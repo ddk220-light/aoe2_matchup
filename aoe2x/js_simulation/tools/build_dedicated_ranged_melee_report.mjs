@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 
@@ -11,6 +11,7 @@ const DEFAULT_OUTPUT = new URL(
   "../calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/",
   import.meta.url,
 );
+const PROJECT_ROOT = resolve(fileURLToPath(new URL("../", import.meta.url)));
 
 
 export function buildDedicatedGoldenAnalysis(report) {
@@ -37,7 +38,7 @@ export function buildDedicatedGoldenAnalysis(report) {
       unresolvedRuns: row.comparison.unresolvedRuns,
       archive: row.archive,
       zipSha256: row.zipSha256,
-      failure: resolved ? null : row.samples.find(({ failure }) => failure)?.failure ?? "unknown",
+      failure: resolved ? null : describeFailure(row.samples),
     });
   });
   const resolvedRows = allRows.filter(({ status }) => status === "resolved");
@@ -102,9 +103,27 @@ export function buildDedicatedGoldenAnalysis(report) {
 }
 
 
-export function buildDedicatedGoldenArtifact({ report, analysis }) {
+function describeFailure(samples) {
+  const explicit = samples.find(({ failure }) => (
+    typeof failure === "string" && failure.length > 0
+  ))?.failure;
+  if (explicit) return explicit;
+  const timeoutTicks = samples
+    .filter(({ outcome }) => outcome === "timeout")
+    .map(({ ticks }) => ticks)
+    .filter(Number.isFinite);
+  if (timeoutTicks.length) return `world exceeded ${Math.max(...timeoutTicks)} ticks`;
+  return "unknown";
+}
+
+
+export function buildDedicatedGoldenArtifact({
+  report,
+  analysis,
+  execution = null,
+  sourcePath = "aoe2x/js_simulation/calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/results.json",
+}) {
   const generatedAt = analysis.generatedAt;
-  const sourcePath = "aoe2x/js_simulation/calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/results.json";
   const manifestPath = "aoe2x/js_simulation/calibration/source/dedicated_ranged_melee_sources.json";
   const truthPath = "aoe2x/js_simulation/calibration/fixtures/dedicated_ranged_melee/dedicated_ranged_melee_truth.json";
   const resolvedShare = percent(analysis.coverage.resolvedRows / analysis.coverage.totalRows);
@@ -117,6 +136,84 @@ export function buildDedicatedGoldenArtifact({ report, analysis }) {
   const failureShare = percent(
     analysis.coverage.failedAttempts / analysis.coverage.totalAttempts,
   );
+  const resolvedAllAttempts = analysis.coverage.resolvedAttempts === analysis.coverage.totalAttempts;
+  const executionSentence = execution?.workers && execution?.availableParallelism
+    ? `The recoverable runner used **${execution.workers} child processes** across ${execution.availableParallelism} available logical CPUs. Each ${execution.checkpointUnit ?? "completed ratio row"} was flushed to an atomic checkpoint, so a restart skips already validated work.`
+    : "The recoverable runner used independent child processes and atomically checkpointed each complete ratio row so a restart skips already validated work.";
+  const largeDeltaCounts = new Map();
+  for (const row of analysis.rowsOver25) {
+    largeDeltaCounts.set(row.matchup, (largeDeltaCounts.get(row.matchup) ?? 0) + 1);
+  }
+  const dominantLargeDelta = [...largeDeltaCounts]
+    .toSorted((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))[0] ?? null;
+  const topWrongWinner = analysis.matchupSummaries
+    .filter(({ wrongWinnerRuns }) => wrongWinnerRuns > 0)
+    .toSorted((left, right) => right.wrongWinnerRuns - left.wrongWinnerRuns)[0] ?? null;
+  const closestMatchup = analysis.matchupSummaries
+    .filter(({ resolvedRows, meanAbsoluteMeanDelta }) => (
+      resolvedRows > 0 && Number.isFinite(meanAbsoluteMeanDelta)
+    ))
+    .toSorted((left, right) => left.meanAbsoluteMeanDelta - right.meanAbsoluteMeanDelta)[0] ?? null;
+  const largestResolvedRow = analysis.allRows
+    .filter(({ absoluteMeanDelta }) => Number.isFinite(absoluteMeanDelta))
+    .toSorted((left, right) => right.absoluteMeanDelta - left.absoluteMeanDelta)[0] ?? null;
+  const technicalTitle = analysis.coverage.failedRows > 0
+    ? "Resolved rows are measurable, but engine failures limit corpus-wide confidence"
+    : analysis.thresholds.rowsOver25Points > 0 || analysis.accuracy.wrongWinnerRuns > 0
+      ? "Every row resolved; the remaining misses are concentrated"
+      : "Every row resolved within the 25-point outcome threshold";
+  const resolutionSentence = resolvedAllAttempts
+    ? `all **${analysis.coverage.totalAttempts} attempts** resolved.`
+    : `**${analysis.coverage.resolvedAttempts}/${analysis.coverage.totalAttempts} attempts** resolved (${resolvedShare}); ${analysis.coverage.failedAttempts} attempts failed (${failureShare}). No failed attempt was silently dropped.`;
+  const thresholdSentence = analysis.thresholds.rowsOver25Points === 0
+    ? "No ratio row exceeds 25 points."
+    : `${analysis.thresholds.rowsOver25Points} ratio rows exceed 25 points.`;
+  const winnerSentence = analysis.accuracy.wrongWinnerRuns === 0
+    ? "Every resolved attempt selects the same winner as its tape repeat."
+    : `${analysis.accuracy.wrongWinnerRuns}/${analysis.coverage.resolvedAttempts} resolved attempts (${wrongWinnerShare}) select the wrong winner.`;
+  const keyFindingTitle = dominantLargeDelta
+    ? `${dominantLargeDelta[0]} contributes the most >25-point rows`
+    : "No ratio row exceeds the 25-point threshold";
+  const largestMissSentence = analysis.rowsOver25[0]
+    ? `The largest miss is **${analysis.rowsOver25[0].matchup} ${analysis.rowsOver25[0].ratio}**: tape ${signed(analysis.rowsOver25[0].tapeMean)} versus simulation ${signed(analysis.rowsOver25[0].simulationMean)}, an **${round(analysis.rowsOver25[0].absoluteMeanDelta)}-point** difference.`
+    : largestResolvedRow
+      ? `The largest remaining resolved difference is **${largestResolvedRow.matchup} ${largestResolvedRow.ratio}** at **${round(largestResolvedRow.absoluteMeanDelta)} points**.`
+      : "No resolved outcome delta is available.";
+  const concentrationSentence = dominantLargeDelta
+    ? `**${dominantLargeDelta[0]}** contributes ${dominantLargeDelta[1]} of ${analysis.thresholds.rowsOver25Points} rows above 25 points.${topWrongWinner ? ` **${topWrongWinner.matchup}** contributes the most wrong-winner attempts (${topWrongWinner.wrongWinnerRuns}).` : ""}`
+    : "No ratio row exceeds 25 points in this run.";
+  const closestSentence = closestMatchup
+    ? `The closest matchup is **${closestMatchup.matchup}**, with a ${round(closestMatchup.meanAbsoluteMeanDelta)}-point mean absolute row delta, a ${round(closestMatchup.maxAbsoluteMeanDelta)}-point maximum, ${closestMatchup.wrongWinnerRuns} wrong-winner attempts, and ${closestMatchup.failedRows} failed rows.`
+    : "No matchup-level resolved comparison is available.";
+  const failureTitle = analysis.coverage.failedAttempts === 0
+    ? "No engine failures occurred"
+    : `${analysis.coverage.failedAttempts} attempts remain unresolved`;
+  const failureBody = analysis.coverage.failedAttempts === 0
+    ? `All ${analysis.coverage.totalRows} ratio rows and ${analysis.coverage.totalAttempts} exact-repeat attempts completed, so every row contributes to the delta distribution.`
+    : `${analysis.coverage.failedRows} ratio rows are fully unresolved and ${analysis.coverage.partiallyUnresolvedRows} are partially unresolved. Failure categories are ${analysis.failureCategories.map(({ category, attempts }) => `${category} (${attempts} attempts)`).join(", ")}. Failed attempts are excluded from delta averages rather than treated as zero error; the ${round(analysis.accuracy.meanAbsoluteMeanDelta)}-point mean describes ${analysis.coverage.resolvedRows} resolved rows.`;
+  const limitationBody = analysis.coverage.failedRows === 0
+    ? `All rows resolved, so aggregate delta metrics cover the complete corpus. The engine is deterministic for each exact starting state; tape variability comes from five recorded repeats, not repeated random seeds from one state. Outcome score measures winner and survivor HP, but does not by itself establish that movement, targeting, damage timing, or battle duration followed the tape.`
+    : `Aggregate accuracy metrics are conditional on successful completion: ${analysis.coverage.failedRows} rows (${percent(analysis.coverage.failedRows / analysis.coverage.totalRows)} of the corpus) have no complete simulation score. The engine is deterministic for each exact starting state; tape variability comes from five recorded repeats, not repeated random seeds from one state. Outcome score measures winner and survivor HP, but does not by itself establish that movement, targeting, damage timing, or battle duration followed the tape.`;
+  const nextSteps = [];
+  if (analysis.coverage.failedRows > 0) {
+    nextSteps.push(`Resolve and rerun the ${analysis.coverage.failedRows} failed rows using their retained checkpoints and typed failure evidence.`);
+  }
+  if (analysis.thresholds.rowsOver25Points > 0) {
+    nextSteps.push(`Review the ${analysis.thresholds.rowsOver25Points} rows above 25 points, starting with ${analysis.rowsOver25.slice(0, 3).map(({ matchup, ratio }) => `${matchup} ${ratio}`).join("; ")}.`);
+  }
+  if (analysis.accuracy.wrongWinnerRuns > 0) {
+    nextSteps.push(`Prioritize the ${analysis.accuracy.wrongWinnerRuns} wrong-winner attempts before tuning same-winner survivor-HP severity.`);
+  }
+  nextSteps.push("Retain the recoverable child-process runner for future corpus jobs; its signature and per-row checkpoints make interrupted runs resumable without repeated work.");
+  const furtherQuestions = [
+    analysis.thresholds.rowsOver25Points > 0
+      ? "Do the remaining >25-point rows share one movement or combat mechanism, or are they unit-class-specific physics gaps?"
+      : "Do movement, engagement timing, and target selection also match tape in the rows whose final outcomes are already close?",
+    analysis.accuracy.wrongWinnerRuns > 0
+      ? "Are wrong-winner attempts concentrated in one density, obstruction, or range regime?"
+      : "Does winner agreement remain stable under newly recorded starting formations?",
+    "Which outcome-accurate rows still have materially different battle duration or survivor trajectories from tape?",
+  ];
   return {
     surface: "report",
     manifest: {
@@ -135,12 +232,12 @@ export function buildDedicatedGoldenArtifact({ report, analysis }) {
           id: "technical-summary",
           type: "markdown",
           sourceId: "results-source",
-          body: `## The resolved rows are often close, but the suite is not yet broadly reliable\n\nThe run preserved all **${analysis.coverage.totalAttempts} exact tape-repeat attempts** across ${analysis.coverage.matchups} dedicated golden matchups. The engine produced outcomes for **${analysis.coverage.resolvedAttempts} attempts**; because failures affect whole ratio rows, ${resolvedShare} of both attempts and ratio rows resolved. It recorded collision-convergence failures for ${analysis.coverage.failedAttempts} attempts (${failureShare}). No failed attempt was silently dropped.\n\nAmong the ${analysis.coverage.resolvedRows} comparable ratio rows, the median absolute tape delta is **${round(analysis.accuracy.medianAbsoluteMeanDelta)} percentage points** and **${analysis.thresholds.rowsAtOrUnder25Points}/${analysis.thresholds.resolvedRows} (${within25Share})** are at or below 25 points. However, ${analysis.thresholds.rowsOver25Points} rows exceed 25 points, six of them are Heavy Scorpion rows, and ${analysis.accuracy.wrongWinnerRuns}/${analysis.coverage.resolvedAttempts} resolved attempts (${wrongWinnerShare}) pick the wrong winner. The honest conclusion is: promising on most resolved non-Scorpion rows, not yet a clean corpus-wide pass.`,
+          body: `## ${technicalTitle}\n\nThe run preserved **${analysis.coverage.totalAttempts} exact tape-repeat attempts** across ${analysis.coverage.matchups} authorized golden matchups; ${resolutionSentence}\n\nAmong ${analysis.coverage.resolvedRows} comparable ratio rows, the median absolute tape delta is **${round(analysis.accuracy.medianAbsoluteMeanDelta)} percentage points** and **${analysis.thresholds.rowsAtOrUnder25Points}/${analysis.thresholds.resolvedRows} (${within25Share})** are at or below 25 points. ${thresholdSentence} ${winnerSentence}`,
         },
         {
           id: "key-findings-heading",
           type: "markdown",
-          body: "## Scorpion dominates the large errors; HCA-versus-Champion is close\n\nHeavy Scorpion contributes six of the nine rows above 25 points and 20 of the 31 wrong-winner attempts. The largest miss is Heavy Scorpion versus Paladin at 15v20: tape **+76.71** (Paladin wins) versus simulation **-87.67** (Scorpion wins), a **164.38-point** swing.\n\nBy contrast, the fully resolved Heavy Cavalry Archer versus Champion matchup has a 7.84-point mean absolute row delta, a 21.18-point maximum, no wrong winners, and no engine failures.",
+          body: `## ${keyFindingTitle}\n\n${concentrationSentence} ${largestMissSentence}\n\n${closestSentence}`,
           sourceId: "results-source",
         },
         { id: "matchup-chart-block", type: "chart", chartId: "matchup-accuracy-chart", layout: "full" },
@@ -155,7 +252,7 @@ export function buildDedicatedGoldenArtifact({ report, analysis }) {
           id: "failures-heading",
           type: "markdown",
           sourceId: "results-source",
-          body: `## All ${analysis.coverage.failedAttempts} unresolved attempts share one engine failure\n\nExactly ${analysis.coverage.failedRows} ratio rows are fully unresolved; there are no partially unresolved rows. Every one reports **collision constraints did not converge after 4096 sweeps** near a map obstacle. These rows are excluded from delta averages rather than treated as zero error. This is why the 19.19-point mean absolute row delta describes only the ${analysis.coverage.resolvedRows} resolved rows, not the full ${analysis.coverage.totalRows}-row corpus.`,
+          body: `## ${failureTitle}\n\n${failureBody}`,
         },
         { id: "failure-table-block", type: "table", tableId: "failure-table", layout: "full" },
         {
@@ -167,24 +264,24 @@ export function buildDedicatedGoldenArtifact({ report, analysis }) {
         {
           id: "methodology",
           type: "markdown",
-          body: "## Exact-repeat methodology\n\nEach external golden ZIP was hashed before intake, copied byte-for-byte into the clean-room source directory, hashed again, and recorded in the active dedicated manifest. `frames.bin`, `summary.json`, and exact starting-unit records were imported reproducibly into the dedicated truth fixture. The current checked-out JavaScript engine then ran each repeat on the golden map with cohesive kiting, mechanics-derived kiting clock, melee attack-move-all, chase capture enabled, zero melee engagement dwell, preventive contact steering enabled, and a 9,000-tick limit.\n\nThe runner catches an individual engine exception as a typed unresolved result so later attempts continue. Four deterministic matchup shards produced the completed run; a strict merge rejected duplicate or incomplete coverage and verified exactly 17 matchups, 85 rows, and 425 attempts.",
+          body: `## Exact-repeat methodology\n\nEach external golden ZIP was hashed before intake, copied byte-for-byte into the clean-room source directory, hashed again, and recorded in the active dedicated manifest. \`frames.bin\`, \`summary.json\`, and exact starting-unit records were imported reproducibly into the dedicated truth fixture. The current checked-out JavaScript engine ran each repeat on the golden map with cohesive kiting, mechanics-derived kiting clock, melee attack-move-all, chase capture enabled, zero melee engagement dwell, preventive contact steering at **0.50 strength**, and a 9,000-tick limit.\n\n${executionSentence} The strict merge rejects duplicate or incomplete coverage and verifies exactly ${analysis.coverage.matchups} matchups, ${analysis.coverage.totalRows} rows, and ${analysis.coverage.totalAttempts} attempts.`,
         },
         {
           id: "limitations",
           type: "markdown",
           sourceId: "results-source",
-          body: "## Limitations, uncertainty, and robustness\n\nThe aggregate accuracy metrics are conditional on successful engine completion: 26 rows (30.6% of the corpus) have no simulation score. Reporting them as missing is materially different from claiming the engine is within 19.19 points across the full suite. The engine is deterministic for a given exact starting state; tape variability comes from five distinct recorded repeats, not repeated random seeds from one state. Outcome score measures winner and survivor HP, but does not by itself establish that movement, targeting, damage timing, or battle duration followed the tape.\n\nRobustness checks passed for provenance and schedule completeness: 17 unique authorized archives, five ratios per matchup, five repeats per ratio, exact repeat starts, no duplicate rows, and no partially written results. Failure classification is also stable: all unresolved attempts are the same collision-convergence family.",
+          body: `## Limitations, uncertainty, and robustness\n\n${limitationBody}\n\nRobustness checks cover provenance and schedule completeness: ${analysis.coverage.matchups} unique authorized archives, five ratios per matchup, five repeats per ratio, exact repeat starts, no duplicate rows, atomic row checkpoints, and no partially written results.`,
         },
         { id: "all-rows-table-block", type: "table", tableId: "all-rows-table", layout: "full" },
         {
           id: "next-steps",
           type: "markdown",
-          body: "## Recommended next steps\n\n1. Treat collision convergence as the first reliability blocker: rerun the 26 failed rows only after that physics failure is corrected.\n2. Keep Scorpion outcome work separate from the general ranged-kiting result; its six large-delta rows dominate the current accuracy gap.\n3. Recheck the three remaining non-Scorpion rows above 25 points: HCA versus Elite Steppe Lancer at 20v15 and 20v20, and Elite Skirmisher versus Champion at 10v5.\n4. Use the new recoverable runner for every future corpus job. It targets 80% of available CPU with independent Node processes, atomically checkpoints each complete matchup, records live progress/ETA, validates a run signature, and resumes only missing matchups.",
+          body: `## Recommended next steps\n\n${nextSteps.map((step, index) => `${index + 1}. ${step}`).join("\n")}`,
         },
         {
           id: "further-questions",
           type: "markdown",
-          body: "## Further questions\n\n- After collision convergence is fixed, do the recovered 26 rows preserve the current 6.7-point median or reveal a density-related accuracy bias?\n- Is Heavy Scorpion's winner reversal caused primarily by projectile behavior, kiting eligibility/timing, obstruction geometry, or melee acquisition?\n- For the three non-Scorpion >25 rows, do survivor HP and winner error come from the same physical mechanism or from distinct unit-class interactions?",
+          body: `## Further questions\n\n${furtherQuestions.map((question) => `- ${question}`).join("\n")}`,
         },
       ],
       charts: [
@@ -236,7 +333,7 @@ export function buildDedicatedGoldenArtifact({ report, analysis }) {
           },
           valueFormat: "number",
           layout: "full",
-          maxRows: 9,
+          maxRows: Math.max(1, analysis.rowsOver25.length),
           surface: { legend: "none", valueLabels: true },
         },
       ],
@@ -279,7 +376,7 @@ export function buildDedicatedGoldenArtifact({ report, analysis }) {
         },
         {
           id: "all-rows-table",
-          title: "All 85 dedicated golden ratio rows",
+          title: `All ${analysis.coverage.totalRows} dedicated golden ratio rows`,
           subtitle: "Exact audit view; unresolved rows retain their failure status and have no simulation delta",
           showDescription: true,
           dataset: "all_rows",
@@ -387,8 +484,14 @@ export async function main(argv = process.argv.slice(2)) {
   const resultsPath = argv[0] ? resolve(argv[0]) : DEFAULT_RESULTS;
   const outputDirectory = argv[1] ? resolve(argv[1]) : DEFAULT_OUTPUT;
   const report = JSON.parse(await readFile(resultsPath, "utf8"));
+  const execution = await readOptionalJson(resolve(dirname(resultsPath), "run-manifest.json"));
   const analysis = buildDedicatedGoldenAnalysis(report);
-  const artifact = buildDedicatedGoldenArtifact({ report, analysis });
+  const artifact = buildDedicatedGoldenArtifact({
+    report,
+    analysis,
+    execution,
+    sourcePath: relative(PROJECT_ROOT, resultsPath).replaceAll("\\", "/"),
+  });
   await mkdir(outputDirectory, { recursive: true });
   await Promise.all([
     writeFile(resolveOutput(outputDirectory, "analysis.json"), `${JSON.stringify(analysis, null, 2)}\n`, "utf8"),
@@ -396,6 +499,16 @@ export async function main(argv = process.argv.slice(2)) {
   ]);
   process.stdout.write(`${JSON.stringify({ analysis: analysis.coverage, outputDirectory: String(outputDirectory) })}\n`);
   return { analysis, artifact };
+}
+
+
+async function readOptionalJson(path) {
+  try {
+    return JSON.parse(await readFile(path, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
 }
 
 
@@ -430,6 +543,12 @@ function round(value) {
 
 function roundOrNull(value) {
   return Number.isFinite(value) ? round(value) : null;
+}
+
+
+function signed(value) {
+  const rounded = round(value);
+  return `${rounded >= 0 ? "+" : ""}${rounded}`;
 }
 
 

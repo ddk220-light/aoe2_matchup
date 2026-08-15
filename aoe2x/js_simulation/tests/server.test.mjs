@@ -148,6 +148,7 @@ test("manual 5 HCA versus 10 Champion setup preserves the tape's matchup order",
     assert.equal(response.status, 200, run.error);
     assert.equal(run.alliedTransitMode, "soft-allied");
     assert.equal(run.contactSteeringMode, "preventive-contact-graph");
+    assert.ok(run.contactSteeringStrength > 0 && run.contactSteeringStrength < 1);
     assert.ok(run.contactSteeringSummary.steeredSteps > 0);
     assert.ok(run.contactSteeringSummary.steeredUnitCount > 0);
     assert.ok(run.contactSteeringSummary.steeredUnitCount <= 10);

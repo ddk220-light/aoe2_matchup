@@ -88,6 +88,39 @@ test("an isolated arrival takes a full-speed tangent instead of closing an allie
 });
 
 
+test("steering strength scales the same correction continuously without changing speed", () => {
+  const target = unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null });
+  const mover = unit({ referenceId: 1, x: 2, y: 2 });
+  const upper = unit({ referenceId: 2, x: 2.7, y: 1.85, pursuitTargetId: null });
+  const lower = unit({ referenceId: 3, x: 2.7, y: 2.15, pursuitTargetId: null });
+  const snapshot = [mover, upper, lower, target];
+  const proposals = [proposal(1, STEP, 0), proposal(2), proposal(3), proposal(90)];
+
+  const full = byReference(planPreventiveContactSteering(
+    snapshot, proposals, MAP, { owner: 3, strength: 1 },
+  )).get(1);
+  const half = byReference(planPreventiveContactSteering(
+    snapshot, proposals, MAP, { owner: 3, strength: 0.5 },
+  )).get(1);
+  const off = byReference(planPreventiveContactSteering(
+    snapshot, proposals, MAP, { owner: 3, strength: 0 },
+  )).get(1);
+  const fullAngle = Math.atan2(full.dy, full.dx);
+  const halfAngle = Math.atan2(half.dy, half.dx);
+
+  assert.ok(Math.abs(fullAngle) > 1e-12);
+  assert.ok(Math.abs(halfAngle - fullAngle * 0.5) < 1e-12);
+  assert.ok(Math.abs(Math.hypot(half.dx, half.dy) - STEP) < 1e-12);
+  assert.deepEqual(off, proposal(1, STEP, 0));
+  assert.throws(() => planPreventiveContactSteering(
+    snapshot, proposals, MAP, { owner: 3, strength: -0.01 },
+  ), /steering strength must be between 0 and 1/);
+  assert.throws(() => planPreventiveContactSteering(
+    snapshot, proposals, MAP, { owner: 3, strength: 1.01 },
+  ), /steering strength must be between 0 and 1/);
+});
+
+
 test("a direct four-unit compact admission is diverted without slowing the mover", () => {
   const target = unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null });
   const mover = unit({ referenceId: 1, x: 2, y: 2 });

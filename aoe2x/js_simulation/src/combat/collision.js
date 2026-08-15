@@ -3,6 +3,11 @@ import { alliedTransitPairKey } from "./allied-transit.js";
 
 
 const EPSILON = 1e-12;
+// Hard collision publication uses a world-scale tolerance rather than the
+// floating-point comparison epsilon. At a 0.2-tile Champion radius this is
+// 0.05% of the body size: physically invisible, but large enough to keep a
+// sequential solver from treating a sub-pixel residual as a broken world.
+const GEOMETRY_SLOP = 1e-4;
 // Crowds pinched between a static obstacle and an enemy body converge
 // geometrically. The former 256-sweep ceiling could stop with a sub-micron
 // residual overlap even though each pass was still making deterministic
@@ -124,18 +129,29 @@ function normalizeBounds(map, bodies) {
 
 
 function validateStartingGeometry(bodies, obstacles, bounds) {
+  let strictlyValid = true;
   for (const body of bodies) {
     if (
-      body.x < body.radius - EPSILON ||
-      body.x > bounds.width - body.radius + EPSILON ||
-      body.y < body.radius - EPSILON ||
-      body.y > bounds.height - body.radius + EPSILON
+      body.x < body.radius - GEOMETRY_SLOP ||
+      body.x > bounds.width - body.radius + GEOMETRY_SLOP ||
+      body.y < body.radius - GEOMETRY_SLOP ||
+      body.y > bounds.height - body.radius + GEOMETRY_SLOP
     ) {
       throw new RangeError(`reference ${body.referenceId} starts outside map bounds`);
     }
+    if (
+      body.x < body.radius - EPSILON
+      || body.x > bounds.width - body.radius + EPSILON
+      || body.y < body.radius - EPSILON
+      || body.y > bounds.height - body.radius + EPSILON
+    ) strictlyValid = false;
     for (const obstacle of obstacles) {
       const distance = Math.hypot(obstacle.x - body.x, obstacle.y - body.y);
-      if (distance >= body.radius + obstacle.radius - EPSILON) continue;
+      const extent = body.radius + obstacle.radius;
+      if (distance >= extent - GEOMETRY_SLOP) {
+        if (distance < extent - EPSILON) strictlyValid = false;
+        continue;
+      }
       const kind = distance === 0 ? "exact overlap" : "starting overlap";
       throw new RangeError(
         `${kind} between reference ${body.referenceId} and obstacle ${obstacle.label}`,
@@ -149,13 +165,18 @@ function validateStartingGeometry(bodies, obstacles, bounds) {
         Math.abs(bodies[j].x - bodies[i].x),
         Math.abs(bodies[j].y - bodies[i].y),
       );
-      if (distance >= bodies[i].radius + bodies[j].radius - EPSILON) continue;
+      const extent = bodies[i].radius + bodies[j].radius;
+      if (distance >= extent - GEOMETRY_SLOP) {
+        if (distance < extent - EPSILON) strictlyValid = false;
+        continue;
+      }
       const kind = distance === 0 ? "exact overlap" : "starting overlap";
       throw new RangeError(
         `${kind} between references ${bodies[i].referenceId} and ${bodies[j].referenceId}`,
       );
     }
   }
+  return strictlyValid;
 }
 
 
@@ -324,8 +345,21 @@ function constrainPair(left, right, alliedTransitPairs) {
 }
 
 
-function resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs) {
-  let finalCorrection = Infinity;
+function reportCollisionDiagnostics(callback, mode, sweeps, largestCorrection,
+  restoredReferences = []) {
+  if (callback === undefined) return;
+  callback(Object.freeze({
+    mode,
+    sweeps,
+    largestCorrection,
+    restoredReferences: Object.freeze([...restoredReferences]),
+  }));
+}
+
+
+function resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs,
+  onCollisionDiagnostics, allowEarlySlop, collisionRecoveryState) {
+  let lastCorrection = Infinity;
   for (let sweep = 0; sweep < MAX_CONSTRAINT_SWEEPS; sweep += 1) {
     let largestCorrection = 0;
     for (const body of bodies) {
@@ -345,41 +379,123 @@ function resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs) {
         );
       }
     }
-    if (
-      largestCorrection <= EPSILON
-      && finalGeometryIsValid(bodies, obstacles, bounds)
-    ) return;
-    finalCorrection = largestCorrection;
+    if (largestCorrection <= EPSILON && finalGeometryIsValid(bodies, obstacles, bounds)) {
+      reportCollisionDiagnostics(
+        onCollisionDiagnostics, "converged", sweep + 1, largestCorrection,
+      );
+      return;
+    }
+    if (allowEarlySlop
+        && finalGeometryIsValid(bodies, obstacles, bounds, GEOMETRY_SLOP)) {
+      reportCollisionDiagnostics(
+        onCollisionDiagnostics, "slop", sweep + 1, largestCorrection,
+      );
+      return;
+    }
+    lastCorrection = largestCorrection;
   }
 
   // Ally separation is a soft constraint: a crowd can stay mutually unsatisfied
   // for as long as it likes, exactly as the tapes show. Spending the whole sweep
   // budget is therefore not an error provided the hard invariants -- enemy
   // separation, map bounds and static obstacles -- all hold.
-  if (finalGeometryIsValid(bodies, obstacles, bounds)) return;
+  if (finalGeometryIsValid(bodies, obstacles, bounds)) {
+    reportCollisionDiagnostics(
+      onCollisionDiagnostics, "budget", MAX_CONSTRAINT_SWEEPS, lastCorrection,
+    );
+    return;
+  }
+  if (finalGeometryIsValid(bodies, obstacles, bounds, GEOMETRY_SLOP)) {
+    if (collisionRecoveryState) collisionRecoveryState.active = true;
+    reportCollisionDiagnostics(
+      onCollisionDiagnostics, "slop", MAX_CONSTRAINT_SWEEPS, lastCorrection,
+    );
+    return;
+  }
 
-  throw new Error(
-    `collision constraints did not converge after ${MAX_CONSTRAINT_SWEEPS} sweeps `
-    + `(last correction ${finalCorrection}; `
-    + `${finalGeometryViolation(bodies, obstacles, bounds) ?? "geometry valid"})`,
+  const restoredReferences = restoreInvalidMovement(bodies, obstacles, bounds);
+  if (collisionRecoveryState) collisionRecoveryState.active = true;
+  reportCollisionDiagnostics(
+    onCollisionDiagnostics, "fallback", MAX_CONSTRAINT_SWEEPS, lastCorrection,
+    restoredReferences,
   );
 }
 
 
-function finalGeometryViolation(bodies, obstacles, bounds) {
+function invalidBodyReferences(bodies, obstacles, bounds, tolerance) {
+  const invalid = new Set();
   for (const body of bodies) {
     const x = body.x + body.dx;
     const y = body.y + body.dy;
     if (
-      x < body.radius - EPSILON ||
-      x > bounds.width - body.radius + EPSILON ||
-      y < body.radius - EPSILON ||
-      y > bounds.height - body.radius + EPSILON
+      x < body.radius - tolerance
+      || x > bounds.width - body.radius + tolerance
+      || y < body.radius - tolerance
+      || y > bounds.height - body.radius + tolerance
+    ) invalid.add(body.referenceId);
+    for (const obstacle of obstacles) {
+      const gap = Math.hypot(obstacle.x - x, obstacle.y - y)
+        - body.radius - obstacle.radius;
+      if (gap < -tolerance) invalid.add(body.referenceId);
+    }
+  }
+  for (let i = 0; i < bodies.length; i += 1) {
+    for (let j = i + 1; j < bodies.length; j += 1) {
+      if (bodies[i].owner === bodies[j].owner) continue;
+      const gap = Math.max(
+        Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
+        Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),
+      ) - bodies[i].radius - bodies[j].radius;
+      if (gap >= -tolerance) continue;
+      invalid.add(bodies[i].referenceId);
+      invalid.add(bodies[j].referenceId);
+    }
+  }
+  return invalid;
+}
+
+
+function restoreInvalidMovement(bodies, obstacles, bounds) {
+  const restored = new Set();
+  for (let pass = 0; pass < bodies.length; pass += 1) {
+    const invalid = invalidBodyReferences(bodies, obstacles, bounds, GEOMETRY_SLOP);
+    if (invalid.size === 0) return [...restored];
+    let grew = false;
+    for (const body of bodies) {
+      if (!invalid.has(body.referenceId) || restored.has(body.referenceId)) continue;
+      body.dx = 0;
+      body.dy = 0;
+      restored.add(body.referenceId);
+      grew = true;
+    }
+    if (!grew) break;
+  }
+
+  // The input snapshot was validated before solving, so restoring every body
+  // is an always-valid deterministic last resort even for an unexpectedly
+  // tangled contact graph.
+  for (const body of bodies) {
+    body.dx = 0;
+    body.dy = 0;
+  }
+  return bodies.map(({ referenceId }) => referenceId);
+}
+
+
+function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON) {
+  for (const body of bodies) {
+    const x = body.x + body.dx;
+    const y = body.y + body.dy;
+    if (
+      x < body.radius - tolerance ||
+      x > bounds.width - body.radius + tolerance ||
+      y < body.radius - tolerance ||
+      y > bounds.height - body.radius + tolerance
     ) return `reference ${body.referenceId} outside bounds`;
     for (const obstacle of obstacles) {
       const gap = Math.hypot(obstacle.x - x, obstacle.y - y)
         - body.radius - obstacle.radius;
-      if (gap < -EPSILON) {
+      if (gap < -tolerance) {
         return `reference ${body.referenceId} overlaps obstacle ${obstacle.label} by ${-gap}`;
       }
     }
@@ -397,7 +513,7 @@ function finalGeometryViolation(bodies, obstacles, bounds) {
         Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
         Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),
       ) - bodies[i].radius - bodies[j].radius;
-      if (gap < -EPSILON) {
+      if (gap < -tolerance) {
         return `references ${bodies[i].referenceId} and ${bodies[j].referenceId} `
           + `overlap by ${-gap}`;
       }
@@ -407,8 +523,8 @@ function finalGeometryViolation(bodies, obstacles, bounds) {
 }
 
 
-function finalGeometryIsValid(bodies, obstacles, bounds) {
-  return finalGeometryViolation(bodies, obstacles, bounds) === null;
+function finalGeometryIsValid(bodies, obstacles, bounds, tolerance = EPSILON) {
+  return finalGeometryViolation(bodies, obstacles, bounds, tolerance) === null;
 }
 
 
@@ -503,12 +619,25 @@ export function queryEnemyContactManifold(beforeSnapshot, afterSnapshot) {
 export function resolveMovementProposals(snapshot, proposals, map, options = {}) {
   const alliedTransitPairs = options.alliedTransitPairs instanceof Set
     ? options.alliedTransitPairs : new Set();
+  const onCollisionDiagnostics = options.onCollisionDiagnostics;
+  if (onCollisionDiagnostics !== undefined && typeof onCollisionDiagnostics !== "function") {
+    throw new TypeError("collision diagnostics callback must be a function");
+  }
+  const collisionRecoveryState = options.collisionRecoveryState;
+  if (collisionRecoveryState !== undefined
+      && (!collisionRecoveryState || typeof collisionRecoveryState !== "object")) {
+    throw new TypeError("collision recovery state must be an object");
+  }
   const bodies = normalizeBodies(snapshot, proposals);
   const bounds = normalizeBounds(map, bodies);
   const obstacles = normalizeObstacles(map);
-  validateStartingGeometry(bodies, obstacles, bounds);
-  resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs);
-  if (!finalGeometryIsValid(bodies, obstacles, bounds)) {
+  const strictlyValidStart = validateStartingGeometry(bodies, obstacles, bounds);
+  resolveConstraints(
+    bodies, obstacles, bounds, alliedTransitPairs, onCollisionDiagnostics,
+    collisionRecoveryState?.active === true || !strictlyValidStart,
+    collisionRecoveryState,
+  );
+  if (!finalGeometryIsValid(bodies, obstacles, bounds, GEOMETRY_SLOP)) {
     throw new Error("collision constraints produced invalid final geometry");
   }
 

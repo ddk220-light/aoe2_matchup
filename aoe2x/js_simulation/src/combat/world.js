@@ -23,7 +23,10 @@ import {
 import { planChaseAim, planMoveAim } from "./chase-path.js";
 import { planCohortContactMotion } from "./cohort-motion.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
-import { planPreventiveContactSteering } from "./contact-graph-steering.js";
+import {
+  planPreventiveContactSteering,
+  PREVENTIVE_CONTACT_STEERING_STRENGTH,
+} from "./contact-graph-steering.js";
 import {
   alliedTransitPairKey,
   updateAlliedTransit,
@@ -211,6 +214,7 @@ export function createWorld(scenario) {
       scenario.soloMovement === true,
     )
     : null;
+  if (kiteState) kiteState.collisionRecoveryState = { active: false };
   if (scenario.kiteChaseDwellTicks !== undefined) {
     if (!kiteState) {
       throw new RangeError("kite chase dwell requires a kiting owner");
@@ -240,7 +244,13 @@ export function createWorld(scenario) {
         "preventive contact steering requires a kiting attack-move scenario",
       );
     }
+    const strength = scenario.preventiveContactSteeringStrength
+      ?? PREVENTIVE_CONTACT_STEERING_STRENGTH;
+    if (!Number.isFinite(strength) || strength < 0 || strength > 1) {
+      throw new RangeError("preventive contact steering strength must be between 0 and 1");
+    }
     kiteState.preventiveContactSteering = true;
+    kiteState.preventiveContactSteeringStrength = strength;
     kiteState.preventiveContactSteeredSteps = 0;
     kiteState.preventiveContactSteeredUnits = new Set();
   }
@@ -890,7 +900,10 @@ function moveUnits(units, map, tick, events, kiteState = null) {
     kiteState.alliedTransit.pairKeys = updatedTransit.pairKeys;
     alliedTransitPairs = updatedTransit.pairKeys;
   }
-  const movementOptions = { alliedTransitPairs };
+  const movementOptions = {
+    alliedTransitPairs,
+    ...(kiteState ? { collisionRecoveryState: kiteState.collisionRecoveryState } : {}),
+  };
   let planned = planLocalAvoidance(live, proposals, map, movementOptions);
   if (kiteState?.preventiveContactSteering === true) {
     let contactProposals = planned.proposals;
@@ -903,7 +916,7 @@ function moveUnits(units, map, tick, events, kiteState = null) {
         planned.units,
         contactProposals,
         map,
-        { owner },
+        { owner, strength: kiteState.preventiveContactSteeringStrength },
       );
       contactProposals = contactPlan.proposals;
       kiteState.preventiveContactSteeredSteps += contactPlan.steered.length;

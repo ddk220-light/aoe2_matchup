@@ -347,6 +347,8 @@ export async function runFight(root, {
         contactSteeringMode: preventiveContactSteering === true
           ? "preventive-contact-graph"
           : "off",
+        contactSteeringStrength:
+          result.world.kiteState?.preventiveContactSteeringStrength ?? 0,
         contactSteeringSummary: Object.freeze({
           steeredSteps: result.world.kiteState?.preventiveContactSteeredSteps ?? 0,
           steeredUnitCount:

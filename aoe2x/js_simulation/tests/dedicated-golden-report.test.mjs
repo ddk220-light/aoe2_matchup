@@ -33,6 +33,29 @@ test("dedicated report analysis keeps failures out of resolved delta denominator
 });
 
 
+test("dedicated report classifies a fully timed-out row as a tick-limit failure", async () => {
+  const report = structuredClone(JSON.parse(await readFile(RESULTS, "utf8")));
+  const row = report.rows[0];
+  row.comparison.absoluteMeanDelta = null;
+  row.comparison.meanDelta = null;
+  row.comparison.tapeBandError = null;
+  row.comparison.unresolvedRuns = 5;
+  row.samples = row.samples.map((sample) => ({
+    ...sample,
+    outcome: "timeout",
+    ticks: 9000,
+    score: null,
+    delta: null,
+  }));
+  const analysis = buildDedicatedGoldenAnalysis(report);
+  const failedRow = analysis.allRows.find(({ rowId }) => rowId === row.id);
+
+  assert.equal(failedRow.status, "engine failure");
+  assert.equal(failedRow.failure, "world exceeded 9000 ticks");
+  assert.ok(analysis.failureCategories.some(({ category }) => category === "tick limit"));
+});
+
+
 test("dedicated artifact exposes the complete 85-row audit table and required technical sections", async () => {
   const report = JSON.parse(await readFile(RESULTS, "utf8"));
   const analysis = buildDedicatedGoldenAnalysis(report);
@@ -59,4 +82,57 @@ test("dedicated artifact exposes the complete 85-row audit table and required te
     ],
   );
   assert.equal(artifact.manifest.sources.length, 4);
+});
+
+
+test("dedicated artifact derives findings and execution details from the supplied run", async () => {
+  const report = JSON.parse(await readFile(RESULTS, "utf8"));
+  const baseline = buildDedicatedGoldenAnalysis(report);
+  const analysis = {
+    ...baseline,
+    coverage: {
+      ...baseline.coverage,
+      resolvedRows: 85,
+      failedRows: 0,
+      resolvedAttempts: 425,
+      failedAttempts: 0,
+      fullyUnresolvedRows: 0,
+      partiallyUnresolvedRows: 0,
+    },
+    accuracy: {
+      ...baseline.accuracy,
+      meanAbsoluteMeanDelta: 4.25,
+      medianAbsoluteMeanDelta: 3.5,
+      maximumAbsoluteMeanDelta: 12.75,
+      rowsInsideTapeBand: 70,
+      wrongWinnerRuns: 2,
+    },
+    thresholds: {
+      resolvedRows: 85,
+      rowsAtOrUnder25Points: 85,
+      rowsOver25Points: 0,
+    },
+    failureCategories: [],
+    rowsOver25: [],
+  };
+  const artifact = buildDedicatedGoldenArtifact({
+    report,
+    analysis,
+    execution: {
+      workers: 19,
+      availableParallelism: 24,
+      checkpointUnit: "one complete ratio row (5 exact tape repeats)",
+    },
+  });
+  const markdown = artifact.manifest.blocks
+    .filter(({ type }) => type === "markdown")
+    .map(({ body }) => body)
+    .join("\n");
+
+  assert.match(markdown, /all \*\*425 attempts\*\* resolved/);
+  assert.match(markdown, /median absolute tape delta is \*\*3\.5 percentage points\*\*/);
+  assert.match(markdown, /\*\*85\/85 \(100%\)\*\* are at or below 25 points/);
+  assert.match(markdown, /\*\*19 child processes\*\* across 24 available logical CPUs/);
+  assert.match(markdown, /No ratio row exceeds 25 points/);
+  assert.doesNotMatch(markdown, /six of the nine rows|Four deterministic matchup shards|19\.19-point/);
 });

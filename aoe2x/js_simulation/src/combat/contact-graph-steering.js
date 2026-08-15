@@ -7,6 +7,7 @@ const EPSILON = 1e-12;
 // unit collision geometry and the already-computed physics proposal.
 const TURN_INCREMENT = Math.PI / 12;
 const MAX_TURNS = 6;
+export const PREVENTIVE_CONTACT_STEERING_STRENGTH = 0.5;
 
 
 function requireFinite(value, name) {
@@ -17,6 +18,15 @@ function requireFinite(value, name) {
 
 function requireReferenceId(value, name = "reference ID") {
   if (!Number.isSafeInteger(value)) throw new TypeError(`${name} must be a safe integer`);
+  return value;
+}
+
+
+function normalizeStrength(value) {
+  requireFinite(value, "steering strength");
+  if (value < 0 || value > 1) {
+    throw new RangeError("steering strength must be between 0 and 1");
+  }
   return value;
 }
 
@@ -260,7 +270,11 @@ function moverPriority(left, right, byReference) {
 }
 
 
-export function planPreventiveContactSteering(snapshot, proposals, map, { owner } = {}) {
+export function planPreventiveContactSteering(snapshot, proposals, map, {
+  owner,
+  strength = PREVENTIVE_CONTACT_STEERING_STRENGTH,
+} = {}) {
+  const normalizedStrength = normalizeStrength(strength);
   const {
     units, byReference, proposalByReference,
   } = normalizeInputs(snapshot, proposals, owner);
@@ -310,12 +324,19 @@ export function planPreventiveContactSteering(snapshot, proposals, map, { owner 
     ));
     const selected = candidates[0];
     if (!selected || compareRisk(selected.risk, directRisk) >= 0) continue;
-    chosen.set(mover.referenceId, selected.proposal);
+    if (normalizedStrength <= EPSILON) continue;
+    const applied = rotatedProposal(
+      direct,
+      selected.side,
+      selected.turn * normalizedStrength,
+    );
+    if (!staticGeometryClears(mover, applied, map)) continue;
+    chosen.set(mover.referenceId, applied);
     steered.push(Object.freeze({
       referenceId: mover.referenceId,
       reason: "compact-contact",
       side: selected.side,
-      turnRadians: selected.turn * TURN_INCREMENT,
+      turnRadians: selected.turn * TURN_INCREMENT * normalizedStrength,
     }));
   }
 

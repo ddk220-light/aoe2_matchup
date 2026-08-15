@@ -120,3 +120,29 @@ test("dedicated suite can isolate one named matchup for a recoverable worker", a
     "heavy_cav_archer_vs_champion",
   ]);
 });
+
+
+test("dedicated suite can isolate one named ratio row", async () => {
+  const corpus = await loadDedicatedGoldenCorpus(ROOT);
+  const report = await runDedicatedGoldenSuite({
+    root: ROOT,
+    corpus,
+    context: Object.freeze({}),
+    rowIds: ["heavy_cav_archer_vs_elite_steppe_20v20"],
+    runImpl: ({ row, run }) => ({
+      rowId: row.id,
+      repeat: run.repeat,
+      outcome: "win",
+      score: run.signed_score,
+      tapeScore: run.signed_score,
+      delta: 0,
+    }),
+  });
+
+  assert.equal(report.schedule.matchups, 1);
+  assert.equal(report.schedule.rows, 1);
+  assert.equal(report.schedule.totalRuns, 5);
+  assert.deepEqual(report.rows.map(({ id }) => id), [
+    "heavy_cav_archer_vs_elite_steppe_20v20",
+  ]);
+});

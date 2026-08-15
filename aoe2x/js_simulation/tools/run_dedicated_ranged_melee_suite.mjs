@@ -28,6 +28,7 @@ export async function runDedicatedGoldenSuite({
   shardIndex = 0,
   shardCount = 1,
   matchupIds = undefined,
+  rowIds = undefined,
 } = {}) {
   if (!Number.isSafeInteger(shardCount) || shardCount < 1
       || !Number.isSafeInteger(shardIndex) || shardIndex < 0 || shardIndex >= shardCount) {
@@ -47,12 +48,32 @@ export async function runDedicatedGoldenSuite({
     const missing = matchupIds.filter((id) => !selectedMatchups.some((matchup) => matchup.id === id));
     if (missing.length) throw new Error(`unknown or unselected dedicated matchup: ${missing.join(", ")}`);
   }
-  const totalRuns = selectedMatchups.reduce((total, matchup) => total + matchup.runs.length, 0);
+  let requestedRows;
+  if (rowIds !== undefined) {
+    if (!Array.isArray(rowIds) || !rowIds.length || new Set(rowIds).size !== rowIds.length) {
+      throw new TypeError("rowIds must be a non-empty unique list");
+    }
+    requestedRows = new Set(rowIds);
+    const availableRows = new Set(selectedMatchups.flatMap(({ ratios }) => (
+      ratios.map(({ id }) => id)
+    )));
+    const missing = rowIds.filter((id) => !availableRows.has(id));
+    if (missing.length) throw new Error(`unknown or unselected dedicated row: ${missing.join(", ")}`);
+    selectedMatchups = selectedMatchups.filter(({ ratios }) => (
+      ratios.some(({ id }) => requestedRows.has(id))
+    ));
+  }
+  const selectedRatios = (matchup) => requestedRows === undefined
+    ? matchup.ratios
+    : matchup.ratios.filter(({ id }) => requestedRows.has(id));
+  const totalRuns = selectedMatchups.reduce((total, matchup) => (
+    total + selectedRatios(matchup).reduce((runs, row) => runs + row.runs.length, 0)
+  ), 0);
   let completed = 0;
   const rows = [];
 
   for (const matchup of selectedMatchups) {
-    for (const row of matchup.ratios) {
+    for (const row of selectedRatios(matchup)) {
       const samples = [];
       for (const run of row.runs) {
         try {

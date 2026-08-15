@@ -23,9 +23,17 @@ export async function runRecoverableDedicatedQueue({
   runSignature,
   concurrency,
   runMatchup,
+  validateReport = validateMatchupReport,
   onProgress = undefined,
 }) {
-  validateQueueInputs({ matchupIds, outputDirectory, runSignature, concurrency, runMatchup });
+  validateQueueInputs({
+    matchupIds,
+    outputDirectory,
+    runSignature,
+    concurrency,
+    runMatchup,
+    validateReport,
+  });
   const checkpointsDirectory = resolve(outputDirectory, "checkpoints");
   await mkdir(checkpointsDirectory, { recursive: true });
   const reports = new Map();
@@ -33,7 +41,7 @@ export async function runRecoverableDedicatedQueue({
   for (const matchupId of matchupIds) {
     const checkpoint = await readCheckpoint(checkpointsDirectory, matchupId);
     if (!checkpoint) continue;
-    validateCheckpoint(checkpoint, { matchupId, runSignature });
+    validateCheckpoint(checkpoint, { matchupId, runSignature, validateReport });
     reports.set(matchupId, checkpoint.report);
   }
 
@@ -80,7 +88,7 @@ export async function runRecoverableDedicatedQueue({
       active.add(matchupId);
       try {
         const report = await runMatchup(matchupId);
-        validateMatchupReport(report, matchupId);
+        validateReport(report, matchupId);
         await writeAtomicJson(
           resolve(checkpointsDirectory, `${matchupId}.json`),
           {
@@ -220,6 +228,98 @@ export function mergeDedicatedMatchupReports(reports, {
 }
 
 
+export function mergeDedicatedRowReports(reports, {
+  expectedMatchups = 17,
+  expectedRows = 85,
+  expectedRuns = 425,
+} = {}) {
+  if (!Array.isArray(reports) || reports.length !== expectedRows) {
+    throw new Error(`expected ${expectedRows} completed row reports`);
+  }
+  reports.forEach((report) => validateRowReport(report, report.rows?.[0]?.id));
+  const rows = reports.flatMap((report) => report.rows);
+  const totalRuns = rows.reduce((total, row) => total + row.samples.length, 0);
+  if (rows.length !== expectedRows || totalRuns !== expectedRuns) {
+    throw new Error(
+      `incomplete dedicated corpus: ${rows.length} rows, ${totalRuns} attempts`,
+    );
+  }
+  if (new Set(rows.map(({ id }) => id)).size !== rows.length) {
+    throw new Error("duplicate dedicated row checkpoint");
+  }
+
+  const summarySourceByMatchup = new Map(reports.map((report) => (
+    [report.matchupSummaries[0].matchupId, report.matchupSummaries[0]]
+  )));
+  const matchupIds = [...new Set(rows.map(({ matchupId }) => matchupId))].toSorted();
+  if (matchupIds.length !== expectedMatchups) {
+    throw new Error(`expected ${expectedMatchups} dedicated matchups`);
+  }
+  const matchupSummaries = matchupIds.map((matchupId) => {
+    const matchupRows = rows.filter((row) => row.matchupId === matchupId);
+    const source = summarySourceByMatchup.get(matchupId);
+    const finiteDeltas = matchupRows
+      .map(({ comparison }) => comparison.absoluteMeanDelta)
+      .filter(Number.isFinite);
+    return Object.freeze({
+      ...source,
+      rows: matchupRows.length,
+      tapeRuns: matchupRows.reduce((total, row) => total + row.samples.length, 0),
+      meanAbsoluteMeanDelta: mean(finiteDeltas),
+      maxAbsoluteMeanDelta: finiteDeltas.length ? Math.max(...finiteDeltas) : null,
+      rowsOver25PointDelta: matchupRows.filter(({ comparison }) => (
+        comparison.absoluteMeanDelta > 25
+      )).length,
+      rowsInsideTapeBand: matchupRows.filter(({ comparison }) => (
+        comparison.tapeBandError === 0
+      )).length,
+      wrongWinnerRuns: matchupRows.reduce((total, { comparison }) => (
+        total + comparison.wrongWinnerRuns
+      ), 0),
+      unresolvedRuns: matchupRows.reduce((total, { comparison }) => (
+        total + comparison.unresolvedRuns
+      ), 0),
+    });
+  });
+  const unresolvedRuns = rows.reduce((total, row) => total + row.comparison.unresolvedRuns, 0);
+  const finiteDeltas = rows
+    .map(({ comparison }) => comparison.absoluteMeanDelta)
+    .filter(Number.isFinite);
+  const summary = Object.freeze({
+    matchups: matchupIds.length,
+    rows: rows.length,
+    totalRuns,
+    resolvedRuns: totalRuns - unresolvedRuns,
+    unresolvedRuns,
+    fullyUnresolvedRows: rows.filter(({ comparison }) => comparison.simulation.runs === 0).length,
+    partiallyUnresolvedRows: rows.filter(({ comparison }) => (
+      comparison.simulation.runs > 0 && comparison.unresolvedRuns > 0
+    )).length,
+    rowsOver25PointDelta: rows.filter(({ comparison }) => (
+      comparison.absoluteMeanDelta > 25
+    )).length,
+    rowsInsideTapeBand: rows.filter(({ comparison }) => comparison.tapeBandError === 0).length,
+    wrongWinnerRuns: rows.reduce((total, row) => total + row.comparison.wrongWinnerRuns, 0),
+    meanAbsoluteMeanDelta: mean(finiteDeltas),
+    medianAbsoluteMeanDelta: median(finiteDeltas),
+    maximumAbsoluteMeanDelta: finiteDeltas.length ? Math.max(...finiteDeltas) : null,
+  });
+  return Object.freeze({
+    ...reports[0],
+    schedule: Object.freeze({
+      matchups: matchupIds.length,
+      rows: rows.length,
+      tapeRunsPerRow: 5,
+      totalRuns,
+      execution: "recoverable-per-row-checkpoints",
+    }),
+    summary,
+    matchupSummaries: Object.freeze(matchupSummaries),
+    rows: Object.freeze(rows.toSorted((left, right) => left.id.localeCompare(right.id))),
+  });
+}
+
+
 export function validateMatchupReport(report, matchupId) {
   const valid = report
     && report.lane === "dedicated_golden_exact_repeat_starts"
@@ -237,6 +337,24 @@ export function validateMatchupReport(report, matchupId) {
 }
 
 
+export function validateRowReport(report, rowId) {
+  const row = report?.rows?.[0];
+  const valid = report
+    && report.lane === "dedicated_golden_exact_repeat_starts"
+    && report.schedule?.matchups === 1
+    && report.schedule?.rows === 1
+    && report.schedule?.totalRuns === 5
+    && report.matchupSummaries?.length === 1
+    && report.rows?.length === 1
+    && row?.id === rowId
+    && row.matchupId === report.matchupSummaries[0].matchupId
+    && Array.isArray(row.samples)
+    && row.samples.length === 5;
+  if (!valid) throw new Error(`invalid row report for ${rowId}`);
+  return true;
+}
+
+
 async function readCheckpoint(checkpointsDirectory, matchupId) {
   try {
     return JSON.parse(await readFile(resolve(checkpointsDirectory, `${matchupId}.json`), "utf8"));
@@ -250,13 +368,13 @@ async function readCheckpoint(checkpointsDirectory, matchupId) {
 }
 
 
-function validateCheckpoint(checkpoint, { matchupId, runSignature }) {
+function validateCheckpoint(checkpoint, { matchupId, runSignature, validateReport = validateMatchupReport }) {
   const valid = checkpoint?.checkpointVersion === 1
     && checkpoint.runSignature === runSignature
     && checkpoint.matchupId === matchupId;
   if (!valid) throw new Error(`invalid checkpoint metadata for ${matchupId}`);
   try {
-    validateMatchupReport(checkpoint.report, matchupId);
+    validateReport(checkpoint.report, matchupId);
   } catch (error) {
     throw new Error(`invalid checkpoint for ${matchupId}: ${error.message}`);
   }
@@ -310,7 +428,14 @@ async function writeAtomicJson(path, value) {
 }
 
 
-function validateQueueInputs({ matchupIds, outputDirectory, runSignature, concurrency, runMatchup }) {
+function validateQueueInputs({
+  matchupIds,
+  outputDirectory,
+  runSignature,
+  concurrency,
+  runMatchup,
+  validateReport,
+}) {
   if (!Array.isArray(matchupIds) || !matchupIds.length || new Set(matchupIds).size !== matchupIds.length) {
     throw new TypeError("unique matchupIds are required");
   }
@@ -324,6 +449,7 @@ function validateQueueInputs({ matchupIds, outputDirectory, runSignature, concur
     throw new RangeError("concurrency must be a positive integer");
   }
   if (typeof runMatchup !== "function") throw new TypeError("runMatchup is required");
+  if (typeof validateReport !== "function") throw new TypeError("validateReport is required");
 }
 
 

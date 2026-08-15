@@ -463,16 +463,24 @@ test("preventive contact steering is an explicit attack-move scenario state", as
     kiteOwner: 2,
     kiteMeleeOpeningOrder: "attack-move-all",
     preventiveContactSteering: true,
+    preventiveContactSteeringStrength: 0.5,
   }));
 
   assert.equal(baseline.kiteState.preventiveContactSteering, undefined);
   assert.equal(enabled.kiteState.preventiveContactSteering, true);
+  assert.equal(enabled.kiteState.preventiveContactSteeringStrength, 0.5);
   assert.equal(enabled.kiteState.preventiveContactSteeredSteps, 0);
   assert.deepEqual([...enabled.kiteState.preventiveContactSteeredUnits], []);
   assert.throws(() => createWorld(scenario(units, {
     kiteOwner: 2,
     preventiveContactSteering: true,
   })), /preventive contact steering requires a kiting attack-move scenario/);
+  assert.throws(() => createWorld(scenario(units, {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+    preventiveContactSteering: true,
+    preventiveContactSteeringStrength: 1.01,
+  })), /preventive contact steering strength must be between 0 and 1/);
 });
 
 

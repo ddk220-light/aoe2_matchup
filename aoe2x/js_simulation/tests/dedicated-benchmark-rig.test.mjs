@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   computeWorkerCount,
   mergeDedicatedMatchupReports,
+  mergeDedicatedRowReports,
   runRecoverableDedicatedQueue,
   seedDedicatedCheckpoints,
 } from "../src/dedicated-benchmark-rig.js";
@@ -119,6 +120,43 @@ test("seeded completed report becomes valid per-matchup checkpoints and merges e
 });
 
 
+test("recoverable queue can checkpoint individual rows and merge them by matchup", async () => {
+  const outputDirectory = await mkdtemp(join(tmpdir(), "dedicated-rig-rows-"));
+  const reportsByRow = new Map([
+    ["alpha_0", fakeRowReport("alpha", 0)],
+    ["alpha_1", fakeRowReport("alpha", 1)],
+    ["bravo_0", fakeRowReport("bravo", 0)],
+    ["bravo_1", fakeRowReport("bravo", 1)],
+  ]);
+  const rowIds = [...reportsByRow.keys()];
+  const queue = await runRecoverableDedicatedQueue({
+    matchupIds: rowIds,
+    outputDirectory,
+    runSignature: "engine-rows",
+    concurrency: 2,
+    runMatchup: async (rowId) => reportsByRow.get(rowId),
+    validateReport: (report, rowId) => {
+      assert.equal(report.rows.length, 1);
+      assert.equal(report.rows[0].id, rowId);
+    },
+  });
+  const merged = mergeDedicatedRowReports(queue.reports, {
+    expectedMatchups: 2,
+    expectedRows: 4,
+    expectedRuns: 20,
+  });
+
+  assert.equal(queue.completedMatchups, 4);
+  assert.equal(merged.schedule.execution, "recoverable-per-row-checkpoints");
+  assert.equal(merged.summary.matchups, 2);
+  assert.equal(merged.summary.rows, 4);
+  assert.equal(merged.summary.totalRuns, 20);
+  assert.deepEqual(merged.matchupSummaries.map(({ matchupId, rows }) => (
+    [matchupId, rows]
+  )), [["alpha", 2], ["bravo", 2]]);
+});
+
+
 function fakeMergedReport(matchupIds) {
   const reports = matchupIds.map(fakeMatchupReport);
   return mergeDedicatedMatchupReports(reports, {
@@ -177,5 +215,35 @@ function fakeMatchupReport(matchupId) {
       unresolvedRuns: 0,
     }],
     rows,
+  };
+}
+
+
+function fakeRowReport(matchupId, rowIndex) {
+  const source = fakeMatchupReport(matchupId);
+  const row = source.rows[rowIndex];
+  return {
+    ...source,
+    schedule: { matchups: 1, rows: 1, tapeRunsPerRow: 5, totalRuns: 5 },
+    summary: {
+      matchups: 1,
+      rows: 1,
+      totalRuns: 5,
+      rowsOver25PointDelta: 0,
+      rowsInsideTapeBand: 1,
+      wrongWinnerRuns: 0,
+      unresolvedRuns: 0,
+      meanAbsoluteMeanDelta: row.comparison.absoluteMeanDelta,
+      medianAbsoluteMeanDelta: row.comparison.absoluteMeanDelta,
+      maximumAbsoluteMeanDelta: row.comparison.absoluteMeanDelta,
+    },
+    matchupSummaries: [{
+      ...source.matchupSummaries[0],
+      rows: 1,
+      tapeRuns: 5,
+      meanAbsoluteMeanDelta: row.comparison.absoluteMeanDelta,
+      maxAbsoluteMeanDelta: row.comparison.absoluteMeanDelta,
+    }],
+    rows: [row],
   };
 }

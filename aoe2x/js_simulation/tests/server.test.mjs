@@ -233,8 +233,33 @@ test("catalogue keeps every website unit visible and enables exactly the registr
     assert.equal(catalogue.civilizations.length, 53);
     assert.equal(catalogue.civilizations.reduce(
       (total, civilization) => total + civilization.units.length, 0), 972);
-    assert.equal(catalogue.enabled.length, 14);
-    assert.equal(new Set(catalogue.enabled.map(({ catalogueKey }) => catalogueKey)).size, 14);
+    assert.equal(catalogue.enabled.length, 34);
+    assert.equal(new Set(catalogue.enabled.map(({ catalogueKey }) => catalogueKey)).size, 34);
+    const enabledSlugs = new Set(catalogue.enabled.map(({ engineSlug }) => engineSlug));
+    for (const slug of [
+      "elite_longbowman",
+      "elite_throwing_axeman",
+      "elite_woad_raider",
+      "elite_shotel_warrior",
+      "elite_gbeto",
+      "elite_huskarl",
+      "elite_teutonic_knight",
+      "elite_boyar",
+      "elite_tarkan",
+      "elite_genoese_crossbowman",
+      "elite_plumed_archer",
+      "elite_mangudai",
+      "elite_rattan_archer",
+      "elite_janissary",
+      "elite_conquistador",
+      "elite_war_wagon",
+      "elite_magyar_huszar",
+      "elite_keshik",
+      "elite_karambit_warrior",
+      "warrior_priest",
+    ]) {
+      assert.equal(enabledSlugs.has(slug), true, `${slug} should be enabled`);
+    }
     assert.deepEqual(catalogue.enabled.find(({ engineSlug }) => engineSlug === "heavy_cav_archer"), {
       catalogueKey: "saracens:heavy-cavalry-archer:1411",
       engineSlug: "heavy_cav_archer",

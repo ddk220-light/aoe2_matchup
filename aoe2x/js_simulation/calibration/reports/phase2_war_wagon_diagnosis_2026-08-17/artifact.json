@@ -1,0 +1,659 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Elite War Wagon: tape versus simulation diagnosis",
+    "description": "All six standard-unit outcomes and a full-rate diagnosis of the Paladin reversal.",
+    "generatedAt": "2026-08-17T22:52:49.457Z",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "layout": "full",
+        "body": "# Elite War Wagon: tape versus simulation diagnosis"
+      },
+      {
+        "id": "technical-summary",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "war-wagon-results",
+        "body": "## Paladin is a singular engagement failure, not a generally overpowered War Wagon\n\nFour of the six standard-unit rows are winner-correct with absolute deltas between **1.60 and 12.51 points**. The Battle Elephant row never terminates. Paladin is the sole resolved reversal: tape has Paladin winning all four repeats with **30.00–39.80%** remaining HP, while all five simulations give War Wagon the win with **83.33%** remaining HP. The **118.77-point delta** is caused primarily by Paladins converging on one target and losing movement under crowd pressure; War Wagon base speed, normalized firing rate, Paladin first-hit timing, and Paladin damage after attack start are close to tape."
+      },
+      {
+        "id": "six-row-finding",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "war-wagon-results",
+        "body": "## Five resolved controls isolate Paladin as the outlier\n\nChampion is almost exact and falls inside the observed tape band. Arbalester, Heavy Cavalry Archer, and Heavy Scorpion retain the correct winner with single-digit to low-teens deltas. That pattern argues against changing War Wagon HP, raw damage, range, or general kiting policy before fixing the Paladin engagement bottleneck."
+      },
+      {
+        "id": "six-row-chart",
+        "type": "chart",
+        "layout": "full",
+        "chartId": "war-wagon-delta-chart"
+      },
+      {
+        "id": "six-row-table",
+        "type": "table",
+        "layout": "full",
+        "tableId": "war-wagon-matchups-table"
+      },
+      {
+        "id": "paladin-outcome",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "war-wagon-trace",
+        "body": "## The fight begins correctly and then diverges at sustained contact\n\nPaladins land their first damage at **3.45s** in simulation versus **3.58–3.60s** on tape, so the opening attack-move and initial arrival are not late. After that, tape Paladins deal all **3,000 War Wagon HP**, while simulation Paladins deal only **500 HP** and kill one Wagon. Tape records **219–223 Paladin attack starts**; simulation records only **35**. Yet hit completion after an attack begins is **97.1%** in simulation versus **93.7–95.9%** on tape. Damage arithmetic is functioning—the Paladins are not being allowed to start enough attacks."
+      },
+      {
+        "id": "contact-finding",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "war-wagon-trace",
+        "body": "## Target concentration creates the crowd jam\n\nTape Paladins pursue a median of **5–6 distinct War Wagons**, with the largest target group holding **38.5–45.5%** of current targets. Simulation collapses to **one distinct target and 100% concentration**. The direct paths therefore converge through the same allied cluster. Actual Paladin speed while position changes falls from **1.485 tiles/s** on tape to **0.955**, and stalled chase observations rise from **12.7–13.6%** to **34.9%**."
+      },
+      {
+        "id": "contact-chart",
+        "type": "chart",
+        "layout": "full",
+        "chartId": "contact-ratio-chart"
+      },
+      {
+        "id": "diagnostic-table",
+        "type": "table",
+        "layout": "full",
+        "tableId": "diagnostic-table"
+      },
+      {
+        "id": "contact-envelope",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "war-wagon-trace",
+        "body": "## Tape forms a surrounding contact front; simulation forms a queue\n\nIn tape, **6–11 Paladins** can simultaneously sit within 0.25 surface tiles of a Wagon and **7–10** can attack at once. Simulation reaches only **one** Paladin in that close shell and at most **two** simultaneous attackers. The robust P10 surface gap is **0.10–0.15 tiles** on tape versus **0.57** in simulation. Rare tape frames go deeper, but matching the extreme overlap is unnecessary; the important target is sustained multi-unit access around several Wagons."
+      },
+      {
+        "id": "war-wagon-controls",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "war-wagon-trace",
+        "body": "## War Wagon mechanics are not the primary lever\n\nObserved Wagon movement speed is **1.300–1.306 tiles/s** on tape and **1.320** in simulation. Normalized firing is **34.5–36.3 attack starts per 100 alive-Wagon seconds** on tape versus **37.2** in simulation—a modest overshoot, not enough to explain the winner reversal. Raw simulation attack totals are larger because almost every Wagon survives for the entire fight. The kiting clock should remain unchanged for the first experiment."
+      },
+      {
+        "id": "diagnosis",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## Recommended engine experiment: congestion-aware melee target assignment\n\nDo not add a War-Wagon-versus-Paladin exception and do not shrink either collision box. When several melee chasers select targets, add a general congestion cost based on allied pursuers already assigned to the target and occupied approach sectors around it. A chaser whose direct path crosses an already saturated allied group should select another reachable enemy or persist around the tangent to an unoccupied approach sector. Preserve the existing allied-overlap cap. This should spread the 17 Paladins across the available 15 Wagons, prevent the one-target queue, and allow the contact solver to capture attacks when a chaser enters a valid target-surface envelope."
+      },
+      {
+        "id": "methods",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "war-wagon-trace",
+        "body": "## Method and definitions\n\nThe four authorized `frames.bin` members were decoded at full render cadence and filtered to masters 829 and 569. HP changes, action-state transitions, targets, paths, collision-surface gaps, and simultaneous contact counts were measured from first active movement/targeting through the final death. The simulation used the exact canonical 15v17 starting roster, coordinates, golden map, sample 0, and seed 20260817. All five saved simulation samples have the same final score. Surface gap subtracts the fixture collision radii—0.45 tiles for Elite War Wagon and 0.25 for Paladin—from center distance."
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "war-wagon-trace",
+        "body": "## Limitations and robustness\n\nTape action-state 7 is a proxy for attack starts rather than a byte-identical engine event. HP drops can aggregate simultaneous projectile hits in one rendered frame, so ranged hit-event counts are less directly comparable than melee attack-start and damage-completion rates. The causal diagnosis is strongly supported by four consistent tape repeats and one deterministic trace whose final result matches all five saved samples, but the proposed target-assignment mechanism still requires a controlled engine experiment and regression checks."
+      },
+      {
+        "id": "next-step",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## Next step and decision gate\n\nImplement the congestion-aware target-selection experiment behind a general engine option, run only the 15v17 War Wagon–Paladin row first, and compare five samples with these trace targets: **5–6 distinct Paladin targets, 6–11 close-contact Paladins, 7–10 simultaneous attackers, 12.7–13.6% stalled chase, and 219–223 attack starts**. If those mechanics move toward tape and Paladin becomes the winner, then run the other five War Wagon controls to ensure Champion, Arbalester, HCA, and Scorpion do not regress and the Elephant timeout does not worsen."
+      },
+      {
+        "id": "further-question",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## What would falsify this diagnosis?\n\nIf spreading Paladin targets and preserving tangent detours restores contact metrics but Paladin damage remains near 500 HP, the next suspect would be the melee engagement envelope around a large moving target. If contact and attack-start counts reach tape while the result still favors War Wagon, only then should War Wagon projectile resolution or recovery timing be investigated."
+      }
+    ],
+    "charts": [
+      {
+        "id": "war-wagon-delta-chart",
+        "title": "Absolute outcome delta across resolved War Wagon rows",
+        "description": "Five simulation samples per exact golden row; Battle Elephant is excluded because all attempts time out.",
+        "type": "bar",
+        "intent": "comparison",
+        "question": "Is the War Wagon error general or opponent-specific?",
+        "rationale": "Five categorical bars make the Paladin outlier visible without obscuring exact values.",
+        "dataset": "resolved_matchup_deltas",
+        "encodings": {
+          "x": {
+            "field": "opponent"
+          },
+          "y": {
+            "field": "absoluteDelta"
+          }
+        },
+        "labels": {
+          "values": "all"
+        },
+        "sourceId": "war-wagon-results"
+      },
+      {
+        "id": "contact-ratio-chart",
+        "title": "Simulation Paladin engagement metrics relative to tape",
+        "description": "Tape median is 100%; stalled chase is higher-is-worse, while all other metrics are higher-is-better.",
+        "type": "bar",
+        "intent": "comparison",
+        "question": "Where does Paladin engagement fall away relative to tape?",
+        "rationale": "A normalized metric comparison separates target access, movement, attack opportunity, and stalling on one scale.",
+        "dataset": "contact_ratios",
+        "encodings": {
+          "x": {
+            "field": "metric"
+          },
+          "y": {
+            "field": "percentOfTapeMedian"
+          }
+        },
+        "labels": {
+          "values": "all"
+        },
+        "sourceId": "war-wagon-trace"
+      }
+    ],
+    "tables": [
+      {
+        "id": "war-wagon-matchups-table",
+        "title": "All six Elite War Wagon golden comparisons",
+        "description": "Exact tape ratios and the completed current-engine results.",
+        "dataset": "war_wagon_matchups",
+        "columns": [
+          {
+            "field": "matchup",
+            "label": "Matchup"
+          },
+          {
+            "field": "ratio",
+            "label": "Ratio"
+          },
+          {
+            "field": "tapeOutcome",
+            "label": "Tape outcome"
+          },
+          {
+            "field": "tapeMean",
+            "label": "Tape mean",
+            "format": "number"
+          },
+          {
+            "field": "tapeRange",
+            "label": "Tape range"
+          },
+          {
+            "field": "simulationOutcome",
+            "label": "Simulation outcome"
+          },
+          {
+            "field": "simulationMean",
+            "label": "Simulation mean",
+            "format": "number"
+          },
+          {
+            "field": "simulationRange",
+            "label": "Simulation range"
+          },
+          {
+            "field": "absoluteDelta",
+            "label": "Abs. delta",
+            "format": "number"
+          },
+          {
+            "field": "status",
+            "label": "Status"
+          }
+        ],
+        "defaultSort": {
+          "field": "absoluteDelta",
+          "direction": "desc"
+        },
+        "sourceId": "war-wagon-results"
+      },
+      {
+        "id": "diagnostic-table",
+        "title": "War Wagon–Paladin trace metrics",
+        "description": "Tape min–max across four repeats compared with the exact-start simulation trace.",
+        "dataset": "diagnostic_metrics",
+        "density": "dense",
+        "columns": [
+          {
+            "field": "metric",
+            "label": "Metric"
+          },
+          {
+            "field": "tapeBand",
+            "label": "Tape range"
+          },
+          {
+            "field": "simulation",
+            "label": "Simulation",
+            "format": "number"
+          },
+          {
+            "field": "unit",
+            "label": "Unit"
+          },
+          {
+            "field": "interpretation",
+            "label": "Interpretation"
+          }
+        ],
+        "defaultSort": {
+          "field": "metric",
+          "direction": "asc"
+        },
+        "sourceId": "war-wagon-trace"
+      }
+    ],
+    "sources": [
+      {
+        "id": "war-wagon-results",
+        "label": "Completed Phase 2 Batch 1 current-engine results",
+        "path": "aoe2x/js_simulation/calibration/reports/phase2_batch1_current_engine_2026-08-17/results.json",
+        "query": {
+          "language": "sql",
+          "engine": "portable-snapshot",
+          "sql": "SELECT matchup, ratio, tapeOutcome, tapeMean, tapeRange, simulationOutcome, simulationMean, simulationRange, absoluteDelta, status FROM war_wagon_matchups ORDER BY absoluteDelta DESC;",
+          "description": "Selects all six exact golden Elite War Wagon rows from the completed recoverable benchmark.",
+          "tables_used": [
+            "aoe2x/js_simulation/calibration/reports/phase2_batch1_current_engine_2026-08-17/results.json"
+          ],
+          "filters": [
+            "Phase-2 subject: Elite War Wagon",
+            "Exact golden starting roster, ratios, and positions",
+            "Five current-engine simulation attempts per stable row"
+          ],
+          "metric_definitions": {
+            "signed_outcome_score": "Winner remaining HP divided by that winner's starting HP, multiplied by 100; positive means owner 3 and negative means owner 2.",
+            "absolute_delta": "Absolute difference between the simulation mean signed outcome and tape mean signed outcome."
+          }
+        }
+      },
+      {
+        "id": "war-wagon-trace",
+        "label": "War Wagon versus Paladin tape and simulation trace analysis",
+        "path": "aoe2x/js_simulation/calibration/reports/phase2_war_wagon_diagnosis_2026-08-17/war_wagon_paladin_analysis.json",
+        "query": {
+          "language": "sql",
+          "engine": "portable-snapshot",
+          "sql": "SELECT metric, tapeBand, simulation, unit, interpretation FROM diagnostic_metrics; SELECT metric, percentOfTapeMedian, tapeMedian, simulation, direction FROM contact_ratios ORDER BY percentOfTapeMedian ASC;",
+          "description": "Compares four decoded full-rate frames.bin repeats with one exact-start current-engine trace; all five saved engine samples have the same final score.",
+          "tables_used": [
+            "aoe2x/js_simulation/calibration/reports/phase2_war_wagon_diagnosis_2026-08-17/war_wagon_paladin_analysis.json"
+          ],
+          "filters": [
+            "15 Elite War Wagons versus 17 Paladins",
+            "Four authorized tape repeats",
+            "Simulation sample 0, seed 20260817",
+            "Combat window from first active movement/targeting through final death"
+          ],
+          "metric_definitions": {
+            "attack_start": "Tape: transition into decoded action_state 7. Simulation: transition into the attacking action.",
+            "effective_speed_while_moving": "Observed path length divided by seconds in which the unit position changed; this captures collision and steering effects rather than nominal stat speed.",
+            "surface_gap": "Center-to-center distance minus the War Wagon and Paladin collision radii (0.45 and 0.25 tiles).",
+            "stalled_chase_share": "Chase-state observations where the unit's position did not change, divided by all chase-state observations.",
+            "pursuit_target_concentration": "Live Paladins grouped by their current target; the largest group divided by Paladins holding a target."
+          }
+        }
+      },
+      {
+        "id": "phase2-archive",
+        "label": "Authorized Phase 2 golden archive",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "status": "ready",
+    "generatedAt": "2026-08-17T22:52:49.457Z",
+    "datasets": {
+      "war_wagon_matchups": [
+        {
+          "opponent": "Arbalester",
+          "matchup": "Elite War Wagon vs Arbalester",
+          "ratio": "10v21",
+          "tapeOutcome": "Elite War Wagon",
+          "tapeMean": -73.5,
+          "tapeRange": "-73.5 to -73.5",
+          "simulationOutcome": "Elite War Wagon",
+          "simulationMean": -65.32,
+          "simulationRange": "-66.4 to -63.9",
+          "absoluteDelta": 8.18,
+          "status": "Winner matched"
+        },
+        {
+          "opponent": "Champion",
+          "matchup": "Elite War Wagon vs Champion",
+          "ratio": "8v21",
+          "tapeOutcome": "Champion",
+          "tapeMean": 20.1,
+          "tapeRange": "9.12 to 25.44",
+          "simulationOutcome": "Champion",
+          "simulationMean": 18.5,
+          "simulationRange": "18.5 to 18.5",
+          "absoluteDelta": 1.6,
+          "status": "Winner matched"
+        },
+        {
+          "opponent": "Elite Elephant",
+          "matchup": "Elite War Wagon vs Elite Battle Elephant",
+          "ratio": "15v13",
+          "tapeOutcome": "Elite Battle Elephant",
+          "tapeMean": 51.73,
+          "tapeRange": "51.73 to 51.73",
+          "simulationOutcome": "Unresolved",
+          "simulationMean": null,
+          "simulationRange": "Unresolved",
+          "absoluteDelta": null,
+          "status": "Unresolved"
+        },
+        {
+          "opponent": "Heavy Cav Archer",
+          "matchup": "Elite War Wagon vs Heavy Cavalry Archer",
+          "ratio": "14v21",
+          "tapeOutcome": "Elite War Wagon",
+          "tapeMean": -66.68,
+          "tapeRange": "-66.68 to -66.68",
+          "simulationOutcome": "Elite War Wagon",
+          "simulationMean": -54.16,
+          "simulationRange": "-56.46 to -52.29",
+          "absoluteDelta": 12.51,
+          "status": "Winner matched"
+        },
+        {
+          "opponent": "Heavy Scorpion",
+          "matchup": "Elite War Wagon vs Heavy Scorpion",
+          "ratio": "15v16",
+          "tapeOutcome": "Elite War Wagon",
+          "tapeMean": -17.55,
+          "tapeRange": "-19.03 to -15.72",
+          "simulationOutcome": "Elite War Wagon",
+          "simulationMean": -27.39,
+          "simulationRange": "-31.22 to -24.42",
+          "absoluteDelta": 9.85,
+          "status": "Winner matched"
+        },
+        {
+          "opponent": "Paladin",
+          "matchup": "Elite War Wagon vs Paladin",
+          "ratio": "15v17",
+          "tapeOutcome": "Paladin",
+          "tapeMean": 35.44,
+          "tapeRange": "30 to 39.8",
+          "simulationOutcome": "Elite War Wagon",
+          "simulationMean": -83.33,
+          "simulationRange": "-83.33 to -83.33",
+          "absoluteDelta": 118.77,
+          "status": "Wrong winner"
+        }
+      ],
+      "resolved_matchup_deltas": [
+        {
+          "opponent": "Arbalester",
+          "absoluteDelta": 8.18,
+          "status": "Winner matched"
+        },
+        {
+          "opponent": "Champion",
+          "absoluteDelta": 1.6,
+          "status": "Winner matched"
+        },
+        {
+          "opponent": "Heavy Cav Archer",
+          "absoluteDelta": 12.51,
+          "status": "Winner matched"
+        },
+        {
+          "opponent": "Heavy Scorpion",
+          "absoluteDelta": 9.85,
+          "status": "Winner matched"
+        },
+        {
+          "opponent": "Paladin",
+          "absoluteDelta": 118.77,
+          "status": "Wrong winner"
+        }
+      ],
+      "diagnostic_metrics": [
+        {
+          "metric": "Paladin first damage",
+          "tapeBand": "3.58–3.6",
+          "tapeMedian": 3.59,
+          "simulation": 3.45,
+          "unit": "seconds",
+          "interpretation": "Initial arrival is not late"
+        },
+        {
+          "metric": "Paladin effective speed while moving",
+          "tapeBand": "1.49–1.49",
+          "tapeMedian": 1.49,
+          "simulation": 0.95,
+          "unit": "tiles/s",
+          "interpretation": "Collision and steering cut actual motion"
+        },
+        {
+          "metric": "Paladin progress across alive time",
+          "tapeBand": "0.94–0.96",
+          "tapeMedian": 0.95,
+          "simulation": 0.59,
+          "unit": "tiles/s",
+          "interpretation": "Net chase progress is much lower"
+        },
+        {
+          "metric": "Paladin stalled chase share",
+          "tapeBand": "12.73–13.58",
+          "tapeMedian": 13.15,
+          "simulation": 34.91,
+          "unit": "%",
+          "interpretation": "Higher is worse"
+        },
+        {
+          "metric": "Median distinct Wagon targets",
+          "tapeBand": "5–6",
+          "tapeMedian": 5,
+          "simulation": 1,
+          "unit": "targets",
+          "interpretation": "Simulation collapses the chase onto one target"
+        },
+        {
+          "metric": "Largest pursuit-target share",
+          "tapeBand": "38.5–45.5",
+          "tapeMedian": 40.7,
+          "simulation": 100,
+          "unit": "%",
+          "interpretation": "Simulation sends every Paladin to the same Wagon"
+        },
+        {
+          "metric": "P10 target surface gap",
+          "tapeBand": "0.1–0.15",
+          "tapeMedian": 0.15,
+          "simulation": 0.57,
+          "unit": "tiles",
+          "interpretation": "Lower means sustained close contact"
+        },
+        {
+          "metric": "Paladin observations within 0.25 surface tiles",
+          "tapeBand": "15.24–18.03",
+          "tapeMedian": 15.73,
+          "simulation": 0.19,
+          "unit": "%",
+          "interpretation": "Close contact almost disappears in simulation"
+        },
+        {
+          "metric": "Maximum Paladins within 0.25 surface tiles",
+          "tapeBand": "6–11",
+          "tapeMedian": 8,
+          "simulation": 1,
+          "unit": "units",
+          "interpretation": "Tape forms a surrounding contact front"
+        },
+        {
+          "metric": "Maximum simultaneous Paladin attackers",
+          "tapeBand": "7–10",
+          "tapeMedian": 8,
+          "simulation": 2,
+          "unit": "units",
+          "interpretation": "Only two can attack together in simulation"
+        },
+        {
+          "metric": "Paladin attack starts per 100 alive-unit seconds",
+          "tapeBand": "15.86–16.62",
+          "tapeMedian": 16.04,
+          "simulation": 3.65,
+          "unit": "starts",
+          "interpretation": "The engagement opportunity collapses"
+        },
+        {
+          "metric": "Paladin hit completion per attack start",
+          "tapeBand": "93.72–95.89",
+          "tapeMedian": 94.58,
+          "simulation": 97.14,
+          "unit": "%",
+          "interpretation": "Once an attack starts, damage works"
+        },
+        {
+          "metric": "Paladin damage dealt",
+          "tapeBand": "3000–3000",
+          "tapeMedian": 3000,
+          "simulation": 500,
+          "unit": "HP",
+          "interpretation": "Tape kills all Wagons; simulation kills one"
+        },
+        {
+          "metric": "War Wagon effective move speed",
+          "tapeBand": "1.3–1.31",
+          "tapeMedian": 1.3,
+          "simulation": 1.32,
+          "unit": "tiles/s",
+          "interpretation": "Base Wagon speed is close"
+        },
+        {
+          "metric": "War Wagon attack starts per 100 alive-unit seconds",
+          "tapeBand": "34.51–36.26",
+          "tapeMedian": 35.5,
+          "simulation": 37.2,
+          "unit": "starts",
+          "interpretation": "Normalized firing rate is only modestly high"
+        }
+      ],
+      "contact_ratios": [
+        {
+          "metric": "Distinct pursuit targets",
+          "percentOfTapeMedian": 20,
+          "tapeMedian": 5,
+          "simulation": 1,
+          "direction": "Higher is better"
+        },
+        {
+          "metric": "Effective moving speed",
+          "percentOfTapeMedian": 64.3,
+          "tapeMedian": 1.485,
+          "simulation": 0.955,
+          "direction": "Higher is better"
+        },
+        {
+          "metric": "Net chase progress",
+          "percentOfTapeMedian": 62.3,
+          "tapeMedian": 0.949,
+          "simulation": 0.591,
+          "direction": "Higher is better"
+        },
+        {
+          "metric": "Attack-start rate",
+          "percentOfTapeMedian": 22.8,
+          "tapeMedian": 16.044,
+          "simulation": 3.653,
+          "direction": "Higher is better"
+        },
+        {
+          "metric": "Close-contact share",
+          "percentOfTapeMedian": 1.2,
+          "tapeMedian": 0.1573,
+          "simulation": 0.0019,
+          "direction": "Higher is better"
+        },
+        {
+          "metric": "Simultaneous attackers",
+          "percentOfTapeMedian": 25,
+          "tapeMedian": 8,
+          "simulation": 2,
+          "direction": "Higher is better"
+        },
+        {
+          "metric": "Stalled chase share",
+          "percentOfTapeMedian": 265.5,
+          "tapeMedian": 0.1315,
+          "simulation": 0.3491,
+          "direction": "Higher is worse"
+        }
+      ]
+    },
+    "accessIssues": []
+  },
+  "sources": [
+    {
+      "id": "war-wagon-results",
+      "label": "Completed Phase 2 Batch 1 current-engine results",
+      "path": "aoe2x/js_simulation/calibration/reports/phase2_batch1_current_engine_2026-08-17/results.json",
+      "query": {
+        "language": "sql",
+        "engine": "portable-snapshot",
+        "sql": "SELECT matchup, ratio, tapeOutcome, tapeMean, tapeRange, simulationOutcome, simulationMean, simulationRange, absoluteDelta, status FROM war_wagon_matchups ORDER BY absoluteDelta DESC;",
+        "description": "Selects all six exact golden Elite War Wagon rows from the completed recoverable benchmark.",
+        "tables_used": [
+          "aoe2x/js_simulation/calibration/reports/phase2_batch1_current_engine_2026-08-17/results.json"
+        ],
+        "filters": [
+          "Phase-2 subject: Elite War Wagon",
+          "Exact golden starting roster, ratios, and positions",
+          "Five current-engine simulation attempts per stable row"
+        ],
+        "metric_definitions": {
+          "signed_outcome_score": "Winner remaining HP divided by that winner's starting HP, multiplied by 100; positive means owner 3 and negative means owner 2.",
+          "absolute_delta": "Absolute difference between the simulation mean signed outcome and tape mean signed outcome."
+        }
+      }
+    },
+    {
+      "id": "war-wagon-trace",
+      "label": "War Wagon versus Paladin tape and simulation trace analysis",
+      "path": "aoe2x/js_simulation/calibration/reports/phase2_war_wagon_diagnosis_2026-08-17/war_wagon_paladin_analysis.json",
+      "query": {
+        "language": "sql",
+        "engine": "portable-snapshot",
+        "sql": "SELECT metric, tapeBand, simulation, unit, interpretation FROM diagnostic_metrics; SELECT metric, percentOfTapeMedian, tapeMedian, simulation, direction FROM contact_ratios ORDER BY percentOfTapeMedian ASC;",
+        "description": "Compares four decoded full-rate frames.bin repeats with one exact-start current-engine trace; all five saved engine samples have the same final score.",
+        "tables_used": [
+          "aoe2x/js_simulation/calibration/reports/phase2_war_wagon_diagnosis_2026-08-17/war_wagon_paladin_analysis.json"
+        ],
+        "filters": [
+          "15 Elite War Wagons versus 17 Paladins",
+          "Four authorized tape repeats",
+          "Simulation sample 0, seed 20260817",
+          "Combat window from first active movement/targeting through final death"
+        ],
+        "metric_definitions": {
+          "attack_start": "Tape: transition into decoded action_state 7. Simulation: transition into the attacking action.",
+          "effective_speed_while_moving": "Observed path length divided by seconds in which the unit position changed; this captures collision and steering effects rather than nominal stat speed.",
+          "surface_gap": "Center-to-center distance minus the War Wagon and Paladin collision radii (0.45 and 0.25 tiles).",
+          "stalled_chase_share": "Chase-state observations where the unit's position did not change, divided by all chase-state observations.",
+          "pursuit_target_concentration": "Live Paladins grouped by their current target; the largest group divided by Paladins holding a target."
+        }
+      }
+    },
+    {
+      "id": "phase2-archive",
+      "label": "Authorized Phase 2 golden archive",
+      "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+      "sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+    }
+  ]
+}

@@ -40,6 +40,41 @@ function classValue(classes, classId, name) {
 }
 
 
+function attackerHasCategory(mechanics, category) {
+  const declared = mechanics?.combat_categories;
+  if (declared !== undefined) {
+    if (!Array.isArray(declared) || declared.some((value) => typeof value !== "string")) {
+      throw new TypeError("combat categories must be an array of strings");
+    }
+    if (declared.includes(category)) return true;
+  }
+  // Build 177723 marks mounted attackers with a negative class-39 attack
+  // entry. It covers cavalry, cavalry archers, Conquistador-class units and
+  // Ballista Elephants without relying on a simulator-side unit-name list.
+  if (category === "mounted") {
+    const marker = classValue(mechanics?.attack_classes, "39", "attack");
+    return marker !== undefined && marker < 0;
+  }
+  return false;
+}
+
+
+function conditionalDamageReduction(actor, target) {
+  const reductions = target?.mechanics?.damage_reduction_by_attacker_category;
+  if (reductions == null) return 0;
+  if (typeof reductions !== "object" || Array.isArray(reductions)) {
+    throw new TypeError("damage reduction by attacker category must be an object");
+  }
+  let total = 0;
+  for (const [category, rawValue] of Object.entries(reductions)) {
+    const value = requireFinite(rawValue, `${category} damage reduction`);
+    if (value < 0) throw new RangeError(`${category} damage reduction must be nonnegative`);
+    if (attackerHasCategory(actor?.mechanics, category)) total += value;
+  }
+  return total;
+}
+
+
 function createEvent(type, details) {
   const tick = requireTick(details?.tick, "event tick");
   const actorId = requireReference(details?.actorId, "actor reference ID");
@@ -153,7 +188,7 @@ export function calculateDamage(actor, target) {
     if (armor === undefined) continue;
     damage += Math.max(0, requireFinite(attack, `attack class ${classId}`) - armor);
   }
-  return Math.max(1, damage);
+  return Math.max(1, damage - conditionalDamageReduction(actor, target));
 }
 
 

@@ -67,6 +67,16 @@ const contactRatios = [
 ];
 
 
+const wagonWagonOverlapRows = [
+  ...tape.map((run, index) => overlapRow(`Tape ${index + 1}`, run.overlap.wagonWagon, "wagonWagon")),
+  overlapRow("Simulation", sim.overlap.wagonWagon, "wagonWagon"),
+];
+const wagonPaladinOverlapRows = [
+  ...tape.map((run, index) => overlapRow(`Tape ${index + 1}`, run.overlap.wagonPaladin, "wagonPaladin")),
+  overlapRow("Simulation", sim.overlap.wagonPaladin, "wagonPaladin"),
+];
+
+
 const sources = [
   {
     id: "war-wagon-results",
@@ -98,7 +108,7 @@ const sources = [
     query: {
       language: "sql",
       engine: "portable-snapshot",
-      sql: "SELECT metric, tapeBand, simulation, unit, interpretation FROM diagnostic_metrics; SELECT metric, percentOfTapeMedian, tapeMedian, simulation, direction FROM contact_ratios ORDER BY percentOfTapeMedian ASC;",
+      sql: "SELECT metric, tapeBand, simulation, unit, interpretation FROM diagnostic_metrics; SELECT metric, percentOfTapeMedian, tapeMedian, simulation, direction FROM contact_ratios ORDER BY percentOfTapeMedian ASC; SELECT * FROM wagon_wagon_overlap; SELECT * FROM wagon_paladin_overlap;",
       description: "Compares four decoded full-rate frames.bin repeats with one exact-start current-engine trace; all five saved engine samples have the same final score.",
       tables_used: [
         "aoe2x/js_simulation/calibration/reports/phase2_war_wagon_diagnosis_2026-08-17/war_wagon_paladin_analysis.json",
@@ -113,6 +123,9 @@ const sources = [
         attack_start: "Tape: transition into decoded action_state 7. Simulation: transition into the attacking action.",
         effective_speed_while_moving: "Observed path length divided by seconds in which the unit position changed; this captures collision and steering effects rather than nominal stat speed.",
         surface_gap: "Center-to-center distance minus the War Wagon and Paladin collision radii (0.45 and 0.25 tiles).",
+        overlap_depth: "Negative surface gap expressed as a positive depth. Wagon-Wagon contact begins below 0.90 center tiles; Wagon-Paladin contact begins below 0.70 center tiles.",
+        overlap_pair_share: "Overlapping pair observations divided by every live pair observation within the combat window.",
+        unit_overlap_share: "Live unit observations in which that unit overlaps at least one unit from the named comparison population.",
         stalled_chase_share: "Chase-state observations where the unit's position did not change, divided by all chase-state observations.",
         pursuit_target_concentration: "Live Paladins grouped by their current target; the largest group divided by Paladins holding a target.",
       },
@@ -142,7 +155,7 @@ const artifact = {
         type: "markdown",
         layout: "full",
         sourceId: "war-wagon-results",
-        body: "## Paladin is a singular engagement failure, not a generally overpowered War Wagon\n\nFour of the six standard-unit rows are winner-correct with absolute deltas between **1.60 and 12.51 points**. The Battle Elephant row never terminates. Paladin is the sole resolved reversal: tape has Paladin winning all four repeats with **30.00–39.80%** remaining HP, while all five simulations give War Wagon the win with **83.33%** remaining HP. The **118.77-point delta** is caused primarily by Paladins converging on one target and losing movement under crowd pressure; War Wagon base speed, normalized firing rate, Paladin first-hit timing, and Paladin damage after attack start are close to tape.",
+        body: "## Paladin is a singular engagement failure, not a generally overpowered War Wagon\n\nFour of the six standard-unit rows are winner-correct with absolute deltas between **1.60 and 12.51 points**. The Battle Elephant row never terminates. Paladin is the sole resolved reversal: tape has Paladin winning all four repeats with **30.00–39.80%** remaining HP, while all five simulations give War Wagon the win with **83.33%** remaining HP. The **118.77-point delta** is caused primarily by Paladins converging on one target, losing movement under crowd pressure, and never penetrating the Wagon collision envelope. Tape records some Wagon–Paladin overlap in **26.0–43.7% of frames**; simulation records none. War Wagon base speed, normalized firing rate, Paladin first-hit timing, and Paladin damage after attack start are close to tape.",
       },
       {
         id: "six-row-finding",
@@ -177,6 +190,22 @@ const artifact = {
         body: "## Tape forms a surrounding contact front; simulation forms a queue\n\nIn tape, **6–11 Paladins** can simultaneously sit within 0.25 surface tiles of a Wagon and **7–10** can attack at once. Simulation reaches only **one** Paladin in that close shell and at most **two** simultaneous attackers. The robust P10 surface gap is **0.10–0.15 tiles** on tape versus **0.57** in simulation. Rare tape frames go deeper, but matching the extreme overlap is unnecessary; the important target is sustained multi-unit access around several Wagons.",
       },
       {
+        id: "wagon-wagon-overlap-finding",
+        type: "markdown",
+        layout: "full",
+        sourceId: "war-wagon-trace",
+        body: "## War Wagons overlap heavily in tape—and even more persistently in simulation\n\nUsing the 0.45-tile Wagon radius, tape has at least one Wagon–Wagon overlap in **80.9–93.4% of combat frames**, and **66.9–80.4%** of live-Wagon observations overlap at least one Wagon ally. Conditional median overlap depth is **0.299–0.325 tiles**. Simulation is denser: **99.2%** of frames have overlap, **97.9%** of live-Wagon observations overlap an ally, and the median depth is **0.420 tiles**. Extreme tape frames reach nearly coincident centers, but the sustained medians—not those extremes—show that same-team Wagon stacking is genuine.",
+      },
+      { id: "wagon-wagon-overlap-table", type: "table", layout: "full", tableId: "wagon-wagon-overlap-table" },
+      {
+        id: "wagon-paladin-overlap-finding",
+        type: "markdown",
+        layout: "full",
+        sourceId: "war-wagon-trace",
+        body: "## Tape permits limited enemy penetration; simulation permits none\n\nA Wagon and Paladin overlap when their center distance falls below **0.70 tiles**. Every tape repeat contains this contact: overlap appears in **26.0–43.7% of frames**, with a conditional median depth of **0.066–0.113 tiles** and P90 depth of **0.179–0.357**. At peak, **6–8 Wagon–Paladin pairs** overlap simultaneously; one Wagon overlaps up to **2–3 Paladins**, while one Paladin can overlap **4–6 Wagons** inside the already compressed Wagon blob. Simulation records **zero** cross-team overlaps; its closest pair still has a **+0.055-tile surface gap**. This hard separation is a second confirmed reason Paladins cannot build a multi-unit attack front.",
+      },
+      { id: "wagon-paladin-overlap-table", type: "table", layout: "full", tableId: "wagon-paladin-overlap-table" },
+      {
         id: "war-wagon-controls",
         type: "markdown",
         layout: "full",
@@ -187,27 +216,27 @@ const artifact = {
         id: "diagnosis",
         type: "markdown",
         layout: "full",
-        body: "## Recommended engine experiment: congestion-aware melee target assignment\n\nDo not add a War-Wagon-versus-Paladin exception and do not shrink either collision box. When several melee chasers select targets, add a general congestion cost based on allied pursuers already assigned to the target and occupied approach sectors around it. A chaser whose direct path crosses an already saturated allied group should select another reachable enemy or persist around the tangent to an unoccupied approach sector. Preserve the existing allied-overlap cap. This should spread the 17 Paladins across the available 15 Wagons, prevent the one-target queue, and allow the contact solver to capture attacks when a chaser enters a valid target-surface envelope.",
+        body: "## Recommended engine experiment: distribute melee targets and permit bounded contact capture\n\nDo not add a War-Wagon-versus-Paladin exception and do not shrink either collision box. First, add a general congestion cost based on allied pursuers already assigned to a target and occupied approach sectors around it. A chaser whose direct path crosses a saturated allied group should select another reachable enemy or persist around the tangent to an unoccupied sector. Second, allow bounded swept contact capture when a melee chaser reaches a valid moving-target envelope; tape supports modest cross-team penetration but not unrestricted pass-through. Preserve the allied-overlap cap. Together these changes should prevent the one-target queue and let several Paladins form the contact front visible in tape.",
       },
       {
         id: "methods",
         type: "markdown",
         layout: "full",
         sourceId: "war-wagon-trace",
-        body: "## Method and definitions\n\nThe four authorized `frames.bin` members were decoded at full render cadence and filtered to masters 829 and 569. HP changes, action-state transitions, targets, paths, collision-surface gaps, and simultaneous contact counts were measured from first active movement/targeting through the final death. The simulation used the exact canonical 15v17 starting roster, coordinates, golden map, sample 0, and seed 20260817. All five saved simulation samples have the same final score. Surface gap subtracts the fixture collision radii—0.45 tiles for Elite War Wagon and 0.25 for Paladin—from center distance.",
+        body: "## Method and definitions\n\nThe four authorized `frames.bin` members were decoded at full render cadence and filtered to live masters 829 and 569. HP changes, action-state transitions, targets, paths, collision-surface gaps, and simultaneous contact counts were measured from first active movement/targeting through the final death. The simulation used the exact canonical 15v17 starting roster, coordinates, golden map, sample 0, and seed 20260817. All five saved simulation samples have the same final score. Surface gap is Euclidean center distance minus the fixture radii: 0.90 tiles combined for Wagon–Wagon and 0.70 for Wagon–Paladin. A negative gap is overlap; overlap depth is its absolute value. Pair share uses every live pair observation, while unit share asks whether each live unit overlaps at least one comparison unit in that frame.",
       },
       {
         id: "limitations",
         type: "markdown",
         layout: "full",
         sourceId: "war-wagon-trace",
-        body: "## Limitations and robustness\n\nTape action-state 7 is a proxy for attack starts rather than a byte-identical engine event. HP drops can aggregate simultaneous projectile hits in one rendered frame, so ranged hit-event counts are less directly comparable than melee attack-start and damage-completion rates. The causal diagnosis is strongly supported by four consistent tape repeats and one deterministic trace whose final result matches all five saved samples, but the proposed target-assignment mechanism still requires a controlled engine experiment and regression checks.",
+        body: "## Limitations and robustness\n\nTape action-state 7 is a proxy for attack starts rather than a byte-identical engine event. HP drops can aggregate simultaneous projectile hits in one rendered frame, so ranged hit-event counts are less directly comparable than melee attack-start and damage-completion rates. Overlap is measured from sampled centers and circularized collision extents; it establishes positional penetration but not the game's private collision decision. Exact near-coincident centers are therefore treated as outliers, while the frame, unit, median, and P90 measures carry the conclusion. The diagnosis is supported by four consistent tape repeats and one deterministic trace whose final result matches all five saved samples, but the proposed mechanics still require a controlled experiment and regressions.",
       },
       {
         id: "next-step",
         type: "markdown",
         layout: "full",
-        body: "## Next step and decision gate\n\nImplement the congestion-aware target-selection experiment behind a general engine option, run only the 15v17 War Wagon–Paladin row first, and compare five samples with these trace targets: **5–6 distinct Paladin targets, 6–11 close-contact Paladins, 7–10 simultaneous attackers, 12.7–13.6% stalled chase, and 219–223 attack starts**. If those mechanics move toward tape and Paladin becomes the winner, then run the other five War Wagon controls to ensure Champion, Arbalester, HCA, and Scorpion do not regress and the Elephant timeout does not worsen.",
+        body: "## Next step and decision gate\n\nImplement the general target-distribution plus bounded-contact experiment, run only the 15v17 War Wagon–Paladin row first, and compare five samples with these trace targets: **5–6 distinct Paladin targets, 26.0–43.7% of frames with some Wagon–Paladin overlap, 6–8 simultaneous overlap pairs, 7–10 simultaneous attackers, 12.7–13.6% stalled chase, and 219–223 attack starts**. If those mechanics move toward tape and Paladin becomes the winner, then run the other five War Wagon controls to ensure Champion, Arbalester, HCA, and Scorpion do not regress and the Elephant timeout does not worsen.",
       },
       {
         id: "further-question",
@@ -274,6 +303,37 @@ const artifact = {
         defaultSort: { field: "metric", direction: "asc" },
         sourceId: "war-wagon-trace",
       },
+      {
+        id: "wagon-wagon-overlap-table",
+        title: "War Wagon–War Wagon overlap by repeat",
+        description: "Pair, frame, and live-Wagon shares use the complete combat window; depths are conditional on overlap.",
+        dataset: "wagon_wagon_overlap",
+        density: "dense",
+        columns: [
+          column("source", "Source"), column("pairSharePercent", "Pair obs. %", "number"),
+          column("frameSharePercent", "Frames %", "number"), column("leftUnitSharePercent", "Wagon obs. %", "number"),
+          column("medianDepth", "Median depth", "number"), column("p90Depth", "P90 depth", "number"),
+          column("maxDepth", "Max depth", "number"), column("maxPairs", "Max pairs", "number"),
+          column("maxLeftContacts", "Max neighbors", "number"),
+        ],
+        sourceId: "war-wagon-trace",
+      },
+      {
+        id: "wagon-paladin-overlap-table",
+        title: "War Wagon–Paladin overlap by repeat",
+        description: "Enemy overlap begins below 0.70 center tiles; depths are tiles inside that combined envelope.",
+        dataset: "wagon_paladin_overlap",
+        density: "dense",
+        columns: [
+          column("source", "Source"), column("pairSharePercent", "Pair obs. %", "number"),
+          column("frameSharePercent", "Frames %", "number"), column("leftUnitSharePercent", "Wagon obs. %", "number"),
+          column("rightUnitSharePercent", "Paladin obs. %", "number"), column("medianDepth", "Median depth", "number"),
+          column("p90Depth", "P90 depth", "number"), column("maxDepth", "Max depth", "number"),
+          column("maxPairs", "Max pairs", "number"), column("maxLeftContacts", "Max Paladins/Wagon", "number"),
+          column("maxRightContacts", "Max Wagons/Paladin", "number"),
+        ],
+        sourceId: "war-wagon-trace",
+      },
     ],
     sources,
   },
@@ -288,6 +348,8 @@ const artifact = {
         .map(({ opponent, absoluteDelta, status }) => ({ opponent, absoluteDelta, status })),
       diagnostic_metrics: diagnosticMetrics,
       contact_ratios: contactRatios,
+      wagon_wagon_overlap: wagonWagonOverlapRows,
+      wagon_paladin_overlap: wagonPaladinOverlapRows,
     },
     accessIssues: [],
   },
@@ -372,6 +434,24 @@ function ratioRow(metricName, simulation, medianTape, higherIsWorse) {
     tapeMedian: round(medianTape, 4),
     simulation: round(simulation, 4),
     direction: higherIsWorse ? "Higher is worse" : "Higher is better",
+  };
+}
+
+
+function overlapRow(source, value, kind) {
+  return {
+    source,
+    pairSharePercent: round(100 * value.overlappingPairObservationShare),
+    frameSharePercent: round(100 * value.framesWithAnyOverlapShare),
+    leftUnitSharePercent: round(100 * value.leftUnitObservationOverlapShare),
+    rightUnitSharePercent: round(100 * value.rightUnitObservationOverlapShare),
+    medianDepth: round(value.overlapDepthTilesWhenOverlapping.median, 3),
+    p90Depth: round(value.overlapDepthTilesWhenOverlapping.p90, 3),
+    maxDepth: round(value.overlapDepthTilesWhenOverlapping.max, 3),
+    maxPairs: value.maximumSimultaneousOverlapPairs,
+    maxLeftContacts: value.maximumContactsOnOneLeftUnit,
+    maxRightContacts: value.maximumContactsOnOneRightUnit,
+    kind,
   };
 }
 

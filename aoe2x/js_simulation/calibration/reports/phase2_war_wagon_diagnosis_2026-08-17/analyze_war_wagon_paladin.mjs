@@ -207,6 +207,38 @@ function finishFrame(state, time, rows) {
   const live = rows.filter(({ alive }) => alive);
   const wagons = live.filter(({ owner }) => owner === OWNER_WAGON);
   const paladins = live.filter(({ owner }) => owner === OWNER_PALADIN);
+  const wagonWagonSurfaceGaps = pairwiseSurfaceGaps(wagons, wagons, {
+    samePopulation: true,
+    leftRadius: COLLISION_RADIUS[OWNER_WAGON],
+    rightRadius: COLLISION_RADIUS[OWNER_WAGON],
+  });
+  const wagonPaladinSurfaceGaps = pairwiseSurfaceGaps(wagons, paladins, {
+    samePopulation: false,
+    leftRadius: COLLISION_RADIUS[OWNER_WAGON],
+    rightRadius: COLLISION_RADIUS[OWNER_PALADIN],
+  });
+  const closestWagonWagonPair = closestPair(wagons, wagons, {
+    samePopulation: true,
+    extent: COLLISION_RADIUS[OWNER_WAGON] + COLLISION_RADIUS[OWNER_WAGON],
+    time,
+  });
+  const closestWagonPaladinPair = closestPair(wagons, paladins, {
+    samePopulation: false,
+    extent: COLLISION_RADIUS[OWNER_WAGON] + COLLISION_RADIUS[OWNER_PALADIN],
+    time,
+  });
+  const wagonWagonContacts = overlapContacts(
+    wagons,
+    wagons,
+    COLLISION_RADIUS[OWNER_WAGON] + COLLISION_RADIUS[OWNER_WAGON],
+    true,
+  );
+  const wagonPaladinContacts = overlapContacts(
+    wagons,
+    paladins,
+    COLLISION_RADIUS[OWNER_WAGON] + COLLISION_RADIUS[OWNER_PALADIN],
+    false,
+  );
   const nearestSurfaceGaps = paladins.map((paladin) => {
     if (!wagons.length) return null;
     const centerDistance = Math.min(...wagons.map((wagon) => (
@@ -235,6 +267,18 @@ function finishFrame(state, time, rows) {
     paladinDistinctTargets: paladinTargets.length,
     paladinsOnLargestTarget: paladinTargets.length ? Math.max(...paladinTargets) : 0,
     nearestSurfaceGaps: Object.freeze(nearestSurfaceGaps),
+    wagonWagonSurfaceGaps: Object.freeze(wagonWagonSurfaceGaps),
+    wagonPaladinSurfaceGaps: Object.freeze(wagonPaladinSurfaceGaps),
+    closestWagonWagonPair,
+    closestWagonPaladinPair,
+    wagonWagonOverlapPairs: wagonWagonContacts.pairs,
+    wagonWagonOverlappingWagons: wagonWagonContacts.leftUnitsWithContact,
+    maximumWagonWagonNeighbors: wagonWagonContacts.maximumLeftContacts,
+    wagonPaladinOverlapPairs: wagonPaladinContacts.pairs,
+    wagonsOverlappingPaladins: wagonPaladinContacts.leftUnitsWithContact,
+    paladinsOverlappingWagons: wagonPaladinContacts.rightUnitsWithContact,
+    maximumPaladinsOverlappingOneWagon: wagonPaladinContacts.maximumLeftContacts,
+    maximumWagonsOverlappingOnePaladin: wagonPaladinContacts.maximumRightContacts,
   }));
 }
 
@@ -250,6 +294,27 @@ function finalizeAnalysis(state) {
     : state.frames.at(-1)?.time ?? combatStart;
   const frames = state.frames.filter(({ time }) => time >= combatStart && time <= combatEnd);
   const gaps = frames.flatMap(({ nearestSurfaceGaps }) => nearestSurfaceGaps);
+  const wagonWagonOverlap = summarizeOverlap(frames, {
+    gapField: "wagonWagonSurfaceGaps",
+    pairCountField: "wagonWagonOverlapPairs",
+    leftContactField: "wagonWagonOverlappingWagons",
+    leftAliveField: "aliveWagons",
+    maximumPairsField: "wagonWagonOverlapPairs",
+    maximumLeftContactsField: "maximumWagonWagonNeighbors",
+    closestPairField: "closestWagonWagonPair",
+  });
+  const wagonPaladinOverlap = summarizeOverlap(frames, {
+    gapField: "wagonPaladinSurfaceGaps",
+    pairCountField: "wagonPaladinOverlapPairs",
+    leftContactField: "wagonsOverlappingPaladins",
+    leftAliveField: "aliveWagons",
+    rightContactField: "paladinsOverlappingWagons",
+    rightAliveField: "alivePaladins",
+    maximumPairsField: "wagonPaladinOverlapPairs",
+    maximumLeftContactsField: "maximumPaladinsOverlappingOneWagon",
+    maximumRightContactsField: "maximumWagonsOverlappingOnePaladin",
+    closestPairField: "closestWagonPaladinPair",
+  });
   const paladinObservations = sum(frames.map(({ alivePaladins }) => alivePaladins));
   const chasingObservations = sum(frames.map(({ chasingPaladins }) => chasingPaladins));
   const aliveUnitSeconds = {
@@ -376,7 +441,135 @@ function finalizeAnalysis(state) {
       2: Math.max(0, ...frames.map(({ attackingWagons }) => attackingWagons)),
       3: Math.max(0, ...frames.map(({ attackingPaladins }) => attackingPaladins)),
     }),
+    overlap: Object.freeze({
+      wagonWagon: wagonWagonOverlap,
+      wagonPaladin: wagonPaladinOverlap,
+    }),
   });
+}
+
+
+function pairwiseSurfaceGaps(leftUnits, rightUnits, {
+  samePopulation,
+  leftRadius,
+  rightRadius,
+}) {
+  const gaps = [];
+  for (let leftIndex = 0; leftIndex < leftUnits.length; leftIndex += 1) {
+    const rightStart = samePopulation ? leftIndex + 1 : 0;
+    for (let rightIndex = rightStart; rightIndex < rightUnits.length; rightIndex += 1) {
+      const left = leftUnits[leftIndex];
+      const right = rightUnits[rightIndex];
+      gaps.push(Math.hypot(left.x - right.x, left.y - right.y) - leftRadius - rightRadius);
+    }
+  }
+  return gaps;
+}
+
+
+function closestPair(leftUnits, rightUnits, { samePopulation, extent, time }) {
+  let closest = null;
+  for (let leftIndex = 0; leftIndex < leftUnits.length; leftIndex += 1) {
+    const rightStart = samePopulation ? leftIndex + 1 : 0;
+    for (let rightIndex = rightStart; rightIndex < rightUnits.length; rightIndex += 1) {
+      const left = leftUnits[leftIndex];
+      const right = rightUnits[rightIndex];
+      const centerDistance = Math.hypot(left.x - right.x, left.y - right.y);
+      if (closest && centerDistance >= closest.centerDistanceTiles) continue;
+      closest = Object.freeze({
+        time: round(time),
+        leftId: left.id,
+        rightId: right.id,
+        leftPosition: Object.freeze({ x: round(left.x), y: round(left.y) }),
+        rightPosition: Object.freeze({ x: round(right.x), y: round(right.y) }),
+        centerDistanceTiles: round(centerDistance),
+        surfaceGapTiles: round(centerDistance - extent),
+        overlapDepthTiles: round(Math.max(0, extent - centerDistance)),
+      });
+    }
+  }
+  return closest;
+}
+
+
+function overlapContacts(leftUnits, rightUnits, extent, samePopulation) {
+  const leftContacts = new Map(leftUnits.map(({ id }) => [id, 0]));
+  const rightContacts = samePopulation
+    ? leftContacts
+    : new Map(rightUnits.map(({ id }) => [id, 0]));
+  let pairs = 0;
+  for (let leftIndex = 0; leftIndex < leftUnits.length; leftIndex += 1) {
+    const rightStart = samePopulation ? leftIndex + 1 : 0;
+    for (let rightIndex = rightStart; rightIndex < rightUnits.length; rightIndex += 1) {
+      const left = leftUnits[leftIndex];
+      const right = rightUnits[rightIndex];
+      if (Math.hypot(left.x - right.x, left.y - right.y) >= extent - 1e-9) continue;
+      pairs += 1;
+      leftContacts.set(left.id, (leftContacts.get(left.id) ?? 0) + 1);
+      rightContacts.set(right.id, (rightContacts.get(right.id) ?? 0) + 1);
+    }
+  }
+  return Object.freeze({
+    pairs,
+    leftUnitsWithContact: [...leftContacts.values()].filter((count) => count > 0).length,
+    rightUnitsWithContact: [...rightContacts.values()].filter((count) => count > 0).length,
+    maximumLeftContacts: Math.max(0, ...leftContacts.values()),
+    maximumRightContacts: Math.max(0, ...rightContacts.values()),
+  });
+}
+
+
+function summarizeOverlap(frames, {
+  gapField,
+  pairCountField,
+  leftContactField,
+  leftAliveField,
+  rightContactField = null,
+  rightAliveField = null,
+  maximumPairsField,
+  maximumLeftContactsField,
+  maximumRightContactsField = null,
+  closestPairField,
+}) {
+  const allGaps = frames.flatMap((frame) => frame[gapField]);
+  const overlapDepths = allGaps.filter((gap) => gap < -1e-9).map((gap) => -gap);
+  const closestGapByFrame = frames
+    .map((frame) => frame[gapField].length ? Math.min(...frame[gapField]) : null)
+    .filter(Number.isFinite);
+  const output = {
+    pairObservations: allGaps.length,
+    overlappingPairObservations: overlapDepths.length,
+    overlappingPairObservationShare: ratio(overlapDepths.length, allGaps.length),
+    framesWithAnyOverlapShare: ratio(
+      frames.filter((frame) => frame[pairCountField] > 0).length,
+      frames.length,
+    ),
+    closestPairSurfaceGapTilesByFrame: quantiles(closestGapByFrame),
+    overlapDepthTilesWhenOverlapping: quantiles(overlapDepths),
+    leftUnitObservationOverlapShare: ratio(
+      sum(frames.map((frame) => frame[leftContactField])),
+      sum(frames.map((frame) => frame[leftAliveField])),
+    ),
+    maximumSimultaneousOverlapPairs: Math.max(0, ...frames.map((frame) => frame[maximumPairsField])),
+    maximumContactsOnOneLeftUnit: Math.max(0, ...frames.map((frame) => frame[maximumLeftContactsField])),
+    deepestOverlapExample: frames
+      .map((frame) => frame[closestPairField])
+      .filter(Boolean)
+      .toSorted((left, right) => left.surfaceGapTiles - right.surfaceGapTiles)[0] ?? null,
+  };
+  if (rightContactField && rightAliveField) {
+    output.rightUnitObservationOverlapShare = ratio(
+      sum(frames.map((frame) => frame[rightContactField])),
+      sum(frames.map((frame) => frame[rightAliveField])),
+    );
+  }
+  if (maximumRightContactsField) {
+    output.maximumContactsOnOneRightUnit = Math.max(
+      0,
+      ...frames.map((frame) => frame[maximumRightContactsField]),
+    );
+  }
+  return Object.freeze(output);
 }
 
 
@@ -441,9 +634,35 @@ function summarizeTapeRuns(runs) {
     ["maxPaladinsWithin0_25", (run) => run.maximumSimultaneousPaladinsNearWagon.within0_25],
     ["maxSimultaneousPaladinAttackers", (run) => run.maximumSimultaneousAttackers[3]],
   ];
+  return Object.freeze({
+    ...Object.fromEntries(metrics.map(([name, select]) => [
+      name,
+      quantiles(runs.map(select).filter(Number.isFinite)),
+    ])),
+    overlap: Object.freeze({
+      wagonWagon: summarizeOverlapRuns(runs, "wagonWagon"),
+      wagonPaladin: summarizeOverlapRuns(runs, "wagonPaladin"),
+    }),
+  });
+}
+
+
+function summarizeOverlapRuns(runs, key) {
+  const metrics = [
+    ["overlappingPairObservationShare", (value) => value.overlappingPairObservationShare],
+    ["framesWithAnyOverlapShare", (value) => value.framesWithAnyOverlapShare],
+    ["medianOverlapDepthTiles", (value) => value.overlapDepthTilesWhenOverlapping.median],
+    ["p90OverlapDepthTiles", (value) => value.overlapDepthTilesWhenOverlapping.p90],
+    ["maximumOverlapDepthTiles", (value) => value.overlapDepthTilesWhenOverlapping.max],
+    ["leftUnitObservationOverlapShare", (value) => value.leftUnitObservationOverlapShare],
+    ["rightUnitObservationOverlapShare", (value) => value.rightUnitObservationOverlapShare],
+    ["maximumSimultaneousOverlapPairs", (value) => value.maximumSimultaneousOverlapPairs],
+    ["maximumContactsOnOneLeftUnit", (value) => value.maximumContactsOnOneLeftUnit],
+    ["maximumContactsOnOneRightUnit", (value) => value.maximumContactsOnOneRightUnit],
+  ];
   return Object.freeze(Object.fromEntries(metrics.map(([name, select]) => [
     name,
-    quantiles(runs.map(select).filter(Number.isFinite)),
+    quantiles(runs.map(({ overlap }) => select(overlap[key])).filter(Number.isFinite)),
   ])));
 }
 

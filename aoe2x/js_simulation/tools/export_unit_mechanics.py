@@ -17,6 +17,15 @@ from typing import Any
 
 IMPERIAL_AGE = "Imperial"
 
+# The reference database uses current UI civilization names; four legacy
+# Genie records retain their original internal names in build 177723.
+REFERENCE_TO_DAT_CIV = {
+    "Britons": "British",
+    "Byzantines": "Byzantine",
+    "Franks": "French",
+    "Mayans": "Mayan",
+}
+
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -45,7 +54,8 @@ def _read_reference_row(reference_db: Path, unit_slug: str, civ: str) -> dict[st
                 final_accuracy,
                 final_los,
                 final_attacks_json,
-                final_armors_json
+                final_armors_json,
+                pop_space
             FROM ref_units
             WHERE unit_slug = ? AND civ_name = ? AND age = ?
             """,
@@ -71,6 +81,13 @@ def _read_reference_row(reference_db: Path, unit_slug: str, civ: str) -> dict[st
             """,
             (row["id"],),
         ).fetchone()
+        row["applied_tech_ids"] = tuple(
+            int(tech["tech_id"])
+            for tech in connection.execute(
+                "SELECT tech_id FROM ref_techs_applied WHERE ref_unit_id = ?",
+                (row["id"],),
+            ).fetchall()
+        )
     if chain is None:
         raise ValueError(f"reference DB has no stat chain for the {civ} {unit_slug}")
     row["exact_speed"] = float(chain["speed"])
@@ -89,6 +106,58 @@ def _parse_classes(raw: str) -> dict[str, int | float]:
             json.loads(raw).items(), key=lambda item: int(item[0])
         )
     }
+
+
+def _decode_armor_attack_value(value: float) -> tuple[int, int]:
+    """Decode Genie's class * 256 + signed-byte amount representation."""
+    encoded = int(value)
+    if encoded >= 0:
+        class_id = encoded // 256
+        amount = encoded % 256
+        if amount > 127:
+            amount -= 256
+        return class_id, amount
+    encoded = abs(encoded)
+    return encoded // 256, -(encoded % 256)
+
+
+def _damage_reduction_by_attacker_category(
+    data, unit_master: int, applied_tech_ids: tuple[int, ...]
+) -> dict[str, int] | None:
+    """Export sourced conditional incoming-damage reductions.
+
+    Royal Heirs (tech 574) adds three points of armor class 39 to each
+    affected target. Build 177723 uses negative class-39 attack entries as the
+    mounted-attacker marker. The game-facing effect is therefore represented
+    explicitly as flat incoming damage reduction from mounted attackers,
+    rather than pretending it is ordinary melee or pierce armor.
+    """
+    royal_heirs_tech_id = 574
+    if royal_heirs_tech_id not in applied_tech_ids:
+        return None
+    tech = data.techs[royal_heirs_tech_id]
+    effect = data.effects[int(tech.effect_id)]
+    if effect.name != "Royal Heirs":
+        raise ValueError(
+            f"tech {royal_heirs_tech_id} must resolve to Royal Heirs, got {effect.name!r}"
+        )
+    reductions = []
+    for command in effect.effect_commands:
+        if (
+            int(command.type) != 4
+            or int(command.a) != unit_master
+            or int(command.c) != 8
+        ):
+            continue
+        class_id, amount = _decode_armor_attack_value(command.d)
+        if class_id == 39 and amount > 0:
+            reductions.append(amount)
+    if reductions != [3]:
+        raise ValueError(
+            f"Royal Heirs must give master {unit_master} one +3 class-39 effect; "
+            f"found {reductions}"
+        )
+    return {"mounted": 3}
 
 
 def _damage_against_self(
@@ -133,10 +202,15 @@ def _raw_unit(dat_path: Path, civ: str, master: int):
     from genieutils.datfile import DatFile
 
     data = DatFile.parse(dat_path)
-    matches = [civilization for civilization in data.civs if civilization.name == civ]
+    dat_civ = REFERENCE_TO_DAT_CIV.get(civ, civ)
+    matches = [
+        civilization for civilization in data.civs
+        if civilization.name == dat_civ
+    ]
     if len(matches) != 1:
         raise ValueError(
-            f"Genie .dat must contain exactly one {civ} civilization; "
+            f"Genie .dat must contain exactly one {dat_civ} civilization "
+            f"for reference civ {civ}; "
             f"found {len(matches)}"
         )
     unit = matches[0].units[master]
@@ -172,6 +246,9 @@ def export_unit_mechanics(
     data, unit = _raw_unit(dat_path, civ, master)
     attack_classes = _parse_classes(reference["final_attacks_json"])
     armor_classes = _parse_classes(reference["final_armors_json"])
+    damage_reduction = _damage_reduction_by_attacker_category(
+        data, master, reference["applied_tech_ids"]
+    )
 
     attack_animation = _animation_seconds(
         data, int(unit.type_50.attack_graphic), "attack")
@@ -245,6 +322,7 @@ def export_unit_mechanics(
         "line_of_sight_tiles": "ref_units.final_los",
         "attack_classes": "ref_units.final_attacks_json",
         "armor_classes": "ref_units.final_armors_json",
+        "population_space": "ref_units.pop_space",
         "collision_size_tiles.x": "unit.collision_size_x",
         "collision_size_tiles.y": "unit.collision_size_y",
         "collision_size_tiles.z": "unit.collision_size_z",
@@ -266,6 +344,12 @@ def export_unit_mechanics(
             " ref_units.final_armors_json)"
         ),
     }
+    if damage_reduction is not None:
+        fields["damage_reduction_by_attacker_category.mounted"] = (
+            "ref_techs_applied.tech_id 574 + dat tech 574/effect 'Royal Heirs': "
+            "type 4 adds +3 armor class 39 to this unit; negative attacker "
+            "class 39 is the build-177723 mounted marker"
+        )
 
     # Charge ability (Fire Lancer family). Raw dat values, exported whenever
     # charge_type is nonzero. Semantics measured from the four authorized
@@ -481,6 +565,8 @@ def export_unit_mechanics(
         "line_of_sight_tiles": float(reference["final_los"]),
         "attack_classes": attack_classes,
         "armor_classes": armor_classes,
+        "population_space": float(reference["pop_space"]),
+        "damage_reduction_by_attacker_category": damage_reduction,
         "collision_size_tiles": {
             "x": round(float(unit.collision_size_x), 6),
             "y": round(float(unit.collision_size_y), 6),
@@ -516,7 +602,9 @@ def export_unit_mechanics(
                 f"ref_units WHERE unit_slug='{unit_slug}' AND civ_name='{civ}' "
                 "AND age='Imperial'"
             ),
-            "dat_selector": f"dat.civs[name='{civ}'].units[{master}]",
+            "dat_selector": (
+                f"dat.civs[name='{REFERENCE_TO_DAT_CIV.get(civ, civ)}'].units[{master}]"
+            ),
             "fields": fields,
         },
     }

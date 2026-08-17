@@ -10,7 +10,11 @@ import {
   runRecoverableDedicatedQueue,
 } from "../src/dedicated-benchmark-rig.js";
 import { loadPhase2Batch1Truth } from "../src/phase2-batch1-comparison.js";
-import { renderPhase2Batch1Csv } from "./run_phase2_batch1_suite.mjs";
+import {
+  PHASE2_STABLE_SAMPLES,
+  PHASE2_VOLATILE_SAMPLES,
+  renderPhase2Batch1Csv,
+} from "./run_phase2_batch1_suite.mjs";
 
 
 const ROOT = resolve(fileURLToPath(new URL("../", import.meta.url)));
@@ -92,8 +96,8 @@ export async function main(argv = process.argv.slice(2)) {
         checkpointUnit: "one complete exact golden matchup row",
         checkpointWrite: "temporary file, flush, atomic rename",
         resumePolicy: "validate signature and shape, skip completed row checkpoints",
-        stableSamples: 5,
-        volatileSamples: 100,
+        stableSamples: PHASE2_STABLE_SAMPLES,
+        volatileSamples: PHASE2_VOLATILE_SAMPLES,
       }, null, 2)}\n`,
       { encoding: "utf8", flush: true },
     ),
@@ -105,7 +109,9 @@ export async function main(argv = process.argv.slice(2)) {
 
 export function validatePhase2Batch1RowReport(report, rowId) {
   const row = report?.rows?.[0];
-  const expectedRuns = row?.tape?.volatile ? 100 : 5;
+  const expectedRuns = row?.tape?.volatile
+    ? PHASE2_VOLATILE_SAMPLES
+    : PHASE2_STABLE_SAMPLES;
   const valid = report
     && report.lane === "phase2_batch1_exact_golden_starts"
     && report.schedule?.rows === 1
@@ -154,6 +160,7 @@ export function mergePhase2Batch1RowReports(reports, expectedRowIds) {
         Number.isFinite(row.comparison.mean)
         && Math.abs(row.comparison.mean - row.tape.mean) > 25
       )).length,
+      knifeEdgeRows: rows.filter((row) => row.tapeClassification === "knife-edge").length,
       wrongStableWinnerCount: rows.filter(({ comparison }) => comparison.wrongStableWinner).length,
       rowsInsideTapeBand: rows.filter(({ comparison }) => comparison.bandError === 0).length,
       meanAbsoluteMeanDelta: mean(absoluteDeltas),

@@ -13,16 +13,25 @@ import { compareRow, summarizeTape } from "../src/standard-units-comparison.js";
 
 const ROOT = new URL("../", import.meta.url);
 const DEFAULT_SEED = 20260817;
+export const PHASE2_STABLE_SAMPLES = 5;
+export const PHASE2_VOLATILE_SAMPLES = 15;
+export const PHASE2_MAX_SAMPLES_PER_ROW = 15;
 const DEFAULT_OUTPUT = new URL(
   "../calibration/reports/phase2_batch1_current_engine_2026-08-17/",
   import.meta.url,
 );
 
 
-export function runSchedule(rows, { samples = 5, volatileSamples = 100 } = {}) {
+export function runSchedule(rows, {
+  samples = PHASE2_STABLE_SAMPLES,
+  volatileSamples = PHASE2_VOLATILE_SAMPLES,
+} = {}) {
   requirePositiveInteger(samples, "samples");
   requirePositiveInteger(volatileSamples, "volatileSamples");
   if (volatileSamples < samples) throw new RangeError("volatileSamples must be at least samples");
+  if (samples > PHASE2_MAX_SAMPLES_PER_ROW || volatileSamples > PHASE2_MAX_SAMPLES_PER_ROW) {
+    throw new RangeError(`Phase 2 comparison rows are capped at ${PHASE2_MAX_SAMPLES_PER_ROW} samples`);
+  }
   return rows.flatMap((row) => {
     const tape = summarizeTape(row);
     const count = tape.volatile ? volatileSamples : samples;
@@ -36,8 +45,8 @@ export async function runPhase2Batch1Suite({
   truth = undefined,
   context = undefined,
   rowIds = undefined,
-  samples = 5,
-  volatileSamples = 100,
+  samples = PHASE2_STABLE_SAMPLES,
+  volatileSamples = PHASE2_VOLATILE_SAMPLES,
   seed = DEFAULT_SEED,
   runImpl = runPhase2Batch1Sample,
   onProgress = undefined,
@@ -92,6 +101,7 @@ export async function runPhase2Batch1Suite({
       side2: row.side2,
       side3: row.side3,
       tape,
+      tapeClassification: tape.volatile ? "knife-edge" : "stable",
       comparison: compareRow({
         row,
         tape,
@@ -142,7 +152,7 @@ export function renderPhase2Batch1Csv(report) {
     "subject", "opponent", "matchup", "side2_count", "side3_count", "tape_runs",
     "tape_mean", "tape_min", "tape_max", "simulation_runs", "simulation_mean",
     "simulation_min", "simulation_max", "absolute_mean_delta", "tape_band_error",
-    "wrong_stable_winner", "unresolved_runs",
+    "tape_classification", "wrong_stable_winner", "unresolved_runs",
   ];
   const rows = report.rows.map((row) => [
     row.subjectSlug, row.opponentSlug, row.matchup, row.side2.count, row.side3.count,
@@ -151,7 +161,7 @@ export function renderPhase2Batch1Csv(report) {
     row.comparison.max, row.comparison.mean === null
       ? null
       : Math.abs(row.comparison.mean - row.tape.mean),
-    row.comparison.bandError, row.comparison.wrongStableWinner,
+    row.comparison.bandError, row.tapeClassification, row.comparison.wrongStableWinner,
     row.comparison.unresolvedRuns,
   ]);
   return `${[header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n")}\n`;
@@ -191,6 +201,7 @@ function summarizeReport(rows) {
       Number.isFinite(row.comparison.mean)
       && Math.abs(row.comparison.mean - row.tape.mean) > 25
     )).length,
+    knifeEdgeRows: rows.filter((row) => row.tapeClassification === "knife-edge").length,
     wrongStableWinnerCount: rows.filter((row) => row.comparison.wrongStableWinner).length,
     rowsInsideTapeBand: rows.filter((row) => row.comparison.bandError === 0).length,
     meanAbsoluteMeanDelta: mean(absoluteDeltas),

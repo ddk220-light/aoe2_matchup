@@ -20,12 +20,16 @@ import {
 const ROOT = new URL("../", import.meta.url);
 
 
-test("Phase 2 schedule uses five stable samples and one hundred volatile samples", async () => {
+test("Phase 2 schedule uses five stable samples and at most fifteen knife-edge samples", async () => {
   const truth = await loadPhase2Batch1Truth(ROOT);
   const schedule = runSchedule(truth.rows);
-  assert.equal(schedule.filter(({ tape }) => tape.volatile).length, 800);
+  assert.equal(schedule.filter(({ tape }) => tape.volatile).length, 120);
   assert.equal(schedule.filter(({ tape }) => !tape.volatile).length, 560);
-  assert.equal(schedule.length, 1360);
+  assert.equal(schedule.length, 680);
+  assert.throws(
+    () => runSchedule(truth.rows, { samples: 5, volatileSamples: 16 }),
+    /capped at 15 samples/,
+  );
 });
 
 
@@ -62,7 +66,7 @@ test("one Phase 2 sample runs from the exact golden starting roster", async () =
 });
 
 
-test("recoverable row reports preserve the five/one-hundred sample policy", async () => {
+test("recoverable row reports preserve the five/fifteen sample policy and knife-edge label", async () => {
   const truth = await loadPhase2Batch1Truth(ROOT);
   const rowIds = ["elite_longbowman_vs_champion", "elite_woad_raider_vs_paladin"];
   const reports = [];
@@ -88,5 +92,7 @@ test("recoverable row reports preserve the five/one-hundred sample policy", asyn
   const merged = mergePhase2Batch1RowReports(reports, rowIds);
   assert.equal(merged.schedule.stableRows, 1);
   assert.equal(merged.schedule.volatileRows, 1);
-  assert.equal(merged.schedule.totalRuns, 105);
+  assert.equal(merged.schedule.totalRuns, 20);
+  assert.equal(merged.summary.knifeEdgeRows, 1);
+  assert.equal(merged.rows.find(({ id }) => id === rowIds[1]).tapeClassification, "knife-edge");
 });

@@ -151,7 +151,8 @@ Each batch is independently reviewable:
 5. Add the twenty unit families to the clean-room viewer.
 6. Run the full existing test suite and the standard-unit regression gate.
 7. Run five deterministic samples per golden row. Expand only volatile rows,
-   to a maximum of 100 samples.
+   to a hard maximum of 15 samples, and report split-winner tape rows as
+   knife-edge rather than forcing a stable-winner conclusion.
 8. Persist every completed simulation immediately through the recoverable
    benchmark runner.
 9. Report tape result, simulation median, delta, winner agreement, convergence,
@@ -169,4 +170,3 @@ Each batch is independently reviewable:
   and replay telemetry work for every new unit.
 - Golden comparisons use only manifested archives and exact tape ratios.
 - No opponent-specific rules or force-fitted random variation are added.
-

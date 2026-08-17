@@ -5,6 +5,7 @@ import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { DEFAULT_KITE_PROFILE } from "../src/combat/ai-orders.js";
+import { deriveKiteProfile, kitePolicyFor } from "../src/combat/kite-timing.js";
 import { runFight } from "../src/fight.js";
 import { KITE_PROFILES, KITE_PROFILE_PROVENANCE } from "../src/kite-profiles.js";
 import { UNIT_REGISTRY } from "../src/unit-registry.js";
@@ -100,13 +101,25 @@ test("the three measured profiles are genuinely different from each other", () =
 });
 
 
-test("every mobile-ranged unit in the registry has a profile", () => {
-  for (const { slug, class: unitClass } of UNIT_REGISTRY) {
+test("every mobile-ranged unit derives a profile without adding a calibration row", async () => {
+  for (const { slug, fixture, class: unitClass } of UNIT_REGISTRY) {
     if (unitClass !== "mobile_ranged") continue;
-    assert.ok(KITE_PROFILES[slug], `${slug} kites but has no generated profile`);
-    assert.ok(KITE_PROFILE_PROVENANCE.profiles[slug], `${slug} has no provenance row`);
+    const mechanics = JSON.parse(await readFile(
+      path.resolve(here, "..", "fixtures", "unit_stats", fixture),
+      "utf8",
+    ));
+    const profile = deriveKiteProfile(mechanics, kitePolicyFor(slug));
+    assert.ok(profile.beatTicks > 0, `${slug} beat`);
+    assert.ok(profile.firstBeatTick > 0, `${slug} opening`);
+    assert.ok(Array.isArray(profile.moveOffsetTicks), `${slug} movement lane`);
+    if (KITE_PROFILES[slug]) {
+      assert.ok(KITE_PROFILE_PROVENANCE.profiles[slug], `${slug} measured provenance`);
+    } else {
+      assert.equal(KITE_PROFILE_PROVENANCE.profiles[slug], undefined,
+        `${slug} must not gain an unsourced calibration row`);
+    }
   }
-  // Nothing that cannot kite should have one.
+  // Every tape-oracle row must still belong to a unit that really kites.
   const kiters = new Set(UNIT_REGISTRY
     .filter(({ class: unitClass }) => unitClass === "mobile_ranged").map(({ slug }) => slug));
   for (const slug of Object.keys(KITE_PROFILES)) {

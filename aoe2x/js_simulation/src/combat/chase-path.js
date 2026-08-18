@@ -20,7 +20,10 @@
 //
 // Everything is a pure function of this tick's positions. No RNG, no clock.
 import { collisionRadius } from "./targeting.js";
-import { enemyPairExtent } from "./collision.js";
+import {
+  createPairInteractionSnapshot,
+  resolvePairInteraction,
+} from "./pair-interactions.js";
 
 const CELL_TILES = 0.25;
 // One waypoint this far along the path (in cells) is handed to the walker.
@@ -58,11 +61,17 @@ function obstacleRadius(body) {
 function buildBlockedGrid(mover, obstacles, cols, rows, options = {}) {
   const blocked = new Uint8Array(cols * rows);
   const moverRadius = collisionRadius(mover);
+  const pairInteractions = options.pairInteractions
+    ?? createPairInteractionSnapshot({
+      legacyEnemyOverlapDepthByMaster: options.enemyOverlapDepthByMaster ?? new Map(),
+    });
   for (const body of obstacles) {
     const dynamicEnemy = body.owner !== undefined && body.owner !== mover.owner;
-    const reach = dynamicEnemy
-      ? enemyPairExtent(mover, body, options.enemyOverlapDepthByMaster)
-      : moverRadius + obstacleRadius(body);
+    const interaction = dynamicEnemy
+      ? resolvePairInteraction(mover, body, pairInteractions)
+      : null;
+    if (interaction && !interaction.pathObstructs) continue;
+    const reach = interaction?.collisionExtent ?? moverRadius + obstacleRadius(body);
     const loX = Math.max(0, Math.floor((body.x - reach) / CELL_TILES - 0.5) + 1);
     const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / CELL_TILES - 0.5) - 1);
     const loY = Math.max(0, Math.floor((body.y - reach) / CELL_TILES - 0.5) + 1);

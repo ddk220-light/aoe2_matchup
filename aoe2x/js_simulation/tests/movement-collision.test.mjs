@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import { surfaceGap } from "../src/combat/targeting.js";
+import { createPairInteractionSnapshot } from "../src/combat/pair-interactions.js";
 
 
 const movementModuleUrl = new URL("../src/combat/movement.js", import.meta.url);
@@ -273,6 +274,56 @@ test("a War Wagon overlap policy does not relax unrelated enemy pairs", async ()
 
   assert.ok(Math.abs(next[1].x - next[0].x - 0.4) < 1e-12);
   assertNonpenetrating(next);
+});
+
+
+test("a reserved enemy-transit pair can cross while an unrelated enemy remains hard", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const chaser = unit({ referenceId: 1, owner: 3, x: 4, y: 4 });
+  const blocker = unit({ referenceId: 2, owner: 2, x: 4.5, y: 4 });
+  const third = unit({ referenceId: 3, owner: 2, x: 4.8, y: 4 });
+  const pairInteractions = createPairInteractionSnapshot({
+    enemyTransitPairs: new Map([["1:2", Object.freeze({
+      chaserId: 1,
+      blockerId: 2,
+      pursuitTargetId: 3,
+      acquisitionAxis: "x",
+      acquisitionSign: 1,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  const next = resolveMovementProposals(
+    [chaser, blocker, third],
+    [proposal(1, 0.5, 0), proposal(2, 0, 0), proposal(3, 0, 0)],
+    openMap,
+    { pairInteractions },
+  );
+  const moved = next.find(({ referenceId }) => referenceId === 1);
+
+  assert.ok(moved.x > 4.1, "the reserved blocker must not stop the chaser");
+  assert.ok(moved.x <= 4.4 + 1e-12, "the unrelated enemy must remain hard");
+});
+
+
+test("inherited enemy overlap is accepted but cannot deepen", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const left = unit({ referenceId: 1, owner: 3, x: 4, y: 4 });
+  const right = unit({ referenceId: 2, owner: 2, x: 4.3, y: 4 });
+  const pairInteractions = createPairInteractionSnapshot({
+    inheritedEnemyContactExtents: new Map([["1:2", 0.3]]),
+  });
+
+  const next = resolveMovementProposals(
+    [left, right],
+    [proposal(1, 0.02, 0), proposal(2, -0.02, 0)],
+    openMap,
+    { pairInteractions },
+  );
+  const separation = Math.abs(next[1].x - next[0].x);
+
+  assert.ok(separation >= 0.3 - 1e-12);
+  assert.ok(separation < 0.4);
 });
 
 

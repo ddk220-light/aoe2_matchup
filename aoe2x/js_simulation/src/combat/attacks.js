@@ -2,9 +2,10 @@ import { secondsToTicksCeil, secondsToTicksNearest } from "../simulation-clock.j
 import {
   MELEE_CONTACT_TOLERANCE_TILES,
   chebyshevGap,
+  collisionRadius,
   surfaceGap as euclideanCollisionGap,
 } from "./targeting.js";
-import { enemyOverlapDepthForPair } from "./collision.js";
+import { createPairInteractionSnapshot, resolvePairInteraction } from "./pair-interactions.js";
 
 
 function compareText(left, right) {
@@ -144,14 +145,13 @@ export function isWithinStopRange(actor, target, options = {}) {
   const range = requireFinite(actor?.mechanics?.attack_range_tiles, "attack range");
   if (range < 0) throw new RangeError("attack range must be nonnegative");
   const stop = Math.max(range, MELEE_CONTACT_TOLERANCE_TILES);
-  const enemyOverlapDepthByMaster = options.enemyOverlapDepthByMaster;
-  if (enemyOverlapDepthByMaster !== undefined
-      && !(enemyOverlapDepthByMaster instanceof Map)) {
-    throw new TypeError("enemy overlap depths by master must be a Map");
-  }
-  const overlapDepth = enemyOverlapDepthByMaster
-    ? enemyOverlapDepthForPair(actor, target, enemyOverlapDepthByMaster)
-    : 0;
+  const pairInteractions = options.pairInteractions
+    ?? createPairInteractionSnapshot({
+      legacyEnemyOverlapDepthByMaster: options.enemyOverlapDepthByMaster ?? new Map(),
+    });
+  const physicalExtent = collisionRadius(actor) + collisionRadius(target);
+  const overlapDepth = physicalExtent
+    - resolvePairInteraction(actor, target, pairInteractions).attackSurfaceExtent;
   // Projectile units stop inside their Euclidean range circle (the same
   // metric as their reach — see isWithinReach); melee units keep the
   // Chebyshev collision-box rule measured on the steppe tapes.

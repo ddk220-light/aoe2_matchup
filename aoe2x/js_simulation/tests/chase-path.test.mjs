@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { planChaseAim, planMoveAim } from "../src/combat/chase-path.js";
+import { createPairInteractionSnapshot } from "../src/combat/pair-interactions.js";
 
 const map = Object.freeze({ width: 8, height: 8, obstacles: Object.freeze([]) });
 
@@ -15,6 +16,10 @@ function body(x, y, radius = 0.2, owner = undefined, unitMaster = undefined) {
       collision_size_tiles: Object.freeze({ x: radius, y: radius }),
     }),
   });
+}
+
+function dynamicBody(referenceId, x, y, radius, owner, unitMaster) {
+  return Object.freeze({ referenceId, ...body(x, y, radius, owner, unitMaster) });
 }
 
 test("coordinate path keeps a clear move order on its exact direct route", () => {
@@ -121,4 +126,27 @@ test("chase path honors a configured War Wagon enemy-overlap envelope", () => {
 
   assert.ok(baseline && baseline.stand !== true);
   assert.equal(relaxed, null);
+});
+
+
+test("chase path omits only a reserved enemy-transit blocker", () => {
+  const mover = dynamicBody(1, 1, 1, 0.2, 3, 75);
+  const target = dynamicBody(3, 5, 1, 0.2, 2, 4);
+  const reserved = dynamicBody(2, 3, 1, 0.2, 2, 4);
+  const pairInteractions = createPairInteractionSnapshot({
+    enemyTransitPairs: new Map([["1:2", Object.freeze({
+      chaserId: 1,
+      blockerId: 2,
+      pursuitTargetId: 3,
+      acquisitionAxis: "x",
+      acquisitionSign: 1,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  assert.ok(planChaseAim(mover, target, [reserved], map));
+  assert.equal(
+    planChaseAim(mover, target, [reserved], map, { pairInteractions }),
+    null,
+  );
 });

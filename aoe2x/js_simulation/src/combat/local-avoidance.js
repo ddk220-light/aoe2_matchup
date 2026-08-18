@@ -2,6 +2,10 @@ import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import { AVOID_ALL_BODIES } from "./experiments.js";
 import { collisionRadius } from "./targeting.js";
 import { alliedTransitPairKey } from "./allied-transit.js";
+import {
+  createPairInteractionSnapshot,
+  resolvePairInteraction,
+} from "./pair-interactions.js";
 
 
 // Floating-point comparison tolerance only; no physical value is adjusted.
@@ -497,7 +501,7 @@ function normalizeMap(map, moverRadius) {
 }
 
 
-function constraintsFor(mover, target, units, map, alliedTransitPairs) {
+function constraintsFor(mover, target, units, map, alliedTransitPairs, pairInteractions) {
   const moverRadius = collisionRadius(mover);
   const mapInfo = normalizeMap(map, moverRadius);
   const bodies = units
@@ -508,6 +512,8 @@ function constraintsFor(mover, target, units, map, alliedTransitPairs) {
       && !(unit.owner === mover.owner && alliedTransitPairs.has(
         alliedTransitPairKey(mover.referenceId, unit.referenceId),
       ))
+      && !(unit.owner !== mover.owner
+        && !resolvePairInteraction(mover, unit, pairInteractions).pathObstructs)
       // Enemy bodies obstruct exactly as ally bodies do -- 99.76% of
       // camel-to-skirmisher pairs across the kiting tapes hold the full
       // 0.45 Chebyshev separation -- so a chaser has to route around the
@@ -516,14 +522,19 @@ function constraintsFor(mover, target, units, map, alliedTransitPairs) {
       // partial speed, which no tape shows. See AOE2X_EXP_AVOID.
       && (AVOID_ALL_BODIES || unit.owner === mover.owner)
     ))
-    .map((unit) => ({
-      kind: "unit",
-      key: `unit:${unit.referenceId.toString().padStart(20, "0")}`,
-      referenceId: unit.referenceId,
-      x: unit.x,
-      y: unit.y,
-      radius: moverRadius + collisionRadius(unit),
-    }));
+    .map((unit) => {
+      const dynamicEnemy = unit.owner !== mover.owner;
+      return {
+        kind: "unit",
+        key: `unit:${unit.referenceId.toString().padStart(20, "0")}`,
+        referenceId: unit.referenceId,
+        x: unit.x,
+        y: unit.y,
+        radius: dynamicEnemy
+          ? resolvePairInteraction(mover, unit, pairInteractions).collisionExtent
+          : moverRadius + collisionRadius(unit),
+      };
+    });
   return { constraints: [...bodies, ...mapInfo.obstacles], mapInfo };
 }
 
@@ -565,6 +576,11 @@ function normalizeInputs(snapshot, proposals) {
 export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
   const alliedTransitPairs = options.alliedTransitPairs instanceof Set
     ? options.alliedTransitPairs : new Set();
+  const pairInteractions = options.pairInteractions
+    ?? createPairInteractionSnapshot({
+      alliedTransitPairs,
+      legacyEnemyOverlapDepthByMaster: options.enemyOverlapDepthByMaster ?? new Map(),
+    });
   const { units, proposalByReference } = normalizeInputs(snapshot, proposals);
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const nextUnits = [];
@@ -601,7 +617,7 @@ export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
       if (speed < 0) throw new RangeError("movement speed must be nonnegative");
       const budget = speed / TICKS_PER_SECOND;
       const { constraints, mapInfo } = constraintsFor(
-        mover, target, units, map, alliedTransitPairs,
+        mover, target, units, map, alliedTransitPairs, pairInteractions,
       );
       if (avoidance !== null && avoidance.targetReferenceId === target.referenceId) {
         const blocker = constraintForState(constraints, avoidance);

@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { deriveKiteProfile } from "../src/combat/kite-timing.js";
+import {
+  deriveKiteProfile,
+  warWagonChasePolicy,
+} from "../src/combat/kite-timing.js";
 
 
 const fixtureRoot = new URL("../fixtures/unit_stats/", import.meta.url);
@@ -113,4 +116,27 @@ test("invalid timing mechanics and policy are rejected instead of silently defau
     reload_seconds: 2,
     attack_delay_seconds: 0.2,
   }, { firstBeatTick: 0 }), /firstBeatTick must be a positive integer/);
+});
+
+
+test("War Wagon chase contact derives from the chaser body instead of matchup constants", () => {
+  assert.deepEqual(warWagonChasePolicy("elite_war_wagon", {
+    collision_size_tiles: { x: 0.25, y: 0.25 },
+  }), {
+    attackMoveTargetPressureTiles: 0.5,
+    attackMoveStickyPursuit: true,
+    warWagonEnemyOverlapDepthTiles: 0.09999999999999998,
+    warWagonEnemyOverlapMode: "always",
+  });
+  assert.deepEqual(warWagonChasePolicy("elite_war_wagon", {
+    collision_size_tiles: { x: 0.2, y: 0.2 },
+  }), {
+    attackMoveTargetPressureTiles: 0.4,
+    attackMoveStickyPursuit: true,
+    warWagonEnemyOverlapDepthTiles: 0,
+    warWagonEnemyOverlapMode: "always",
+  });
+  assert.deepEqual(warWagonChasePolicy("arbalester", {
+    collision_size_tiles: { x: 0.25, y: 0.25 },
+  }), {});
 });

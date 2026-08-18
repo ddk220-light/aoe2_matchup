@@ -49,6 +49,46 @@ test("tape-normalized melee-versus-ranged rows keep the ranged kiter on owner 2"
 });
 
 
+test("Phase 2 applies the evidence-backed War Wagon formation and body-contact policy only there", async () => {
+  const truth = await loadPhase2Batch1Truth(ROOT);
+  const context = await loadPhase2Batch1Context(ROOT, truth);
+  const warWagonRow = truth.rows.find(({ id }) => id === "elite_war_wagon_vs_paladin");
+  const championRow = truth.rows.find(({ id }) => id === "elite_war_wagon_vs_champion");
+  const boyarRow = truth.rows.find(({ id }) => id === "elite_boyar_vs_paladin");
+  const warWagonScenario = scenarioFromPhase2Batch1Row({
+    row: warWagonRow,
+    sampleIndex: 0,
+    seed: 20260817,
+    context,
+  });
+  const boyarScenario = scenarioFromPhase2Batch1Row({
+    row: boyarRow,
+    sampleIndex: 0,
+    seed: 20260817,
+    context,
+  });
+  const championScenario = scenarioFromPhase2Batch1Row({
+    row: championRow,
+    sampleIndex: 0,
+    seed: 20260817,
+    context,
+  });
+
+  assert.equal(warWagonScenario.kiteProfile.formationSpacingTiles, 0.6);
+  assert.equal(warWagonScenario.attackMoveStickyPursuit, true);
+  assert.equal(warWagonScenario.attackMoveTargetPressureTiles, 0.5);
+  assert.ok(Math.abs(warWagonScenario.warWagonEnemyOverlapDepthTiles - 0.1) < 1e-12);
+  assert.equal(warWagonScenario.warWagonEnemyOverlapMode, "always");
+  assert.equal(championScenario.kiteProfile.formationSpacingTiles, 0.6);
+  assert.equal(championScenario.attackMoveTargetPressureTiles, 0.4);
+  assert.equal(championScenario.warWagonEnemyOverlapDepthTiles, 0);
+  assert.equal(championScenario.warWagonEnemyOverlapMode, "always");
+  assert.equal(boyarScenario.warWagonEnemyOverlapDepthTiles, undefined);
+  assert.equal(boyarScenario.warWagonEnemyOverlapMode, undefined);
+  assert.equal(boyarScenario.attackMoveStickyPursuit, undefined);
+});
+
+
 test("one Phase 2 sample runs from the exact golden starting roster", async () => {
   const truth = await loadPhase2Batch1Truth(ROOT);
   const row = truth.rows.find(({ id }) => id === "elite_boyar_vs_champion");

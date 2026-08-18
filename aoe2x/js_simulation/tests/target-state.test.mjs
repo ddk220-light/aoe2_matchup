@@ -410,6 +410,42 @@ test("an attack-moving chaser acquires a visible target before reaching its wayp
 });
 
 
+test("an attack-move scan can account for targets claimed earlier in the same scan", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  let world = createWorld(scenario([
+    unit({ referenceId: 1, owner: 3, x: 2, y: 5, acquire: 100 }),
+    unit({ referenceId: 2, owner: 3, x: 2, y: 5.05, acquire: 100 }),
+    unit({
+      referenceId: 3,
+      owner: 2,
+      x: 6,
+      y: 5,
+      acquire: 100,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+    unit({
+      referenceId: 4,
+      owner: 2,
+      x: 6.3,
+      y: 5,
+      acquire: 100,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+    attackMoveTargetPressureTiles: 0.5,
+  }));
+
+  while (world.tick < 37) world = stepWorld(world);
+  const chasers = world.units
+    .filter(({ owner }) => owner === 3)
+    .sort((left, right) => left.referenceId - right.referenceId);
+
+  assert.deepEqual(chasers.map(({ pursuitTargetId }) => pursuitTargetId), [3, 4]);
+});
+
+
 test("an attack-move cohort creates only one allied-transit reservation per chaser", async () => {
   const { createWorld, stepWorld } = await import("../src/combat/world.js");
   let world = createWorld(scenario([
@@ -554,6 +590,46 @@ test("a blocked attack-moving chaser retargets to the nearest visible enemy", as
   assert.ok(next.events.some(({ type, actorId, targetId }) => (
     type === "pursuit-acquired" && actorId === 1 && targetId === 3
   )));
+});
+
+
+test("a sticky attack-move target does not thrash merely because pursuit is blocked", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const blockedChampion = unit({
+    referenceId: 1,
+    owner: 3,
+    x: 2,
+    y: 5,
+    pursuitTargetId: 2,
+  });
+  blockedChampion.experimentBlocked = true;
+  const next = stepWorld(createWorld(scenario([
+    blockedChampion,
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 6,
+      y: 5,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+    unit({
+      referenceId: 3,
+      owner: 2,
+      x: 3,
+      y: 5,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+    attackMoveStickyPursuit: true,
+  })));
+  const champion = next.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.equal(champion.pursuitTargetId, 2);
+  assert.equal(next.events.some(({ type, actorId }) => (
+    type === "pursuit-acquired" && actorId === 1
+  )), false);
 });
 
 

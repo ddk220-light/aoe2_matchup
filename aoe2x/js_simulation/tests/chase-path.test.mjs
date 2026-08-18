@@ -5,11 +5,12 @@ import { planChaseAim, planMoveAim } from "../src/combat/chase-path.js";
 
 const map = Object.freeze({ width: 8, height: 8, obstacles: Object.freeze([]) });
 
-function body(x, y, radius = 0.2, owner = undefined) {
+function body(x, y, radius = 0.2, owner = undefined, unitMaster = undefined) {
   return Object.freeze({
     x,
     y,
     ...(owner === undefined ? {} : { owner }),
+    ...(unitMaster === undefined ? {} : { unitMaster }),
     mechanics: Object.freeze({
       collision_size_tiles: Object.freeze({ x: radius, y: radius }),
     }),
@@ -105,4 +106,19 @@ test("chase path can leave a coarse start cell whose center is blocked but mover
   const plan = planChaseAim(mover, target, [], obstacleMap);
 
   assert.ok(plan === null || plan.stand !== true);
+});
+
+
+test("chase path honors a configured War Wagon enemy-overlap envelope", () => {
+  const mover = body(1, 1, 0.2, 3, 75);
+  const target = body(5, 1, 0.45, 2, 829);
+  const warWagonBlocker = body(3, 1.65, 0.45, 2, 829);
+
+  const baseline = planChaseAim(mover, target, [warWagonBlocker], map);
+  const relaxed = planChaseAim(mover, target, [warWagonBlocker], map, {
+    enemyOverlapDepthByMaster: new Map([[829, 0.2]]),
+  });
+
+  assert.ok(baseline && baseline.stand !== true);
+  assert.equal(relaxed, null);
 });

@@ -143,9 +143,18 @@ function isEnemy(unit, candidate) {
 }
 
 
-export function selectPursuitTarget(unit, snapshot) {
+export function selectPursuitTarget(unit, snapshot, {
+  targetLoadById = null,
+  targetLoadPenaltyTiles = 0,
+} = {}) {
   if (!Array.isArray(snapshot)) throw new TypeError("snapshot must be an array");
   if (!isLive(unit)) return null;
+  if (targetLoadById !== null && !(targetLoadById instanceof Map)) {
+    throw new TypeError("target load must be a Map");
+  }
+  if (!Number.isFinite(targetLoadPenaltyTiles) || targetLoadPenaltyTiles < 0) {
+    throw new RangeError("target load penalty must be nonnegative and finite");
+  }
 
   if (unit.pursuitTargetId !== null && unit.pursuitTargetId !== undefined) {
     const locked = snapshot.find(({ referenceId }) => (
@@ -166,15 +175,17 @@ export function selectPursuitTarget(unit, snapshot) {
   if (lineOfSight < 0) throw new RangeError("line of sight must be nonnegative");
 
   let best = null;
-  let bestGap = Infinity;
+  let bestScore = Infinity;
   for (const candidate of snapshot) {
     if (!isLive(candidate) || !isEnemy(unit, candidate)) continue;
     if (centerDistance(unit, candidate) > lineOfSight) continue;
 
     const gap = surfaceGap(unit, candidate);
+    const targetLoad = targetLoadById?.get(candidate.referenceId) ?? 0;
+    const score = gap + targetLoad * targetLoadPenaltyTiles;
     if (
       best === null ||
-      gap < bestGap ||
+      score < bestScore ||
       // Ties are effectively unreachable and this branch is near-dead code:
       // units acquire on a stagger, so by the time any unit picks a target the
       // others have been moving for a while and exact ties have dissolved.
@@ -185,10 +196,10 @@ export function selectPursuitTarget(unit, snapshot) {
       // highest-ID changed nothing anywhere, in either direction.
       //
       // What decides the target is ACQUISITION ORDER, not this tie-break.
-      (gap === bestGap && candidate.referenceId < best.referenceId)
+      (score === bestScore && candidate.referenceId < best.referenceId)
     ) {
       best = candidate;
-      bestGap = gap;
+      bestScore = score;
     }
   }
   return best;

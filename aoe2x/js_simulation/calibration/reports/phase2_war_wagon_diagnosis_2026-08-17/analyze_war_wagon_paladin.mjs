@@ -25,6 +25,13 @@ const STARTING_COUNTS = Object.freeze({ 2: 15, 3: 17 });
 const COLLISION_RADIUS = Object.freeze({ 2: 0.45, 3: 0.25 });
 const TAPE_MOVE_STATE = 4;
 const TAPE_ATTACK_STATE = 7;
+const DIAGNOSTIC_VARIANT = process.env.AOE2X_WW_DIAGNOSTIC ?? "baseline";
+const SPACING_MATCH = /^sticky-pressure-spacing-(0_[0-9]+)(?:-contact-(0_[0-9]+)(-always)?)?(?:-wide-pressure)?$/.exec(
+  DIAGNOSTIC_VARIANT,
+);
+if (!["baseline", "sticky-pressure"].includes(DIAGNOSTIC_VARIANT) && !SPACING_MATCH) {
+  throw new RangeError(`unknown War Wagon diagnostic variant ${DIAGNOSTIC_VARIANT}`);
+}
 
 
 const truth = await loadPhase2Batch1Truth(ROOT);
@@ -37,16 +44,60 @@ for (const tag of TAGS) {
 }
 
 const context = await loadPhase2Batch1Context(ROOT, truth);
-const scenario = scenarioFromPhase2Batch1Row({
+const baseScenario = scenarioFromPhase2Batch1Row({
   row,
   sampleIndex: 0,
   seed: 20260817,
   context,
 });
-const simResult = runWorld(createWorld(scenario), {
-  maxTicks: PHASE2_MAX_TICKS,
-  retainSnapshots: true,
-});
+const chaserMechanics = context.mechanicsByMaster.get(row.side3.master);
+const kiterMechanics = context.mechanicsByMaster.get(row.side2.master);
+const stickyPressure = DIAGNOSTIC_VARIANT !== "baseline";
+const formationSpacingTiles = SPACING_MATCH
+  ? Number(SPACING_MATCH[1].replace("_", "."))
+  : null;
+const contactDepthTiles = SPACING_MATCH?.[2]
+  ? Number(SPACING_MATCH[2].replace("_", "."))
+  : null;
+const scenario = stickyPressure
+  ? Object.freeze({
+    ...baseScenario,
+    ...(formationSpacingTiles === null
+      ? {}
+      : {
+        kiteProfile: Object.freeze({
+          ...baseScenario.kiteProfile,
+          formationSpacingTiles,
+        }),
+      }),
+    attackMoveTargetPressureTiles: DIAGNOSTIC_VARIANT.endsWith("-wide-pressure")
+      ? 2 * kiterMechanics.collision_size_tiles.x
+      : 2 * chaserMechanics.collision_size_tiles.x,
+    attackMoveStickyPursuit: true,
+    ...(contactDepthTiles === null
+      ? {}
+      : {
+        warWagonEnemyOverlapDepthTiles: contactDepthTiles,
+        warWagonEnemyOverlapMode: SPACING_MATCH?.[3] ? "always" : "attacking-target",
+      }),
+  })
+  : baseScenario;
+let simResult;
+try {
+  simResult = runWorld(createWorld(scenario), {
+    maxTicks: PHASE2_MAX_TICKS,
+    retainSnapshots: true,
+  });
+} catch (error) {
+  if (!String(error?.message ?? error).includes("world exceeded")) throw error;
+  simResult = Object.freeze({
+    winner: null,
+    ticks: PHASE2_MAX_TICKS,
+    world: error.world,
+    snapshots: error.world.snapshots,
+    events: error.world.eventLog,
+  });
+}
 const simulation = analyzeSimulation(simResult);
 
 const output = Object.freeze({
@@ -62,13 +113,20 @@ const output = Object.freeze({
     archiveSha256: truth.zip_sha256,
     tapeMembers: row.runs.map(({ source_members }) => source_members.frames),
     startingUnitsHash: row.runs[0].starting_units_hash,
-    simulationSample: Object.freeze({ sampleIndex: 0, seed: 20260817 }),
+    simulationSample: Object.freeze({
+      sampleIndex: 0,
+      seed: 20260817,
+      variant: DIAGNOSTIC_VARIANT,
+    }),
   }),
 });
 
+const outputStem = DIAGNOSTIC_VARIANT === "baseline"
+  ? "war_wagon_paladin"
+  : `war_wagon_paladin_${DIAGNOSTIC_VARIANT.replaceAll("-", "_")}`;
 await Promise.all([
-  writeFile(new URL("war_wagon_paladin_analysis.json", import.meta.url), `${JSON.stringify(output, null, 2)}\n`, "utf8"),
-  writeFile(new URL("war_wagon_paladin_sim_events.json", import.meta.url), `${JSON.stringify(simResult.events, null, 2)}\n`, "utf8"),
+  writeFile(new URL(`${outputStem}_analysis.json`, import.meta.url), `${JSON.stringify(output, null, 2)}\n`, "utf8"),
+  writeFile(new URL(`${outputStem}_sim_events.json`, import.meta.url), `${JSON.stringify(simResult.events, null, 2)}\n`, "utf8"),
 ]);
 process.stdout.write(`${JSON.stringify({
   tapeBand: output.tapeBand,

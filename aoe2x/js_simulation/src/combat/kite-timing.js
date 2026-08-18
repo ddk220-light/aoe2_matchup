@@ -3,6 +3,8 @@ import { TICKS_PER_SECOND } from "../simulation-clock.js";
 
 export const KITE_ORDER_CLOCK_TICKS = 40;
 export const KITE_MOVE_INTERVAL_TICKS = 2 * KITE_ORDER_CLOCK_TICKS;
+const STANDARD_INFANTRY_COLLISION_RADIUS_TILES = 0.2;
+const EMPTY_KITE_SCENARIO_POLICY = Object.freeze({});
 
 
 function finite(value, name) {
@@ -128,6 +130,14 @@ export function deriveKiteProfile(mechanics, policy = {}) {
 
 
 export const KITE_POLICIES = Object.freeze({
+  elite_war_wagon: Object.freeze({
+    // The 0.9-tile War Wagon bodies march on a 0.6-tile lattice in all eight
+    // authorized Paladin/Champion recordings: conditional allied overlap
+    // depth centers at ~0.30 tiles. Cohesive navigation consumes this same
+    // profile value, so it no longer collapses them back onto the generic
+    // 0.48-tile ranged lattice.
+    formationSpacingTiles: 0.6,
+  }),
   heavy_cav_archer: Object.freeze({
     firstBeatTick: 40,
     topupOffsetTicks: Object.freeze([40]),
@@ -142,4 +152,30 @@ export const KITE_POLICIES = Object.freeze({
 
 export function kitePolicyFor(slug) {
   return KITE_POLICIES[slug] ?? Object.freeze({});
+}
+
+
+export function warWagonChasePolicy(kiterSlug, chaserMechanics) {
+  if (kiterSlug !== "elite_war_wagon") return EMPTY_KITE_SCENARIO_POLICY;
+  const radiusX = finite(
+    chaserMechanics?.collision_size_tiles?.x,
+    "chaser collision size x",
+  );
+  const radiusY = finite(
+    chaserMechanics?.collision_size_tiles?.y,
+    "chaser collision size y",
+  );
+  if (radiusX <= 0 || radiusY <= 0 || radiusX !== radiusY) {
+    throw new RangeError("War Wagon chase contact requires a positive square chaser body");
+  }
+  return Object.freeze({
+    attackMoveTargetPressureTiles: 2 * radiusX,
+    attackMoveStickyPursuit: true,
+    // The tape's transient Wagon/enemy penetration grows with the chaser
+    // body. Express it as excess collision DIAMETER over an ordinary
+    // infantry body: Paladin 0.25 -> 0.10, Champion 0.20 -> 0.00.
+    warWagonEnemyOverlapDepthTiles:
+      2 * Math.max(0, radiusX - STANDARD_INFANTRY_COLLISION_RADIUS_TILES),
+    warWagonEnemyOverlapMode: "always",
+  });
 }

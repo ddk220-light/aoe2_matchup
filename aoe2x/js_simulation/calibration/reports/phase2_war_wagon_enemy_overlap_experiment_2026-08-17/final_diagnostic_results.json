@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-08-18T01:47:20.234Z",
+  "source": {
+    "archive": {
+      "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+      "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+      "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+    },
+    "archiveSha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+  },
+  "simulation": {
+    "sampleIndex": 0,
+    "seed": 20260817
+  },
+  "comparisons": [
+    {
+      "rowId": "elite_war_wagon_vs_paladin",
+      "ratio": "15v17",
+      "tape": {
+        "samples": 4,
+        "meanScore": 35.4412,
+        "minScore": 30,
+        "maxScore": 39.8039,
+        "winnerOwner": 3
+      },
+      "simulation": {
+        "rowId": "elite_war_wagon_vs_paladin",
+        "sampleIndex": 0,
+        "seed": 20260817,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 696,
+        "score": 22.745098039215687,
+        "ticks": 6525,
+        "finalStateHash": "e08b1dc944c948217370399599d5aeb95761082ec52cc321201e49e3599f2c87",
+        "eventLogHash": "34ff760ac3a45c9886628b416ef5d68e41e8bd3660b678884fa2eb3c0ae8c6c4"
+      },
+      "absoluteDelta": 12.6961,
+      "correctWinner": true
+    },
+    {
+      "rowId": "elite_war_wagon_vs_champion",
+      "ratio": "8v21",
+      "tape": {
+        "samples": 4,
+        "meanScore": 20.102,
+        "minScore": 9.1156,
+        "maxScore": 25.4422,
+        "winnerOwner": 3
+      },
+      "simulation": {
+        "rowId": "elite_war_wagon_vs_champion",
+        "sampleIndex": 0,
+        "seed": 20260817,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 636,
+        "score": 43.265306122448976,
+        "ticks": 3729,
+        "finalStateHash": "f762edf290e8d53f4606d11fcd91c4bd61907b1f9db714c94a9368ce06b0490b",
+        "eventLogHash": "43a82b40e7694ffe7903b5e9b4d675ded8b166e5534deab3e19038b7d334fde9"
+      },
+      "absoluteDelta": 23.1633,
+      "correctWinner": true
+    }
+  ]
+}

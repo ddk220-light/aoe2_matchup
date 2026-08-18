@@ -1,0 +1,145 @@
+{
+  "generatedAt": "2026-08-18T00:49:58.963Z",
+  "source": {
+    "archive": {
+      "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+      "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+      "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+    },
+    "archiveSha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+  },
+  "simulation": {
+    "sampleIndices": [
+      0
+    ],
+    "variants": [
+      "sticky-pressure",
+      "sticky-pressure-pairwise-transit"
+    ],
+    "seed": 20260817,
+    "placements": "exact canonical golden starting positions",
+    "overlapPolicy": "baseline; no War Wagon enemy-overlap allowance"
+  },
+  "candidates": [
+    {
+      "variant": "sticky-pressure",
+      "sampleIndex": 0,
+      "seed": 20260817,
+      "pressureTiles": 0.5,
+      "pressureFormula": "two times the chaser collision half-extent",
+      "stickyPursuit": true,
+      "rowId": "elite_war_wagon_vs_paladin",
+      "ratio": "15v17",
+      "outcome": "win",
+      "winnerOwner": 2,
+      "remainingHp": {
+        "owner2": 1330,
+        "owner3": 0
+      },
+      "remainingHpPercent": {
+        "owner2": 44.3333,
+        "owner3": 0
+      },
+      "score": -44.3333,
+      "ticks": 8227,
+      "tapeMean": 35.4412,
+      "absoluteDelta": 79.7745,
+      "correctWinner": false,
+      "pursuitAcquisitions": 49,
+      "attackStarts": {
+        "owner2": 563,
+        "owner3": 120
+      }
+    },
+    {
+      "variant": "sticky-pressure",
+      "sampleIndex": 0,
+      "seed": 20260817,
+      "pressureTiles": 0.4,
+      "pressureFormula": "two times the chaser collision half-extent",
+      "stickyPursuit": true,
+      "rowId": "elite_war_wagon_vs_champion",
+      "ratio": "8v21",
+      "outcome": "win",
+      "winnerOwner": 3,
+      "remainingHp": {
+        "owner2": 0,
+        "owner3": 552
+      },
+      "remainingHpPercent": {
+        "owner2": 0,
+        "owner3": 37.551
+      },
+      "score": 37.551,
+      "ticks": 3759,
+      "tapeMean": 20.102,
+      "absoluteDelta": 17.449,
+      "correctWinner": true,
+      "pursuitAcquisitions": 45,
+      "attackStarts": {
+        "owner2": 119,
+        "owner3": 120
+      }
+    },
+    {
+      "variant": "sticky-pressure-pairwise-transit",
+      "sampleIndex": 0,
+      "seed": 20260817,
+      "pressureTiles": 0.5,
+      "pressureFormula": "two times the chaser collision half-extent",
+      "stickyPursuit": true,
+      "rowId": "elite_war_wagon_vs_paladin",
+      "ratio": "15v17",
+      "outcome": "win",
+      "winnerOwner": 2,
+      "remainingHp": {
+        "owner2": 1700,
+        "owner3": 0
+      },
+      "remainingHpPercent": {
+        "owner2": 56.6667,
+        "owner3": 0
+      },
+      "score": -56.6667,
+      "ticks": 7596,
+      "tapeMean": 35.4412,
+      "absoluteDelta": 92.1078,
+      "correctWinner": false,
+      "pursuitAcquisitions": 45,
+      "attackStarts": {
+        "owner2": 573,
+        "owner3": 95
+      }
+    },
+    {
+      "variant": "sticky-pressure-pairwise-transit",
+      "sampleIndex": 0,
+      "seed": 20260817,
+      "pressureTiles": 0.4,
+      "pressureFormula": "two times the chaser collision half-extent",
+      "stickyPursuit": true,
+      "rowId": "elite_war_wagon_vs_champion",
+      "ratio": "8v21",
+      "outcome": "win",
+      "winnerOwner": 3,
+      "remainingHp": {
+        "owner2": 0,
+        "owner3": 566
+      },
+      "remainingHpPercent": {
+        "owner2": 0,
+        "owner3": 38.5034
+      },
+      "score": 38.5034,
+      "ticks": 3654,
+      "tapeMean": 20.102,
+      "absoluteDelta": 18.4014,
+      "correctWinner": true,
+      "pursuitAcquisitions": 53,
+      "attackStarts": {
+        "owner2": 124,
+        "owner3": 128
+      }
+    }
+  ]
+}

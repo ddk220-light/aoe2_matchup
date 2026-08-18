@@ -1,4 +1,5 @@
 import { surfaceGap } from "./targeting.js";
+import { enemyOverlapDepthForPair } from "./collision.js";
 
 
 function requireFinite(value, name) {
@@ -7,7 +8,7 @@ function requireFinite(value, name) {
 }
 
 
-export function proposeMovement(unit, target, ticksPerSecond) {
+export function proposeMovement(unit, target, ticksPerSecond, options = {}) {
   const ticks = requireFinite(ticksPerSecond, "ticks per second");
   if (ticks <= 0) throw new RangeError("ticks per second must be positive");
 
@@ -20,7 +21,15 @@ export function proposeMovement(unit, target, ticksPerSecond) {
   const dx = requireFinite(target?.x, "target x") - requireFinite(unit?.x, "unit x");
   const dy = requireFinite(target?.y, "target y") - requireFinite(unit?.y, "unit y");
   const centerDistance = Math.hypot(dx, dy);
-  const gap = surfaceGap(unit, target);
+  const enemyOverlapDepthByMaster = options.enemyOverlapDepthByMaster;
+  if (enemyOverlapDepthByMaster !== undefined
+      && !(enemyOverlapDepthByMaster instanceof Map)) {
+    throw new TypeError("enemy overlap depths by master must be a Map");
+  }
+  const overlapDepth = enemyOverlapDepthByMaster
+    ? enemyOverlapDepthForPair(unit, target, enemyOverlapDepthByMaster)
+    : 0;
+  const gap = surfaceGap(unit, target) + overlapDepth;
   if (centerDistance === 0 || gap <= 0 || speed === 0) {
     return Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   }

@@ -20,6 +20,7 @@
 //
 // Everything is a pure function of this tick's positions. No RNG, no clock.
 import { collisionRadius } from "./targeting.js";
+import { enemyPairExtent } from "./collision.js";
 
 const CELL_TILES = 0.25;
 // One waypoint this far along the path (in cells) is handed to the walker.
@@ -54,11 +55,14 @@ function obstacleRadius(body) {
 // Blocked-cell grid for ONE mover: a cell is blocked when placing the mover's
 // centre there would overlap an obstacle body (Chebyshev, radius sum -- the
 // same test the collision solver applies).
-function buildBlockedGrid(mover, obstacles, cols, rows) {
+function buildBlockedGrid(mover, obstacles, cols, rows, options = {}) {
   const blocked = new Uint8Array(cols * rows);
   const moverRadius = collisionRadius(mover);
   for (const body of obstacles) {
-    const reach = moverRadius + obstacleRadius(body);
+    const dynamicEnemy = body.owner !== undefined && body.owner !== mover.owner;
+    const reach = dynamicEnemy
+      ? enemyPairExtent(mover, body, options.enemyOverlapDepthByMaster)
+      : moverRadius + obstacleRadius(body);
     const loX = Math.max(0, Math.floor((body.x - reach) / CELL_TILES - 0.5) + 1);
     const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / CELL_TILES - 0.5) - 1);
     const loY = Math.max(0, Math.floor((body.y - reach) / CELL_TILES - 0.5) + 1);
@@ -143,10 +147,10 @@ const NEIGHBORS = Object.freeze([
 //   null                     -- straight line is clear; keep live tracking
 //   { stand: true }          -- no reachable progress; stand still
 //   { x, y }                 -- next waypoint along the planned path (tiles)
-function planGridAim(mover, target, obstacles, map, enterBlockedGoal) {
+function planGridAim(mover, target, obstacles, map, enterBlockedGoal, options = {}) {
   const cols = Math.max(1, Math.round(map.width / CELL_TILES));
   const rows = Math.max(1, Math.round(map.height / CELL_TILES));
-  const blocked = buildBlockedGrid(mover, obstacles, cols, rows);
+  const blocked = buildBlockedGrid(mover, obstacles, cols, rows, options);
 
   const startX = toCell(mover.x, cols);
   const startY = toCell(mover.y, rows);
@@ -228,22 +232,24 @@ function planGridAim(mover, target, obstacles, map, enterBlockedGoal) {
 
 // Plan toward an unoccupied move-order coordinate. Unlike pursuit, a blocked
 // goal cell is not enterable: the best reachable approach is used instead.
-export function planMoveAim(mover, goal, obstacles, map) {
-  return planGridAim(mover, goal, [...(map.obstacles ?? []), ...obstacles], map, false);
+export function planMoveAim(mover, goal, obstacles, map, options = {}) {
+  return planGridAim(
+    mover, goal, [...(map.obstacles ?? []), ...obstacles], map, false, options,
+  );
 }
 
 
-export function planChaseAim(mover, target, obstacles, map) {
+export function planChaseAim(mover, target, obstacles, map, options = {}) {
   const blocking = obstacles.filter((body) => (
     body.owner === undefined || body.owner !== mover.owner
   ));
   const planned = planGridAim(
-    mover, target, [...(map.obstacles ?? []), ...blocking], map, true,
+    mover, target, [...(map.obstacles ?? []), ...blocking], map, true, options,
   );
   if (planned?.stand !== true || blocking.length === 0) return planned;
   // Dynamic bodies can move on the very next tick. If only those bodies make
   // A* declare the mover boxed in, continue live pursuit and let the local
   // collision layers handle this tick. Static map geometry may still produce
   // a genuine stand result.
-  return planGridAim(mover, target, map.obstacles ?? [], map, true);
+  return planGridAim(mover, target, map.obstacles ?? [], map, true, options);
 }

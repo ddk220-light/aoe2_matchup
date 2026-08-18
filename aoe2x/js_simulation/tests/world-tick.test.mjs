@@ -16,6 +16,10 @@ const scorpionMechanics = JSON.parse(await readFile(new URL(
   "../fixtures/unit_stats/heavy_scorpion_japanese_imperial.json",
   import.meta.url,
 ), "utf8"));
+const warWagonMechanics = JSON.parse(await readFile(new URL(
+  "../fixtures/unit_stats/elite_war_wagon_koreans_imperial.json",
+  import.meta.url,
+), "utf8"));
 
 
 function unit({
@@ -134,6 +138,63 @@ test("world publication preserves blocker-aware local route state", async () => 
     targetReferenceId: 3,
     side: 1,
   });
+});
+
+
+test("a world tick honors the bounded War Wagon enemy-overlap envelope", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const start = scenario([
+    unit({
+      referenceId: 1,
+      owner: 2,
+      x: 4,
+      y: 4,
+      unitMechanics: warWagonMechanics,
+    }),
+    unit({ referenceId: 2, owner: 3, x: 4.6, y: 4 }),
+  ], { warWagonEnemyOverlapDepthTiles: 0.1 });
+
+  const next = stepWorld(createWorld(start));
+  const separation = Math.abs(next.units[1].x - next.units[0].x);
+
+  assert.ok(separation >= 0.55 - 1e-12);
+  assert.ok(separation < 0.65 - 1e-12);
+});
+
+
+test("kited-fight steering honors War Wagon overlap around a non-target body", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const chaser = unit({
+    referenceId: 1,
+    owner: 3,
+    x: 2,
+    y: 5,
+    pursuitTargetId: 3,
+  });
+  const blocker = unit({
+    referenceId: 2,
+    owner: 2,
+    x: 2,
+    y: 5.6,
+    unitMechanics: warWagonMechanics,
+  });
+  const target = unit({
+    referenceId: 3,
+    owner: 2,
+    x: 6,
+    y: 5,
+    unitMechanics: warWagonMechanics,
+  });
+  const start = scenario([chaser, blocker, target], {
+    kiteOwner: 2,
+    warWagonEnemyOverlapDepthTiles: 0.2,
+  });
+
+  const next = stepWorld(createWorld(start));
+  const moved = next.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.ok(moved.x > chaser.x);
+  assert.ok(Math.abs(moved.y - chaser.y) < 1e-12);
 });
 
 

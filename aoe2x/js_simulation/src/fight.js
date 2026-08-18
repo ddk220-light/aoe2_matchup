@@ -10,7 +10,11 @@ import {
   requireSoloNavigationVariant,
   SOLO_NAVIGATION_VARIANTS,
 } from "./combat/solo-navigation.js";
-import { deriveKiteProfile, kitePolicyFor } from "./combat/kite-timing.js";
+import {
+  deriveKiteProfile,
+  kitePolicyFor,
+  warWagonChasePolicy,
+} from "./combat/kite-timing.js";
 import { kitingObservationPlacement } from "./kiting-observation-placement.js";
 import { placeArmy, resolveFamily, sideCapacity } from "./placement.js";
 import { deriveCounts, PURCHASE_BUDGET } from "./purchase.js";
@@ -308,6 +312,9 @@ export async function runFight(root, {
         ),
         ...(kiteNavigation === undefined ? {} : { kiteNavigation }),
         ...(kiteMeleeOpeningOrder === undefined ? {} : { kiteMeleeOpeningOrder }),
+        ...(kiteMeleeOpeningOrder === "attack-move-all"
+          ? warWagonChasePolicy(kiter.slug, chaserMechanics)
+          : {}),
       }),
     ...(preventiveContactSteering === true && innerMeleeCrowdOwner !== null
       ? {

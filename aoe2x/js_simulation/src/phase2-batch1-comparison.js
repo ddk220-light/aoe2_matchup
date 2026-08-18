@@ -2,7 +2,11 @@ import { readFile } from "node:fs/promises";
 
 import { buildArenaPhysicsMap } from "./arena-physics-map.js";
 import { hashCanonicalJson } from "./canonical-json.js";
-import { deriveKiteProfile, kitePolicyFor } from "./combat/kite-timing.js";
+import {
+  deriveKiteProfile,
+  kitePolicyFor,
+  warWagonChasePolicy,
+} from "./combat/kite-timing.js";
 import { createUnitState } from "./combat/unit-state.js";
 import { createWorld, runWorld } from "./combat/world.js";
 import { resolveFamily } from "./placement.js";
@@ -89,7 +93,7 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
     : (kiteOwner === 3 ? context.mechanicsByMaster.get(side2Unit.master) : null);
   const reachMeleeWedgeTransit = kiteOwner !== null
     && (chaserMechanics?.attack_range_tiles ?? 0) >= 1;
-
+  const warWagonKiter = kiter?.slug === "elite_war_wagon";
   return Object.freeze({
     ratio: `${row.side2.count}v${row.side3.count}`,
     units: Object.freeze(units),
@@ -105,6 +109,7 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
         kiteChaseDwellTicks: 0,
         pairwiseAlliedTransit: false,
         reachMeleeWedgeTransit,
+        ...(warWagonKiter ? warWagonChasePolicy(kiter.slug, chaserMechanics) : {}),
       }),
     ...(meleeCrowdOwner === null
       ? {}

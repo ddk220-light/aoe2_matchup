@@ -4,6 +4,7 @@ import {
   chebyshevGap,
   surfaceGap as euclideanCollisionGap,
 } from "./targeting.js";
+import { enemyOverlapDepthForPair } from "./collision.js";
 
 
 function compareText(left, right) {
@@ -139,17 +140,25 @@ export function reloadTicks(mechanics) {
 // long-established 0.1 stop. Units therefore walk INSIDE their outline
 // attack envelope (isWithinReach) before stopping; eligibility and stopping
 // are different rules with different boxes.
-export function isWithinStopRange(actor, target) {
+export function isWithinStopRange(actor, target, options = {}) {
   const range = requireFinite(actor?.mechanics?.attack_range_tiles, "attack range");
   if (range < 0) throw new RangeError("attack range must be nonnegative");
   const stop = Math.max(range, MELEE_CONTACT_TOLERANCE_TILES);
+  const enemyOverlapDepthByMaster = options.enemyOverlapDepthByMaster;
+  if (enemyOverlapDepthByMaster !== undefined
+      && !(enemyOverlapDepthByMaster instanceof Map)) {
+    throw new TypeError("enemy overlap depths by master must be a Map");
+  }
+  const overlapDepth = enemyOverlapDepthByMaster
+    ? enemyOverlapDepthForPair(actor, target, enemyOverlapDepthByMaster)
+    : 0;
   // Projectile units stop inside their Euclidean range circle (the same
   // metric as their reach — see isWithinReach); melee units keep the
   // Chebyshev collision-box rule measured on the steppe tapes.
   if (actor?.mechanics?.ranged) {
-    return euclideanCollisionGap(actor, target) <= stop + 1e-12;
+    return euclideanCollisionGap(actor, target) + overlapDepth <= stop + 1e-12;
   }
-  return chebyshevGap(actor, target) <= stop + 1e-12;
+  return chebyshevGap(actor, target) + overlapDepth <= stop + 1e-12;
 }
 
 

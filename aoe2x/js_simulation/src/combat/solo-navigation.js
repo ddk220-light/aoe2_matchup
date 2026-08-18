@@ -77,19 +77,22 @@ function compactSlots(count, spacing) {
 }
 
 
-function assignStableSlots(units) {
+function assignStableSlots(units, { formationSpacingTiles } = {}) {
   const own = centroid(units);
   const ordered = [...units].sort((a, b) => (
     a.y !== b.y ? a.y - b.y : (a.x !== b.x ? a.x - b.x : a.referenceId - b.referenceId)
   ));
   // Formation orders are allowed to compress allied bodies: the movement
   // solver deliberately exempts two allies that both hold formation orders,
-  // matching the recorded marching blocks. Keep the measured half-tile slot
-  // lattice for every ranged unit; using full Scorpion body diameter here
-  // makes a 21-unit square physically wider than the Arena corridor, even
-  // though the game formation can traverse it. Static-obstacle clearance is
-  // still based on the full body radius in centralObstacleEnvelope below.
-  const slots = compactSlots(units.length, MIN_SLOT_SPACING_TILES);
+  // matching the recorded marching blocks. Most ranged units use the measured
+  // half-tile lattice. A tape-measured profile may provide a wider lattice for
+  // a large body; this has to reach cohesive navigation as well as the visible
+  // kite order, otherwise the navigation layer silently compresses the group
+  // back to 0.48 tiles on the next tick.
+  const spacing = Number.isFinite(formationSpacingTiles) && formationSpacingTiles > 0
+    ? formationSpacingTiles
+    : MIN_SLOT_SPACING_TILES;
+  const slots = compactSlots(units.length, spacing);
   return new Map(ordered.map((unit, index) => [unit.referenceId, slots[index]]));
 }
 
@@ -292,11 +295,11 @@ function buildDiagnostics(state, units, blockedCount = 0) {
 }
 
 
-export function createSoloNavigationState(variant, units, map) {
+export function createSoloNavigationState(variant, units, map, formationProfile = {}) {
   requireSoloNavigationVariant(variant);
   const own = centroid(units);
   const anchor = { ...own };
-  const slots = assignStableSlots(units);
+  const slots = assignStableSlots(units, formationProfile);
   const routeBounds = centralObstacleEnvelope(
     map,
     slots,

@@ -16,6 +16,8 @@ const elephantMechanics = JSON.parse(await readFile(
   new URL("../fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json", import.meta.url), "utf8"));
 const lancerMechanics = JSON.parse(await readFile(
   new URL("../fixtures/unit_stats/elite_steppe_lancer_cumans_imperial.json", import.meta.url), "utf8"));
+const warWagonMechanics = JSON.parse(await readFile(
+  new URL("../fixtures/unit_stats/elite_war_wagon_koreans_imperial.json", import.meta.url), "utf8"));
 
 
 function unit({ referenceId, owner, x, y, mechanics, hp = mechanics.hp }) {
@@ -49,6 +51,43 @@ test("the lancer's movement stop is collision gap <= range, range-0 units keep 0
   assert.equal(isWithinStopRange(lancer, championBeyond), false);
   // The range-0 champion at the same separation is nowhere near ITS stop range.
   assert.equal(isWithinStopRange(championAtStop, lancer), false);
+});
+
+
+test("a melee chaser stops at the configured War Wagon overlap-adjusted gap", () => {
+  const champion = unit({
+    referenceId: 1,
+    owner: 3,
+    x: 4,
+    y: 4,
+    mechanics: championMechanics,
+  });
+  const wagonOutsideAdjustedStop = unit({
+    referenceId: 2,
+    owner: 2,
+    x: 4.7,
+    y: 4,
+    mechanics: warWagonMechanics,
+  });
+  const wagonAtAdjustedStop = unit({
+    referenceId: 3,
+    owner: 2,
+    x: 4.55,
+    y: 4,
+    mechanics: warWagonMechanics,
+  });
+  const ordinaryChampion = unit({
+    referenceId: 4,
+    owner: 2,
+    x: 4.45,
+    y: 4,
+    mechanics: championMechanics,
+  });
+  const options = { enemyOverlapDepthByMaster: new Map([[829, 0.2]]) };
+
+  assert.equal(isWithinStopRange(champion, wagonOutsideAdjustedStop, options), false);
+  assert.equal(isWithinStopRange(champion, wagonAtAdjustedStop, options), true);
+  assert.equal(isWithinStopRange(champion, ordinaryChampion, options), true);
 });
 
 

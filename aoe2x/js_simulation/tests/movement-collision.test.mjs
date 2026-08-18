@@ -18,16 +18,34 @@ const paladinMechanics = JSON.parse(await readFile(
   new URL("../fixtures/unit_stats/paladin_spanish_imperial.json", import.meta.url),
   "utf8",
 ));
+const warWagonMechanics = JSON.parse(await readFile(
+  new URL("../fixtures/unit_stats/elite_war_wagon_koreans_imperial.json", import.meta.url),
+  "utf8",
+));
 const openMap = Object.freeze({ width: 10, height: 10, obstacles: Object.freeze([]) });
 
 
-function unit({ referenceId, x, y, owner = 2, unitMechanics = mechanics } = {}) {
+function unit({
+  referenceId,
+  x,
+  y,
+  owner = 2,
+  unitMechanics = mechanics,
+  action = "idle",
+  pursuitTargetId = null,
+  engagedTargetId = null,
+  attackTargetId = null,
+} = {}) {
   return Object.freeze({
     referenceId,
     owner,
     x,
     y,
     alive: true,
+    action,
+    pursuitTargetId,
+    engagedTargetId,
+    attackTargetId,
     mechanics: unitMechanics,
   });
 }
@@ -95,6 +113,39 @@ test("pursuit is clamped only by the remaining physical surface gap", async () =
 });
 
 
+test("War Wagon pursuit keeps moving inside raw contact until its configured overlap limit", async () => {
+  const { proposeMovement } = await loadMovement();
+  const wagon = unit({
+    referenceId: 1,
+    x: 4,
+    y: 4,
+    unitMechanics: warWagonMechanics,
+  });
+  const champion = unit({ referenceId: 2, owner: 3, x: 4.6, y: 4 });
+
+  const result = proposeMovement(wagon, champion, 60, {
+    enemyOverlapDepthByMaster: new Map([[829, 0.1]]),
+  });
+
+  assert.ok(Math.abs(result.dx - warWagonMechanics.speed_tiles_per_second / 60) < 1e-12);
+  assert.equal(result.dy, 0);
+});
+
+
+test("War Wagon overlap movement policy does not move an unrelated pair inside contact", async () => {
+  const { proposeMovement } = await loadMovement();
+  const mover = unit({ referenceId: 1, x: 4, y: 4 });
+  const target = unit({ referenceId: 2, owner: 3, x: 4.35, y: 4 });
+
+  const result = proposeMovement(mover, target, 60, {
+    enemyOverlapDepthByMaster: new Map([[829, 0.1]]),
+  });
+
+  assert.equal(result.dx, 0);
+  assert.equal(result.dy, 0);
+});
+
+
 test("head-on Champions split the available gap without penetrating", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const left = unit({ referenceId: 1, x: 4, y: 4 });
@@ -109,6 +160,118 @@ test("head-on Champions split the available gap without penetrating", async () =
 
   assert.ok(Math.abs(next[0].x - 4.01) < 1e-12);
   assert.ok(Math.abs(next[1].x - 4.41) < 1e-12);
+  assertNonpenetrating(next);
+});
+
+
+test("a configured War Wagon pair may enter only its bounded enemy overlap depth", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const wagon = unit({
+    referenceId: 1,
+    x: 4,
+    y: 4,
+    unitMechanics: warWagonMechanics,
+  });
+  const champion = unit({ referenceId: 2, owner: 3, x: 4.67, y: 4 });
+
+  const next = resolveMovementProposals(
+    [wagon, champion],
+    [proposal(1, 0.08, 0), proposal(2, -0.08, 0)],
+    openMap,
+    { enemyOverlapDepthByMaster: new Map([[829, 0.1]]) },
+  );
+  const separation = Math.abs(next[1].x - next[0].x);
+
+  assert.ok(Math.abs(separation - 0.55) < 1e-12);
+  assert.ok(Math.abs(surfaceGap(next[0], next[1]) + 0.1) < 1e-12);
+});
+
+
+test("an attacking-only War Wagon overlap policy opens during attack lock, not pursuit", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const wagon = unit({
+    referenceId: 1,
+    x: 4,
+    y: 4,
+    unitMechanics: warWagonMechanics,
+  });
+  const pursuing = unit({ referenceId: 2, owner: 3, x: 4.67, y: 4 });
+  const attacking = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 4.67,
+    y: 4,
+    action: "attacking",
+    pursuitTargetId: 1,
+    engagedTargetId: 1,
+    attackTargetId: 1,
+  });
+  const proposals = [proposal(1, 0.08, 0), proposal(2, -0.08, 0)];
+  const options = {
+    enemyOverlapDepthByMaster: new Map([[
+      829,
+      Object.freeze({ depth: 0.1, mode: "attacking-any" }),
+    ]]),
+  };
+
+  const pursuitResult = resolveMovementProposals(
+    [wagon, pursuing], proposals, openMap, options,
+  );
+  const attackResult = resolveMovementProposals(
+    [wagon, attacking], proposals, openMap, options,
+  );
+
+  assert.ok(Math.abs(pursuitResult[1].x - pursuitResult[0].x - 0.65) < 1e-12);
+  assert.ok(Math.abs(attackResult[1].x - attackResult[0].x - 0.55) < 1e-12);
+});
+
+
+test("attack-locked War Wagon overlap remains legal until the pair separates", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const wagon = unit({
+    referenceId: 1,
+    x: 4,
+    y: 4,
+    unitMechanics: warWagonMechanics,
+  });
+  const releasedChampion = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 4.58,
+    y: 4,
+    action: "idle",
+  });
+  const options = {
+    enemyOverlapDepthByMaster: new Map([[
+      829,
+      Object.freeze({ depth: 0.1, mode: "attacking-any" }),
+    ]]),
+  };
+
+  const next = resolveMovementProposals(
+    [wagon, releasedChampion],
+    [proposal(1, -0.02, 0), proposal(2, 0.02, 0)],
+    openMap,
+    options,
+  );
+
+  assert.ok(Math.abs(next[1].x - next[0].x - 0.62) < 1e-12);
+});
+
+
+test("a War Wagon overlap policy does not relax unrelated enemy pairs", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const left = unit({ referenceId: 1, x: 4, y: 4 });
+  const right = unit({ referenceId: 2, owner: 3, x: 4.42, y: 4 });
+
+  const next = resolveMovementProposals(
+    [left, right],
+    [proposal(1, 0.04, 0), proposal(2, -0.04, 0)],
+    openMap,
+    { enemyOverlapDepthByMaster: new Map([[829, 0.1]]) },
+  );
+
+  assert.ok(Math.abs(next[1].x - next[0].x - 0.4) < 1e-12);
   assertNonpenetrating(next);
 });
 

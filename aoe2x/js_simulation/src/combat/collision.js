@@ -1,5 +1,9 @@
 import { allyCollisionRadius, collisionRadius } from "./targeting.js";
 import { alliedTransitPairKey } from "./allied-transit.js";
+import {
+  createPairInteractionSnapshot,
+  resolvePairInteraction,
+} from "./pair-interactions.js";
 
 
 const EPSILON = 1e-12;
@@ -205,40 +209,22 @@ function configuredPolicyApplies(configuredBody, opponentBody, mode) {
 export function enemyOverlapDepthForPair(left, right,
   enemyOverlapDepthByMaster = EMPTY_ENEMY_OVERLAP_DEPTHS) {
   if (left.owner === right.owner) return 0;
-  if (!(enemyOverlapDepthByMaster instanceof Map)) {
-    throw new TypeError("enemy overlap depths by master must be a Map");
-  }
-  const leftMaster = left.unitMaster ?? left.mechanics?.unit_master;
-  const rightMaster = right.unitMaster ?? right.mechanics?.unit_master;
-  let depth = 0;
-  for (const [configured, opponent, master] of [
-    [left, right, leftMaster],
-    [right, left, rightMaster],
-  ]) {
-    const policy = policyForMaster(master, enemyOverlapDepthByMaster);
-    if (policy && configuredPolicyApplies(configured, opponent, policy.mode)) {
-      depth = Math.max(depth, policy.depth);
-    }
-  }
-  return depth;
+  const snapshot = createPairInteractionSnapshot({
+    legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
+  });
+  const interaction = resolvePairInteraction(left, right, snapshot);
+  const leftRadius = Number.isFinite(left.radius) ? left.radius : collisionRadius(left);
+  const rightRadius = Number.isFinite(right.radius) ? right.radius : collisionRadius(right);
+  return leftRadius + rightRadius - interaction.collisionExtent;
 }
 
 
 export function enemyPairExtent(left, right,
   enemyOverlapDepthByMaster = EMPTY_ENEMY_OVERLAP_DEPTHS) {
-  const leftRadius = Number.isFinite(left.radius) ? left.radius : collisionRadius(left);
-  const rightRadius = Number.isFinite(right.radius) ? right.radius : collisionRadius(right);
-  const fullExtent = leftRadius + rightRadius;
-  if (left.owner === right.owner) return fullExtent;
-  const overlapDepth = enemyOverlapDepthForPair(
-    left, right, enemyOverlapDepthByMaster,
-  );
-  if (overlapDepth >= fullExtent) {
-    throw new RangeError(
-      `enemy overlap depth ${overlapDepth} must be smaller than pair extent ${fullExtent}`,
-    );
-  }
-  return fullExtent - overlapDepth;
+  const snapshot = createPairInteractionSnapshot({
+    legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
+  });
+  return resolvePairInteraction(left, right, snapshot).collisionExtent;
 }
 
 

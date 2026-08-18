@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { isWithinStopRange } from "../src/combat/attacks.js";
+import { createPairInteractionSnapshot } from "../src/combat/pair-interactions.js";
 import { isWithinReach } from "../src/combat/targeting.js";
 import { createUnitState } from "../src/combat/unit-state.js";
 import { createWorld, stepWorld } from "../src/combat/world.js";
@@ -51,6 +52,27 @@ test("the lancer's movement stop is collision gap <= range, range-0 units keep 0
   assert.equal(isWithinStopRange(lancer, championBeyond), false);
   // The range-0 champion at the same separation is nowhere near ITS stop range.
   assert.equal(isWithinStopRange(championAtStop, lancer), false);
+});
+
+
+test("a reserved range-zero transit pair closes to the paired unit center", () => {
+  const champion = unit({ referenceId: 1, owner: 3, x: 4, y: 4, mechanics: championMechanics });
+  const outsideContact = unit({ referenceId: 2, owner: 2, x: 4.55, y: 4, mechanics: paladinMechanics });
+  const atContact = { ...outsideContact, x: 4 };
+  const pairInteractions = createPairInteractionSnapshot({
+    circularEnemyContact: true,
+    enemyTransitPairs: new Map([["1:2", Object.freeze({
+      chaserId: 1,
+      blockerId: 2,
+      pursuitTargetId: 2,
+      acquisitionAxis: "x",
+      acquisitionSign: 1,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  assert.equal(isWithinStopRange(champion, outsideContact, { pairInteractions }), false);
+  assert.equal(isWithinStopRange(champion, atContact, { pairInteractions }), true);
 });
 
 

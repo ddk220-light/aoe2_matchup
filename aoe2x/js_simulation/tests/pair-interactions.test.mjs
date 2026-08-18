@@ -32,6 +32,7 @@ function unit({
     attackTargetId,
     mechanics: Object.freeze({
       unit_master: unitMaster,
+      min_collision_size_multiplier: 0.8,
       collision_size_tiles: Object.freeze({ x: radius, y: radius }),
     }),
   });
@@ -62,6 +63,63 @@ test("ordinary enemies use one hard physical pair extent for every purpose", () 
 });
 
 
+test("the shared experiment projects circular enemy contact into the movement axes", () => {
+  const left = unit({ referenceId: 1, owner: 2, x: 4, y: 4, radius: 0.25 });
+  const right = unit({ referenceId: 2, owner: 3, x: 5, y: 5, radius: 0.25 });
+  const interaction = resolvePairInteraction(left, right, createPairInteractionSnapshot({
+    circularEnemyContact: true,
+  }));
+
+  assert.equal(interaction.kind, "circular-contact");
+  assert.ok(Math.abs(interaction.collisionExtent - Math.SQRT1_2 * 0.5) < 1e-12);
+  assert.equal(interaction.pathObstructs, true);
+  assert.ok(Math.abs(interaction.attackSurfaceExtent - Math.SQRT1_2 * 0.5) < 1e-12);
+  assert.equal(interaction.mayDeepen, false);
+});
+
+
+test("a reserved transit pair remains transparent under circular projection", () => {
+  const left = unit({ referenceId: 1, owner: 3, x: 4, y: 4, radius: 0.25 });
+  const right = unit({ referenceId: 2, owner: 2, x: 5, y: 5, radius: 0.25 });
+  const snapshot = createPairInteractionSnapshot({
+    circularEnemyContact: true,
+    enemyTransitPairs: new Map([["1:2", Object.freeze({
+      chaserId: 1,
+      blockerId: 2,
+      pursuitTargetId: 2,
+      mode: "formation-flow",
+      acquisitionAxis: "x",
+      acquisitionSign: 1,
+      acquiredTick: 10,
+    })]]),
+  });
+  const interaction = resolvePairInteraction(left, right, snapshot);
+
+  assert.equal(interaction.collisionExtent, 0);
+  assert.equal(interaction.attackSurfaceExtent, 0);
+});
+
+
+test("active pursuit paths ignore non-target enemies without waiving their collision", () => {
+  const chaser = unit({ referenceId: 1, owner: 3, x: 4, y: 4, radius: 0.25 });
+  const blocker = unit({ referenceId: 2, owner: 2, x: 5, y: 5, radius: 0.25 });
+  const target = unit({ referenceId: 3, owner: 2, x: 6, y: 6, radius: 0.25 });
+  const snapshot = createPairInteractionSnapshot({
+    circularEnemyContact: true,
+    enemyPursuitTargets: new Map([[1, 3]]),
+  });
+
+  const corridor = resolvePairInteraction(chaser, blocker, snapshot);
+  assert.equal(corridor.kind, "pursuit-corridor");
+  assert.equal(corridor.pathObstructs, false);
+  assert.ok(corridor.collisionExtent > 0);
+
+  const direct = resolvePairInteraction(chaser, target, snapshot);
+  assert.equal(direct.kind, "circular-contact");
+  assert.equal(direct.pathObstructs, true);
+});
+
+
 test("snapshots reject malformed pair-state collections before movement", () => {
   assert.throws(
     () => createPairInteractionSnapshot({ enemyTransitPairs: new Set() }),
@@ -76,7 +134,7 @@ test("snapshots reject malformed pair-state collections before movement", () => 
 });
 
 
-test("reserved enemy transit waives non-target obstruction but not attack geometry", () => {
+test("ordinary pursuit transit uses DAT compression while unrelated enemies stay hard", () => {
   const left = unit({ referenceId: 1, owner: 3, radius: 0.25 });
   const right = unit({ referenceId: 2, owner: 2, radius: 0.3 });
   const snapshot = createPairInteractionSnapshot({
@@ -92,12 +150,50 @@ test("reserved enemy transit waives non-target obstruction but not attack geomet
 
   assert.deepEqual(resolvePairInteraction(left, right, snapshot), {
     kind: "transit",
-    collisionExtent: 0,
+    collisionExtent: 0.5,
     pathObstructs: false,
-    attackSurfaceExtent: 0.55,
+    attackSurfaceExtent: 0.5,
     mayDeepen: true,
-    reason: "non-target-corridor",
+    reason: "reserved-pair-compression",
   });
+});
+
+
+test("engagement contact uses both bodies' DAT shrink allowances", () => {
+  const left = unit({ referenceId: 1, owner: 3, radius: 0.25 });
+  const right = unit({ referenceId: 2, owner: 2, radius: 0.25 });
+  const snapshot = createPairInteractionSnapshot({
+    enemyTransitPairs: new Map([["1:2", Object.freeze({
+      chaserId: 1,
+      blockerId: 2,
+      pursuitTargetId: 2,
+      mode: "engagement-contact",
+      acquisitionAxis: "x",
+      acquisitionSign: 1,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  assert.equal(resolvePairInteraction(left, right, snapshot).collisionExtent, 0.4);
+});
+
+
+test("direct engagement cannot compress into a larger target footprint", () => {
+  const chaser = unit({ referenceId: 1, owner: 3, x: 1, y: 1, radius: 0.25 });
+  const largeTarget = unit({ referenceId: 2, owner: 2, x: 1.7, y: 1, radius: 0.4 });
+  const snapshot = createPairInteractionSnapshot({
+    enemyTransitPairs: new Map([["1:2", Object.freeze({
+      chaserId: 1,
+      blockerId: 2,
+      pursuitTargetId: 2,
+      mode: "engagement-contact",
+      acquisitionAxis: "x",
+      acquisitionSign: 1,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  assert.equal(resolvePairInteraction(chaser, largeTarget, snapshot).collisionExtent, 0.65);
 });
 
 

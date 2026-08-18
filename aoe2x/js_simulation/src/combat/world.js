@@ -8,6 +8,7 @@ import {
 } from "./pair-interactions.js";
 import {
   createEnemyTransitState,
+  separateInheritedContactProposals,
   updateEnemyTransit,
 } from "./enemy-transit.js";
 import {
@@ -40,7 +41,7 @@ import {
   updateAlliedTransit,
 } from "./allied-transit.js";
 import { updateExclusiveAlliedOverlap } from "./allied-overlap.js";
-import { proposeMovement } from "./movement.js";
+import { proposeMovement, proposePointMovement } from "./movement.js";
 import {
   createSoloNavigationState,
   finishSoloNavigationTick,
@@ -861,6 +862,7 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
     enemyTransitPairs: enemyTransitState?.reservations ?? new Map(),
     inheritedEnemyContactExtents:
       enemyTransitState?.inheritedContactExtents ?? new Map(),
+    circularEnemyContact: enemyTransitState !== null,
   });
   const soloDestinations = kiteState?.soloNavigationState
     ? planSoloNavigation(
@@ -908,8 +910,10 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
       }
       const plan = waypoint.plan;
       if (plan !== null) {
-        if (plan.stand === true) return { ...target, x: unit.x, y: unit.y };
-        return { ...target, x: plan.x, y: plan.y };
+        if (plan.stand === true) {
+          return Object.freeze({ x: unit.x, y: unit.y, pathWaypoint: true });
+        }
+        return Object.freeze({ x: plan.x, y: plan.y, pathWaypoint: true });
       }
     }
     return { ...target, x: waypoint.x, y: waypoint.y };
@@ -1012,7 +1016,9 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
     if (kiteState?.meleeOpeningOrder === "attack-move-all"
         && unit.owner !== kiteState.owner
         && engaged?.alive && engaged.owner !== unit.owner
-        && isWithinReach(unit, engaged)) {
+        && isWithinReach(unit, engaged)
+        && (enemyTransitState === null
+          || isWithinStopRange(unit, engaged, { pairInteractions }))) {
       return Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
     }
     const target = byReference.get(unit.pursuitTargetId);
@@ -1020,12 +1026,12 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
       unit, target, { pairInteractions },
     )
       && !holdsForChargeVolley(unit, target)
-      ? proposeMovement(
-        unit,
-        chaseAim(unit, target),
-        TICKS_PER_SECOND,
-        { pairInteractions },
-      )
+      ? (() => {
+        const aim = chaseAim(unit, target);
+        return aim.pathWaypoint
+          ? proposePointMovement(unit, aim, TICKS_PER_SECOND)
+          : proposeMovement(unit, aim, TICKS_PER_SECOND, { pairInteractions });
+      })()
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
   };
   let proposals = live.map(proposalForUnit);
@@ -1070,8 +1076,14 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
       ...enemyTransitUpdate.state.reservations.values(),
       ...enemyTransitUpdate.diagnostics,
     ].map(({ chaserId }) => chaserId).filter(Number.isSafeInteger));
+    for (const referenceId of enemyTransitUpdate.pairSnapshotData.enemyPursuitTargets.keys()) {
+      replanIds.add(referenceId);
+    }
     if (kiteState?.chaseWaypoints) {
       for (const referenceId of replanIds) kiteState.chaseWaypoints.delete(referenceId);
+    }
+    if (kiteState?.kitedWaypoints) {
+      for (const referenceId of replanIds) kiteState.kitedWaypoints.delete(referenceId);
     }
     if (replanIds.size > 0) {
       proposals = proposals.map((proposal) => {
@@ -1079,6 +1091,14 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
         return proposalForUnit(byReference.get(proposal.referenceId));
       });
     }
+    proposals = separateInheritedContactProposals({
+      units: live,
+      proposals,
+      inheritedContactExtents:
+        enemyTransitUpdate.state.inheritedContactExtents,
+      inheritedContactSources:
+        enemyTransitUpdate.state.inheritedContactSources,
+    });
   }
   let alliedTransitPairs = new Set();
   if (kiteState?.alliedTransit) {
@@ -1226,6 +1246,7 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
     blockedIds,
     velocities,
     enemyTransitUpdate,
+    pairInteractions: movementOptions.pairInteractions,
   };
 }
 
@@ -1251,7 +1272,8 @@ const KITE_DWELL_HOLD_RADIUS_TILES = 1.0;
 const CONTACT_CAPTURE_EPSILON = 0.02;
 
 
-function updateEngagements(units, contacts, tick, events, blockedIds, kiteState = null) {
+function updateEngagements(units, contacts, tick, events, blockedIds, kiteState = null,
+  pairInteractions = createPairInteractionSnapshot()) {
   const kiteOwner = kiteState ? kiteState.owner : null;
   if (kiteState && !kiteState.reachDwell) kiteState.reachDwell = new Map();
   const snapshot = Object.freeze(units.map(freezeUnit));
@@ -1336,7 +1358,13 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
         for (const candidate of snapshot) {
           if (!candidate.alive || candidate.owner === unit.owner) continue;
           if (candidate.referenceId === unit.pursuitTargetId) continue;
-          if (chebyshevGap(unit, candidate) > CONTACT_CAPTURE_EPSILON) continue;
+          const contactGap = pairInteractions.circularEnemyContact
+            ? Math.max(
+              Math.abs(candidate.x - unit.x),
+              Math.abs(candidate.y - unit.y),
+            ) - resolvePairInteraction(unit, candidate, pairInteractions).attackSurfaceExtent
+            : chebyshevGap(unit, candidate);
+          if (contactGap > CONTACT_CAPTURE_EPSILON) continue;
           const towardX = candidate.x - unit.x;
           const towardY = candidate.y - unit.y;
           if (frontX * towardX + frontY * towardY <= 0) continue;
@@ -1488,7 +1516,11 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
     // to selectEngagementTarget kept every pinned scorpion firing full
     // pass-through bolts at the rest of the pack and flipped svc 15v20 to a
     // scorpion win the tape refutes.
-    const pursuedClosed = pursued && pursued.alive && isWithinStopRange(self, pursued);
+    const pursuedClosed = pursued && pursued.alive && isWithinStopRange(
+      self,
+      pursued,
+      { pairInteractions },
+    );
     const nextTargetId = pursuedClosed && isWithinReach(self, pursued)
       ? pursued.referenceId
       : (pursuedClosed && unit.mechanics?.ranged
@@ -2168,6 +2200,7 @@ export function stepWorld(world) {
     blockedIds,
     velocities,
     enemyTransitUpdate,
+    pairInteractions,
   } = moveUnits(
     units,
     world.map,
@@ -2178,7 +2211,15 @@ export function stepWorld(world) {
     world.enemyOverlapDepthByMaster ?? new Map(),
     world.enemyTransitState ?? null,
   );
-  updateEngagements(units, contacts, tick, events, blockedIds, world.kiteState ?? null);
+  updateEngagements(
+    units,
+    contacts,
+    tick,
+    events,
+    blockedIds,
+    world.kiteState ?? null,
+    pairInteractions,
+  );
   // Clone flight state: published projectiles are frozen, ranged shots
   // advance their position every tick, and a bolt's hit list must not alias
   // the previous tick's published array.

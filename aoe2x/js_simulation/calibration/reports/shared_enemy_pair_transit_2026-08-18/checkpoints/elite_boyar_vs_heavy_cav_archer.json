@@ -1,0 +1,315 @@
+{
+  "schemaVersion": 1,
+  "experimentRevision": 7,
+  "engineSignature": "77E033C87CEDE5AD5602047A222F7FFF4F461C427AE2D3E87232F20CED40FE86",
+  "rowId": "elite_boyar_vs_heavy_cav_archer",
+  "samplesRequested": 3,
+  "sourceHashes": {
+    "phase2": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6",
+    "hcaPaladin": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+  },
+  "samples": [
+    {
+      "rowId": "elite_boyar_vs_heavy_cav_archer",
+      "sampleIndex": 0,
+      "outcome": {
+        "kind": "win",
+        "winnerOwner": 3,
+        "winnerHp": 564,
+        "score": 23.5,
+        "ticks": 5331
+      },
+      "overlap": {
+        "eligibleFrames": 5331,
+        "frameShare": 0.308385,
+        "pairObservations": 656748,
+        "overlappingPairObservations": 2451,
+        "pairShare": 0.003732,
+        "depthTiles": {
+          "min": 0.000066,
+          "median": 0.076164,
+          "p90": 0.125,
+          "max": 0.184575
+        },
+        "maximumPairsInFrame": 4,
+        "episodes": {
+          "count": 31,
+          "durationSeconds": {
+            "min": 0.016667,
+            "median": 0.8,
+            "p90": 4.25,
+            "max": 5.316667
+          }
+        },
+        "overlapSources": {
+          "engagement-contact": 934,
+          "formation-flow": 55,
+          "inherited": 1045,
+          "melee-pursuit": 417
+        },
+        "reservationDepthsByMode": {
+          "formation-flow": {
+            "min": -0.517881,
+            "median": -0.176104,
+            "p90": 0.087151,
+            "max": 0.184575
+          },
+          "engagement-contact": {
+            "min": -0.853751,
+            "median": -0.02691,
+            "p90": 0.075947,
+            "max": 0.125
+          },
+          "melee-pursuit": {
+            "min": -0.16992,
+            "median": 0.038666,
+            "p90": 0.124311,
+            "max": 0.125
+          }
+        }
+      },
+      "movement": {
+        "2": {
+          "meanPathTilesPerStartingUnit": 19.738563,
+          "effectiveSpeedWhileMovingTilesPerSecond": 1.519279,
+          "progressSpeedAcrossAliveTimeTilesPerSecond": 0.414213,
+          "movingShareOfAliveObservations": 0.272638,
+          "attackingShareOfAliveObservations": 0.566944
+        },
+        "3": {
+          "meanPathTilesPerStartingUnit": 31.686843,
+          "effectiveSpeedWhileMovingTilesPerSecond": 1.051991,
+          "progressSpeedAcrossAliveTimeTilesPerSecond": 0.643619,
+          "movingShareOfAliveObservations": 0.611811,
+          "attackingShareOfAliveObservations": 0.307175
+        }
+      },
+      "transit": {
+        "acquired": 63,
+        "released": 61,
+        "maximumReservations": 5,
+        "releaseReasons": {
+          "crossed-and-separating": 16,
+          "flow-separated": 8,
+          "flow-ended": 6,
+          "blocker-missing": 11,
+          "pursuit-ended": 15,
+          "target-changed": 5
+        },
+        "acquisitionReasons": {
+          "moving-through-engaged-enemy": 29,
+          "direct-target-contact": 29,
+          "non-target-corridor": 5
+        },
+        "acquisitionSeparations": {
+          "min": 0.5,
+          "median": 0.590295,
+          "p90": 0.878738,
+          "max": 1.017881
+        }
+      }
+    },
+    {
+      "rowId": "elite_boyar_vs_heavy_cav_archer",
+      "sampleIndex": 1,
+      "outcome": {
+        "kind": "win",
+        "winnerOwner": 2,
+        "winnerHp": 110,
+        "score": -6.547619,
+        "ticks": 6576
+      },
+      "overlap": {
+        "eligibleFrames": 6576,
+        "frameShare": 0.126064,
+        "pairObservations": 724854,
+        "overlappingPairObservations": 900,
+        "pairShare": 0.001242,
+        "depthTiles": {
+          "min": 0.000336,
+          "median": 0.05744,
+          "p90": 0.125,
+          "max": 0.125
+        },
+        "maximumPairsInFrame": 2,
+        "episodes": {
+          "count": 20,
+          "durationSeconds": {
+            "min": 0.033333,
+            "median": 0.7,
+            "p90": 1.466667,
+            "max": 2.033333
+          }
+        },
+        "overlapSources": {
+          "engagement-contact": 495,
+          "formation-flow": 11,
+          "inherited": 125,
+          "melee-pursuit": 269
+        },
+        "reservationDepthsByMode": {
+          "formation-flow": {
+            "min": -0.516446,
+            "median": -0.145007,
+            "p90": -0.046123,
+            "max": 0.066726
+          },
+          "engagement-contact": {
+            "min": -0.804893,
+            "median": -0.036321,
+            "p90": 0.124574,
+            "max": 0.125
+          },
+          "melee-pursuit": {
+            "min": -0.515659,
+            "median": 0.009074,
+            "p90": 0.122474,
+            "max": 0.125
+          }
+        }
+      },
+      "movement": {
+        "2": {
+          "meanPathTilesPerStartingUnit": 29.6195,
+          "effectiveSpeedWhileMovingTilesPerSecond": 1.53912,
+          "progressSpeedAcrossAliveTimeTilesPerSecond": 0.470186,
+          "movingShareOfAliveObservations": 0.30549,
+          "attackingShareOfAliveObservations": 0.567881
+        },
+        "3": {
+          "meanPathTilesPerStartingUnit": 30.285379,
+          "effectiveSpeedWhileMovingTilesPerSecond": 1.074386,
+          "progressSpeedAcrossAliveTimeTilesPerSecond": 0.650119,
+          "movingShareOfAliveObservations": 0.605107,
+          "attackingShareOfAliveObservations": 0.296527
+        }
+      },
+      "transit": {
+        "acquired": 44,
+        "released": 43,
+        "maximumReservations": 3,
+        "releaseReasons": {
+          "crossed-and-separating": 12,
+          "flow-separated": 3,
+          "flow-ended": 5,
+          "pursuit-ended": 10,
+          "blocker-missing": 7,
+          "target-changed": 4,
+          "chaser-missing": 2
+        },
+        "acquisitionReasons": {
+          "moving-through-engaged-enemy": 20,
+          "direct-target-contact": 20,
+          "non-target-corridor": 4
+        },
+        "acquisitionSeparations": {
+          "min": 0.503363,
+          "median": 0.589693,
+          "p90": 0.599661,
+          "max": 0.878738
+        }
+      }
+    },
+    {
+      "rowId": "elite_boyar_vs_heavy_cav_archer",
+      "sampleIndex": 2,
+      "outcome": {
+        "kind": "win",
+        "winnerOwner": 3,
+        "winnerHp": 370,
+        "score": 15.416667,
+        "ticks": 5797
+      },
+      "overlap": {
+        "eligibleFrames": 5797,
+        "frameShare": 0.181991,
+        "pairObservations": 701597,
+        "overlappingPairObservations": 1265,
+        "pairShare": 0.001803,
+        "depthTiles": {
+          "min": 0.000085,
+          "median": 0.043687,
+          "p90": 0.113043,
+          "max": 0.162728
+        },
+        "maximumPairsInFrame": 3,
+        "episodes": {
+          "count": 32,
+          "durationSeconds": {
+            "min": 0.016667,
+            "median": 0.466667,
+            "p90": 1.283333,
+            "max": 1.95
+          }
+        },
+        "overlapSources": {
+          "engagement-contact": 829,
+          "formation-flow": 23,
+          "inherited": 7,
+          "melee-pursuit": 406
+        },
+        "reservationDepthsByMode": {
+          "formation-flow": {
+            "min": -0.513318,
+            "median": -0.151243,
+            "p90": -0.05298,
+            "max": 0.162728
+          },
+          "engagement-contact": {
+            "min": -0.800293,
+            "median": -0.019462,
+            "p90": 0.112241,
+            "max": 0.125
+          },
+          "melee-pursuit": {
+            "min": -1.003871,
+            "median": -0.063144,
+            "p90": 0.109291,
+            "max": 0.125
+          }
+        }
+      },
+      "movement": {
+        "2": {
+          "meanPathTilesPerStartingUnit": 24.400822,
+          "effectiveSpeedWhileMovingTilesPerSecond": 1.537559,
+          "progressSpeedAcrossAliveTimeTilesPerSecond": 0.46042,
+          "movingShareOfAliveObservations": 0.299449,
+          "attackingShareOfAliveObservations": 0.562088
+        },
+        "3": {
+          "meanPathTilesPerStartingUnit": 31.838541,
+          "effectiveSpeedWhileMovingTilesPerSecond": 1.074643,
+          "progressSpeedAcrossAliveTimeTilesPerSecond": 0.651067,
+          "movingShareOfAliveObservations": 0.605845,
+          "attackingShareOfAliveObservations": 0.302411
+        }
+      },
+      "transit": {
+        "acquired": 46,
+        "released": 45,
+        "maximumReservations": 3,
+        "releaseReasons": {
+          "crossed-and-separating": 14,
+          "flow-separated": 3,
+          "flow-ended": 4,
+          "pursuit-ended": 8,
+          "blocker-missing": 12,
+          "chaser-missing": 2,
+          "target-changed": 2
+        },
+        "acquisitionReasons": {
+          "moving-through-engaged-enemy": 21,
+          "direct-target-contact": 19,
+          "non-target-corridor": 6
+        },
+        "acquisitionSeparations": {
+          "min": 0.500357,
+          "median": 0.581578,
+          "p90": 0.657117,
+          "max": 0.878738
+        }
+      }
+    }
+  ]
+}

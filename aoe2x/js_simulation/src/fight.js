@@ -190,6 +190,7 @@ export async function runFight(root, {
   kiteChaseCapture,
   kiteChaseDwellTicks,
   pairwiseAlliedTransit,
+  pairwiseEnemyTransit,
   reachMeleeWedgeTransit,
   preventiveContactSteering,
   placementByOwner,
@@ -298,6 +299,7 @@ export async function runFight(root, {
     ratio: `${innerCount2}v${innerCount3}`,
     units,
     ...(map ? { map } : {}),
+    ...(pairwiseEnemyTransit === true ? { pairwiseEnemyTransit: true } : {}),
     ...(innerKiteOwner === null
       ? {}
       : {
@@ -377,6 +379,7 @@ export async function runFight(root, {
         }),
       }
       : (kiteNavigation === undefined ? {} : { contactSteeringMode: "off" })),
+    ...(pairwiseEnemyTransit === true ? { enemyTransitMode: "pairwise" } : {}),
     side2: Object.freeze({
       slug: side2.slug, label: side2.label, civ: side2.civ, count: count2, class: side2.class }),
     side3: Object.freeze({
@@ -493,6 +496,7 @@ export async function runKitingObservation(root, {
   meleeSlug = "champion",
   n2,
   n3,
+  pairwiseEnemyTransit = false,
 } = {}) {
   requireSoloNavigationVariant(navigation);
   const matchup = kitingObservationMatchup(rangedSlug, meleeSlug);
@@ -522,6 +526,7 @@ export async function runKitingObservation(root, {
     map,
     placementByOwner,
     preventiveContactSteering: true,
+    pairwiseEnemyTransit,
     ...(cohesiveKiting
       ? {
         kiteNavigation: navigation,

@@ -410,6 +410,38 @@ test("an attack-moving chaser acquires a visible target before reaching its wayp
 });
 
 
+test("pairwise compression lets a reloading melee engagement close to its stop surface", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const next = stepWorld(createWorld(scenario([
+    unit({
+      referenceId: 1,
+      owner: 3,
+      x: 2,
+      y: 5,
+      pursuitTargetId: 2,
+      engagedTargetId: 2,
+      action: "reload",
+      reload: 10,
+    }),
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 2.6,
+      y: 5,
+      pursuitTargetId: 1,
+      unitMechanics: heavyCavArcherMechanics,
+    }),
+  ], {
+    kiteOwner: 2,
+    kiteMeleeOpeningOrder: "attack-move-all",
+    pairwiseEnemyTransit: true,
+  })));
+  const champion = next.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.ok(champion.x > 2);
+});
+
+
 test("an attack-move scan can account for targets claimed earlier in the same scan", async () => {
   const { createWorld, stepWorld } = await import("../src/combat/world.js");
   let world = createWorld(scenario([

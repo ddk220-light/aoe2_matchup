@@ -172,7 +172,7 @@ test("an enabled world tick reserves a non-target enemy in a melee pursuit corri
       y: 5,
       pursuitTargetId: 3,
     }),
-    unit({ referenceId: 2, owner: 2, x: 2.7, y: 5.05 }),
+    unit({ referenceId: 2, owner: 2, x: 2.41, y: 5 }),
     unit({ referenceId: 3, owner: 2, x: 6, y: 5 }),
   ], { pairwiseEnemyTransit: true });
 
@@ -183,6 +183,9 @@ test("an enabled world tick reserves a non-target enemy in a melee pursuit corri
   assert.equal(next.enemyTransitDiagnostics.some(({ type }) => (
     type === "enemy-transit-acquired"
   )), true);
+  const chaser = next.units.find(({ referenceId }) => referenceId === 1);
+  const blocker = next.units.find(({ referenceId }) => referenceId === 2);
+  assert.ok(Math.abs(blocker.x - chaser.x) < 0.4);
 });
 
 

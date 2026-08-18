@@ -82,6 +82,12 @@ function normalizeTransitPairs(value) {
       reservation.pursuitTargetId,
       "transit pursuit target ID",
     );
+    const mode = reservation.mode ?? "melee-pursuit";
+    if (mode !== "melee-pursuit"
+        && mode !== "formation-flow"
+        && mode !== "engagement-contact") {
+      throw new RangeError(`unknown enemy transit mode ${mode}`);
+    }
     if (dynamicPairKey(chaserId, blockerId) !== key) {
       throw new TypeError("enemy transit reservation IDs must match its pair key");
     }
@@ -98,10 +104,25 @@ function normalizeTransitPairs(value) {
       chaserId,
       blockerId,
       pursuitTargetId,
+      mode,
       acquisitionAxis: reservation.acquisitionAxis,
       acquisitionSign: reservation.acquisitionSign,
       acquiredTick: reservation.acquiredTick,
     }));
+  }
+  return result;
+}
+
+
+function normalizePursuitTargets(value) {
+  const result = new Map();
+  for (const [chaserId, targetId] of requireMap(value, "enemy pursuit targets")) {
+    const normalizedChaserId = requireReferenceId(chaserId, "pursuit chaser ID");
+    const normalizedTargetId = requireReferenceId(targetId, "pursuit target ID");
+    if (normalizedChaserId === normalizedTargetId) {
+      throw new RangeError("a pursuit target must differ from its chaser");
+    }
+    result.set(normalizedChaserId, normalizedTargetId);
   }
   return result;
 }
@@ -140,6 +161,47 @@ function fullPairExtent(left, right) {
   const leftRadius = Number.isFinite(left.radius) ? left.radius : collisionRadius(left);
   const rightRadius = Number.isFinite(right.radius) ? right.radius : collisionRadius(right);
   return leftRadius + rightRadius;
+}
+
+
+function shrinkAllowance(body) {
+  const source = sourceUnit(body);
+  const radius = Number.isFinite(body.radius) ? body.radius : collisionRadius(body);
+  const multiplier = source?.mechanics?.min_collision_size_multiplier;
+  if (!Number.isFinite(multiplier)) return 0;
+  if (multiplier <= 0 || multiplier > 1) {
+    throw new RangeError("minimum collision size multiplier must be within (0, 1]");
+  }
+  return radius * (1 - multiplier);
+}
+
+
+function reservedPairExtent(left, right, reservation) {
+  if (reservation.mode === "formation-flow") return 0;
+  const chaser = left.referenceId === reservation.chaserId ? left : right;
+  if (reservation.mode === "melee-pursuit") {
+    return Math.max(0, fullPairExtent(left, right) - shrinkAllowance(chaser));
+  }
+  const target = left.referenceId === reservation.blockerId ? left : right;
+  const chaserRadius = Number.isFinite(chaser.radius)
+    ? chaser.radius : collisionRadius(chaser);
+  const targetRadius = Number.isFinite(target.radius)
+    ? target.radius : collisionRadius(target);
+  if (targetRadius > chaserRadius + EPSILON) return fullPairExtent(left, right);
+  return Math.max(
+    0,
+    fullPairExtent(left, right) - shrinkAllowance(chaser) - shrinkAllowance(target),
+  );
+}
+
+
+function circularProjectedExtent(left, right, extent) {
+  const dx = Math.abs(right.x - left.x);
+  const dy = Math.abs(right.y - left.y);
+  const distance = Math.hypot(dx, dy);
+  return distance <= Number.EPSILON
+    ? extent
+    : extent * Math.max(dx, dy) / distance;
 }
 
 
@@ -211,9 +273,14 @@ export function createPairInteractionSnapshot({
   exclusiveAlliedShrinkOwners = new Set(),
   legacyEnemyOverlapDepthByMaster = new Map(),
   enemyTransitPairs = new Map(),
+  enemyPursuitTargets = new Map(),
   sweptEnemyContactExtents = new Map(),
   inheritedEnemyContactExtents = new Map(),
+  circularEnemyContact = false,
 } = {}) {
+  if (typeof circularEnemyContact !== "boolean") {
+    throw new TypeError("circular enemy contact must be a boolean");
+  }
   const normalizedReservedIds = new Set();
   for (const referenceId of requireSet(
     alliedShrinkReservedIds,
@@ -238,6 +305,7 @@ export function createPairInteractionSnapshot({
       legacyEnemyOverlapDepthByMaster,
     ),
     enemyTransitPairs: normalizeTransitPairs(enemyTransitPairs),
+    enemyPursuitTargets: normalizePursuitTargets(enemyPursuitTargets),
     sweptEnemyContactExtents: normalizeExtentMap(
       sweptEnemyContactExtents,
       "swept enemy contact",
@@ -246,6 +314,7 @@ export function createPairInteractionSnapshot({
       inheritedEnemyContactExtents,
       "inherited enemy contact",
     ),
+    circularEnemyContact,
   });
 }
 
@@ -273,7 +342,19 @@ export function resolvePairInteraction(left, right,
     ? dynamicPairKey(left.referenceId, right.referenceId)
     : null;
   if (snapshot.enemyTransitPairs.has(key)) {
-    return interaction("transit", 0, false, extent, true, "non-target-corridor");
+    const reservation = snapshot.enemyTransitPairs.get(key);
+    const compressedExtent = reservedPairExtent(left, right, reservation);
+    const approachExtent = snapshot.circularEnemyContact
+      ? circularProjectedExtent(left, right, compressedExtent)
+      : compressedExtent;
+    return interaction(
+      "transit",
+      approachExtent,
+      false,
+      approachExtent,
+      true,
+      "reserved-pair-compression",
+    );
   }
   if (snapshot.sweptEnemyContactExtents.has(key)) {
     const sweptExtent = snapshot.sweptEnemyContactExtents.get(key);
@@ -297,6 +378,27 @@ export function resolvePairInteraction(left, right,
     );
   }
 
+
+  const leftPursuitTarget = snapshot.enemyPursuitTargets.get(left.referenceId);
+  const rightPursuitTarget = snapshot.enemyPursuitTargets.get(right.referenceId);
+  const pursuitCorridor = (leftPursuitTarget !== undefined
+      && leftPursuitTarget !== right.referenceId)
+    || (rightPursuitTarget !== undefined
+      && rightPursuitTarget !== left.referenceId);
+  if (pursuitCorridor) {
+    const projectedExtent = snapshot.circularEnemyContact
+      ? circularProjectedExtent(left, right, extent)
+      : extent;
+    return interaction(
+      "pursuit-corridor",
+      projectedExtent,
+      false,
+      projectedExtent,
+      false,
+      "non-target-pursuit-path",
+    );
+  }
+
   const legacyDepth = legacyOverlapDepth(
     left,
     right,
@@ -315,6 +417,17 @@ export function resolvePairInteraction(left, right,
       extent - legacyDepth,
       true,
       "legacy-unit-policy",
+    );
+  }
+  if (snapshot.circularEnemyContact) {
+    const projectedExtent = circularProjectedExtent(left, right, extent);
+    return interaction(
+      "circular-contact",
+      projectedExtent,
+      true,
+      projectedExtent,
+      false,
+      "circular-enemy-contact",
     );
   }
   return interaction("hard", extent, true, extent, false, "hard-enemy-contact");

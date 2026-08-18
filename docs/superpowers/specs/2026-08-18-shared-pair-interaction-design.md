@@ -2,6 +2,29 @@
 
 **Date:** 2026-08-18
 
+## Implementation outcome
+
+The enemy-transit stage is implemented and accepted on the local feature
+branch. The final implementation refined the initial design in four important
+ways, all derived from engine mechanics rather than matchup constants:
+
+1. Active direct engagement is a non-exclusive contact mode, while a true
+   through-body corridor remains one-to-one.
+2. Reserved compression uses the units' sourced DAT minimum-collision
+   multipliers. A direct target with a larger footprint remains hard.
+3. Moving ranged formation members can form a one-to-one `formation-flow`
+   contact with a stationary engaged melee body.
+4. Released overlap is both non-deepening and actively cleared along its
+   collision normal when either participant already has movement intent.
+
+Square-footprint recovery and post-arbitration reconciliation guarantee that a
+position legally published on one tick is valid input on the next. The focused
+golden report is
+`aoe2x/js_simulation/calibration/reports/shared_enemy_pair_transit_2026-08-18/report.md`;
+all four tape-backed rows have correct winners and comparable overlap rate and
+depth. Boyar-HCA has one recorded tape, so only the canonical simulation is a
+tape-matched gate; extra acquisition-rank permutations are diagnostics.
+
 ## Goal
 
 Replace unit-specific and subsystem-specific overlap decisions with one shared,

@@ -586,6 +586,20 @@ test("generalized observation endpoint runs Heavy Scorpions with native siege AI
 });
 
 
+test("the kiting viewer can explicitly enable shared pairwise enemy transit", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/ranged-vs-melee-kiting`
+        + "?ranged=heavy_cav_archer&melee=paladin&navigation=cohesive"
+        + "&n2=5&n3=5&enemyTransit=pairwise",
+    );
+    const run = await response.json();
+    assert.equal(response.status, 200, run.error);
+    assert.equal(run.enemyTransitMode, "pairwise");
+  });
+});
+
+
 test("native Heavy Scorpion chase prevents four-Paladin compact stacks", async () => {
   await withServer(async (baseUrl) => {
     const response = await fetch(

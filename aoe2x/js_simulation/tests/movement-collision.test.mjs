@@ -114,6 +114,20 @@ test("pursuit is clamped only by the remaining physical surface gap", async () =
 });
 
 
+test("path waypoint movement reaches the point without subtracting a target body", async () => {
+  const { proposePointMovement } = await loadMovement();
+  const mover = unit({ referenceId: 1, x: 1, y: 1 });
+  const waypoint = Object.freeze({ x: 1.1, y: 1 });
+
+  const result = proposePointMovement(mover, waypoint, 60);
+
+  assert.ok(Math.abs(
+    result.dx - mechanics.speed_tiles_per_second / 60,
+  ) < 1e-12);
+  assert.equal(result.dy, 0);
+});
+
+
 test("War Wagon pursuit keeps moving inside raw contact until its configured overlap limit", async () => {
   const { proposeMovement } = await loadMovement();
   const wagon = unit({

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   createEnemyTransitState,
+  separateInheritedContactProposals,
   updateEnemyTransit,
 } from "../src/combat/enemy-transit.js";
 
@@ -13,6 +14,10 @@ function unit(referenceId, owner, x, y = 5, {
   attackRange = 0,
   ranged = false,
   radius = 0.25,
+  action = "idle",
+  engagedTargetId = null,
+  attackTargetId = null,
+  moveOrder = null,
 } = {}) {
   return Object.freeze({
     referenceId,
@@ -21,8 +26,13 @@ function unit(referenceId, owner, x, y = 5, {
     y,
     alive,
     pursuitTargetId,
+    engagedTargetId,
+    attackTargetId,
+    action,
+    moveOrder,
     mechanics: Object.freeze({
       attack_range_tiles: attackRange,
+      min_collision_size_multiplier: 0.8,
       collision_size_tiles: Object.freeze({ x: radius, y: radius }),
       ...(ranged ? {
         ranged: Object.freeze({ min_range_tiles: 0 }),
@@ -58,7 +68,7 @@ function normalize(result) {
 
 test("a progressing melee pursuer reserves the nearest non-target enemy in its corridor", () => {
   const chaser = unit(1, 3, 1, 5, { pursuitTargetId: 3 });
-  const blocker = unit(2, 2, 1.7, 5.1);
+  const blocker = unit(2, 2, 1.51, 5.1);
   const target = unit(3, 2, 5, 5);
 
   const result = update(
@@ -71,6 +81,7 @@ test("a progressing melee pursuer reserves the nearest non-target enemy in its c
     chaserId: 1,
     blockerId: 2,
     pursuitTargetId: 3,
+    mode: "melee-pursuit",
     acquisitionAxis: "x",
     acquisitionSign: 1,
     acquiredTick: 10,
@@ -82,8 +93,22 @@ test("a progressing melee pursuer reserves the nearest non-target enemy in its c
 });
 
 
+test("corridor transit opens only inside a one-tick mechanics-derived contact window", () => {
+  const chaser = unit(1, 3, 1, 5, { pursuitTargetId: 3 });
+  const blocker = unit(2, 2, 2.2, 5.1);
+  const target = unit(3, 2, 5, 5);
+
+  const result = update(
+    [chaser, blocker, target],
+    [proposal(1, 0.02), proposal(2, 0), proposal(3, 0)],
+  );
+
+  assert.equal(result.state.reservations.size, 0);
+});
+
+
 test("one-range melee uses the same transit rule while ranged movers cannot initiate it", () => {
-  const blocker = unit(2, 2, 1.7, 5);
+  const blocker = unit(2, 2, 1.51, 5);
   const target = unit(3, 2, 5, 5);
   const reachMelee = unit(1, 3, 1, 5, {
     pursuitTargetId: 3,
@@ -104,14 +129,33 @@ test("one-range melee uses the same transit rule while ranged movers cannot init
 });
 
 
-test("direct targets, allies, dead units, idle movers, and off-corridor enemies stay hard", () => {
+test("a moving ranged formation member can transit one engaged melee enemy", () => {
+  const mover = unit(1, 2, 1, 5, {
+    pursuitTargetId: 2,
+    ranged: true,
+    attackRange: 4,
+    moveOrder: { x: 5, y: 5 },
+  });
+  const engagedMelee = unit(2, 3, 1.7, 5, {
+    engagedTargetId: 3,
+    action: "attacking",
+  });
+  const engagedTarget = unit(3, 2, 0, 5, { ranged: true, attackRange: 4 });
+  const result = update(
+    [mover, engagedMelee, engagedTarget],
+    [proposal(1, 0, 0.02), proposal(2, 0), proposal(3, 0)],
+  );
+
+  assert.deepEqual([...result.state.reservations.keys()], ["1:2"]);
+  assert.equal(result.state.reservations.get("1:2").chaserId, 1);
+  assert.equal(result.state.reservations.get("1:2").mode, "formation-flow");
+  assert.equal(result.diagnostics.at(-1).reason, "moving-through-engaged-enemy");
+});
+
+
+test("allies, dead units, idle movers, and off-corridor enemies stay hard", () => {
   const target = unit(3, 2, 5, 5);
   const cases = [
-    {
-      name: "direct target",
-      units: [unit(1, 3, 1, 5, { pursuitTargetId: 3 }), target],
-      proposals: [proposal(1, 0.02), proposal(3, 0)],
-    },
     {
       name: "ally",
       units: [
@@ -169,11 +213,147 @@ test("direct targets, allies, dead units, idle movers, and off-corridor enemies 
 });
 
 
+test("a melee pursuer tracks direct contact without spending a deep transit slot", () => {
+  const chaser = unit(1, 3, 1, 5, { pursuitTargetId: 2 });
+  const target = unit(2, 2, 1.51, 5);
+  const result = update([chaser, target], [proposal(1, 0.02), proposal(2, 0)]);
+
+  assert.deepEqual([...result.state.reservations.keys()], ["1:2"]);
+  assert.equal(result.state.reservations.get("1:2").mode, "engagement-contact");
+
+  const distantTarget = unit(2, 2, 1.7, 5);
+  assert.equal(update(
+    [chaser, distantTarget],
+    [proposal(1, 0.02), proposal(2, 0)],
+  ).state.reservations.size, 0);
+});
+
+
+test("a moving ranged direct target receives only an engagement contact", () => {
+  const chaser = unit(1, 3, 1, 5, { pursuitTargetId: 2 });
+  const target = unit(2, 2, 1.51, 5, { ranged: true, attackRange: 4 });
+  const result = update(
+    [chaser, target],
+    [proposal(1, 0), proposal(2, -0.02)],
+  );
+
+  assert.deepEqual([...result.state.reservations.keys()], ["1:2"]);
+  assert.equal(result.state.reservations.get("1:2").mode, "engagement-contact");
+});
+
+
+test("an untracked square-overlap is inherited even outside circular contact", () => {
+  const left = unit(1, 2, 1, 5);
+  const right = unit(2, 3, 1.49, 5.49);
+  const result = update(
+    [left, right],
+    [proposal(1, 0), proposal(2, 0)],
+  );
+
+  assert.ok(Math.abs(result.state.inheritedContactExtents.get("1:2") - 0.49) < 1e-12);
+  assert.equal(result.diagnostics.at(-1).reason, "published-square-overlap");
+});
+
+
+test("one chaser can hold a hard direct engagement and one deep corridor transit", () => {
+  const chaser = unit(1, 3, 1, 5, { pursuitTargetId: 3 });
+  const blocker = unit(2, 2, 1.51, 5);
+  const target = unit(3, 2, 1.55, 5);
+  const result = update(
+    [chaser, blocker, target],
+    [proposal(1, 0.02), proposal(2, 0), proposal(3, 0)],
+  );
+
+  assert.deepEqual([...result.state.reservations.keys()].sort(), ["1:2", "1:3"]);
+  assert.equal(result.state.reservations.get("1:2").mode, "melee-pursuit");
+  assert.equal(result.state.reservations.get("1:3").mode, "engagement-contact");
+});
+
+
+test("a moving direct target upgrades hard engagement contact to formation transit", () => {
+  const mover = unit(1, 2, 1, 5, {
+    ranged: true,
+    attackRange: 4,
+    moveOrder: { x: 2, y: 5 },
+  });
+  const attacker = unit(2, 3, 1.51, 5, {
+    pursuitTargetId: 1,
+    engagedTargetId: 1,
+    attackTargetId: 1,
+    action: "attacking",
+  });
+  const initial = update(
+    [mover, attacker],
+    [proposal(1, 0), proposal(2, 0)],
+  ).state;
+  const result = update(
+    [mover, attacker],
+    [proposal(1, 0.02), proposal(2, 0)],
+    initial,
+    11,
+  );
+
+  assert.equal(result.state.reservations.get("1:2").mode, "formation-flow");
+});
+
+
+test("a blocked formation upgrade preserves its existing engagement contact", () => {
+  const mover = unit(1, 2, 1, 5, {
+    ranged: true,
+    attackRange: 4,
+    moveOrder: { x: 2, y: 5 },
+  });
+  const attacker = unit(2, 3, 1.51, 5, {
+    pursuitTargetId: 1,
+    engagedTargetId: 1,
+    attackTargetId: 1,
+    action: "attacking",
+  });
+  const otherBlocker = unit(3, 3, 1.8, 5, {
+    engagedTargetId: 1,
+    action: "attacking",
+  });
+  const state = Object.freeze({
+    reservations: new Map([
+      ["1:2", Object.freeze({
+        chaserId: 2,
+        blockerId: 1,
+        pursuitTargetId: 1,
+        mode: "engagement-contact",
+        acquisitionAxis: "x",
+        acquisitionSign: -1,
+        acquiredTick: 9,
+      })],
+      ["1:3", Object.freeze({
+        chaserId: 1,
+        blockerId: 3,
+        pursuitTargetId: 3,
+        mode: "formation-flow",
+        acquisitionAxis: "x",
+        acquisitionSign: 1,
+        acquiredTick: 9,
+      })],
+    ]),
+    inheritedContactExtents: new Map(),
+  });
+
+  const result = update(
+    [mover, attacker, otherBlocker],
+    [proposal(1, 0.02), proposal(2, 0), proposal(3, 0)],
+    state,
+    11,
+  );
+
+  assert.equal(result.state.reservations.get("1:2").mode, "engagement-contact");
+  assert.equal(result.state.reservations.get("1:3").mode, "formation-flow");
+});
+
+
 test("deep enemy transit is a deterministic one-to-one matching", () => {
   const units = [
     unit(1, 3, 1, 4.95, { pursuitTargetId: 3 }),
     unit(4, 3, 1, 5.05, { pursuitTargetId: 3 }),
-    unit(2, 2, 1.7, 5),
+    unit(2, 2, 1.51, 5),
     unit(3, 2, 5, 5),
   ];
   const proposals = [
@@ -252,7 +432,7 @@ test("a crossed and separating reservation releases into inherited overlap", () 
 });
 
 
-test("death, retargeting, and blocker becoming the target release reservations", () => {
+test("death and unrelated retargeting release reservations", () => {
   const prior = Object.freeze({
     chaserId: 1,
     blockerId: 2,
@@ -279,14 +459,6 @@ test("death, retargeting, and blocker becoming the target release reservations",
         unit(4, 2, 0, 5),
       ],
     },
-    {
-      reason: "blocker-became-target",
-      units: [
-        unit(1, 3, 1.4, 5, { pursuitTargetId: 2 }),
-        unit(2, 2, 1.7, 5),
-        unit(3, 2, 5, 5),
-      ],
-    },
   ];
 
   for (const entry of cases) {
@@ -300,12 +472,96 @@ test("death, retargeting, and blocker becoming the target release reservations",
 });
 
 
+test("a chase-captured blocker keeps its active contact reservation", () => {
+  const prior = Object.freeze({
+    chaserId: 1,
+    blockerId: 2,
+    pursuitTargetId: 3,
+    acquisitionAxis: "x",
+    acquisitionSign: 1,
+    acquiredTick: 5,
+  });
+  const state = Object.freeze({
+    reservations: new Map([["1:2", prior]]),
+    inheritedContactExtents: new Map(),
+  });
+  const result = update([
+    unit(1, 3, 1.4, 5, { pursuitTargetId: 2 }),
+    unit(2, 2, 1.7, 5),
+    unit(3, 2, 5, 5),
+  ], [proposal(1, 0), proposal(2, 0), proposal(3, 0)], state, 20);
+
+  assert.equal(result.state.reservations.size, 1);
+  assert.equal(result.state.reservations.get("1:2").pursuitTargetId, 2);
+  assert.equal(result.diagnostics.at(-1).type, "enemy-transit-persisted");
+  assert.equal(result.diagnostics.at(-1).reason, "blocker-captured-in-contact");
+});
+
+
+test("an attack-locked blocker keeps contact across pursuit retargeting", () => {
+  const prior = Object.freeze({
+    chaserId: 1,
+    blockerId: 2,
+    pursuitTargetId: 3,
+    mode: "melee-pursuit",
+    acquisitionAxis: "x",
+    acquisitionSign: 1,
+    acquiredTick: 5,
+  });
+  const state = Object.freeze({
+    reservations: new Map([["1:2", prior]]),
+    inheritedContactExtents: new Map(),
+  });
+  const result = update([
+    unit(1, 3, 1.4, 5, {
+      pursuitTargetId: 4,
+      engagedTargetId: 2,
+      attackTargetId: 2,
+      action: "attacking",
+    }),
+    unit(2, 2, 1.7, 5),
+    unit(3, 2, 5, 5),
+    unit(4, 2, 4, 5),
+  ], [proposal(1, 0), proposal(2, 0), proposal(3, 0), proposal(4, 0)], state, 20);
+
+  assert.equal(result.state.reservations.size, 1);
+  assert.equal(result.state.reservations.get("1:2").pursuitTargetId, 2);
+  assert.equal(result.diagnostics.at(-1).type, "enemy-transit-persisted");
+  assert.equal(result.diagnostics.at(-1).reason, "blocker-captured-in-contact");
+});
+
+
+test("a near-contact reservation survives a temporary zero-step pursuit stall", () => {
+  const prior = Object.freeze({
+    chaserId: 1,
+    blockerId: 2,
+    pursuitTargetId: 3,
+    acquisitionAxis: "x",
+    acquisitionSign: 1,
+    acquiredTick: 5,
+  });
+  const state = Object.freeze({
+    reservations: new Map([["1:2", prior]]),
+    inheritedContactExtents: new Map(),
+  });
+  const result = update([
+    unit(1, 3, 1, 5, { pursuitTargetId: 3 }),
+    unit(2, 2, 1.7, 5),
+    unit(3, 2, 5, 5),
+  ], [proposal(1, 0), proposal(2, 0), proposal(3, 0)], state, 20);
+
+  assert.equal(result.state.reservations.get("1:2"), prior);
+  assert.equal(result.diagnostics.at(-1).reason, "near-contact-stall");
+});
+
+
 test("swept enemy contact derives a one-tick legal extent from relative motion", () => {
-  const chaser = unit(1, 3, 1, 5, { pursuitTargetId: 2 });
+  const chaser = unit(1, 3, 1, 5, { pursuitTargetId: 3 });
   const crossing = unit(2, 2, 1.52, 5);
+  const target = unit(3, 2, 1, 8);
   const result = update(
-    [chaser, crossing],
-    [proposal(1, 0.03), proposal(2, 0)],
+    [chaser, crossing, target],
+    [proposal(1, 0, 0.02), proposal(2, -0.03), proposal(3, 0)],
   );
 
   assert.equal(result.state.reservations.size, 0);
@@ -375,4 +631,96 @@ test("inherited contact tracks current separation and cannot deepen", () => {
   ], [proposal(1, 0), proposal(2, 0.02), proposal(3, 0)], separated.state, 12);
 
   assert.equal(cleared.state.inheritedContactExtents.has("1:2"), false);
+});
+
+
+test("an inherited overlap keeps both units out of new deep transit pairs", () => {
+  const state = Object.freeze({
+    reservations: new Map(),
+    inheritedContactExtents: new Map([["1:2", 0.45]]),
+  });
+  const result = update([
+    unit(1, 3, 1, 5, { pursuitTargetId: 3 }),
+    unit(2, 2, 1.45, 5),
+    unit(4, 2, 1.51, 5.05),
+    unit(3, 2, 5, 5),
+  ], [
+    proposal(1, 0.02),
+    proposal(2, 0),
+    proposal(4, 0),
+    proposal(3, 0),
+  ], state, 11);
+
+  assert.equal(result.state.reservations.has("1:4"), false);
+  assert.equal(result.state.inheritedContactExtents.has("1:2"), true);
+});
+
+
+test("a moving inherited pair spends its step clearing the collision normal", () => {
+  const left = unit(1, 2, 1, 5);
+  const right = unit(2, 3, 1.4, 5);
+  const inheritedContactExtents = new Map([["1:2", 0.4]]);
+
+  assert.deepEqual(separateInheritedContactProposals({
+    units: [left, right],
+    proposals: [proposal(1, 0.02), proposal(2, 0)],
+    inheritedContactExtents,
+    inheritedContactSources: new Map([["1:2", "melee-pursuit"]]),
+  }), [proposal(1, -0.02), proposal(2, 0)]);
+
+  assert.deepEqual(separateInheritedContactProposals({
+    units: [left, right],
+    proposals: [proposal(1, -0.02), proposal(2, 0)],
+    inheritedContactExtents,
+    inheritedContactSources: new Map([["1:2", "melee-pursuit"]]),
+  }), [proposal(1, -0.02), proposal(2, 0)]);
+});
+
+
+test("released direct engagement also clears its collision normal when moving", () => {
+  const left = unit(1, 2, 1, 5);
+  const right = unit(2, 3, 1.4, 5);
+  const proposals = [proposal(1, 0.02), proposal(2, 0)];
+
+  assert.deepEqual(separateInheritedContactProposals({
+    units: [left, right],
+    proposals,
+    inheritedContactExtents: new Map([["1:2", 0.4]]),
+    inheritedContactSources: new Map([["1:2", "engagement-contact"]]),
+  }), [proposal(1, -0.02), proposal(2, 0)]);
+});
+
+
+test("inherited direct engagement does not consume a deep transit slot", () => {
+  const state = Object.freeze({
+    reservations: new Map(),
+    inheritedContactExtents: new Map([["1:2", 0.45]]),
+    inheritedContactSources: new Map([["1:2", "engagement-contact"]]),
+  });
+  const result = update([
+    unit(1, 3, 1, 5, { pursuitTargetId: 3 }),
+    unit(2, 2, 1.45, 5),
+    unit(4, 2, 1.51, 5.05),
+    unit(3, 2, 5, 5),
+  ], [
+    proposal(1, 0.02),
+    proposal(2, 0),
+    proposal(4, 0),
+    proposal(3, 0),
+  ], state, 11);
+
+  assert.equal(result.state.reservations.has("1:4"), true);
+});
+
+
+test("a published enemy-footprint overlap is inherited before the next collision solve", () => {
+  const result = update(
+    [unit(1, 3, 1, 5), unit(2, 2, 1.3, 5)],
+    [proposal(1, 0), proposal(2, 0)],
+  );
+
+  assert.ok(Math.abs(result.state.inheritedContactExtents.get("1:2") - 0.3) < 1e-12);
+  assert.equal(result.diagnostics.some(({ type, reason }) => (
+    type === "enemy-transit-recovered" && reason === "published-square-overlap"
+  )), true);
 });

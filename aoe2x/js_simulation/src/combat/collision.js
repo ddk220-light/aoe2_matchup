@@ -279,16 +279,18 @@ function validateStartingGeometry(bodies, obstacles, bounds, pairInteractions) {
         Math.abs(bodies[j].x - bodies[i].x),
         Math.abs(bodies[j].y - bodies[i].y),
       );
-      const extent = resolvePairInteraction(
+      const interaction = resolvePairInteraction(
         bodies[i], bodies[j], pairInteractions,
-      ).collisionExtent;
+      );
+      const extent = interaction.collisionExtent;
       if (distance >= extent - GEOMETRY_SLOP) {
         if (distance < extent - EPSILON) strictlyValid = false;
         continue;
       }
       const kind = distance === 0 ? "exact overlap" : "starting overlap";
       throw new RangeError(
-        `${kind} between references ${bodies[i].referenceId} and ${bodies[j].referenceId}`,
+        `${kind} between references ${bodies[i].referenceId} and ${bodies[j].referenceId}`
+          + ` (${interaction.kind}/${interaction.reason}; separation=${distance}; extent=${extent})`,
       );
     }
   }

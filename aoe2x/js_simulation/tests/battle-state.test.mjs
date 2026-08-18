@@ -210,6 +210,23 @@ test("the generalized kiting lab accepts only supported ranged-versus-melee pair
   assert.deepEqual(
     battleStateModule.kitingFightRequest(
       "https://dragonstar.tail82a190.ts.net/golden-map/"
+        + "?mode=ranged-vs-melee-kiting&ranged=heavy_cav_archer&melee=paladin"
+        + "&navigation=cohesive&n2=20&n3=15&enemyTransit=pairwise",
+    ),
+    {
+      endpoint: "api/ranged-vs-melee-kiting",
+      ranged: "heavy_cav_archer",
+      melee: "paladin",
+      navigation: "cohesive",
+      enemyTransit: "pairwise",
+      n2: 20,
+      n3: 15,
+      query: "ranged=heavy_cav_archer&melee=paladin&navigation=cohesive&enemyTransit=pairwise&n2=20&n3=15",
+    },
+  );
+  assert.deepEqual(
+    battleStateModule.kitingFightRequest(
+      "https://dragonstar.tail82a190.ts.net/golden-map/"
         + "?mode=ranged-vs-melee-kiting&ranged=heavy_scorpion&melee=paladin"
         + "&navigation=cohesive&n2=12&n3=17",
     ),
@@ -282,6 +299,7 @@ test("the generalized kiting lab accepts only supported ranged-versus-melee pair
     "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=heavy_scorpion&n2=17&n3=10",
     "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&ranged=siege_onager&n2=17&n3=10",
     "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&n2=10&n2=11&n3=10",
+    "http://127.0.0.1:5011/?mode=ranged-vs-melee-kiting&enemyTransit=unknown",
   ]) {
     assert.equal(battleStateModule.kitingFightRequest(url), null);
   }

@@ -1,8 +1,15 @@
 import {
-  enemyPairExtent,
   queryEnemyContactManifold,
   resolveMovementProposals,
 } from "./collision.js";
+import {
+  createPairInteractionSnapshot,
+  resolvePairInteraction,
+} from "./pair-interactions.js";
+import {
+  createEnemyTransitState,
+  updateEnemyTransit,
+} from "./enemy-transit.js";
 import {
   createKiteState,
   createOrderState,
@@ -207,6 +214,13 @@ export function createWorld(scenario) {
   const units = canonicalUnits(scenario.units, { cloneMechanics: true });
   validateInitialAttackState(units);
   const map = scenario.map ? freezeMap(scenario.map) : DEFAULT_MAP;
+  if (scenario.pairwiseEnemyTransit !== undefined
+      && typeof scenario.pairwiseEnemyTransit !== "boolean") {
+    throw new TypeError("pairwise enemy transit must be a boolean");
+  }
+  const enemyTransitState = scenario.pairwiseEnemyTransit === true
+    ? createEnemyTransitState()
+    : null;
   const warWagonEnemyOverlapDepth = scenario.warWagonEnemyOverlapDepthTiles;
   if (warWagonEnemyOverlapDepth !== undefined
       && (!Number.isFinite(warWagonEnemyOverlapDepth)
@@ -340,6 +354,10 @@ export function createWorld(scenario) {
     ...(kiteState ? { kiteState } : {}),
     ...(crowdState ? { crowdState } : {}),
     ...(enemyOverlapDepthByMaster ? { enemyOverlapDepthByMaster } : {}),
+    ...(enemyTransitState ? {
+      enemyTransitState,
+      enemyTransitDiagnostics: Object.freeze([]),
+    } : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     // Deterministic per-shot RNG, present only when a unit can miss or blast
     // (dat accuracy < 100 or blast width > 0 — nothing in the converged
@@ -600,7 +618,7 @@ const STEER_MAX_TURNS = 6;
 
 
 function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds,
-  alliedTransitPairs, enemyOverlapDepthByMaster) {
+  alliedTransitPairs, pairInteractions) {
   const x = mover.x + dx;
   const y = mover.y + dy;
   const radius = collisionRadius(mover);
@@ -622,10 +640,13 @@ function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds,
     const otherProposal = proposalByReference.get(other.referenceId);
     const otherMoving = otherProposal !== undefined
       && (otherProposal.dx !== 0 || otherProposal.dy !== 0);
+    const enemyInteraction = allied
+      ? null : resolvePairInteraction(mover, other, pairInteractions);
+    if (enemyInteraction && !enemyInteraction.pathObstructs) continue;
     const extent = allied
       ? (moverMoving ? allyCollisionRadius(mover) : radius)
         + (otherMoving ? allyCollisionRadius(other) : collisionRadius(other))
-      : enemyPairExtent(mover, other, enemyOverlapDepthByMaster);
+      : enemyInteraction.collisionExtent;
     if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
       return false;
     }
@@ -645,13 +666,15 @@ function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds,
 //     esc 10v5, hcp 20v15, hcst 20v20 all lose their tape winner);
 //   * a NON-target enemy body is the ball surface, which the camel forensics
 //     show the chaser routing around at full speed.
-function stepHitsAnyEnemyBody(mover, dx, dy, live, enemyOverlapDepthByMaster) {
+function stepHitsAnyEnemyBody(mover, dx, dy, live, pairInteractions) {
   const x = mover.x + dx;
   const y = mover.y + dy;
   for (const other of live) {
     if (other.referenceId === mover.referenceId) continue;
     if (other.owner === mover.owner) continue;
-    const extent = enemyPairExtent(mover, other, enemyOverlapDepthByMaster);
+    const interaction = resolvePairInteraction(mover, other, pairInteractions);
+    if (!interaction.pathObstructs) continue;
+    const extent = interaction.collisionExtent;
     if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
       return true;
     }
@@ -660,7 +683,7 @@ function stepHitsAnyEnemyBody(mover, dx, dy, live, enemyOverlapDepthByMaster) {
 }
 
 
-function stepHitsOtherEnemyBody(mover, dx, dy, live, enemyOverlapDepthByMaster) {
+function stepHitsOtherEnemyBody(mover, dx, dy, live, pairInteractions) {
   const x = mover.x + dx;
   const y = mover.y + dy;
   for (const other of live) {
@@ -669,7 +692,9 @@ function stepHitsOtherEnemyBody(mover, dx, dy, live, enemyOverlapDepthByMaster) 
     if (other.referenceId === mover.pursuitTargetId
       || other.referenceId === mover.engagedTargetId
       || other.referenceId === mover.attackTargetId) continue;
-    const extent = enemyPairExtent(mover, other, enemyOverlapDepthByMaster);
+    const interaction = resolvePairInteraction(mover, other, pairInteractions);
+    if (!interaction.pathObstructs) continue;
+    const extent = interaction.collisionExtent;
     if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
       return true;
     }
@@ -683,7 +708,12 @@ function stepHitsOtherEnemyBody(mover, dx, dy, live, enemyOverlapDepthByMaster) 
 function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = false,
   movementOptions = {}) {
   const alliedTransitPairs = movementOptions.alliedTransitPairs ?? new Set();
-  const enemyOverlapDepthByMaster = movementOptions.enemyOverlapDepthByMaster ?? new Map();
+  const pairInteractions = movementOptions.pairInteractions
+    ?? createPairInteractionSnapshot({
+      alliedTransitPairs,
+      legacyEnemyOverlapDepthByMaster:
+        movementOptions.enemyOverlapDepthByMaster ?? new Map(),
+    });
   const hasMinimumRangeRetreat = planned.proposals.some(({ movementIntent }) => (
     movementIntent === "minimum-range-retreat"
   ));
@@ -720,7 +750,7 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
         // walk into.
         if (!escapeActive || !mover.moveOrder) return proposal;
         if (!stepHitsAnyEnemyBody(
-          mover, proposal.dx, proposal.dy, planned.units, enemyOverlapDepthByMaster,
+          mover, proposal.dx, proposal.dy, planned.units, pairInteractions,
         )) {
           return proposal;
         }
@@ -731,7 +761,7 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
         // target is the catch. Wider triggers were measured and rejected --
         // see the ally-queue ladder in HCC_CHASER_MOBILITY_2026-08-07.md.
         if (!stepHitsOtherEnemyBody(
-          mover, proposal.dx, proposal.dy, planned.units, enemyOverlapDepthByMaster,
+          mover, proposal.dx, proposal.dy, planned.units, pairInteractions,
         )) {
           return proposal;
         }
@@ -739,7 +769,7 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
     }
     if (stepClearsBodies(mover, proposal.dx, proposal.dy, planned.units,
       proposalByReference, bounds, alliedTransitPairs,
-      enemyOverlapDepthByMaster)) return proposal;
+      pairInteractions)) return proposal;
     steered.add(proposal.referenceId);
     const heading = Math.atan2(proposal.dy, proposal.dx);
     // Retreaters keep a stable parity-selected side on symmetric choices.
@@ -756,7 +786,7 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
         const dx = Math.cos(angle) * distance;
         const dy = Math.sin(angle) * distance;
         if (stepClearsBodies(mover, dx, dy, planned.units, proposalByReference, bounds,
-          alliedTransitPairs, enemyOverlapDepthByMaster)) {
+          alliedTransitPairs, pairInteractions)) {
           return Object.freeze({ ...proposal, dx, dy });
         }
       }
@@ -823,9 +853,15 @@ function resolveMovement(planned, byReference, map, kiteState = null, movementOp
 
 
 function moveUnits(units, map, tick, events, kiteState = null, crowdState = null,
-  enemyOverlapDepthByMaster = new Map()) {
+  enemyOverlapDepthByMaster = new Map(), enemyTransitState = null) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
+  let pairInteractions = createPairInteractionSnapshot({
+    legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
+    enemyTransitPairs: enemyTransitState?.reservations ?? new Map(),
+    inheritedEnemyContactExtents:
+      enemyTransitState?.inheritedContactExtents ?? new Map(),
+  });
   const soloDestinations = kiteState?.soloNavigationState
     ? planSoloNavigation(
       kiteState.soloNavigationState,
@@ -867,7 +903,7 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
           && other.referenceId !== unit.engagedTargetId
           && other.referenceId !== unit.attackTargetId);
         waypoint.plan = planChaseAim(unit, target, obstacles, map, {
-          enemyOverlapDepthByMaster,
+          pairInteractions,
         });
       }
       const plan = waypoint.plan;
@@ -904,7 +940,7 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
         orderX: goal.x,
         orderY: goal.y,
         plan: planMoveAim(unit, goal, obstacles, map, {
-          enemyOverlapDepthByMaster,
+          pairInteractions,
         }),
       };
       waypoints.set(unit.referenceId, waypoint);
@@ -913,7 +949,7 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
     if (waypoint.plan.stand === true) return { x: unit.x, y: unit.y };
     return waypoint.plan;
   };
-  let proposals = live.map((unit) => {
+  const proposalForUnit = (unit) => {
     // A kite move order overrides everything: the tape's move-ordered units
     // walk their waypoint and do not fight until the next attack beat.
     //
@@ -981,17 +1017,18 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
     }
     const target = byReference.get(unit.pursuitTargetId);
     return target && unit.action !== "attacking" && !isWithinStopRange(
-      unit, target, { enemyOverlapDepthByMaster },
+      unit, target, { pairInteractions },
     )
       && !holdsForChargeVolley(unit, target)
       ? proposeMovement(
         unit,
         chaseAim(unit, target),
         TICKS_PER_SECOND,
-        { enemyOverlapDepthByMaster },
+        { pairInteractions },
       )
       : Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
-  });
+  };
+  let proposals = live.map(proposalForUnit);
   if (kiteState?.profile?.cohortMotion === "contact_heading") {
     const proposalByReference = new Map(
       proposals.map((proposal) => [proposal.referenceId, proposal]),
@@ -1017,6 +1054,32 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
       ));
     }
   }
+  let enemyTransitUpdate = null;
+  if (enemyTransitState) {
+    enemyTransitUpdate = updateEnemyTransit({
+      state: enemyTransitState,
+      units: live,
+      proposals,
+      tick,
+    });
+    pairInteractions = createPairInteractionSnapshot({
+      legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
+      ...enemyTransitUpdate.pairSnapshotData,
+    });
+    const replanIds = new Set([
+      ...enemyTransitUpdate.state.reservations.values(),
+      ...enemyTransitUpdate.diagnostics,
+    ].map(({ chaserId }) => chaserId).filter(Number.isSafeInteger));
+    if (kiteState?.chaseWaypoints) {
+      for (const referenceId of replanIds) kiteState.chaseWaypoints.delete(referenceId);
+    }
+    if (replanIds.size > 0) {
+      proposals = proposals.map((proposal) => {
+        if (!replanIds.has(proposal.referenceId)) return proposal;
+        return proposalForUnit(byReference.get(proposal.referenceId));
+      });
+    }
+  }
   let alliedTransitPairs = new Set();
   if (kiteState?.alliedTransit) {
     const updatedTransit = updateAlliedTransit(kiteState.alliedTransit, live, proposals);
@@ -1027,6 +1090,11 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
   let movementOptions = {
     alliedTransitPairs,
     enemyOverlapDepthByMaster,
+    pairInteractions: createPairInteractionSnapshot({
+      alliedTransitPairs,
+      legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
+      ...(enemyTransitUpdate?.pairSnapshotData ?? {}),
+    }),
     ...(kiteState ? { collisionRecoveryState: kiteState.collisionRecoveryState } : {}),
   };
   let planned = planLocalAvoidance(live, proposals, map, movementOptions);
@@ -1059,6 +1127,15 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
       alliedShrinkPairs: overlap.pairKeys,
       alliedShallowPairs: overlap.shallowPairKeys,
       alliedShrinkReservedIds: overlap.reservedIds,
+      pairInteractions: createPairInteractionSnapshot({
+        alliedTransitPairs,
+        exclusiveAlliedShrinkOwners: new Set([crowdState.owner]),
+        alliedShrinkPairs: overlap.pairKeys,
+        alliedShallowPairs: overlap.shallowPairKeys,
+        alliedShrinkReservedIds: overlap.reservedIds,
+        legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
+        ...(enemyTransitUpdate?.pairSnapshotData ?? {}),
+      }),
     };
   }
   const moved = resolveMovement(planned, byReference, map, kiteState, movementOptions);
@@ -1148,6 +1225,7 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
     movedIds,
     blockedIds,
     velocities,
+    enemyTransitUpdate,
   };
 }
 
@@ -2084,7 +2162,13 @@ export function stepWorld(world) {
   if (!world.kiteState) {
     issueOrders(world.orderState, units, tick, events, event);
   }
-  const { contacts, movedIds, blockedIds, velocities } = moveUnits(
+  const {
+    contacts,
+    movedIds,
+    blockedIds,
+    velocities,
+    enemyTransitUpdate,
+  } = moveUnits(
     units,
     world.map,
     tick,
@@ -2092,6 +2176,7 @@ export function stepWorld(world) {
     world.kiteState ?? null,
     world.crowdState ?? null,
     world.enemyOverlapDepthByMaster ?? new Map(),
+    world.enemyTransitState ?? null,
   );
   updateEngagements(units, contacts, tick, events, blockedIds, world.kiteState ?? null);
   // Clone flight state: published projectiles are frozen, ranged shots
@@ -2120,6 +2205,10 @@ export function stepWorld(world) {
   ]);
   return Object.freeze({
     ...world,
+    ...(enemyTransitUpdate ? {
+      enemyTransitState: enemyTransitUpdate.state,
+      enemyTransitDiagnostics: enemyTransitUpdate.diagnostics,
+    } : {}),
     ...(remainingProjectiles !== null
       ? { projectiles: Object.freeze(remainingProjectiles.map((p) => Object.freeze({ ...p }))) }
       : {}),

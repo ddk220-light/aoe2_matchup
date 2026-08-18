@@ -141,6 +141,51 @@ test("world publication preserves blocker-aware local route state", async () => 
 });
 
 
+test("pairwise enemy transit state exists only for an explicitly enabled scenario", async () => {
+  const { createWorld } = await loadWorld();
+  const units = [
+    unit({ referenceId: 1, owner: 3, x: 2, y: 5 }),
+    unit({ referenceId: 2, owner: 2, x: 5, y: 5 }),
+  ];
+
+  const baseline = createWorld(scenario(units));
+  const enabled = createWorld(scenario(units, { pairwiseEnemyTransit: true }));
+
+  assert.equal(Object.hasOwn(baseline, "enemyTransitState"), false);
+  assert.equal(enabled.enemyTransitState.reservations.size, 0);
+  assert.equal(enabled.enemyTransitState.inheritedContactExtents.size, 0);
+  assert.deepEqual(enabled.enemyTransitDiagnostics, []);
+  assert.throws(
+    () => createWorld(scenario(units, { pairwiseEnemyTransit: "yes" })),
+    /pairwise enemy transit must be a boolean/,
+  );
+});
+
+
+test("an enabled world tick reserves a non-target enemy in a melee pursuit corridor", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const start = scenario([
+    unit({
+      referenceId: 1,
+      owner: 3,
+      x: 2,
+      y: 5,
+      pursuitTargetId: 3,
+    }),
+    unit({ referenceId: 2, owner: 2, x: 2.7, y: 5.05 }),
+    unit({ referenceId: 3, owner: 2, x: 6, y: 5 }),
+  ], { pairwiseEnemyTransit: true });
+
+  const next = stepWorld(createWorld(start));
+
+  assert.deepEqual([...next.enemyTransitState.reservations.keys()], ["1:2"]);
+  assert.equal(next.enemyTransitState.reservations.get("1:2").pursuitTargetId, 3);
+  assert.equal(next.enemyTransitDiagnostics.some(({ type }) => (
+    type === "enemy-transit-acquired"
+  )), true);
+});
+
+
 test("a world tick honors the bounded War Wagon enemy-overlap envelope", async () => {
   const { createWorld, stepWorld } = await loadWorld();
   const start = scenario([

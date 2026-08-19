@@ -16,6 +16,7 @@ const unit = (id, owner, x, {
   moving = false,
   attacking = false,
   targetId = null,
+  minCollisionMultiplier = 1,
 } = {}) => Object.freeze({
   id,
   owner,
@@ -26,6 +27,7 @@ const unit = (id, owner, x, {
   hp: 100,
   moving,
   attacking,
+  minCollisionMultiplier,
   pursuitTargetId: targetId,
   engagedTargetId: targetId,
   attackTargetId: attacking ? targetId : null,
@@ -68,7 +70,39 @@ test("contact windows and graph topology do not mistake a three-stack for pairs"
   assert.equal(row.maximumComponentSize, 3);
   assert.equal(row.maximumTriangles, 1);
   assert.equal(row.maximumFourCliques, 0);
+  assert.equal(row.maximumDeepLocalDegree, 2);
+  assert.equal(row.maximumDeepTriangles, 1);
+  assert.equal(row.localNeighborCount.median, 2);
+  assert.equal(row.componentSize.median, 3);
   assert.equal(row.contactWindowMs.median, 300);
+});
+
+test("sourced minimum collision multipliers distinguish shallow from deep edges", () => {
+  const report = analyzePairContactFrames([frame(0, [
+    unit(1, 2, 4, { minCollisionMultiplier: 0.5 }),
+    unit(2, 2, 4.3, { minCollisionMultiplier: 0.5 }),
+    unit(3, 2, 4.45, { minCollisionMultiplier: 0.5 }),
+  ])]);
+  const row = report.relationships["same-master-allies"];
+
+  assert.equal(row.maximumLocalDegree, 2);
+  assert.equal(row.maximumDeepLocalDegree, 1);
+  assert.equal(row.maximumDeepTriangles, 0);
+});
+
+test("contact populations retain attacking-unit access and target-load distributions", () => {
+  const report = analyzePairContactFrames([frame(0, [
+    unit(1, 2, 4, { attacking: true, targetId: 3 }),
+    unit(2, 2, 4.1, { attacking: true, targetId: 3 }),
+    unit(3, 3, 4.25),
+  ])]);
+  const row = report.populations[
+    "enemies|neither-moving|one-attacking|direct-target|entering"
+  ];
+
+  assert.equal(row.attackingUnitCount.median, 2);
+  assert.equal(row.attackAccessRatio.median, 0.666666666667);
+  assert.equal(row.targetLoad.median, 2);
 });
 
 test("percentile interpolates deterministically and handles no evidence", () => {

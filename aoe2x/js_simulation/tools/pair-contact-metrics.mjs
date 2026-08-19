@@ -49,7 +49,11 @@ export function analyzePairContactFrames(frames) {
     const currentContacts = new Set();
     const seenPairs = new Set();
     const relationshipFrameEdges = new Map();
+    const relationshipFrameDeepEdges = new Map();
+    const relationshipFrameUnits = new Map();
     const populationFrameEdges = new Map();
+    const populationFrameDeepEdges = new Map();
+    const populationFrameUnits = new Map();
     const relationshipsSeen = new Set();
     const populationsSeen = new Set();
 
@@ -86,6 +90,12 @@ export function analyzePairContactFrames(frames) {
           relationship.acquisitionCount += phase === "entering" ? 1 : 0;
           addFrameEdge(relationshipFrameEdges, state.relationship, left.id, right.id);
           addFrameEdge(populationFrameEdges, populationKey, left.id, right.id);
+          addFrameUnits(relationshipFrameUnits, state.relationship, left, right);
+          addFrameUnits(populationFrameUnits, populationKey, left, right);
+          if (geometry.deep) {
+            addFrameEdge(relationshipFrameDeepEdges, state.relationship, left.id, right.id);
+            addFrameEdge(populationFrameDeepEdges, populationKey, left.id, right.id);
+          }
           observeContactWindow(
             activeWindows,
             pairKey,
@@ -119,12 +129,19 @@ export function analyzePairContactFrames(frames) {
       updateGraphMetrics(
         accumulator,
         relationshipFrameEdges.get(relationshipName) ?? [],
+        relationshipFrameDeepEdges.get(relationshipName) ?? [],
+        relationshipFrameUnits.get(relationshipName) ?? new Map(),
       );
     }
     for (const populationKey of populationsSeen) {
       const accumulator = populationAccumulators.get(populationKey);
       accumulator.frameCount += 1;
-      updateGraphMetrics(accumulator, populationFrameEdges.get(populationKey) ?? []);
+      updateGraphMetrics(
+        accumulator,
+        populationFrameEdges.get(populationKey) ?? [],
+        populationFrameDeepEdges.get(populationKey) ?? [],
+        populationFrameUnits.get(populationKey) ?? new Map(),
+      );
     }
     previousContacts = currentContacts;
   });
@@ -220,13 +237,24 @@ function targets(unit, targetId) {
 function pairGeometry(left, right) {
   const separation = Math.max(Math.abs(left.x - right.x), Math.abs(left.y - right.y));
   const fullExtent = left.radius + right.radius;
+  const movingFloor = collisionFloor(left) + collisionFloor(right);
   const depth = Math.max(0, fullExtent - separation);
   return Object.freeze({
     separation: cleanNumber(separation),
     fullExtent: cleanNumber(fullExtent),
     depth: cleanNumber(depth),
     normalizedDepth: fullExtent > EPSILON ? cleanNumber(depth / fullExtent) : 0,
+    movingFloor: cleanNumber(movingFloor),
+    deep: separation < movingFloor - EPSILON,
   });
+}
+
+function collisionFloor(unit) {
+  const multiplier = unit.minCollisionMultiplier ?? 1;
+  if (!Number.isFinite(multiplier) || multiplier <= 0 || multiplier > 1) {
+    throw new RangeError(`unit ${String(unit.id)} has an invalid minimum collision multiplier`);
+  }
+  return unit.radius * multiplier;
 }
 
 function populationKeyFor(state, phase) {
@@ -245,11 +273,23 @@ function createAccumulator() {
     depths: [],
     normalizedDepths: [],
     contactWindowsMs: [],
+    localNeighborCounts: [],
+    componentSizes: [],
+    deepLocalNeighborCounts: [],
+    deepComponentSizes: [],
+    attackingUnitCounts: [],
+    contactUnitCounts: [],
+    attackAccessRatios: [],
+    targetLoads: [],
     maximumSimultaneousOverlappingPairs: 0,
     maximumLocalDegree: 0,
     maximumComponentSize: 0,
     maximumTriangles: 0,
     maximumFourCliques: 0,
+    maximumDeepLocalDegree: 0,
+    maximumDeepComponentSize: 0,
+    maximumDeepTriangles: 0,
+    maximumDeepFourCliques: 0,
   };
 }
 
@@ -291,7 +331,13 @@ function addFrameEdge(frameEdges, key, leftId, rightId) {
   edges.push([typedId(leftId), typedId(rightId)]);
 }
 
-function updateGraphMetrics(accumulator, edges) {
+function addFrameUnits(frameUnits, key, left, right) {
+  const units = getAccumulator(frameUnits, key, () => new Map());
+  units.set(typedId(left.id), left);
+  units.set(typedId(right.id), right);
+}
+
+function updateGraphMetrics(accumulator, edges, deepEdges, units) {
   if (edges.length === 0) {
     return;
   }
@@ -306,23 +352,71 @@ function updateGraphMetrics(accumulator, edges) {
     getAccumulator(adjacency, right, () => new Set()).add(left);
   }
   for (const neighbors of adjacency.values()) {
+    accumulator.localNeighborCounts.push(neighbors.size);
     accumulator.maximumLocalDegree = Math.max(
       accumulator.maximumLocalDegree,
       neighbors.size,
     );
   }
-  accumulator.maximumComponentSize = Math.max(
-    accumulator.maximumComponentSize,
-    maximumComponentSize(adjacency),
-  );
+  const components = componentSizes(adjacency);
+  accumulator.componentSizes.push(...components);
+  accumulator.maximumComponentSize = Math.max(accumulator.maximumComponentSize, ...components);
   const { triangles, fourCliques } = countCliques(adjacency);
   accumulator.maximumTriangles = Math.max(accumulator.maximumTriangles, triangles);
   accumulator.maximumFourCliques = Math.max(accumulator.maximumFourCliques, fourCliques);
+  observeAttackAccess(accumulator, units);
+
+  if (deepEdges.length === 0) return;
+  const deepAdjacency = new Map();
+  for (const [left, right] of deepEdges) {
+    getAccumulator(deepAdjacency, left, () => new Set()).add(right);
+    getAccumulator(deepAdjacency, right, () => new Set()).add(left);
+  }
+  for (const neighbors of deepAdjacency.values()) {
+    accumulator.deepLocalNeighborCounts.push(neighbors.size);
+    accumulator.maximumDeepLocalDegree = Math.max(
+      accumulator.maximumDeepLocalDegree,
+      neighbors.size,
+    );
+  }
+  const deepComponents = componentSizes(deepAdjacency);
+  accumulator.deepComponentSizes.push(...deepComponents);
+  accumulator.maximumDeepComponentSize = Math.max(
+    accumulator.maximumDeepComponentSize,
+    ...deepComponents,
+  );
+  const deepCliques = countCliques(deepAdjacency);
+  accumulator.maximumDeepTriangles = Math.max(
+    accumulator.maximumDeepTriangles,
+    deepCliques.triangles,
+  );
+  accumulator.maximumDeepFourCliques = Math.max(
+    accumulator.maximumDeepFourCliques,
+    deepCliques.fourCliques,
+  );
 }
 
-function maximumComponentSize(adjacency) {
+function observeAttackAccess(accumulator, units) {
+  const contactUnits = [...units.values()];
+  const attacking = contactUnits.filter(({ attacking }) => attacking);
+  accumulator.contactUnitCounts.push(contactUnits.length);
+  accumulator.attackingUnitCounts.push(attacking.length);
+  accumulator.attackAccessRatios.push(cleanNumber(
+    contactUnits.length > 0 ? attacking.length / contactUnits.length : 0,
+  ));
+  const targetLoads = new Map();
+  for (const unit of attacking) {
+    const targetId = unit.attackTargetId ?? unit.engagedTargetId ?? unit.pursuitTargetId;
+    if (targetId === null || targetId === undefined) continue;
+    const targetKey = typedId(targetId);
+    targetLoads.set(targetKey, (targetLoads.get(targetKey) ?? 0) + 1);
+  }
+  accumulator.targetLoads.push(...targetLoads.values());
+}
+
+function componentSizes(adjacency) {
   const visited = new Set();
-  let maximum = 0;
+  const sizes = [];
   for (const start of adjacency.keys()) {
     if (visited.has(start)) {
       continue;
@@ -340,9 +434,9 @@ function maximumComponentSize(adjacency) {
         }
       }
     }
-    maximum = Math.max(maximum, size);
+    sizes.push(size);
   }
-  return maximum;
+  return sizes;
 }
 
 function countCliques(adjacency) {
@@ -406,11 +500,23 @@ function finishAccumulator(accumulator) {
     ...prefixedSummary("normalizedDepth", accumulator.normalizedDepths),
     maximumNormalizedDepth: maximum(accumulator.normalizedDepths),
     contactWindowMs: distribution(accumulator.contactWindowsMs),
+    localNeighborCount: distribution(accumulator.localNeighborCounts),
+    componentSize: distribution(accumulator.componentSizes),
+    deepLocalNeighborCount: distribution(accumulator.deepLocalNeighborCounts),
+    deepComponentSize: distribution(accumulator.deepComponentSizes),
+    attackingUnitCount: distribution(accumulator.attackingUnitCounts),
+    contactUnitCount: distribution(accumulator.contactUnitCounts),
+    attackAccessRatio: distribution(accumulator.attackAccessRatios),
+    targetLoad: distribution(accumulator.targetLoads),
     maximumSimultaneousOverlappingPairs: accumulator.maximumSimultaneousOverlappingPairs,
     maximumLocalDegree: accumulator.maximumLocalDegree,
     maximumComponentSize: accumulator.maximumComponentSize,
     maximumTriangles: accumulator.maximumTriangles,
     maximumFourCliques: accumulator.maximumFourCliques,
+    maximumDeepLocalDegree: accumulator.maximumDeepLocalDegree,
+    maximumDeepComponentSize: accumulator.maximumDeepComponentSize,
+    maximumDeepTriangles: accumulator.maximumDeepTriangles,
+    maximumDeepFourCliques: accumulator.maximumDeepFourCliques,
   };
 }
 

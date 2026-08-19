@@ -31,7 +31,7 @@ import { ENGINE_CONFIG } from "../engine-config.js";
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import { calculateDamage } from "./attacks.js";
 import { MIN_RANGE_SUPPRESSES_SHOOTER } from "./experiments.js";
-import { isWithinReach } from "./targeting.js";
+import { collisionRadius, isWithinReach, surfaceGap } from "./targeting.js";
 
 export const ORDERS_ENABLED = ENGINE_CONFIG.orders;
 // AOE2X_EXP_NO_RESCUE=1 disables the mid-fight idle rescue (probe flag: the
@@ -337,6 +337,10 @@ export function createKiteState(kiteOwner, kiteProfile = null, chaseCapture = fa
       moveOffsetTicks: [...kiteProfile.moveOffsetTicks],
       topupOffsetTicks: [...(kiteProfile.topupOffsetTicks ?? [])],
       preMoveTicks: [...(kiteProfile.preMoveTicks ?? [])],
+      ...(Number.isSafeInteger(kiteProfile.openingVolleyTick)
+          && kiteProfile.openingVolleyTick > 0
+        ? { openingVolleyTick: kiteProfile.openingVolleyTick }
+        : {}),
       ...(kiteProfile.kitedPath === "clearance_grid" ? { kitedPath: "clearance_grid" } : {}),
       ...(kiteProfile.cohortMotion === "contact_heading"
         ? { cohortMotion: "contact_heading" }
@@ -382,6 +386,7 @@ export function createKiteState(kiteOwner, kiteProfile = null, chaseCapture = fa
     ...(soloMovement === true ? { soloMovement: true } : {}),
     nextBeat: profile.firstBeatTick,
     lastBeatTick: null,
+    openingIssued: false,
     meleeAssigned: false,
     meleeActive: null,      // ids of melee units that acquired a live target
     ...(profile.meleeWave === "location_approach"
@@ -461,6 +466,34 @@ function signedArcDelta(a, b, perimeter) {
 }
 
 
+function kiteOpeningAcquisition(state, kiters, enemies, tick, events, makeEvent) {
+  // The opening player command does not carry the recurring volley script's
+  // damage bookkeeping. Each unit enters the ordinary target-acquisition
+  // path independently, so geometry can make several shooters choose the
+  // same front target and naturally overkill it. Only a target already in
+  // the unit's attack envelope is eligible: the full-rate Phase 2 tapes show
+  // the farther members of the opening formation holding instead of chasing.
+  for (const unit of kiters) {
+    let target = null;
+    let bestGap = Infinity;
+    for (const enemy of enemies) {
+      if (!isWithinReach(unit, enemy)) continue;
+      const gap = surfaceGap(unit, enemy);
+      if (gap < bestGap
+        || (gap === bestGap && enemy.referenceId < target.referenceId)) {
+        target = enemy;
+        bestGap = gap;
+      }
+    }
+    if (target === null) continue;
+    delete unit.moveOrder;
+    unit.actionTimers.acquire = 0;
+    applyOrder(unit, target, tick, events, makeEvent);
+  }
+  state.openingIssued = true;
+}
+
+
 function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
   // NOT MODELLED YET: minimum range suppresses the SHOOTER, not just the one
   // target it was aimed at. The tape's AI names every shooter here (439
@@ -510,7 +543,8 @@ function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
   // group soaks the whole volley out of range and survives 20-second
   // killing sprees no tape shows.
   const assigned = [];
-  const directOpening = state.lastBeatTick === null
+  const directOpening = state.openingIssued !== true
+    && state.lastBeatTick === null
     && (state.profile.openingVolley === "close_to_fire"
       || state.profile.volleyPursuit === "close_to_fire");
   const closingBeat = directOpening || state.profile.volleyPursuit === "close_to_fire";
@@ -620,7 +654,14 @@ function kiteMoveOrder(state, kiters, enemies, map, tick, events, makeEvent) {
   const py = tx;
   const count = kiters.length;
   const columns = Math.max(1, Math.ceil(Math.sqrt(count)));
-  const spacing = state.profile.formationSpacingTiles ?? 0.5;
+  const hasSourcedBodies = kiters.every((unit) => (
+    Number.isFinite(unit.mechanics?.collision_size_tiles?.x)
+    && Number.isFinite(unit.mechanics?.collision_size_tiles?.y)
+  ));
+  const spacing = state.profile.formationSpacingTiles
+    ?? (hasSourcedBodies
+      ? 2 * Math.max(...kiters.map((unit) => collisionRadius(unit)))
+      : 0.5);
   const slots = [];
   for (let index = 0; index < count; index += 1) {
     const column = index % columns;
@@ -707,6 +748,15 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
     if (profile.moveOffsetTicks.includes(tick - state.lastBeatTick)) {
       kiteMoveOrder(state, kiters, enemies, map, tick, events, makeEvent);
     }
+    return;
+  }
+
+  const { profile } = state;
+  // Phase 2 begins with a one-off player attack command before the recurring
+  // move/fire script. Keep that order separate: using it as the first beat
+  // shifts every later movement order and creates a different battle.
+  if (tick === profile.openingVolleyTick) {
+    kiteOpeningAcquisition(state, kiters, enemies, tick, events, makeEvent);
     return;
   }
 
@@ -802,7 +852,6 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
     }
   }
 
-  const { profile } = state;
   if (tick === state.nextBeat) {
     kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent);
     state.lastBeatTick = tick;

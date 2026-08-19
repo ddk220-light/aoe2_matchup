@@ -137,6 +137,62 @@ test("world publication preserves blocker-aware local route state", async () => 
 });
 
 
+test("persistent melee pursuit keeps a multi-waypoint route across ticks", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const rangedTarget = unit({
+    referenceId: 90,
+    owner: 2,
+    x: 7,
+    y: 5,
+    unitMechanics: scorpionMechanics,
+  });
+  const chaser = unit({
+    referenceId: 1,
+    owner: 3,
+    x: 2,
+    y: 5,
+    pursuitTargetId: 90,
+  });
+  const alliedPack = [
+    unit({ referenceId: 2, owner: 3, x: 3.0, y: 4.75 }),
+    unit({ referenceId: 3, owner: 3, x: 3.25, y: 5.0 }),
+    unit({ referenceId: 4, owner: 3, x: 3.0, y: 5.25 }),
+  ];
+  const initial = createWorld(scenario(
+    [chaser, ...alliedPack, rangedTarget],
+    {
+      kiteOwner: 2,
+      persistentMeleePursuitRouting: true,
+      preventiveContactSteering: true,
+    },
+  ));
+
+  const first = stepWorld(initial);
+  const firstRoute = first.kiteState.chaseRoutes.get(1);
+  assert.ok(firstRoute?.waypoints.length > 1);
+  assert.equal(first.units.find(({ referenceId }) => referenceId === 1).avoidance, null);
+  assert.equal(first.contactSteeringStates.get(3).steeredUnits.has(1), false);
+
+  const second = stepWorld(first);
+  const secondRoute = second.kiteState.chaseRoutes.get(1);
+  assert.ok(secondRoute, "the next tick must continue the same corridor");
+  assert.equal(secondRoute.targetReferenceId, firstRoute.targetReferenceId);
+  assert.deepEqual(secondRoute.waypoints, firstRoute.waypoints);
+  assert.ok(secondRoute.waypointIndex >= firstRoute.waypointIndex);
+});
+
+
+test("persistent melee pursuit requires a kiting world", async () => {
+  const { createWorld } = await loadWorld();
+  assert.throws(() => createWorld(scenario([
+    unit({ referenceId: 1, owner: 2, x: 2, y: 5 }),
+    unit({ referenceId: 2, owner: 3, x: 7, y: 5 }),
+  ], {
+    persistentMeleePursuitRouting: true,
+  })), /persistent melee pursuit routing requires a kiting owner/);
+});
+
+
 test("melee contact state is mechanics-derived rather than selected by owner", async () => {
   const { createWorld } = await loadWorld();
   const units = [

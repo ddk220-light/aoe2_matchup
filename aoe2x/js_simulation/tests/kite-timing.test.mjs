@@ -119,6 +119,25 @@ test("invalid timing mechanics and policy are rejected instead of silently defau
 });
 
 
+test("a scenario opening volley does not shift the mechanics-derived recurring beat", () => {
+  assert.deepEqual(deriveKiteProfile({
+    reload_seconds: 2,
+    attack_delay_seconds: 0.5,
+  }, {
+    openingVolleyTick: 1,
+    openingVolley: "close_to_fire",
+  }), {
+    beatTicks: 120,
+    firstBeatTick: 120,
+    moveOffsetTicks: [40],
+    topupOffsetTicks: [],
+    preMoveTicks: [80],
+    openingVolleyTick: 1,
+    openingVolley: "close_to_fire",
+  });
+});
+
+
 test("War Wagon target pressure derives from the chaser body without collision overrides", () => {
   assert.deepEqual(warWagonChasePolicy("elite_war_wagon", {
     collision_size_tiles: { x: 0.25, y: 0.25 },

@@ -20,7 +20,7 @@ const mechanics = Object.freeze({
 });
 
 
-function unit(referenceId, owner, x) {
+function unit(referenceId, owner, x, overrides = {}) {
   return Object.freeze({
     referenceId,
     owner,
@@ -29,6 +29,7 @@ function unit(referenceId, owner, x) {
     alive: true,
     action: "moving",
     mechanics,
+    ...overrides,
   });
 }
 
@@ -66,6 +67,66 @@ test("ordinary pairs use their complete sourced collision extent", () => {
   assert.equal(interaction.attackSurfaceExtent, 0.5);
   assert.equal(interaction.pathObstructs, true);
   assert.equal(interaction.mayDeepen, false);
+});
+
+
+test("allied formation orders share a zero-obstruction transit surface", () => {
+  const left = unit(1, 2, 4, { moveOrder: Object.freeze({ x: 8, y: 4 }) });
+  const right = unit(2, 2, 4.5, { moveOrder: Object.freeze({ x: 8.5, y: 4 }) });
+  const interaction = resolvePairInteraction(left, right);
+
+  assert.deepEqual(interaction, {
+    kind: "formation-transit",
+    collisionExtent: 0,
+    pathObstructs: false,
+    attackSurfaceExtent: 0.5,
+    mayDeepen: true,
+    reason: "shared-allied-formation-order",
+  });
+});
+
+
+test("formation transit overrides a stale release until the shared order ends", () => {
+  const snapshot = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", reservation({
+      kind: "releasing",
+      collisionExtent: 0.3,
+      attackSurfaceExtent: 0.5,
+      pathObstructs: true,
+      mayDeepen: false,
+      initiatorId: null,
+      targetId: null,
+    })]]),
+  });
+  const left = unit(1, 2, 4, { moveOrder: Object.freeze({ x: 8, y: 4 }) });
+  const right = unit(2, 2, 4.3, { moveOrder: Object.freeze({ x: 8.5, y: 4 }) });
+
+  assert.equal(resolvePairInteraction(left, right, snapshot).kind, "formation-transit");
+  assert.equal(resolvePairInteraction(
+    unit(1, 2, 4),
+    unit(2, 2, 4.3),
+    snapshot,
+  ).kind, "releasing");
+});
+
+
+test("formation transit lets several ordered allies cross without a deep-slot cap", () => {
+  const ordered = [
+    unit(1, 2, 4, { moveOrder: Object.freeze({ x: 8, y: 4 }) }),
+    unit(2, 2, 4.5, { moveOrder: Object.freeze({ x: 7.5, y: 4 }) }),
+    unit(3, 2, 5, { moveOrder: Object.freeze({ x: 7, y: 4 }) }),
+  ];
+  const next = resolveMovementProposals(
+    ordered,
+    [
+      Object.freeze({ referenceId: 1, dx: 0.5, dy: 0 }),
+      Object.freeze({ referenceId: 2, dx: 0, dy: 0 }),
+      Object.freeze({ referenceId: 3, dx: -0.5, dy: 0 }),
+    ],
+    Object.freeze({ width: 10, height: 10, obstacles: Object.freeze([]) }),
+  );
+
+  assert.deepEqual(next.map(({ x }) => x), [4.5, 4.5, 4.5]);
 });
 
 

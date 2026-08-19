@@ -1,4 +1,5 @@
 import { collisionRadius } from "./targeting.js";
+import { hasLimitedClosurePerReload } from "./reach-melee.js";
 
 
 const EPSILON = 1e-12;
@@ -254,6 +255,7 @@ function admitsReachMeleeWedge(mover, byReference, risk) {
   if (risk.fourCliques > 0 || risk.neighborCount > 2) return false;
   const target = byReference.get(mover.pursuitTargetId);
   if (!target || target.alive === false || target.owner === mover.owner) return false;
+  if (!hasLimitedClosurePerReload(mover, target)) return false;
   const centerDistance = Math.max(
     Math.abs(target.x - mover.x),
     Math.abs(target.y - mover.y),
@@ -293,6 +295,7 @@ function moverPriority(left, right, byReference) {
 export function planPreventiveContactSteering(snapshot, proposals, map, {
   owner,
   strength = PREVENTIVE_CONTACT_STEERING_STRENGTH,
+  authoritativeReferenceIds = new Set(),
 } = {}) {
   const normalizedStrength = normalizeStrength(strength);
   const {
@@ -307,6 +310,7 @@ export function planPreventiveContactSteering(snapshot, proposals, map, {
   const steered = [];
   const movers = alliedUnits
     .filter((unit) => {
+      if (authoritativeReferenceIds.has(unit.referenceId)) return false;
       const row = chosen.get(unit.referenceId);
       return Math.hypot(row.dx, row.dy) > EPSILON;
     })

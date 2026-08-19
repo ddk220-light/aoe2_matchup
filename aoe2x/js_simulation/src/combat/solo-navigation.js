@@ -190,14 +190,27 @@ function routeAnchor(state, units, map, tick) {
   // occupy an obstructed slot. Ordinary ranged bodies retain the established
   // 0.62-tile leash; Scorpions derive a one-tile leash from their mechanics.
   const leash = Math.max(ANCHOR_LEASH_TILES, 2 * maximumCollisionRadius(units));
-  const maximumError = units.reduce((maximum, unit) => {
+  const errors = units.map((unit) => {
     const slot = state.slots.get(unit.referenceId);
-    if (!slot) return maximum;
+    if (!slot) return { referenceId: unit.referenceId, error: 0 };
     const goal = { x: state.anchor.x + slot.x, y: state.anchor.y + slot.y };
-    return Math.max(maximum, Math.hypot(unit.x - goal.x, unit.y - goal.y));
-  }, 0);
+    return {
+      referenceId: unit.referenceId,
+      error: Math.hypot(unit.x - goal.x, unit.y - goal.y),
+    };
+  });
+  const maximumError = errors.reduce((maximum, current) => (
+    Math.max(maximum, current.error)
+  ), 0);
+  const mobileErrors = errors.filter(({ referenceId }) => (
+    !state.blockedReferenceIds.has(referenceId)
+  ));
+  const strictMajority = Math.floor(units.length / 2) + 1;
+  const leashError = mobileErrors.length >= strictMajority
+    ? mobileErrors.reduce((maximum, current) => Math.max(maximum, current.error), 0)
+    : maximumError;
   if (state.phase === "forming-first-order") {
-    if (maximumError > leash || speed <= 0) return maximumError;
+    if (leashError > leash || speed <= 0) return maximumError;
     state.phase = "routing";
     state.lastAnchorMoveTick = tick;
   }
@@ -222,7 +235,10 @@ function routeAnchor(state, units, map, tick) {
     state.routeWaypoint = ringPoint(state.routeBounds, state.routeArc);
   }
 
-  if (maximumError > leash || speed <= 0) return maximumError;
+  // A unit that the physical solver could not move on the previous tick
+  // rejoins independently; it cannot freeze the mobile majority. Ordinary
+  // unblocked stragglers still hold the anchor, preserving formation pace.
+  if (leashError > leash || speed <= 0) return maximumError;
   const dx = state.routeWaypoint.x - state.anchor.x;
   const dy = state.routeWaypoint.y - state.anchor.y;
   const distance = Math.hypot(dx, dy);
@@ -324,6 +340,7 @@ export function createSoloNavigationState(variant, units, map, formationProfile 
     lastAnchorMoveTick: 0,
     lastTick: 0,
     totalAnchorDistance: 0,
+    blockedReferenceIds: new Set(),
     diagnostics: null,
   };
   state.destinations = destinationsFor(state, units);
@@ -368,6 +385,7 @@ export function planSoloNavigation(state, units, map, tick) {
 
 
 export function finishSoloNavigationTick(state, units, blockedIds) {
+  state.blockedReferenceIds = new Set(blockedIds ?? []);
   state.diagnostics = buildDiagnostics(state, units, blockedIds?.size ?? 0);
   return state.diagnostics;
 }

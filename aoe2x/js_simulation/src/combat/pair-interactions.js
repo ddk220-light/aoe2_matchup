@@ -7,6 +7,7 @@ const VALID_CONTACT_RESERVATION_KINDS = new Set([
   "ranged-ingress",
   "enemy-transit",
   "engagement-contact",
+  "shallow-contact",
   "releasing",
 ]);
 const VALID_SNAPSHOT_OPTIONS = new Set(["contactReservations"]);
@@ -152,7 +153,28 @@ export function resolvePairInteraction(left, right,
   if (!snapshot || typeof snapshot !== "object") {
     throw new TypeError("pair interaction snapshot is required");
   }
+  const leftUnit = sourceUnit(left);
+  const rightUnit = sourceUnit(right);
   const extent = bodyRadius(left) + bodyRadius(right);
+  // A formation order assigns every member of the cohort its own destination.
+  // The authorized tapes show those ordered allies reforming through one
+  // another (including center crossings) instead of treating arrived members
+  // as walls. This interaction belongs above inherited reservations: an old
+  // release surface must not block a later shared formation order. As soon as
+  // either order ends, the unified reservation state publishes the pair's
+  // current overlap as monotonically releasing geometry.
+  if (leftUnit.owner === rightUnit.owner
+      && leftUnit.moveOrder !== undefined && leftUnit.moveOrder !== null
+      && rightUnit.moveOrder !== undefined && rightUnit.moveOrder !== null) {
+    return interaction(
+      "formation-transit",
+      0,
+      false,
+      extent,
+      true,
+      "shared-allied-formation-order",
+    );
+  }
   const reservation = snapshot.contactReservations?.get(
     dynamicPairKey(left.referenceId, right.referenceId),
   );
@@ -172,7 +194,7 @@ export function resolvePairInteraction(left, right,
     true,
     extent,
     false,
-    sourceUnit(left).owner === sourceUnit(right).owner
+    leftUnit.owner === rightUnit.owner
       ? "hard-allied-contact" : "hard-enemy-contact",
   );
 }

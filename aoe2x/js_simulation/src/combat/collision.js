@@ -626,7 +626,10 @@ export function resolveMovementProposals(snapshot, proposals, map, options = {})
   if (!finalGeometryIsValid(
     bodies, obstacles, bounds, GEOMETRY_SLOP, pairInteractions,
   )) {
-    throw new Error("collision constraints produced invalid final geometry");
+    const violation = finalGeometryViolation(
+      bodies, obstacles, bounds, GEOMETRY_SLOP, pairInteractions,
+    );
+    throw new Error(`collision constraints produced invalid final geometry: ${violation}`);
   }
 
   const nextByIndex = new Array(snapshot.length);

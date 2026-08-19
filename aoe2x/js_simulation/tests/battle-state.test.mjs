@@ -329,3 +329,36 @@ test("kiting setup links preserve manual counts and clamp them to the selected f
       + "&ranged=arbalester&melee=paladin",
   );
 });
+
+
+test("wrong-winner review URLs select one exact golden row and reject extra state", () => {
+  assert.equal(typeof battleStateModule.phase2WrongWinnerRequest, "function");
+  assert.equal(typeof battleStateModule.phase2WrongWinnerHref, "function");
+  assert.deepEqual(
+    battleStateModule.phase2WrongWinnerRequest(
+      "https://dragonstar.tail82a190.ts.net/golden-map/"
+        + "?mode=phase2-wrong-winners&row=elite_boyar_vs_heavy_cav_archer",
+    ),
+    {
+      endpoint: "api/phase2/wrong-winner",
+      rowId: "elite_boyar_vs_heavy_cav_archer",
+      query: "row=elite_boyar_vs_heavy_cav_archer",
+    },
+  );
+  assert.equal(
+    battleStateModule.phase2WrongWinnerHref(
+      "https://dragonstar.tail82a190.ts.net/golden-map/?old=1",
+      "elite_war_wagon_vs_champion",
+    ),
+    "https://dragonstar.tail82a190.ts.net/golden-map/"
+      + "?mode=phase2-wrong-winners&row=elite_war_wagon_vs_champion",
+  );
+  for (const url of [
+    "?mode=phase2-wrong-winners",
+    "?mode=phase2-wrong-winners&row=bad row",
+    "?mode=phase2-wrong-winners&row=elite_boyar_vs_heavy_cav_archer&extra=1",
+    "?mode=phase2-wrong-winners&row=a&row=b",
+  ]) {
+    assert.equal(battleStateModule.phase2WrongWinnerRequest(url), null, url);
+  }
+});

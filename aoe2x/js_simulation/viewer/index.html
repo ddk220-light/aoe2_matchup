@@ -138,6 +138,20 @@
           </div>
         </div>
       </div>
+      <section class="wrong-winner-review" id="wrongWinnerReview" hidden
+               aria-labelledby="wrongWinnerReviewTitle">
+        <div class="wrong-winner-picker">
+          <span class="review-kicker">Current Phase 2 review</span>
+          <label id="wrongWinnerReviewTitle" for="wrongWinnerMatchup">Wrong-winner matchup</label>
+          <select id="wrongWinnerMatchup" aria-describedby="wrongWinnerConvention"></select>
+          <small id="wrongWinnerConvention">Exact golden roster and starting cells · positive score favors the left army</small>
+        </div>
+        <div class="wrong-winner-metrics" aria-label="Latest completed report scores">
+          <div><span>Tape</span><strong id="wrongWinnerTapeScore">—</strong></div>
+          <div><span>Simulation</span><strong id="wrongWinnerSimulationScore">—</strong></div>
+          <div class="is-delta"><span>Delta</span><strong id="wrongWinnerDelta">—</strong></div>
+        </div>
+      </section>
       <p class="start-hint" id="startHint">Pick a calibrated civ &amp; unit for both teams to start</p>
 
       <div class="sim-stage" id="simStage">

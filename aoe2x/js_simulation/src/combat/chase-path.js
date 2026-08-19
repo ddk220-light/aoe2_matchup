@@ -19,7 +19,10 @@
 //     with the ordinary movement/collision layers underneath.
 //
 // Everything is a pure function of this tick's positions. No RNG, no clock.
-import { collisionRadius } from "./targeting.js";
+import {
+  collisionRadius,
+  MELEE_CONTACT_TOLERANCE_TILES,
+} from "./targeting.js";
 import {
   createPairInteractionSnapshot,
   resolvePairInteraction,
@@ -33,6 +36,18 @@ const WAYPOINT_LOOKAHEAD_CELLS = 8; // 2.0 tiles
 const MAX_EXPANSIONS = 8192;
 const STRAIGHT_COST = 10;
 const DIAGONAL_COST = 14;
+const ROUTE_WAYPOINT_REACHED_TILES = CELL_TILES * 0.75;
+const MAX_DEEP_CONTACT_DEGREE = 2;
+const SLOT_OCCUPYING_CONTACT_KINDS = new Set([
+  "allied-transit",
+  "ranged-ingress",
+  "enemy-transit",
+  "engagement-contact",
+]);
+const ALLIED_SLOT_CONTACT_KINDS = new Set([
+  "allied-transit",
+  "ranged-ingress",
+]);
 
 function cellIndex(cx, cy, cols) {
   return cy * cols + cx;
@@ -240,8 +255,25 @@ function planGridAim(mover, target, obstacles, map, enterBlockedGoal, options = 
 // Plan toward an unoccupied move-order coordinate. Unlike pursuit, a blocked
 // goal cell is not enterable: the best reachable approach is used instead.
 export function planMoveAim(mover, goal, obstacles, map, options = {}) {
-  return planGridAim(
+  const planned = planGridAim(
     mover, goal, [...(map.obstacles ?? []), ...obstacles], map, false, options,
+  );
+  if (planned?.stand !== true || !obstacles.some(({ owner }) => owner !== undefined)) {
+    return planned;
+  }
+  // A temporary ring of moving bodies must not become a permanent movement
+  // order. Retry against static geometry only and let pairwise collision and
+  // local avoidance resolve the live escape direction on this tick.
+  return planGridAim(
+    mover,
+    goal,
+    [
+      ...(map.obstacles ?? []),
+      ...obstacles.filter(({ owner }) => owner === undefined),
+    ],
+    map,
+    false,
+    options,
   );
 }
 
@@ -259,4 +291,299 @@ export function planChaseAim(mover, target, obstacles, map, options = {}) {
   // collision layers handle this tick. Static map geometry may still produce
   // a genuine stand result.
   return planGridAim(mover, target, map.obstacles ?? [], map, true, options);
+}
+
+
+function addHardBody(blocked, body, reach, cols, rows) {
+  const loX = Math.max(0, Math.floor((body.x - reach) / CELL_TILES - 0.5) + 1);
+  const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / CELL_TILES - 0.5) - 1);
+  const loY = Math.max(0, Math.floor((body.y - reach) / CELL_TILES - 0.5) + 1);
+  const hiY = Math.min(rows - 1, Math.ceil((body.y + reach) / CELL_TILES - 0.5) - 1);
+  for (let cy = loY; cy <= hiY; cy += 1) {
+    for (let cx = loX; cx <= hiX; cx += 1) {
+      const centreX = (cx + 0.5) * CELL_TILES;
+      const centreY = (cy + 0.5) * CELL_TILES;
+      if (Math.max(Math.abs(centreX - body.x), Math.abs(centreY - body.y)) < reach) {
+        blocked[cellIndex(cx, cy, cols)] = 1;
+      }
+    }
+  }
+}
+
+
+function contactSlotUsage(pairInteractions) {
+  const deepDegree = new Map();
+  const allied = new Set();
+  for (const reservation of pairInteractions.contactReservations.values()) {
+    if (!SLOT_OCCUPYING_CONTACT_KINDS.has(reservation.kind)) continue;
+    for (const referenceId of [reservation.leftId, reservation.rightId]) {
+      deepDegree.set(referenceId, (deepDegree.get(referenceId) ?? 0) + 1);
+      if (ALLIED_SLOT_CONTACT_KINDS.has(reservation.kind)) allied.add(referenceId);
+    }
+  }
+  return { deepDegree, allied };
+}
+
+
+function alliedTransitSlotAvailable(mover, body, slots) {
+  return !slots.allied.has(mover.referenceId)
+    && !slots.allied.has(body.referenceId)
+    && (slots.deepDegree.get(mover.referenceId) ?? 0) < MAX_DEEP_CONTACT_DEGREE
+    && (slots.deepDegree.get(body.referenceId) ?? 0) < MAX_DEEP_CONTACT_DEGREE;
+}
+
+
+// Persistent pursuit differs from the legacy one-waypoint planner in how it
+// treats FRIENDLY bodies. They are not hard walls: AoE2's dat-derived friendly
+// shrink and this engine's pair interactions can permit a shallow crossing.
+// Instead, a candidate cell pays the geometric clearance distance needed to
+// leave every allied body it penetrates. One ally can therefore remain the
+// shortest physical route; the costs of a dense pack add and make walking
+// around the connected crowd cheaper without a roster-size or unit-name gate.
+function buildPersistentGrid(mover, target, obstacles, cols, rows, options = {}) {
+  const blocked = new Uint8Array(cols * rows);
+  const congestion = new Uint32Array(cols * rows);
+  const alliedOccupancy = new Uint8Array(cols * rows);
+  const moverRadius = collisionRadius(mover);
+  const pairInteractions = options.pairInteractions
+    ?? createPairInteractionSnapshot();
+  const contactSlots = contactSlotUsage(pairInteractions);
+  for (const body of [...(options.mapObstacles ?? []), ...obstacles]) {
+    if (body.referenceId === mover.referenceId
+        || body.referenceId === target.referenceId) continue;
+    const dynamic = body.owner !== undefined;
+    const interaction = dynamic
+      ? resolvePairInteraction(mover, body, pairInteractions)
+      : null;
+    if (interaction && !interaction.pathObstructs) continue;
+    const reach = interaction?.collisionExtent ?? moverRadius + obstacleRadius(body);
+    if (!dynamic || body.owner !== mover.owner) {
+      addHardBody(blocked, body, reach, cols, rows);
+      continue;
+    }
+    // A planner may admit one ally only when the unified contact authority
+    // can actually publish that pair on this tick. If either body already
+    // owns its one allied lane (or its two total deep-contact slots), the
+    // next ally is route geometry, not a second simultaneous transit. An
+    // existing releasing surface is likewise hard until separation.
+    if (interaction.kind !== "hard"
+        || !alliedTransitSlotAvailable(mover, body, contactSlots)) {
+      addHardBody(blocked, body, reach, cols, rows);
+      continue;
+    }
+    // A cell inside one ally can be admitted by the pairwise transit layer on
+    // this same tick. A cell inside two allies would require a three-body
+    // collapse, so it becomes hard route geometry after all bodies are tallied.
+    const loX = Math.max(0, Math.floor((body.x - reach) / CELL_TILES - 0.5) + 1);
+    const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / CELL_TILES - 0.5) - 1);
+    const loY = Math.max(0, Math.floor((body.y - reach) / CELL_TILES - 0.5) + 1);
+    const hiY = Math.min(rows - 1, Math.ceil((body.y + reach) / CELL_TILES - 0.5) - 1);
+    for (let cy = loY; cy <= hiY; cy += 1) {
+      for (let cx = loX; cx <= hiX; cx += 1) {
+        const centreX = (cx + 0.5) * CELL_TILES;
+        const centreY = (cy + 0.5) * CELL_TILES;
+        const penetration = reach - Math.max(
+          Math.abs(centreX - body.x),
+          Math.abs(centreY - body.y),
+        );
+        if (penetration <= 0) continue;
+        alliedOccupancy[cellIndex(cx, cy, cols)] += 1;
+        // Convert physical clearance distance to the same distance units as
+        // A*: ten cost points per orthogonal grid cell.
+        congestion[cellIndex(cx, cy, cols)] += Math.ceil(
+          penetration / CELL_TILES,
+        ) * STRAIGHT_COST;
+      }
+    }
+  }
+  for (let index = 0; index < alliedOccupancy.length; index += 1) {
+    if (alliedOccupancy[index] >= 2) blocked[index] = 1;
+  }
+  return { blocked, congestion, pairInteractions };
+}
+
+
+function lineHasPersistentObstruction(blocked, congestion, cols, ax, ay, bx, by) {
+  const steps = Math.max(Math.abs(bx - ax), Math.abs(by - ay));
+  if (steps === 0) return false;
+  for (let i = 1; i <= steps; i += 1) {
+    const cx = Math.round(ax + ((bx - ax) * i) / steps);
+    const cy = Math.round(ay + ((by - ay) * i) / steps);
+    const index = cellIndex(cx, cy, cols);
+    // A single transit-eligible ally is a cost if A* is already routing, not
+    // a reason to abandon a clear direct pursuit. Only hard geometry (which
+    // includes simultaneous penetration of two allies) starts a detour.
+    if (blocked[index]) return true;
+  }
+  return false;
+}
+
+
+function meleeStopReach(mover, target, pairInteractions) {
+  const range = mover?.mechanics?.attack_range_tiles ?? 0;
+  if (!Number.isFinite(range) || range < 0) {
+    throw new RangeError("persistent chase attack range must be nonnegative and finite");
+  }
+  const interaction = resolvePairInteraction(mover, target, pairInteractions);
+  const stop = interaction.kind === "enemy-transit"
+    ? range
+    : Math.max(range, MELEE_CONTACT_TOLERANCE_TILES);
+  return interaction.attackSurfaceExtent + stop;
+}
+
+
+function inGoalEnvelope(cx, cy, target, reach) {
+  const x = (cx + 0.5) * CELL_TILES;
+  const y = (cy + 0.5) * CELL_TILES;
+  return Math.max(Math.abs(x - target.x), Math.abs(y - target.y)) <= reach + 1e-12;
+}
+
+
+function envelopeHeuristic(cx, cy, target, reach) {
+  const x = (cx + 0.5) * CELL_TILES;
+  const y = (cy + 0.5) * CELL_TILES;
+  const dx = Math.max(0, Math.abs(x - target.x) - reach);
+  const dy = Math.max(0, Math.abs(y - target.y) - reach);
+  // Floor keeps this heuristic admissible for a goal envelope whose edge may
+  // fall between cell centres.
+  return octile(
+    0,
+    0,
+    Math.floor(dx / CELL_TILES),
+    Math.floor(dy / CELL_TILES),
+  );
+}
+
+
+function freezePersistentRoute(target, path, cols) {
+  const waypoints = Object.freeze(path.slice(1).map((index) => Object.freeze({
+    x: (index % cols + 0.5) * CELL_TILES,
+    y: (Math.floor(index / cols) + 0.5) * CELL_TILES,
+  })));
+  return Object.freeze({
+    targetReferenceId: target.referenceId,
+    targetX: target.x,
+    targetY: target.y,
+    waypoints,
+    waypointIndex: 0,
+  });
+}
+
+
+function detourPrefix(path, blocked, congestion, cols, targetX, targetY) {
+  // A pursuit target moves continuously. Persist only until the path has
+  // cleared the obstruction that forced the detour, then hand control back to
+  // live target tracking. Persisting the complete A* path would chase the
+  // target's old position after every kite beat.
+  for (let pathIndex = 1; pathIndex < path.length; pathIndex += 1) {
+    const index = path[pathIndex];
+    const cx = index % cols;
+    const cy = (index - cx) / cols;
+    if (!lineHasPersistentObstruction(
+      blocked, congestion, cols, cx, cy, targetX, targetY,
+    )) {
+      return path.slice(0, pathIndex + 1);
+    }
+  }
+  return path;
+}
+
+
+// Return a complete, persistent detour corridor. `null` deliberately means
+// the live direct route is clear; the caller should continue tracking the
+// moving target. Unlike planChaseAim, this plans to the actor's physical stop
+// envelope and includes geometric allied congestion in the route cost.
+export function planPersistentChaseRoute(mover, target, obstacles, map, options = {}) {
+  const cols = Math.max(1, Math.round(map.width / CELL_TILES));
+  const rows = Math.max(1, Math.round(map.height / CELL_TILES));
+  const { blocked, congestion, pairInteractions } = buildPersistentGrid(
+    mover,
+    target,
+    obstacles,
+    cols,
+    rows,
+    { ...options, mapObstacles: map.obstacles ?? [] },
+  );
+  const startX = toCell(mover.x, cols);
+  const startY = toCell(mover.y, rows);
+  const targetX = toCell(target.x, cols);
+  const targetY = toCell(target.y, rows);
+  const startIndex = cellIndex(startX, startY, cols);
+  blocked[startIndex] = 0;
+  congestion[startIndex] = 0;
+  const reach = meleeStopReach(mover, target, pairInteractions);
+  if (inGoalEnvelope(startX, startY, target, reach)) return null;
+  if (!lineHasPersistentObstruction(
+    blocked, congestion, cols, startX, startY, targetX, targetY,
+  )) return null;
+
+  const gScore = new Map([[startIndex, 0]]);
+  const cameFrom = new Map();
+  const closed = new Set();
+  const startH = envelopeHeuristic(startX, startY, target, reach);
+  const heap = [{ index: startIndex, g: 0, h: startH, f: startH }];
+  let goalIndex = null;
+  let expansions = 0;
+  while (heap.length > 0 && expansions < MAX_EXPANSIONS) {
+    const current = heapPop(heap);
+    if (closed.has(current.index)) continue;
+    closed.add(current.index);
+    expansions += 1;
+    const cx = current.index % cols;
+    const cy = (current.index - cx) / cols;
+    if (inGoalEnvelope(cx, cy, target, reach)) {
+      goalIndex = current.index;
+      break;
+    }
+    for (const [dx, dy, cost] of NEIGHBORS) {
+      const nx = cx + dx;
+      const ny = cy + dy;
+      if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) continue;
+      const nIndex = cellIndex(nx, ny, cols);
+      if (closed.has(nIndex) || blocked[nIndex]) continue;
+      if (dx !== 0 && dy !== 0
+          && (blocked[cellIndex(cx + dx, cy, cols)]
+            || blocked[cellIndex(cx, cy + dy, cols)])) continue;
+      const tentative = current.g + cost + congestion[nIndex];
+      const known = gScore.get(nIndex);
+      if (known !== undefined && known <= tentative) continue;
+      gScore.set(nIndex, tentative);
+      cameFrom.set(nIndex, current.index);
+      const h = envelopeHeuristic(nx, ny, target, reach);
+      heapPush(heap, { index: nIndex, g: tentative, h, f: tentative + h });
+    }
+  }
+  if (goalIndex === null) return Object.freeze({ stand: true });
+  const path = [];
+  for (let index = goalIndex; index !== undefined; index = cameFrom.get(index)) {
+    path.push(index);
+    if (index === startIndex) break;
+  }
+  path.reverse();
+  return freezePersistentRoute(
+    target,
+    detourPrefix(path, blocked, congestion, cols, targetX, targetY),
+    cols,
+  );
+}
+
+
+export function advancePersistentChaseRoute(mover, route) {
+  if (!route || !Array.isArray(route.waypoints)) {
+    throw new TypeError("persistent chase route with waypoints is required");
+  }
+  let waypointIndex = route.waypointIndex;
+  while (waypointIndex < route.waypoints.length) {
+    const waypoint = route.waypoints[waypointIndex];
+    if (Math.hypot(waypoint.x - mover.x, waypoint.y - mover.y)
+        > ROUTE_WAYPOINT_REACHED_TILES + 1e-12) break;
+    waypointIndex += 1;
+  }
+  if (waypointIndex === route.waypointIndex) return route;
+  return Object.freeze({ ...route, waypointIndex });
+}
+
+
+export function persistentRouteMotionStalled(before, after) {
+  return Math.hypot(after.x - before.x, after.y - before.y) <= 1e-12;
 }

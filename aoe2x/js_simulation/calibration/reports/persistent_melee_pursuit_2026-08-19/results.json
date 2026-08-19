@@ -1,0 +1,484 @@
+{
+  "schemaVersion": 1,
+  "experiment": "persistent-melee-pursuit-routing",
+  "samplesRun": 2,
+  "source": {
+    "phase2": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6",
+    "hcaPaladin": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+  },
+  "rows": [
+    {
+      "id": "elite_boyar_vs_heavy_cav_archer",
+      "matchup": "Heavy Cavalry Archer vs Elite Boyar",
+      "ratio": "21v16",
+      "tape": {
+        "runs": 1,
+        "mean": 10.5,
+        "min": 10.5,
+        "max": 10.5,
+        "owner3WinRate": 1
+      },
+      "previousEngine": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -37.57142857142857,
+        "min": -43.333333333333336,
+        "max": -31.25,
+        "side3WinRate": 0,
+        "side3WinRateError": 1,
+        "bandError": 48.07142857142857,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": true,
+        "report": "phase2_reachable_opening_body_formation_full_2026-08-19"
+      },
+      "candidate": {
+        "runs": 1,
+        "mean": 16.75,
+        "min": 16.75,
+        "max": 16.75,
+        "owner3WinRate": 1,
+        "unresolved": 0,
+        "samples": [
+          {
+            "sample": 0,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 402,
+            "score": 16.75,
+            "ticks": 6007
+          }
+        ]
+      },
+      "diagnosticSample": {
+        "routePlans": 689,
+        "routeAdvances": 2338,
+        "routeInvalidations": 193,
+        "invalidationReasons": {
+          "target-changed": 123,
+          "no-progress": 70
+        },
+        "invalidationExamples": [
+          {
+            "tick": 680,
+            "actorId": 1608,
+            "targetId": 1266,
+            "waypointX": 7.375,
+            "waypointY": 4.625,
+            "beforeX": 7.111420343638422,
+            "beforeY": 4.625090892897082,
+            "proposedX": 7.13525367607126,
+            "proposedY": 4.625082674202734,
+            "afterX": 7.111420343638422,
+            "afterY": 4.625090892897082,
+            "blockingReferenceIds": [
+              1620
+            ]
+          },
+          {
+            "tick": 732,
+            "actorId": 1613,
+            "targetId": 1266,
+            "waypointX": 8.375,
+            "waypointY": 4.625,
+            "beforeX": 7.969555551054613,
+            "beforeY": 4.574547757980882,
+            "proposedX": 7.993206476504635,
+            "proposedY": 4.577490805340106,
+            "afterX": 7.969555551054613,
+            "afterY": 4.574547757980882,
+            "blockingReferenceIds": [
+              1620
+            ]
+          },
+          {
+            "tick": 733,
+            "actorId": 1613,
+            "targetId": 1266,
+            "waypointX": 8.125,
+            "waypointY": 4.625,
+            "beforeX": 7.969555551054613,
+            "beforeY": 4.574547757980882,
+            "proposedX": 7.992224742700847,
+            "proposedY": 4.581905444608312,
+            "afterX": 7.969555551054613,
+            "afterY": 4.574547757980882,
+            "blockingReferenceIds": [
+              1620
+            ]
+          },
+          {
+            "tick": 734,
+            "actorId": 1613,
+            "targetId": 1266,
+            "waypointX": 8.125,
+            "waypointY": 4.625,
+            "beforeX": 7.969555551054613,
+            "beforeY": 4.574547757980882,
+            "proposedX": 7.992224742700847,
+            "proposedY": 4.581905444608312,
+            "afterX": 7.969555551054613,
+            "afterY": 4.574547757980882,
+            "blockingReferenceIds": [
+              1620
+            ]
+          },
+          {
+            "tick": 735,
+            "actorId": 1613,
+            "targetId": 1266,
+            "waypointX": 8.125,
+            "waypointY": 4.625,
+            "beforeX": 7.969555551054613,
+            "beforeY": 4.574547757980882,
+            "proposedX": 7.992224742700847,
+            "proposedY": 4.581905444608312,
+            "afterX": 7.969555551054613,
+            "afterY": 4.574547757980882,
+            "blockingReferenceIds": [
+              1620
+            ]
+          },
+          {
+            "tick": 736,
+            "actorId": 1613,
+            "targetId": 1266,
+            "waypointX": 8.125,
+            "waypointY": 4.625,
+            "beforeX": 7.969555551054613,
+            "beforeY": 4.574547757980882,
+            "proposedX": 7.992224742700847,
+            "proposedY": 4.581905444608312,
+            "afterX": 7.969555551054613,
+            "afterY": 4.574547757980882,
+            "blockingReferenceIds": [
+              1620
+            ]
+          },
+          {
+            "tick": 737,
+            "actorId": 1613,
+            "targetId": 1266,
+            "waypointX": 8.125,
+            "waypointY": 4.625,
+            "beforeX": 7.969555551054613,
+            "beforeY": 4.574547757980882,
+            "proposedX": 7.992224742700847,
+            "proposedY": 4.581905444608312,
+            "afterX": 7.969555551054613,
+            "afterY": 4.574547757980882,
+            "blockingReferenceIds": [
+              1620
+            ]
+          },
+          {
+            "tick": 738,
+            "actorId": 1613,
+            "targetId": 1266,
+            "waypointX": 8.125,
+            "waypointY": 4.625,
+            "beforeX": 7.969555551054613,
+            "beforeY": 4.574547757980882,
+            "proposedX": 7.992224742700847,
+            "proposedY": 4.581905444608312,
+            "afterX": 7.969555551054613,
+            "afterY": 4.574547757980882,
+            "blockingReferenceIds": [
+              1620
+            ]
+          },
+          {
+            "tick": 1496,
+            "actorId": 1619,
+            "targetId": 1264,
+            "waypointX": 11.875,
+            "waypointY": 5.625,
+            "beforeX": 11.874999999997755,
+            "beforeY": 5.241557689608006,
+            "proposedX": 11.874999999997895,
+            "proposedY": 5.265391023457912,
+            "afterX": 11.874999999997895,
+            "afterY": 5.241557689608006,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 1497,
+            "actorId": 1619,
+            "targetId": 1264,
+            "waypointX": 11.875,
+            "waypointY": 5.375,
+            "beforeX": 11.874999999997895,
+            "beforeY": 5.241557689608006,
+            "proposedX": 11.874999999998272,
+            "proposedY": 5.265391023457912,
+            "afterX": 11.874999999998272,
+            "afterY": 5.241557689608006,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 1498,
+            "actorId": 1619,
+            "targetId": 1264,
+            "waypointX": 11.875,
+            "waypointY": 5.375,
+            "beforeX": 11.874999999998272,
+            "beforeY": 5.241557689608006,
+            "proposedX": 11.87499999999858,
+            "proposedY": 5.265391023457912,
+            "afterX": 11.87499999999858,
+            "afterY": 5.241557689608006,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 1499,
+            "actorId": 1619,
+            "targetId": 1264,
+            "waypointX": 11.875,
+            "waypointY": 5.375,
+            "beforeX": 11.87499999999858,
+            "beforeY": 5.241557689608006,
+            "proposedX": 11.874999999998835,
+            "proposedY": 5.265391023457912,
+            "afterX": 11.874999999998835,
+            "afterY": 5.241557689608006,
+            "blockingReferenceIds": []
+          }
+        ],
+        "chaseUnitTicks": 34929,
+        "modeShares": {
+          "direct": 0.29568553351083626,
+          "oblique": 0.16997337455982134,
+          "lateral": 0.2597268745168771,
+          "away": 0.09868590569440866,
+          "stall": 0.17592831171805662
+        }
+      }
+    },
+    {
+      "id": "heavy_cav_archer_vs_paladin_20v15",
+      "matchup": "Heavy Cavalry Archer vs Paladin",
+      "ratio": "20v15",
+      "tape": {
+        "runs": 5,
+        "mean": 39.49629629629629,
+        "min": 32.74074074074074,
+        "max": 48.44444444444444,
+        "owner3WinRate": 1
+      },
+      "previousEngine": {
+        "samples": 1,
+        "score": 40,
+        "winnerOwner": 3,
+        "ticks": 4418,
+        "report": "shared_enemy_pair_transit_2026-08-18"
+      },
+      "candidate": {
+        "runs": 1,
+        "mean": 39.7037037037037,
+        "min": 39.7037037037037,
+        "max": 39.7037037037037,
+        "owner3WinRate": 1,
+        "unresolved": 0,
+        "samples": [
+          {
+            "sample": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1072,
+            "score": 39.7037037037037,
+            "ticks": 4412
+          }
+        ]
+      },
+      "diagnosticSample": {
+        "routePlans": 563,
+        "routeAdvances": 2030,
+        "routeInvalidations": 164,
+        "invalidationReasons": {
+          "target-changed": 129,
+          "no-progress": 35
+        },
+        "invalidationExamples": [
+          {
+            "tick": 399,
+            "actorId": 1612,
+            "targetId": 1554,
+            "waypointX": 4.625,
+            "waypointY": 5.375,
+            "beforeX": 4.565851241800826,
+            "beforeY": 5.563579945694245,
+            "proposedX": 4.573258360828734,
+            "proposedY": 5.539964334030342,
+            "afterX": 4.565851241800826,
+            "afterY": 5.563579945694245,
+            "blockingReferenceIds": [
+              1613,
+              1618
+            ]
+          },
+          {
+            "tick": 750,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 751,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 752,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 753,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 760,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 761,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 762,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 763,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 764,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 765,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          },
+          {
+            "tick": 766,
+            "actorId": 1618,
+            "targetId": 1270,
+            "waypointX": 6.625,
+            "waypointY": 4.375,
+            "beforeX": 6.656829743276113,
+            "beforeY": 4.125115112493365,
+            "proposedX": 6.653702415466783,
+            "proposedY": 4.149666738657977,
+            "afterX": 6.656829743276113,
+            "afterY": 4.125115112493365,
+            "blockingReferenceIds": []
+          }
+        ],
+        "chaseUnitTicks": 29969,
+        "modeShares": {
+          "direct": 0.290366712269345,
+          "oblique": 0.19513497280523207,
+          "lateral": 0.24642130201207915,
+          "away": 0.0846541426140345,
+          "stall": 0.1834228702993093
+        }
+      }
+    }
+  ]
+}

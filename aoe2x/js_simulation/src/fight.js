@@ -136,7 +136,7 @@ function kiteProfileFor(unit, mechanics) {
 // it changes every tick (the renderer's direction arrow); the per-type fields
 // the renderer also needs -- unit master, collision radius, attack range --
 // do not change per tick, so they live once in unitIndex instead.
-function slimSnapshot(snapshot) {
+export function slimSnapshot(snapshot) {
   return Object.freeze({
     tick: snapshot.tick,
     units: Object.freeze(snapshot.units.map((unit) => Object.freeze([
@@ -189,6 +189,7 @@ export async function runFight(root, {
   kiteOwnerOverride,
   kiteChaseCapture,
   kiteChaseDwellTicks,
+  persistentMeleePursuitRouting,
   preventiveContactSteering,
   placementByOwner,
 }) {
@@ -306,6 +307,9 @@ export async function runFight(root, {
         ...(kiteMeleeOpeningOrder === "attack-move-all"
           ? warWagonChasePolicy(kiter.slug, chaserMechanics)
           : {}),
+        ...(persistentMeleePursuitRouting === true
+          ? { persistentMeleePursuitRouting: true }
+          : {}),
       }),
     ...(preventiveContactSteering === true
       ? { preventiveContactSteering: true }
@@ -350,6 +354,9 @@ export async function runFight(root, {
           innerKiteOwner === 2 ? innerCount2 : innerCount3,
         ),
         alliedTransitMode: "contact-reservation",
+        ...(persistentMeleePursuitRouting === true
+          ? { meleePursuitRouting: "persistent-grid" }
+          : {}),
       }),
     ...(preventiveContactSteering === true
       ? {
@@ -525,6 +532,7 @@ export async function runKitingObservation(root, {
         // range-entry tick. Recorded batch playbacks retain the calibrated
         // one-second default because they do not pass this viewer-only override.
         kiteChaseDwellTicks: 0,
+        persistentMeleePursuitRouting: true,
       }
       : {}),
   });

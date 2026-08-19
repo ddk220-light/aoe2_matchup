@@ -569,6 +569,7 @@ function normalizeInputs(snapshot, proposals) {
 export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
   const pairInteractions = options.pairInteractions
     ?? createPairInteractionSnapshot();
+  const authoritativeReferenceIds = options.authoritativeReferenceIds ?? new Set();
   const { units, proposalByReference } = normalizeInputs(snapshot, proposals);
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const nextUnits = [];
@@ -578,6 +579,14 @@ export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
   for (const mover of units) {
     const original = proposalByReference.get(mover.referenceId)
       ?? Object.freeze({ referenceId: mover.referenceId, dx: 0, dy: 0 });
+    // A persistent grid route has already considered the whole obstruction
+    // corridor. Replacing that step with a one-body tangent recreates the
+    // per-tick local minimum the route is intended to escape.
+    if (authoritativeReferenceIds.has(mover.referenceId)) {
+      nextUnits.push(Object.freeze({ ...mover, avoidance: null }));
+      nextProposals.push(original);
+      continue;
+    }
     const originalBudget = Math.hypot(original.dx, original.dy);
     // A kite-move marcher walks its formation slot, not toward contact with
     // its beat target — routing it around blockers toward that target would

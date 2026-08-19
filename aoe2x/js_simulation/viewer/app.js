@@ -1,7 +1,13 @@
 import { validateMapFixture } from "../src/map-model.js";
 import { formationUnits, validateFormationFixture } from "../src/formation-model.js";
 import { createBattlePage } from "./battle-page.js";
-import { kitingFightHref, kitingFightRequest, soloMovementRequest } from "./battle-state.js";
+import {
+  kitingFightHref,
+  kitingFightRequest,
+  phase2WrongWinnerHref,
+  phase2WrongWinnerRequest,
+  soloMovementRequest,
+} from "./battle-state.js";
 import { createMapRenderer } from "./map-renderer.js";
 import {
   createPlaybackCursor,
@@ -12,6 +18,12 @@ import {
 
 const byId = (id) => document.getElementById(id);
 const TICKS_PER_SECOND = 60;
+
+
+function signedScore(value) {
+  if (!Number.isFinite(value)) return "—";
+  return `${value > 0 ? "+" : ""}${value.toFixed(2)}`;
+}
 
 
 function prettyName(value) {
@@ -166,22 +178,32 @@ function renderDamageBreakdown(result, events) {
 async function start() {
   const soloRequest = soloMovementRequest(window.location.href);
   const kitingRequest = kitingFightRequest(window.location.href);
+  const wrongWinnerRequest = phase2WrongWinnerRequest(window.location.href);
   const navigationRequest = soloRequest ?? kitingRequest;
-  const [mapResponse, formationResponse, unitsResponse, catalogueResponse] = await Promise.all([
+  const autoRequest = navigationRequest ?? wrongWinnerRequest;
+  const [mapResponse, formationResponse, unitsResponse, catalogueResponse,
+    wrongWinnerResponse] = await Promise.all([
     fetch("api/map", { cache: "no-store" }),
     fetch("api/formation", { cache: "no-store" }),
     fetch("api/units", { cache: "no-store" }),
     fetch("api/catalogue", { cache: "no-store" }),
+    wrongWinnerRequest
+      ? fetch("api/phase2/wrong-winners", { cache: "no-store" })
+      : Promise.resolve(null),
   ]);
   for (const [label, response] of [
     ["Map", mapResponse], ["Formation", formationResponse], ["Units", unitsResponse],
     ["Catalogue", catalogueResponse],
+    ["Wrong-winner catalogue", wrongWinnerResponse],
   ]) {
+    if (!response) continue;
     if (!response.ok) throw new Error(`${label} API returned ${response.status}`);
   }
 
   const units = deepFreeze(await unitsResponse.json());
   const catalogue = deepFreeze(await catalogueResponse.json());
+  const wrongWinnerCatalogue = wrongWinnerResponse
+    ? deepFreeze(await wrongWinnerResponse.json()) : null;
   const fixture = validateMapFixture(await mapResponse.json());
   const formation = validateFormationFixture(await formationResponse.json());
   const formationRoster = formationUnits(formation);
@@ -226,6 +248,9 @@ async function start() {
     ? units.kitingObservationMatchups.find(({ rangedSlug, meleeSlug }) => (
       rangedSlug === kitingRangedSlug && meleeSlug === kitingMeleeSlug
     ))
+    : null;
+  const wrongWinnerRow = wrongWinnerRequest
+    ? wrongWinnerCatalogue?.rows.find(({ id }) => id === wrongWinnerRequest.rowId)
     : null;
 
   if (soloRequest) {
@@ -307,6 +332,34 @@ async function start() {
     byId("kitingMeleeField").hidden = false;
     byId("kitingMeleeCountField").hidden = false;
     byId("navigationVariant").value = kitingRequest.navigation;
+  } else if (wrongWinnerRequest) {
+    if (!wrongWinnerRow) {
+      throw new Error(`Wrong-winner review row ${wrongWinnerRequest.rowId} is unavailable`);
+    }
+    document.body.classList.add("wrong-winner-review-mode");
+    document.querySelector(".page-header h1").textContent = "Current Wrong-Winner Review";
+    document.querySelector(".page-header .subtitle").textContent =
+      "Latest completed Phase 2 report · exact golden setups · current engine playback";
+    byId("wrongWinnerReview").hidden = false;
+    const matchupSelect = byId("wrongWinnerMatchup");
+    for (const row of wrongWinnerCatalogue.rows) {
+      matchupSelect.append(new Option(
+        `${row.matchup} · ${row.side2.count} vs ${row.side3.count}`,
+        row.id,
+      ));
+    }
+    matchupSelect.value = wrongWinnerRow.id;
+    byId("wrongWinnerTapeScore").textContent = signedScore(wrongWinnerRow.tapeScore);
+    byId("wrongWinnerSimulationScore").textContent = signedScore(
+      wrongWinnerRow.simulationScore,
+    );
+    byId("wrongWinnerDelta").textContent = signedScore(wrongWinnerRow.delta);
+    byId("team1Rail").querySelector(".rail-title").textContent =
+      `${wrongWinnerRow.side2.label} · ${wrongWinnerRow.side2.count} · Engine Team 2`;
+    byId("team2Rail").querySelector(".rail-title").textContent =
+      `${wrongWinnerRow.side3.label} · ${wrongWinnerRow.side3.count} · Engine Team 3`;
+    byId("optionsCurrent").textContent =
+      `Golden roster · ${wrongWinnerRow.side2.count} vs ${wrongWinnerRow.side3.count}`;
   }
 
   function renderNavigationStats(navigation) {
@@ -462,8 +515,11 @@ async function start() {
     byId("player3Count").textContent = String(result.side3.count);
     byId("placementAudit").textContent = result.mode === "solo-movement"
       ? "21 owner-2 kite spawn cells · AI move orders every 80 ticks · no enemy roster"
-      : `${result.side2.count + result.side3.count} spawn cells · ${result.family} block`
-        + (result.orientationNormalised ? " · measured orientation" : "");
+      : result.mode === "phase2-wrong-winner-review"
+        ? `${result.side2.count + result.side3.count} exact golden spawn cells`
+          + ` · current Phase 2 engine · ${result.review.rowId}`
+        : `${result.side2.count + result.side3.count} spawn cells · ${result.family} block`
+          + (result.orientationNormalised ? " · measured orientation" : "");
     byId("ledgerNumber").textContent = result.mode === "solo-movement"
       ? "SOLO 21" : `${result.side2.count}V${result.side3.count}`;
     renderDamageBreakdown(result, eventLog);
@@ -553,6 +609,11 @@ async function start() {
       const next = new URL(window.location.href);
       next.searchParams.set("navigation", event.target.value);
       window.location.assign(next.href);
+    });
+  }
+  if (wrongWinnerRequest) {
+    byId("wrongWinnerMatchup").addEventListener("change", (event) => {
+      window.location.assign(phase2WrongWinnerHref(window.location.href, event.target.value));
     });
   }
 
@@ -709,8 +770,8 @@ async function start() {
   const observer = new ResizeObserver(() => renderer.resize());
   observer.observe(canvas);
   renderer.resize();
-  if (navigationRequest) {
-    await loadSimulation(navigationRequest.query, null, navigationRequest.endpoint);
+  if (autoRequest) {
+    await loadSimulation(autoRequest.query, null, autoRequest.endpoint);
   }
 }
 

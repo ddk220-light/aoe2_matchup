@@ -2,6 +2,8 @@ import { isWithinReach } from "./targeting.js";
 
 
 const EPSILON = 1e-12;
+const MAX_DEEP_CONTACT_DEGREE = 2;
+const MAX_INCOMING_ENGAGEMENTS = 2;
 
 export function createContactReservationState() {
   return Object.freeze({
@@ -21,7 +23,7 @@ export function updateContactReservations({ state, units, proposals, tick }) {
   const contactReservations = new Map();
   const reservations = new Map();
   const inheritedExtents = new Map();
-  const reservedIds = new Set();
+  const contactSlots = createContactSlots();
   const diagnostics = [];
 
   publishInheritedReleases({
@@ -29,7 +31,6 @@ export function updateContactReservations({ state, units, proposals, tick }) {
     byReference,
     inheritedExtents,
     contactReservations,
-    reservedIds,
     diagnostics,
     tick,
   });
@@ -41,8 +42,14 @@ export function updateContactReservations({ state, units, proposals, tick }) {
       diagnostics.push(diagnostic("reservation-released", key, { reason: "unit-missing" }));
       continue;
     }
+    if (sharedFormationOrder(left, right)) {
+      diagnostics.push(diagnostic("reservation-released", key, {
+        reason: "shared-formation-order",
+      }));
+      continue;
+    }
     if (reservationRemainsActive(prior, left, right, byReference, proposalByReference)) {
-      if (reservedIds.has(prior.leftId) || reservedIds.has(prior.rightId)) {
+      if (!contactSlotsAvailable(prior, left, right, contactSlots)) {
         diagnostics.push(diagnostic("reservation-released", key, {
           reason: "deep-slot-conflict",
         }));
@@ -52,7 +59,6 @@ export function updateContactReservations({ state, units, proposals, tick }) {
           right,
           inheritedExtents,
           contactReservations,
-          reservedIds,
           diagnostics,
           tick,
         });
@@ -60,8 +66,7 @@ export function updateContactReservations({ state, units, proposals, tick }) {
       }
       reservations.set(key, prior);
       contactReservations.set(key, prior);
-      reservedIds.add(prior.leftId);
-      reservedIds.add(prior.rightId);
+      occupyContactSlots(prior, left, right, contactSlots);
       diagnostics.push(diagnostic("reservation-persisted", key, { kind: prior.kind }));
       continue;
     }
@@ -71,27 +76,31 @@ export function updateContactReservations({ state, units, proposals, tick }) {
       right,
       inheritedExtents,
       contactReservations,
-      reservedIds,
       diagnostics,
       tick,
     });
   }
 
   const candidates = generateCandidates(live, byReference, proposalByReference, tick);
+  const admissibleShallowPairs = new Set(candidates
+    .filter(({ reservation }) => reservation.kind !== "releasing")
+    .map(({ key }) => key));
   for (const candidate of candidates) {
-    if (contactReservations.has(candidate.key)
-        || reservedIds.has(candidate.reservation.leftId)
-        || reservedIds.has(candidate.reservation.rightId)) {
-      continue;
-    }
+    if (contactReservations.has(candidate.key)) continue;
     if (candidate.reservation.kind === "releasing") {
       inheritedExtents.set(candidate.key, candidate.reservation.collisionExtent);
-    } else {
-      reservations.set(candidate.key, candidate.reservation);
+      contactReservations.set(candidate.key, candidate.reservation);
+      diagnostics.push(diagnostic("release-published", candidate.key, {
+        collisionExtent: candidate.reservation.collisionExtent,
+      }));
+      continue;
     }
+    const left = byReference.get(candidate.reservation.leftId);
+    const right = byReference.get(candidate.reservation.rightId);
+    if (!contactSlotsAvailable(candidate.reservation, left, right, contactSlots)) continue;
+    reservations.set(candidate.key, candidate.reservation);
     contactReservations.set(candidate.key, candidate.reservation);
-    reservedIds.add(candidate.reservation.leftId);
-    reservedIds.add(candidate.reservation.rightId);
+    occupyContactSlots(candidate.reservation, left, right, contactSlots);
     diagnostics.push(diagnostic("reservation-acquired", candidate.key, {
       kind: candidate.reservation.kind,
       entryFraction: candidate.entryFraction,
@@ -100,12 +109,158 @@ export function updateContactReservations({ state, units, proposals, tick }) {
     }));
   }
 
+  publishShallowContacts({
+    units: live,
+    proposals: proposalByReference,
+    contactReservations,
+    inheritedExtents,
+    admissiblePairs: admissibleShallowPairs,
+    diagnostics,
+    tick,
+  });
+
   const nextState = Object.freeze({ reservations, inheritedExtents });
   return Object.freeze({
     state: nextState,
     contactReservations,
     diagnostics: Object.freeze(diagnostics),
   });
+}
+
+function createContactSlots() {
+  return {
+    allied: new Set(),
+    enemyTransit: new Set(),
+    engagementOutgoing: new Set(),
+    engagementIncoming: new Map(),
+    deepDegree: new Map(),
+  };
+}
+
+function contactSlotsAvailable(reservation, left, right, slots) {
+  if (!left || !right) throw new Error("contact slot pair must reference live units");
+  if ((slots.deepDegree.get(left.referenceId) ?? 0) >= MAX_DEEP_CONTACT_DEGREE
+      || (slots.deepDegree.get(right.referenceId) ?? 0) >= MAX_DEEP_CONTACT_DEGREE) {
+    return false;
+  }
+  if (left.owner === right.owner) {
+    return !slots.allied.has(left.referenceId) && !slots.allied.has(right.referenceId);
+  }
+  if (reservation.kind === "engagement-contact") {
+    return engagementDirections(reservation, left, right).every(([initiator, target]) => (
+      !slots.engagementOutgoing.has(initiator.referenceId)
+        && (slots.engagementIncoming.get(target.referenceId) ?? 0)
+          < MAX_INCOMING_ENGAGEMENTS
+    ));
+  }
+  return !slots.enemyTransit.has(left.referenceId)
+    && !slots.enemyTransit.has(right.referenceId);
+}
+
+function occupyContactSlots(reservation, left, right, slots) {
+  slots.deepDegree.set(
+    left.referenceId,
+    (slots.deepDegree.get(left.referenceId) ?? 0) + 1,
+  );
+  slots.deepDegree.set(
+    right.referenceId,
+    (slots.deepDegree.get(right.referenceId) ?? 0) + 1,
+  );
+  if (left.owner === right.owner) {
+    slots.allied.add(left.referenceId);
+    slots.allied.add(right.referenceId);
+    return;
+  }
+  if (reservation.kind === "engagement-contact") {
+    for (const [initiator, target] of engagementDirections(reservation, left, right)) {
+      slots.engagementOutgoing.add(initiator.referenceId);
+      slots.engagementIncoming.set(
+        target.referenceId,
+        (slots.engagementIncoming.get(target.referenceId) ?? 0) + 1,
+      );
+    }
+    return;
+  }
+  slots.enemyTransit.add(left.referenceId);
+  slots.enemyTransit.add(right.referenceId);
+}
+
+function engagementDirections(reservation, left, right) {
+  const byReference = new Map([
+    [left.referenceId, left],
+    [right.referenceId, right],
+  ]);
+  const initiator = byReference.get(reservation.initiatorId);
+  const target = byReference.get(reservation.targetId);
+  if (!initiator || !target) {
+    throw new Error("engagement contact must identify its pair direction");
+  }
+  const directions = [[initiator, target]];
+  if (directTarget(target, initiator)) directions.push([target, initiator]);
+  return directions;
+}
+
+function publishShallowContacts({
+  units,
+  proposals,
+  contactReservations,
+  inheritedExtents,
+  admissiblePairs,
+  diagnostics,
+  tick,
+}) {
+  for (let leftIndex = 0; leftIndex < units.length; leftIndex += 1) {
+    const left = units[leftIndex];
+    for (let rightIndex = leftIndex + 1; rightIndex < units.length; rightIndex += 1) {
+      const right = units[rightIndex];
+      // A unit may make one deep allied transit reservation. Additional allied
+      // lanes remain ordinary hard bodies so a moving formation does not
+      // collapse into a multi-unit knot. Shallow secondary contact is for
+      // several enemies sharing the same engagement boundary.
+      if (left.owner === right.owner) continue;
+      const key = pairKey(left.referenceId, right.referenceId);
+      if (contactReservations.has(key) || !admissiblePairs.has(key)) continue;
+      const leftProposal = proposalFor(left, proposals);
+      const rightProposal = proposalFor(right, proposals);
+      const current = pairSeparation(left, right);
+      const projected = pairSeparation(left, right, leftProposal, rightProposal);
+      const relativeClosure = current - projected;
+      if (relativeClosure <= EPSILON) continue;
+      const fullExtent = pairFullExtent(left, right);
+      if (sweptEntryFraction(
+        left,
+        right,
+        leftProposal,
+        rightProposal,
+        fullExtent,
+      ) === null) continue;
+      const oneTickSurface = Math.max(
+        movingFloor(left, right),
+        fullExtent - relativeClosure,
+      );
+      const collisionExtent = cleanNumber(Math.min(current, oneTickSurface));
+      const [canonicalLeft, canonicalRight] = left.referenceId < right.referenceId
+        ? [left, right]
+        : [right, left];
+      contactReservations.set(key, Object.freeze({
+        leftId: canonicalLeft.referenceId,
+        rightId: canonicalRight.referenceId,
+        kind: "shallow-contact",
+        collisionExtent,
+        attackSurfaceExtent: fullExtent,
+        pathObstructs: false,
+        mayDeepen: false,
+        initiatorId: chooseInitiator(left, right, leftProposal, rightProposal).referenceId,
+        targetId: null,
+        acquiredTick: tick,
+      }));
+      inheritedExtents.set(key, collisionExtent);
+      diagnostics.push(diagnostic("shallow-contact-published", key, {
+        collisionExtent,
+        relativeClosure: cleanNumber(relativeClosure),
+      }));
+    }
+  }
 }
 
 function requireInputs(state, units, proposals, tick) {
@@ -160,7 +315,6 @@ function publishInheritedReleases({
   byReference,
   inheritedExtents,
   contactReservations,
-  reservedIds,
   diagnostics,
   tick,
 }) {
@@ -172,14 +326,16 @@ function publishInheritedReleases({
     const left = byReference.get(leftId);
     const right = byReference.get(rightId);
     if (!left || !right) continue;
+    if (sharedFormationOrder(left, right)) {
+      diagnostics.push(diagnostic("release-cleared", key, {
+        reason: "shared-formation-order",
+      }));
+      continue;
+    }
     const fullExtent = pairFullExtent(left, right);
     const currentExtent = pairSeparation(left, right);
     if (currentExtent >= fullExtent - EPSILON) continue;
-    if (reservedIds.has(leftId) || reservedIds.has(rightId)) {
-      diagnostics.push(diagnostic("release-conflict", key, { priorExtent, currentExtent }));
-      continue;
-    }
-    const publishedExtent = cleanNumber(Math.min(priorExtent, currentExtent));
+    const publishedExtent = cleanNumber(Math.max(priorExtent, currentExtent));
     inheritedExtents.set(key, publishedExtent);
     contactReservations.set(key, releasingReservation({
       left,
@@ -187,8 +343,6 @@ function publishInheritedReleases({
       collisionExtent: publishedExtent,
       tick,
     }));
-    reservedIds.add(leftId);
-    reservedIds.add(rightId);
     diagnostics.push(diagnostic("release-persisted", key, {
       priorExtent,
       currentExtent,
@@ -203,17 +357,12 @@ function inheritReleasedPair({
   right,
   inheritedExtents,
   contactReservations,
-  reservedIds,
   diagnostics,
   tick,
 }) {
   const currentExtent = pairSeparation(left, right);
   if (currentExtent >= pairFullExtent(left, right) - EPSILON) {
     diagnostics.push(diagnostic("reservation-released", key, { reason: "full-separation" }));
-    return;
-  }
-  if (reservedIds.has(left.referenceId) || reservedIds.has(right.referenceId)) {
-    diagnostics.push(diagnostic("reservation-released", key, { reason: "release-slot-conflict" }));
     return;
   }
   const publishedExtent = cleanNumber(currentExtent);
@@ -224,8 +373,6 @@ function inheritReleasedPair({
     collisionExtent: publishedExtent,
     tick,
   }));
-  reservedIds.add(left.referenceId);
-  reservedIds.add(right.referenceId);
   diagnostics.push(diagnostic("reservation-released", key, {
     reason: "inherited-current-overlap",
     currentExtent: publishedExtent,
@@ -239,6 +386,10 @@ function generateCandidates(units, byReference, proposals, tick) {
     for (let rightIndex = leftIndex + 1; rightIndex < units.length; rightIndex += 1) {
       const right = units[rightIndex];
       if (left.owner === right.owner) {
+        // Formation cohorts own zero-obstruction pair geometry in the shared
+        // interaction resolver. Do not leave a deeper reservation behind:
+        // when either order ends, an exact current-shape release is created.
+        if (sharedFormationOrder(left, right)) continue;
         const candidate = isRanged(left) && isRanged(right)
           ? rangedIngressCandidate(left, right, byReference, proposals, tick)
           : alliedCandidate(left, right, proposals, tick);
@@ -355,7 +506,6 @@ function untrackedReleaseCandidate(left, right, tick) {
 }
 
 function alliedCandidate(left, right, proposals, tick) {
-  if (left.action === "attacking" || right.action === "attacking") return null;
   const leftProposal = proposalFor(left, proposals);
   const rightProposal = proposalFor(right, proposals);
   if (!isMoving(leftProposal) && !isMoving(rightProposal)) return null;
@@ -465,8 +615,8 @@ function makeCandidate({
     ? [left, right]
     : [right, left];
   const fullExtent = pairFullExtent(left, right);
-  const configuredFloor = movingFloor(left, right);
   const currentExtent = pairSeparation(left, right);
+  const configuredFloor = movingFloor(left, right);
   const collisionExtent = cleanNumber(Math.min(configuredFloor, currentExtent));
   const attackSurfaceExtent = kind === "engagement-contact"
     ? fullExtent + attackRange(initiator)
@@ -511,9 +661,7 @@ function releasingReservation({ left, right, collisionExtent, tick }) {
 
 function reservationRemainsActive(prior, left, right, byReference, proposals) {
   if (prior.kind === "allied-transit") {
-    if (left.owner !== right.owner
-        || left.action === "attacking"
-        || right.action === "attacking") return false;
+    if (left.owner !== right.owner) return false;
   } else if (prior.kind === "ranged-ingress") {
     if (left.owner !== right.owner || !isRanged(left) || !isRanged(right)) return false;
     return pairSeparation(left, right) < pairFullExtent(left, right) - EPSILON
@@ -676,6 +824,12 @@ function isRanged(unit) {
 
 function isMoving(proposal) {
   return stepLength(proposal) > EPSILON;
+}
+
+function sharedFormationOrder(left, right) {
+  return left.owner === right.owner
+    && left.moveOrder !== undefined && left.moveOrder !== null
+    && right.moveOrder !== undefined && right.moveOrder !== null;
 }
 
 function stepLength(proposal) {

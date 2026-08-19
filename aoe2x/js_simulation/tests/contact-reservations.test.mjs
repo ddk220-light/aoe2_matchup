@@ -14,6 +14,7 @@ const mechanics = (radius, multiplier = 0.5, range = 0) => Object.freeze({
   collision_size_tiles: Object.freeze({ x: radius, y: radius }),
   min_collision_size_multiplier: multiplier,
   attack_range_tiles: range,
+  speed_tiles_per_second: 1.2,
   ranged: null,
 });
 
@@ -22,6 +23,7 @@ const rangedMechanics = (radius = 0.2, range = 5) => Object.freeze({
   outline_size_tiles: Object.freeze({ x: radius, y: radius }),
   min_collision_size_multiplier: 0.8,
   attack_range_tiles: range,
+  speed_tiles_per_second: 1.2,
   ranged: Object.freeze({ projectile_speed_tiles_per_second: 7 }),
 });
 
@@ -47,7 +49,7 @@ function sortedReservations(result) {
     .map(([key, value]) => [key, value]);
 }
 
-test("a closing allied pair derives its floor from both sourced multipliers", () => {
+test("allied transit derives its floor from both sourced multipliers", () => {
   const result = updateContactReservations({
     state: createContactReservationState(),
     tick: 10,
@@ -60,11 +62,43 @@ test("a closing allied pair derives its floor from both sourced multipliers", ()
   assert.equal(result.contactReservations.get("1:2").pathObstructs, false);
 });
 
-test("three-on-one convergence gives one allied lane and ordinary third-unit surfaces", () => {
+test("shared formation orders clear stale pair state until the order ends", () => {
+  const ordered = (x) => unit(1, 2, x, {
+    moveOrder: Object.freeze({ x: 8, y: 4 }),
+  });
+  const orderedPeer = (x) => unit(2, 2, x, {
+    moveOrder: Object.freeze({ x: 8.5, y: 4 }),
+  });
+  const stale = Object.freeze({
+    reservations: new Map(),
+    inheritedExtents: new Map([["1:2", 0.4]]),
+  });
+  const during = updateContactReservations({
+    state: stale,
+    tick: 11,
+    units: [ordered(4), orderedPeer(4.25)],
+    proposals: [proposal(1, 0.02), proposal(2, -0.02)],
+  });
+
+  assert.equal(during.contactReservations.size, 0);
+  assert.equal(during.state.inheritedExtents.size, 0);
+  assert.equal(during.state.reservations.size, 0);
+
+  const after = updateContactReservations({
+    state: during.state,
+    tick: 12,
+    units: [unit(1, 2, 4), unit(2, 2, 4.21)],
+    proposals: [proposal(1, 0), proposal(2, 0)],
+  });
+  assert.equal(after.contactReservations.get("1:2").kind, "releasing");
+  assert.equal(after.contactReservations.get("1:2").collisionExtent, 0.21);
+});
+
+test("allied convergence gives one deep lane without compounding shallow overlap", () => {
   const units = [
     unit(1, 2, 4, { pursuitTargetId: 4 }),
     unit(2, 2, 4.5, { pursuitTargetId: 4 }),
-    unit(3, 2, 4.25, { pursuitTargetId: 4 }),
+    unit(3, 2, 4, { pursuitTargetId: 4, y: 4.5 }),
     unit(4, 3, 7, { action: "idle" }),
   ];
   const result = updateContactReservations({
@@ -72,9 +106,9 @@ test("three-on-one convergence gives one allied lane and ordinary third-unit sur
     tick: 10,
     units,
     proposals: [
-      proposal(1, 0.1),
-      proposal(2, -0.1),
-      proposal(3, 0.05),
+      proposal(1, 0.03, 0.04),
+      proposal(2, 0),
+      proposal(3, 0),
       proposal(4, 0),
     ],
   });
@@ -88,7 +122,132 @@ test("three-on-one convergence gives one allied lane and ordinary third-unit sur
 
   assert.equal(result.contactReservations.size, 1);
   assert.equal(interactions.filter(({ kind }) => kind === "allied-transit").length, 1);
+  assert.equal(interactions.filter(({ kind }) => kind === "shallow-contact").length, 0);
   assert.equal(interactions.filter(({ kind }) => kind === "hard").length, 2);
+});
+
+test("one unit may hold one allied transit and one enemy engagement contact", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 10,
+    units: [
+      unit(1, 2, 4, { y: 4, pursuitTargetId: 3 }),
+      unit(2, 2, 4.5, { y: 4, action: "idle" }),
+      unit(3, 3, 4.5, { y: 4.5, action: "idle" }),
+    ],
+    proposals: [proposal(1, 0.03, 0.03), proposal(2, 0), proposal(3, 0)],
+  });
+
+  assert.equal(result.state.reservations.size, 2);
+  assert.deepEqual(
+    [...result.state.reservations.values()].map(({ kind }) => kind).sort(),
+    ["allied-transit", "engagement-contact"],
+  );
+});
+
+test("a target accepts two directed engagements and leaves a third transient", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 10,
+    units: [
+      unit(1, 2, 4, { y: 4, pursuitTargetId: 4 }),
+      unit(2, 2, 4, { y: 4.5, pursuitTargetId: 4 }),
+      unit(3, 2, 4.5, { y: 3.75, pursuitTargetId: 4 }),
+      unit(4, 3, 4.5, { y: 4.25, action: "idle" }),
+    ],
+    proposals: [
+      proposal(1, 0.03, 0.015),
+      proposal(2, 0.03, -0.015),
+      proposal(3, 0, 0.03),
+      proposal(4, 0),
+    ],
+  });
+  const engagements = [...result.state.reservations.values()]
+    .filter(({ kind }) => kind === "engagement-contact");
+  const shallow = [...result.contactReservations.values()]
+    .filter(({ kind }) => kind === "shallow-contact");
+
+  assert.equal(engagements.length, 2);
+  assert.equal(shallow.length, 1);
+  assert.ok(engagements.every(({ targetId }) => targetId === 4));
+});
+
+test("shallow contact depth is exactly one tick of sourced relative closure", () => {
+  const units = [
+    unit(1, 2, 4, { y: 4, pursuitTargetId: 4 }),
+    unit(2, 2, 4, { y: 4.5, pursuitTargetId: 4 }),
+    unit(3, 2, 4.5, { y: 3.75, pursuitTargetId: 4 }),
+    unit(4, 3, 4.5, { y: 4.25, action: "idle" }),
+  ];
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 11,
+    units,
+    proposals: [
+      proposal(1, 0.03, 0.015),
+      proposal(2, 0.03, -0.015),
+      proposal(3, 0, 0.03),
+      proposal(4, 0),
+    ],
+  });
+  const shallow = [...result.contactReservations.values()]
+    .find(({ kind }) => kind === "shallow-contact");
+
+  assert.ok(shallow);
+  assert.equal(shallow.collisionExtent, 0.47);
+  assert.equal(shallow.mayDeepen, false);
+  assert.equal(shallow.pathObstructs, false);
+  assert.equal([...result.state.reservations.values()].some(
+    ({ kind }) => kind === "shallow-contact",
+  ), false);
+});
+
+test("shallow contact becomes a non-deep release surface until separation", () => {
+  const first = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 12,
+    units: [
+      unit(1, 2, 4, { y: 4, pursuitTargetId: 4 }),
+      unit(2, 2, 4, { y: 4.5, pursuitTargetId: 4 }),
+      unit(3, 2, 4.5, { y: 3.75, pursuitTargetId: 4 }),
+      unit(4, 3, 4.5, { y: 4.25, action: "idle" }),
+    ],
+    proposals: [
+      proposal(1, 0.03, 0.015),
+      proposal(2, 0.03, -0.015),
+      proposal(3, 0, 0.03),
+      proposal(4, 0),
+    ],
+  });
+  const shallowEntry = [...first.contactReservations.entries()]
+    .find(([, { kind }]) => kind === "shallow-contact");
+  assert.ok(shallowEntry);
+  const [key, shallow] = shallowEntry;
+  const [leftId, rightId] = key.split(":").map(Number);
+  const positions = new Map([
+    [1, { x: 4.03, y: 4.015 }],
+    [2, { x: 4.03, y: 4.485 }],
+    [3, { x: 4.5, y: 3.78 }],
+    [4, { x: 4.5, y: 4.25 }],
+  ]);
+  const secondUnits = [
+    unit(1, 2, positions.get(1).x, { y: positions.get(1).y, action: "idle" }),
+    unit(2, 2, positions.get(2).x, { y: positions.get(2).y, action: "idle" }),
+    unit(3, 2, positions.get(3).x, { y: positions.get(3).y, action: "idle" }),
+    unit(4, 3, positions.get(4).x, { y: positions.get(4).y, action: "idle" }),
+  ];
+  const second = updateContactReservations({
+    state: first.state,
+    tick: 13,
+    units: secondUnits,
+    proposals: [proposal(1, 0), proposal(2, 0), proposal(3, 0), proposal(4, 0)],
+  });
+  const release = second.contactReservations.get(key);
+
+  assert.ok([leftId, rightId].every((id) => positions.has(id)));
+  assert.equal(release.kind, "releasing");
+  assert.equal(release.collisionExtent, shallow.collisionExtent);
+  assert.equal(release.mayDeepen, false);
 });
 
 test("stopped or attacking allies cannot newly acquire transit", () => {
@@ -108,6 +267,17 @@ test("stopped or attacking allies cannot newly acquire transit", () => {
   }
 });
 
+test("unrelated closing enemies remain hard instead of gaining incidental shallow contact", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 19,
+    units: [unit(1, 2, 4), unit(2, 3, 4.5)],
+    proposals: [proposal(1, 0.03), proposal(2, -0.03)],
+  });
+
+  assert.equal(result.contactReservations.size, 0);
+});
+
 test("an inherited pair releases monotonically without further deepening", () => {
   const state = Object.freeze({
     reservations: new Map(),
@@ -125,6 +295,24 @@ test("an inherited pair releases monotonically without further deepening", () =>
   assert.equal(release.collisionExtent, 0.3);
   assert.equal(release.mayDeepen, false);
   assert.equal(result.state.inheritedExtents.get("1:2"), 0.3);
+});
+
+test("natural separation advances a release surface so recovered space stays recovered", () => {
+  const state = Object.freeze({
+    reservations: new Map(),
+    inheritedExtents: new Map([["1:2", 0.3]]),
+  });
+  const result = updateContactReservations({
+    state,
+    tick: 21,
+    units: [unit(1, 2, 4), unit(2, 2, 4.34)],
+    proposals: [proposal(1, -0.02), proposal(2, 0.02)],
+  });
+  const release = result.contactReservations.get("1:2");
+
+  assert.equal(release.kind, "releasing");
+  assert.equal(release.collisionExtent, 0.34);
+  assert.equal(result.state.inheritedExtents.get("1:2"), 0.34);
 });
 
 test("direct melee target contact has an attack surface distinct from collision depth", () => {
@@ -208,6 +396,49 @@ test("range-one melee can pass one stopped ally while closing on its target", ()
   assert.equal(result.contactReservations.get("1:2").pathObstructs, false);
 });
 
+test("a moving chaser can pass one stationary attacking ally", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 42,
+    units: [
+      unit(1, 2, 4, { pursuitTargetId: 3 }),
+      unit(2, 2, 4.5, { action: "attacking", attackTargetId: 3 }),
+      unit(3, 3, 6, { action: "idle" }),
+    ],
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0)],
+  });
+
+  assert.equal(result.contactReservations.get("1:2").kind, "allied-transit");
+  assert.equal(result.contactReservations.get("1:2").initiatorId, 1);
+  assert.equal(result.contactReservations.get("1:2").pathObstructs, false);
+});
+
+test("allied transit past an attacker persists until the moving unit clears it", () => {
+  const acquired = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 43,
+    units: [
+      unit(1, 2, 4, { pursuitTargetId: 3 }),
+      unit(2, 2, 4.5, { action: "attacking", attackTargetId: 3 }),
+      unit(3, 3, 6, { action: "idle" }),
+    ],
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0)],
+  });
+  const persisted = updateContactReservations({
+    state: acquired.state,
+    tick: 44,
+    units: [
+      unit(1, 2, 4.1, { pursuitTargetId: 3 }),
+      unit(2, 2, 4.5, { action: "attacking", attackTargetId: 3 }),
+      unit(3, 3, 6, { action: "idle" }),
+    ],
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0)],
+  });
+
+  assert.equal(persisted.contactReservations.get("1:2").kind, "allied-transit");
+  assert.equal(persisted.contactReservations.get("1:2").pathObstructs, false);
+});
+
 test("ranged ingress admits one out-of-range rear shooter through a front ally", () => {
   const result = updateContactReservations({
     state: createContactReservationState(),
@@ -252,7 +483,7 @@ test("an untracked overlap is published as monotonic release geometry", () => {
   assert.equal(release.mayDeepen, false);
 });
 
-test("mixed radii use both sourced floors rather than a unit-specific override", () => {
+test("mixed-radius allied transit derives its floor from both bodies", () => {
   const result = updateContactReservations({
     state: createContactReservationState(),
     tick: 50,

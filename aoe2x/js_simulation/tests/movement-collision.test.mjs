@@ -204,7 +204,6 @@ test("inherited enemy overlap is accepted but cannot deepen", async () => {
   assert.ok(separation < 0.4);
 });
 
-
 test("unequal head-on proposals receive an equal-mass normal correction", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const left = unit({ referenceId: 10, x: 4, y: 4 });

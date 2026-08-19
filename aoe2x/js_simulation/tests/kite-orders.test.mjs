@@ -49,6 +49,85 @@ test("kite state preserves only translated-offset formation motion", () => {
 });
 
 
+test("kite state preserves a separate scenario opening without shifting its beat", () => {
+  const state = createKiteState(2, {
+    ...HC_PROFILE,
+    openingVolleyTick: 1,
+    openingVolley: "close_to_fire",
+  });
+
+  assert.equal(state.profile.openingVolleyTick, 1);
+  assert.equal(state.profile.firstBeatTick, 240);
+  assert.equal(state.nextBeat, 240);
+});
+
+
+test("separate opening independently attacks each unit's nearest reachable target", () => {
+  const state = createKiteState(2, {
+    ...HC_PROFILE,
+    openingVolleyTick: 1,
+    openingVolley: "close_to_fire",
+  });
+  const makeUnit = (referenceId, owner, x, y) => ({
+    referenceId,
+    owner,
+    alive: true,
+    x,
+    y,
+    action: "idle",
+    actionTimers: { acquire: 12, windup: 0, reload: 0, swing: 0 },
+    pursuitTargetId: null,
+    engagedTargetId: null,
+    attackTargetId: null,
+    avoidance: null,
+    mechanics: owner === 2 ? {
+      line_of_sight_tiles: 10,
+      attack_range_tiles: 5,
+      collision_size_tiles: { x: 0.2, y: 0.2 },
+      outline_size_tiles: { x: 0.2, y: 0.2 },
+      ranged: { min_range_tiles: 0 },
+    } : {
+      line_of_sight_tiles: 5,
+      attack_range_tiles: 0,
+      collision_size_tiles: { x: 0.2, y: 0.2 },
+      outline_size_tiles: { x: 0.2, y: 0.2 },
+    },
+  });
+  const kiters = [
+    makeUnit(1, 2, 4, 4),
+    makeUnit(2, 2, 9, 4),
+    makeUnit(3, 2, 14, 1),
+  ];
+  const enemies = [
+    makeUnit(10, 3, 5, 8),
+    makeUnit(11, 3, 10, 8),
+  ];
+  const events = [];
+
+  issueKiteOrders(
+    state,
+    [...kiters, ...enemies],
+    { width: 16, height: 16 },
+    1,
+    events,
+    (tick, type, actorId, targetId, extra = {}) => ({
+      tick, type, actorId, targetId, ...extra,
+    }),
+  );
+
+  assert.deepEqual(kiters.map(({ pursuitTargetId }) => pursuitTargetId), [10, 11, null]);
+  assert.deepEqual(kiters.map(({ actionTimers }) => actionTimers.acquire), [0, 0, 12]);
+  assert.deepEqual(events.map(({ type, actorId, targetId }) => ({
+    type, actorId, targetId,
+  })), [
+    { type: "ai-order", actorId: 1, targetId: 10 },
+    { type: "ai-order", actorId: 2, targetId: 11 },
+  ]);
+  assert.deepEqual(state.lastTargetIds, []);
+  assert.equal(state.nextBeat, 240);
+});
+
+
 test("half-roster melee wave orders only the high half of the chaser roster", () => {
   const state = createKiteState(2, {
     ...HC_PROFILE,
@@ -152,6 +231,52 @@ test("translated-offset motion preserves the formation's relative destinations",
   assert.ok(units[1].moveOrder);
   assert.equal(units[1].moveOrder.x - units[0].moveOrder.x, 2);
   assert.equal(units[1].moveOrder.y - units[0].moveOrder.y, 0);
+});
+
+
+test("default formation slots derive their spacing from the unit collision diameter", () => {
+  const state = createKiteState(2, HC_PROFILE);
+  const makeUnit = (referenceId, owner, x, y) => ({
+    referenceId,
+    owner,
+    alive: true,
+    x,
+    y,
+    action: "idle",
+    mechanics: {
+      collision_size_tiles: { x: 0.2, y: 0.2 },
+    },
+  });
+  const units = [
+    makeUnit(1, 2, 4, 4),
+    makeUnit(2, 2, 5, 4),
+    makeUnit(3, 2, 4, 5),
+    makeUnit(4, 2, 5, 5),
+    makeUnit(10, 3, 8, 10),
+  ];
+
+  issueKiteOrders(
+    state,
+    units,
+    { width: 16, height: 16 },
+    80,
+    [],
+    (tick, type, actorId, targetId, extra = {}) => ({
+      tick, type, actorId, targetId, ...extra,
+    }),
+  );
+
+  const destinations = units.slice(0, 4).map(({ moveOrder }) => moveOrder);
+  const pairDistances = [];
+  for (let left = 0; left < destinations.length; left += 1) {
+    for (let right = left + 1; right < destinations.length; right += 1) {
+      pairDistances.push(Math.hypot(
+        destinations[left].x - destinations[right].x,
+        destinations[left].y - destinations[right].y,
+      ));
+    }
+  }
+  assert.ok(Math.abs(Math.min(...pairDistances) - 0.4) < 1e-9);
 });
 
 

@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_janissary_vs_paladin",
+  "completedAt": "2026-08-19T15:41:36.883Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 4.38095238095238,
+      "medianAbsoluteMeanDelta": 4.38095238095238,
+      "maximumAbsoluteMeanDelta": 4.38095238095238
+    },
+    "rows": [
+      {
+        "id": "elite_janissary_vs_paladin",
+        "subjectSlug": "elite_janissary",
+        "opponentSlug": "paladin",
+        "matchup": "Elite Janissary vs Paladin",
+        "side2": {
+          "count": 21,
+          "master": 557,
+          "owner": 2,
+          "slug": "elite_janissary",
+          "unit": "Elite Janissary"
+        },
+        "side3": {
+          "count": 17,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -46.857142857142854,
+          "min": -46.857142857142854,
+          "max": -46.857142857142854,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -42.476190476190474,
+          "min": -42.476190476190474,
+          "max": -42.476190476190474,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 4.38095238095238,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_janissary_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 446,
+            "score": -42.476190476190474,
+            "ticks": 3873,
+            "finalStateHash": "49c4b664ec6bd5cc384ab1e0918f2c0f312173231de195a5e9b9c5d616abe1fd",
+            "eventLogHash": "50120f7cd82952357c701024ba65699d642d3e89825658ff078c96f4f292ea34"
+          },
+          {
+            "rowId": "elite_janissary_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 446,
+            "score": -42.476190476190474,
+            "ticks": 3873,
+            "finalStateHash": "49c4b664ec6bd5cc384ab1e0918f2c0f312173231de195a5e9b9c5d616abe1fd",
+            "eventLogHash": "50120f7cd82952357c701024ba65699d642d3e89825658ff078c96f4f292ea34"
+          },
+          {
+            "rowId": "elite_janissary_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 446,
+            "score": -42.476190476190474,
+            "ticks": 3873,
+            "finalStateHash": "49c4b664ec6bd5cc384ab1e0918f2c0f312173231de195a5e9b9c5d616abe1fd",
+            "eventLogHash": "50120f7cd82952357c701024ba65699d642d3e89825658ff078c96f4f292ea34"
+          },
+          {
+            "rowId": "elite_janissary_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 446,
+            "score": -42.476190476190474,
+            "ticks": 3873,
+            "finalStateHash": "49c4b664ec6bd5cc384ab1e0918f2c0f312173231de195a5e9b9c5d616abe1fd",
+            "eventLogHash": "50120f7cd82952357c701024ba65699d642d3e89825658ff078c96f4f292ea34"
+          },
+          {
+            "rowId": "elite_janissary_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 446,
+            "score": -42.476190476190474,
+            "ticks": 3873,
+            "finalStateHash": "49c4b664ec6bd5cc384ab1e0918f2c0f312173231de195a5e9b9c5d616abe1fd",
+            "eventLogHash": "50120f7cd82952357c701024ba65699d642d3e89825658ff078c96f4f292ea34"
+          }
+        ]
+      }
+    ]
+  }
+}

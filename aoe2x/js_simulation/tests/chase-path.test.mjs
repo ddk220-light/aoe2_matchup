@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { planChaseAim, planMoveAim } from "../src/combat/chase-path.js";
+import {
+  advancePersistentChaseRoute,
+  planChaseAim,
+  planMoveAim,
+  planPersistentChaseRoute,
+} from "../src/combat/chase-path.js";
 import { createPairInteractionSnapshot } from "../src/combat/pair-interactions.js";
 
 const map = Object.freeze({ width: 8, height: 8, obstacles: Object.freeze([]) });
@@ -67,6 +72,24 @@ test("coordinate path stands when surrounding bodies leave no reachable progress
     body(0.75, 1.25, 0.3), body(1, 1.25, 0.3), body(1.25, 1.25, 0.3),
   ];
   assert.deepEqual(planMoveAim(mover, goal, obstacles, map), { stand: true });
+});
+
+
+test("coordinate path keeps moving when only dynamic enemies temporarily box in the mover", () => {
+  const mover = dynamicBody(1, 1, 1, 0.2, 2, 4);
+  const goal = Object.freeze({ x: 5, y: 1 });
+  const enemies = [
+    dynamicBody(3, 0.75, 0.75, 0.3, 3, 75),
+    dynamicBody(4, 1, 0.75, 0.3, 3, 75),
+    dynamicBody(5, 1.25, 0.75, 0.3, 3, 75),
+    dynamicBody(6, 0.75, 1, 0.3, 3, 75),
+    dynamicBody(7, 1.25, 1, 0.3, 3, 75),
+    dynamicBody(8, 0.75, 1.25, 0.3, 3, 75),
+    dynamicBody(9, 1, 1.25, 0.3, 3, 75),
+    dynamicBody(10, 1.25, 1.25, 0.3, 3, 75),
+  ];
+
+  assert.equal(planMoveAim(mover, goal, enemies, map), null);
 });
 
 
@@ -143,4 +166,186 @@ test("chase path omits only a reserved enemy-transit blocker", () => {
     planChaseAim(mover, target, [reserved], map, { pairInteractions }),
     null,
   );
+});
+
+
+test("persistent chase route ends at clear egress and returns to live target tracking", () => {
+  const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
+  const blocker = dynamicBody(3, 3.5, 4, 0.35, 2, 4);
+
+  const route = planPersistentChaseRoute(mover, target, [blocker], map);
+
+  assert.ok(route && route.waypoints.length >= 2);
+  const egress = route.waypoints.at(-1);
+  assert.ok(
+    Math.max(Math.abs(egress.x - target.x), Math.abs(egress.y - target.y)) > 0.5,
+    "the detour must end before the moving target's old stop envelope",
+  );
+  assert.ok(
+    Math.abs(egress.y - blocker.y) >= 0.5,
+    "the egress must clear the blocking body's inflated corridor",
+  );
+});
+
+
+test("persistent chase keeps the direct line through one transit-eligible ally", () => {
+  const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
+  const ally = dynamicBody(3, 3.25, 4, 0.2, 3, 75);
+
+  assert.equal(planPersistentChaseRoute(mover, target, [ally], map), null);
+});
+
+
+test("persistent chase route accumulates geometric congestion across an allied pack", () => {
+  const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
+  const single = [dynamicBody(3, 3.25, 4, 0.2, 3, 75)];
+  const pack = [
+    dynamicBody(3, 3.0, 3.75, 0.2, 3, 75),
+    dynamicBody(4, 3.25, 4.0, 0.2, 3, 75),
+    dynamicBody(5, 3.0, 4.25, 0.2, 3, 75),
+  ];
+  const pairInteractions = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:3", Object.freeze({
+      leftId: 1,
+      rightId: 3,
+      kind: "allied-transit",
+      collisionExtent: 0,
+      attackSurfaceExtent: 0.4,
+      pathObstructs: false,
+      mayDeepen: true,
+      initiatorId: 1,
+      targetId: 2,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  const singleRoute = planPersistentChaseRoute(mover, target, single, map, {
+    pairInteractions,
+  });
+  const packRoute = planPersistentChaseRoute(mover, target, pack, map);
+  const lateralExtent = (route) => Math.max(
+    0,
+    ...(route?.waypoints ?? []).map(({ y }) => Math.abs(y - mover.y)),
+  );
+
+  assert.ok(packRoute, "a dense allied pack on the direct corridor must create a route");
+  assert.ok(
+    lateralExtent(packRoute) > lateralExtent(singleRoute),
+    "the accumulated physical penetration cost must route farther around a pack",
+  );
+});
+
+
+test("persistent chase route gives attacking and idle allies the same geometry", () => {
+  const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
+  const idleBlocker = dynamicBody(3, 3.25, 4, 0.2, 3, 75);
+  const attackingBlocker = Object.freeze({
+    ...dynamicBody(3, 3.25, 4, 0.2, 3, 75),
+    action: "attacking",
+  });
+
+  const idleRoute = planPersistentChaseRoute(mover, target, [idleBlocker], map);
+  const attackingRoute = planPersistentChaseRoute(mover, target, [attackingBlocker], map);
+
+  assert.deepEqual(attackingRoute, idleRoute);
+});
+
+
+test("persistent chase route respects the one-allied-transit slot while routing", () => {
+  const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
+  const nextBlocker = dynamicBody(4, 3.25, 4, 0.2, 3, 75);
+  const pairInteractions = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:3", Object.freeze({
+      leftId: 1,
+      rightId: 3,
+      kind: "allied-transit",
+      collisionExtent: 0.2,
+      attackSurfaceExtent: 0.4,
+      pathObstructs: false,
+      mayDeepen: true,
+      initiatorId: 1,
+      targetId: null,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  const route = planPersistentChaseRoute(
+    mover,
+    target,
+    [nextBlocker],
+    map,
+    { pairInteractions },
+  );
+  const routeWithoutOccupiedSlot = planPersistentChaseRoute(
+    mover,
+    target,
+    [nextBlocker],
+    map,
+  );
+  assert.ok(route);
+  assert.notDeepEqual(route, routeWithoutOccupiedSlot);
+  assert.ok(route.waypoints.every(({ x, y }) => (
+    Math.max(Math.abs(x - nextBlocker.x), Math.abs(y - nextBlocker.y)) >= 0.4 - 1e-12
+  )));
+});
+
+
+test("persistent chase routes are deterministic under a vertical mirror", () => {
+  const mover = dynamicBody(1, 1.125, 3.125, 0.2, 3, 75);
+  const target = dynamicBody(2, 6.125, 3.125, 0.2, 2, 4);
+  const obstacles = [
+    dynamicBody(3, 3.125, 2.875, 0.2, 3, 75),
+    dynamicBody(4, 3.375, 3.125, 0.2, 3, 75),
+    dynamicBody(5, 3.125, 3.375, 0.2, 3, 75),
+    dynamicBody(6, 3.125, 2.375, 0.3, 3, 75),
+    dynamicBody(7, 3.375, 2.625, 0.3, 3, 75),
+  ];
+  const mirror = (entry) => Object.freeze({ ...entry, y: map.height - entry.y });
+
+  const route = planPersistentChaseRoute(mover, target, obstacles, map);
+  const mirrored = planPersistentChaseRoute(
+    mirror(mover), mirror(target), obstacles.map(mirror), map,
+  );
+
+  assert.deepEqual(
+    mirrored.waypoints.map(({ x, y }) => ({ x, y: map.height - y })),
+    route.waypoints,
+  );
+});
+
+
+test("persistent chase route advances without returning to direct target aim", () => {
+  const route = Object.freeze({
+    targetReferenceId: 2,
+    waypoints: Object.freeze([
+      Object.freeze({ x: 2, y: 3 }),
+      Object.freeze({ x: 4, y: 3 }),
+      Object.freeze({ x: 5.5, y: 4 }),
+    ]),
+    waypointIndex: 0,
+  });
+
+  const advanced = advancePersistentChaseRoute({ x: 2, y: 3 }, route);
+
+  assert.equal(advanced.waypointIndex, 1);
+  assert.deepEqual(advanced.waypoints, route.waypoints);
+  assert.deepEqual(advanced.waypoints[advanced.waypointIndex], { x: 4, y: 3 });
+});
+
+
+test("persistent route keeps a collision-layer sidestep instead of treating it as a stall", async () => {
+  const { persistentRouteMotionStalled } = await import("../src/combat/chase-path.js");
+  const before = Object.freeze({ x: 1, y: 1 });
+  const waypoint = Object.freeze({ x: 2, y: 1 });
+
+  assert.equal(
+    persistentRouteMotionStalled(before, Object.freeze({ x: 1, y: 1.01 }), waypoint),
+    false,
+  );
+  assert.equal(persistentRouteMotionStalled(before, before, waypoint), true);
 });

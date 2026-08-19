@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_mangudai_vs_champion",
+  "completedAt": "2026-08-19T15:38:26.088Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 31.363636363636374,
+      "medianAbsoluteMeanDelta": 31.363636363636374,
+      "maximumAbsoluteMeanDelta": 31.363636363636374
+    },
+    "rows": [
+      {
+        "id": "elite_mangudai_vs_champion",
+        "subjectSlug": "elite_mangudai",
+        "opponentSlug": "champion",
+        "matchup": "Elite Mangudai vs Champion",
+        "side2": {
+          "count": 11,
+          "master": 561,
+          "owner": 2,
+          "slug": "elite_mangudai",
+          "unit": "Elite Mangudai"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -92.04545454545455,
+          "min": -92.04545454545455,
+          "max": -92.04545454545455,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -60.68181818181817,
+          "min": -60.68181818181818,
+          "max": -60.68181818181818,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 31.363636363636374,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_mangudai_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 534,
+            "score": -60.68181818181818,
+            "ticks": 2569,
+            "finalStateHash": "71b2a26792b9cdfb687e27230f3560f4e10a963a1d3ff7d49e4fe5768c2e1867",
+            "eventLogHash": "7f62def00f17ad2f88c6d84fcc6e2a7517bf8a4c04d18500fd06203e2bc28fe4"
+          },
+          {
+            "rowId": "elite_mangudai_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 534,
+            "score": -60.68181818181818,
+            "ticks": 2569,
+            "finalStateHash": "71b2a26792b9cdfb687e27230f3560f4e10a963a1d3ff7d49e4fe5768c2e1867",
+            "eventLogHash": "5b164e96dfd439dbe337f080b1bb9841e5e480867186ca6b14b8dce657890374"
+          },
+          {
+            "rowId": "elite_mangudai_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 534,
+            "score": -60.68181818181818,
+            "ticks": 2569,
+            "finalStateHash": "71b2a26792b9cdfb687e27230f3560f4e10a963a1d3ff7d49e4fe5768c2e1867",
+            "eventLogHash": "79f248f5b1de4e75a1fec2945d1fdd7b39be50e88dcf215d76f0be91e371be0d"
+          },
+          {
+            "rowId": "elite_mangudai_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 534,
+            "score": -60.68181818181818,
+            "ticks": 2569,
+            "finalStateHash": "71b2a26792b9cdfb687e27230f3560f4e10a963a1d3ff7d49e4fe5768c2e1867",
+            "eventLogHash": "28313b38fe605642bcd204f9a57bc1486b921cb22f87f998c0aee1ba8229a8eb"
+          },
+          {
+            "rowId": "elite_mangudai_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 534,
+            "score": -60.68181818181818,
+            "ticks": 2569,
+            "finalStateHash": "71b2a26792b9cdfb687e27230f3560f4e10a963a1d3ff7d49e4fe5768c2e1867",
+            "eventLogHash": "250c3555b6f33c3fee51d688a645abdc5c407a23600f8050cf6de34600055c01"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -159,6 +159,43 @@ export function kitingFightHref(urlValue, {
 }
 
 
+const PHASE2_ROW_ID = /^[a-z0-9]+(?:_[a-z0-9]+)+$/;
+
+
+export function phase2WrongWinnerRequest(urlValue) {
+  let url;
+  try {
+    url = new URL(urlValue, "http://127.0.0.1/");
+  } catch {
+    return null;
+  }
+  const keys = [...url.searchParams.keys()];
+  if (keys.some((key) => key !== "mode" && key !== "row")
+      || url.searchParams.getAll("mode").length !== 1
+      || url.searchParams.getAll("row").length !== 1
+      || url.searchParams.get("mode") !== "phase2-wrong-winners") return null;
+  const rowId = url.searchParams.get("row");
+  if (!PHASE2_ROW_ID.test(rowId ?? "")) return null;
+  return Object.freeze({
+    endpoint: "api/phase2/wrong-winner",
+    rowId,
+    query: new URLSearchParams({ row: rowId }).toString(),
+  });
+}
+
+
+export function phase2WrongWinnerHref(urlValue, rowId) {
+  if (!PHASE2_ROW_ID.test(rowId ?? "")) {
+    throw new RangeError(`invalid Phase 2 row id ${rowId}`);
+  }
+  const url = new URL(urlValue, "http://127.0.0.1/");
+  url.search = "";
+  url.searchParams.set("mode", "phase2-wrong-winners");
+  url.searchParams.set("row", rowId);
+  return url.href;
+}
+
+
 function requireTeam(team) {
   if (team !== 1 && team !== 2) throw new RangeError(`team must be 1 or 2, got ${team}`);
 }

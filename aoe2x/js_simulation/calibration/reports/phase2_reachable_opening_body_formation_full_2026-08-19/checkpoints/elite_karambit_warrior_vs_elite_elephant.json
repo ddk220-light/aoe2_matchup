@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_karambit_warrior_vs_elite_elephant",
+  "completedAt": "2026-08-19T15:44:29.984Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 5.28125,
+      "medianAbsoluteMeanDelta": 5.28125,
+      "maximumAbsoluteMeanDelta": 5.28125
+    },
+    "rows": [
+      {
+        "id": "elite_karambit_warrior_vs_elite_elephant",
+        "subjectSlug": "elite_karambit_warrior",
+        "opponentSlug": "elite_elephant",
+        "matchup": "Elite Karambit Warrior vs Elite Battle Elephant",
+        "side2": {
+          "count": 21,
+          "master": 1125,
+          "owner": 2,
+          "slug": "elite_karambit_warrior",
+          "unit": "Elite Karambit Warrior"
+        },
+        "side3": {
+          "count": 4,
+          "master": 1134,
+          "owner": 3,
+          "slug": "elite_elephant",
+          "unit": "Elite Battle Elephant"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 38.125,
+          "min": 33.75,
+          "max": 43.125,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 43.40625,
+          "min": 40.78125,
+          "max": 48.28125,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 0.28125,
+          "tapeBandCoverage": 0.6,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_karambit_warrior_vs_elite_elephant",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 582,
+            "score": 45.46875,
+            "ticks": 1829,
+            "finalStateHash": "b52cf29243896e88da6aeb4b5cada22391ece9101c0831e8e5c7282a3a790d5c",
+            "eventLogHash": "1404f568ad6b7fb4d3442d53bd59d086f429decc827d63206e572d7d77bfe076"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_elite_elephant",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 528,
+            "score": 41.25,
+            "ticks": 2065,
+            "finalStateHash": "83e9d0fe64ee69b0d1b67786e83e73a0bc124f3bfcaa462dfe674361bbfc3789",
+            "eventLogHash": "001a898b534ce6fc7470df17721dc45c53392bdd31b3f686b531be610cd489f6"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_elite_elephant",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 522,
+            "score": 40.78125,
+            "ticks": 2097,
+            "finalStateHash": "f4ad231647fbfcf1c5b4b911631f9072cf8052375bfd839e6b66e522df509da5",
+            "eventLogHash": "dee6b6c183474e83f7686d2af85e13709af8b33761106895a6e99e3de406d90d"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_elite_elephant",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 618,
+            "score": 48.28125,
+            "ticks": 1994,
+            "finalStateHash": "f85957279e60e4d6dcb6695b6d953f3c2f1a8a3e765ee295ce23daef3331081f",
+            "eventLogHash": "d6d635b501345af783ad4afd7aea5a292eb06796159ae95b19ae272f38e66797"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_elite_elephant",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 528,
+            "score": 41.25,
+            "ticks": 1948,
+            "finalStateHash": "07578c380c137b8b6a60d2668fe4735dee4eeb4d67ccc5650940e71036ef5bea",
+            "eventLogHash": "6ecbb2515a71e02f4ede68408a554031c34946581ce1a2a1f85e925a89008e94"
+          }
+        ]
+      }
+    ]
+  }
+}

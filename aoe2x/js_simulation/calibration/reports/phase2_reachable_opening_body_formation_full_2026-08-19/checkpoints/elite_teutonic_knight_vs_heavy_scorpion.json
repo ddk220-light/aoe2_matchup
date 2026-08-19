@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_teutonic_knight_vs_heavy_scorpion",
+  "completedAt": "2026-08-19T15:33:31.048Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 1,
+      "meanAbsoluteMeanDelta": 3.5119047619047663,
+      "medianAbsoluteMeanDelta": 3.5119047619047663,
+      "maximumAbsoluteMeanDelta": 3.5119047619047663
+    },
+    "rows": [
+      {
+        "id": "elite_teutonic_knight_vs_heavy_scorpion",
+        "subjectSlug": "elite_teutonic_knight",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Heavy Scorpion vs Elite Teutonic Knight",
+        "side2": {
+          "count": 14,
+          "master": 542,
+          "owner": 2,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "side3": {
+          "count": 21,
+          "master": 554,
+          "owner": 3,
+          "slug": "elite_teutonic_knight",
+          "unit": "Elite Teutonic Knight"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 50.89285714285714,
+          "min": 40.23809523809524,
+          "max": 63.57142857142857,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 47.38095238095237,
+          "min": 41.904761904761905,
+          "max": 52.857142857142854,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 0,
+          "tapeBandCoverage": 1,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_teutonic_knight_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 968,
+            "score": 41.904761904761905,
+            "ticks": 1976,
+            "finalStateHash": "369d6dc7c7932ceb53adb57db75ccd7213ef86c11295dc097e5857c6897c137e",
+            "eventLogHash": "1412cfe096197e8f1ff9ce10da1193f4d4bc85cff5f402ae2243312db999e5e9"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1221,
+            "score": 52.857142857142854,
+            "ticks": 1773,
+            "finalStateHash": "981fc5566440d2575e395b09eb77fd5f3d2b46fdd2feb907c4448e638e62076e",
+            "eventLogHash": "5cbd0ed1a44bf976e8c650efd7963d78a152eceb3afb2d29b6ad5644daa4f783"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1034,
+            "score": 44.76190476190476,
+            "ticks": 1814,
+            "finalStateHash": "da2be29c7a4c06628f0cc3b8044b767c6dd1ae27e9b589a15666bdf36eb61fe1",
+            "eventLogHash": "5c535473c68f32b5a0e22706a36d1c10b7d30908b92fea0eedadc70f1962d82b"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1122,
+            "score": 48.57142857142857,
+            "ticks": 1732,
+            "finalStateHash": "b3672a05785196130fb220c488da7203446b714f49ed514d40346f894483edad",
+            "eventLogHash": "0d0b2710e2a1fdfc37621b2a86c5333d6f57c47c146a61c08d23a6537f3a3d8d"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1127.5,
+            "score": 48.80952380952381,
+            "ticks": 1745,
+            "finalStateHash": "d6c6c8c171732937bb2415db0365703dfb932d15783306df1f5aff1c5f1c21ae",
+            "eventLogHash": "0f6334ca0a2aee4a5bc08ce6b36d3a2e448c4fcaf0c8d12e322c7cb8050de812"
+          }
+        ]
+      }
+    ]
+  }
+}

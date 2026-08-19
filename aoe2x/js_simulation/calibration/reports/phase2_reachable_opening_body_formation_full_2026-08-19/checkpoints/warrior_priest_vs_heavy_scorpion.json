@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "warrior_priest_vs_heavy_scorpion",
+  "completedAt": "2026-08-19T15:45:53.408Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 5.836190476190474,
+      "medianAbsoluteMeanDelta": 5.836190476190474,
+      "maximumAbsoluteMeanDelta": 5.836190476190474
+    },
+    "rows": [
+      {
+        "id": "warrior_priest_vs_heavy_scorpion",
+        "subjectSlug": "warrior_priest",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Heavy Scorpion vs Warrior Priest",
+        "side2": {
+          "count": 12,
+          "master": 542,
+          "owner": 2,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "side3": {
+          "count": 21,
+          "master": 1811,
+          "owner": 3,
+          "slug": "warrior_priest",
+          "unit": "Warrior Priest"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 65.52380952380952,
+          "min": 65.52380952380952,
+          "max": 65.52380952380952,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 59.687619047619044,
+          "min": 55.61904761904762,
+          "max": 63.542857142857144,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 5.836190476190474,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "warrior_priest_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1621,
+            "score": 61.75238095238095,
+            "ticks": 1491,
+            "finalStateHash": "8ef7f589e139087eee50e01fb59e7a702278b46fb7879fab3903ced49ac7bef1",
+            "eventLogHash": "6a07451c3519ab3fbbb2a0ec769ca3eed6952a90ea80d66b82a52dbe12b592e0"
+          },
+          {
+            "rowId": "warrior_priest_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1460,
+            "score": 55.61904761904762,
+            "ticks": 1476,
+            "finalStateHash": "9bc8687f7b9606f12cb7043dd1b9e6b5081182f410adebac543972627986069e",
+            "eventLogHash": "30214af8e5c92b3baf1d2c836250f1e4303c20b3443eb919bf33a7fa10a970ec"
+          },
+          {
+            "rowId": "warrior_priest_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1507,
+            "score": 57.40952380952381,
+            "ticks": 1551,
+            "finalStateHash": "8199321ba0c5009f1f0b4562ae1dbfe9d4b7da53e453ec793b7a5f65b715644a",
+            "eventLogHash": "132eba98120845cc17e7ad1ce6247a58d79a2698e860e7118a5582c7244fb633"
+          },
+          {
+            "rowId": "warrior_priest_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1668,
+            "score": 63.542857142857144,
+            "ticks": 1434,
+            "finalStateHash": "e9bf9daa811df043ada44acc0791a5f84bab5d7db13339166075aab5c45d16f0",
+            "eventLogHash": "f240bc2dfc18f97bffca347f81a66ec2970c418c3d51a093cdf8fdc95f0fb4af"
+          },
+          {
+            "rowId": "warrior_priest_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1578,
+            "score": 60.114285714285714,
+            "ticks": 1463,
+            "finalStateHash": "c9d1c06bf2a8cd9145428fe809817ff0e1e76470dd51766a0a355d0ea6999815",
+            "eventLogHash": "398c1d54d89e9ed159f8cb9a35758ac693851e64100fc581de6d96ef7d83c4bc"
+          }
+        ]
+      }
+    ]
+  }
+}

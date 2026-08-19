@@ -162,6 +162,25 @@ test("a direct four-unit compact admission is diverted without slowing the mover
 });
 
 
+test("an authoritative persistent route bypasses compact-contact rotation", () => {
+  const target = unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null });
+  const mover = unit({ referenceId: 1, x: 2, y: 2 });
+  const upper = unit({ referenceId: 2, x: 2.7, y: 1.85, pursuitTargetId: null });
+  const lower = unit({ referenceId: 3, x: 2.7, y: 2.15, pursuitTargetId: null });
+  const routed = proposal(1, STEP, 0);
+
+  const result = planPreventiveContactSteering(
+    [mover, upper, lower, target],
+    [routed, proposal(2), proposal(3), proposal(90)],
+    MAP,
+    { owner: 3, authoritativeReferenceIds: new Set([1]) },
+  );
+
+  assert.deepEqual(byReference(result).get(1), routed);
+  assert.deepEqual(result.steered, []);
+});
+
+
 test("reach melee near its target may form a two-deep wedge but not enter a three-ally stack", () => {
   const target = unit({ referenceId: 90, owner: 2, x: 3.8, y: 2, pursuitTargetId: null });
   const mover = unit({ referenceId: 1, x: 2, y: 2, attackRange: 1 });
@@ -209,7 +228,7 @@ test("reach melee still avoids forming a wedge while it is far from attack range
 });
 
 
-test("one-range melee may form a near-target wedge regardless of target speed", () => {
+test("reach melee still steers when closure per reload exceeds extra reach", () => {
   const target = unit({
     referenceId: 90, owner: 2, x: 3.8, y: 2, pursuitTargetId: null, speed: 0.9,
   });
@@ -227,8 +246,8 @@ test("one-range melee may form a near-target wedge regardless of target speed", 
     { owner: 3 },
   );
 
-  assert.deepEqual(byReference(result).get(1), direct);
-  assert.deepEqual(result.steered, []);
+  assert.notDeepEqual(byReference(result).get(1), direct);
+  assert.equal(result.steered[0].reason, "compact-contact");
 });
 
 

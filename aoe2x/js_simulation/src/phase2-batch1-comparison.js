@@ -15,6 +15,7 @@ import { UNIT_REGISTRY } from "./unit-registry.js";
 
 
 export const PHASE2_MAX_TICKS = 9000;
+export const PHASE2_OPENING_VOLLEY_TICK = 1;
 const unitByMaster = new Map(UNIT_REGISTRY.map((unit) => [unit.master, unit]));
 
 
@@ -103,7 +104,17 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
       ? {}
       : {
         kiteOwner,
-        kiteProfile: deriveKiteProfile(kiterMechanics, kitePolicyFor(kiter.slug)),
+        // Every Phase 2 ranged-melee tape opens with an immediate attack
+        // command and then settles onto the mechanics-derived recurring beat.
+        // This is scenario order state, not a unit/outcome calibration: the
+        // same tick-one opening applies whichever eligible ranged unit owns
+        // the kiting side, while its reload and release timing remain sourced
+        // from that unit's mechanics.
+        kiteProfile: deriveKiteProfile(kiterMechanics, {
+          ...kitePolicyFor(kiter.slug),
+          openingVolleyTick: PHASE2_OPENING_VOLLEY_TICK,
+          openingVolley: "close_to_fire",
+        }),
         kiteNavigation: "cohesive",
         kiteMeleeOpeningOrder: "attack-move-all",
         chaseCapture: true,

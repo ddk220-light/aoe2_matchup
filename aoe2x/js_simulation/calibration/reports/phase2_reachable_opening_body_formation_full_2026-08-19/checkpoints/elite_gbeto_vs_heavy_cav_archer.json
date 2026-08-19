@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_gbeto_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T15:24:51.205Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 29.396638655462187,
+      "medianAbsoluteMeanDelta": 29.396638655462187,
+      "maximumAbsoluteMeanDelta": 29.396638655462187
+    },
+    "rows": [
+      {
+        "id": "elite_gbeto_vs_heavy_cav_archer",
+        "subjectSlug": "elite_gbeto",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Heavy Cavalry Archer vs Elite Gbeto",
+        "side2": {
+          "count": 17,
+          "master": 474,
+          "owner": 2,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "side3": {
+          "count": 21,
+          "master": 1015,
+          "owner": 3,
+          "slug": "elite_gbeto",
+          "unit": "Elite Gbeto"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 33.92857142857143,
+          "min": 28.095238095238095,
+          "max": 38.95238095238095,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 4.531932773109244,
+          "min": -41.911764705882355,
+          "max": 19.238095238095237,
+          "side3WinRate": 0.8,
+          "side3WinRateError": 0.19999999999999996,
+          "bandError": 23.56330532212885,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_gbeto_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 102,
+            "score": 9.714285714285714,
+            "ticks": 3492,
+            "finalStateHash": "ca8c1acb18b485c273729e4c79067bbc1b87924dbfa2307a88497fe3b5f4555e",
+            "eventLogHash": "2efc458a0878388a693188f3492a1e624a2c3e76f3810a33ae66e7d111424be2"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 188,
+            "score": 17.904761904761905,
+            "ticks": 3148,
+            "finalStateHash": "3616c8dbe3d38569c61751142f09d2d62f59f430168003d38ed0e397e8cc7b53",
+            "eventLogHash": "b2645faf386d6f31ae9a8d9ffc7447b697e01b9056b2c13d43b4f3b6d301ecd0"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 570,
+            "score": -41.911764705882355,
+            "ticks": 4036,
+            "finalStateHash": "f401f6e995c078614351fb2346adeb2e0e3fe14d5afb9ede9022005c4dff85ce",
+            "eventLogHash": "cec20e95f7d098fe9fb975a642f485d7ba290573e53d45d0dd7d7ce042a410da"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 186,
+            "score": 17.714285714285715,
+            "ticks": 3086,
+            "finalStateHash": "25ec5203039b8069b343f5ca8de7fac7f48518bef43b9fe2cde43eac386a2bb6",
+            "eventLogHash": "4ce6c7d88bac73c6015017c944b79424f78a643b2b20f823399cefb5d34d84d9"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 202,
+            "score": 19.238095238095237,
+            "ticks": 3059,
+            "finalStateHash": "d55af41731fbba41501f2a912c7e32e3bc9e7da85e67813586d28919ab436b3e",
+            "eventLogHash": "eb29d4803b2932fbc46755bb0b80791d13d43ab5112db41b5150810118fa3e6a"
+          }
+        ]
+      }
+    ]
+  }
+}

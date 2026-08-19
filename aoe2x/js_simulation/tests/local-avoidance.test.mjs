@@ -320,6 +320,32 @@ test("unified contact lanes ignore only a mover's reserved allied-transit partne
 });
 
 
+test("an authoritative persistent route bypasses local tangent rewriting", () => {
+  const mover = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 2,
+    y: 5,
+    facing: Math.PI / 2,
+    pursuitTargetId: 3,
+  });
+  const blocker = unit({ referenceId: 2, owner: 2, x: 4, y: 5 });
+  const target = unit({ referenceId: 3, owner: 3, x: 6, y: 5 });
+  const routed = proposal(1, STEP / Math.SQRT2, STEP / Math.SQRT2);
+
+  const result = planLocalAvoidance(
+    [mover, blocker, target],
+    [routed],
+    OPEN_MAP,
+    { authoritativeReferenceIds: new Set([1]) },
+  );
+
+  assert.deepEqual(result.proposals.find(({ referenceId }) => referenceId === 1), routed);
+  assert.equal(result.units.find(({ referenceId }) => referenceId === 1).avoidance, null);
+  assert.deepEqual(result.routes, []);
+});
+
+
 test("route selection rejects paths swept through a second body or map obstacle", () => {
   const mover = unit({
     referenceId: 1,

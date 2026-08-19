@@ -28,7 +28,13 @@ import {
   STEER_AROUND_BODIES,
   shouldReevaluatePursuit,
 } from "./experiments.js";
-import { planChaseAim, planMoveAim } from "./chase-path.js";
+import {
+  advancePersistentChaseRoute,
+  persistentRouteMotionStalled,
+  planChaseAim,
+  planMoveAim,
+  planPersistentChaseRoute,
+} from "./chase-path.js";
 import { planCohortContactMotion } from "./cohort-motion.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
 import {
@@ -253,6 +259,16 @@ export function createWorld(scenario) {
       scenario.soloMovement === true,
     )
     : null;
+  if (scenario.persistentMeleePursuitRouting === true) {
+    if (!kiteState) {
+      throw new RangeError("persistent melee pursuit routing requires a kiting owner");
+    }
+    kiteState.persistentMeleePursuitRouting = true;
+    kiteState.chaseRoutes = new Map();
+  } else if (scenario.persistentMeleePursuitRouting !== undefined
+      && scenario.persistentMeleePursuitRouting !== false) {
+    throw new TypeError("persistent melee pursuit routing must be boolean");
+  }
   let contactSteeringStates = null;
   if (kiteState) kiteState.collisionRecoveryState = { active: false };
   if (scenario.kiteChaseDwellTicks !== undefined) {
@@ -744,6 +760,9 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
     if (distance <= ZERO_STEP_EPSILON) return proposal;
     const mover = byReference.get(proposal.referenceId);
     if (!mover) return proposal;
+    if (movementOptions.authoritativeReferenceIds?.has(mover.referenceId)) {
+      return proposal;
+    }
     const minimumRangeRetreat = proposal.movementIntent === "minimum-range-retreat";
     // "chaser" scope: only the chasing side of a kited scenario steers; the
     // kiting side (and every non-kited fight) keeps the baseline solver.
@@ -879,6 +898,20 @@ function moveUnits(units, map, tick, events, kiteState = null,
     )
     : null;
   if (kiteState && !kiteState.chaseWaypoints) kiteState.chaseWaypoints = new Map();
+  if (kiteState?.persistentMeleePursuitRouting === true && !kiteState.chaseRoutes) {
+    kiteState.chaseRoutes = new Map();
+  }
+  const authoritativeRouteReferenceIds = new Set();
+  if (kiteState?.chaseRoutes) {
+    for (const referenceId of kiteState.chaseRoutes.keys()) {
+      const unit = byReference.get(referenceId);
+      const target = byReference.get(unit?.pursuitTargetId);
+      if (!unit?.alive || unit.owner === kiteState.owner
+          || !target?.alive || target.owner === unit.owner) {
+        kiteState.chaseRoutes.delete(referenceId);
+      }
+    }
+  }
   const soloGridPath = kiteState?.soloNavigationState?.variant === "per-unit-grid"
     || kiteState?.soloNavigationState?.variant === "cohesive";
   if (kiteState?.profile?.kitedPath === "clearance_grid" || soloGridPath) {
@@ -892,6 +925,62 @@ function moveUnits(units, map, tick, events, kiteState = null,
   }
   const chaseAim = (unit, target) => {
     if (!kiteState || unit.owner === kiteState.owner) return target;
+    const obstacles = live.filter((other) => other.referenceId !== unit.referenceId
+      && other.referenceId !== target.referenceId
+      && other.referenceId !== unit.pursuitTargetId
+      && other.referenceId !== unit.engagedTargetId
+      && other.referenceId !== unit.attackTargetId);
+    if (kiteState.persistentMeleePursuitRouting === true) {
+      const routes = kiteState.chaseRoutes;
+      let route = routes.get(unit.referenceId) ?? null;
+      if (route && route.targetReferenceId !== target.referenceId) {
+        routes.delete(unit.referenceId);
+        events.push(event(tick, "pursuit-route-invalidated", unit.referenceId,
+          route.targetReferenceId, { reason: "target-changed" }));
+        route = null;
+      }
+      if (route) {
+        const advanced = advancePersistentChaseRoute(unit, route);
+        if (advanced.waypointIndex !== route.waypointIndex) {
+          events.push(event(tick, "pursuit-route-advanced", unit.referenceId,
+            target.referenceId, { waypointIndex: advanced.waypointIndex }));
+        }
+        route = advanced;
+        if (route.waypointIndex >= route.waypoints.length) {
+          routes.delete(unit.referenceId);
+          route = null;
+        } else {
+          routes.set(unit.referenceId, route);
+        }
+      }
+      if (!route) {
+        route = planPersistentChaseRoute(unit, target, obstacles, map, {
+          pairInteractions,
+        });
+        if (route?.stand === true) {
+          return Object.freeze({ x: unit.x, y: unit.y, pathWaypoint: true });
+        }
+        if (route) {
+          routes.set(unit.referenceId, route);
+          events.push(event(tick, "pursuit-route-planned", unit.referenceId,
+            target.referenceId, {
+              waypointCount: route.waypoints.length,
+              waypointIndex: route.waypointIndex,
+            }));
+        }
+      }
+      if (route) {
+        authoritativeRouteReferenceIds.add(unit.referenceId);
+        const waypoint = route.waypoints[route.waypointIndex];
+        return Object.freeze({
+          x: waypoint.x,
+          y: waypoint.y,
+          pathWaypoint: true,
+          persistentRoute: true,
+        });
+      }
+      return target;
+    }
     const waypoints = kiteState.chaseWaypoints;
     let waypoint = waypoints.get(unit.referenceId);
     if (!waypoint || waypoint.targetId !== target.referenceId
@@ -905,11 +994,6 @@ function moveUnits(units, map, tick, events, kiteState = null,
       // Plan on the repath cadence: the waypoint object is recreated by the
       // repath above, so a missing plan means this cycle has not planned yet.
       if (waypoint.plan === undefined) {
-        const obstacles = live.filter((other) => other.referenceId !== unit.referenceId
-          && other.referenceId !== target.referenceId
-          && other.referenceId !== unit.pursuitTargetId
-          && other.referenceId !== unit.engagedTargetId
-          && other.referenceId !== unit.attackTargetId);
         waypoint.plan = planChaseAim(unit, target, obstacles, map, {
           pairInteractions,
         });
@@ -1094,6 +1178,9 @@ function moveUnits(units, map, tick, events, kiteState = null,
       contactReservations: contactUpdate?.contactReservations ?? new Map(),
     }),
     ...(kiteState ? { collisionRecoveryState: kiteState.collisionRecoveryState } : {}),
+    ...(authoritativeRouteReferenceIds.size > 0
+      ? { authoritativeReferenceIds: authoritativeRouteReferenceIds }
+      : {}),
   };
   let planned = planLocalAvoidance(live, proposals, map, movementOptions);
   for (const contactSteeringState of contactSteeringStates.values()) {
@@ -1101,7 +1188,11 @@ function moveUnits(units, map, tick, events, kiteState = null,
       planned.units,
       planned.proposals,
       map,
-      { owner: contactSteeringState.owner, strength: contactSteeringState.strength },
+      {
+        owner: contactSteeringState.owner,
+        strength: contactSteeringState.strength,
+        authoritativeReferenceIds: authoritativeRouteReferenceIds,
+      },
     );
     contactSteeringState.steeredSteps += contactPlan.steered.length;
     for (const { referenceId } of contactPlan.steered) {
@@ -1114,6 +1205,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
   const proposalByReference = new Map(proposals.map((proposal) => [proposal.referenceId, proposal]));
   const moveEvents = [];
   const blockedEvents = [];
+  const routeEvents = [];
   const movedIds = new Set();
   const blockedIds = new Set();
   // Per-tick displacement of every live unit, for ballistics lead (smart_mode
@@ -1142,6 +1234,41 @@ function moveUnits(units, map, tick, events, kiteState = null,
     }
     const proposal = proposalByReference.get(unit.referenceId);
     const isBlocked = Math.abs(dx - proposal.dx) > 1e-12 || Math.abs(dy - proposal.dy) > 1e-12;
+    if (authoritativeRouteReferenceIds.has(unit.referenceId)) {
+      const route = kiteState?.chaseRoutes?.get(unit.referenceId);
+      const waypoint = route?.waypoints?.[route.waypointIndex];
+      if (waypoint) {
+        if (persistentRouteMotionStalled(before, result)) {
+          const proposedX = before.x + proposal.dx;
+          const proposedY = before.y + proposal.dy;
+          const blockingReferenceIds = live.filter((other) => {
+            if (other.referenceId === unit.referenceId) return false;
+            const interaction = resolvePairInteraction(
+              before, other, movementOptions.pairInteractions,
+            );
+            return interaction.pathObstructs
+              && Math.max(
+                Math.abs(proposedX - other.x),
+                Math.abs(proposedY - other.y),
+              ) < interaction.collisionExtent - STEP_EPSILON;
+          }).map(({ referenceId }) => referenceId);
+          kiteState.chaseRoutes.delete(unit.referenceId);
+          routeEvents.push(event(tick, "pursuit-route-invalidated", unit.referenceId,
+            route.targetReferenceId, {
+              reason: "no-progress",
+              waypointX: waypoint.x,
+              waypointY: waypoint.y,
+              beforeX: before.x,
+              beforeY: before.y,
+              proposedX,
+              proposedY,
+              afterX: result.x,
+              afterY: result.y,
+              blockingReferenceIds,
+            }));
+        }
+      }
+    }
     // Only stamp experiment state when an experiment is running: the canonical
     // unit record feeds finalStateHash, so an always-present field would change
     // every golden hash for no reason.
@@ -1183,7 +1310,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
       }));
     }
   }
-  events.push(...moveEvents, ...blockedEvents);
+  events.push(...moveEvents, ...blockedEvents, ...routeEvents);
   if (kiteState?.soloNavigationState) {
     finishSoloNavigationTick(
       kiteState.soloNavigationState,

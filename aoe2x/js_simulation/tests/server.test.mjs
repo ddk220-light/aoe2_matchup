@@ -148,6 +148,7 @@ test("manual 5 HCA versus 10 Champion setup preserves the tape's matchup order",
     const run = await response.json();
     assert.equal(response.status, 200, run.error);
     assert.equal(run.alliedTransitMode, "contact-reservation");
+    assert.equal(run.meleePursuitRouting, "persistent-grid");
     assert.equal(run.contactSteeringMode, "preventive-contact-graph");
     assert.ok(run.contactSteeringStrength > 0 && run.contactSteeringStrength < 1);
     assert.ok(run.contactSteeringSummary.steeredSteps > 0);
@@ -960,6 +961,96 @@ test("server keeps source archives and raw calibration fixtures inaccessible", a
 });
 
 
+test("server lists only resolved wrong-winner rows from the current Phase 2 report", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/phase2/wrong-winners`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    const catalogue = await response.json();
+
+    assert.equal(catalogue.schemaVersion, 1);
+    assert.equal(catalogue.report, "phase2_reachable_opening_body_formation_full_2026-08-19");
+    assert.equal(catalogue.rows.length, 10);
+    assert.deepEqual(catalogue.rows.map(({ id }) => id), [
+      "elite_boyar_vs_heavy_cav_archer",
+      "elite_conquistador_vs_arbalester",
+      "elite_karambit_warrior_vs_paladin",
+      "elite_longbowman_vs_arbalester",
+      "elite_longbowman_vs_heavy_cav_archer",
+      "elite_longbowman_vs_heavy_scorpion",
+      "elite_magyar_huszar_vs_arbalester",
+      "elite_plumed_archer_vs_paladin",
+      "elite_throwing_axeman_vs_arbalester",
+      "elite_war_wagon_vs_champion",
+    ]);
+    assert.deepEqual(catalogue.rows[0], {
+      id: "elite_boyar_vs_heavy_cav_archer",
+      matchup: "Heavy Cavalry Archer vs Elite Boyar",
+      side2: { slug: "heavy_cav_archer", label: "Heavy Cavalry Archer", count: 21 },
+      side3: { slug: "elite_boyar", label: "Elite Boyar", count: 16 },
+      tapeScore: 10.5,
+      simulationScore: 34.666666666666664,
+      delta: 24.166666666666664,
+    });
+  });
+});
+
+
+test("wrong-winner playback uses the exact golden roster and current Phase 2 scenario", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/phase2/wrong-winner?row=elite_boyar_vs_heavy_cav_archer`,
+    );
+    assert.equal(response.status, 200);
+    const run = await response.json();
+
+    assert.equal(run.mode, "phase2-wrong-winner-review");
+    assert.equal(run.review.rowId, "elite_boyar_vs_heavy_cav_archer");
+    assert.equal(run.review.tapeScore, 10.5);
+    assert.equal(run.review.simulationScore, 34.666666666666664);
+    assert.equal(run.review.pursuitRouting, "persistent-grid");
+    assert.equal(run.side2.slug, "heavy_cav_archer");
+    assert.equal(run.side2.count, 21);
+    assert.equal(run.side3.slug, "elite_boyar");
+    assert.equal(run.side3.count, 16);
+    assert.equal(run.snapshots[0].tick, 0);
+    assert.deepEqual(run.snapshots[0].units[0].slice(0, 3), [1263, 6.5, 4.5]);
+    assert.equal(run.winnerOwner, 3);
+    assert.ok(run.ticks < 9000);
+  });
+});
+
+
+test("wrong-winner playback applies current pursuit routing to every ranged-melee row", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/phase2/wrong-winner?row=elite_plumed_archer_vs_paladin`,
+    );
+    assert.equal(response.status, 200);
+    const run = await response.json();
+
+    assert.equal(run.review.rowId, "elite_plumed_archer_vs_paladin");
+    assert.equal(run.family, "kite");
+    assert.equal(run.review.pursuitRouting, "persistent-grid");
+  });
+});
+
+
+test("wrong-winner playback rejects unresolved, passing, and malformed rows", async () => {
+  await withServer(async (baseUrl) => {
+    for (const requestPath of [
+      "/api/phase2/wrong-winner",
+      "/api/phase2/wrong-winner?row=elite_mangudai_vs_elite_elephant",
+      "/api/phase2/wrong-winner?row=elite_boyar_vs_arbalester",
+      "/api/phase2/wrong-winner?row=elite_boyar_vs_heavy_cav_archer&extra=1",
+    ]) {
+      const response = await fetch(`${baseUrl}${requestPath}`);
+      assert.equal(response.status, 400, requestPath);
+    }
+  });
+});
+
+
 test("viewer page exposes battle controls and local calibration tools without a seed control", async () => {
   await withServer(async (baseUrl) => {
     const response = await fetch(`${baseUrl}/?ratio=5v3&repeat=3`);
@@ -998,6 +1089,11 @@ test("viewer page exposes battle controls and local calibration tools without a 
       "reviewNote",
       "clearFeedback",
       "exportFeedback",
+      "wrongWinnerReview",
+      "wrongWinnerMatchup",
+      "wrongWinnerTapeScore",
+      "wrongWinnerSimulationScore",
+      "wrongWinnerDelta",
     ]) {
       assert.match(body, new RegExp(`id=["']${id}["']`), id);
     }

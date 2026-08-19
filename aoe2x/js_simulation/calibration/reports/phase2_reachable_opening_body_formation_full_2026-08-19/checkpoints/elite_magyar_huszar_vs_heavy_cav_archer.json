@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_magyar_huszar_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T15:44:34.932Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 23.116883116883116,
+      "medianAbsoluteMeanDelta": 23.116883116883116,
+      "maximumAbsoluteMeanDelta": 23.116883116883116
+    },
+    "rows": [
+      {
+        "id": "elite_magyar_huszar_vs_heavy_cav_archer",
+        "subjectSlug": "elite_magyar_huszar",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Heavy Cavalry Archer vs Elite Magyar Huszar",
+        "side2": {
+          "count": 16,
+          "master": 474,
+          "owner": 2,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "side3": {
+          "count": 21,
+          "master": 871,
+          "owner": 3,
+          "slug": "elite_magyar_huszar",
+          "unit": "Elite Magyar Huszar"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 52.38095238095238,
+          "min": 52.38095238095238,
+          "max": 52.38095238095238,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 29.264069264069263,
+          "min": 24.025974025974026,
+          "max": 31.385281385281385,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 23.116883116883116,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 675,
+            "score": 29.22077922077922,
+            "ticks": 4926,
+            "finalStateHash": "5781734c95a73b9ad95e45dc6875725a9c54adbe1c029aad90b66521b7b279ef",
+            "eventLogHash": "afdc397faa068b48414ace698c9850915383d787eb5f002237253331ce7d521e"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 725,
+            "score": 31.385281385281385,
+            "ticks": 4576,
+            "finalStateHash": "fda38da45d444e35924d43e9000079a7b55ba798dfccf36bb77e39c88ffd89c4",
+            "eventLogHash": "0b3bd438c602bfa98459f35cfc9fcf64a2ed21b646d3098a8632f3bc16c20e1f"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 715,
+            "score": 30.952380952380953,
+            "ticks": 4586,
+            "finalStateHash": "5b3737223e3ab409ee796be9d4150748b9bbcc8ab63162c9632691ffc3d4b9bc",
+            "eventLogHash": "8c9a4ddc2c8e8af08c50d5997c23f85a49c1e493c7c429c5909fd4bf0b5204e1"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 710,
+            "score": 30.735930735930737,
+            "ticks": 4586,
+            "finalStateHash": "0dc6a3709afeb7a2adb4f06bff91ac595edd0382cc1c237d413c46610570820f",
+            "eventLogHash": "6d54a016358f4b3dd253b2c1a16386d511226f0f9a88fc5690cee224ca155388"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 555,
+            "score": 24.025974025974026,
+            "ticks": 5059,
+            "finalStateHash": "6fbe0320bb290a4d4833b17fbf8e1897e57ecef8083065dad6acf65f1a640728",
+            "eventLogHash": "e3f1f53365c199c63a039927f7f7d757033a2f7091af664938f20ac003af2396"
+          }
+        ]
+      }
+    ]
+  }
+}

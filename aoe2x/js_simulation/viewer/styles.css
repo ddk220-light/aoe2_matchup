@@ -89,30 +89,41 @@
 .solo-movement-mode #resetBtn,
 .kiting-observation-mode .sim-options,
 .kiting-observation-mode #startHint,
-.kiting-observation-mode #resetBtn {
+.kiting-observation-mode #resetBtn,
+.wrong-winner-review-mode .sim-options,
+.wrong-winner-review-mode .sim-topbar-right,
+.wrong-winner-review-mode #startHint,
+.wrong-winner-review-mode #startBtn,
+.wrong-winner-review-mode #resetBtn,
+.wrong-winner-review-mode #returnFormation {
   display: none !important;
 }
 
 .solo-movement-mode .rail-search,
 .solo-movement-mode .rail-picker,
 .kiting-observation-mode .rail-search,
-.kiting-observation-mode .rail-picker {
+.kiting-observation-mode .rail-picker,
+.wrong-winner-review-mode .rail-search,
+.wrong-winner-review-mode .rail-picker {
   display: none !important;
 }
 
 .solo-movement-mode .rail-live,
-.kiting-observation-mode .rail-live {
+.kiting-observation-mode .rail-live,
+.wrong-winner-review-mode .rail-live {
   display: block !important;
 }
 
 .solo-movement-mode .sim-topbar,
-.kiting-observation-mode .sim-topbar {
+.kiting-observation-mode .sim-topbar,
+.wrong-winner-review-mode .sim-topbar {
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .solo-movement-mode .sim-topbar-center,
-.kiting-observation-mode .sim-topbar-center {
+.kiting-observation-mode .sim-topbar-center,
+.wrong-winner-review-mode .sim-topbar-center {
   margin-inline: auto;
 }
 
@@ -170,6 +181,102 @@
 
 .solo-movement-mode .arena {
   min-width: 0;
+}
+
+/* Current-engine wrong-winner review ------------------------------------ */
+
+.wrong-winner-review {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: clamp(16px, 3vw, 40px);
+  margin: 12px 0 18px;
+  padding: clamp(14px, 2vw, 20px);
+  border: 1px solid color-mix(in srgb, var(--gold) 34%, var(--border));
+  border-radius: 10px;
+  background:
+    linear-gradient(120deg, color-mix(in srgb, var(--gold) 9%, transparent), transparent 48%),
+    var(--surface-elevated, var(--bg-warm));
+  box-shadow: var(--shadow-card);
+}
+
+.wrong-winner-review[hidden] {
+  display: none !important;
+}
+
+.wrong-winner-picker {
+  display: grid;
+  flex: 1 1 520px;
+  gap: 5px;
+  min-width: 0;
+}
+
+.wrong-winner-picker .review-kicker {
+  color: var(--gold);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.wrong-winner-picker label {
+  color: var(--text);
+  font-family: var(--font-display, inherit);
+  font-size: clamp(0.95rem, 1.6vw, 1.16rem);
+  font-weight: 700;
+}
+
+.wrong-winner-picker select {
+  width: 100%;
+  max-width: 720px;
+  padding: 9px 34px 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.wrong-winner-picker small {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.wrong-winner-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(82px, 1fr));
+  flex: 0 1 360px;
+  gap: 8px;
+}
+
+.wrong-winner-metrics > div {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  text-align: center;
+}
+
+.wrong-winner-metrics span {
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.wrong-winner-metrics strong {
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+}
+
+.wrong-winner-metrics .is-delta strong {
+  color: var(--poor);
 }
 
 /* Catalogue availability -------------------------------------------------- */
@@ -677,6 +784,8 @@
   .navigation-lab-field { justify-content: space-between; }
   .navigation-lab-field select { flex: 1 1 auto; min-width: 0; }
   .navigation-count-field input[type="number"] { flex: 0 0 72px; }
+  .wrong-winner-review { align-items: stretch; flex-direction: column; }
+  .wrong-winner-metrics { flex: 0 0 auto; }
   .sim-stage {
     display: grid;
     grid-template-columns: 1fr;

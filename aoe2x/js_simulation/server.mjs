@@ -24,6 +24,10 @@ import {
   syntheticMatchupPlayback,
 } from "./src/matchup-playback.js";
 import { SOLO_MOVEMENT_UNIT_SLUGS, UNIT_REGISTRY } from "./src/unit-registry.js";
+import {
+  loadPhase2WrongWinnerCatalogue,
+  runPhase2WrongWinnerPlayback,
+} from "./src/phase2-wrong-winner-review.js";
 
 
 const CONTENT_TYPES = new Map([
@@ -315,7 +319,8 @@ async function loadArenaPhysicsMap(root) {
 
 async function handleFightApi({ request, response, root, url }) {
   if (!["/api/catalogue", "/api/units", "/api/fight", "/api/solo-hand-cannoneers",
-    "/api/hand-cannoneer-vs-champion-kiting", "/api/ranged-vs-melee-kiting"]
+    "/api/hand-cannoneer-vs-champion-kiting", "/api/ranged-vs-melee-kiting",
+    "/api/phase2/wrong-winners", "/api/phase2/wrong-winner"]
     .includes(url.pathname)) return false;
   if (request.method !== "GET") {
     sendJson(response, 405, { error: "Fight diagnostics are read-only" });
@@ -341,6 +346,38 @@ async function handleFightApi({ request, response, root, url }) {
   }
   if (url.pathname === "/api/catalogue") {
     sendJson(response, 200, await loadViewerCatalogue(root));
+    return true;
+  }
+  if (url.pathname === "/api/phase2/wrong-winners") {
+    if ([...url.searchParams.keys()].length !== 0) {
+      sendJson(response, 400, { error: "wrong-winner catalogue accepts no parameters" });
+      return true;
+    }
+    try {
+      sendJson(response, 200, await loadPhase2WrongWinnerCatalogue(
+        pathToFileURL(path.join(root, "/")),
+      ));
+    } catch (error) {
+      sendJson(response, 400, { error: String(error?.message ?? error) });
+    }
+    return true;
+  }
+  if (url.pathname === "/api/phase2/wrong-winner") {
+    const keys = [...url.searchParams.keys()];
+    const rowValues = url.searchParams.getAll("row");
+    if (keys.length !== 1 || keys[0] !== "row" || rowValues.length !== 1
+        || !/^[a-z0-9]+(?:_[a-z0-9]+)+$/.test(rowValues[0])) {
+      sendJson(response, 400, { error: "wrong-winner playback requires one valid row" });
+      return true;
+    }
+    try {
+      sendJson(response, 200, await runPhase2WrongWinnerPlayback(
+        pathToFileURL(path.join(root, "/")),
+        rowValues[0],
+      ));
+    } catch (error) {
+      sendJson(response, 400, { error: String(error?.message ?? error) });
+    }
     return true;
   }
   if (url.pathname === "/api/hand-cannoneer-vs-champion-kiting") {

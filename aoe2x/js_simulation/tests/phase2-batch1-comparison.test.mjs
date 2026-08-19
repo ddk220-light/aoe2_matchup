@@ -42,9 +42,33 @@ test("tape-normalized melee-versus-ranged rows keep the ranged kiter on owner 2"
   const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex: 0, seed: 20260817, context });
   assert.equal(scenario.kiteOwner, 2);
   assert.equal(scenario.kiteNavigation, "cohesive");
+  assert.equal(scenario.kiteProfile.firstBeatTick, 120);
+  assert.equal(scenario.kiteProfile.openingVolleyTick, 1);
   assert.equal(scenario.kiteMeleeOpeningOrder, "attack-move-all");
   assert.equal(scenario.kiteChaseDwellTicks, 0);
   assert.equal(scenario.preventiveContactSteering, true);
+});
+
+
+test("Phase 2 ranged-melee rows begin with the recorded opening volley", async () => {
+  const truth = await loadPhase2Batch1Truth(ROOT);
+  const context = await loadPhase2Batch1Context(ROOT, truth);
+  for (const [rowId, recurringFirstBeat] of [
+    ["elite_janissary_vs_champion", 240],
+    ["elite_conquistador_vs_champion", 200],
+    ["elite_longbowman_vs_champion", 120],
+  ]) {
+    const row = truth.rows.find(({ id }) => id === rowId);
+    const scenario = scenarioFromPhase2Batch1Row({
+      row,
+      sampleIndex: 0,
+      seed: 20260817,
+      context,
+    });
+    assert.equal(scenario.kiteProfile.firstBeatTick, recurringFirstBeat, rowId);
+    assert.equal(scenario.kiteProfile.openingVolleyTick, 1, rowId);
+    assert.equal(scenario.kiteProfile.openingVolley, "close_to_fire", rowId);
+  }
 });
 
 

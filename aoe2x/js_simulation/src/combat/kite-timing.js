@@ -105,6 +105,12 @@ export function deriveKiteProfile(mechanics, policy = {}) {
       ).filter((tick) => tick < firstBeatTick)
       : [],
   };
+  if (policy.openingVolleyTick !== undefined) {
+    profile.openingVolleyTick = positiveInteger(
+      policy.openingVolleyTick,
+      "openingVolleyTick",
+    );
+  }
   for (const key of [
     "formationMotion",
     "volleyPursuit",

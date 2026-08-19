@@ -779,7 +779,7 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
   // wave keeps the measured deterministic spread. Ordered chasers whose
   // target has died re-designate the nearest live kiter immediately and
   // LOS-blind (chasers idle >= 1 s only 233 short times across 25 fights).
-  if (!state.meleeAssigned) {
+  if (state.opponentMode !== "ordinary-ranged" && !state.meleeAssigned) {
     if (tick === KITE_MELEE_ORDER_TICK) {
       const melee = [...enemies].sort((a, b) => a.referenceId - b.referenceId);
       if (state.meleeOpeningOrder === "attack-move-all") {
@@ -836,7 +836,7 @@ export function issueKiteOrders(state, units, map, tick, events, makeEvent) {
         : wave.map(({ referenceId }) => referenceId));
       state.meleeAssigned = true;
     }
-  } else {
+  } else if (state.opponentMode !== "ordinary-ranged") {
     for (const unit of enemies) {
       if (unit.pursuitTargetId !== null && unit.pursuitTargetId !== undefined) {
         // A picket that acquired through line of sight joins the active set

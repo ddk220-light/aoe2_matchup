@@ -168,6 +168,43 @@ test("half-roster melee wave orders only the high half of the chaser roster", ()
 });
 
 
+test("ordinary ranged opponents are not assigned the melee opening wave", () => {
+  const state = createKiteState(2, HC_PROFILE);
+  state.opponentMode = "ordinary-ranged";
+  const makeUnit = (referenceId, owner, x) => ({
+    referenceId,
+    owner,
+    alive: true,
+    x,
+    y: owner === 2 ? 4 : 9,
+    action: "idle",
+    actionTimers: { acquire: 0, windup: 0, reload: 0, swing: 0 },
+    pursuitTargetId: null,
+    engagedTargetId: null,
+    attackTargetId: null,
+    avoidance: null,
+  });
+  const kiters = [makeUnit(1, 2, 4), makeUnit(2, 2, 5)];
+  const opponents = [makeUnit(10, 3, 4), makeUnit(11, 3, 5)];
+  const events = [];
+
+  issueKiteOrders(
+    state,
+    [...kiters, ...opponents],
+    { width: 16, height: 16 },
+    36,
+    events,
+    (tick, type, actorId, targetId, extra = {}) => ({
+      tick, type, actorId, targetId, ...extra,
+    }),
+  );
+
+  assert.equal(state.meleeAssigned, false);
+  assert.deepEqual(opponents.map(({ pursuitTargetId }) => pursuitTargetId), [null, null]);
+  assert.deepEqual(events, []);
+});
+
+
 test("location-approach melee wave preserves static tape positions until LOS acquisition", () => {
   const state = createKiteState(2, {
     ...HC_PROFILE,

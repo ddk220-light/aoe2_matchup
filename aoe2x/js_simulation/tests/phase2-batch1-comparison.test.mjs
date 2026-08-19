@@ -115,16 +115,55 @@ test("swapping melee player numbers leaves the physical trajectory unchanged", a
 });
 
 
-test("ranged-versus-ranged rows enable AI target pressure without enabling kiting", async () => {
+test("ranged-versus-ranged rows reproduce the ordered owner-2 shoot-and-move side", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const truth = await loadPhase2Batch1Truth(ROOT);
+  const row = truth.rows.find(({ id }) => id === "elite_longbowman_vs_arbalester");
+  const context = await loadPhase2Batch1Context(ROOT, truth);
+  const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex: 0, seed: 20260817, context });
+  const world = stepWorld(createWorld(scenario));
+  const owner2 = world.units.filter(({ owner }) => owner === 2);
+  const owner3 = world.units.filter(({ owner }) => owner === 3);
+  const targetLoads = [...owner2.reduce((loads, unit) => {
+    loads.set(unit.pursuitTargetId, (loads.get(unit.pursuitTargetId) ?? 0) + 1);
+    return loads;
+  }, new Map()).values()].sort((left, right) => left - right);
+
+  assert.equal(scenario.openingAttackOwners, undefined);
+  assert.equal(scenario.kiteOwner, 2);
+  assert.equal(scenario.kiteOpponentMode, "ordinary-ranged");
+  assert.equal(scenario.kiteProfile.openingVolleyTick, 1);
+  assert.equal(scenario.kiteProfile.firstBeatTick, 120);
+  assert.deepEqual(scenario.kiteProfile.preMoveTicks, [80]);
+  assert.deepEqual(scenario.kiteProfile.moveOffsetTicks, [40]);
+  assert.equal(owner2.every(({ pursuitTargetId }) => Number.isSafeInteger(pursuitTargetId)), true);
+  assert.equal(owner3.every(({ pursuitTargetId }) => pursuitTargetId === null), true);
+  assert.deepEqual(targetLoads, [6, 14]);
+  assert.equal(
+    world.eventLog.filter(({ type }) => type === "ai-order").length,
+    owner2.length,
+  );
+});
+
+
+test("a shorter-range subject remains in ordinary ranged-versus-ranged combat", async () => {
   const truth = await loadPhase2Batch1Truth(ROOT);
   const row = truth.rows.find(({ id }) => id === "elite_gbeto_vs_heavy_cav_archer");
   const context = await loadPhase2Batch1Context(ROOT, truth);
-  const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex: 0, seed: 20260817, context });
+  const scenario = scenarioFromPhase2Batch1Row({
+    row,
+    sampleIndex: 0,
+    seed: 20260817,
+    context,
+  });
 
+  assert.equal(row.subject_slug, "elite_gbeto");
+  assert.equal(row.side3.slug, "elite_gbeto");
+  assert.equal(scenario.kiteOwner, undefined);
+  assert.equal(scenario.kiteOpponentMode, undefined);
   assert.equal(scenario.rangedTargetPressureOwner, 3);
   assert.equal(scenario.rangedOpportunityRetargetOwner, 2);
   assert.equal(scenario.rangedWindupRetargetOwner, 3);
-  assert.equal(scenario.kiteOwner, undefined);
 });
 
 

@@ -259,6 +259,16 @@ export function createWorld(scenario) {
       scenario.soloMovement === true,
     )
     : null;
+  if (scenario.kiteOpponentMode !== undefined
+      && scenario.kiteOpponentMode !== "ordinary-ranged") {
+    throw new RangeError("kite opponent mode must be ordinary-ranged");
+  }
+  if (scenario.kiteOpponentMode === "ordinary-ranged") {
+    if (!kiteState) {
+      throw new RangeError("kite opponent mode requires a kiting owner");
+    }
+    kiteState.opponentMode = "ordinary-ranged";
+  }
   if (scenario.persistentMeleePursuitRouting === true) {
     if (!kiteState) {
       throw new RangeError("persistent melee pursuit routing requires a kiting owner");
@@ -1383,7 +1393,8 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
     // (svc contrast). Hits land at up to 1.91 tiles center distance at the
     // damage frame, so release stays unconditional (commitReadyAttacks has no
     // distance check) — the discipline is entirely in the swing START.
-    if (kiteOwner !== null && unit.owner !== kiteOwner) {
+    if (kiteOwner !== null && unit.owner !== kiteOwner
+        && kiteState.opponentMode !== "ordinary-ranged") {
       // CONTACT CAPTURE (measured on the full-rate action decode, five
       // archives): a walking chaser that comes into BODY CONTACT with a live
       // enemy switches its pursuit to that enemy, old target dead or alive.
@@ -2279,12 +2290,19 @@ export function stepWorld(world) {
     world.rangedOpportunityRetargetOwner ?? null,
   );
   issueKiteOrders(world.kiteState, units, world.map, tick, events, event);
-  // Kiting tapes carry a SINGLE attack order for the melee side all fight —
-  // none of the cvp-style sweep/rescue storm — so the ordinary order layer
-  // stands down entirely when a beat controller is running; the melee side
-  // fights on unit AI alone, exactly as recorded.
-  if (!world.kiteState) {
-    issueOrders(world.orderState, units, tick, events, event);
+  // Melee chase tapes carry a single opening wave and then rely on unit AI,
+  // so their ordinary player-order layer stays down. Ranged opponents retain
+  // their ordinary AI orders while the commanded owner is excluded from that
+  // layer and driven by the shoot-and-move controller.
+  if (!world.kiteState || world.kiteState.opponentMode === "ordinary-ranged") {
+    issueOrders(
+      world.orderState,
+      units,
+      tick,
+      events,
+      event,
+      world.kiteState?.owner ?? null,
+    );
   }
   const {
     contacts,

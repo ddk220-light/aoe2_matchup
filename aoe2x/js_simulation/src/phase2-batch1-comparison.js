@@ -81,7 +81,36 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
     side2Unit.class === "mobile_ranged" ? 2 : null,
     side3Unit.class === "mobile_ranged" ? 3 : null,
   ].filter(Number.isSafeInteger);
-  const kiteOwner = family === "kite" && mobileOwners.length === 1 ? mobileOwners[0] : null;
+  // In the raw Phase 2 ranged-versus-ranged recordings, the unique-unit
+  // subject is the player-commanded shoot-and-move side while its standard
+  // opponent continues through ordinary ranged unit/AI combat. Comparison
+  // normalization can swap that subject to owner 3 (Gbeto-vs-HCA), so carry
+  // the order role through the swap instead of keying behavior to a player
+  // number. This is scenario command fidelity, not a unit matchup modifier.
+  const subjectOwner = row.side2.slug === row.subject_slug
+    ? 2
+    : (row.side3.slug === row.subject_slug ? 3 : null);
+  const subjectUnit = subjectOwner === 2 ? side2Unit : (subjectOwner === 3 ? side3Unit : null);
+  const opposingUnit = subjectOwner === 2 ? side3Unit : (subjectOwner === 3 ? side2Unit : null);
+  const subjectMechanics = subjectUnit
+    ? context.mechanicsByMaster.get(subjectUnit.master)
+    : null;
+  const opposingMechanics = opposingUnit
+    ? context.mechanicsByMaster.get(opposingUnit.master)
+    : null;
+  // A shoot-and-move order can maintain or increase separation only when the
+  // commanded side can fire from at least the opponent's range. A shorter-
+  // ranged subject (Gbeto into HCA) has no kiting envelope and remains an
+  // ordinary ranged engagement, matching the absence of patrol movement in
+  // that command stream.
+  const hasRangedKitingEnvelope = (subjectMechanics?.attack_range_tiles ?? -Infinity)
+    >= (opposingMechanics?.attack_range_tiles ?? Infinity);
+  const orderedRangedOwner = family === "rvr"
+      && subjectUnit?.class === "mobile_ranged" && hasRangedKitingEnvelope
+    ? subjectOwner
+    : null;
+  const kiteOwner = orderedRangedOwner
+    ?? (family === "kite" && mobileOwners.length === 1 ? mobileOwners[0] : null);
   const hasMelee = side2Unit.class === "melee" || side3Unit.class === "melee";
   const kiter = kiteOwner === 2 ? side2Unit : (kiteOwner === 3 ? side3Unit : null);
   const kiterMechanics = kiteOwner === null
@@ -95,7 +124,7 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
     ratio: `${row.side2.count}v${row.side3.count}`,
     units: Object.freeze(units),
     map: context.map,
-    ...(family === "rvr" ? {
+    ...(family === "rvr" && orderedRangedOwner === null ? {
       rangedTargetPressureOwner: 3,
       rangedOpportunityRetargetOwner: 2,
       rangedWindupRetargetOwner: 3,
@@ -116,10 +145,14 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
           openingVolley: "close_to_fire",
         }),
         kiteNavigation: "cohesive",
-        kiteMeleeOpeningOrder: "attack-move-all",
-        chaseCapture: true,
-        kiteChaseDwellTicks: 0,
-        ...(warWagonKiter ? warWagonChasePolicy(kiter.slug, chaserMechanics) : {}),
+        ...(orderedRangedOwner === null
+          ? {
+            kiteMeleeOpeningOrder: "attack-move-all",
+            chaseCapture: true,
+            kiteChaseDwellTicks: 0,
+            ...(warWagonKiter ? warWagonChasePolicy(kiter.slug, chaserMechanics) : {}),
+          }
+          : { kiteOpponentMode: "ordinary-ranged" }),
       }),
     ...(hasMelee ? { preventiveContactSteering: true } : {}),
   });

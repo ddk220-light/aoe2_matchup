@@ -41,11 +41,77 @@ test("tape-normalized melee-versus-ranged rows keep the ranged kiter on owner 2"
   const context = await loadPhase2Batch1Context(ROOT, truth);
   const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex: 0, seed: 20260817, context });
   assert.equal(scenario.kiteOwner, 2);
-  assert.equal(scenario.meleeCrowdOwner, 3);
+  assert.equal(scenario.meleeCrowdOwner, undefined);
+  assert.equal(scenario.meleeCrowdOwners, undefined);
   assert.equal(scenario.kiteNavigation, "cohesive");
   assert.equal(scenario.kiteMeleeOpeningOrder, "attack-move-all");
   assert.equal(scenario.kiteChaseDwellTicks, 0);
+  assert.equal(scenario.pairwiseEnemyTransit, undefined);
   assert.equal(scenario.preventiveContactSteering, true);
+  assert.equal(scenario.rangedAlliedIngressOwners, undefined);
+});
+
+
+test("melee-versus-melee rows request generic steering without selecting owners", async () => {
+  const truth = await loadPhase2Batch1Truth(ROOT);
+  const row = truth.rows.find(({ id }) => id === "elite_keshik_vs_champion");
+  const context = await loadPhase2Batch1Context(ROOT, truth);
+  const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex: 0, seed: 20260817, context });
+
+  assert.equal(scenario.meleeCrowdOwners, undefined);
+  assert.equal(scenario.meleeCrowdOwner, undefined);
+  assert.equal(scenario.pairwiseEnemyTransit, undefined);
+  assert.equal(scenario.preventiveContactSteering, true);
+});
+
+
+test("swapping melee player numbers leaves the physical trajectory unchanged", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const truth = await loadPhase2Batch1Truth(ROOT);
+  const row = truth.rows.find(({ id }) => id === "elite_keshik_vs_champion");
+  const context = await loadPhase2Batch1Context(ROOT, truth);
+  const originalScenario = scenarioFromPhase2Batch1Row({
+    row,
+    sampleIndex: 0,
+    seed: 20260817,
+    context,
+  });
+  const swappedScenario = Object.freeze({
+    ...originalScenario,
+    units: Object.freeze(originalScenario.units.map((unit) => Object.freeze({
+      ...unit,
+      owner: unit.owner === 2 ? 3 : 2,
+    }))),
+  });
+  let original = createWorld(originalScenario);
+  let swapped = createWorld(swappedScenario);
+  for (let tick = 0; tick < 300; tick += 1) {
+    original = stepWorld(original);
+    swapped = stepWorld(swapped);
+  }
+  const physicalState = (world) => world.units.map(({ owner, ...unit }) => unit);
+  const canonicalEvents = (world) => [...world.eventLog]
+    .toSorted((left, right) => left.id.localeCompare(right.id));
+
+  assert.deepEqual(physicalState(swapped), physicalState(original));
+  assert.deepEqual(canonicalEvents(swapped), canonicalEvents(original));
+});
+
+
+test("ranged-versus-ranged rows enable AI target pressure without enabling kiting", async () => {
+  const truth = await loadPhase2Batch1Truth(ROOT);
+  const row = truth.rows.find(({ id }) => id === "elite_gbeto_vs_heavy_cav_archer");
+  const context = await loadPhase2Batch1Context(ROOT, truth);
+  const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex: 0, seed: 20260817, context });
+
+  assert.equal(scenario.rangedTargetPressureOwner, 3);
+  assert.equal(scenario.rangedOpportunityRetargetOwner, 2);
+  assert.equal(scenario.rangedWindupRetargetOwner, 3);
+  assert.deepEqual(scenario.rangedAlliedIngressOwners, [2, 3]);
+  assert.equal(scenario.kiteOwner, undefined);
+  assert.equal(scenario.meleeCrowdOwner, undefined);
+  assert.equal(scenario.meleeCrowdOwners, undefined);
+  assert.equal(scenario.pairwiseEnemyTransit, undefined);
 });
 
 

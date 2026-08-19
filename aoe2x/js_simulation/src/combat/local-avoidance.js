@@ -1,7 +1,6 @@
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
 import { AVOID_ALL_BODIES } from "./experiments.js";
 import { collisionRadius } from "./targeting.js";
-import { alliedTransitPairKey } from "./allied-transit.js";
 import {
   createPairInteractionSnapshot,
   resolvePairInteraction,
@@ -501,7 +500,7 @@ function normalizeMap(map, moverRadius) {
 }
 
 
-function constraintsFor(mover, target, units, map, alliedTransitPairs, pairInteractions) {
+function constraintsFor(mover, target, units, map, pairInteractions) {
   const moverRadius = collisionRadius(mover);
   const mapInfo = normalizeMap(map, moverRadius);
   const bodies = units
@@ -509,11 +508,7 @@ function constraintsFor(mover, target, units, map, alliedTransitPairs, pairInter
       unit.alive !== false
       && unit.referenceId !== mover.referenceId
       && unit.referenceId !== target.referenceId
-      && !(unit.owner === mover.owner && alliedTransitPairs.has(
-        alliedTransitPairKey(mover.referenceId, unit.referenceId),
-      ))
-      && !(unit.owner !== mover.owner
-        && !resolvePairInteraction(mover, unit, pairInteractions).pathObstructs)
+      && resolvePairInteraction(mover, unit, pairInteractions).pathObstructs
       // Enemy bodies obstruct exactly as ally bodies do -- 99.76% of
       // camel-to-skirmisher pairs across the kiting tapes hold the full
       // 0.45 Chebyshev separation -- so a chaser has to route around the
@@ -523,16 +518,14 @@ function constraintsFor(mover, target, units, map, alliedTransitPairs, pairInter
       && (AVOID_ALL_BODIES || unit.owner === mover.owner)
     ))
     .map((unit) => {
-      const dynamicEnemy = unit.owner !== mover.owner;
+      const interaction = resolvePairInteraction(mover, unit, pairInteractions);
       return {
         kind: "unit",
         key: `unit:${unit.referenceId.toString().padStart(20, "0")}`,
         referenceId: unit.referenceId,
         x: unit.x,
         y: unit.y,
-        radius: dynamicEnemy
-          ? resolvePairInteraction(mover, unit, pairInteractions).collisionExtent
-          : moverRadius + collisionRadius(unit),
+        radius: interaction.collisionExtent,
       };
     });
   return { constraints: [...bodies, ...mapInfo.obstacles], mapInfo };
@@ -617,7 +610,7 @@ export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
       if (speed < 0) throw new RangeError("movement speed must be nonnegative");
       const budget = speed / TICKS_PER_SECOND;
       const { constraints, mapInfo } = constraintsFor(
-        mover, target, units, map, alliedTransitPairs, pairInteractions,
+        mover, target, units, map, pairInteractions,
       );
       if (avoidance !== null && avoidance.targetReferenceId === target.referenceId) {
         const blocker = constraintForState(constraints, avoidance);

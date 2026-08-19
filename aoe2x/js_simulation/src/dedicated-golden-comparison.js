@@ -73,7 +73,6 @@ export function scenarioFromDedicatedRun({ row, run, mechanicsByMaster, map }) {
         reachMeleeWedgeTransit,
       }
       : {}),
-    meleeCrowdOwner: 3,
     preventiveContactSteering: true,
   });
 }

@@ -81,9 +81,7 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
     side3Unit.class === "mobile_ranged" ? 3 : null,
   ].filter(Number.isSafeInteger);
   const kiteOwner = family === "kite" && mobileOwners.length === 1 ? mobileOwners[0] : null;
-  const meleeCrowdOwner = side2Unit.class === "melee"
-    ? 2
-    : (side3Unit.class === "melee" ? 3 : null);
+  const hasMelee = side2Unit.class === "melee" || side3Unit.class === "melee";
   const kiter = kiteOwner === 2 ? side2Unit : (kiteOwner === 3 ? side3Unit : null);
   const kiterMechanics = kiteOwner === null
     ? null
@@ -98,6 +96,12 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
     ratio: `${row.side2.count}v${row.side3.count}`,
     units: Object.freeze(units),
     map: context.map,
+    ...(family === "rvr" ? {
+      rangedTargetPressureOwner: 3,
+      rangedOpportunityRetargetOwner: 2,
+      rangedWindupRetargetOwner: 3,
+      rangedAlliedIngressOwners: Object.freeze([2, 3]),
+    } : {}),
     ...(kiteOwner === null
       ? {}
       : {
@@ -111,12 +115,7 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
         reachMeleeWedgeTransit,
         ...(warWagonKiter ? warWagonChasePolicy(kiter.slug, chaserMechanics) : {}),
       }),
-    ...(meleeCrowdOwner === null
-      ? {}
-      : {
-        meleeCrowdOwner,
-        preventiveContactSteering: true,
-      }),
+    ...(hasMelee ? { preventiveContactSteering: true } : {}),
   });
 }
 

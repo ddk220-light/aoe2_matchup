@@ -141,28 +141,74 @@ test("world publication preserves blocker-aware local route state", async () => 
 });
 
 
-test("pairwise enemy transit state exists only for an explicitly enabled scenario", async () => {
+test("melee contact state is mechanics-derived rather than selected by owner", async () => {
   const { createWorld } = await loadWorld();
   const units = [
     unit({ referenceId: 1, owner: 3, x: 2, y: 5 }),
     unit({ referenceId: 2, owner: 2, x: 5, y: 5 }),
   ];
 
-  const baseline = createWorld(scenario(units));
-  const enabled = createWorld(scenario(units, { pairwiseEnemyTransit: true }));
+  const world = createWorld(scenario(units, { preventiveContactSteering: true }));
 
-  assert.equal(Object.hasOwn(baseline, "enemyTransitState"), false);
-  assert.equal(enabled.enemyTransitState.reservations.size, 0);
-  assert.equal(enabled.enemyTransitState.inheritedContactExtents.size, 0);
-  assert.deepEqual(enabled.enemyTransitDiagnostics, []);
-  assert.throws(
-    () => createWorld(scenario(units, { pairwiseEnemyTransit: "yes" })),
-    /pairwise enemy transit must be a boolean/,
+  assert.equal(world.contactReservationState.reservations.size, 0);
+  assert.equal(world.contactReservationState.inheritedExtents.size, 0);
+  assert.deepEqual(world.contactReservationDiagnostics, []);
+  assert.equal(Object.hasOwn(world, "crowdState"), false);
+  assert.equal(Object.hasOwn(world, "crowdStates"), false);
+  assert.equal(Object.hasOwn(world, "enemyTransitState"), false);
+  assert.deepEqual(
+    [...world.contactSteeringStates.keys()],
+    [2, 3],
+    "every melee owner receives the same derived steering policy",
   );
 });
 
 
-test("an enabled world tick reserves a non-target enemy in a melee pursuit corridor", async () => {
+test("melee contact state includes range-one melee and stays absent from ranged-only worlds", async () => {
+  const { createWorld } = await loadWorld();
+  const reachMeleeMechanics = Object.freeze({
+    ...mechanics,
+    attack_range_tiles: 1,
+  });
+  const world = createWorld(scenario([
+    unit({
+      referenceId: 1,
+      owner: 3,
+      x: 2,
+      y: 5,
+      unitMechanics: reachMeleeMechanics,
+    }),
+    unit({
+      referenceId: 2,
+      owner: 2,
+      x: 5,
+      y: 5,
+      unitMechanics: scorpionMechanics,
+    }),
+  ]));
+  const rangedOnly = createWorld(scenario([
+    unit({
+      referenceId: 3,
+      owner: 2,
+      x: 2,
+      y: 5,
+      unitMechanics: scorpionMechanics,
+    }),
+    unit({
+      referenceId: 4,
+      owner: 3,
+      x: 5,
+      y: 5,
+      unitMechanics: scorpionMechanics,
+    }),
+  ]));
+
+  assert.ok(world.contactReservationState);
+  assert.equal(Object.hasOwn(rangedOnly, "contactReservationState"), false);
+});
+
+
+test("a world tick reserves a non-target enemy in a melee pursuit corridor", async () => {
   const { createWorld, stepWorld } = await loadWorld();
   const start = scenario([
     unit({
@@ -174,14 +220,18 @@ test("an enabled world tick reserves a non-target enemy in a melee pursuit corri
     }),
     unit({ referenceId: 2, owner: 2, x: 2.41, y: 5 }),
     unit({ referenceId: 3, owner: 2, x: 6, y: 5 }),
-  ], { pairwiseEnemyTransit: true });
+  ]);
 
   const next = stepWorld(createWorld(start));
 
-  assert.deepEqual([...next.enemyTransitState.reservations.keys()], ["1:2"]);
-  assert.equal(next.enemyTransitState.reservations.get("1:2").pursuitTargetId, 3);
-  assert.equal(next.enemyTransitDiagnostics.some(({ type }) => (
-    type === "enemy-transit-acquired"
+  assert.deepEqual([...next.contactReservationState.reservations.keys()], ["1:2"]);
+  assert.equal(next.contactReservationState.reservations.get("1:2").kind, "enemy-transit");
+  assert.equal(next.contactReservationState.reservations.get("1:2").targetId, 3);
+  assert.equal(next.contactReservationDiagnostics.some(({ type }) => (
+    type === "reservation-acquired"
+  )), true);
+  assert.equal(next.events.some(({ type, pairKey }) => (
+    type === "contact-reservation-acquired" && pairKey === "1:2"
   )), true);
   const chaser = next.units.find(({ referenceId }) => referenceId === 1);
   const blocker = next.units.find(({ referenceId }) => referenceId === 2);

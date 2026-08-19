@@ -370,7 +370,9 @@ function makeCandidate({
     ? [left, right]
     : [right, left];
   const fullExtent = pairFullExtent(left, right);
-  const collisionExtent = movingFloor(left, right);
+  const configuredFloor = movingFloor(left, right);
+  const currentExtent = pairSeparation(left, right);
+  const collisionExtent = cleanNumber(Math.min(configuredFloor, currentExtent));
   const attackSurfaceExtent = kind === "engagement-contact"
     ? fullExtent + attackRange(initiator)
     : fullExtent;
@@ -386,7 +388,7 @@ function makeCandidate({
       collisionExtent,
       attackSurfaceExtent: cleanNumber(attackSurfaceExtent),
       pathObstructs,
-      mayDeepen: true,
+      mayDeepen: currentExtent >= configuredFloor - EPSILON,
       initiatorId: initiator.referenceId,
       targetId: target?.referenceId ?? null,
       acquiredTick: tick,

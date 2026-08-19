@@ -6,6 +6,8 @@ import {
   dynamicPairKey,
   resolvePairInteraction,
 } from "../src/combat/pair-interactions.js";
+import { isWithinStopRange } from "../src/combat/attacks.js";
+import { resolveMovementProposals } from "../src/combat/collision.js";
 
 
 function unit({
@@ -19,6 +21,7 @@ function unit({
   pursuitTargetId = null,
   engagedTargetId = null,
   attackTargetId = null,
+  range = 0,
 } = {}) {
   return Object.freeze({
     referenceId,
@@ -34,6 +37,8 @@ function unit({
       unit_master: unitMaster,
       min_collision_size_multiplier: 0.8,
       collision_size_tiles: Object.freeze({ x: radius, y: radius }),
+      attack_range_tiles: range,
+      ranged: null,
     }),
   });
 }
@@ -89,6 +94,49 @@ test("unified contact reservations are the authoritative pair surface", () => {
     mayDeepen: true,
     reason: "unified-contact-reservation",
   });
+});
+
+
+test("direct engagement attack and collision consumers share one reserved surface", () => {
+  const actor = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 4,
+    y: 4,
+    radius: 0.25,
+    range: 1,
+    pursuitTargetId: 2,
+  });
+  const target = unit({ referenceId: 2, owner: 3, x: 5.4, y: 4, radius: 0.25 });
+  const snapshot = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", Object.freeze({
+      leftId: 1,
+      rightId: 2,
+      kind: "engagement-contact",
+      collisionExtent: 0.25,
+      attackSurfaceExtent: 1.5,
+      pathObstructs: true,
+      mayDeepen: true,
+      initiatorId: 1,
+      targetId: 2,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  assert.equal(isWithinStopRange(actor, target, { pairInteractions: snapshot }), true);
+  const moved = resolveMovementProposals(
+    [actor, target],
+    [
+      Object.freeze({ referenceId: 1, dx: 1.4, dy: 0 }),
+      Object.freeze({ referenceId: 2, dx: 0, dy: 0 }),
+    ],
+    Object.freeze({ width: 10, height: 10, obstacles: Object.freeze([]) }),
+    { pairInteractions: snapshot },
+  );
+  const separation = Math.abs(moved[1].x - moved[0].x);
+
+  assert.ok(separation >= 0.25 - 1e-12);
+  assert.ok(separation < 0.5 - 1e-12);
 });
 
 

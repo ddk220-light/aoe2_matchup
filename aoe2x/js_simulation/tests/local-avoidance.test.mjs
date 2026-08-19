@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { resolveMovementProposals } from "../src/combat/collision.js";
 import { planLocalAvoidance } from "../src/combat/local-avoidance.js";
+import { createPairInteractionSnapshot } from "../src/combat/pair-interactions.js";
 
 
 const mechanics = JSON.parse(await readFile(
@@ -260,7 +261,7 @@ test("an active detour uses sourced full speed instead of the direct proposal cl
 });
 
 
-test("local avoidance ignores only a mover's reserved allied-transit partner", () => {
+test("unified contact lanes ignore only a mover's reserved allied-transit partner", () => {
   const mover = unit({
     referenceId: 1,
     owner: 2,
@@ -273,7 +274,22 @@ test("local avoidance ignores only a mover's reserved allied-transit partner", (
   const third = unit({ referenceId: 3, owner: 2, x: 4.1, y: 5 });
   const target = unit({ referenceId: 4, owner: 3, x: 6, y: 5 });
   const direct = proposal(1, STEP, 0);
-  const options = { alliedTransitPairs: new Set(["1:2"]) };
+  const options = {
+    pairInteractions: createPairInteractionSnapshot({
+      contactReservations: new Map([["1:2", Object.freeze({
+        leftId: 1,
+        rightId: 2,
+        kind: "allied-transit",
+        collisionExtent: 2 * RADIUS * mechanics.min_collision_size_multiplier,
+        attackSurfaceExtent: 2 * RADIUS,
+        pathObstructs: false,
+        mayDeepen: true,
+        initiatorId: 1,
+        targetId: null,
+        acquiredTick: 1,
+      })]]),
+    }),
+  };
 
   const partnerOnly = planLocalAvoidance(
     [mover, partner, target],

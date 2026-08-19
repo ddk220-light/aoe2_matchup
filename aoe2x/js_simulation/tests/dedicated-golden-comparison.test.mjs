@@ -61,7 +61,10 @@ test("dedicated scenario uses the exact repeat placement and current viewer poli
   assert.equal(scenario.chaseCapture, true);
   assert.equal(scenario.kiteChaseDwellTicks, 0);
   assert.equal(scenario.pairwiseAlliedTransit, false);
+  assert.equal(scenario.pairwiseEnemyTransit, undefined);
   assert.equal(scenario.reachMeleeWedgeTransit, false);
+  assert.equal(scenario.meleeCrowdOwner, undefined);
+  assert.equal(scenario.meleeCrowdOwners, undefined);
   assert.equal(scenario.preventiveContactSteering, true);
   assert.equal(scenario.map.id, "golden-map");
 });
@@ -119,7 +122,9 @@ test("dedicated Heavy Scorpion scenario uses native siege AI instead of cohesive
   assert.equal(scenario.kiteMeleeOpeningOrder, undefined);
   assert.equal(scenario.chaseCapture, undefined);
   assert.equal(scenario.kiteChaseDwellTicks, undefined);
-  assert.equal(scenario.meleeCrowdOwner, 3);
+  assert.equal(scenario.meleeCrowdOwner, undefined);
+  assert.equal(scenario.meleeCrowdOwners, undefined);
+  assert.equal(scenario.pairwiseEnemyTransit, undefined);
   assert.equal(scenario.preventiveContactSteering, true);
   assert.equal(scenario.units[0].mechanics.ranged.min_range_tiles, 2,
     "native Heavy Scorpion AI must retain its sourced individual minimum range");

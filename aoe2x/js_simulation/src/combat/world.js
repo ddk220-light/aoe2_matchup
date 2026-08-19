@@ -7,10 +7,9 @@ import {
   resolvePairInteraction,
 } from "./pair-interactions.js";
 import {
-  createEnemyTransitState,
-  separateInheritedContactProposals,
-  updateEnemyTransit,
-} from "./enemy-transit.js";
+  createContactReservationState,
+  updateContactReservations,
+} from "./contact-reservations.js";
 import {
   createKiteState,
   createOrderState,
@@ -40,7 +39,9 @@ import {
   alliedTransitPairKey,
   updateAlliedTransit,
 } from "./allied-transit.js";
-import { updateExclusiveAlliedOverlap } from "./allied-overlap.js";
+import {
+  updateRangedAlliedIngress,
+} from "./allied-overlap.js";
 import { proposeMovement, proposePointMovement } from "./movement.js";
 import {
   createSoloNavigationState,
@@ -90,6 +91,11 @@ const DEFAULT_MAP = Object.freeze({
 const DEFAULT_WORLD_TICKS = 3600;
 const MAX_WORLD_TICKS = 9000;
 const WAR_WAGON_MASTER = 829;
+
+
+function hasMeleeMode(unit) {
+  return unit?.mechanics?.ranged === undefined || unit.mechanics.ranged === null;
+}
 
 
 function freezeUnit(unit) {
@@ -215,13 +221,52 @@ export function createWorld(scenario) {
   const units = canonicalUnits(scenario.units, { cloneMechanics: true });
   validateInitialAttackState(units);
   const map = scenario.map ? freezeMap(scenario.map) : DEFAULT_MAP;
-  if (scenario.pairwiseEnemyTransit !== undefined
-      && typeof scenario.pairwiseEnemyTransit !== "boolean") {
-    throw new TypeError("pairwise enemy transit must be a boolean");
-  }
-  const enemyTransitState = scenario.pairwiseEnemyTransit === true
-    ? createEnemyTransitState()
+  const scenarioOwners = new Set(units.map(({ owner }) => owner));
+  const meleeOwners = [...new Set(units
+    .filter(hasMeleeMode)
+    .map(({ owner }) => owner))]
+    .sort((left, right) => left - right);
+  const contactReservationState = meleeOwners.length > 0
+    ? createContactReservationState()
     : null;
+  const rangedAlliedIngressOwners = scenario.rangedAlliedIngressOwners;
+  if (rangedAlliedIngressOwners !== undefined) {
+    if (!Array.isArray(rangedAlliedIngressOwners)
+        || rangedAlliedIngressOwners.length === 0
+        || new Set(rangedAlliedIngressOwners).size !== rangedAlliedIngressOwners.length
+        || rangedAlliedIngressOwners.some((owner) => !Number.isSafeInteger(owner))) {
+      throw new TypeError(
+        "ranged allied-ingress owners must be a non-empty unique integer list",
+      );
+    }
+    if (rangedAlliedIngressOwners.some((owner) => !scenarioOwners.has(owner))) {
+      throw new RangeError("ranged allied-ingress owner must identify a scenario owner");
+    }
+  }
+  if (scenario.rangedTargetPressureOwner !== undefined
+      && !Number.isSafeInteger(scenario.rangedTargetPressureOwner)) {
+    throw new TypeError("ranged target pressure owner must be a safe integer");
+  }
+  if (Number.isSafeInteger(scenario.rangedTargetPressureOwner)
+      && !units.some(({ owner }) => owner === scenario.rangedTargetPressureOwner)) {
+    throw new RangeError("ranged target pressure owner must identify a scenario owner");
+  }
+  if (scenario.rangedOpportunityRetargetOwner !== undefined
+      && !Number.isSafeInteger(scenario.rangedOpportunityRetargetOwner)) {
+    throw new TypeError("ranged opportunity retarget owner must be a safe integer");
+  }
+  if (Number.isSafeInteger(scenario.rangedOpportunityRetargetOwner)
+      && !units.some(({ owner }) => owner === scenario.rangedOpportunityRetargetOwner)) {
+    throw new RangeError("ranged opportunity retarget owner must identify a scenario owner");
+  }
+  if (scenario.rangedWindupRetargetOwner !== undefined
+      && !Number.isSafeInteger(scenario.rangedWindupRetargetOwner)) {
+    throw new TypeError("ranged windup retarget owner must be a safe integer");
+  }
+  if (Number.isSafeInteger(scenario.rangedWindupRetargetOwner)
+      && !units.some(({ owner }) => owner === scenario.rangedWindupRetargetOwner)) {
+    throw new RangeError("ranged windup retarget owner must identify a scenario owner");
+  }
   const warWagonEnemyOverlapDepth = scenario.warWagonEnemyOverlapDepthTiles;
   if (warWagonEnemyOverlapDepth !== undefined
       && (!Number.isFinite(warWagonEnemyOverlapDepth)
@@ -253,16 +298,14 @@ export function createWorld(scenario) {
       scenario.soloMovement === true,
     )
     : null;
-  const crowdState = Number.isSafeInteger(scenario.meleeCrowdOwner)
-    ? {
-      owner: scenario.meleeCrowdOwner,
-      preventiveContactSteering: false,
-      preventiveContactSteeringStrength: 0,
-      preventiveContactSteeredSteps: 0,
-      preventiveContactSteeredUnits: new Set(),
-      alliedOverlap: { reservations: new Map() },
-    }
-    : null;
+  let contactSteeringStates = null;
+  const rangedAlliedIngressState = rangedAlliedIngressOwners === undefined
+    ? null
+    : {
+      perOwner: new Map(rangedAlliedIngressOwners.map((owner) => [owner, {
+        reservations: new Map(),
+      }])),
+    };
   if (kiteState) kiteState.collisionRecoveryState = { active: false };
   if (scenario.kiteChaseDwellTicks !== undefined) {
     if (!kiteState) {
@@ -305,16 +348,20 @@ export function createWorld(scenario) {
     kiteState.attackMoveStickyPursuit = true;
   }
   if (scenario.preventiveContactSteering === true) {
-    if (!crowdState) {
-      throw new RangeError("preventive contact steering requires a melee crowd owner");
+    if (meleeOwners.length === 0) {
+      throw new RangeError("preventive contact steering requires a melee unit");
     }
     const strength = scenario.preventiveContactSteeringStrength
       ?? PREVENTIVE_CONTACT_STEERING_STRENGTH;
     if (!Number.isFinite(strength) || strength < 0 || strength > 1) {
       throw new RangeError("preventive contact steering strength must be between 0 and 1");
     }
-    crowdState.preventiveContactSteering = true;
-    crowdState.preventiveContactSteeringStrength = strength;
+    contactSteeringStates = new Map(meleeOwners.map((owner) => [owner, {
+      owner,
+      strength,
+      steeredSteps: 0,
+      steeredUnits: new Set(),
+    }]));
   }
   if (scenario.pairwiseAlliedTransit === true
       && scenario.reachMeleeWedgeTransit === true) {
@@ -353,12 +400,22 @@ export function createWorld(scenario) {
     // the scenario names a kiting owner, so every other world keeps its
     // exact published shape.
     ...(kiteState ? { kiteState } : {}),
-    ...(crowdState ? { crowdState } : {}),
-    ...(enemyOverlapDepthByMaster ? { enemyOverlapDepthByMaster } : {}),
-    ...(enemyTransitState ? {
-      enemyTransitState,
-      enemyTransitDiagnostics: Object.freeze([]),
+    ...(rangedAlliedIngressState ? { rangedAlliedIngressState } : {}),
+    ...(Number.isSafeInteger(scenario.rangedTargetPressureOwner)
+      ? { rangedTargetPressureOwner: scenario.rangedTargetPressureOwner }
+      : {}),
+    ...(Number.isSafeInteger(scenario.rangedOpportunityRetargetOwner)
+      ? { rangedOpportunityRetargetOwner: scenario.rangedOpportunityRetargetOwner }
+      : {}),
+    ...(Number.isSafeInteger(scenario.rangedWindupRetargetOwner)
+      ? { rangedWindupRetargetOwner: scenario.rangedWindupRetargetOwner }
+      : {}),
+    ...(contactReservationState ? {
+      contactReservationState,
+      contactReservationDiagnostics: Object.freeze([]),
     } : {}),
+    ...(contactSteeringStates ? { contactSteeringStates } : {}),
+    ...(enemyOverlapDepthByMaster ? { enemyOverlapDepthByMaster } : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     // Deterministic per-shot RNG, present only when a unit can miss or blast
     // (dat accuracy < 100 or blast width > 0 — nothing in the converged
@@ -420,7 +477,7 @@ function validatePursuitTargets(units, tick, events) {
 }
 
 
-function validateAttackTargets(units, tick, events) {
+function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = null) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   for (const unit of units) {
     if (!unit.alive || unit.action !== "attacking") continue;
@@ -439,6 +496,33 @@ function validateAttackTargets(units, tick, events) {
       ? chargeSpec(unit.mechanics).windupTicks
       : attackDelayTicks(unit.mechanics);
     if (unit.actionTimers.swing >= releaseTicks) continue;
+    if (unit.owner === rangedWindupRetargetOwner
+        && rangedSpec(unit.mechanics) !== null
+        && unit.attackKind !== "charge") {
+      const replacement = selectPursuitTarget(
+        { ...freezeUnit(unit), pursuitTargetId: null },
+        Object.freeze(units
+          .filter((candidate) => (
+            candidate.owner === unit.owner
+            || (candidate.alive && isWithinReach(unit, candidate))
+          ))
+          .map(freezeUnit)),
+      );
+      if (replacement !== null) {
+        unit.pursuitTargetId = replacement.referenceId;
+        unit.engagedTargetId = replacement.referenceId;
+        unit.attackTargetId = replacement.referenceId;
+        unit.avoidance = null;
+        events.push(event(
+          tick,
+          "attack-retargeted",
+          unit.referenceId,
+          replacement.referenceId,
+          { fromTargetId: invalidTargetId },
+        ));
+        continue;
+      }
+    }
     events.push(createAttackCanceledEvent({
       tick,
       actorId: unit.referenceId,
@@ -455,15 +539,26 @@ function validateAttackTargets(units, tick, events) {
 }
 
 
-function acquirePursuitTargets(units, tick, events, kiteState = null) {
+function acquirePursuitTargets(
+  units,
+  tick,
+  events,
+  kiteState = null,
+  rangedTargetPressureOwner = null,
+  rangedOpportunityRetargetOwner = null,
+) {
   const snapshot = Object.freeze(units.map(freezeUnit));
   const targetPressureTiles = kiteState?.attackMoveTargetPressureTiles ?? 0;
   const targetLoadById = targetPressureTiles > 0
+      || Number.isSafeInteger(rangedTargetPressureOwner)
     ? new Map()
     : null;
   if (targetLoadById) {
     for (const unit of units) {
-      if (!unit.alive || unit.owner === kiteState.owner) continue;
+      const kitePressureApplies = targetPressureTiles > 0
+        && unit.owner !== kiteState.owner;
+      const rangedPressureApplies = unit.owner === rangedTargetPressureOwner;
+      if (!unit.alive || (!kitePressureApplies && !rangedPressureApplies)) continue;
       if (unit.pursuitTargetId === null || unit.pursuitTargetId === undefined) continue;
       targetLoadById.set(
         unit.pursuitTargetId,
@@ -488,10 +583,29 @@ function acquirePursuitTargets(units, tick, events, kiteState = null) {
       && unit.owner !== kiteState.owner
       && kiteState.attackMoveStickyPursuit !== true
       && unit.experimentBlocked === true;
+    const pursued = unit.pursuitTargetId === null
+      ? null
+      : snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId);
+    const rangedOpportunity = unit.owner === rangedOpportunityRetargetOwner
+      && unit.mechanics?.ranged !== undefined
+      && pursued?.alive === true
+      && !isWithinReach(unit, pursued)
+      && snapshot.some((candidate) => (
+        candidate.alive
+        && candidate.owner !== unit.owner
+        && isWithinReach(unit, candidate)
+      ));
     const reevaluate = unit.pursuitTargetId !== null
-      && (shouldReevaluatePursuit(unit) || blockedAttackMover);
+      && (shouldReevaluatePursuit(unit) || blockedAttackMover || rangedOpportunity);
     if (unit.pursuitTargetId !== null && !reevaluate) continue;
-    const pressureApplies = targetLoadById !== null && unit.owner !== kiteState.owner;
+    const kitePressureApplies = targetPressureTiles > 0
+      && unit.owner !== kiteState.owner;
+    const rangedPressureApplies = unit.owner === rangedTargetPressureOwner;
+    const pressureApplies = targetLoadById !== null
+      && (kitePressureApplies || rangedPressureApplies);
+    const pressureTiles = rangedPressureApplies
+      ? 2 * collisionRadius(unit)
+      : targetPressureTiles;
     if (pressureApplies && reevaluate) {
       const previousLoad = targetLoadById.get(unit.pursuitTargetId) ?? 0;
       if (previousLoad <= 1) targetLoadById.delete(unit.pursuitTargetId);
@@ -502,7 +616,7 @@ function acquirePursuitTargets(units, tick, events, kiteState = null) {
     // re-evaluation has to present the unit as unlocked to force a fresh scan.
     const candidate = reevaluate ? { ...found, pursuitTargetId: null } : found;
     const target = selectPursuitTarget(candidate, snapshot, pressureApplies
-      ? { targetLoadById, targetLoadPenaltyTiles: targetPressureTiles }
+      ? { targetLoadById, targetLoadPenaltyTiles: pressureTiles }
       : undefined);
     if (target === null) {
       if (pressureApplies && reevaluate) {
@@ -853,16 +967,19 @@ function resolveMovement(planned, byReference, map, kiteState = null, movementOp
 }
 
 
-function moveUnits(units, map, tick, events, kiteState = null, crowdState = null,
-  enemyOverlapDepthByMaster = new Map(), enemyTransitState = null) {
+function moveUnits(units, map, tick, events, kiteState = null,
+  contactReservationState = null, contactSteeringStates = new Map(),
+  enemyOverlapDepthByMaster = new Map(), rangedAlliedIngressState = null) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
+  const priorRangedIngressPairs = new Set(rangedAlliedIngressState
+    ? [...rangedAlliedIngressState.perOwner.values()]
+      .flatMap(({ reservations }) => [...reservations.keys()])
+    : []);
   let pairInteractions = createPairInteractionSnapshot({
+    contactReservations: contactReservationState?.reservations ?? new Map(),
+    alliedRangedIngressPairs: priorRangedIngressPairs,
     legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
-    enemyTransitPairs: enemyTransitState?.reservations ?? new Map(),
-    inheritedEnemyContactExtents:
-      enemyTransitState?.inheritedContactExtents ?? new Map(),
-    circularEnemyContact: enemyTransitState !== null,
   });
   const soloDestinations = kiteState?.soloNavigationState
     ? planSoloNavigation(
@@ -1017,8 +1134,7 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
         && unit.owner !== kiteState.owner
         && engaged?.alive && engaged.owner !== unit.owner
         && isWithinReach(unit, engaged)
-        && (enemyTransitState === null
-          || isWithinStopRange(unit, engaged, { pairInteractions }))) {
+        && isWithinStopRange(unit, engaged, { pairInteractions })) {
       return Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
     }
     const target = byReference.get(unit.pursuitTargetId);
@@ -1060,103 +1176,70 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
       ));
     }
   }
-  let enemyTransitUpdate = null;
-  if (enemyTransitState) {
-    enemyTransitUpdate = updateEnemyTransit({
-      state: enemyTransitState,
+  const contactUpdate = contactReservationState
+    ? updateContactReservations({
+      state: contactReservationState,
       units: live,
       proposals,
       tick,
-    });
+    })
+    : null;
+  if (contactUpdate) {
     pairInteractions = createPairInteractionSnapshot({
+      contactReservations: contactUpdate.contactReservations,
       legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
-      ...enemyTransitUpdate.pairSnapshotData,
     });
-    const replanIds = new Set([
-      ...enemyTransitUpdate.state.reservations.values(),
-      ...enemyTransitUpdate.diagnostics,
-    ].map(({ chaserId }) => chaserId).filter(Number.isSafeInteger));
-    for (const referenceId of enemyTransitUpdate.pairSnapshotData.enemyPursuitTargets.keys()) {
-      replanIds.add(referenceId);
+    for (const diagnostic of contactUpdate.diagnostics) {
+      const [leftId, rightId] = diagnostic.pairKey.split(":").map(Number);
+      const { type, pairKey, ...details } = diagnostic;
+      events.push(event(
+        tick,
+        `contact-${type}`,
+        leftId,
+        rightId,
+        { pairKey, ...details },
+      ));
     }
-    if (kiteState?.chaseWaypoints) {
-      for (const referenceId of replanIds) kiteState.chaseWaypoints.delete(referenceId);
-    }
-    if (kiteState?.kitedWaypoints) {
-      for (const referenceId of replanIds) kiteState.kitedWaypoints.delete(referenceId);
-    }
-    if (replanIds.size > 0) {
-      proposals = proposals.map((proposal) => {
-        if (!replanIds.has(proposal.referenceId)) return proposal;
-        return proposalForUnit(byReference.get(proposal.referenceId));
-      });
-    }
-    proposals = separateInheritedContactProposals({
-      units: live,
-      proposals,
-      inheritedContactExtents:
-        enemyTransitUpdate.state.inheritedContactExtents,
-      inheritedContactSources:
-        enemyTransitUpdate.state.inheritedContactSources,
-    });
   }
   let alliedTransitPairs = new Set();
-  if (kiteState?.alliedTransit) {
+  if (!contactUpdate && kiteState?.alliedTransit) {
     const updatedTransit = updateAlliedTransit(kiteState.alliedTransit, live, proposals);
     kiteState.alliedTransit.reservations = updatedTransit.reservations;
     kiteState.alliedTransit.pairKeys = updatedTransit.pairKeys;
     alliedTransitPairs = updatedTransit.pairKeys;
   }
+  const alliedRangedIngressPairs = new Set();
+  if (!contactUpdate && rangedAlliedIngressState) {
+    for (const [owner, state] of rangedAlliedIngressState.perOwner) {
+      const updatedIngress = updateRangedAlliedIngress(state, live, proposals, owner);
+      state.reservations = updatedIngress.reservations;
+      for (const key of updatedIngress.pairKeys) alliedRangedIngressPairs.add(key);
+    }
+  }
   let movementOptions = {
     alliedTransitPairs,
     enemyOverlapDepthByMaster,
     pairInteractions: createPairInteractionSnapshot({
+      contactReservations: contactUpdate?.contactReservations ?? new Map(),
       alliedTransitPairs,
+      alliedRangedIngressPairs,
       legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
-      ...(enemyTransitUpdate?.pairSnapshotData ?? {}),
     }),
     ...(kiteState ? { collisionRecoveryState: kiteState.collisionRecoveryState } : {}),
   };
   let planned = planLocalAvoidance(live, proposals, map, movementOptions);
-  if (crowdState?.preventiveContactSteering === true) {
-    let contactProposals = planned.proposals;
+  for (const contactSteeringState of contactSteeringStates.values()) {
     const contactPlan = planPreventiveContactSteering(
       planned.units,
-      contactProposals,
-      map,
-      { owner: crowdState.owner, strength: crowdState.preventiveContactSteeringStrength },
-    );
-    contactProposals = contactPlan.proposals;
-    crowdState.preventiveContactSteeredSteps += contactPlan.steered.length;
-    for (const { referenceId } of contactPlan.steered) {
-      crowdState.preventiveContactSteeredUnits.add(referenceId);
-    }
-    planned = Object.freeze({ ...planned, proposals: contactProposals });
-  }
-  if (crowdState) {
-    const overlap = updateExclusiveAlliedOverlap(
-      crowdState.alliedOverlap,
-      planned.units,
       planned.proposals,
-      crowdState.owner,
+      map,
+      { owner: contactSteeringState.owner, strength: contactSteeringState.strength },
     );
-    crowdState.alliedOverlap = { reservations: overlap.reservations };
-    movementOptions = {
-      ...movementOptions,
-      exclusiveAlliedShrinkOwners: new Set([crowdState.owner]),
-      alliedShrinkPairs: overlap.pairKeys,
-      alliedShallowPairs: overlap.shallowPairKeys,
-      alliedShrinkReservedIds: overlap.reservedIds,
-      pairInteractions: createPairInteractionSnapshot({
-        alliedTransitPairs,
-        exclusiveAlliedShrinkOwners: new Set([crowdState.owner]),
-        alliedShrinkPairs: overlap.pairKeys,
-        alliedShallowPairs: overlap.shallowPairKeys,
-        alliedShrinkReservedIds: overlap.reservedIds,
-        legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
-        ...(enemyTransitUpdate?.pairSnapshotData ?? {}),
-      }),
-    };
+    contactSteeringState.steeredSteps += contactPlan.steered.length;
+    for (const { referenceId } of contactPlan.steered) {
+      contactSteeringState.steeredUnits.add(referenceId);
+    }
+    planned = Object.freeze({ ...planned, proposals: contactPlan.proposals });
   }
   const moved = resolveMovement(planned, byReference, map, kiteState, movementOptions);
   const movedByReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
@@ -1245,7 +1328,7 @@ function moveUnits(units, map, tick, events, kiteState = null, crowdState = null
     movedIds,
     blockedIds,
     velocities,
-    enemyTransitUpdate,
+    contactUpdate,
     pairInteractions: movementOptions.pairInteractions,
   };
 }
@@ -2184,8 +2267,20 @@ export function stepWorld(world) {
   const snapshot = Object.freeze([...world.units]);
   const units = snapshot.map(mutableUnit);
   validatePursuitTargets(units, tick, events);
-  validateAttackTargets(units, tick, events);
-  acquirePursuitTargets(units, tick, events, world.kiteState ?? null);
+  validateAttackTargets(
+    units,
+    tick,
+    events,
+    world.rangedWindupRetargetOwner ?? null,
+  );
+  acquirePursuitTargets(
+    units,
+    tick,
+    events,
+    world.kiteState ?? null,
+    world.rangedTargetPressureOwner ?? null,
+    world.rangedOpportunityRetargetOwner ?? null,
+  );
   issueKiteOrders(world.kiteState, units, world.map, tick, events, event);
   // Kiting tapes carry a SINGLE attack order for the melee side all fight —
   // none of the cvp-style sweep/rescue storm — so the ordinary order layer
@@ -2199,7 +2294,7 @@ export function stepWorld(world) {
     movedIds,
     blockedIds,
     velocities,
-    enemyTransitUpdate,
+    contactUpdate,
     pairInteractions,
   } = moveUnits(
     units,
@@ -2207,9 +2302,10 @@ export function stepWorld(world) {
     tick,
     events,
     world.kiteState ?? null,
-    world.crowdState ?? null,
+    world.contactReservationState ?? null,
+    world.contactSteeringStates ?? new Map(),
     world.enemyOverlapDepthByMaster ?? new Map(),
-    world.enemyTransitState ?? null,
+    world.rangedAlliedIngressState ?? null,
   );
   updateEngagements(
     units,
@@ -2246,9 +2342,9 @@ export function stepWorld(world) {
   ]);
   return Object.freeze({
     ...world,
-    ...(enemyTransitUpdate ? {
-      enemyTransitState: enemyTransitUpdate.state,
-      enemyTransitDiagnostics: enemyTransitUpdate.diagnostics,
+    ...(contactUpdate ? {
+      contactReservationState: contactUpdate.state,
+      contactReservationDiagnostics: contactUpdate.diagnostics,
     } : {}),
     ...(remainingProjectiles !== null
       ? { projectiles: Object.freeze(remainingProjectiles.map((p) => Object.freeze({ ...p }))) }

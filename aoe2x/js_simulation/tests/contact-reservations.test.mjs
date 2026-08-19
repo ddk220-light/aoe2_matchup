@@ -5,6 +5,10 @@ import {
   createContactReservationState,
   updateContactReservations,
 } from "../src/combat/contact-reservations.js";
+import {
+  createPairInteractionSnapshot,
+  resolvePairInteraction,
+} from "../src/combat/pair-interactions.js";
 
 const mechanics = (radius, multiplier = 0.5, range = 0) => Object.freeze({
   collision_size_tiles: Object.freeze({ x: radius, y: radius }),
@@ -48,15 +52,35 @@ test("a closing allied pair derives its floor from both sourced multipliers", ()
   assert.equal(result.contactReservations.get("1:2").pathObstructs, false);
 });
 
-test("three closing allies cannot form two deep edges or a deep triangle", () => {
+test("three-on-one convergence gives one allied lane and ordinary third-unit surfaces", () => {
+  const units = [
+    unit(1, 2, 4, { pursuitTargetId: 4 }),
+    unit(2, 2, 4.5, { pursuitTargetId: 4 }),
+    unit(3, 2, 4.25, { pursuitTargetId: 4 }),
+    unit(4, 3, 7, { action: "idle" }),
+  ];
   const result = updateContactReservations({
     state: createContactReservationState(),
     tick: 10,
-    units: [unit(1, 2, 4), unit(2, 2, 4.5), unit(3, 2, 4.25)],
-    proposals: [proposal(1, 0.1), proposal(2, -0.1), proposal(3, 0.05)],
+    units,
+    proposals: [
+      proposal(1, 0.1),
+      proposal(2, -0.1),
+      proposal(3, 0.05),
+      proposal(4, 0),
+    ],
   });
+  const snapshot = createPairInteractionSnapshot({
+    contactReservations: result.contactReservations,
+  });
+  const alliedPairs = [[units[0], units[1]], [units[0], units[2]], [units[1], units[2]]];
+  const interactions = alliedPairs.map(([left, right]) => (
+    resolvePairInteraction(left, right, snapshot)
+  ));
 
   assert.equal(result.contactReservations.size, 1);
+  assert.equal(interactions.filter(({ kind }) => kind === "allied-transit").length, 1);
+  assert.equal(interactions.filter(({ kind }) => kind === "hard").length, 2);
 });
 
 test("stopped or attacking allies cannot newly acquire transit", () => {
@@ -112,6 +136,23 @@ test("direct melee target contact has an attack surface distinct from collision 
   assert.equal(contact.pathObstructs, true);
   assert.equal(contact.initiatorId, 1);
   assert.equal(contact.targetId, 2);
+});
+
+test("an already-deep direct contact preserves its current extent without deepening", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 31,
+    units: [
+      unit(1, 2, 4, { pursuitTargetId: 2 }),
+      unit(2, 3, 4.2),
+    ],
+    proposals: [proposal(1, 0), proposal(2, 0)],
+  });
+  const contact = result.contactReservations.get("1:2");
+
+  assert.equal(contact.kind, "engagement-contact");
+  assert.equal(contact.collisionExtent, 0.2);
+  assert.equal(contact.mayDeepen, false);
 });
 
 test("range-one melee can reserve a non-target enemy in its pursuit corridor", () => {

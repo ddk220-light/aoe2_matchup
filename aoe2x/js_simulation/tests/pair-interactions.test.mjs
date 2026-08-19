@@ -63,6 +63,76 @@ test("ordinary enemies use one hard physical pair extent for every purpose", () 
 });
 
 
+test("unified contact reservations are the authoritative pair surface", () => {
+  const left = unit({ referenceId: 1, owner: 2, radius: 0.25 });
+  const right = unit({ referenceId: 2, owner: 2, radius: 0.25 });
+  const snapshot = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", Object.freeze({
+      leftId: 1,
+      rightId: 2,
+      kind: "allied-transit",
+      collisionExtent: 0.25,
+      attackSurfaceExtent: 0.5,
+      pathObstructs: true,
+      mayDeepen: true,
+      initiatorId: 1,
+      targetId: null,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  assert.deepEqual(resolvePairInteraction(left, right, snapshot), {
+    kind: "allied-transit",
+    collisionExtent: 0.25,
+    pathObstructs: true,
+    attackSurfaceExtent: 0.5,
+    mayDeepen: true,
+    reason: "unified-contact-reservation",
+  });
+});
+
+
+test("unified pair geometry is validated once for every consumer", () => {
+  const reservation = (overrides = {}) => Object.freeze({
+    leftId: 1,
+    rightId: 2,
+    kind: "enemy-transit",
+    collisionExtent: 0.2,
+    attackSurfaceExtent: 0.5,
+    pathObstructs: false,
+    mayDeepen: true,
+    initiatorId: 1,
+    targetId: 3,
+    acquiredTick: 10,
+    ...overrides,
+  });
+
+  assert.throws(() => createPairInteractionSnapshot({
+    contactReservations: new Map([["2:1", reservation()]]),
+  }), /canonical/);
+  assert.throws(() => createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", reservation({ rightId: 3 })]]),
+  }), /IDs must match/);
+  assert.throws(() => createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", reservation({ collisionExtent: -0.1 })]]),
+  }), /nonnegative/);
+  assert.throws(() => createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", reservation({ kind: "calibrated" })]]),
+  }), /unknown contact reservation kind/);
+  assert.throws(() => createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", reservation()]]),
+    enemyTransitPairs: new Map([["1:2", Object.freeze({
+      chaserId: 1,
+      blockerId: 2,
+      pursuitTargetId: 3,
+      acquisitionAxis: "x",
+      acquisitionSign: 1,
+      acquiredTick: 10,
+    })]]),
+  }), /both unified and legacy/);
+});
+
+
 test("the shared experiment projects circular enemy contact into the movement axes", () => {
   const left = unit({ referenceId: 1, owner: 2, x: 4, y: 4, radius: 0.25 });
   const right = unit({ referenceId: 2, owner: 3, x: 5, y: 5, radius: 0.25 });
@@ -75,6 +145,20 @@ test("the shared experiment projects circular enemy contact into the movement ax
   assert.equal(interaction.pathObstructs, true);
   assert.ok(Math.abs(interaction.attackSurfaceExtent - Math.SQRT1_2 * 0.5) < 1e-12);
   assert.equal(interaction.mayDeepen, false);
+});
+
+
+test("circular enemy contact applies only to explicitly eligible initiators", () => {
+  const eligible = unit({ referenceId: 1, owner: 3, x: 4, y: 4, radius: 0.25 });
+  const reachMelee = unit({ referenceId: 2, owner: 3, x: 4, y: 4, radius: 0.25 });
+  const target = unit({ referenceId: 3, owner: 2, x: 5, y: 5, radius: 0.25 });
+  const snapshot = createPairInteractionSnapshot({
+    circularEnemyContact: true,
+    circularEnemyContactInitiatorIds: new Set([1]),
+  });
+
+  assert.equal(resolvePairInteraction(eligible, target, snapshot).kind, "circular-contact");
+  assert.equal(resolvePairInteraction(reachMelee, target, snapshot).kind, "hard");
 });
 
 
@@ -97,6 +181,23 @@ test("a reserved transit pair remains transparent under circular projection", ()
 
   assert.equal(interaction.collisionExtent, 0);
   assert.equal(interaction.attackSurfaceExtent, 0);
+});
+
+
+test("a ranged-ingress pair compresses to half extent without becoming transparent", () => {
+  const rear = unit({ referenceId: 1, owner: 3, x: 4, y: 4, radius: 0.2 });
+  const front = unit({ referenceId: 2, owner: 3, x: 4, y: 4.4, radius: 0.2 });
+  const snapshot = createPairInteractionSnapshot({
+    alliedRangedIngressPairs: new Set(["1:2"]),
+  });
+
+  const resolved = resolvePairInteraction(rear, front, snapshot);
+
+  assert.equal(resolved.kind, "allied-ranged-ingress");
+  assert.equal(resolved.collisionExtent, 0.2);
+  assert.equal(resolved.pathObstructs, true);
+  assert.equal(resolved.attackSurfaceExtent, 0.4);
+  assert.equal(resolved.mayDeepen, true);
 });
 
 

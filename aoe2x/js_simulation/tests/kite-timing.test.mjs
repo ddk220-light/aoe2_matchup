@@ -119,22 +119,18 @@ test("invalid timing mechanics and policy are rejected instead of silently defau
 });
 
 
-test("War Wagon chase contact derives from the chaser body instead of matchup constants", () => {
+test("War Wagon target pressure derives from the chaser body without collision overrides", () => {
   assert.deepEqual(warWagonChasePolicy("elite_war_wagon", {
     collision_size_tiles: { x: 0.25, y: 0.25 },
   }), {
     attackMoveTargetPressureTiles: 0.5,
     attackMoveStickyPursuit: true,
-    warWagonEnemyOverlapDepthTiles: 0.09999999999999998,
-    warWagonEnemyOverlapMode: "always",
   });
   assert.deepEqual(warWagonChasePolicy("elite_war_wagon", {
     collision_size_tiles: { x: 0.2, y: 0.2 },
   }), {
     attackMoveTargetPressureTiles: 0.4,
     attackMoveStickyPursuit: true,
-    warWagonEnemyOverlapDepthTiles: 0,
-    warWagonEnemyOverlapMode: "always",
   });
   assert.deepEqual(warWagonChasePolicy("arbalester", {
     collision_size_tiles: { x: 0.25, y: 0.25 },

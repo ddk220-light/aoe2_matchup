@@ -410,7 +410,7 @@ test("an attack-moving chaser acquires a visible target before reaching its wayp
 });
 
 
-test("pairwise compression lets a reloading melee engagement close to its stop surface", async () => {
+test("unified contact lets a reloading melee engagement close to its stop surface", async () => {
   const { createWorld, stepWorld } = await import("../src/combat/world.js");
   const next = stepWorld(createWorld(scenario([
     unit({
@@ -434,7 +434,6 @@ test("pairwise compression lets a reloading melee engagement close to its stop s
   ], {
     kiteOwner: 2,
     kiteMeleeOpeningOrder: "attack-move-all",
-    pairwiseEnemyTransit: true,
   })));
   const champion = next.units.find(({ referenceId }) => referenceId === 1);
 
@@ -478,66 +477,7 @@ test("an attack-move scan can account for targets claimed earlier in the same sc
 });
 
 
-test("an attack-move cohort creates only one allied-transit reservation per chaser", async () => {
-  const { createWorld, stepWorld } = await import("../src/combat/world.js");
-  let world = createWorld(scenario([
-    unit({ referenceId: 1, owner: 3, x: 2, y: 4.8, acquire: 100 }),
-    unit({ referenceId: 2, owner: 3, x: 2, y: 5.2, acquire: 100 }),
-    unit({ referenceId: 3, owner: 3, x: 2, y: 5.6, acquire: 100 }),
-    unit({
-      referenceId: 4,
-      owner: 2,
-      x: 6,
-      y: 5,
-      acquire: 100,
-      unitMechanics: heavyCavArcherMechanics,
-    }),
-  ], {
-    kiteOwner: 2,
-    kiteMeleeOpeningOrder: "attack-move-all",
-    pairwiseAlliedTransit: true,
-  }));
-
-  while (world.tick < 36) world = stepWorld(world);
-  const transit = world.kiteState.alliedTransit;
-  const reservations = [...transit.reservations.values()];
-  const reservedIds = reservations.flatMap(({ leftId, rightId }) => [leftId, rightId]);
-
-  assert.deepEqual([...transit.cohort].sort((left, right) => left - right), [1, 2, 3]);
-  assert.equal(reservations.length, 1);
-  assert.equal(new Set(reservedIds).size, reservedIds.length);
-  assert.equal(transit.pairKeys.size, 1);
-  assert.equal(reservedIds.every((referenceId) => [1, 2, 3].includes(referenceId)), true);
-});
-
-
-test("reach-melee wedge transit is an explicit attack-move scenario mode", async () => {
-  const { createWorld } = await import("../src/combat/world.js");
-  const units = [
-    unit({ referenceId: 1, owner: 3, x: 2, y: 5 }),
-    unit({
-      referenceId: 2,
-      owner: 2,
-      x: 6,
-      y: 5,
-      unitMechanics: heavyCavArcherMechanics,
-    }),
-  ];
-  const world = createWorld(scenario(units, {
-    kiteOwner: 2,
-    kiteMeleeOpeningOrder: "attack-move-all",
-    reachMeleeWedgeTransit: true,
-  }));
-
-  assert.equal(world.kiteState.alliedTransit.mode, "reach-wedge");
-  assert.throws(() => createWorld(scenario(units, {
-    kiteOwner: 2,
-    reachMeleeWedgeTransit: true,
-  })), /reach-melee wedge transit requires a kiting attack-move scenario/);
-});
-
-
-test("preventive contact steering has melee crowd state independent of kite state", async () => {
+test("preventive contact steering derives its owners independently of kite state", async () => {
   const { createWorld } = await import("../src/combat/world.js");
   const units = [
     unit({ referenceId: 1, owner: 3, x: 2, y: 5, pursuitTargetId: 2 }),
@@ -556,33 +496,53 @@ test("preventive contact steering has melee crowd state independent of kite stat
   const enabled = createWorld(scenario(units, {
     kiteOwner: 2,
     kiteMeleeOpeningOrder: "attack-move-all",
-    meleeCrowdOwner: 3,
     preventiveContactSteering: true,
     preventiveContactSteeringStrength: 0.5,
   }));
   const nativeSiege = createWorld(scenario(units, {
-    meleeCrowdOwner: 3,
     preventiveContactSteering: true,
     preventiveContactSteeringStrength: 0.5,
   }));
 
-  assert.equal(baseline.crowdState, undefined);
-  assert.equal(enabled.crowdState.owner, 3);
-  assert.equal(enabled.crowdState.preventiveContactSteering, true);
-  assert.equal(enabled.crowdState.preventiveContactSteeringStrength, 0.5);
-  assert.equal(enabled.crowdState.preventiveContactSteeredSteps, 0);
-  assert.deepEqual([...enabled.crowdState.preventiveContactSteeredUnits], []);
+  assert.equal(baseline.contactSteeringStates, undefined);
+  assert.deepEqual([...enabled.contactSteeringStates.keys()], [3]);
+  assert.equal(enabled.contactSteeringStates.get(3).strength, 0.5);
+  assert.equal(enabled.contactSteeringStates.get(3).steeredSteps, 0);
+  assert.deepEqual([...enabled.contactSteeringStates.get(3).steeredUnits], []);
   assert.equal(nativeSiege.kiteState, undefined);
-  assert.equal(nativeSiege.crowdState.owner, 3);
-  assert.equal(nativeSiege.crowdState.preventiveContactSteering, true);
-  assert.throws(() => createWorld(scenario(units, {
+  assert.deepEqual([...nativeSiege.contactSteeringStates.keys()], [3]);
+  assert.throws(() => createWorld(scenario(units.map((entry) => ({
+    ...entry,
+    mechanics: heavyCavArcherMechanics,
+  })), {
     preventiveContactSteering: true,
-  })), /preventive contact steering requires a melee crowd owner/);
+  })), /preventive contact steering requires a melee unit/);
   assert.throws(() => createWorld(scenario(units, {
-    meleeCrowdOwner: 3,
     preventiveContactSteering: true,
     preventiveContactSteeringStrength: 1.01,
   })), /preventive contact steering strength must be between 0 and 1/);
+});
+
+
+test("multiple melee owners receive independent symmetric steering state", async () => {
+  const { createWorld } = await import("../src/combat/world.js");
+  const units = [
+    unit({ referenceId: 1, owner: 2, x: 2, y: 5, pursuitTargetId: 2 }),
+    unit({ referenceId: 2, owner: 3, x: 6, y: 5, pursuitTargetId: 1 }),
+  ];
+  const world = createWorld(scenario(units, {
+    preventiveContactSteering: true,
+    preventiveContactSteeringStrength: 0.5,
+  }));
+
+  assert.deepEqual([...world.contactSteeringStates.keys()], [2, 3]);
+  assert.notEqual(
+    world.contactSteeringStates.get(2),
+    world.contactSteeringStates.get(3),
+  );
+  assert.ok([...world.contactSteeringStates.values()].every(({ strength }) => (
+    strength === 0.5
+  )));
 });
 
 

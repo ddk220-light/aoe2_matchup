@@ -145,15 +145,13 @@ export function isWithinStopRange(actor, target, options = {}) {
   const range = requireFinite(actor?.mechanics?.attack_range_tiles, "attack range");
   if (range < 0) throw new RangeError("attack range must be nonnegative");
   const pairInteractions = options.pairInteractions
-    ?? createPairInteractionSnapshot({
-      legacyEnemyOverlapDepthByMaster: options.enemyOverlapDepthByMaster ?? new Map(),
-    });
+    ?? createPairInteractionSnapshot();
   const interaction = resolvePairInteraction(actor, target, pairInteractions);
   // A one-to-one transit reservation is already the collision state for this
   // pair. Range-zero melee therefore closes to that physical contact surface
   // instead of stopping at the ordinary 0.1 approach tolerance; sourced
   // attack eligibility still uses the unchanged outline reach below.
-  const stop = interaction.kind === "transit"
+  const stop = interaction.kind === "enemy-transit"
     ? range
     : Math.max(range, MELEE_CONTACT_TOLERANCE_TILES);
   const physicalExtent = collisionRadius(actor) + collisionRadius(target);

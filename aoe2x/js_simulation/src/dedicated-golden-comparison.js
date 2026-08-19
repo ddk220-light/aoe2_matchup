@@ -53,9 +53,6 @@ export function scenarioFromDedicatedRun({ row, run, mechanicsByMaster, map }) {
   const ranged = unitBySlug.get(row.rangedSlug);
   if (!ranged) throw new RangeError(`unknown ranged unit ${row.rangedSlug}`);
   const rangedMechanics = mechanicsByMaster.get(ranged.master);
-  const reachMeleeWedgeTransit = units.some((unit) => (
-    unit.owner === 3 && (unit.mechanics?.attack_range_tiles ?? 0) >= 1
-  ));
   const cohesiveKiting = ranged.class === "mobile_ranged";
   return Object.freeze({
     ratio: row.ratio,
@@ -69,8 +66,6 @@ export function scenarioFromDedicatedRun({ row, run, mechanicsByMaster, map }) {
         kiteMeleeOpeningOrder: "attack-move-all",
         chaseCapture: true,
         kiteChaseDwellTicks: 0,
-        pairwiseAlliedTransit: false,
-        reachMeleeWedgeTransit,
       }
       : {}),
     preventiveContactSteering: true,

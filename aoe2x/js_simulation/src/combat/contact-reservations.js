@@ -1,3 +1,6 @@
+import { isWithinReach } from "./targeting.js";
+
+
 const EPSILON = 1e-12;
 
 export function createContactReservationState() {
@@ -81,7 +84,11 @@ export function updateContactReservations({ state, units, proposals, tick }) {
         || reservedIds.has(candidate.reservation.rightId)) {
       continue;
     }
-    reservations.set(candidate.key, candidate.reservation);
+    if (candidate.reservation.kind === "releasing") {
+      inheritedExtents.set(candidate.key, candidate.reservation.collisionExtent);
+    } else {
+      reservations.set(candidate.key, candidate.reservation);
+    }
     contactReservations.set(candidate.key, candidate.reservation);
     reservedIds.add(candidate.reservation.leftId);
     reservedIds.add(candidate.reservation.rightId);
@@ -232,8 +239,13 @@ function generateCandidates(units, byReference, proposals, tick) {
     for (let rightIndex = leftIndex + 1; rightIndex < units.length; rightIndex += 1) {
       const right = units[rightIndex];
       if (left.owner === right.owner) {
-        const candidate = alliedCandidate(left, right, proposals, tick);
+        const candidate = isRanged(left) && isRanged(right)
+          ? rangedIngressCandidate(left, right, byReference, proposals, tick)
+          : alliedCandidate(left, right, proposals, tick);
         if (candidate) candidates.push(candidate);
+        else if (pairSeparation(left, right) < pairFullExtent(left, right) - EPSILON) {
+          candidates.push(untrackedReleaseCandidate(left, right, tick));
+        }
         continue;
       }
       const direct = directEngagementCandidate(left, right, proposals, tick);
@@ -254,9 +266,92 @@ function generateCandidates(units, byReference, proposals, tick) {
         tick,
       );
       if (rightCorridor) candidates.push(rightCorridor);
+      if (!direct && !leftCorridor && !rightCorridor
+          && pairSeparation(left, right) < pairFullExtent(left, right) - EPSILON) {
+        candidates.push(untrackedReleaseCandidate(left, right, tick));
+      }
     }
   }
   return candidates.sort(compareCandidates);
+}
+
+function rangedIngressCandidate(left, right, byReference, proposals, tick) {
+  const directions = [[left, right], [right, left]]
+    .filter(([mover, front]) => rangedIngressQualifies(
+      mover,
+      front,
+      byReference,
+      proposals,
+    ));
+  if (directions.length === 0) return null;
+  directions.sort(([leftMover], [rightMover]) => (
+    leftMover.referenceId - rightMover.referenceId
+  ));
+  const [mover] = directions[0];
+  const leftProposal = proposalFor(left, proposals);
+  const rightProposal = proposalFor(right, proposals);
+  const current = pairSeparation(left, right);
+  const projected = pairSeparation(left, right, leftProposal, rightProposal);
+  const fullExtent = pairFullExtent(left, right);
+  const entryFraction = current < fullExtent - EPSILON
+    ? 0
+    : sweptEntryFraction(left, right, leftProposal, rightProposal, fullExtent);
+  if (entryFraction === null) return null;
+  return makeCandidate({
+    left,
+    right,
+    initiator: mover,
+    target: null,
+    kind: "ranged-ingress",
+    pathObstructs: false,
+    entryFraction,
+    projected,
+    progress: stepLength(proposalFor(mover, proposals)),
+    tick,
+  });
+}
+
+function rangedIngressQualifies(mover, front, byReference, proposals) {
+  const moverProposal = proposalFor(mover, proposals);
+  if (!isMoving(moverProposal)) return false;
+  const target = directPursuitTarget(mover, byReference);
+  if (!target || isWithinReach(mover, target)) return false;
+  const currentTargetDistance = euclideanDistance(mover, target);
+  if (euclideanDistance(mover, target, moverProposal) >= currentTargetDistance - EPSILON) {
+    return false;
+  }
+  if (euclideanDistance(front, target) >= currentTargetDistance - EPSILON) return false;
+  const frontProposal = proposalFor(front, proposals);
+  const current = pairSeparation(mover, front);
+  const projected = pairSeparation(mover, front, moverProposal, frontProposal);
+  return projected < pairFullExtent(mover, front) - EPSILON
+    && projected < current - EPSILON;
+}
+
+function euclideanDistance(unit, target, proposal = null) {
+  return Math.hypot(
+    target.x - unit.x - (proposal?.dx ?? 0),
+    target.y - unit.y - (proposal?.dy ?? 0),
+  );
+}
+
+function untrackedReleaseCandidate(left, right, tick) {
+  const currentExtent = cleanNumber(pairSeparation(left, right));
+  return Object.freeze({
+    key: pairKey(left.referenceId, right.referenceId),
+    entryFraction: -1,
+    projectedNormalizedDepth: cleanNumber(
+      Math.max(0, pairFullExtent(left, right) - currentExtent)
+        / pairFullExtent(left, right),
+    ),
+    progress: 0,
+    reservation: releasingReservation({
+      left,
+      right,
+      collisionExtent: currentExtent,
+      tick,
+    }),
+  });
 }
 
 function alliedCandidate(left, right, proposals, tick) {
@@ -419,6 +514,11 @@ function reservationRemainsActive(prior, left, right, byReference, proposals) {
     if (left.owner !== right.owner
         || left.action === "attacking"
         || right.action === "attacking") return false;
+  } else if (prior.kind === "ranged-ingress") {
+    if (left.owner !== right.owner || !isRanged(left) || !isRanged(right)) return false;
+    return pairSeparation(left, right) < pairFullExtent(left, right) - EPSILON
+      || rangedIngressQualifies(left, right, byReference, proposals)
+      || rangedIngressQualifies(right, left, byReference, proposals);
   } else if (left.owner === right.owner) {
     return false;
   }
@@ -568,6 +668,10 @@ function attackRange(unit) {
 
 function isMelee(unit) {
   return unit?.mechanics?.ranged === undefined || unit.mechanics.ranged === null;
+}
+
+function isRanged(unit) {
+  return !isMelee(unit);
 }
 
 function isMoving(proposal) {

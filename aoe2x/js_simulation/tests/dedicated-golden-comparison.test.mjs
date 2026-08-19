@@ -60,17 +60,12 @@ test("dedicated scenario uses the exact repeat placement and current viewer poli
   assert.equal(scenario.kiteMeleeOpeningOrder, "attack-move-all");
   assert.equal(scenario.chaseCapture, true);
   assert.equal(scenario.kiteChaseDwellTicks, 0);
-  assert.equal(scenario.pairwiseAlliedTransit, false);
-  assert.equal(scenario.pairwiseEnemyTransit, undefined);
-  assert.equal(scenario.reachMeleeWedgeTransit, false);
-  assert.equal(scenario.meleeCrowdOwner, undefined);
-  assert.equal(scenario.meleeCrowdOwners, undefined);
   assert.equal(scenario.preventiveContactSteering, true);
   assert.equal(scenario.map.id, "golden-map");
 });
 
 
-test("dedicated scenario enables reach-wedge transit only for sourced reach melee", () => {
+test("dedicated reach melee uses the same generic contact policy", () => {
   const scenario = scenarioFromDedicatedRun({
     row: {
       id: "heavy_cav_archer_vs_elite_steppe_5v10",
@@ -91,7 +86,6 @@ test("dedicated scenario enables reach-wedge transit only for sourced reach mele
     map: { id: "golden-map" },
   });
 
-  assert.equal(scenario.reachMeleeWedgeTransit, true);
 });
 
 
@@ -122,9 +116,6 @@ test("dedicated Heavy Scorpion scenario uses native siege AI instead of cohesive
   assert.equal(scenario.kiteMeleeOpeningOrder, undefined);
   assert.equal(scenario.chaseCapture, undefined);
   assert.equal(scenario.kiteChaseDwellTicks, undefined);
-  assert.equal(scenario.meleeCrowdOwner, undefined);
-  assert.equal(scenario.meleeCrowdOwners, undefined);
-  assert.equal(scenario.pairwiseEnemyTransit, undefined);
   assert.equal(scenario.preventiveContactSteering, true);
   assert.equal(scenario.units[0].mechanics.ranged.min_range_tiles, 2,
     "native Heavy Scorpion AI must retain its sourced individual minimum range");

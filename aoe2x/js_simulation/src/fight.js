@@ -189,9 +189,6 @@ export async function runFight(root, {
   kiteOwnerOverride,
   kiteChaseCapture,
   kiteChaseDwellTicks,
-  pairwiseAlliedTransit,
-  pairwiseEnemyTransit,
-  reachMeleeWedgeTransit,
   preventiveContactSteering,
   placementByOwner,
 }) {
@@ -290,24 +287,16 @@ export async function runFight(root, {
   }
   const kiter = innerKiteOwner === 2 ? inner2 : inner3;
   const chaserMechanics = innerKiteOwner === 2 ? mechanics3 : mechanics2;
-  const innerReachMeleeWedgeTransit = reachMeleeWedgeTransit === true
-    && (chaserMechanics?.attack_range_tiles ?? 0) >= 1;
-  const innerMeleeCrowdOwner = inner2.class === "melee"
-    ? 2
-    : (inner3.class === "melee" ? 3 : null);
   const result = runWorld(createWorld({
     ratio: `${innerCount2}v${innerCount3}`,
     units,
     ...(map ? { map } : {}),
-    ...(pairwiseEnemyTransit === true ? { pairwiseEnemyTransit: true } : {}),
     ...(innerKiteOwner === null
       ? {}
       : {
         kiteOwner: innerKiteOwner,
         ...(kiteChaseCapture === true ? { chaseCapture: true } : {}),
         ...(kiteChaseDwellTicks === undefined ? {} : { kiteChaseDwellTicks }),
-        ...(pairwiseAlliedTransit === true ? { pairwiseAlliedTransit: true } : {}),
-        ...(innerReachMeleeWedgeTransit ? { reachMeleeWedgeTransit: true } : {}),
         kiteProfile: kiteProfileFor(
           kiter,
           innerKiteOwner === 2 ? mechanics2 : mechanics3,
@@ -318,11 +307,8 @@ export async function runFight(root, {
           ? warWagonChasePolicy(kiter.slug, chaserMechanics)
           : {}),
       }),
-    ...(preventiveContactSteering === true && innerMeleeCrowdOwner !== null
-      ? {
-        meleeCrowdOwner: innerMeleeCrowdOwner,
-        preventiveContactSteering: true,
-      }
+    ...(preventiveContactSteering === true
+      ? { preventiveContactSteering: true }
       : {}),
   }), { maxTicks: MAX_TICKS });
 
@@ -363,23 +349,23 @@ export async function runFight(root, {
           result.world,
           innerKiteOwner === 2 ? innerCount2 : innerCount3,
         ),
-        alliedTransitMode: innerReachMeleeWedgeTransit
-          ? "reach-wedge-pair"
-          : (pairwiseAlliedTransit === true ? "exclusive-pair" : "soft-allied"),
+        alliedTransitMode: "contact-reservation",
       }),
     ...(preventiveContactSteering === true
       ? {
         contactSteeringMode: "preventive-contact-graph",
-        contactSteeringStrength:
-          result.world.crowdState?.preventiveContactSteeringStrength ?? 0,
+        contactSteeringStrength: [...(result.world.contactSteeringStates?.values() ?? [])]
+          .reduce((maximum, state) => Math.max(maximum, state.strength), 0),
         contactSteeringSummary: Object.freeze({
-          steeredSteps: result.world.crowdState?.preventiveContactSteeredSteps ?? 0,
-          steeredUnitCount:
-            result.world.crowdState?.preventiveContactSteeredUnits?.size ?? 0,
+          steeredSteps: [...(result.world.contactSteeringStates?.values() ?? [])]
+            .reduce((total, state) => total + state.steeredSteps, 0),
+          steeredUnitCount: new Set(
+            [...(result.world.contactSteeringStates?.values() ?? [])]
+              .flatMap((state) => [...state.steeredUnits]),
+          ).size,
         }),
       }
       : (kiteNavigation === undefined ? {} : { contactSteeringMode: "off" })),
-    ...(pairwiseEnemyTransit === true ? { enemyTransitMode: "pairwise" } : {}),
     side2: Object.freeze({
       slug: side2.slug, label: side2.label, civ: side2.civ, count: count2, class: side2.class }),
     side3: Object.freeze({
@@ -496,7 +482,6 @@ export async function runKitingObservation(root, {
   meleeSlug = "champion",
   n2,
   n3,
-  pairwiseEnemyTransit = false,
 } = {}) {
   requireSoloNavigationVariant(navigation);
   const matchup = kitingObservationMatchup(rangedSlug, meleeSlug);
@@ -526,7 +511,6 @@ export async function runKitingObservation(root, {
     map,
     placementByOwner,
     preventiveContactSteering: true,
-    pairwiseEnemyTransit,
     ...(cohesiveKiting
       ? {
         kiteNavigation: navigation,
@@ -541,14 +525,6 @@ export async function runKitingObservation(root, {
         // range-entry tick. Recorded batch playbacks retain the calibrated
         // one-second default because they do not pass this viewer-only override.
         kiteChaseDwellTicks: 0,
-        // The exclusive-pair pass-through remains available to focused engine
-        // experiments, but it is not the viewer default: in 5 HCA vs 10 Champion
-        // it creates long-lived deep pairs and moves the result away from tape.
-        pairwiseAlliedTransit: false,
-        // Reach melee may reserve one front-line ally while entering its sourced
-        // attack envelope. The reservation remains exclusive, so it permits a
-        // two-deep wedge without making the full chaser cohort transparent.
-        reachMeleeWedgeTransit: true,
       }
       : {}),
   });
@@ -571,7 +547,7 @@ export async function runKitingObservation(root, {
       maxSlotError: 0,
       maxBlockedCount: 0,
     }),
-    alliedTransitMode: "soft-allied",
+    alliedTransitMode: "contact-reservation",
     contactSteeringMode: "preventive-contact-graph",
     contactSteeringStrength: result.contactSteeringStrength ?? 0,
     contactSteeringSummary: result.contactSteeringSummary

@@ -62,9 +62,7 @@ function buildBlockedGrid(mover, obstacles, cols, rows, options = {}) {
   const blocked = new Uint8Array(cols * rows);
   const moverRadius = collisionRadius(mover);
   const pairInteractions = options.pairInteractions
-    ?? createPairInteractionSnapshot({
-      legacyEnemyOverlapDepthByMaster: options.enemyOverlapDepthByMaster ?? new Map(),
-    });
+    ?? createPairInteractionSnapshot();
   for (const body of obstacles) {
     const dynamicEnemy = body.owner !== undefined && body.owner !== mover.owner;
     const interaction = dynamicEnemy

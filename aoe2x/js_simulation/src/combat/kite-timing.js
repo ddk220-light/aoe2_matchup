@@ -3,7 +3,6 @@ import { TICKS_PER_SECOND } from "../simulation-clock.js";
 
 export const KITE_ORDER_CLOCK_TICKS = 40;
 export const KITE_MOVE_INTERVAL_TICKS = 2 * KITE_ORDER_CLOCK_TICKS;
-const STANDARD_INFANTRY_COLLISION_RADIUS_TILES = 0.2;
 const EMPTY_KITE_SCENARIO_POLICY = Object.freeze({});
 
 
@@ -171,11 +170,5 @@ export function warWagonChasePolicy(kiterSlug, chaserMechanics) {
   return Object.freeze({
     attackMoveTargetPressureTiles: 2 * radiusX,
     attackMoveStickyPursuit: true,
-    // The tape's transient Wagon/enemy penetration grows with the chaser
-    // body. Express it as excess collision DIAMETER over an ordinary
-    // infantry body: Paladin 0.25 -> 0.10, Champion 0.20 -> 0.00.
-    warWagonEnemyOverlapDepthTiles:
-      2 * Math.max(0, radiusX - STANDARD_INFANTRY_COLLISION_RADIUS_TILES),
-    warWagonEnemyOverlapMode: "always",
   });
 }

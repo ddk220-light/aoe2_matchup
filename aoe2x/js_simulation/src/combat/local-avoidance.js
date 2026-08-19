@@ -567,13 +567,8 @@ function normalizeInputs(snapshot, proposals) {
 
 
 export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
-  const alliedTransitPairs = options.alliedTransitPairs instanceof Set
-    ? options.alliedTransitPairs : new Set();
   const pairInteractions = options.pairInteractions
-    ?? createPairInteractionSnapshot({
-      alliedTransitPairs,
-      legacyEnemyOverlapDepthByMaster: options.enemyOverlapDepthByMaster ?? new Map(),
-    });
+    ?? createPairInteractionSnapshot();
   const { units, proposalByReference } = normalizeInputs(snapshot, proposals);
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const nextUnits = [];

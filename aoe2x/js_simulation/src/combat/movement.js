@@ -49,9 +49,7 @@ export function proposeMovement(unit, target, ticksPerSecond, options = {}) {
     ticksPerSecond,
   );
   const pairInteractions = options.pairInteractions
-    ?? createPairInteractionSnapshot({
-      legacyEnemyOverlapDepthByMaster: options.enemyOverlapDepthByMaster ?? new Map(),
-    });
+    ?? createPairInteractionSnapshot();
   const gap = centerDistance
     - resolvePairInteraction(unit, target, pairInteractions).attackSurfaceExtent;
   if (centerDistance === 0 || gap <= 0 || speed === 0) {

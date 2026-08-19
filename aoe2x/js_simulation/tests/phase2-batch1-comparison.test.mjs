@@ -41,14 +41,10 @@ test("tape-normalized melee-versus-ranged rows keep the ranged kiter on owner 2"
   const context = await loadPhase2Batch1Context(ROOT, truth);
   const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex: 0, seed: 20260817, context });
   assert.equal(scenario.kiteOwner, 2);
-  assert.equal(scenario.meleeCrowdOwner, undefined);
-  assert.equal(scenario.meleeCrowdOwners, undefined);
   assert.equal(scenario.kiteNavigation, "cohesive");
   assert.equal(scenario.kiteMeleeOpeningOrder, "attack-move-all");
   assert.equal(scenario.kiteChaseDwellTicks, 0);
-  assert.equal(scenario.pairwiseEnemyTransit, undefined);
   assert.equal(scenario.preventiveContactSteering, true);
-  assert.equal(scenario.rangedAlliedIngressOwners, undefined);
 });
 
 
@@ -58,9 +54,6 @@ test("melee-versus-melee rows request generic steering without selecting owners"
   const context = await loadPhase2Batch1Context(ROOT, truth);
   const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex: 0, seed: 20260817, context });
 
-  assert.equal(scenario.meleeCrowdOwners, undefined);
-  assert.equal(scenario.meleeCrowdOwner, undefined);
-  assert.equal(scenario.pairwiseEnemyTransit, undefined);
   assert.equal(scenario.preventiveContactSteering, true);
 });
 
@@ -107,15 +100,11 @@ test("ranged-versus-ranged rows enable AI target pressure without enabling kitin
   assert.equal(scenario.rangedTargetPressureOwner, 3);
   assert.equal(scenario.rangedOpportunityRetargetOwner, 2);
   assert.equal(scenario.rangedWindupRetargetOwner, 3);
-  assert.deepEqual(scenario.rangedAlliedIngressOwners, [2, 3]);
   assert.equal(scenario.kiteOwner, undefined);
-  assert.equal(scenario.meleeCrowdOwner, undefined);
-  assert.equal(scenario.meleeCrowdOwners, undefined);
-  assert.equal(scenario.pairwiseEnemyTransit, undefined);
 });
 
 
-test("Phase 2 applies the evidence-backed War Wagon formation and body-contact policy only there", async () => {
+test("Phase 2 keeps the War Wagon formation and attack-move policy", async () => {
   const truth = await loadPhase2Batch1Truth(ROOT);
   const context = await loadPhase2Batch1Context(ROOT, truth);
   const warWagonRow = truth.rows.find(({ id }) => id === "elite_war_wagon_vs_paladin");
@@ -143,14 +132,8 @@ test("Phase 2 applies the evidence-backed War Wagon formation and body-contact p
   assert.equal(warWagonScenario.kiteProfile.formationSpacingTiles, 0.6);
   assert.equal(warWagonScenario.attackMoveStickyPursuit, true);
   assert.equal(warWagonScenario.attackMoveTargetPressureTiles, 0.5);
-  assert.ok(Math.abs(warWagonScenario.warWagonEnemyOverlapDepthTiles - 0.1) < 1e-12);
-  assert.equal(warWagonScenario.warWagonEnemyOverlapMode, "always");
   assert.equal(championScenario.kiteProfile.formationSpacingTiles, 0.6);
   assert.equal(championScenario.attackMoveTargetPressureTiles, 0.4);
-  assert.equal(championScenario.warWagonEnemyOverlapDepthTiles, 0);
-  assert.equal(championScenario.warWagonEnemyOverlapMode, "always");
-  assert.equal(boyarScenario.warWagonEnemyOverlapDepthTiles, undefined);
-  assert.equal(boyarScenario.warWagonEnemyOverlapMode, undefined);
   assert.equal(boyarScenario.attackMoveStickyPursuit, undefined);
 });
 

@@ -130,6 +130,7 @@ test("kiting viewer request selection validates manual counts without running a 
     "ranged=heavy_scorpion&n2=17&n3=10",
     "n2=10&n2=11&n3=10",
     "n2=10&n3=10&extra=true",
+    "n2=5&n3=5&enemyTransit=pairwise",
   ]) {
     assert.equal(serverModule.kitingObservationSelection(new URL(
       `http://127.0.0.1/api/ranged-vs-melee-kiting?${query}`,
@@ -146,7 +147,7 @@ test("manual 5 HCA versus 10 Champion setup preserves the tape's matchup order",
     );
     const run = await response.json();
     assert.equal(response.status, 200, run.error);
-    assert.equal(run.alliedTransitMode, "soft-allied");
+    assert.equal(run.alliedTransitMode, "contact-reservation");
     assert.equal(run.contactSteeringMode, "preventive-contact-graph");
     assert.ok(run.contactSteeringStrength > 0 && run.contactSteeringStrength < 1);
     assert.ok(run.contactSteeringSummary.steeredSteps > 0);
@@ -582,20 +583,6 @@ test("generalized observation endpoint runs Heavy Scorpions with native siege AI
       type === "ai-location-order" && tick === 36 && championIds.includes(actorId)
     ));
     assert.equal(cohesiveOpeningAttackMove.length, 0);
-  });
-});
-
-
-test("the kiting viewer can explicitly enable shared pairwise enemy transit", async () => {
-  await withServer(async (baseUrl) => {
-    const response = await fetch(
-      `${baseUrl}/api/ranged-vs-melee-kiting`
-        + "?ranged=heavy_cav_archer&melee=paladin&navigation=cohesive"
-        + "&n2=5&n3=5&enemyTransit=pairwise",
-    );
-    const run = await response.json();
-    assert.equal(response.status, 200, run.error);
-    assert.equal(run.enemyTransitMode, "pairwise");
   });
 });
 

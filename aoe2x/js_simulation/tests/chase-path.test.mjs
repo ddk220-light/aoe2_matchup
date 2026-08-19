@@ -84,12 +84,17 @@ test("chase path leaves friendly crowd bodies to the local collision layers", ()
 
 
 test("chase path falls back to live pursuit when only dynamic enemies box in the mover", () => {
-  const mover = body(1, 1, 0.2, 3);
-  const target = body(5, 1, 0.2, 2);
+  const mover = dynamicBody(1, 1, 1, 0.2, 3, 75);
+  const target = dynamicBody(2, 5, 1, 0.2, 2, 4);
   const enemies = [
-    body(0.75, 0.75, 0.3, 2), body(1, 0.75, 0.3, 2), body(1.25, 0.75, 0.3, 2),
-    body(0.75, 1, 0.3, 2), body(1.25, 1, 0.3, 2),
-    body(0.75, 1.25, 0.3, 2), body(1, 1.25, 0.3, 2), body(1.25, 1.25, 0.3, 2),
+    dynamicBody(3, 0.75, 0.75, 0.3, 2, 4),
+    dynamicBody(4, 1, 0.75, 0.3, 2, 4),
+    dynamicBody(5, 1.25, 0.75, 0.3, 2, 4),
+    dynamicBody(6, 0.75, 1, 0.3, 2, 4),
+    dynamicBody(7, 1.25, 1, 0.3, 2, 4),
+    dynamicBody(8, 0.75, 1.25, 0.3, 2, 4),
+    dynamicBody(9, 1, 1.25, 0.3, 2, 4),
+    dynamicBody(10, 1.25, 1.25, 0.3, 2, 4),
   ];
 
   assert.equal(planChaseAim(mover, target, enemies, map), null);
@@ -114,32 +119,21 @@ test("chase path can leave a coarse start cell whose center is blocked but mover
 });
 
 
-test("chase path honors a configured War Wagon enemy-overlap envelope", () => {
-  const mover = body(1, 1, 0.2, 3, 75);
-  const target = body(5, 1, 0.45, 2, 829);
-  const warWagonBlocker = body(3, 1.65, 0.45, 2, 829);
-
-  const baseline = planChaseAim(mover, target, [warWagonBlocker], map);
-  const relaxed = planChaseAim(mover, target, [warWagonBlocker], map, {
-    enemyOverlapDepthByMaster: new Map([[829, 0.2]]),
-  });
-
-  assert.ok(baseline && baseline.stand !== true);
-  assert.equal(relaxed, null);
-});
-
-
 test("chase path omits only a reserved enemy-transit blocker", () => {
   const mover = dynamicBody(1, 1, 1, 0.2, 3, 75);
   const target = dynamicBody(3, 5, 1, 0.2, 2, 4);
   const reserved = dynamicBody(2, 3, 1, 0.2, 2, 4);
   const pairInteractions = createPairInteractionSnapshot({
-    enemyTransitPairs: new Map([["1:2", Object.freeze({
-      chaserId: 1,
-      blockerId: 2,
-      pursuitTargetId: 3,
-      acquisitionAxis: "x",
-      acquisitionSign: 1,
+    contactReservations: new Map([["1:2", Object.freeze({
+      leftId: 1,
+      rightId: 2,
+      kind: "enemy-transit",
+      collisionExtent: 0.2,
+      attackSurfaceExtent: 0.4,
+      pathObstructs: false,
+      mayDeepen: true,
+      initiatorId: 1,
+      targetId: 3,
       acquiredTick: 10,
     })]]),
   });

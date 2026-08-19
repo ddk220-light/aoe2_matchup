@@ -1,5 +1,4 @@
-import { allyCollisionRadius, collisionRadius } from "./targeting.js";
-import { alliedTransitPairKey } from "./allied-transit.js";
+import { collisionRadius } from "./targeting.js";
 import {
   createPairInteractionSnapshot,
   resolvePairInteraction,
@@ -18,13 +17,6 @@ const GEOMETRY_SLOP = 1e-4;
 // progress. This remains a failure ceiling, not a physical tolerance: hard
 // geometry must still satisfy EPSILON before a movement step is published.
 const MAX_CONSTRAINT_SWEEPS = 4096;
-const EMPTY_ENEMY_OVERLAP_DEPTHS = new Map();
-const VALID_ENEMY_OVERLAP_MODES = new Set([
-  "always",
-  "attacking-any",
-  "attacking-target",
-  "attacking-other",
-]);
 
 
 function requireFinite(value, name) {
@@ -111,11 +103,6 @@ function normalizeBodies(snapshot, proposals) {
         "unit master",
       ),
       owner: unit.owner,
-      allyRadius: allyCollisionRadius(unit),
-      // Under a formation move order (the tape's formFormation 2 groups) the
-      // group reforms THROUGH itself -- see constrainPair.
-      formation: unit.moveOrder !== undefined && unit.moveOrder !== null,
-      stationary: proposed.dx === 0 && proposed.dy === 0,
       dx: proposed.dx,
       dy: proposed.dy,
     };
@@ -126,105 +113,6 @@ function normalizeBodies(snapshot, proposals) {
     }
   }
   return bodies.sort(pairKey);
-}
-
-
-function normalizeEnemyOverlapDepths(value) {
-  if (value === undefined) return EMPTY_ENEMY_OVERLAP_DEPTHS;
-  if (!(value instanceof Map)) {
-    throw new TypeError("enemy overlap depths by master must be a Map");
-  }
-  const result = new Map();
-  for (const [master, rawPolicy] of value) {
-    requireReferenceId(master, "enemy overlap unit master");
-    const policy = typeof rawPolicy === "number"
-      ? { depth: rawPolicy, mode: "always" }
-      : rawPolicy;
-    if (!policy || typeof policy !== "object" || Array.isArray(policy)) {
-      throw new TypeError("enemy overlap policy must be a depth or policy object");
-    }
-    const depth = policy.depth;
-    requireFinite(depth, "enemy overlap depth");
-    if (depth < 0) throw new RangeError("enemy overlap depth must be nonnegative");
-    const mode = policy.mode ?? "always";
-    if (!VALID_ENEMY_OVERLAP_MODES.has(mode)) {
-      throw new RangeError(`unknown enemy overlap mode ${mode}`);
-    }
-    result.set(master, Object.freeze({ depth, mode }));
-  }
-  return result;
-}
-
-
-function sourceUnit(body) {
-  return body.unit ?? body;
-}
-
-
-function policyForMaster(master, policies) {
-  const rawPolicy = policies.get(master);
-  if (rawPolicy === undefined) return null;
-  if (typeof rawPolicy === "number") return { depth: rawPolicy, mode: "always" };
-  if (!rawPolicy || typeof rawPolicy !== "object" || Array.isArray(rawPolicy)) {
-    throw new TypeError("enemy overlap policy must be a depth or policy object");
-  }
-  const depth = requireFinite(rawPolicy.depth, "enemy overlap depth");
-  if (depth < 0) throw new RangeError("enemy overlap depth must be nonnegative");
-  const mode = rawPolicy.mode ?? "always";
-  if (!VALID_ENEMY_OVERLAP_MODES.has(mode)) {
-    throw new RangeError(`unknown enemy overlap mode ${mode}`);
-  }
-  return { depth, mode };
-}
-
-
-function configuredPolicyApplies(configuredBody, opponentBody, mode) {
-  if (mode === "always") return true;
-  const configured = sourceUnit(configuredBody);
-  const opponent = sourceUnit(opponentBody);
-  const configuredRadius = Number.isFinite(configuredBody.radius)
-    ? configuredBody.radius : collisionRadius(configuredBody);
-  const opponentRadius = Number.isFinite(opponentBody.radius)
-    ? opponentBody.radius : collisionRadius(opponentBody);
-  const alreadyOverlapping = Math.max(
-    Math.abs(configuredBody.x - opponentBody.x),
-    Math.abs(configuredBody.y - opponentBody.y),
-  ) < configuredRadius + opponentRadius - EPSILON;
-  // Once an attack-locked contact enters the envelope it remains legal until
-  // normal motion separates the bodies. Revoking the envelope at the exact
-  // animation-state transition would turn a valid published world into an
-  // invalid starting snapshot on the next tick.
-  if (alreadyOverlapping) return true;
-  if (opponent.action !== "attacking") return false;
-  if (mode === "attacking-any") return true;
-  const targetId = opponent.attackTargetId
-    ?? opponent.engagedTargetId
-    ?? opponent.pursuitTargetId
-    ?? null;
-  const directTarget = targetId === configured.referenceId;
-  return mode === "attacking-target" ? directTarget : !directTarget;
-}
-
-
-export function enemyOverlapDepthForPair(left, right,
-  enemyOverlapDepthByMaster = EMPTY_ENEMY_OVERLAP_DEPTHS) {
-  if (left.owner === right.owner) return 0;
-  const snapshot = createPairInteractionSnapshot({
-    legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
-  });
-  const interaction = resolvePairInteraction(left, right, snapshot);
-  const leftRadius = Number.isFinite(left.radius) ? left.radius : collisionRadius(left);
-  const rightRadius = Number.isFinite(right.radius) ? right.radius : collisionRadius(right);
-  return leftRadius + rightRadius - interaction.collisionExtent;
-}
-
-
-export function enemyPairExtent(left, right,
-  enemyOverlapDepthByMaster = EMPTY_ENEMY_OVERLAP_DEPTHS) {
-  const snapshot = createPairInteractionSnapshot({
-    legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
-  });
-  return resolvePairInteraction(left, right, snapshot).collisionExtent;
 }
 
 
@@ -274,7 +162,6 @@ function validateStartingGeometry(bodies, obstacles, bounds, pairInteractions) {
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {
-      if (bodies[i].owner === bodies[j].owner) continue;
       const distance = Math.max(
         Math.abs(bodies[j].x - bodies[i].x),
         Math.abs(bodies[j].y - bodies[i].y),
@@ -392,77 +279,26 @@ function distributeEqualMassRemoval(excess, available) {
 // Chebyshev separation of exactly 0.4000 tiles (0.2 + 0.2) whichever axis they
 // meet on, which a Euclidean radius cannot produce. Resolution is the standard
 // minimum-translation push along the axis that is closest to clearing.
-function constrainPair(left, right, alliedTransitPairs, alliedShrinkPairs, alliedShallowPairs,
-  alliedShrinkReservedIds, exclusiveAlliedShrinkOwners, pairInteractions) {
-  // Allies obstruct each other just as enemies do, but a MOVING unit shrinks its
-  // own obstruction against a friendly (DeadFish.min_collision_size_multiplier)
-  // so the crowd closes up instead of deadlocking. A stopped unit is not trying
-  // to go anywhere and keeps its full box.
-  const allied = left.owner === right.owner;
-  if (allied && alliedTransitPairs.has(alliedTransitPairKey(
-    left.referenceId, right.referenceId,
-  ))) return 0;
-  // Two allies that are BOTH under a formation move order do not obstruct each
-  // other at all. Measured on the tapes: while the kite formation marches, an
-  // ally sitting 0.42 tiles directly ahead costs a skirmisher almost nothing
-  // (stalled 19.7% of frames vs 14.4% with a clear path, median step still a
-  // full walk), and the block's own nearest-neighbour pairs sit INSIDE the
-  // 0.400 separation 58.6% of the time, bottoming out at 0.000 -- the group
-  // reforms straight through itself. Enforcing the box here instead gridlocks
-  // it: 38.7% of our marching kiter-ticks stalled, 73% of them behind an ally.
-  // Scope matters. Chasers under aiOrder attack waves are NOT exempt: the same
-  // measurement on tape camels (19.5% vs 18.5%) is nearly free, but kac
-  // champions do pay (13.2% vs 5.6%), and a blanket ally exemption was
-  // A/B-rejected earlier for wrecking kac 20v20. Having a move order is the
-  // discriminator, not being in motion -- a unit that has ARRIVED at its slot
-  // keeps its order until the next beat, and gating on motion instead leaves
-  // those arrived units standing as walls for the rest of the group.
-  const exclusiveShrink = allied && exclusiveAlliedShrinkOwners.has(left.owner);
-  if (allied && left.formation && right.formation && !exclusiveShrink) return 0;
-  const pairKey = alliedTransitPairKey(left.referenceId, right.referenceId);
-  const shrinkPair = exclusiveShrink && alliedShrinkPairs.has(pairKey);
-  const shallowPair = exclusiveShrink && alliedShallowPairs.has(pairKey);
-  // An active deep pair is a single reserved passage. A nonpartner must see
-  // both members at their full allied extent; allowing the arriving unit to
-  // shrink one-sided creates a stable three-body pocket around every pair.
-  // Unreserved allies retain the ordinary moving-body shrink until a pair is
-  // selected, and the selected pair alone may use the minimum extent.
-  const leftReserved = alliedShrinkReservedIds.has(left.referenceId);
-  const rightReserved = alliedShrinkReservedIds.has(right.referenceId);
-  const leftCanShrink = !left.stationary && (!exclusiveShrink
-    || shrinkPair || (shallowPair && !leftReserved));
-  const rightCanShrink = !right.stationary && (!exclusiveShrink
-    || shrinkPair || (shallowPair && !rightReserved));
-  const extent = allied
-    ? (leftCanShrink ? left.allyRadius : left.radius)
-      + (rightCanShrink ? right.allyRadius : right.radius)
-    : resolvePairInteraction(left, right, pairInteractions).collisionExtent;
+function constrainPair(left, right, pairInteractions) {
+  const interaction = resolvePairInteraction(left, right, pairInteractions);
+  const extent = interaction.collisionExtent;
   const centerX = right.x - left.x;
   const centerY = right.y - left.y;
-  // Allied overlap is a legal inherited crowd state. Once it exists, this
-  // tick may preserve or reduce it, but cannot make it deeper. Requiring the
-  // pair to heal all the way back to the ordinary extent in one step turns
-  // equal co-motion into a collision correction and can pin both movers.
-  const currentSeparation = Math.max(Math.abs(centerX), Math.abs(centerY));
-  const requiredSeparation = allied && currentSeparation < extent - EPSILON
-    ? currentSeparation
-    : extent;
-  const comparisonTolerance = allied ? EPSILON : 0;
   if (Math.max(
     Math.abs(centerX + right.dx - left.dx),
     Math.abs(centerY + right.dy - left.dy),
-  ) >= requiredSeparation - comparisonTolerance) return 0;
+  ) >= extent - EPSILON) return 0;
 
   const alongX = Math.abs(centerX) >= Math.abs(centerY);
   const axisCenter = alongX ? centerX : centerY;
   const sign = axisCenter < 0 ? -1 : 1;
   const nx = alongX ? sign : 0;
   const ny = alongX ? 0 : sign;
-  const gap = Math.abs(axisCenter) - requiredSeparation;
+  const gap = Math.abs(axisCenter) - extent;
   const leftNormal = left.dx * nx + left.dy * ny;
   const rightNormal = right.dx * nx + right.dy * ny;
   const closure = leftNormal - rightNormal;
-  if (closure <= gap + comparisonTolerance) return 0;
+  if (closure <= gap + EPSILON) return 0;
 
   const excess = closure - gap;
   const leftInward = Math.max(0, leftNormal);
@@ -491,10 +327,8 @@ function reportCollisionDiagnostics(callback, mode, sweeps, largestCorrection,
 }
 
 
-function resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs, alliedShrinkPairs,
-  alliedShallowPairs,
-  alliedShrinkReservedIds, exclusiveAlliedShrinkOwners,
-  pairInteractions, onCollisionDiagnostics, allowEarlySlop, collisionRecoveryState) {
+function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
+  onCollisionDiagnostics, allowEarlySlop, collisionRecoveryState) {
   let lastCorrection = Infinity;
   for (let sweep = 0; sweep < MAX_CONSTRAINT_SWEEPS; sweep += 1) {
     let largestCorrection = 0;
@@ -511,10 +345,7 @@ function resolveConstraints(bodies, obstacles, bounds, alliedTransitPairs, allie
       for (let j = i + 1; j < bodies.length; j += 1) {
         largestCorrection = Math.max(
           largestCorrection,
-          constrainPair(
-            bodies[i], bodies[j], alliedTransitPairs, alliedShrinkPairs, alliedShallowPairs,
-            alliedShrinkReservedIds, exclusiveAlliedShrinkOwners, pairInteractions,
-          ),
+          constrainPair(bodies[i], bodies[j], pairInteractions),
         );
       }
     }
@@ -656,13 +487,6 @@ function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON,
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {
-      // Enemy separation is a hard invariant; ally separation is best effort.
-      // Measured over all 15 tapes: enemy Champions never breach 0.4000 tiles of
-      // Chebyshev separation, while ally pairs sit below it in 1.9% of frames
-      // where both are moving, 6.8% where one is moving into a stopped ally, and
-      // 15.3% where both have stopped -- crowding squeezes allies together and
-      // nothing pushes them back apart once they stand still.
-      if (bodies[i].owner === bodies[j].owner) continue;
       const gap = Math.max(
         Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
         Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),
@@ -776,28 +600,8 @@ export function queryEnemyContactManifold(beforeSnapshot, afterSnapshot) {
 
 
 export function resolveMovementProposals(snapshot, proposals, map, options = {}) {
-  const alliedTransitPairs = options.alliedTransitPairs instanceof Set
-    ? options.alliedTransitPairs : new Set();
-  const alliedShrinkPairs = options.alliedShrinkPairs instanceof Set
-    ? options.alliedShrinkPairs : new Set();
-  const alliedShallowPairs = options.alliedShallowPairs instanceof Set
-    ? options.alliedShallowPairs : new Set();
-  const alliedShrinkReservedIds = options.alliedShrinkReservedIds instanceof Set
-    ? options.alliedShrinkReservedIds : new Set();
-  const exclusiveAlliedShrinkOwners = options.exclusiveAlliedShrinkOwners instanceof Set
-    ? options.exclusiveAlliedShrinkOwners : new Set();
-  const enemyOverlapDepthByMaster = normalizeEnemyOverlapDepths(
-    options.enemyOverlapDepthByMaster,
-  );
   const pairInteractions = options.pairInteractions
-    ?? createPairInteractionSnapshot({
-      alliedTransitPairs,
-      alliedShrinkPairs,
-      alliedShallowPairs,
-      alliedShrinkReservedIds,
-      exclusiveAlliedShrinkOwners,
-      legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
-    });
+    ?? createPairInteractionSnapshot();
   const onCollisionDiagnostics = options.onCollisionDiagnostics;
   if (onCollisionDiagnostics !== undefined && typeof onCollisionDiagnostics !== "function") {
     throw new TypeError("collision diagnostics callback must be a function");
@@ -814,8 +618,7 @@ export function resolveMovementProposals(snapshot, proposals, map, options = {})
     bodies, obstacles, bounds, pairInteractions,
   );
   resolveConstraints(
-    bodies, obstacles, bounds, alliedTransitPairs, alliedShrinkPairs, alliedShallowPairs,
-    alliedShrinkReservedIds, exclusiveAlliedShrinkOwners, pairInteractions,
+    bodies, obstacles, bounds, pairInteractions,
     onCollisionDiagnostics,
     collisionRecoveryState?.active === true || !strictlyValidStart,
     collisionRecoveryState,

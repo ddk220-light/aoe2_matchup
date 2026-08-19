@@ -89,8 +89,6 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
   const chaserMechanics = kiteOwner === 2
     ? context.mechanicsByMaster.get(side3Unit.master)
     : (kiteOwner === 3 ? context.mechanicsByMaster.get(side2Unit.master) : null);
-  const reachMeleeWedgeTransit = kiteOwner !== null
-    && (chaserMechanics?.attack_range_tiles ?? 0) >= 1;
   const warWagonKiter = kiter?.slug === "elite_war_wagon";
   return Object.freeze({
     ratio: `${row.side2.count}v${row.side3.count}`,
@@ -100,7 +98,6 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
       rangedTargetPressureOwner: 3,
       rangedOpportunityRetargetOwner: 2,
       rangedWindupRetargetOwner: 3,
-      rangedAlliedIngressOwners: Object.freeze([2, 3]),
     } : {}),
     ...(kiteOwner === null
       ? {}
@@ -111,8 +108,6 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
         kiteMeleeOpeningOrder: "attack-move-all",
         chaseCapture: true,
         kiteChaseDwellTicks: 0,
-        pairwiseAlliedTransit: false,
-        reachMeleeWedgeTransit,
         ...(warWagonKiter ? warWagonChasePolicy(kiter.slug, chaserMechanics) : {}),
       }),
     ...(hasMelee ? { preventiveContactSteering: true } : {}),

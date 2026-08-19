@@ -17,6 +17,14 @@ const mechanics = (radius, multiplier = 0.5, range = 0) => Object.freeze({
   ranged: null,
 });
 
+const rangedMechanics = (radius = 0.2, range = 5) => Object.freeze({
+  collision_size_tiles: Object.freeze({ x: radius, y: radius }),
+  outline_size_tiles: Object.freeze({ x: radius, y: radius }),
+  min_collision_size_multiplier: 0.8,
+  attack_range_tiles: range,
+  ranged: Object.freeze({ projectile_speed_tiles_per_second: 7 }),
+});
+
 const unit = (referenceId, owner, x, overrides = {}) => Object.freeze({
   referenceId,
   owner,
@@ -92,7 +100,11 @@ test("stopped or attacking allies cannot newly acquire transit", () => {
       proposals: [proposal(1, 0), proposal(2, 0)],
       tick: 20,
     });
-    assert.equal(result.contactReservations.size, 0, action);
+    assert.equal(
+      [...result.contactReservations.values()].some(({ kind }) => kind === "allied-transit"),
+      false,
+      action,
+    );
   }
 });
 
@@ -175,6 +187,69 @@ test("range-one melee can reserve a non-target enemy in its pursuit corridor", (
   assert.equal(contact.initiatorId, 1);
   assert.equal(contact.targetId, 3);
   assert.equal(contact.pathObstructs, false);
+});
+
+test("range-one melee can pass one stopped ally while closing on its target", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 41,
+    units: [
+      unit(1, 2, 4, {
+        mechanics: mechanics(0.25, 0.5, 1),
+        pursuitTargetId: 3,
+      }),
+      unit(2, 2, 4.5, { action: "idle" }),
+      unit(3, 3, 6, { action: "idle" }),
+    ],
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0)],
+  });
+
+  assert.equal(result.contactReservations.get("1:2").kind, "allied-transit");
+  assert.equal(result.contactReservations.get("1:2").pathObstructs, false);
+});
+
+test("ranged ingress admits one out-of-range rear shooter through a front ally", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 42,
+    units: [
+      unit(1, 2, 4, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 3,
+      }),
+      unit(2, 2, 4.4, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 3,
+      }),
+      unit(3, 3, 10, {
+        mechanics: rangedMechanics(),
+        action: "idle",
+      }),
+    ],
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0)],
+  });
+  const ingress = result.contactReservations.get("1:2");
+
+  assert.equal(ingress.kind, "ranged-ingress");
+  assert.equal(ingress.pathObstructs, false);
+  assert.equal(ingress.collisionExtent, 0.32);
+});
+
+test("an untracked overlap is published as monotonic release geometry", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 43,
+    units: [
+      unit(1, 2, 4, { action: "idle" }),
+      unit(2, 3, 4.3, { action: "idle" }),
+    ],
+    proposals: [proposal(1, 0), proposal(2, 0)],
+  });
+  const release = result.contactReservations.get("1:2");
+
+  assert.equal(release.kind, "releasing");
+  assert.equal(release.collisionExtent, 0.3);
+  assert.equal(release.mayDeepen, false);
 });
 
 test("mixed radii use both sourced floors rather than a unit-specific override", () => {

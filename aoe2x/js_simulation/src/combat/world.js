@@ -35,13 +35,6 @@ import {
   planPreventiveContactSteering,
   PREVENTIVE_CONTACT_STEERING_STRENGTH,
 } from "./contact-graph-steering.js";
-import {
-  alliedTransitPairKey,
-  updateAlliedTransit,
-} from "./allied-transit.js";
-import {
-  updateRangedAlliedIngress,
-} from "./allied-overlap.js";
 import { proposeMovement, proposePointMovement } from "./movement.js";
 import {
   createSoloNavigationState,
@@ -75,7 +68,7 @@ import {
   reloadTicks,
   trampleSpec,
 } from "./attacks.js";
-import { allyCollisionRadius, collisionRadius } from "./targeting.js";
+import { collisionRadius } from "./targeting.js";
 
 
 const DEFAULT_MAP = Object.freeze({
@@ -90,7 +83,6 @@ const DEFAULT_MAP = Object.freeze({
 // up to the ceiling for those.
 const DEFAULT_WORLD_TICKS = 3600;
 const MAX_WORLD_TICKS = 9000;
-const WAR_WAGON_MASTER = 829;
 
 
 function hasMeleeMode(unit) {
@@ -226,23 +218,7 @@ export function createWorld(scenario) {
     .filter(hasMeleeMode)
     .map(({ owner }) => owner))]
     .sort((left, right) => left - right);
-  const contactReservationState = meleeOwners.length > 0
-    ? createContactReservationState()
-    : null;
-  const rangedAlliedIngressOwners = scenario.rangedAlliedIngressOwners;
-  if (rangedAlliedIngressOwners !== undefined) {
-    if (!Array.isArray(rangedAlliedIngressOwners)
-        || rangedAlliedIngressOwners.length === 0
-        || new Set(rangedAlliedIngressOwners).size !== rangedAlliedIngressOwners.length
-        || rangedAlliedIngressOwners.some((owner) => !Number.isSafeInteger(owner))) {
-      throw new TypeError(
-        "ranged allied-ingress owners must be a non-empty unique integer list",
-      );
-    }
-    if (rangedAlliedIngressOwners.some((owner) => !scenarioOwners.has(owner))) {
-      throw new RangeError("ranged allied-ingress owner must identify a scenario owner");
-    }
-  }
+  const contactReservationState = createContactReservationState();
   if (scenario.rangedTargetPressureOwner !== undefined
       && !Number.isSafeInteger(scenario.rangedTargetPressureOwner)) {
     throw new TypeError("ranged target pressure owner must be a safe integer");
@@ -267,27 +243,6 @@ export function createWorld(scenario) {
       && !units.some(({ owner }) => owner === scenario.rangedWindupRetargetOwner)) {
     throw new RangeError("ranged windup retarget owner must identify a scenario owner");
   }
-  const warWagonEnemyOverlapDepth = scenario.warWagonEnemyOverlapDepthTiles;
-  if (warWagonEnemyOverlapDepth !== undefined
-      && (!Number.isFinite(warWagonEnemyOverlapDepth)
-        || warWagonEnemyOverlapDepth < 0)) {
-    throw new RangeError("War Wagon enemy overlap depth must be nonnegative and finite");
-  }
-  const warWagonEnemyOverlapMode = scenario.warWagonEnemyOverlapMode ?? "always";
-  if (![
-    "always",
-    "attacking-any",
-    "attacking-target",
-    "attacking-other",
-  ].includes(warWagonEnemyOverlapMode)) {
-    throw new RangeError(`unknown War Wagon enemy overlap mode ${warWagonEnemyOverlapMode}`);
-  }
-  const enemyOverlapDepthByMaster = warWagonEnemyOverlapDepth === undefined
-    ? null
-    : new Map([[WAR_WAGON_MASTER, Object.freeze({
-      depth: warWagonEnemyOverlapDepth,
-      mode: warWagonEnemyOverlapMode,
-    })]]);
   const events = Object.freeze([]);
   const kiteState = Number.isSafeInteger(scenario.kiteOwner)
     ? createKiteState(
@@ -299,13 +254,6 @@ export function createWorld(scenario) {
     )
     : null;
   let contactSteeringStates = null;
-  const rangedAlliedIngressState = rangedAlliedIngressOwners === undefined
-    ? null
-    : {
-      perOwner: new Map(rangedAlliedIngressOwners.map((owner) => [owner, {
-        reservations: new Map(),
-      }])),
-    };
   if (kiteState) kiteState.collisionRecoveryState = { active: false };
   if (scenario.kiteChaseDwellTicks !== undefined) {
     if (!kiteState) {
@@ -363,26 +311,6 @@ export function createWorld(scenario) {
       steeredUnits: new Set(),
     }]));
   }
-  if (scenario.pairwiseAlliedTransit === true
-      && scenario.reachMeleeWedgeTransit === true) {
-    throw new RangeError("allied transit modes are mutually exclusive");
-  }
-  const alliedTransitMode = scenario.reachMeleeWedgeTransit === true
-    ? "reach-wedge"
-    : (scenario.pairwiseAlliedTransit === true ? "ordinary" : null);
-  if (alliedTransitMode !== null) {
-    if (!kiteState || scenario.kiteMeleeOpeningOrder !== "attack-move-all") {
-      throw new RangeError(alliedTransitMode === "reach-wedge"
-        ? "reach-melee wedge transit requires a kiting attack-move scenario"
-        : "pairwise allied transit requires a kiting attack-move scenario");
-    }
-    kiteState.alliedTransit = {
-      mode: alliedTransitMode,
-      cohort: new Set(),
-      reservations: new Map(),
-      pairKeys: new Set(),
-    };
-  }
   const snapshot = createSnapshot(0, units, events,
     soloNavigationSnapshot(kiteState?.soloNavigationState));
   // Charge-projectile flight queue, present only when the roster can fire one
@@ -400,7 +328,6 @@ export function createWorld(scenario) {
     // the scenario names a kiting owner, so every other world keeps its
     // exact published shape.
     ...(kiteState ? { kiteState } : {}),
-    ...(rangedAlliedIngressState ? { rangedAlliedIngressState } : {}),
     ...(Number.isSafeInteger(scenario.rangedTargetPressureOwner)
       ? { rangedTargetPressureOwner: scenario.rangedTargetPressureOwner }
       : {}),
@@ -410,12 +337,9 @@ export function createWorld(scenario) {
     ...(Number.isSafeInteger(scenario.rangedWindupRetargetOwner)
       ? { rangedWindupRetargetOwner: scenario.rangedWindupRetargetOwner }
       : {}),
-    ...(contactReservationState ? {
-      contactReservationState,
-      contactReservationDiagnostics: Object.freeze([]),
-    } : {}),
+    contactReservationState,
+    contactReservationDiagnostics: Object.freeze([]),
     ...(contactSteeringStates ? { contactSteeringStates } : {}),
-    ...(enemyOverlapDepthByMaster ? { enemyOverlapDepthByMaster } : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     // Deterministic per-shot RNG, present only when a unit can miss or blast
     // (dat accuracy < 100 or blast width > 0 — nothing in the converged
@@ -732,36 +656,17 @@ const STEER_INCREMENT_RADIANS = Math.PI / 12;
 const STEER_MAX_TURNS = 6;
 
 
-function stepClearsBodies(mover, dx, dy, live, proposalByReference, bounds,
-  alliedTransitPairs, pairInteractions) {
+function stepClearsBodies(mover, dx, dy, live, bounds, pairInteractions) {
   const x = mover.x + dx;
   const y = mover.y + dy;
   const radius = collisionRadius(mover);
   if (x < radius - STEP_EPSILON || x > bounds.width - radius + STEP_EPSILON
     || y < radius - STEP_EPSILON || y > bounds.height - radius + STEP_EPSILON) return false;
-  const moverProposal = proposalByReference.get(mover.referenceId);
-  const moverMoving = moverProposal !== undefined
-    && (moverProposal.dx !== 0 || moverProposal.dy !== 0);
   for (const other of live) {
     if (other.referenceId === mover.referenceId) continue;
-    const allied = other.owner === mover.owner;
-    if (allied && alliedTransitPairs.has(alliedTransitPairKey(
-      mover.referenceId, other.referenceId,
-    ))) continue;
-    // Same three rules the constraint solver applies (see collision.js):
-    // formation-mates ignore each other, a moving unit shrinks against a
-    // friendly, enemies always hold the full box.
-    if (allied && mover.moveOrder && other.moveOrder) continue;
-    const otherProposal = proposalByReference.get(other.referenceId);
-    const otherMoving = otherProposal !== undefined
-      && (otherProposal.dx !== 0 || otherProposal.dy !== 0);
-    const enemyInteraction = allied
-      ? null : resolvePairInteraction(mover, other, pairInteractions);
-    if (enemyInteraction && !enemyInteraction.pathObstructs) continue;
-    const extent = allied
-      ? (moverMoving ? allyCollisionRadius(mover) : radius)
-        + (otherMoving ? allyCollisionRadius(other) : collisionRadius(other))
-      : enemyInteraction.collisionExtent;
+    const interaction = resolvePairInteraction(mover, other, pairInteractions);
+    if (!interaction.pathObstructs) continue;
+    const extent = interaction.collisionExtent;
     if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
       return false;
     }
@@ -822,13 +727,8 @@ function stepHitsOtherEnemyBody(mover, dx, dy, live, pairInteractions) {
 
 function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = false,
   movementOptions = {}) {
-  const alliedTransitPairs = movementOptions.alliedTransitPairs ?? new Set();
   const pairInteractions = movementOptions.pairInteractions
-    ?? createPairInteractionSnapshot({
-      alliedTransitPairs,
-      legacyEnemyOverlapDepthByMaster:
-        movementOptions.enemyOverlapDepthByMaster ?? new Map(),
-    });
+    ?? createPairInteractionSnapshot();
   const hasMinimumRangeRetreat = planned.proposals.some(({ movementIntent }) => (
     movementIntent === "minimum-range-retreat"
   ));
@@ -838,9 +738,6 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
   const escapeActive = KITED_SIDE_STEER || kitedEscape;
   const bounds = { width: map.width, height: map.height };
   const byReference = new Map(planned.units.map((unit) => [unit.referenceId, unit]));
-  const proposalByReference = new Map(
-    planned.proposals.map((proposal) => [proposal.referenceId, proposal]),
-  );
   const steered = new Set();
   const proposals = planned.proposals.map((proposal) => {
     const distance = Math.hypot(proposal.dx, proposal.dy);
@@ -883,8 +780,7 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
       }
     }
     if (stepClearsBodies(mover, proposal.dx, proposal.dy, planned.units,
-      proposalByReference, bounds, alliedTransitPairs,
-      pairInteractions)) return proposal;
+      bounds, pairInteractions)) return proposal;
     steered.add(proposal.referenceId);
     const heading = Math.atan2(proposal.dy, proposal.dx);
     // Retreaters keep a stable parity-selected side on symmetric choices.
@@ -900,8 +796,8 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
         const angle = heading + side * turn * STEER_INCREMENT_RADIANS;
         const dx = Math.cos(angle) * distance;
         const dy = Math.sin(angle) * distance;
-        if (stepClearsBodies(mover, dx, dy, planned.units, proposalByReference, bounds,
-          alliedTransitPairs, pairInteractions)) {
+        if (stepClearsBodies(mover, dx, dy, planned.units, bounds,
+          pairInteractions)) {
           return Object.freeze({ ...proposal, dx, dy });
         }
       }
@@ -968,18 +864,11 @@ function resolveMovement(planned, byReference, map, kiteState = null, movementOp
 
 
 function moveUnits(units, map, tick, events, kiteState = null,
-  contactReservationState = null, contactSteeringStates = new Map(),
-  enemyOverlapDepthByMaster = new Map(), rangedAlliedIngressState = null) {
+  contactReservationState = null, contactSteeringStates = new Map()) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
-  const priorRangedIngressPairs = new Set(rangedAlliedIngressState
-    ? [...rangedAlliedIngressState.perOwner.values()]
-      .flatMap(({ reservations }) => [...reservations.keys()])
-    : []);
   let pairInteractions = createPairInteractionSnapshot({
     contactReservations: contactReservationState?.reservations ?? new Map(),
-    alliedRangedIngressPairs: priorRangedIngressPairs,
-    legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
   });
   const soloDestinations = kiteState?.soloNavigationState
     ? planSoloNavigation(
@@ -1187,7 +1076,6 @@ function moveUnits(units, map, tick, events, kiteState = null,
   if (contactUpdate) {
     pairInteractions = createPairInteractionSnapshot({
       contactReservations: contactUpdate.contactReservations,
-      legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
     });
     for (const diagnostic of contactUpdate.diagnostics) {
       const [leftId, rightId] = diagnostic.pairKey.split(":").map(Number);
@@ -1201,29 +1089,9 @@ function moveUnits(units, map, tick, events, kiteState = null,
       ));
     }
   }
-  let alliedTransitPairs = new Set();
-  if (!contactUpdate && kiteState?.alliedTransit) {
-    const updatedTransit = updateAlliedTransit(kiteState.alliedTransit, live, proposals);
-    kiteState.alliedTransit.reservations = updatedTransit.reservations;
-    kiteState.alliedTransit.pairKeys = updatedTransit.pairKeys;
-    alliedTransitPairs = updatedTransit.pairKeys;
-  }
-  const alliedRangedIngressPairs = new Set();
-  if (!contactUpdate && rangedAlliedIngressState) {
-    for (const [owner, state] of rangedAlliedIngressState.perOwner) {
-      const updatedIngress = updateRangedAlliedIngress(state, live, proposals, owner);
-      state.reservations = updatedIngress.reservations;
-      for (const key of updatedIngress.pairKeys) alliedRangedIngressPairs.add(key);
-    }
-  }
   let movementOptions = {
-    alliedTransitPairs,
-    enemyOverlapDepthByMaster,
     pairInteractions: createPairInteractionSnapshot({
       contactReservations: contactUpdate?.contactReservations ?? new Map(),
-      alliedTransitPairs,
-      alliedRangedIngressPairs,
-      legacyEnemyOverlapDepthByMaster: enemyOverlapDepthByMaster,
     }),
     ...(kiteState ? { collisionRecoveryState: kiteState.collisionRecoveryState } : {}),
   };
@@ -1441,12 +1309,14 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
         for (const candidate of snapshot) {
           if (!candidate.alive || candidate.owner === unit.owner) continue;
           if (candidate.referenceId === unit.pursuitTargetId) continue;
-          const contactGap = pairInteractions.circularEnemyContact
-            ? Math.max(
-              Math.abs(candidate.x - unit.x),
-              Math.abs(candidate.y - unit.y),
-            ) - resolvePairInteraction(unit, candidate, pairInteractions).attackSurfaceExtent
-            : chebyshevGap(unit, candidate);
+          const contactGap = Math.max(
+            Math.abs(candidate.x - unit.x),
+            Math.abs(candidate.y - unit.y),
+          ) - resolvePairInteraction(
+            unit,
+            candidate,
+            pairInteractions,
+          ).attackSurfaceExtent;
           if (contactGap > CONTACT_CAPTURE_EPSILON) continue;
           const towardX = candidate.x - unit.x;
           const towardY = candidate.y - unit.y;
@@ -2304,8 +2174,6 @@ export function stepWorld(world) {
     world.kiteState ?? null,
     world.contactReservationState ?? null,
     world.contactSteeringStates ?? new Map(),
-    world.enemyOverlapDepthByMaster ?? new Map(),
-    world.rangedAlliedIngressState ?? null,
   );
   updateEngagements(
     units,

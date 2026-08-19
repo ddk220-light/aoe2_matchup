@@ -15,14 +15,6 @@ const mechanicsUrl = new URL(
   import.meta.url,
 );
 const mechanics = JSON.parse(await readFile(mechanicsUrl, "utf8"));
-const paladinMechanics = JSON.parse(await readFile(
-  new URL("../fixtures/unit_stats/paladin_spanish_imperial.json", import.meta.url),
-  "utf8",
-));
-const warWagonMechanics = JSON.parse(await readFile(
-  new URL("../fixtures/unit_stats/elite_war_wagon_koreans_imperial.json", import.meta.url),
-  "utf8",
-));
 const openMap = Object.freeze({ width: 10, height: 10, obstacles: Object.freeze([]) });
 
 
@@ -96,9 +88,11 @@ test("unblocked pursuit moves exactly speed divided by 60", async () => {
   const result = proposeMovement(mover, target, 60);
 
   assert.equal(result.referenceId, 1);
-  assert.ok(Math.abs(Math.hypot(result.dx, result.dy) - 1.06 / 60) < 1e-12);
-  assert.ok(Math.abs(result.dx - 0.0106) < 1e-12);
-  assert.ok(Math.abs(result.dy - 1.06 / 60 * 4 / 5) < 1e-12);
+  assert.ok(Math.abs(
+    Math.hypot(result.dx, result.dy) - mechanics.speed_tiles_per_second / 60,
+  ) < 1e-12);
+  assert.ok(Math.abs(result.dx - mechanics.speed_tiles_per_second / 60 * 3 / 5) < 1e-12);
+  assert.ok(Math.abs(result.dy - mechanics.speed_tiles_per_second / 60 * 4 / 5) < 1e-12);
 });
 
 
@@ -128,39 +122,6 @@ test("path waypoint movement reaches the point without subtracting a target body
 });
 
 
-test("War Wagon pursuit keeps moving inside raw contact until its configured overlap limit", async () => {
-  const { proposeMovement } = await loadMovement();
-  const wagon = unit({
-    referenceId: 1,
-    x: 4,
-    y: 4,
-    unitMechanics: warWagonMechanics,
-  });
-  const champion = unit({ referenceId: 2, owner: 3, x: 4.6, y: 4 });
-
-  const result = proposeMovement(wagon, champion, 60, {
-    enemyOverlapDepthByMaster: new Map([[829, 0.1]]),
-  });
-
-  assert.ok(Math.abs(result.dx - warWagonMechanics.speed_tiles_per_second / 60) < 1e-12);
-  assert.equal(result.dy, 0);
-});
-
-
-test("War Wagon overlap movement policy does not move an unrelated pair inside contact", async () => {
-  const { proposeMovement } = await loadMovement();
-  const mover = unit({ referenceId: 1, x: 4, y: 4 });
-  const target = unit({ referenceId: 2, owner: 3, x: 4.35, y: 4 });
-
-  const result = proposeMovement(mover, target, 60, {
-    enemyOverlapDepthByMaster: new Map([[829, 0.1]]),
-  });
-
-  assert.equal(result.dx, 0);
-  assert.equal(result.dy, 0);
-});
-
-
 test("head-on Champions split the available gap without penetrating", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const left = unit({ referenceId: 1, x: 4, y: 4 });
@@ -179,130 +140,22 @@ test("head-on Champions split the available gap without penetrating", async () =
 });
 
 
-test("a configured War Wagon pair may enter only its bounded enemy overlap depth", async () => {
-  const { resolveMovementProposals } = await loadCollision();
-  const wagon = unit({
-    referenceId: 1,
-    x: 4,
-    y: 4,
-    unitMechanics: warWagonMechanics,
-  });
-  const champion = unit({ referenceId: 2, owner: 3, x: 4.67, y: 4 });
-
-  const next = resolveMovementProposals(
-    [wagon, champion],
-    [proposal(1, 0.08, 0), proposal(2, -0.08, 0)],
-    openMap,
-    { enemyOverlapDepthByMaster: new Map([[829, 0.1]]) },
-  );
-  const separation = Math.abs(next[1].x - next[0].x);
-
-  assert.ok(Math.abs(separation - 0.55) < 1e-12);
-  assert.ok(Math.abs(surfaceGap(next[0], next[1]) + 0.1) < 1e-12);
-});
-
-
-test("an attacking-only War Wagon overlap policy opens during attack lock, not pursuit", async () => {
-  const { resolveMovementProposals } = await loadCollision();
-  const wagon = unit({
-    referenceId: 1,
-    x: 4,
-    y: 4,
-    unitMechanics: warWagonMechanics,
-  });
-  const pursuing = unit({ referenceId: 2, owner: 3, x: 4.67, y: 4 });
-  const attacking = unit({
-    referenceId: 2,
-    owner: 3,
-    x: 4.67,
-    y: 4,
-    action: "attacking",
-    pursuitTargetId: 1,
-    engagedTargetId: 1,
-    attackTargetId: 1,
-  });
-  const proposals = [proposal(1, 0.08, 0), proposal(2, -0.08, 0)];
-  const options = {
-    enemyOverlapDepthByMaster: new Map([[
-      829,
-      Object.freeze({ depth: 0.1, mode: "attacking-any" }),
-    ]]),
-  };
-
-  const pursuitResult = resolveMovementProposals(
-    [wagon, pursuing], proposals, openMap, options,
-  );
-  const attackResult = resolveMovementProposals(
-    [wagon, attacking], proposals, openMap, options,
-  );
-
-  assert.ok(Math.abs(pursuitResult[1].x - pursuitResult[0].x - 0.65) < 1e-12);
-  assert.ok(Math.abs(attackResult[1].x - attackResult[0].x - 0.55) < 1e-12);
-});
-
-
-test("attack-locked War Wagon overlap remains legal until the pair separates", async () => {
-  const { resolveMovementProposals } = await loadCollision();
-  const wagon = unit({
-    referenceId: 1,
-    x: 4,
-    y: 4,
-    unitMechanics: warWagonMechanics,
-  });
-  const releasedChampion = unit({
-    referenceId: 2,
-    owner: 3,
-    x: 4.58,
-    y: 4,
-    action: "idle",
-  });
-  const options = {
-    enemyOverlapDepthByMaster: new Map([[
-      829,
-      Object.freeze({ depth: 0.1, mode: "attacking-any" }),
-    ]]),
-  };
-
-  const next = resolveMovementProposals(
-    [wagon, releasedChampion],
-    [proposal(1, -0.02, 0), proposal(2, 0.02, 0)],
-    openMap,
-    options,
-  );
-
-  assert.ok(Math.abs(next[1].x - next[0].x - 0.62) < 1e-12);
-});
-
-
-test("a War Wagon overlap policy does not relax unrelated enemy pairs", async () => {
-  const { resolveMovementProposals } = await loadCollision();
-  const left = unit({ referenceId: 1, x: 4, y: 4 });
-  const right = unit({ referenceId: 2, owner: 3, x: 4.42, y: 4 });
-
-  const next = resolveMovementProposals(
-    [left, right],
-    [proposal(1, 0.04, 0), proposal(2, -0.04, 0)],
-    openMap,
-    { enemyOverlapDepthByMaster: new Map([[829, 0.1]]) },
-  );
-
-  assert.ok(Math.abs(next[1].x - next[0].x - 0.4) < 1e-12);
-  assertNonpenetrating(next);
-});
-
-
 test("a reserved enemy-transit pair can cross while an unrelated enemy remains hard", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const chaser = unit({ referenceId: 1, owner: 3, x: 4, y: 4 });
   const blocker = unit({ referenceId: 2, owner: 2, x: 4.5, y: 4 });
-  const third = unit({ referenceId: 3, owner: 2, x: 4.8, y: 4 });
+  const third = unit({ referenceId: 3, owner: 2, x: 4.9, y: 4 });
   const pairInteractions = createPairInteractionSnapshot({
-    enemyTransitPairs: new Map([["1:2", Object.freeze({
-      chaserId: 1,
-      blockerId: 2,
-      pursuitTargetId: 3,
-      acquisitionAxis: "x",
-      acquisitionSign: 1,
+    contactReservations: new Map([["1:2", Object.freeze({
+      leftId: 1,
+      rightId: 2,
+      kind: "enemy-transit",
+      collisionExtent: 0.2,
+      attackSurfaceExtent: 0.4,
+      pathObstructs: false,
+      mayDeepen: true,
+      initiatorId: 1,
+      targetId: 3,
       acquiredTick: 10,
     })]]),
   });
@@ -316,7 +169,7 @@ test("a reserved enemy-transit pair can cross while an unrelated enemy remains h
   const moved = next.find(({ referenceId }) => referenceId === 1);
 
   assert.ok(moved.x > 4.1, "the reserved blocker must not stop the chaser");
-  assert.ok(moved.x <= 4.4 + 1e-12, "the unrelated enemy must remain hard");
+  assert.ok(moved.x <= 4.5 + 1e-12, "the unrelated enemy must remain hard");
 });
 
 
@@ -325,7 +178,18 @@ test("inherited enemy overlap is accepted but cannot deepen", async () => {
   const left = unit({ referenceId: 1, owner: 3, x: 4, y: 4 });
   const right = unit({ referenceId: 2, owner: 2, x: 4.3, y: 4 });
   const pairInteractions = createPairInteractionSnapshot({
-    inheritedEnemyContactExtents: new Map([["1:2", 0.3]]),
+    contactReservations: new Map([["1:2", Object.freeze({
+      leftId: 1,
+      rightId: 2,
+      kind: "releasing",
+      collisionExtent: 0.3,
+      attackSurfaceExtent: 0.4,
+      pathObstructs: true,
+      mayDeepen: false,
+      initiatorId: null,
+      targetId: null,
+      acquiredTick: 10,
+    })]]),
   });
 
   const next = resolveMovementProposals(
@@ -399,8 +263,8 @@ test("an allied-transit reservation lets one pair cross while a third ally still
   const { resolveMovementProposals } = await loadCollision();
   const snapshot = [
     unit({ referenceId: 1, x: 4, y: 4 }),
-    unit({ referenceId: 2, x: 4.38, y: 4 }),
-    unit({ referenceId: 3, x: 4.76, y: 4 }),
+    unit({ referenceId: 2, x: 4.4, y: 4 }),
+    unit({ referenceId: 3, x: 4.8, y: 4 }),
   ];
   const proposals = [
     proposal(1, 0.04, 0),
@@ -409,46 +273,29 @@ test("an allied-transit reservation lets one pair cross while a third ally still
   ];
 
   const ordinary = resolveMovementProposals(snapshot, proposals, openMap);
+  const pairInteractions = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", Object.freeze({
+      leftId: 1,
+      rightId: 2,
+      kind: "allied-transit",
+      collisionExtent: 0.2,
+      attackSurfaceExtent: 0.4,
+      pathObstructs: false,
+      mayDeepen: true,
+      initiatorId: 1,
+      targetId: null,
+      acquiredTick: 10,
+    })]]),
+  });
   const transit = resolveMovementProposals(snapshot, proposals, openMap, {
-    alliedTransitPairs: new Set(["1:2"]),
+    pairInteractions,
   });
   const ordinaryById = new Map(ordinary.map((current) => [current.referenceId, current]));
   const transitById = new Map(transit.map((current) => [current.referenceId, current]));
 
-  assert.ok(Math.abs(ordinaryById.get(2).x - ordinaryById.get(1).x) >= 0.32 - 1e-12);
-  assert.ok(Math.abs(transitById.get(2).x - transitById.get(1).x) < 0.32);
-  assert.ok(Math.abs(transitById.get(3).x - transitById.get(2).x) >= 0.32 - 1e-12);
-});
-
-
-test("exclusive allied shrink gives a third cavalry unit one shallow edge, never a triangle", async () => {
-  const { resolveMovementProposals } = await loadCollision();
-  const snapshot = [
-    unit({ referenceId: 1, owner: 3, x: 4, y: 4, unitMechanics: paladinMechanics }),
-    unit({ referenceId: 2, owner: 3, x: 4.5, y: 4, unitMechanics: paladinMechanics }),
-    unit({ referenceId: 3, owner: 3, x: 4.75, y: 4.5, unitMechanics: paladinMechanics }),
-  ];
-  const next = resolveMovementProposals(
-    snapshot,
-    [proposal(1, 0.2, 0), proposal(2, -0.2, 0), proposal(3, 0, -0.2)],
-    openMap,
-    {
-      exclusiveAlliedShrinkOwners: new Set([3]),
-      alliedShrinkPairs: new Set(["1:2"]),
-      alliedShallowPairs: new Set(["2:3"]),
-      alliedShrinkReservedIds: new Set([1, 2]),
-    },
-  );
-  const byId = new Map(next.map((current) => [current.referenceId, current]));
-  const separation = (leftId, rightId) => Math.max(
-    Math.abs(byId.get(leftId).x - byId.get(rightId).x),
-    Math.abs(byId.get(leftId).y - byId.get(rightId).y),
-  );
-
-  assert.ok(Math.abs(separation(1, 2) - 0.25) < 1e-12);
-  assert.ok(separation(1, 3) >= 0.5 - 1e-12);
-  assert.ok(separation(2, 3) >= 0.375 - 1e-12);
-  assert.ok(separation(2, 3) < 0.5 - 1e-12);
+  assert.ok(Math.abs(ordinaryById.get(2).x - ordinaryById.get(1).x) >= 0.4 - 1e-12);
+  assert.ok(Math.abs(transitById.get(2).x - transitById.get(1).x) < 0.4);
+  assert.ok(Math.abs(transitById.get(3).x - transitById.get(2).x) >= 0.4 - 1e-12);
 });
 
 
@@ -456,11 +303,26 @@ test("allies that begin a tick overlapped may co-move without healing or deepeni
   const { resolveMovementProposals } = await loadCollision();
   const left = unit({ referenceId: 1, x: 4, y: 4 });
   const right = unit({ referenceId: 2, x: 4.15, y: 4 });
+  const pairInteractions = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", Object.freeze({
+      leftId: 1,
+      rightId: 2,
+      kind: "releasing",
+      collisionExtent: 0.15,
+      attackSurfaceExtent: 0.4,
+      pathObstructs: true,
+      mayDeepen: false,
+      initiatorId: null,
+      targetId: null,
+      acquiredTick: 10,
+    })]]),
+  });
 
   const next = resolveMovementProposals(
     [left, right],
     [proposal(1, 0.02, 0), proposal(2, 0.02, 0)],
     openMap,
+    { pairInteractions },
   );
 
   assert.ok(Math.abs(next[0].x - 4.02) < 1e-12);
@@ -487,7 +349,7 @@ test("contact removes only the inward normal and keeps collision-free tangent", 
 });
 
 
-test("a swept tangent from outside contact is not clipped by linear projection", async () => {
+test("a swept tangent on a releasing contact is not clipped by linear projection", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const mover = unit({
     referenceId: 1,
@@ -496,16 +358,38 @@ test("a swept tangent from outside contact is not clipped by linear projection",
   });
   const blocker = unit({ referenceId: 2, x: 4.35856, y: 7.358579 });
   const tangent = proposal(1, 0.004701209638722499, 0.0193425586453437);
+  const currentExtent = Math.max(
+    Math.abs(mover.x - blocker.x),
+    Math.abs(mover.y - blocker.y),
+  );
+  const pairInteractions = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", Object.freeze({
+      leftId: 1,
+      rightId: 2,
+      kind: "releasing",
+      collisionExtent: currentExtent,
+      attackSurfaceExtent: 0.4,
+      pathObstructs: true,
+      mayDeepen: false,
+      initiatorId: null,
+      targetId: null,
+      acquiredTick: 10,
+    })]]),
+  });
 
   const next = resolveMovementProposals(
     [mover, blocker],
     [tangent, proposal(2, 0, 0)],
     openMap,
+    { pairInteractions },
   );
 
   assert.ok(Math.abs(next[0].x - mover.x - tangent.dx) < 1e-12);
   assert.ok(Math.abs(next[0].y - mover.y - tangent.dy) < 1e-12);
-  assertNonpenetrating(next);
+  assert.ok(Math.max(
+    Math.abs(next[0].x - next[1].x),
+    Math.abs(next[0].y - next[1].y),
+  ) >= currentExtent - 1e-12);
 });
 
 

@@ -233,7 +233,7 @@ function fightSelection(url) {
 
 export function kitingObservationSelection(url) {
   const allowedKeys = new Set([
-    "ranged", "melee", "navigation", "n2", "n3", "enemyTransit",
+    "ranged", "melee", "navigation", "n2", "n3",
   ]);
   const keys = [...url.searchParams.keys()];
   if (keys.some((key) => !allowedKeys.has(key))
@@ -242,8 +242,6 @@ export function kitingObservationSelection(url) {
   const rangedSlug = url.searchParams.get("ranged") ?? "hand_cannoneer";
   const meleeSlug = url.searchParams.get("melee") ?? "champion";
   const navigation = url.searchParams.get("navigation") ?? "cohesive";
-  const enemyTransit = url.searchParams.get("enemyTransit");
-  if (enemyTransit !== null && enemyTransit !== "pairwise") return null;
   const matchup = KITE_OBSERVATION_MATCHUPS.find((row) => (
     row.rangedSlug === rangedSlug && row.meleeSlug === meleeSlug
   ));
@@ -251,11 +249,8 @@ export function kitingObservationSelection(url) {
 
   const raw2 = url.searchParams.get("n2");
   const raw3 = url.searchParams.get("n3");
-  const transitSelection = enemyTransit === "pairwise"
-    ? { pairwiseEnemyTransit: true }
-    : {};
   if (raw2 === null && raw3 === null) {
-    return { rangedSlug, meleeSlug, navigation, ...transitSelection };
+    return { rangedSlug, meleeSlug, navigation };
   }
   if ((raw2 === null) !== (raw3 === null)
       || !/^(?:[1-9]|1\d|2[01])$/.test(raw2)
@@ -267,7 +262,7 @@ export function kitingObservationSelection(url) {
   const n2 = Number(raw2);
   const n3 = Number(raw3);
   if (n2 > sideCapacity(2, family) || n3 > sideCapacity(3, family)) return null;
-  return { rangedSlug, meleeSlug, navigation, n2, n3, ...transitSelection };
+  return { rangedSlug, meleeSlug, navigation, n2, n3 };
 }
 
 

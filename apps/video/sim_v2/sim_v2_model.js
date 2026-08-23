@@ -64,6 +64,23 @@ process.env.GRAZE_K = "1.5";
 process.env.BLOCK = "1";
 process.env.GAP = "160";
 process.env.BSP = "30";
+//   SLOT = 4   ENVELOPMENT. Melee target selection treats an enemy whose contact
+//          ring already holds >= SLOT attackers as "full", so overflow attackers
+//          pick the next-nearest enemy and slide around to the flanks/rear —
+//          encirclement emerges (no fudge multiplier). Without it the sim caps the
+//          numerically-superior side's ENGAGED count at frontage-parity with the
+//          smaller side, silently discarding its numbers. Root-caused on ETG(12)
+//          vs White Feather Guard(21) (2026-07-07): the 5 in-game rolls are a clean
+//          0/5 ETG LOSS (WFG keeps ~11/21) because all 21 WFG engage the 12 ETG,
+//          yet the no-SLOT sim let only ~8 WFG engage (= the ETG frontage) and
+//          called it an 80% ETG WIN. With SLOT=4 the WFG bring ~10 units to bear
+//          and the sim flips to a 100% WFG win keeping ~9-10/21 — matching the
+//          rolls. Stable plateau at SLOT 4-6 (identical); SLOT=3 is still bimodal.
+//          This is the principled fix for the whole "outnumbered high-HP unit
+//          over-rated vs a cheaper swarm" class (WFG / Konnik / Huskarl), not a
+//          per-matchup override. (Supersedes the old "SLOT superseded by RTRUE"
+//          note — RTRUE fixed body radius, but engagement still needed SLOT.)
+process.env.SLOT = process.env.SLOT || "4";
 // Pin the sim time-cap and ramp so a caller passing positional argv (which
 // headless_sim reads as RAMP/SEEDS/MAXS fallbacks) can NEVER shorten the fight.
 // (Bug found 2026-07-06: sim_one_v2 passed the opponent count as argv[4], which
@@ -71,7 +88,7 @@ process.env.BSP = "30";
 process.env.MAXS = process.env.MAXS || "180";
 process.env.SEEDS = process.env.SEEDS || "8";
 process.env.RAMP = process.env.RAMP || "window";
-// RAMP stays the shipped 5s-window ramp (the file already has it). No SLOT
-// (superseded by RTRUE), no SPAWN=game (that is Huskarl-specific).
+// RAMP stays the shipped 5s-window ramp (the file already has it). SLOT=4 is now
+// enabled (see the ENVELOPMENT knob above); no SPAWN=game (that is Huskarl-specific).
 
 module.exports = require("./headless_sim");

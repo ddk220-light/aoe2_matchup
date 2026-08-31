@@ -5,7 +5,7 @@
     "watchPatterns": ["apps/website/**", "aoe2x/**", "data/golden/**"]
   },
   "deploy": {
-    "startCommand": "cd apps/website && gunicorn app:app --workers 2 --timeout 300 --graceful-timeout 300",
+    "startCommand": "cd apps/website && gunicorn app:app --workers 1 --threads 2 --worker-class gthread --timeout 300 --graceful-timeout 300",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

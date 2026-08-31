@@ -136,7 +136,7 @@ test("the RvR AI side preserves an unreleased windup when its target dies", () =
 });
 
 
-test("ranged ingress respects the units' sourced minimum collision floor", () => {
+test("an isolated ranged pair compresses below its old one-lane DAT floor", () => {
   const world = createWorld({
     ratio: "2v1-ranged-ingress-test",
     mapHash: "ranged-ingress-test-map",
@@ -151,20 +151,12 @@ test("ranged ingress respects the units' sourced minimum collision floor", () =>
   let next = world;
   for (let tick = 0; tick < 10; tick += 1) {
     next = stepWorld(next);
-    if (next.contactReservationState.reservations.has("200:201")) break;
   }
   const front = next.units.find(({ referenceId }) => referenceId === 200);
   const rear = next.units.find(({ referenceId }) => referenceId === 201);
 
-  assert.equal(
-    next.contactReservationState.reservations.has("200:201"),
-    true,
-    JSON.stringify({
-      front: { y: front.y, action: front.action, pursuit: front.pursuitTargetId },
-      rear: { y: rear.y, action: rear.action, pursuit: rear.pursuitTargetId },
-      events: next.events,
-    }),
-  );
-  assert.ok(Math.abs(front.y - rear.y) <= 0.4 + 1e-9);
-  assert.ok(Math.abs(front.y - rear.y) >= 0.4 - 1e-9);
+  const separation = Math.abs(front.y - rear.y);
+  assert.ok(separation < 0.4 - 1e-9, JSON.stringify({ front, rear, events: next.events }));
+  assert.ok(separation >= 0.4 * 0.025 - 1e-9);
+  assert.equal(next.pursuitRecoveryState.attempts.get(201) ?? 0, 0);
 });

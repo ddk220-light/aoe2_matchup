@@ -29,6 +29,7 @@ function unit({
   windup = 0,
   reload = 0,
   acquire = 0,
+  swing = 0,
   unitMechanics = mechanics,
 } = {}) {
   return {
@@ -46,7 +47,7 @@ function unit({
     attackTargetId,
     avoidance: null,
     action,
-    actionTimers: { windup, reload, acquire },
+    actionTimers: { windup, reload, acquire, swing },
   };
 }
 
@@ -100,6 +101,71 @@ test("published unit state rejects the ambiguous legacy target field", async () 
     ])),
     /legacy targetId.*ambiguous/i,
   );
+});
+
+
+test("directional diplomacy controls acquisition independently for each owner", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  let world = createWorld(scenario([
+    unit({ referenceId: 1, owner: 2, x: 2, y: 5 }),
+    unit({ referenceId: 2, owner: 3, x: 4, y: 5 }),
+    unit({ referenceId: 3, owner: 4, x: 6, y: 5 }),
+  ], {
+    diplomacyByOwner: {
+      2: { 3: 3, 4: 0 },
+      3: { 2: 0, 4: 3 },
+      4: { 2: 0, 3: 3 },
+    },
+  }));
+
+  world = stepWorld(world);
+  assert.equal(world.units.find(({ owner }) => owner === 2).pursuitTargetId, 2);
+  assert.equal(world.units.find(({ owner }) => owner === 3).pursuitTargetId, 3);
+  assert.equal(world.units.find(({ owner }) => owner === 4).pursuitTargetId, 2);
+});
+
+
+test("a Player 4 defeat trigger changes only the configured diplomacy direction", async () => {
+  const { createWorld, stepWorld } = await import("../src/combat/world.js");
+  const units = [
+    unit({ referenceId: 1, owner: 2, x: 9, y: 5, unitMechanics: stoppedMechanics }),
+    unit({ referenceId: 2, owner: 3, x: 4, y: 5 }),
+    unit({ referenceId: 3, owner: 4, x: 4.4, y: 5, hp: 1 }),
+  ];
+  let world = createWorld(scenario(units, {
+    diplomacyByOwner: {
+      2: { 3: 3, 4: 0 },
+      3: { 2: 0, 4: 3 },
+      4: { 2: 0, 3: 3 },
+    },
+    triggers: [{
+      trigger_index: 1,
+      name: "DefeatFrontLine",
+      looping: false,
+      conditions: [{ type: "player_defeated", source_player: 4 }],
+      effects: [{
+        type: "change_diplomacy",
+        source_player: 3,
+        target_player: 2,
+        diplomacy: 3,
+        mutual: false,
+      }],
+    }],
+  }));
+  assert.equal(world.diplomacyByOwner[3][2], 0);
+  assert.equal(world.diplomacyByOwner[2][3], 3);
+  for (let tick = 0; tick < 200 && world.units.some(({ owner, alive }) => (
+    owner === 4 && alive
+  )); tick += 1) world = stepWorld(world);
+  assert.equal(world.units.some(({ owner, alive }) => owner === 4 && alive), false);
+  assert.equal(world.diplomacyByOwner[3][2], 3);
+  assert.equal(world.diplomacyByOwner[2][3], 3);
+  assert.equal(world.eventLog.some(({ type, owner }) => (
+    type === "owner-defeated" && owner === 4
+  )), true);
+  assert.equal(world.eventLog.some(({ type, sourceOwner, targetOwner }) => (
+    type === "diplomacy-changed" && sourceOwner === 3 && targetOwner === 2
+  )), true);
 });
 
 

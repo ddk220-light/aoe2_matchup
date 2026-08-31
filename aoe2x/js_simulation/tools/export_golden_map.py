@@ -16,8 +16,8 @@ from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 
 
 REPOSITORY_SOURCE = (
-    "origin/staging:"
-    "apps/video/templates/golden_meleevsmelee.aoe2scenario"
+    "aoe2x/js_simulation/calibration/live_observations/"
+    "current_melee_golden_2026-08-28/source/meleevsmelee.aoe2scenario"
 )
 
 
@@ -38,7 +38,7 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def extract_map(path: Path) -> dict:
+def extract_map(path: Path, repository_source: str = REPOSITORY_SOURCE) -> dict:
     """Return a stable, complete map fixture without inferred geometry."""
     path = Path(path).resolve()
     scenario = AoE2DEScenario.from_file(str(path))
@@ -91,7 +91,7 @@ def extract_map(path: Path) -> dict:
         "source": {
             "filename": path.name,
             "sha256": _sha256(path),
-            "repository_source": REPOSITORY_SOURCE,
+            "repository_source": repository_source,
             "game_version": str(scenario.game_version),
             "scenario_version": float(scenario.scenario_version),
             "parser": "AoE2ScenarioParser",
@@ -112,9 +112,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scenario", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--repository-source", default=REPOSITORY_SOURCE)
     args = parser.parse_args()
 
-    payload = extract_map(args.scenario)
+    payload = extract_map(args.scenario, args.repository_source)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",

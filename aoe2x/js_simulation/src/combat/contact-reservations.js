@@ -1,30 +1,77 @@
 import { isWithinReach } from "./targeting.js";
+import { areAllies, areOpponents, isHostile } from "./diplomacy.js";
+import { formationTransitActive } from "./pair-interactions.js";
 
 
 const EPSILON = 1e-12;
 const MAX_DEEP_CONTACT_DEGREE = 2;
-const MAX_INCOMING_ENGAGEMENTS = 2;
+// A contact surface admits two deep melee claimants at once. The engagement
+// layer uses the same capacity so units that are still inside the attack
+// envelope cannot bypass the physical reservation surface merely because
+// they have not yet made body contact.
+export const MAX_INCOMING_ENGAGEMENTS = 2;
 
-export function createContactReservationState() {
+export function createContactReservationState({ alliedTransitPathObstructs = false } = {}) {
+  if (typeof alliedTransitPathObstructs !== "boolean") {
+    throw new TypeError("allied transit path obstruction must be boolean");
+  }
   return Object.freeze({
     reservations: new Map(),
     inheritedExtents: new Map(),
+    formationPairs: new Map(),
+    alliedTransitPathObstructs,
   });
 }
 
-export function updateContactReservations({ state, units, proposals, tick }) {
+export function updateContactReservations({
+  state,
+  units,
+  proposals,
+  tick,
+  externalReservations = new Map(),
+}) {
   requireInputs(state, units, proposals, tick);
+  if (!(externalReservations instanceof Map)) {
+    throw new TypeError("external contact reservations must be a Map");
+  }
   const live = units
     .filter((unit) => unit?.alive !== false)
     .slice()
     .sort((left, right) => left.referenceId - right.referenceId);
   const byReference = unitMap(live);
   const proposalByReference = proposalMap(proposals, byReference);
-  const contactReservations = new Map();
+  const contactReservations = new Map(externalReservations);
   const reservations = new Map();
   const inheritedExtents = new Map();
   const contactSlots = createContactSlots();
   const diagnostics = [];
+
+  // Shared formation orders temporarily own zero-obstruction geometry. Keep
+  // the pair's existence (not only its depth) so that when either unit peels
+  // off the order, every current overlap receives an exact, monotonically
+  // releasing surface. Without this handoff a dense formation can become an
+  // invalid hard/hard starting overlap on the acquisition tick.
+  for (const [key] of sortedEntries(state.formationPairs ?? new Map())) {
+    if (externalReservations.has(key)) continue;
+    const [leftId, rightId] = parsePairKey(key);
+    const left = byReference.get(leftId);
+    const right = byReference.get(rightId);
+    if (!left || !right || sharedFormationOrder(left, right)) continue;
+    const current = pairSeparation(left, right);
+    if (current >= pairFullExtent(left, right) - EPSILON) continue;
+    const extent = cleanNumber(current);
+    inheritedExtents.set(key, extent);
+    contactReservations.set(key, releasingReservation({
+      left,
+      right,
+      collisionExtent: extent,
+      tick,
+    }));
+    diagnostics.push(diagnostic("release-published", key, {
+      collisionExtent: extent,
+      reason: "formation-order-ended",
+    }));
+  }
 
   publishInheritedReleases({
     inherited: state.inheritedExtents,
@@ -40,6 +87,12 @@ export function updateContactReservations({ state, units, proposals, tick }) {
     const right = byReference.get(prior.rightId);
     if (!left || !right) {
       diagnostics.push(diagnostic("reservation-released", key, { reason: "unit-missing" }));
+      continue;
+    }
+    if (externalReservations.has(key)) {
+      diagnostics.push(diagnostic("reservation-released", key, {
+        reason: "external-contact-authority",
+      }));
       continue;
     }
     if (sharedFormationOrder(left, right)) {
@@ -81,7 +134,13 @@ export function updateContactReservations({ state, units, proposals, tick }) {
     });
   }
 
-  const candidates = generateCandidates(live, byReference, proposalByReference, tick);
+  const candidates = generateCandidates(
+    live,
+    byReference,
+    proposalByReference,
+    tick,
+    state.alliedTransitPathObstructs === true,
+  );
   const admissibleShallowPairs = new Set(candidates
     .filter(({ reservation }) => reservation.kind !== "releasing")
     .map(({ key }) => key));
@@ -119,7 +178,24 @@ export function updateContactReservations({ state, units, proposals, tick }) {
     tick,
   });
 
-  const nextState = Object.freeze({ reservations, inheritedExtents });
+  const formationPairs = new Map();
+  for (let leftIndex = 0; leftIndex < live.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < live.length; rightIndex += 1) {
+      const left = live[leftIndex];
+      const right = live[rightIndex];
+      const key = pairKey(left.referenceId, right.referenceId);
+      if (sharedFormationOrder(left, right) && !externalReservations.has(key)) {
+        formationPairs.set(key,
+          cleanNumber(pairSeparation(left, right)));
+      }
+    }
+  }
+  const nextState = Object.freeze({
+    reservations,
+    inheritedExtents,
+    formationPairs,
+    alliedTransitPathObstructs: state.alliedTransitPathObstructs === true,
+  });
   return Object.freeze({
     state: nextState,
     contactReservations,
@@ -143,7 +219,7 @@ function contactSlotsAvailable(reservation, left, right, slots) {
       || (slots.deepDegree.get(right.referenceId) ?? 0) >= MAX_DEEP_CONTACT_DEGREE) {
     return false;
   }
-  if (left.owner === right.owner) {
+  if (areAllies(left, right)) {
     return !slots.allied.has(left.referenceId) && !slots.allied.has(right.referenceId);
   }
   if (reservation.kind === "engagement-contact") {
@@ -166,7 +242,7 @@ function occupyContactSlots(reservation, left, right, slots) {
     right.referenceId,
     (slots.deepDegree.get(right.referenceId) ?? 0) + 1,
   );
-  if (left.owner === right.owner) {
+  if (areAllies(left, right)) {
     slots.allied.add(left.referenceId);
     slots.allied.add(right.referenceId);
     return;
@@ -217,7 +293,7 @@ function publishShallowContacts({
       // lanes remain ordinary hard bodies so a moving formation does not
       // collapse into a multi-unit knot. Shallow secondary contact is for
       // several enemies sharing the same engagement boundary.
-      if (left.owner === right.owner) continue;
+      if (!areOpponents(left, right)) continue;
       const key = pairKey(left.referenceId, right.referenceId);
       if (contactReservations.has(key) || !admissiblePairs.has(key)) continue;
       const leftProposal = proposalFor(left, proposals);
@@ -265,8 +341,13 @@ function publishShallowContacts({
 
 function requireInputs(state, units, proposals, tick) {
   if (!state || !(state.reservations instanceof Map)
-      || !(state.inheritedExtents instanceof Map)) {
-    throw new TypeError("contact reservation state requires reservation and inherited maps");
+      || !(state.inheritedExtents instanceof Map)
+      || (state.formationPairs !== undefined && !(state.formationPairs instanceof Map))
+      || (state.alliedTransitPathObstructs !== undefined
+        && typeof state.alliedTransitPathObstructs !== "boolean")) {
+    throw new TypeError(
+      "contact reservation state requires reservation, inherited, and formation maps",
+    );
   }
   if (!Array.isArray(units)) throw new TypeError("contact reservation units must be an array");
   if (!Array.isArray(proposals)) {
@@ -319,6 +400,7 @@ function publishInheritedReleases({
   tick,
 }) {
   for (const [key, priorExtent] of sortedEntries(inherited)) {
+    if (contactReservations.has(key)) continue;
     if (!Number.isFinite(priorExtent) || priorExtent < 0) {
       throw new RangeError("inherited contact extent must be finite and nonnegative");
     }
@@ -379,20 +461,27 @@ function inheritReleasedPair({
   }));
 }
 
-function generateCandidates(units, byReference, proposals, tick) {
+function generateCandidates(units, byReference, proposals, tick,
+  alliedTransitPathObstructs) {
   const candidates = [];
   for (let leftIndex = 0; leftIndex < units.length; leftIndex += 1) {
     const left = units[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < units.length; rightIndex += 1) {
       const right = units[rightIndex];
-      if (left.owner === right.owner) {
+      if (areAllies(left, right)) {
         // Formation cohorts own zero-obstruction pair geometry in the shared
         // interaction resolver. Do not leave a deeper reservation behind:
         // when either order ends, an exact current-shape release is created.
         if (sharedFormationOrder(left, right)) continue;
         const candidate = isRanged(left) && isRanged(right)
           ? rangedIngressCandidate(left, right, byReference, proposals, tick)
-          : alliedCandidate(left, right, proposals, tick);
+          : alliedCandidate(
+            left,
+            right,
+            proposals,
+            tick,
+            alliedTransitPathObstructs,
+          );
         if (candidate) candidates.push(candidate);
         else if (pairSeparation(left, right) < pairFullExtent(left, right) - EPSILON) {
           candidates.push(untrackedReleaseCandidate(left, right, tick));
@@ -505,7 +594,7 @@ function untrackedReleaseCandidate(left, right, tick) {
   });
 }
 
-function alliedCandidate(left, right, proposals, tick) {
+function alliedCandidate(left, right, proposals, tick, pathObstructs) {
   const leftProposal = proposalFor(left, proposals);
   const rightProposal = proposalFor(right, proposals);
   if (!isMoving(leftProposal) && !isMoving(rightProposal)) return null;
@@ -524,7 +613,7 @@ function alliedCandidate(left, right, proposals, tick) {
     initiator,
     target: null,
     kind: "allied-transit",
-    pathObstructs: false,
+    pathObstructs,
     entryFraction,
     projected,
     progress: stepLength(leftProposal) + stepLength(rightProposal),
@@ -661,13 +750,13 @@ function releasingReservation({ left, right, collisionExtent, tick }) {
 
 function reservationRemainsActive(prior, left, right, byReference, proposals) {
   if (prior.kind === "allied-transit") {
-    if (left.owner !== right.owner) return false;
+    if (!areAllies(left, right)) return false;
   } else if (prior.kind === "ranged-ingress") {
-    if (left.owner !== right.owner || !isRanged(left) || !isRanged(right)) return false;
+    if (!areAllies(left, right) || !isRanged(left) || !isRanged(right)) return false;
     return pairSeparation(left, right) < pairFullExtent(left, right) - EPSILON
       || rangedIngressQualifies(left, right, byReference, proposals)
       || rangedIngressQualifies(right, left, byReference, proposals);
-  } else if (left.owner === right.owner) {
+  } else if (!areOpponents(left, right)) {
     return false;
   }
   const current = pairSeparation(left, right);
@@ -718,13 +807,13 @@ function directTargetPriority(unit) {
 function directPursuitTarget(unit, byReference) {
   for (const targetId of [unit.pursuitTargetId, unit.engagedTargetId, unit.attackTargetId]) {
     const target = byReference.get(targetId);
-    if (target && target.owner !== unit.owner) return target;
+    if (target && isHostile(unit, target)) return target;
   }
   return null;
 }
 
 function insidePursuitCorridor(chaser, blocker, target) {
-  if (blocker.owner === chaser.owner) return false;
+  if (!areOpponents(chaser, blocker)) return false;
   const targetX = target.x - chaser.x;
   const targetY = target.y - chaser.y;
   const targetDistance = Math.hypot(targetX, targetY);
@@ -827,9 +916,9 @@ function isMoving(proposal) {
 }
 
 function sharedFormationOrder(left, right) {
-  return left.owner === right.owner
-    && left.moveOrder !== undefined && left.moveOrder !== null
-    && right.moveOrder !== undefined && right.moveOrder !== null;
+  return areAllies(left, right)
+    && formationTransitActive(left)
+    && formationTransitActive(right);
 }
 
 function stepLength(proposal) {

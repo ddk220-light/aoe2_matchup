@@ -3,6 +3,7 @@ import {
   createPairInteractionSnapshot,
   resolvePairInteraction,
 } from "./pair-interactions.js";
+import { areOpponents } from "./diplomacy.js";
 
 
 const EPSILON = 1e-12;
@@ -421,7 +422,7 @@ function invalidBodyReferences(bodies, obstacles, bounds, tolerance, pairInterac
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {
-      if (bodies[i].owner === bodies[j].owner) continue;
+      if (!areOpponents(bodies[i], bodies[j])) continue;
       const gap = Math.max(
         Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
         Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),
@@ -567,7 +568,7 @@ export function queryEnemyContactManifold(beforeSnapshot, afterSnapshot) {
         || rightBefore.alive === false
         || leftAfter.alive === false
         || rightAfter.alive === false
-        || leftBefore.owner === rightBefore.owner
+        || !areOpponents(leftBefore, rightBefore)
       ) continue;
       const finalSurfaceGap = Math.hypot(
         rightAfter.x - leftAfter.x,

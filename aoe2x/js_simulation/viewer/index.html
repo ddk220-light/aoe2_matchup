@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#f4f1e8">
-    <title>AoE2 Battle Simulation · Local Clean-Room Engine</title>
+    <title>AoE2 Battle Simulation · Live-Capture Engine</title>
     <script>
       (() => {
         const mountBase = document.createElement("base");
@@ -30,12 +30,12 @@
         <a href="./" class="nav-tab active">
           <span class="nav-tab-icon">⚔</span>
           <span class="nav-tab-label">Battle Sim</span>
-          <span class="nav-tab-desc">Clean-room local preview</span>
+          <span class="nav-tab-desc">Live-capture engine preview</span>
         </a>
       </div>
       <div class="local-engine-pill" id="sourceBadge" aria-live="polite">
         <span class="local-engine-dot"></span>
-        Loading clean-room engine
+        Loading simulation engine
       </div>
     </nav>
 
@@ -152,6 +152,20 @@
           <div class="is-delta"><span>Delta</span><strong id="wrongWinnerDelta">—</strong></div>
         </div>
       </section>
+      <section class="wrong-winner-review" id="problemMatchupReview" hidden
+               aria-labelledby="problemMatchupReviewTitle">
+        <div class="wrong-winner-picker">
+          <span class="review-kicker">Latest current-engine problem set</span>
+          <label id="problemMatchupReviewTitle" for="problemMatchup">Problem matchup</label>
+          <select id="problemMatchup" aria-describedby="problemMatchupConvention"></select>
+          <small id="problemMatchupConvention">Exact golden roster and scenario triggers · automatically runs a representative current-engine seed</small>
+        </div>
+        <div class="wrong-winner-metrics" aria-label="Latest five-run comparison">
+          <div><span>Live mean</span><strong id="problemMatchupLiveScore">—</strong></div>
+          <div><span>Simulation</span><strong id="problemMatchupSimulationScore">—</strong></div>
+          <div class="is-delta"><span>Known issue</span><strong id="problemMatchupIssue">—</strong></div>
+        </div>
+      </section>
       <p class="start-hint" id="startHint">Pick a calibrated civ &amp; unit for both teams to start</p>
 
       <div class="sim-stage" id="simStage">
@@ -204,11 +218,10 @@
                 <div><dt>Preventive turns</dt><dd id="navContactSteps">—</dd></div>
               </dl>
             </div>
-            <canvas id="mapCanvas" aria-label="Isometric clean-room battle simulation"></canvas>
+            <canvas id="mapCanvas" aria-label="Isometric battle simulation"></canvas>
             <div class="overlay-key" aria-label="Simulation overlay legend">
-              <span class="key-pursuit">Pursuit</span>
-              <span class="key-engaged">Engaged</span>
-              <span class="key-attack">Attack</span>
+              <span class="key-attack-red">Red attacking</span>
+              <span class="key-attack-blue">Blue attacking</span>
               <span class="key-body">Body / reach</span>
               <span class="key-navigation">AI / route / slots</span>
             </div>

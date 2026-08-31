@@ -34,7 +34,7 @@ export async function loadPhase2Batch1Context(root, truth = undefined) {
     row.side3.master,
   ]))];
   const [mapFixture, mechanicsEntries] = await Promise.all([
-    readFile(new URL("fixtures/golden_map.json", root), "utf8").then(JSON.parse),
+    readFile(new URL("fixtures/golden_map_legacy.json", root), "utf8").then(JSON.parse),
     Promise.all(masters.map(async (master) => {
       const unit = unitByMaster.get(master);
       if (!unit) throw new RangeError(`no unit registry entry for master ${master}`);

@@ -8,6 +8,7 @@ import {
 } from "./pair-interactions.js";
 import {
   createContactReservationState,
+  MAX_INCOMING_ENGAGEMENTS,
   updateContactReservations,
 } from "./contact-reservations.js";
 import {
@@ -37,6 +38,7 @@ import {
 } from "./chase-path.js";
 import { planCohortContactMotion } from "./cohort-motion.js";
 import { planLocalAvoidance } from "./local-avoidance.js";
+import { planRangedCrowding } from "./ranged-crowding.js";
 import {
   planPreventiveContactSteering,
   PREVENTIVE_CONTACT_STEERING_STRENGTH,
@@ -75,6 +77,14 @@ import {
   trampleSpec,
 } from "./attacks.js";
 import { collisionRadius } from "./targeting.js";
+import {
+  areOpponents,
+  changeDiplomacy,
+  createDiplomacyByOwner,
+  DIPLOMACY,
+  isHostile,
+  withDiplomacy,
+} from "./diplomacy.js";
 
 
 const DEFAULT_MAP = Object.freeze({
@@ -82,6 +92,22 @@ const DEFAULT_MAP = Object.freeze({
   height: 16,
   obstacles: Object.freeze([]),
 });
+const PATROL_FIRST_SCAN_MIN_SECONDS = 1.60;
+const AUXILIARY_PATROL_FIRST_SCAN_MIN_SECONDS = 1.48;
+const PATROL_FIRST_SCAN_MAX_SECONDS = 1.66;
+const PATROL_RESCAN_SECONDS = 0.8;
+const PATROL_ORDER_REACTION_SECONDS = 1.0;
+const PATROL_BLOCKER_CAPTURE_TICKS = Math.round(PATROL_RESCAN_SECONDS * TICKS_PER_SECOND);
+// Generic blocked-pursuit recovery. A unit first gives the ordinary direct +
+// local-avoidance solver five consecutive physical attempts. Only after all
+// five produce less than 5% of the requested step does it promote the chase
+// to a persistent obstacle route. This is roster- and matchup-independent.
+const BLOCKED_PURSUIT_RETRY_LIMIT = 5;
+const BLOCKED_PURSUIT_PROGRESS_FRACTION = 0.05;
+// One diagonal lattice rank in the authored formations is sqrt(2) tiles
+// deep.  The engine exposes roughly that first physical rank to a cohort
+// PATROL instead of choosing anchors from arbitrary scenario roster order.
+const PATROL_OPENING_FRONT_BAND_TILES = 1.5;
 // Default runaway guard for a single fight, and the hard ceiling a caller may
 // raise it to. 60 s covers every recorded melee fight with margin, but the
 // ranged tapes' own 20v15 fights run 56.5-59.8 s and the sim legitimately
@@ -99,6 +125,9 @@ function hasMeleeMode(unit) {
 function freezeUnit(unit) {
   return Object.freeze({
     ...unit,
+    ...(unit.relationByOwner
+      ? { relationByOwner: Object.freeze({ ...unit.relationByOwner }) }
+      : {}),
     avoidance: unit.avoidance === null || unit.avoidance === undefined
       ? null
       : Object.freeze({ ...unit.avoidance }),
@@ -163,6 +192,9 @@ function canonicalUnits(units, { cloneMechanics = false } = {}) {
 function mutableUnit(unit) {
   return {
     ...unit,
+    ...(unit.relationByOwner
+      ? { relationByOwner: Object.freeze({ ...unit.relationByOwner }) }
+      : {}),
     avoidance: unit.avoidance === null ? null : { ...unit.avoidance },
     actionTimers: { ...unit.actionTimers },
   };
@@ -174,8 +206,263 @@ function freezeMap(map) {
 }
 
 
+function nextPursuitRecoveryState(previous = null) {
+  return {
+    attempts: new Map(previous?.attempts ?? []),
+    routes: new Map(previous?.routes ?? []),
+    retargetReady: new Set(previous?.retargetReady ?? []),
+    routeFailures: new Map(previous?.routeFailures ?? []),
+    failedTargets: new Map([...(previous?.failedTargets ?? [])].map(
+      ([referenceId, targets]) => [referenceId, new Set(targets)],
+    )),
+  };
+}
+
+
+function recoveryOpportunityTarget(unit, snapshot) {
+  return snapshot
+    .filter((candidate) => (
+      candidate.alive
+      && isHostile(unit, candidate)
+      && candidate.referenceId !== unit.pursuitTargetId
+      && isWithinReach(unit, candidate)
+    ))
+    .sort((left, right) => (
+      Math.hypot(left.x - unit.x, left.y - unit.y)
+        - Math.hypot(right.x - unit.x, right.y - unit.y)
+      || left.referenceId - right.referenceId
+    ))[0] ?? null;
+}
+
+
+function recoveryAlternateTarget(unit, snapshot, pursuitRecoveryState, map,
+  pairInteractions) {
+  const failedTargets = pursuitRecoveryState.failedTargets.get(unit.referenceId)
+    ?? new Set();
+  const withoutCurrent = snapshot.filter(({ referenceId }) => (
+    referenceId !== unit.pursuitTargetId
+  ));
+  let candidatePool = withoutCurrent.filter(({ referenceId }) => (
+    referenceId !== unit.pursuitTargetId && !failedTargets.has(referenceId)
+  ));
+  const lineOfSight = unit.mechanics?.line_of_sight_tiles ?? 0;
+  let visible = candidatePool.filter((candidate) => (
+    candidate.alive
+    && isHostile(unit, candidate)
+    && Math.hypot(candidate.x - unit.x, candidate.y - unit.y) <= lineOfSight
+  ));
+  // Failed-target memory prevents immediate A/B thrashing, but it is not a
+  // permanent blacklist. Once every other visible hostile has been tried,
+  // reopen the ordinary candidate set using the unit's current geometry.
+  if (visible.length === 0 && failedTargets.size > 0) {
+    failedTargets.clear();
+    pursuitRecoveryState.failedTargets.delete(unit.referenceId);
+    candidatePool = withoutCurrent;
+    visible = candidatePool.filter((candidate) => (
+      candidate.alive
+      && isHostile(unit, candidate)
+      && Math.hypot(candidate.x - unit.x, candidate.y - unit.y) <= lineOfSight
+    ));
+  }
+  const step = unit.mechanics.speed_tiles_per_second / TICKS_PER_SECOND;
+  const bounds = { width: map.width, height: map.height };
+  const directlyReachable = visible.filter((candidate) => {
+    const targetDx = candidate.x - unit.x;
+    const targetDy = candidate.y - unit.y;
+    const distance = Math.hypot(targetDx, targetDy);
+    if (distance <= ZERO_STEP_EPSILON) return true;
+    const amount = Math.min(step, distance);
+    const dx = targetDx / distance * amount;
+    const dy = targetDy / distance * amount;
+    // This selector runs only after repeated solver-rejected pursuit. A
+    // non-obstructing reservation that still owns a collision extent is not
+    // a directly reachable lane for recovery, even though ordinary pursuit
+    // is allowed to try it before blockage has been demonstrated.
+    return stepClearsBodies(
+      unit,
+      dx,
+      dy,
+      snapshot,
+      bounds,
+      pairInteractions,
+      true,
+    )
+      && stepClearsMapObstacles(unit, dx, dy, map);
+  });
+  return selectPursuitTarget(
+    { ...unit, pursuitTargetId: null },
+    directlyReachable.length > 0 ? directlyReachable : visible,
+  );
+}
+
+
+function applyOpeningPatrol(units, openingPatrolByOwner, map) {
+  if (openingPatrolByOwner === undefined) return units;
+  if (!openingPatrolByOwner || typeof openingPatrolByOwner !== "object"
+      || Array.isArray(openingPatrolByOwner)) {
+    throw new TypeError("opening patrol by owner must be an object");
+  }
+  const owners = new Set(units.map(({ owner }) => owner));
+  const destinations = new Map();
+  for (const [ownerText, destination] of Object.entries(openingPatrolByOwner)) {
+    const owner = Number(ownerText);
+    if (!Number.isSafeInteger(owner) || !owners.has(owner)) {
+      throw new RangeError("opening patrol owner must identify a scenario owner");
+    }
+    const x = destination?.x;
+    const y = destination?.y;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      throw new TypeError("opening patrol coordinates must be finite");
+    }
+    if (x < 0 || x >= map.width || y < 0 || y >= map.height) {
+      throw new RangeError("opening patrol destination must be inside the map");
+    }
+    destinations.set(owner, Object.freeze({ x, y, kind: "opening-patrol" }));
+  }
+  if (destinations.size !== owners.size) {
+    throw new RangeError("opening patrol must provide every scenario owner");
+  }
+  return units.map((unit) => {
+    if (unit.moveOrder !== undefined && unit.moveOrder !== null) {
+      throw new Error(`unit ${unit.referenceId} already has a move order`);
+    }
+    const destination = destinations.get(unit.owner);
+    return {
+      ...unit,
+      moveOrder: destination,
+    };
+  });
+}
+
+
 function createSnapshot(tick, units, events, navigation = null) {
   return Object.freeze({ tick, units, events, ...(navigation ? { navigation } : {}) });
+}
+
+
+function openingHash(seed, owner, referenceId) {
+  let value = (seed ^ Math.imul(owner, 0x9e3779b1) ^ referenceId) >>> 0;
+  value ^= value >>> 16;
+  value = Math.imul(value, 0x7feb352d) >>> 0;
+  value ^= value >>> 15;
+  value = Math.imul(value, 0x846ca68b) >>> 0;
+  return (value ^ (value >>> 16)) >>> 0;
+}
+
+
+function selectPatrolOpeningTarget(unit, snapshot, order) {
+  const directionX = (order.commandX ?? order.x) - order.cohortOriginX;
+  const directionY = (order.commandY ?? order.y) - order.cohortOriginY;
+  const length = Math.hypot(directionX, directionY);
+  if (length <= 1e-12) return null;
+  const candidates = snapshot.filter((candidate) => (
+    candidate.alive
+      && isHostile(unit, candidate)
+      // Visibility reaches the near edge of the target obstruction, not only
+      // its center. The first live Paladin lock is recorded at 5.236 center
+      // tiles with LOS 5 and a 0.25 target collision half-extent.
+      && Math.hypot(candidate.x - unit.x, candidate.y - unit.y)
+        - collisionRadius(candidate)
+        <= unit.mechanics.line_of_sight_tiles + 1e-12
+  ));
+  candidates.sort((left, right) => {
+    const lateral = (candidate) => Math.abs(
+      (candidate.x - order.cohortOriginX) * directionY
+        - (candidate.y - order.cohortOriginY) * directionX,
+    ) / length;
+    return lateral(left) - lateral(right)
+      || openingHash(order.openingSeed, unit.owner, left.referenceId)
+        - openingHash(order.openingSeed, unit.owner, right.referenceId)
+      || left.referenceId - right.referenceId;
+  });
+  return candidates[0] ?? null;
+}
+
+
+function selectPatrolCohortOpeningTargets(unit, snapshot, order) {
+  // First confirm that shared player vision has exposed at least one hostile
+  // body. The game's group decision then names a cohort anchor set, including
+  // for members that do not individually see every anchor yet. Target choice
+  // is the explicitly permitted opening stochastic boundary; roster order is stable
+  // scenario input and is never consulted by subsequent retargeting.
+  if (selectPatrolOpeningTarget(unit, snapshot, order) === null) return null;
+  const roster = snapshot.filter((candidate) => candidate.alive && isHostile(unit, candidate));
+  if (roster.length === 0) return null;
+  const cohortSize = snapshot.filter((candidate) => (
+    candidate.alive && candidate.owner === unit.owner
+  )).length;
+  const hostileFrontIsRanged = roster.every(({ mechanics }) => mechanics?.ranged);
+  if (!hostileFrontIsRanged || unit.owner === 4) {
+    // A melee roster presents one advancing contact surface. The scenario's
+    // stable creation order is also the game's group roster order: across the
+    // mixed captures its roughly 80%-depth member receives 60-100% of first
+    // locks, with fan-out only when the ranged cohort is outnumbered. Keep
+    // this explicitly inside the permitted first-target boundary; no later
+    // retarget or damage decision can inspect roster order.
+    const ordered = roster.slice().sort((left, right) => (
+      left.referenceId - right.referenceId
+    ));
+    const anchorCount = unit.owner === 4 || cohortSize >= ordered.length
+      ? 1
+      : Math.max(2, Math.floor(ordered.length / 4));
+    const defaultAnchor = Math.min(
+      ordered.length - 1,
+      Math.floor(ordered.length * 0.8),
+    );
+    const seedRoll = (order.openingSeed ?? 0) === 0
+      ? 2
+      : openingHash(order.openingSeed, unit.owner, ordered.length) % 5;
+    const center = Math.max(0, Math.min(
+      ordered.length - 1,
+      defaultAnchor + [-2, -1, 0, 1, 2][seedRoll],
+    ));
+    const first = Math.max(0, Math.min(
+      ordered.length - anchorCount,
+      center - Math.floor(anchorCount / 2),
+    ));
+    return ordered.slice(first, first + anchorCount);
+  }
+  const directionX = (order.commandX ?? order.x) - order.cohortOriginX;
+  const directionY = (order.commandY ?? order.y) - order.cohortOriginY;
+  const length = Math.hypot(directionX, directionY);
+  if (length <= 1e-12) return null;
+  const projected = roster.map((candidate) => {
+    const relativeX = candidate.x - order.cohortOriginX;
+    const relativeY = candidate.y - order.cohortOriginY;
+    return {
+      candidate,
+      longitudinal: (relativeX * directionX + relativeY * directionY) / length,
+      lateral: (relativeX * -directionY + relativeY * directionX) / length,
+    };
+  });
+  const leading = Math.min(...projected.map(({ longitudinal }) => longitudinal));
+  const frontBand = projected
+    .filter(({ longitudinal }) => (
+      longitudinal <= leading + PATROL_OPENING_FRONT_BAND_TILES + 1e-12
+    ))
+    .sort((left, right) => left.lateral - right.lateral
+      || left.longitudinal - right.longitudinal
+      || left.candidate.referenceId - right.candidate.referenceId);
+  // Player 4 is one committed auxiliary group. A principal cohort that is at
+  // least as large as the opposing roster names both exposed flanks; an
+  // outnumbered cohort samples the whole visible front rank. This is still
+  // only the explicitly permitted first-target boundary. Subsequent targeting
+  // is ordinary distance/contact AI and never consults formation membership.
+  const anchorCount = cohortSize >= roster.length
+    ? Math.min(2, frontBand.length)
+    : frontBand.length;
+  if (anchorCount >= frontBand.length) {
+    return frontBand.map(({ candidate }) => candidate);
+  }
+  if (anchorCount === 1) {
+    return [frontBand[Math.floor(frontBand.length / 2)].candidate];
+  }
+  const selected = [];
+  for (let index = 0; index < anchorCount; index += 1) {
+    const frontIndex = Math.round(index * (frontBand.length - 1) / (anchorCount - 1));
+    selected.push(frontBand[frontIndex].candidate);
+  }
+  return selected;
 }
 
 
@@ -191,7 +478,7 @@ function validateInitialAttackState(units) {
       continue;
     }
     const target = byReference.get(unit.attackTargetId);
-    if (!target?.alive || target.owner === unit.owner) {
+    if (!target?.alive || !isHostile(unit, target)) {
       throw new Error(
         `attacking unit ${unit.referenceId} attackTargetId must reference a live enemy`,
       );
@@ -216,15 +503,63 @@ export function createWorld(scenario) {
   if (!scenario || typeof scenario !== "object") {
     throw new TypeError("scenario is required");
   }
-  const units = canonicalUnits(scenario.units, { cloneMechanics: true });
-  validateInitialAttackState(units);
   const map = scenario.map ? freezeMap(scenario.map) : DEFAULT_MAP;
-  const scenarioOwners = new Set(units.map(({ owner }) => owner));
+  if (scenario.disableAiOrders !== undefined && typeof scenario.disableAiOrders !== "boolean") {
+    throw new TypeError("disable AI orders must be boolean");
+  }
+  const preparedUnits = applyOpeningPatrol(
+    scenario.units,
+    scenario.openingPatrolByOwner,
+    map,
+  );
+  const scenarioOwners = Object.freeze([...new Set(preparedUnits.map(({ owner }) => owner))]
+    .sort((left, right) => left - right));
+  let diplomacyByOwner = createDiplomacyByOwner(
+    scenarioOwners,
+    scenario.diplomacyByOwner,
+  );
+  let mutablePreparedUnits = preparedUnits.map((unit) => (
+    withDiplomacy(mutableUnit(unit), diplomacyByOwner)
+  ));
+  const triggers = compileScenarioTriggers(scenario.triggers, scenarioOwners, map);
+  if (scenario.openingSeed !== undefined
+      && (!Number.isSafeInteger(scenario.openingSeed) || scenario.openingSeed < 0)) {
+    throw new RangeError("opening seed must be a nonnegative safe integer");
+  }
+  let scenarioTriggerState = triggers.length === 0
+    ? null
+    : Object.freeze({
+      triggers,
+      firedTriggerIds: Object.freeze([]),
+      defeatedOwners: Object.freeze([]),
+      openingSeed: scenario.openingSeed ?? 0,
+    });
+  const creationEvents = [];
+  if (scenarioTriggerState) {
+    const initial = fireEligibleScenarioTriggers(
+      mutablePreparedUnits,
+      diplomacyByOwner,
+      scenarioTriggerState,
+      0,
+      creationEvents,
+    );
+    diplomacyByOwner = initial.diplomacyByOwner;
+    scenarioTriggerState = initial.triggerState;
+  }
+  const units = canonicalUnits(mutablePreparedUnits, { cloneMechanics: true });
+  validateInitialAttackState(units);
+  const victoryTeams = compileVictoryTeams(scenarioOwners, scenario.victoryTeams);
   const meleeOwners = [...new Set(units
     .filter(hasMeleeMode)
     .map(({ owner }) => owner))]
     .sort((left, right) => left - right);
-  const contactReservationState = createContactReservationState();
+  const contactReservationState = createContactReservationState({
+    // Trigger-authored PATROL orders retain zero-obstruction formation
+    // transit. Once a unit peels off to attack, its allies become
+    // path-obstructing DAT bodies, matching the user's move-vs-attack
+    // distinction in the current golden captures.
+    alliedTransitPathObstructs: triggers.length > 0,
+  });
   if (scenario.rangedTargetPressureOwner !== undefined
       && !Number.isSafeInteger(scenario.rangedTargetPressureOwner)) {
     throw new TypeError("ranged target pressure owner must be a safe integer");
@@ -249,7 +584,15 @@ export function createWorld(scenario) {
       && !units.some(({ owner }) => owner === scenario.rangedWindupRetargetOwner)) {
     throw new RangeError("ranged windup retarget owner must identify a scenario owner");
   }
-  const events = Object.freeze([]);
+  const events = Object.freeze(creationEvents);
+  const aiOrderSweepStartSeconds = scenario.aiOrderSweepStartSeconds;
+  if (aiOrderSweepStartSeconds !== undefined
+      && (!Number.isFinite(aiOrderSweepStartSeconds) || aiOrderSweepStartSeconds < 0)) {
+    throw new RangeError("AI order sweep start seconds must be nonnegative and finite");
+  }
+  const aiOrderSweepStartTick = aiOrderSweepStartSeconds === undefined
+    ? undefined
+    : Math.round(aiOrderSweepStartSeconds * TICKS_PER_SECOND);
   const kiteState = Number.isSafeInteger(scenario.kiteOwner)
     ? createKiteState(
       scenario.kiteOwner,
@@ -349,7 +692,11 @@ export function createWorld(scenario) {
     // Experiment-only mutable AI-player state; absent in baseline so world
     // shape and hashes are unchanged (the object is frozen but Maps inside
     // stay mutable across ticks by design).
-    ...(ORDERS_ENABLED ? { orderState: createOrderState(units) } : {}),
+    ...(ORDERS_ENABLED && scenario.disableAiOrders !== true ? {
+      orderState: createOrderState(units, aiOrderSweepStartTick === undefined
+        ? undefined
+        : { sweepStartTick: aiOrderSweepStartTick }),
+    } : {}),
     // Kiting-side beat controller (see issueKiteOrders): present only when
     // the scenario names a kiting owner, so every other world keeps its
     // exact published shape.
@@ -363,6 +710,11 @@ export function createWorld(scenario) {
     ...(Number.isSafeInteger(scenario.rangedWindupRetargetOwner)
       ? { rangedWindupRetargetOwner: scenario.rangedWindupRetargetOwner }
       : {}),
+    scenarioOwners,
+    diplomacyByOwner,
+    victoryTeams,
+    ...(scenarioTriggerState ? { scenarioTriggerState } : {}),
+    ...(scenarioTriggerState ? { patrolOpeningTargetByOwner: new Map() } : {}),
     contactReservationState,
     contactReservationDiagnostics: Object.freeze([]),
     ...(contactSteeringStates ? { contactSteeringStates } : {}),
@@ -405,9 +757,9 @@ function validatePursuitTargets(units, tick, events) {
     if (unit.pursuitTargetId === null || unit.pursuitTargetId === undefined) continue;
     const target = byReference.get(unit.pursuitTargetId);
     if (target?.alive) {
-      if (target.owner === unit.owner) {
+      if (!isHostile(unit, target)) {
         throw new Error(
-          `unit ${unit.referenceId} has friendly pursuit target ${target.referenceId}`,
+          `unit ${unit.referenceId} has friendly/non-hostile pursuit target ${target.referenceId}`,
         );
       }
       continue;
@@ -423,6 +775,9 @@ function validatePursuitTargets(units, tick, events) {
     ));
     unit.pursuitTargetId = null;
     unit.avoidance = null;
+    if (unit.moveOrder?.kind === "scenario-patrol") {
+      unit.patrolFormationTransit = true;
+    }
   }
 }
 
@@ -432,7 +787,7 @@ function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = 
   for (const unit of units) {
     if (!unit.alive || unit.action !== "attacking") continue;
     const target = byReference.get(unit.attackTargetId);
-    if (target?.alive && target.owner !== unit.owner) continue;
+    if (target?.alive && isHostile(unit, target)) continue;
     const invalidTargetId = unit.attackTargetId;
     if (!Number.isSafeInteger(invalidTargetId)) {
       throw new Error(`attacking unit ${unit.referenceId} has no captured attack target`);
@@ -453,7 +808,7 @@ function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = 
         { ...freezeUnit(unit), pursuitTargetId: null },
         Object.freeze(units
           .filter((candidate) => (
-            candidate.owner === unit.owner
+            !isHostile(unit, candidate)
             || (candidate.alive && isWithinReach(unit, candidate))
           ))
           .map(freezeUnit)),
@@ -496,6 +851,10 @@ function acquirePursuitTargets(
   kiteState = null,
   rangedTargetPressureOwner = null,
   rangedOpportunityRetargetOwner = null,
+  patrolOpeningTargetByOwner = null,
+  pursuitRecoveryState = null,
+  map = DEFAULT_MAP,
+  pairInteractions = createPairInteractionSnapshot(),
 ) {
   const snapshot = Object.freeze(units.map(freezeUnit));
   const targetPressureTiles = kiteState?.attackMoveTargetPressureTiles ?? 0;
@@ -516,15 +875,114 @@ function acquirePursuitTargets(
       );
     }
   }
+  // Vision is shared by a player. Before servicing this tick's opening wave,
+  // let any member of the still-patrolling cohort reveal the opening anchor
+  // set; then every unit whose AI slot is due receives its stable member of
+  // that set.
+  if (patrolOpeningTargetByOwner !== null) {
+    const openingOwners = [...new Set(units
+      .filter((unit) => unit.alive
+        && unit.moveOrder?.kind === "scenario-patrol"
+        && unit.openingAcquisitionComplete !== true
+        && tick >= unit.moveOrder.nextOpeningScanTick)
+      .map(({ owner }) => owner))]
+      .sort((left, right) => left - right);
+    for (const owner of openingOwners) {
+      if (patrolOpeningTargetByOwner.has(owner)) continue;
+      const detectors = units.filter((unit) => unit.alive && unit.owner === owner
+        && unit.moveOrder?.kind === "scenario-patrol"
+        && unit.openingAcquisitionComplete !== true);
+      for (const detector of detectors) {
+        const targets = selectPatrolCohortOpeningTargets(
+          detector,
+          snapshot,
+          detector.moveOrder,
+        );
+        if (targets === null) continue;
+        patrolOpeningTargetByOwner.set(owner, Object.freeze(
+          targets.map(({ referenceId }) => referenceId),
+        ));
+        break;
+      }
+    }
+  }
   for (const unit of units) {
     if (!unit.alive) continue;
+    const openingPatrolOrder = unit.moveOrder?.kind === "scenario-patrol"
+      && unit.openingAcquisitionComplete !== true
+      ? unit.moveOrder
+      : null;
     // Initial target-acquisition delay. Only the first acquisition waits; once a
     // unit has been in combat, re-acquisition is governed by its swing state.
-    if (unit.actionTimers.acquire > 0) {
+    // A group PATROL scans on the game AI's shared opening cadence. Units that
+    // do not yet have line of sight remain in formation until the next scan;
+    // they do not poll continuously on every render tick.
+    if (openingPatrolOrder) {
+      if (tick < openingPatrolOrder.nextOpeningScanTick) continue;
+      unit.actionTimers.acquire = 0;
+    } else if (unit.actionTimers.acquire > 0) {
       unit.actionTimers.acquire -= 1;
       // Acquire on the very tick the delay expires, so no unit is ever briefly
       // idle with an expired timer and no target.
       if (unit.actionTimers.acquire > 0) continue;
+    }
+    // A unit following a recovery detour may naturally reveal or enter range
+    // of a different enemy. That is a real acquisition opportunity, not a
+    // desired-output assignment: choose the nearest newly legal target using
+    // only current geometry. If the route itself proved unavailable, perform
+    // one ordinary line-of-sight acquisition excluding the blocked target.
+    if (pursuitRecoveryState && unit.action !== "attacking") {
+      const routeActive = pursuitRecoveryState.routes.has(unit.referenceId);
+      const current = Number.isSafeInteger(unit.pursuitTargetId)
+        ? snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId)
+        : null;
+      if (routeActive && current?.alive && isHostile(unit, current)
+          && isWithinReach(unit, current)) {
+        pursuitRecoveryState.routes.delete(unit.referenceId);
+        pursuitRecoveryState.attempts.delete(unit.referenceId);
+        pursuitRecoveryState.routeFailures.delete(unit.referenceId);
+        pursuitRecoveryState.failedTargets.delete(unit.referenceId);
+      }
+      const retargetReady = pursuitRecoveryState.retargetReady.has(unit.referenceId);
+      const opportunity = (routeActive || retargetReady)
+          && current?.alive && !isWithinReach(unit, current)
+        ? recoveryOpportunityTarget(unit, snapshot)
+        : null;
+      const alternate = opportunity ?? (
+        retargetReady
+          ? recoveryAlternateTarget(
+            unit,
+            snapshot,
+            pursuitRecoveryState,
+            map,
+            pairInteractions,
+          )
+          : null
+      );
+      pursuitRecoveryState.retargetReady.delete(unit.referenceId);
+      if (alternate) {
+        const previousTargetId = unit.pursuitTargetId;
+        unit.pursuitTargetId = alternate.referenceId;
+        unit.engagedTargetId = null;
+        unit.avoidance = null;
+        if (unit.moveOrder?.kind === "scenario-patrol") {
+          unit.patrolFormationTransit = false;
+        }
+        pursuitRecoveryState.routes.delete(unit.referenceId);
+        pursuitRecoveryState.attempts.delete(unit.referenceId);
+        pursuitRecoveryState.routeFailures.delete(unit.referenceId);
+        if (opportunity) pursuitRecoveryState.failedTargets.delete(unit.referenceId);
+        if (alternate.referenceId !== previousTargetId) {
+          events.push(event(tick, "pursuit-acquired", unit.referenceId,
+            alternate.referenceId, {
+              reason: opportunity
+                ? "blocked-route-opportunity"
+                : "blocked-route-unavailable",
+              previousTargetId,
+            }));
+        }
+        continue;
+      }
     }
     // Experiment harness (docs/RETARGETING_INVESTIGATION.md). Off by default:
     // shouldReevaluatePursuit is false unless AOE2X_EXP_PURSUIT is set, so this
@@ -542,7 +1000,7 @@ function acquirePursuitTargets(
       && !isWithinReach(unit, pursued)
       && snapshot.some((candidate) => (
         candidate.alive
-        && candidate.owner !== unit.owner
+        && isHostile(unit, candidate)
         && isWithinReach(unit, candidate)
       ));
     const reevaluate = unit.pursuitTargetId !== null
@@ -565,10 +1023,96 @@ function acquirePursuitTargets(
     // selectPursuitTarget short-circuits on a live locked target, so a
     // re-evaluation has to present the unit as unlocked to force a fresh scan.
     const candidate = reevaluate ? { ...found, pursuitTargetId: null } : found;
-    const target = selectPursuitTarget(candidate, snapshot, pressureApplies
-      ? { targetLoadById, targetLoadPenaltyTiles: pressureTiles }
-      : undefined);
+    const scenarioPatrol = openingPatrolOrder;
+    const lockedPatrolTargetIds = scenarioPatrol
+      ? patrolOpeningTargetByOwner?.get(unit.owner)
+      : null;
+    const hasLockedPatrolTarget = Array.isArray(lockedPatrolTargetIds)
+      && lockedPatrolTargetIds.length > 0;
+    const gateAnchorIndex = hasLockedPatrolTarget
+      ? openingHash(
+        scenarioPatrol.openingSeed ?? 0,
+        unit.owner,
+        unit.referenceId,
+      ) % lockedPatrolTargetIds.length
+      : null;
+    const rangedOpeningFront = hasLockedPatrolTarget
+      && lockedPatrolTargetIds.every((referenceId) => (
+        snapshot.find((possible) => possible.referenceId === referenceId)
+          ?.mechanics?.ranged
+      ));
+    const gatePatrolTarget = hasLockedPatrolTarget
+      ? snapshot.find((possible) => (
+        possible.referenceId === lockedPatrolTargetIds[gateAnchorIndex]
+          && possible.alive
+          && isHostile(unit, possible)
+          && Math.hypot(possible.x - unit.x, possible.y - unit.y)
+            - collisionRadius(possible)
+            <= unit.mechanics.line_of_sight_tiles + 1e-12
+      )) ?? null
+      : null;
+    const rangedAssignmentTargets = rangedOpeningFront
+      ? lockedPatrolTargetIds
+        .map((referenceId) => snapshot.find((possible) => (
+          possible.referenceId === referenceId
+            && possible.alive
+            && isHostile(unit, possible)
+        )) ?? null)
+        .filter((possible) => possible !== null)
+      : [];
+    const opposingRange = rangedAssignmentTargets.reduce((maximum, possible) => (
+      Math.max(maximum, possible.mechanics?.attack_range_tiles ?? 0)
+    ), 0);
+    const rangeDisadvantage = Math.max(
+      0,
+      opposingRange - (unit.mechanics?.attack_range_tiles ?? 0),
+    );
+    const outsideFiringEnvelope = rangedAssignmentTargets.filter((possible) => (
+      Math.hypot(possible.x - unit.x, possible.y - unit.y)
+        > collisionRadius(unit) + collisionRadius(possible)
+          + unit.mechanics.attack_range_tiles + rangeDisadvantage
+    ));
+    const nonGateOutside = outsideFiringEnvelope.filter((possible) => (
+      possible.referenceId !== gatePatrolTarget?.referenceId
+    ));
+    const assignmentPool = nonGateOutside.length > 0
+      ? nonGateOutside
+      : outsideFiringEnvelope.length > 0
+        ? outsideFiringEnvelope
+        : rangedAssignmentTargets;
+    const assignmentIndex = assignmentPool.length > 0
+      ? openingHash(
+        (scenarioPatrol.openingSeed ?? 0) ^ 0x6d2b79f5,
+        unit.owner,
+        unit.referenceId,
+      ) % assignmentPool.length
+      : null;
+    const lockedPatrolTargetId = rangedOpeningFront
+      ? assignmentIndex === null ? null : assignmentPool[assignmentIndex].referenceId
+      : hasLockedPatrolTarget
+        ? lockedPatrolTargetIds[gateAnchorIndex]
+        : null;
+    const lockedPatrolTarget = gatePatrolTarget
+      ? snapshot.find((possible) => (
+        possible.referenceId === lockedPatrolTargetId
+          && possible.alive
+          && isHostile(unit, possible)
+      )) ?? null
+      : null;
+    const target = scenarioPatrol
+      ? hasLockedPatrolTarget
+        ? lockedPatrolTarget
+        : selectPatrolOpeningTarget(candidate, snapshot, scenarioPatrol)
+      : selectPursuitTarget(candidate, snapshot, pressureApplies
+        ? { targetLoadById, targetLoadPenaltyTiles: pressureTiles }
+        : undefined);
     if (target === null) {
+      if (scenarioPatrol) {
+        unit.moveOrder = Object.freeze({
+          ...scenarioPatrol,
+          nextOpeningScanTick: tick + Math.round(PATROL_RESCAN_SECONDS * TICKS_PER_SECOND),
+        });
+      }
       if (pressureApplies && reevaluate) {
         targetLoadById.set(
           unit.pursuitTargetId,
@@ -583,8 +1127,303 @@ function acquirePursuitTargets(
     if (target.referenceId !== unit.pursuitTargetId) {
       events.push(event(tick, "pursuit-acquired", unit.referenceId, target.referenceId));
     }
+    if (scenarioPatrol && patrolOpeningTargetByOwner !== null
+        && !patrolOpeningTargetByOwner.has(unit.owner)) {
+      patrolOpeningTargetByOwner.set(unit.owner, Object.freeze([target.referenceId]));
+    }
     unit.pursuitTargetId = target.referenceId;
+    unit.openingAcquisitionComplete = true;
+    // A scenario PATROL is suspended—not destroyed—while combat pursuit owns
+    // the unit. If that target is later lost outside shared vision, the unit
+    // resumes toward the authored patrol point and keeps scanning. A plain
+    // opening-patrol remains one-shot setup behavior.
+    if (unit.moveOrder?.kind === "scenario-patrol") {
+      unit.patrolFormationTransit = false;
+    } else if (unit.moveOrder?.kind === "opening-patrol") {
+      delete unit.moveOrder;
+      delete unit.patrolFormationTransit;
+    }
   }
+}
+
+
+function compileScenarioTriggers(rawTriggers, owners, map) {
+  if (rawTriggers === undefined) return Object.freeze([]);
+  if (!Array.isArray(rawTriggers)) throw new TypeError("scenario triggers must be an array");
+  const ownerSet = new Set(owners);
+  const ids = new Set();
+  return Object.freeze(rawTriggers.map((raw, index) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      throw new TypeError("scenario trigger must be an object");
+    }
+    const id = raw.trigger_index ?? raw.id ?? index;
+    if (!Number.isSafeInteger(id) || id < 0 || ids.has(id)) {
+      throw new RangeError("scenario trigger IDs must be unique nonnegative integers");
+    }
+    ids.add(id);
+    if (raw.looping === true) {
+      throw new RangeError("looping scenario triggers are not implemented");
+    }
+    const conditions = raw.conditions ?? [];
+    if (!Array.isArray(conditions)) throw new TypeError("trigger conditions must be an array");
+    const compiledConditions = Object.freeze(conditions.map((condition) => {
+      if (condition?.type !== "player_defeated") {
+        throw new RangeError(`unknown scenario trigger condition ${condition?.type}`);
+      }
+      const sourceOwner = condition.source_player;
+      if (!Number.isSafeInteger(sourceOwner) || !ownerSet.has(sourceOwner)) {
+        throw new RangeError("player-defeated condition must identify a scenario owner");
+      }
+      return Object.freeze({ type: "player-defeated", sourceOwner });
+    }));
+    if (!Array.isArray(raw.effects) || raw.effects.length === 0) {
+      throw new RangeError("scenario trigger must contain at least one effect");
+    }
+    const effects = Object.freeze(raw.effects.map((effect) => {
+      if (effect?.type === "change_diplomacy") {
+        const sourceOwner = effect.source_player;
+        const targetOwner = effect.target_player;
+        if (!Number.isSafeInteger(sourceOwner) || !ownerSet.has(sourceOwner)
+            || !Number.isSafeInteger(targetOwner) || !ownerSet.has(targetOwner)
+            || sourceOwner === targetOwner) {
+          throw new RangeError("diplomacy effect must identify two scenario owners");
+        }
+        if (![DIPLOMACY.ALLY, DIPLOMACY.NEUTRAL, DIPLOMACY.ENEMY]
+          .includes(effect.diplomacy)) {
+          throw new RangeError("diplomacy effect has an invalid relation");
+        }
+        return Object.freeze({
+          type: "change-diplomacy",
+          sourceOwner,
+          targetOwner,
+          diplomacy: effect.diplomacy,
+          mutual: effect.mutual === true,
+        });
+      }
+      if (effect?.type === "patrol") {
+        const owner = effect.owner;
+        const x = effect.x;
+        const y = effect.y;
+        if (!Number.isSafeInteger(owner) || !ownerSet.has(owner)) {
+          throw new RangeError("patrol effect owner must identify a scenario owner");
+        }
+        if (!Number.isFinite(x) || !Number.isFinite(y)
+            || x < 0 || x >= map.width || y < 0 || y >= map.height) {
+          throw new RangeError("patrol effect destination must be inside the map");
+        }
+        const area = effect.area ?? { x1: 0, y1: 0, x2: map.width, y2: map.height };
+        for (const name of ["x1", "y1", "x2", "y2"]) {
+          if (!Number.isFinite(area[name])) {
+            throw new TypeError("patrol selection area coordinates must be finite");
+          }
+        }
+        if (area.x1 > area.x2 || area.y1 > area.y2) {
+          throw new RangeError("patrol selection area must be ordered");
+        }
+        return Object.freeze({
+          type: "patrol",
+          owner,
+          x,
+          y,
+          area: Object.freeze({ ...area }),
+        });
+      }
+      throw new RangeError(`unknown scenario trigger effect ${effect?.type}`);
+    }));
+    return Object.freeze({
+      id,
+      name: typeof raw.name === "string" ? raw.name : `Trigger ${id}`,
+      conditions: compiledConditions,
+      effects,
+    });
+  }));
+}
+
+
+function compileVictoryTeams(owners, rawTeams = undefined) {
+  const orderedOwners = [...owners].sort((left, right) => left - right);
+  const teams = rawTeams ?? orderedOwners.map((owner) => ({
+    winnerOwner: owner,
+    owners: [owner],
+  }));
+  if (!Array.isArray(teams) || teams.length === 0) {
+    throw new TypeError("victory teams must be a nonempty array");
+  }
+  const seen = new Set();
+  const ownerSet = new Set(orderedOwners);
+  const compiled = teams.map((team) => {
+    if (!team || typeof team !== "object" || !Array.isArray(team.owners)
+        || team.owners.length === 0) {
+      throw new TypeError("victory team must contain owners");
+    }
+    if (!Number.isSafeInteger(team.winnerOwner) || !team.owners.includes(team.winnerOwner)) {
+      throw new RangeError("victory team winner must be one of its owners");
+    }
+    const members = [...team.owners].sort((left, right) => left - right);
+    for (const owner of members) {
+      if (!ownerSet.has(owner) || seen.has(owner)) {
+        throw new RangeError("victory teams must partition the scenario owners");
+      }
+      seen.add(owner);
+    }
+    return Object.freeze({
+      winnerOwner: team.winnerOwner,
+      owners: Object.freeze(members),
+    });
+  });
+  if (seen.size !== ownerSet.size) {
+    throw new RangeError("victory teams must include every scenario owner");
+  }
+  return Object.freeze(compiled);
+}
+
+
+function triggerConditionsMet(trigger, defeatedOwners) {
+  return trigger.conditions.every((condition) => (
+    condition.type === "player-defeated" && defeatedOwners.has(condition.sourceOwner)
+  ));
+}
+
+
+function unitInsideArea(unit, area) {
+  return unit.x >= area.x1 && unit.x <= area.x2
+    && unit.y >= area.y1 && unit.y <= area.y2;
+}
+
+
+function applyPatrolEffect(units, effect, trigger, tick, events) {
+  const ownerOpeningHash = openingHash(trigger.openingSeed ?? 0, effect.owner, 0);
+  const openingFraction = ownerOpeningHash / 0xffffffff;
+  const firstScanMinimum = effect.owner === 4
+    ? AUXILIARY_PATROL_FIRST_SCAN_MIN_SECONDS
+    : PATROL_FIRST_SCAN_MIN_SECONDS;
+  const firstScanTick = tick + Math.round((
+    firstScanMinimum
+      + openingFraction * (PATROL_FIRST_SCAN_MAX_SECONDS - firstScanMinimum)
+  ) * TICKS_PER_SECOND);
+  let selected = 0;
+  for (const unit of units) {
+    if (!unit.alive || unit.owner !== effect.owner || !unitInsideArea(unit, effect.area)) {
+      continue;
+    }
+    selected += 1;
+    unit.pursuitTargetId = null;
+    unit.engagedTargetId = null;
+    unit.attackTargetId = null;
+    unit.avoidance = null;
+    delete unit.attackKind;
+    unit.actionTimers.windup = 0;
+    unit.actionTimers.swing = 0;
+    unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
+    unit.moveOrder = Object.freeze({
+      kind: "scenario-patrol",
+      // The scenario trigger issues one patrol destination to the selected
+      // group. Individual combat pursuit takes over at first acquisition.
+      x: effect.x,
+      y: effect.y,
+      commandX: effect.x,
+      commandY: effect.y,
+      issuedTick: tick,
+      triggerId: trigger.id,
+      openingSeed: trigger.openingSeed ?? 0,
+      motionStartTick: tick + Math.round(PATROL_ORDER_REACTION_SECONDS * TICKS_PER_SECOND),
+      nextOpeningScanTick: firstScanTick,
+    });
+  }
+  events.push(event(tick, "patrol-issued", effect.owner, null, {
+    owner: effect.owner,
+    x: effect.x,
+    y: effect.y,
+    selected,
+    triggerId: trigger.id,
+  }));
+}
+
+
+function fireEligibleScenarioTriggers(
+  units,
+  diplomacyByOwner,
+  triggerState,
+  tick,
+  events,
+) {
+  const fired = new Set(triggerState.firedTriggerIds);
+  const defeated = new Set(triggerState.defeatedOwners);
+  let diplomacy = diplomacyByOwner;
+  for (const trigger of triggerState.triggers) {
+    if (fired.has(trigger.id) || !triggerConditionsMet(trigger, defeated)) continue;
+    fired.add(trigger.id);
+    events.push(event(tick, "scenario-trigger-fired", trigger.id, null, {
+      triggerId: trigger.id,
+      name: trigger.name,
+    }));
+    for (const effect of trigger.effects) {
+      if (effect.type === "change-diplomacy") {
+        const prior = diplomacy[effect.sourceOwner][effect.targetOwner];
+        diplomacy = changeDiplomacy(
+          diplomacy,
+          effect.sourceOwner,
+          effect.targetOwner,
+          effect.diplomacy,
+          { mutual: effect.mutual },
+        );
+        for (let index = 0; index < units.length; index += 1) {
+          units[index] = withDiplomacy(units[index], diplomacy);
+        }
+        events.push(event(tick, "diplomacy-changed", effect.sourceOwner, effect.targetOwner, {
+          sourceOwner: effect.sourceOwner,
+          targetOwner: effect.targetOwner,
+          prior,
+          diplomacy: effect.diplomacy,
+          mutual: effect.mutual,
+          triggerId: trigger.id,
+        }));
+      } else {
+        applyPatrolEffect(units, effect, {
+          ...trigger,
+          openingSeed: triggerState.openingSeed ?? 0,
+        }, tick, events);
+      }
+    }
+  }
+  return {
+    diplomacyByOwner: diplomacy,
+    triggerState: Object.freeze({
+      triggers: triggerState.triggers,
+      firedTriggerIds: Object.freeze([...fired].sort((left, right) => left - right)),
+      defeatedOwners: Object.freeze([...defeated].sort((left, right) => left - right)),
+      openingSeed: triggerState.openingSeed ?? 0,
+    }),
+  };
+}
+
+
+function advanceScenarioTriggers(world, units, tick, events) {
+  if (!world.scenarioTriggerState) {
+    return {
+      diplomacyByOwner: world.diplomacyByOwner,
+      triggerState: null,
+    };
+  }
+  const defeated = new Set(world.scenarioTriggerState.defeatedOwners);
+  for (const owner of world.scenarioOwners) {
+    if (defeated.has(owner) || units.some((unit) => unit.alive && unit.owner === owner)) {
+      continue;
+    }
+    defeated.add(owner);
+    events.push(event(tick, "owner-defeated", owner, null, { owner }));
+  }
+  return fireEligibleScenarioTriggers(
+    units,
+    world.diplomacyByOwner,
+    Object.freeze({
+      ...world.scenarioTriggerState,
+      defeatedOwners: Object.freeze([...defeated].sort((left, right) => left - right)),
+      openingSeed: world.scenarioTriggerState.openingSeed ?? 0,
+    }),
+    tick,
+    events,
+  );
 }
 
 
@@ -619,7 +1458,7 @@ function minRangeRetreat(unit, live) {
   let nearest = null;
   let nearestDistance = Infinity;
   for (const other of live) {
-    if (other.owner === unit.owner) continue;
+    if (!isHostile(unit, other)) continue;
     const distance = Math.hypot(other.x - unit.x, other.y - unit.y);
     if (distance < spec.min_range_tiles - 1e-9 && distance < nearestDistance) {
       nearest = other;
@@ -680,9 +1519,11 @@ const ZERO_STEP_EPSILON = 1e-12;
 // turn is genuinely walled in and stands, which is the tape's other mode.
 const STEER_INCREMENT_RADIANS = Math.PI / 12;
 const STEER_MAX_TURNS = 6;
+const RECOVERY_STEER_MAX_TURNS = Math.round(Math.PI / STEER_INCREMENT_RADIANS);
 
 
-function stepClearsBodies(mover, dx, dy, live, bounds, pairInteractions) {
+function stepClearsBodies(mover, dx, dy, live, bounds, pairInteractions,
+  includeNonObstructingContacts = false) {
   const x = mover.x + dx;
   const y = mover.y + dy;
   const radius = collisionRadius(mover);
@@ -691,13 +1532,80 @@ function stepClearsBodies(mover, dx, dy, live, bounds, pairInteractions) {
   for (const other of live) {
     if (other.referenceId === mover.referenceId) continue;
     const interaction = resolvePairInteraction(mover, other, pairInteractions);
-    if (!interaction.pathObstructs) continue;
+    if (!interaction.pathObstructs && !includeNonObstructingContacts) continue;
     const extent = interaction.collisionExtent;
     if (Math.max(Math.abs(x - other.x), Math.abs(y - other.y)) < extent - STEP_EPSILON) {
       return false;
     }
   }
   return true;
+}
+
+
+function obstacleCollisionRadius(obstacle) {
+  const radius = obstacle?.radius
+    ?? obstacle?.collisionRadius
+    ?? obstacle?.collision_radius;
+  if (radius === undefined) return collisionRadius(obstacle);
+  if (!Number.isFinite(radius) || radius <= 0) {
+    throw new RangeError("map obstacle radius must be positive and finite");
+  }
+  return radius;
+}
+
+
+function stepClearsMapObstacles(mover, dx, dy, map) {
+  const x = mover.x + dx;
+  const y = mover.y + dy;
+  const moverRadius = collisionRadius(mover);
+  return (map.obstacles ?? []).every((obstacle) => (
+    Math.max(Math.abs(x - obstacle.x), Math.abs(y - obstacle.y))
+      >= moverRadius + obstacleCollisionRadius(obstacle) - STEP_EPSILON
+  ));
+}
+
+
+function planBlockedPursuitEscape(mover, target, wantedDx, wantedDy, live, map,
+  pairInteractions, recoveryAttempt = 0) {
+  const stepLength = Math.hypot(wantedDx, wantedDy);
+  if (stepLength <= ZERO_STEP_EPSILON) return null;
+  const bounds = { width: map.width, height: map.height };
+  const heading = Math.atan2(target.y - mover.y, target.x - mover.x);
+  const preferPositive = (mover.referenceId + recoveryAttempt) % 2 === 0;
+  const sides = preferPositive ? [1, -1] : [-1, 1];
+  for (let turn = 1; turn <= RECOVERY_STEER_MAX_TURNS; turn += 1) {
+    for (const side of sides) {
+      const angle = heading + side * turn * STEER_INCREMENT_RADIANS;
+      const dx = Math.cos(angle) * stepLength;
+      const dy = Math.sin(angle) * stepLength;
+      if (!stepClearsBodies(
+        mover,
+        dx,
+        dy,
+        live,
+        bounds,
+        pairInteractions,
+        true,
+      )
+          || !stepClearsMapObstacles(mover, dx, dy, map)) continue;
+      const escapeDistance = Math.max(
+        collisionRadius(mover) * 2,
+        stepLength + STEER_INCREMENT_RADIANS,
+      );
+      return Object.freeze({
+        targetReferenceId: target.referenceId,
+        targetX: target.x,
+        targetY: target.y,
+        waypoints: Object.freeze([Object.freeze({
+          x: mover.x + Math.cos(angle) * escapeDistance,
+          y: mover.y + Math.sin(angle) * escapeDistance,
+        })]),
+        waypointIndex: 0,
+        recoveryKind: "local-escape",
+      });
+    }
+  }
+  return null;
 }
 
 
@@ -717,7 +1625,7 @@ function stepHitsAnyEnemyBody(mover, dx, dy, live, pairInteractions) {
   const y = mover.y + dy;
   for (const other of live) {
     if (other.referenceId === mover.referenceId) continue;
-    if (other.owner === mover.owner) continue;
+    if (!areOpponents(mover, other)) continue;
     const interaction = resolvePairInteraction(mover, other, pairInteractions);
     if (!interaction.pathObstructs) continue;
     const extent = interaction.collisionExtent;
@@ -734,7 +1642,7 @@ function stepHitsOtherEnemyBody(mover, dx, dy, live, pairInteractions) {
   const y = mover.y + dy;
   for (const other of live) {
     if (other.referenceId === mover.referenceId) continue;
-    if (other.owner === mover.owner) continue;
+    if (!areOpponents(mover, other)) continue;
     if (other.referenceId === mover.pursuitTargetId
       || other.referenceId === mover.engagedTargetId
       || other.referenceId === mover.attackTargetId) continue;
@@ -893,7 +1801,8 @@ function resolveMovement(planned, byReference, map, kiteState = null, movementOp
 
 
 function moveUnits(units, map, tick, events, kiteState = null,
-  contactReservationState = null, contactSteeringStates = new Map()) {
+  contactReservationState = null, contactSteeringStates = new Map(),
+  pursuitRecoveryState = null) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
   let pairInteractions = createPairInteractionSnapshot({
@@ -912,12 +1821,25 @@ function moveUnits(units, map, tick, events, kiteState = null,
     kiteState.chaseRoutes = new Map();
   }
   const authoritativeRouteReferenceIds = new Set();
+  if (pursuitRecoveryState) {
+    for (const referenceId of pursuitRecoveryState.routes.keys()) {
+      const unit = byReference.get(referenceId);
+      const target = byReference.get(unit?.pursuitTargetId);
+      if (!unit?.alive || !target?.alive || !isHostile(unit, target)) {
+        pursuitRecoveryState.routes.delete(referenceId);
+        pursuitRecoveryState.attempts.delete(referenceId);
+        pursuitRecoveryState.retargetReady.delete(referenceId);
+        pursuitRecoveryState.routeFailures.delete(referenceId);
+        pursuitRecoveryState.failedTargets.delete(referenceId);
+      }
+    }
+  }
   if (kiteState?.chaseRoutes) {
     for (const referenceId of kiteState.chaseRoutes.keys()) {
       const unit = byReference.get(referenceId);
       const target = byReference.get(unit?.pursuitTargetId);
       if (!unit?.alive || unit.owner === kiteState.owner
-          || !target?.alive || target.owner === unit.owner) {
+          || !target?.alive || !isHostile(unit, target)) {
         kiteState.chaseRoutes.delete(referenceId);
       }
     }
@@ -934,6 +1856,40 @@ function moveUnits(units, map, tick, events, kiteState = null,
     }
   }
   const chaseAim = (unit, target) => {
+    const recoveryRoutes = pursuitRecoveryState?.routes;
+    let recoveryRoute = recoveryRoutes?.get(unit.referenceId) ?? null;
+    if (recoveryRoute && recoveryRoute.targetReferenceId !== target.referenceId) {
+      recoveryRoutes.delete(unit.referenceId);
+      recoveryRoute = null;
+    }
+    if (recoveryRoute) {
+      const advanced = advancePersistentChaseRoute(unit, recoveryRoute);
+      if (advanced.waypointIndex !== recoveryRoute.waypointIndex) {
+        events.push(event(tick, "pursuit-route-advanced", unit.referenceId,
+          target.referenceId, {
+            waypointIndex: advanced.waypointIndex,
+            reason: "blocked-pursuit-recovery",
+          }));
+      }
+      recoveryRoute = advanced;
+      if (recoveryRoute.waypointIndex >= recoveryRoute.waypoints.length) {
+        recoveryRoutes.delete(unit.referenceId);
+        pursuitRecoveryState.routeFailures.delete(unit.referenceId);
+        recoveryRoute = null;
+      } else {
+        recoveryRoutes.set(unit.referenceId, recoveryRoute);
+      }
+    }
+    if (recoveryRoute) {
+      authoritativeRouteReferenceIds.add(unit.referenceId);
+      const waypoint = recoveryRoute.waypoints[recoveryRoute.waypointIndex];
+      return Object.freeze({
+        x: waypoint.x,
+        y: waypoint.y,
+        pathWaypoint: true,
+        persistentRoute: true,
+      });
+    }
     if (!kiteState || unit.owner === kiteState.owner) return target;
     const obstacles = live.filter((other) => other.referenceId !== unit.referenceId
       && other.referenceId !== target.referenceId
@@ -1039,7 +1995,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
       // shrink rule), and treating allies as hard A* walls tears the kiting
       // ball apart and suppresses its volley. Plan only around enemy bodies;
       // execution still passes through the normal ally collision solver.
-      const obstacles = live.filter((other) => other.owner !== unit.owner);
+      const obstacles = live.filter((other) => isHostile(unit, other));
       waypoint = {
         orderX: goal.x,
         orderY: goal.y,
@@ -1073,8 +2029,17 @@ function moveUnits(units, map, tick, events, kiteState = null,
     // corpus can reach it. windup === 0 is exactly "the swing has been
     // released"; an unreleased swing was already cancelled when the order was
     // issued, and a unit holding a move order never starts a new attack.
-    if (unit.moveOrder
+    const suspendedScenarioPatrol = unit.moveOrder?.kind === "scenario-patrol"
+      && (Number.isSafeInteger(unit.pursuitTargetId)
+        || Number.isSafeInteger(unit.engagedTargetId)
+        || Number.isSafeInteger(unit.attackTargetId));
+    if (unit.moveOrder && !suspendedScenarioPatrol
         && (unit.action !== "attacking" || unit.actionTimers.windup === 0)) {
+      if (unit.moveOrder.kind === "scenario-patrol"
+          && Number.isSafeInteger(unit.moveOrder.motionStartTick)
+          && tick < unit.moveOrder.motionStartTick) {
+        return Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
+      }
       const moveAim = kitedMoveAim(unit);
       const dx = moveAim.x - unit.x;
       const dy = moveAim.y - unit.y;
@@ -1115,7 +2080,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
     const engaged = byReference.get(unit.engagedTargetId);
     if (kiteState?.meleeOpeningOrder === "attack-move-all"
         && unit.owner !== kiteState.owner
-        && engaged?.alive && engaged.owner !== unit.owner
+        && engaged?.alive && isHostile(unit, engaged)
         && isWithinReach(unit, engaged)
         && isWithinStopRange(unit, engaged, { pairInteractions })) {
       return Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
@@ -1147,7 +2112,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
       const plannedCohort = planCohortContactMotion({
         units: cohort,
         proposals: cohort.map((unit) => proposalByReference.get(unit.referenceId)),
-        enemies: live.filter((unit) => unit.owner !== kiteState.owner),
+        enemies: live.filter((unit) => isHostile(cohort[0], unit)),
         map,
         preferredTurn: kiteState.ringDirection || 1,
       });
@@ -1159,17 +2124,107 @@ function moveUnits(units, map, tick, events, kiteState = null,
       ));
     }
   }
+  const crowdInputProposals = proposals;
+  let rangedCrowdPlan = planRangedCrowding(live, crowdInputProposals, tick, {
+    authoritativeReferenceIds: authoritativeRouteReferenceIds,
+  });
+  proposals = rangedCrowdPlan.proposals;
+  if (pursuitRecoveryState && rangedCrowdPlan.routeRequests.length > 0) {
+    const provisionalReservations = new Map(pairInteractions.contactReservations);
+    for (const [key, reservation] of rangedCrowdPlan.contactReservations) {
+      provisionalReservations.set(key, reservation);
+    }
+    const routePairInteractions = createPairInteractionSnapshot({
+      contactReservations: provisionalReservations,
+    });
+    const routeProposalByReference = new Map();
+    for (const request of rangedCrowdPlan.routeRequests) {
+      const unit = byReference.get(request.referenceId);
+      const target = byReference.get(request.targetReferenceId);
+      if (!unit?.alive || !target?.alive || !isHostile(unit, target)
+          || isWithinReach(unit, target)) continue;
+      const obstacles = live.filter((other) => (
+        other.referenceId !== unit.referenceId
+        && other.referenceId !== target.referenceId
+      ));
+      const persistentRoute = planPersistentChaseRoute(
+        unit,
+        target,
+        obstacles,
+        map,
+        {
+          pairInteractions: routePairInteractions,
+          includeNonObstructingContacts: true,
+        },
+      );
+      const route = persistentRoute && persistentRoute.stand !== true
+        ? persistentRoute
+        : planBlockedPursuitEscape(
+          unit,
+          target,
+          request.wantedDx,
+          request.wantedDy,
+          live,
+          map,
+          routePairInteractions,
+          pursuitRecoveryState.routeFailures.get(unit.referenceId) ?? 0,
+        );
+      if (!route || route.stand === true || route.waypoints.length === 0) {
+        const failedTargets = pursuitRecoveryState.failedTargets.get(unit.referenceId)
+          ?? new Set();
+        failedTargets.add(target.referenceId);
+        pursuitRecoveryState.failedTargets.set(unit.referenceId, failedTargets);
+        pursuitRecoveryState.retargetReady.add(unit.referenceId);
+        events.push(event(tick, "pursuit-retarget-requested", unit.referenceId,
+          target.referenceId, {
+            reason: "ranged-crowd-route-unavailable",
+          }));
+        continue;
+      }
+      pursuitRecoveryState.routes.set(unit.referenceId, route);
+      pursuitRecoveryState.attempts.delete(unit.referenceId);
+      pursuitRecoveryState.retargetReady.delete(unit.referenceId);
+      authoritativeRouteReferenceIds.add(unit.referenceId);
+      const waypoint = route.waypoints[route.waypointIndex];
+      routeProposalByReference.set(
+        unit.referenceId,
+        proposePointMovement(unit, waypoint, TICKS_PER_SECOND),
+      );
+      events.push(event(tick, "pursuit-route-planned", unit.referenceId,
+        target.referenceId, {
+          reason: request.reason,
+          waypointCount: route.waypoints.length,
+          waypointIndex: route.waypointIndex,
+          recoveryAttempt: pursuitRecoveryState.routeFailures.get(unit.referenceId) ?? 0,
+          ...(route.recoveryKind ? { recoveryKind: route.recoveryKind } : {}),
+        }));
+    }
+    if (routeProposalByReference.size > 0) {
+      const routedInputs = crowdInputProposals.map((proposal) => (
+        routeProposalByReference.get(proposal.referenceId) ?? proposal
+      ));
+      rangedCrowdPlan = planRangedCrowding(live, routedInputs, tick, {
+        authoritativeReferenceIds: authoritativeRouteReferenceIds,
+      });
+      proposals = rangedCrowdPlan.proposals;
+    }
+  }
   const contactUpdate = contactReservationState
     ? updateContactReservations({
       state: contactReservationState,
       units: live,
       proposals,
       tick,
+      externalReservations: rangedCrowdPlan.contactReservations,
     })
     : null;
   if (contactUpdate) {
+    const combinedReservations = new Map(contactUpdate.contactReservations);
+    for (const [key, reservation] of rangedCrowdPlan.contactReservations) {
+      combinedReservations.set(key, reservation);
+    }
     pairInteractions = createPairInteractionSnapshot({
-      contactReservations: contactUpdate.contactReservations,
+      contactReservations: combinedReservations,
     });
     for (const diagnostic of contactUpdate.diagnostics) {
       const [leftId, rightId] = diagnostic.pairKey.split(":").map(Number);
@@ -1184,9 +2239,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
     }
   }
   let movementOptions = {
-    pairInteractions: createPairInteractionSnapshot({
-      contactReservations: contactUpdate?.contactReservations ?? new Map(),
-    }),
+    pairInteractions,
     ...(kiteState ? { collisionRecoveryState: kiteState.collisionRecoveryState } : {}),
     ...(authoritativeRouteReferenceIds.size > 0
       ? { authoritativeReferenceIds: authoritativeRouteReferenceIds }
@@ -1216,6 +2269,13 @@ function moveUnits(units, map, tick, events, kiteState = null,
   const moveEvents = [];
   const blockedEvents = [];
   const routeEvents = [];
+  const recoveryPlanRequests = [];
+  const recoveryRequestIds = new Set();
+  const queueRecoveryPlan = (request) => {
+    if (recoveryRequestIds.has(request.referenceId)) return;
+    recoveryRequestIds.add(request.referenceId);
+    recoveryPlanRequests.push(Object.freeze(request));
+  };
   const movedIds = new Set();
   const blockedIds = new Set();
   // Per-tick displacement of every live unit, for ballistics lead (smart_mode
@@ -1244,38 +2304,57 @@ function moveUnits(units, map, tick, events, kiteState = null,
     }
     const proposal = proposalByReference.get(unit.referenceId);
     const isBlocked = Math.abs(dx - proposal.dx) > 1e-12 || Math.abs(dy - proposal.dy) > 1e-12;
+    const recoveryRoute = pursuitRecoveryState?.routes.get(unit.referenceId) ?? null;
     if (authoritativeRouteReferenceIds.has(unit.referenceId)) {
-      const route = kiteState?.chaseRoutes?.get(unit.referenceId);
+      const route = recoveryRoute ?? kiteState?.chaseRoutes?.get(unit.referenceId);
       const waypoint = route?.waypoints?.[route.waypointIndex];
       if (waypoint) {
-        if (persistentRouteMotionStalled(before, result)) {
+        const routeWanted = Math.hypot(proposal.dx, proposal.dy);
+        const routeActual = Math.hypot(dx, dy);
+        const recoveryRouteStalled = recoveryRoute
+          && routeWanted > ZERO_STEP_EPSILON
+          && routeActual < routeWanted * BLOCKED_PURSUIT_PROGRESS_FRACTION;
+        if (persistentRouteMotionStalled(before, result) || recoveryRouteStalled) {
           const proposedX = before.x + proposal.dx;
-          const proposedY = before.y + proposal.dy;
-          const blockingReferenceIds = live.filter((other) => {
-            if (other.referenceId === unit.referenceId) return false;
-            const interaction = resolvePairInteraction(
-              before, other, movementOptions.pairInteractions,
-            );
-            return interaction.pathObstructs
-              && Math.max(
-                Math.abs(proposedX - other.x),
-                Math.abs(proposedY - other.y),
-              ) < interaction.collisionExtent - STEP_EPSILON;
-          }).map(({ referenceId }) => referenceId);
-          kiteState.chaseRoutes.delete(unit.referenceId);
-          routeEvents.push(event(tick, "pursuit-route-invalidated", unit.referenceId,
-            route.targetReferenceId, {
-              reason: "no-progress",
-              waypointX: waypoint.x,
-              waypointY: waypoint.y,
-              beforeX: before.x,
-              beforeY: before.y,
-              proposedX,
-              proposedY,
-              afterX: result.x,
-              afterY: result.y,
-              blockingReferenceIds,
-            }));
+            const proposedY = before.y + proposal.dy;
+            const blockingReferenceIds = live.filter((other) => {
+              if (other.referenceId === unit.referenceId) return false;
+              const interaction = resolvePairInteraction(
+                before, other, movementOptions.pairInteractions,
+              );
+              return Math.max(
+                  Math.abs(proposedX - other.x),
+                  Math.abs(proposedY - other.y),
+                ) < interaction.collisionExtent - STEP_EPSILON;
+            }).map(({ referenceId }) => referenceId);
+            if (recoveryRoute) {
+              pursuitRecoveryState.routes.delete(unit.referenceId);
+              pursuitRecoveryState.retargetReady.add(unit.referenceId);
+              pursuitRecoveryState.routeFailures.set(
+                unit.referenceId,
+                (pursuitRecoveryState.routeFailures.get(unit.referenceId) ?? 0) + 1,
+              );
+              const failedTargets = pursuitRecoveryState.failedTargets.get(unit.referenceId)
+                ?? new Set();
+              failedTargets.add(route.targetReferenceId);
+              pursuitRecoveryState.failedTargets.set(unit.referenceId, failedTargets);
+            } else {
+              kiteState.chaseRoutes.delete(unit.referenceId);
+            }
+            routeEvents.push(event(tick, "pursuit-route-invalidated", unit.referenceId,
+              route.targetReferenceId, {
+                reason: recoveryRouteStalled ? "insufficient-progress" : "no-progress",
+                ...(recoveryRoute ? { recovery: true } : {}),
+                waypointX: waypoint.x,
+                waypointY: waypoint.y,
+                beforeX: before.x,
+                beforeY: before.y,
+                proposedX,
+                proposedY,
+                afterX: result.x,
+                afterY: result.y,
+                blockingReferenceIds,
+              }));
         }
       }
     }
@@ -1297,7 +2376,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
         const wantX = before.x + proposal.dx;
         const wantY = before.y + proposal.dy;
         for (const other of live) {
-          if (other.owner === unit.owner || other.referenceId === unit.referenceId) continue;
+          if (!areOpponents(unit, other) || other.referenceId === unit.referenceId) continue;
           const extent = collisionRadius(before) + collisionRadius(other);
           const gap = Math.max(Math.abs(wantX - other.x), Math.abs(wantY - other.y));
           if (gap < extent - STEP_EPSILON && gap < nearestGap) {
@@ -1318,6 +2397,107 @@ function moveUnits(units, map, tick, events, kiteState = null,
         actualDx: dx,
         actualDy: dy,
       }));
+    }
+    if (pursuitRecoveryState && !authoritativeRouteReferenceIds.has(unit.referenceId)) {
+      const target = byReference.get(unit.pursuitTargetId);
+      const wanted = Math.hypot(proposal.dx, proposal.dy);
+      const actual = Math.hypot(dx, dy);
+      const failedAttempt = target?.alive
+        && isHostile(unit, target)
+        && !isWithinReach(before, target)
+        && wanted > ZERO_STEP_EPSILON
+        && isBlocked
+        && actual < wanted * BLOCKED_PURSUIT_PROGRESS_FRACTION;
+      if (failedAttempt) {
+        const previous = pursuitRecoveryState.attempts.get(unit.referenceId);
+        const count = previous?.targetReferenceId === target.referenceId
+          ? previous.count + 1
+          : 1;
+        if (count >= BLOCKED_PURSUIT_RETRY_LIMIT) {
+          pursuitRecoveryState.attempts.delete(unit.referenceId);
+          queueRecoveryPlan({
+            referenceId: unit.referenceId,
+            targetReferenceId: target.referenceId,
+            wantedDx: proposal.dx,
+            wantedDy: proposal.dy,
+            reason: "blocked-pursuit-recovery",
+            failedAttempts: BLOCKED_PURSUIT_RETRY_LIMIT,
+          });
+        } else {
+          pursuitRecoveryState.attempts.set(unit.referenceId, Object.freeze({
+            targetReferenceId: target.referenceId,
+            count,
+          }));
+        }
+      } else {
+        pursuitRecoveryState.attempts.delete(unit.referenceId);
+        if (actual >= wanted * BLOCKED_PURSUIT_PROGRESS_FRACTION
+            && actual > ZERO_STEP_EPSILON) {
+          pursuitRecoveryState.failedTargets.delete(unit.referenceId);
+        }
+      }
+
+    }
+  }
+  if (pursuitRecoveryState && recoveryPlanRequests.length > 0) {
+    const postMoveLive = units.filter(({ alive }) => alive).map(freezeUnit);
+    const postMoveByReference = new Map(
+      postMoveLive.map((unit) => [unit.referenceId, unit]),
+    );
+    for (const request of recoveryPlanRequests) {
+      const unit = postMoveByReference.get(request.referenceId);
+      const target = postMoveByReference.get(request.targetReferenceId);
+      if (!unit?.alive || !target?.alive || !isHostile(unit, target)
+          || isWithinReach(unit, target)) continue;
+      const obstacles = postMoveLive.filter((other) => (
+        other.referenceId !== unit.referenceId
+        && other.referenceId !== target.referenceId
+      ));
+      const persistentRoute = planPersistentChaseRoute(unit, target, obstacles, map, {
+        pairInteractions: movementOptions.pairInteractions,
+        includeNonObstructingContacts: true,
+      });
+      const route = persistentRoute && persistentRoute.stand !== true
+        ? persistentRoute
+        : planBlockedPursuitEscape(
+          unit,
+          target,
+          request.wantedDx,
+          request.wantedDy,
+          postMoveLive,
+          map,
+          movementOptions.pairInteractions,
+          pursuitRecoveryState.routeFailures.get(unit.referenceId) ?? 0,
+        );
+      if (route && route.stand !== true && route.waypoints.length > 0) {
+        pursuitRecoveryState.routes.set(unit.referenceId, route);
+        routeEvents.push(event(tick, "pursuit-route-planned", unit.referenceId,
+          target.referenceId, {
+            reason: request.reason,
+            ...(request.failedAttempts === undefined
+              ? {}
+              : { failedAttempts: request.failedAttempts }),
+            waypointCount: route.waypoints.length,
+            waypointIndex: route.waypointIndex,
+            recoveryAttempt: pursuitRecoveryState.routeFailures.get(unit.referenceId) ?? 0,
+            ...(route.recoveryKind ? { recoveryKind: route.recoveryKind } : {}),
+          }));
+      } else {
+        const failedTargets = pursuitRecoveryState.failedTargets.get(unit.referenceId)
+          ?? new Set();
+        failedTargets.add(target.referenceId);
+        pursuitRecoveryState.failedTargets.set(unit.referenceId, failedTargets);
+        pursuitRecoveryState.retargetReady.add(unit.referenceId);
+        routeEvents.push(event(tick, "pursuit-retarget-requested", unit.referenceId,
+          target.referenceId, {
+            reason: persistentRoute?.stand === true
+              ? "blocked-route-unreachable"
+              : "blocked-route-not-found",
+            ...(request.failedAttempts === undefined
+              ? {}
+              : { failedAttempts: request.failedAttempts }),
+          }));
+      }
     }
   }
   events.push(...moveEvents, ...blockedEvents, ...routeEvents);
@@ -1365,23 +2545,37 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
   const kiteOwner = kiteState ? kiteState.owner : null;
   if (kiteState && !kiteState.reachDwell) kiteState.reachDwell = new Map();
   const snapshot = Object.freeze(units.map(freezeUnit));
+  const incomingMeleeEngagements = new Map();
+  for (const unit of snapshot) {
+    if (!unit.alive || unit.mechanics?.ranged) continue;
+    if (!Number.isSafeInteger(unit.engagedTargetId)) continue;
+    const target = snapshot.find(({ referenceId }) => referenceId === unit.engagedTargetId);
+    if (!target?.alive || !isHostile(unit, target)) continue;
+    incomingMeleeEngagements.set(
+      target.referenceId,
+      (incomingMeleeEngagements.get(target.referenceId) ?? 0) + 1,
+    );
+  }
   for (const unit of units) {
     if (!unit.alive) {
       unit.engagedTargetId = null;
       continue;
     }
-    // No engagement before first acquisition: the outline reach can span the
-    // spawn bands (steppe-vs-elephant 1v1 spawns sit at exactly outline gap
-    // 1.1), yet the tapes show no unit swinging before its acquisition delay
-    // has run. Collision-based reach never spanned a spawn gap, so this gate
-    // changes nothing for the recorded range-0 fixtures.
-    if (unit.actionTimers.acquire > 0) {
+    // No engagement before first acquisition. A scenario PATROL can be close
+    // enough to an enemy before its next scheduled AI scan; ordinary contact
+    // selection must not let it attack an enemy it has not acquired. That was
+    // observable as an impossible attack-start preceding pursuit-acquired.
+    // The numeric acquire timer remains the equivalent gate for non-scenario
+    // orders (including the range-0 fixtures).
+    const awaitingPatrolAcquisition = unit.moveOrder?.kind === "scenario-patrol"
+      && unit.openingAcquisitionComplete !== true;
+    if (awaitingPatrolAcquisition || unit.actionTimers.acquire > 0) {
       unit.engagedTargetId = null;
       continue;
     }
     // A kite move order suppresses engagement until the next attack beat
     // re-designates (the tape wraps each move in a no-attack stance toggle).
-    if (unit.moveOrder) {
+    if (unit.moveOrder && unit.moveOrder.kind !== "scenario-patrol") {
       unit.engagedTargetId = null;
       continue;
     }
@@ -1445,7 +2639,7 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
         let touched = null;
         let touchedGap = Infinity;
         for (const candidate of snapshot) {
-          if (!candidate.alive || candidate.owner === unit.owner) continue;
+          if (!candidate.alive || !isHostile(unit, candidate)) continue;
           if (candidate.referenceId === unit.pursuitTargetId) continue;
           const contactGap = Math.max(
             Math.abs(candidate.x - unit.x),
@@ -1485,7 +2679,7 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       // Against a min-range-0 kiter no pin exists, the chaser loses reach
       // for a full walk phase every cycle and resets — the arbalester
       // tapes' 0.09-0.17 conversion. Swing START still requires reach.
-      const gap = pursued && pursued.alive && pursued.owner !== unit.owner
+      const gap = pursued && pursued.alive && isHostile(unit, pursued)
         ? Math.hypot(pursued.x - unit.x, pursued.y - unit.y)
         : Infinity;
       // A REACH fighter (nonzero melee attack range: the Elite Steppe
@@ -1567,13 +2761,28 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       && blockedIds.has(unit.referenceId)
     ) {
       const engaged = snapshot.find(({ referenceId }) => referenceId === previousTargetId);
-      if (engaged && engaged.alive && engaged.owner !== unit.owner) {
+      if (engaged && engaged.alive && isHostile(unit, engaged)) {
         const distance = Math.hypot(engaged.x - unit.x, engaged.y - unit.y);
         if (distance <= unit.mechanics.line_of_sight_tiles) continue;
       }
     }
     const self = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
-    const selection = selectEngagementTarget(self, snapshot, contacts);
+    const meleeReachRanks = unit.mechanics?.ranged
+      ? 0
+      : Math.max(0, Math.floor(unit.mechanics?.attack_range_tiles ?? 0));
+    // The two-claimant reservation is a body-contact surface. A reach fighter
+    // can occupy additional outline-reach ranks behind that surface without
+    // claiming another deep collision slot. Scale the engagement capacity by
+    // physical reach ranks; range-zero behavior remains exactly two.
+    const incomingEngagementCapacity = MAX_INCOMING_ENGAGEMENTS
+      + meleeReachRanks;
+    const targetAvailable = (candidate) => (
+      unit.mechanics?.ranged
+      || candidate.referenceId === previousTargetId
+      || (incomingMeleeEngagements.get(candidate.referenceId) ?? 0)
+        < incomingEngagementCapacity
+    );
+    const selection = selectEngagementTarget(self, snapshot, contacts, { targetAvailable });
     // Experiment harness: engagement follows pursuit. Off by default.
     //
     // Priority, not exclusivity: a unit whose pursuit target is in reach
@@ -1612,13 +2821,64 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       pursued,
       { pairInteractions },
     );
-    const nextTargetId = pursuedClosed && isWithinReach(self, pursued)
-      ? pursued.referenceId
-      : (pursuedClosed && unit.mechanics?.ranged
-        ? null
-        : selection.target?.referenceId ?? null);
+    // The auxiliary gate is a committed opening engagement: the melee army
+    // and Player 4 keep their acquired opponent until contact, with a body
+    // that physically blocks the route able to capture the engagement. Once
+    // the trigger removes Player 4 and the two principal armies become
+    // hostile, they use ordinary aggressive engagement selection.
+    const auxiliaryPatrolPursuit = unit.owner === 4 || pursued?.owner === 4;
+    const auxiliaryPatrolPursuitLocked = unit.moveOrder?.kind === "scenario-patrol"
+      && pursued?.alive === true
+      && auxiliaryPatrolPursuit;
+    const openingRangedPatrolLocked = false;
+    const latchedPatrolBlocker = auxiliaryPatrolPursuitLocked
+        && Number.isSafeInteger(previousTargetId)
+        && previousTargetId !== pursued.referenceId
+      ? snapshot.find(({ referenceId }) => referenceId === previousTargetId)
+      : null;
+    const observedPatrolBlocker = auxiliaryPatrolPursuitLocked
+        && Number.isSafeInteger(unit.experimentBlockedByEnemyId)
+      ? snapshot.find(({ referenceId }) => referenceId === unit.experimentBlockedByEnemyId)
+      : null;
+    if (observedPatrolBlocker?.alive && isHostile(self, observedPatrolBlocker)) {
+      if (unit.patrolBlockerId === observedPatrolBlocker.referenceId) {
+        unit.patrolBlockerTicks = (unit.patrolBlockerTicks ?? 0) + 1;
+      } else {
+        unit.patrolBlockerId = observedPatrolBlocker.referenceId;
+        unit.patrolBlockerTicks = 1;
+      }
+    } else if (!latchedPatrolBlocker) {
+      delete unit.patrolBlockerId;
+      delete unit.patrolBlockerTicks;
+    }
+    const patrolBlocker = latchedPatrolBlocker?.alive
+      ? latchedPatrolBlocker
+      : (unit.patrolBlockerTicks ?? 0) >= PATROL_BLOCKER_CAPTURE_TICKS
+        ? observedPatrolBlocker
+        : null;
+    const nextTargetId = openingRangedPatrolLocked
+      ? (pursuedClosed && isWithinReach(self, pursued) && targetAvailable(pursued)
+        ? pursued.referenceId
+        : null)
+      : auxiliaryPatrolPursuitLocked
+      ? (pursuedClosed && isWithinReach(self, pursued) && targetAvailable(pursued)
+        ? pursued.referenceId
+        : patrolBlocker?.alive && isHostile(self, patrolBlocker)
+            && isWithinReach(self, patrolBlocker) && targetAvailable(patrolBlocker)
+          ? patrolBlocker.referenceId
+          : null)
+      : pursuedClosed && isWithinReach(self, pursued) && targetAvailable(pursued)
+        ? pursued.referenceId
+        : (pursuedClosed && unit.mechanics?.ranged
+          ? null
+          : selection.target?.referenceId ?? null);
     if (nextTargetId === previousTargetId) continue;
     if (previousTargetId !== null && previousTargetId !== undefined) {
+      if (!unit.mechanics?.ranged) {
+        const previousIncoming = incomingMeleeEngagements.get(previousTargetId) ?? 0;
+        if (previousIncoming <= 1) incomingMeleeEngagements.delete(previousTargetId);
+        else incomingMeleeEngagements.set(previousTargetId, previousIncoming - 1);
+      }
       events.push(event(tick, "engagement-ended", unit.referenceId, previousTargetId, {
         reason: snapshot.find(({ referenceId }) => referenceId === previousTargetId)?.alive
           ? "contact-lost"
@@ -1627,6 +2887,12 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
     }
     unit.engagedTargetId = nextTargetId;
     if (nextTargetId === null) continue;
+    if (!unit.mechanics?.ranged) {
+      incomingMeleeEngagements.set(
+        nextTargetId,
+        (incomingMeleeEngagements.get(nextTargetId) ?? 0) + 1,
+      );
+    }
     unit.avoidance = null;
     events.push(event(tick, "engagement-started", unit.referenceId, nextTargetId, {
       sweptToi: selection.contact?.sweptToi ?? null,
@@ -1655,7 +2921,7 @@ function releaseChargeVolley(unit, target, spec, tick, events, projectiles) {
   // unreleased cycle abandoned earlier (validateAttackTargets) keeps its
   // charge instead.
   unit.charge = 0;
-  if (!target?.alive || target.owner === unit.owner) return;
+  if (!target?.alive || !isHostile(unit, target)) return;
   const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
   const flight = Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed));
   const amount = chargeProjectileDamage(spec, target);
@@ -1724,7 +2990,7 @@ function nextShotRoll(shotRng) {
 
 
 function releaseRangedShot(unit, target, spec, tick, events, projectiles, velocities, shotRng) {
-  if (!target?.alive || target.owner === unit.owner) return;
+  if (!target?.alive || !isHostile(unit, target)) return;
   let aim = (spec.smartMode & 1) === 1
     ? leadAimPoint(unit, target, spec, velocities)
     : { x: target.x, y: target.y };
@@ -1785,6 +3051,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       kind: "stray",
       actorId: unit.referenceId,
       actorOwner: unit.owner,
+      actorRelationByOwner: unit.relationByOwner,
       actorMechanics: unit.mechanics,
       targetId: target.referenceId,
       x: unit.x,
@@ -1810,6 +3077,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       kind: "bolt",
       actorId: unit.referenceId,
       actorOwner: unit.owner,
+      actorRelationByOwner: unit.relationByOwner,
       actorMechanics: unit.mechanics,
       targetId: target.referenceId,
       x: unit.x,
@@ -1936,7 +3204,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles, velocities,
     ) {
       const chargeTarget = byReference.get(unit.engagedTargetId)
         ?? byReference.get(unit.pursuitTargetId);
-      if (chargeTarget?.alive && chargeTarget.owner !== unit.owner) {
+      if (chargeTarget?.alive && isHostile(unit, chargeTarget)) {
         const distance = Math.hypot(chargeTarget.x - unit.x, chargeTarget.y - unit.y);
         if (distance <= unit.mechanics.line_of_sight_tiles) {
           events.push(createAttackStartEvent({
@@ -1961,7 +3229,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles, velocities,
     if (
       unit.actionTimers.reload !== 0 ||
       !target?.alive ||
-      target.owner === unit.owner
+      !isHostile(unit, target)
     ) continue;
     if (!isWithinStopRange(unit, target) && movedIds.has(unit.referenceId)) continue;
 
@@ -2009,7 +3277,7 @@ function commitReadyAttacks(units, ready, tick, events) {
     }
     if (
       !target?.alive
-      || target.owner === actor.owner
+      || !isHostile(actor, target)
       || actor.attackTargetId !== target.referenceId
     ) {
       actor.action = actor.actionTimers.reload > 0 ? "reload" : "idle";
@@ -2037,7 +3305,7 @@ function commitReadyAttacks(units, ready, tick, events) {
     const blast = trampleSpec(actor.mechanics);
     if (blast) {
       for (const victim of units) {
-        if (!victim.alive || victim.owner === actor.owner) continue;
+        if (!victim.alive || !isHostile(actor, victim)) continue;
         if (victim.referenceId === target.referenceId) continue;
         const reach = Math.hypot(
           Math.max(0, Math.abs(victim.x - actor.x) - collisionRadius(victim)),
@@ -2079,7 +3347,11 @@ function processChargeProjectiles(units, projectiles, tick, events) {
       projectile.y += projectile.stepY;
       projectile.traveled += projectile.stepLength;
       for (const victim of units) {
-        if (!victim.alive || victim.owner === projectile.actorOwner) continue;
+        if (!victim.alive || !isHostile({
+          referenceId: projectile.actorId,
+          owner: projectile.actorOwner,
+          relationByOwner: projectile.actorRelationByOwner,
+        }, victim)) continue;
         if (projectile.hitIds.includes(victim.referenceId)) continue;
         const dx = Math.abs(victim.x - projectile.x);
         const dy = Math.abs(victim.y - projectile.y);
@@ -2140,7 +3412,11 @@ function processChargeProjectiles(units, projectiles, tick, events) {
       projectile.traveled += projectile.stepLength;
       let struck = false;
       for (const victim of units) {
-        if (!victim.alive || victim.owner === projectile.actorOwner) continue;
+        if (!victim.alive || !isHostile({
+          referenceId: projectile.actorId,
+          owner: projectile.actorOwner,
+          relationByOwner: projectile.actorRelationByOwner,
+        }, victim)) continue;
         const dx = Math.abs(victim.x - projectile.x);
         const dy = Math.abs(victim.y - projectile.y);
         if (Math.max(dx, dy) > collisionRadius(victim) + 1e-9) continue;
@@ -2274,6 +3550,12 @@ export function stepWorld(world) {
 
   const snapshot = Object.freeze([...world.units]);
   const units = snapshot.map(mutableUnit);
+  const pursuitRecoveryState = nextPursuitRecoveryState(
+    world.pursuitRecoveryState ?? null,
+  );
+  const acquisitionPairInteractions = createPairInteractionSnapshot({
+    contactReservations: world.contactReservationState?.reservations ?? new Map(),
+  });
   validatePursuitTargets(units, tick, events);
   validateAttackTargets(
     units,
@@ -2288,6 +3570,10 @@ export function stepWorld(world) {
     world.kiteState ?? null,
     world.rangedTargetPressureOwner ?? null,
     world.rangedOpportunityRetargetOwner ?? null,
+    world.patrolOpeningTargetByOwner ?? null,
+    pursuitRecoveryState,
+    world.map,
+    acquisitionPairInteractions,
   );
   issueKiteOrders(world.kiteState, units, world.map, tick, events, event);
   // Melee chase tapes carry a single opening wave and then rely on unit AI,
@@ -2319,6 +3605,7 @@ export function stepWorld(world) {
     world.kiteState ?? null,
     world.contactReservationState ?? null,
     world.contactSteeringStates ?? new Map(),
+    pursuitRecoveryState,
   );
   updateEngagements(
     units,
@@ -2344,6 +3631,7 @@ export function stepWorld(world) {
   const remainingProjectiles = projectiles
     ? processChargeProjectiles(units, projectiles, tick, events)
     : null;
+  const scenarioUpdate = advanceScenarioTriggers(world, units, tick, events);
 
   const publishedUnits = canonicalUnits(units);
   const publishedEvents = Object.freeze(events);
@@ -2355,6 +3643,7 @@ export function stepWorld(world) {
   ]);
   return Object.freeze({
     ...world,
+    pursuitRecoveryState,
     ...(contactUpdate ? {
       contactReservationState: contactUpdate.state,
       contactReservationDiagnostics: contactUpdate.diagnostics,
@@ -2362,6 +3651,10 @@ export function stepWorld(world) {
     ...(remainingProjectiles !== null
       ? { projectiles: Object.freeze(remainingProjectiles.map((p) => Object.freeze({ ...p }))) }
       : {}),
+    ...(scenarioUpdate.triggerState
+      ? { scenarioTriggerState: scenarioUpdate.triggerState }
+      : {}),
+    diplomacyByOwner: scenarioUpdate.diplomacyByOwner,
     tick,
     units: publishedUnits,
     events: publishedEvents,
@@ -2378,8 +3671,14 @@ function outcome(world) {
   if (liveOwners.size === 0) {
     throw new Error(`invalid terminal world at tick ${world.tick}: no live owners`);
   }
-  if (liveOwners.size > 1) return null;
-  const [winner] = liveOwners;
+  const liveTeams = world.victoryTeams.filter((team) => (
+    team.owners.some((owner) => liveOwners.has(owner))
+  ));
+  if (liveTeams.length > 1) return null;
+  if (liveTeams.length === 0) {
+    throw new Error(`invalid terminal world at tick ${world.tick}: no live victory team`);
+  }
+  const winner = liveTeams[0].winnerOwner;
   return Object.freeze({
     outcome: "win",
     winner,

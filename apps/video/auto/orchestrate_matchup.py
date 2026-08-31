@@ -248,7 +248,7 @@ def _reach_load_page(state, logfile) -> bool:
     if state == "load_dialog":
         return True
     if state == "editor":
-        if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu", dbl=True):
+        if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu"):
             return False
         time.sleep(0.8)
         state = "main_menu"
@@ -284,7 +284,7 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     -> Load -> (save? No) -> editor -> Menu. OCR only as cheap per-gate verification."""
     st = start_state
     if st == "editor":
-        _click_frac(*FP_MENU, logfile=logfile, label="Menu", dbl=True, settle=0.9)
+        _click_frac(*FP_MENU, logfile=logfile, label="Menu", settle=0.9)
         st = "main_menu"
     if st == "main_menu":
         _click_frac(*FP_LOAD_MENU, logfile=logfile, label="Load Scenario", settle=0.5)
@@ -320,7 +320,7 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     _click_frac(*FP_MENU, logfile=logfile, label="Menu", dbl=True, settle=0.7)
     # GATE C: the menu dialog (with 'Test') must be up; else OCR-find Menu (self-correcting)
     if not _wait_text("Test", R_DIALOG, tries=3):
-        if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu", dbl=True):
+        if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu"):
             return False
         time.sleep(0.6)
     return True
@@ -341,7 +341,7 @@ def _navigate_ocr(start_state, scenario_name, logfile) -> bool:
         return False
     _dismiss_save_prompt(logfile)          # loading over the open scenario can re-prompt
     time.sleep(2.5)
-    if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu", dbl=True):
+    if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu"):
         return False
     time.sleep(0.8)
     return True
@@ -435,7 +435,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
                 cap=240, mode="count", unit_cap=30, live_overlay=True, compose=True,
                 out_mov=os.path.join(TMP, "auto_fight.mov"),
                 final=os.path.join(TMP, "auto_matchup_FINAL.mp4"),
-                dismiss_after=True, logfile=None) -> Path:
+                dismiss_after=True, logfile=None, template=None,
+                counts_override=None) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
 
@@ -450,7 +451,13 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     # 1. BUILD the run scenario from the golden template (swap units/civs, no tech)
     side1 = resolve_side(civ1, slug1)
     side2 = resolve_side(civ2, slug2)
-    if mode == "resources":
+    if counts_override is not None:
+        if (not isinstance(counts_override, (tuple, list))
+                or len(counts_override) != 2
+                or not all(isinstance(value, int) and value > 0 for value in counts_override)):
+            raise ValueError("counts_override must be a pair of positive integers")
+        counts = tuple(counts_override)
+    elif mode == "resources":
         counts = equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap)
     else:
         counts = (unit_cap, unit_cap)
@@ -458,7 +465,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     from overlay.overlay_data import get_unit_card
     ranged = (bool(get_unit_card(civ1, slug1).get("is_ranged")),
               bool(get_unit_card(civ2, slug2).get("is_ranged")))
-    build_run(side1, side2, run_path, counts=counts, ranged=ranged)
+    build_kwargs = {} if template is None else {"template": Path(template)}
+    build_run(side1, side2, run_path, counts=counts, ranged=ranged, **build_kwargs)
     log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "
         f"[{mode}] ranged={ranged} -> {run_path}", logfile)
 

@@ -63,6 +63,17 @@ test("every registry row points at a real mechanics fixture with a matching mast
   }
 });
 
+test("Spanish Hand Cannoneer fixture includes the sourced gunpowder reload bonus", async () => {
+  const row = unitBySlug("hand_cannoneer");
+  const mechanics = JSON.parse(await readFile(
+    new URL(`../fixtures/unit_stats/${row.fixture}`, import.meta.url), "utf8"));
+  assert.equal(row.civ, "Spanish");
+  assert.equal(mechanics.reload_seconds, 2.9325);
+  assert.equal(mechanics.provenance.reload_base_seconds, 3.45);
+  assert.equal(mechanics.provenance.reload_multiplier, 0.85);
+  assert.match(mechanics.provenance.reload_evidence, /Spanish\.md$/);
+});
+
 test("Batch 1 ranged units use the generic mobile-ranged controller", () => {
   const kiters = UNIT_REGISTRY.filter((row) => row.class === "mobile_ranged").map((r) => r.slug);
   assert.deepEqual(kiters.sort(),

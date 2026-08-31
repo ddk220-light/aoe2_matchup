@@ -1,5 +1,6 @@
 import { collisionRadius } from "./targeting.js";
 import { hasLimitedClosurePerReload } from "./reach-melee.js";
+import { isHostile } from "./diplomacy.js";
 
 
 const EPSILON = 1e-12;
@@ -128,7 +129,7 @@ function movementHorizon(unit, proposal, byReference, alliedUnits) {
   );
   let horizon = collisionRadius(unit) + largestAllyRadius;
   const target = byReference.get(unit.pursuitTargetId);
-  if (target?.alive !== false && target && target.owner !== unit.owner) {
+  if (target?.alive !== false && target && isHostile(unit, target)) {
     const centerDistance = Math.hypot(target.x - unit.x, target.y - unit.y);
     const attackRange = Number.isFinite(unit?.mechanics?.attack_range_tiles)
       ? Math.max(0, unit.mechanics.attack_range_tiles) : 0;
@@ -254,7 +255,7 @@ function admitsReachMeleeWedge(mover, byReference, risk) {
   if (attackRange < 1 - EPSILON) return false;
   if (risk.fourCliques > 0 || risk.neighborCount > 2) return false;
   const target = byReference.get(mover.pursuitTargetId);
-  if (!target || target.alive === false || target.owner === mover.owner) return false;
+  if (!target || target.alive === false || !isHostile(mover, target)) return false;
   if (!hasLimitedClosurePerReload(mover, target)) return false;
   const centerDistance = Math.max(
     Math.abs(target.x - mover.x),
@@ -283,7 +284,7 @@ function rotatedProposal(proposal, side, turn) {
 function moverPriority(left, right, byReference) {
   const targetDistance = (unit) => {
     const target = byReference.get(unit.pursuitTargetId);
-    return target && target.owner !== unit.owner
+    return target && isHostile(unit, target)
       ? Math.hypot(target.x - unit.x, target.y - unit.y)
       : Infinity;
   };

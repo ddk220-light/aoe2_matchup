@@ -14,9 +14,19 @@ const VIEW_ORIENTATION = "counterclockwise";
 const TERRAIN = Object.freeze({
   DIRT_1: { top: "#788b50", edge: "#53633a", grain: "#91a760" },
   FOREST_DRY_SOUTH_AMERICAN: { top: "#49643a", edge: "#2e472c", grain: "#66804d" },
+  FOREST_JUNGLE: { top: "#315a38", edge: "#1f3d29", grain: "#4d7548" },
   FOREST_OAK: { top: "#3f5b36", edge: "#2b432b", grain: "#587246" },
+  FOREST_AUTUMN: { top: "#75633d", edge: "#51442f", grain: "#987a47" },
+  FOREST_BIRCH: { top: "#586b46", edge: "#3b4d35", grain: "#74875a" },
   FOREST_RAINFOREST: { top: "#31503a", edge: "#1f392c", grain: "#4d6d4c" },
 });
+
+
+function playerTeam(playerId) {
+  if (playerId === 2) return "p2";
+  if (playerId === 4) return "p4";
+  return "p3";
+}
 
 
 function objectKind(name) {
@@ -27,6 +37,9 @@ function objectKind(name) {
   if (name.includes("ACACIA")) return "acacia";
   if (name.includes("OLIVE")) return "olive";
   if (name.includes("RAINFOREST")) return "rainforest";
+  if (name.includes("JUNGLE")) return "jungle";
+  if (name.includes("BIRCH")) return "birch";
+  if (name.includes("AUTUMN")) return "autumn";
   return "oak";
 }
 
@@ -51,7 +64,7 @@ export function buildFormationScene(units, {
   return Object.freeze(units
     .map((unit) => Object.freeze({
       ...unit,
-      team: unit.player_id === 2 ? "p2" : "p3",
+      team: playerTeam(unit.player_id),
     }))
     .sort((a, b) => compareMapDepth(
       { x: a.position.x, y: a.position.y },
@@ -94,7 +107,7 @@ export function buildSimulationScene(snapshot, {
       name: unit.label,
       position: Object.freeze({ x: unit.x, y: unit.y }),
       rotation: unit.facing,
-      team: unit.owner === 2 ? "p2" : "p3",
+      team: playerTeam(unit.owner),
       maxHp: unit.mechanics.hp,
     }))
     .sort((a, b) => compareMapDepth(
@@ -241,6 +254,9 @@ function drawTree(ctx, object, x, y, scale) {
   const palette = {
     olive: ["#6d8056", "#8d9d6c"],
     rainforest: ["#174c38", "#2f6a48"],
+    jungle: ["#1d5531", "#367747"],
+    birch: ["#537349", "#789266"],
+    autumn: ["#80562f", "#a8793f"],
     oak: ["#285b36", "#3e7545"],
   }[object.kind] || ["#285b36", "#3e7545"];
   drawCanopyBlob(ctx, x, y - trunkHeight, size, palette[0], object.reference_id);
@@ -495,22 +511,10 @@ export function createMapRenderer(canvas, map) {
       );
       drawTargetLine(
         unit,
-        byReference.get(unit.pursuitTargetId),
-        "rgba(229, 179, 73, .44)",
-        [6, 6],
-        1,
-      );
-      drawTargetLine(
-        unit,
-        byReference.get(unit.engagedTargetId),
-        "rgba(103, 209, 192, .72)",
-        [2, 3],
-        1.5,
-      );
-      drawTargetLine(
-        unit,
         byReference.get(unit.attackTargetId),
-        "rgba(240, 102, 78, .88)",
+        unit.team === "p2"
+          ? "rgba(240, 102, 78, .92)"
+          : "rgba(105, 201, 255, .92)",
         [],
         2.2,
       );
@@ -592,7 +596,9 @@ export function createMapRenderer(canvas, map) {
     const size = Math.max(7, 13 * state.zoom);
     const palette = unit.team === "p2"
       ? { fill: "#d65d50", rim: "#ffab83", dark: "#602d2a" }
-      : { fill: "#4b9b72", rim: "#9ed5a8", dark: "#214b39" };
+      : unit.team === "p4"
+        ? { fill: "#d6ad36", rim: "#ffe58a", dark: "#6d5318" }
+        : { fill: "#4b9b72", rim: "#9ed5a8", dark: "#214b39" };
 
     ctx.save();
     if (unit.alive === false) ctx.globalAlpha = 0.36;

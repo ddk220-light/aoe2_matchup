@@ -5,6 +5,7 @@ import {
   createPairInteractionSnapshot,
   resolvePairInteraction,
 } from "./pair-interactions.js";
+import { areAllies } from "./diplomacy.js";
 
 
 // Floating-point comparison tolerance only; no physical value is adjusted.
@@ -515,7 +516,7 @@ function constraintsFor(mover, target, units, map, pairInteractions) {
       // formation standing between it and its target. Ally-only routing
       // leaves it walking into the block and grinding along bodies at
       // partial speed, which no tape shows. See AOE2X_EXP_AVOID.
-      && (AVOID_ALL_BODIES || unit.owner === mover.owner)
+      && (AVOID_ALL_BODIES || areAllies(unit, mover))
     ))
     .map((unit) => {
       const interaction = resolvePairInteraction(mover, unit, pairInteractions);
@@ -525,7 +526,11 @@ function constraintsFor(mover, target, units, map, pairInteractions) {
         referenceId: unit.referenceId,
         x: unit.x,
         y: unit.y,
-        radius: interaction.collisionExtent,
+        // Unit collision is resolved as an axis-aligned DAT box. Tangent
+        // routing uses circles, so its safe enclosing radius is the box's
+        // half-diagonal; using the half-extent alone can strand a mover on a
+        // corner that the planner calls clear but collision correctly blocks.
+        radius: interaction.collisionExtent * Math.SQRT2,
       };
     });
   return { constraints: [...bodies, ...mapInfo.obstacles], mapInfo };
@@ -542,7 +547,9 @@ function normalizeInputs(snapshot, proposals) {
       throw new Error(`duplicate movement proposal for reference ${referenceId}`);
     }
     const movementIntent = row.movementIntent ?? null;
-    if (movementIntent !== null && movementIntent !== "minimum-range-retreat") {
+    if (movementIntent !== null
+        && movementIntent !== "minimum-range-retreat"
+        && movementIntent !== "pursuit") {
       throw new RangeError(`unknown movement intent ${movementIntent}`);
     }
     proposalByReference.set(referenceId, Object.freeze({
@@ -597,7 +604,12 @@ export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
     // target that is already inside the unit's maximum firing range. Treating
     // it as an ordinary pursuit makes contactGoal report "reached" and
     // cancels the retreat before collision resolution can see it.
-    const target = mover.moveOrder || original.movementIntent === "minimum-range-retreat"
+    const scenarioPatrolPursuit = mover.moveOrder?.kind === "scenario-patrol"
+      && mover.openingAcquisitionComplete === true
+      && original.movementIntent === "pursuit";
+    const formationOrderControlsPath = mover.moveOrder && !scenarioPatrolPursuit;
+    const target = formationOrderControlsPath
+      || original.movementIntent === "minimum-range-retreat"
       ? null
       : byReference.get(mover.pursuitTargetId);
     const goal = target?.alive === false || !target ? null : contactGoal(mover, target);
@@ -652,7 +664,31 @@ export function planLocalAvoidance(snapshot, proposals, map, options = {}) {
       } else {
         avoidance = null;
       }
-      if (selected === null && originalBudget > EPSILON) {
+      // Persistent PATROL pursuit begins as a formation interruption. Do not
+      // pre-route a member merely because an ally lies somewhere along the
+      // full target ray: the recorded groups retain their shared shape until
+      // an immediate step reaches a body. At that physical block, ordinary
+      // tangent routing starts and persists from geometry, with no timer.
+      const lookaheadBudget = 2 * collisionRadius(mover) + Math.max(
+        0,
+        requireFinite(mover.mechanics.speed_tiles_per_second, "movement speed")
+          - requireFinite(mover.mechanics.attack_range_tiles, "attack range"),
+      );
+      const routeTriggerStep = originalBudget <= EPSILON
+        ? original
+        : {
+          dx: original.dx / originalBudget * lookaheadBudget,
+          dy: original.dy / originalBudget * lookaheadBudget,
+        };
+      const directStepBlocked = !stepClears(
+        mover,
+        routeTriggerStep,
+        constraints,
+        collisionRadius(mover),
+        mapInfo.bounds,
+      );
+      if (selected === null && originalBudget > EPSILON
+          && (!scenarioPatrolPursuit || directStepBlocked)) {
         selected = selectRoute(mover, target, goal, constraints, mapInfo, budget);
         if (selected !== null) {
           avoidance = routeState(selected.route.blocker, target, selected.route.side);

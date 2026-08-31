@@ -10,13 +10,15 @@ SCENARIO = (
     REPO_ROOT
     / "aoe2x"
     / "js_simulation"
-    / "fixtures"
+    / "calibration"
+    / "live_observations"
+    / "current_melee_golden_2026-08-28"
     / "source"
-    / "golden_meleevsmelee.aoe2scenario"
+    / "meleevsmelee.aoe2scenario"
 )
-EXPORTED = SCENARIO.parent.parent / "golden_map.json"
+EXPORTED = REPO_ROOT / "aoe2x" / "js_simulation" / "fixtures" / "golden_map.json"
 EXPECTED_SCENARIO_SHA256 = (
-    "f10508cbe6ec6211d611c35d411ad7e40b38c96b6ef0d6b0d651daa42df645a4"
+    "31f3bed38ce0512b484124d89d5aa4e97318b3ea55c398bb8dad27242c769f4e"
 )
 
 
@@ -29,23 +31,28 @@ def test_extracts_complete_golden_map_without_inferred_geometry():
     assert payload["map"]["width"] == 16
     assert payload["map"]["height"] == 16
     assert len(payload["map"]["tiles"]) == 256
-    assert len(payload["map"]["gaia_objects"]) == 101
+    assert len(payload["map"]["gaia_objects"]) == 152
     assert payload["terrain_counts"] == {
-        "6:DIRT_1": 156,
-        "10:FOREST_OAK": 7,
+        "6:DIRT_1": 104,
+        "10:FOREST_OAK": 2,
+        "17:FOREST_JUNGLE": 98,
+        "104:FOREST_AUTUMN": 1,
+        "110:FOREST_BIRCH": 1,
         "56:FOREST_RAINFOREST": 1,
-        "128:FOREST_DRY_SOUTH_AMERICAN": 92,
+        "128:FOREST_DRY_SOUTH_AMERICAN": 49,
     }
     assert payload["object_counts"] == {
-        "411:TREE_OAK_FOREST": 7,
-        "1053:BUSH_B": 7,
-        "1063:TREE_ACACIA": 14,
+        "411:TREE_OAK_FOREST": 2,
+        "414:TREE_JUNGLE": 98,
+        "1053:BUSH_B": 5,
+        "1063:TREE_ACACIA": 6,
         "1146:TREE_RAINFOREST": 1,
-        "1348:TREE_ITALIAN_PINE": 32,
-        "1349:TREE_OLIVE": 8,
-        "2082:PANDA_ROCK": 1,
-        "2567:TREE_OAK_GREEN": 12,
-        "2570:TREE_MONKEY_PUZZLE": 19,
+        "1248:TREE_OAK_AUTUMN": 1,
+        "1348:TREE_ITALIAN_PINE": 21,
+        "1349:TREE_OLIVE": 3,
+        "1717:TREE_BIRCH": 1,
+        "2567:TREE_OAK_GREEN": 4,
+        "2570:TREE_MONKEY_PUZZLE": 10,
     }
 
 

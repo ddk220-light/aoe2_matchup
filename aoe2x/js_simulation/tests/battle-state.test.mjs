@@ -121,6 +121,32 @@ test("equal resources sends only a validated budget", () => {
 });
 
 
+test("a direct engine-only battle link can launch a 20v20 matchup without tape state", () => {
+  assert.deepEqual(
+    battleStateModule.directFightRequest(
+      "https://starlight.tail82a190.ts.net/golden-map/"
+        + "?mode=battle&side2=champion&side3=paladin&n2=20&n3=20",
+    ),
+    {
+      endpoint: "api/fight",
+      side2: "champion",
+      side3: "paladin",
+      n2: 20,
+      n3: 20,
+      query: "side2=champion&side3=paladin&n2=20&n3=20",
+    },
+  );
+  for (const url of [
+    "http://127.0.0.1:5011/",
+    "http://127.0.0.1:5011/?mode=battle&side2=champion&side3=paladin&n2=20",
+    "http://127.0.0.1:5011/?mode=battle&side2=champion&side3=paladin&n2=0&n3=20",
+    "http://127.0.0.1:5011/?mode=battle&side2=champion&side3=paladin&n2=20&n3=20&extra=1",
+  ]) {
+    assert.equal(battleStateModule.directFightRequest(url), null);
+  }
+});
+
+
 test("the dedicated Hand Cannoneer movement link exposes three saved navigation variants", () => {
   assert.equal(typeof battleStateModule.soloMovementRequest, "function");
   assert.deepEqual(
@@ -360,5 +386,61 @@ test("wrong-winner review URLs select one exact golden row and reject extra stat
     "?mode=phase2-wrong-winners&row=a&row=b",
   ]) {
     assert.equal(battleStateModule.phase2WrongWinnerRequest(url), null, url);
+  }
+});
+
+
+test("problem-matchup URLs select one current ranged row and remain shareable", () => {
+  assert.deepEqual(
+    battleStateModule.problemMatchupRequest(
+      "https://starlight.tail82a190.ts.net/golden-map/"
+        + "?mode=problem-matchups&matchup=hand_cannoneer_vs_elite_steppe",
+    ),
+    {
+      endpoint: "api/problem-matchup",
+      matchupId: "hand_cannoneer_vs_elite_steppe",
+      query: "matchup=hand_cannoneer_vs_elite_steppe",
+    },
+  );
+  assert.equal(
+    battleStateModule.problemMatchupHref(
+      "https://starlight.tail82a190.ts.net/golden-map/?old=1#inspect",
+      "arbalester_vs_heavy_cav_archer",
+    ),
+    "https://starlight.tail82a190.ts.net/golden-map/"
+      + "?mode=problem-matchups&matchup=arbalester_vs_heavy_cav_archer#inspect",
+  );
+  assert.deepEqual(
+    battleStateModule.problemMatchupRequest(
+      "https://starlight.tail82a190.ts.net/golden-map/"
+        + "?mode=problem-matchups&matchup=arbalester_vs_heavy_cav_archer&seed=4",
+    ),
+    {
+      endpoint: "api/problem-matchup",
+      matchupId: "arbalester_vs_heavy_cav_archer",
+      openingSeed: 4,
+      query: "matchup=arbalester_vs_heavy_cav_archer&seed=4",
+    },
+  );
+  assert.equal(
+    battleStateModule.problemMatchupHref(
+      "https://starlight.tail82a190.ts.net/golden-map/?old=1#inspect",
+      "arbalester_vs_heavy_cav_archer",
+      4,
+    ),
+    "https://starlight.tail82a190.ts.net/golden-map/"
+      + "?mode=problem-matchups&matchup=arbalester_vs_heavy_cav_archer&seed=4#inspect",
+  );
+  for (const url of [
+    "?mode=problem-matchups",
+    "?mode=problem-matchups&matchup=bad row",
+    "?mode=problem-matchups&matchup=arbalester_vs_paladin&extra=1",
+    "?mode=problem-matchups&matchup=avsb",
+    "?mode=problem-matchups&matchup=a_vs_b&matchup=c_vs_d",
+    "?mode=problem-matchups&matchup=a_vs_b&seed=-1",
+    "?mode=problem-matchups&matchup=a_vs_b&seed=4.5",
+    "?mode=problem-matchups&matchup=a_vs_b&seed=3&seed=4",
+  ]) {
+    assert.equal(battleStateModule.problemMatchupRequest(url), null, url);
   }
 });

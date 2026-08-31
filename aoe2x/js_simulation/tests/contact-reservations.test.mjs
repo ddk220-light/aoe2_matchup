@@ -62,6 +62,18 @@ test("allied transit derives its floor from both sourced multipliers", () => {
   assert.equal(result.contactReservations.get("1:2").pathObstructs, false);
 });
 
+
+test("profiled attack pursuit keeps allied transit path-obstructing", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState({ alliedTransitPathObstructs: true }),
+    tick: 10,
+    units: [unit(1, 2, 4), unit(2, 2, 4.5)],
+    proposals: [proposal(1, 0.1), proposal(2, -0.1)],
+  });
+  assert.equal(result.contactReservations.get("1:2").kind, "allied-transit");
+  assert.equal(result.contactReservations.get("1:2").pathObstructs, true);
+});
+
 test("shared formation orders clear stale pair state until the order ends", () => {
   const ordered = (x) => unit(1, 2, x, {
     moveOrder: Object.freeze({ x: 8, y: 4 }),
@@ -537,4 +549,36 @@ test("death removes an active reservation instead of leaking pair state", () => 
 
   assert.equal(afterDeath.contactReservations.size, 0);
   assert.equal(afterDeath.state.reservations.size, 0);
+});
+
+
+test("an external ranged crowd surface owns its pair without inherited release churn", () => {
+  const crowd = Object.freeze({
+    leftId: 1,
+    rightId: 2,
+    kind: "ranged-crowd",
+    collisionExtent: 0.3,
+    attackSurfaceExtent: 0.5,
+    pathObstructs: false,
+    mayDeepen: false,
+    initiatorId: null,
+    targetId: null,
+    acquiredTick: 80,
+  });
+  const result = updateContactReservations({
+    state: Object.freeze({
+      reservations: new Map(),
+      inheritedExtents: new Map([["1:2", 0.35]]),
+      formationPairs: new Map([["1:2", 0.35]]),
+    }),
+    tick: 80,
+    units: [unit(1, 2, 4), unit(2, 2, 4.3)],
+    proposals: [proposal(1, 0), proposal(2, 0)],
+    externalReservations: new Map([["1:2", crowd]]),
+  });
+
+  assert.equal(result.contactReservations.get("1:2"), crowd);
+  assert.equal(result.state.inheritedExtents.has("1:2"), false);
+  assert.equal(result.state.formationPairs.has("1:2"), false);
+  assert.equal(result.diagnostics.some(({ type }) => type === "release-persisted"), false);
 });

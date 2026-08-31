@@ -1,10 +1,12 @@
 import { collisionRadius } from "./targeting.js";
+import { areAllies } from "./diplomacy.js";
 
 
 const EPSILON = 1e-12;
 const VALID_CONTACT_RESERVATION_KINDS = new Set([
   "allied-transit",
   "ranged-ingress",
+  "ranged-crowd",
   "enemy-transit",
   "engagement-contact",
   "shallow-contact",
@@ -123,6 +125,20 @@ function bodyRadius(body) {
 }
 
 
+export function formationTransitActive(unit) {
+  if (unit.moveOrder === undefined || unit.moveOrder === null) return false;
+  // Scenario PATROL keeps a resumable location order attached during combat,
+  // but its zero-obstruction formation phase ends at first acquisition. This
+  // must match contact-reservations.js; otherwise that layer publishes ally
+  // transit/release geometry that this resolver silently overrides with zero.
+  if (unit.moveOrder.kind !== "scenario-patrol") return true;
+  if (unit.patrolFormationTransit !== undefined) {
+    return unit.patrolFormationTransit === true;
+  }
+  return unit.openingAcquisitionComplete !== true;
+}
+
+
 export function dynamicPairKey(leftId, rightId) {
   requireReferenceId(leftId, "left reference ID");
   requireReferenceId(rightId, "right reference ID");
@@ -156,6 +172,23 @@ export function resolvePairInteraction(left, right,
   const leftUnit = sourceUnit(left);
   const rightUnit = sourceUnit(right);
   const extent = bodyRadius(left) + bodyRadius(right);
+  const reservation = snapshot.contactReservations?.get(
+    dynamicPairKey(left.referenceId, right.referenceId),
+  );
+  // Combat-patrol crowding is evaluated from the whole local ranged geometry,
+  // so it must outrank the otherwise unlimited shared-formation shortcut.
+  // Other reservation kinds remain below formation transit so stale release
+  // state cannot obstruct a later ordinary formation order.
+  if (reservation?.kind === "ranged-crowd") {
+    return interaction(
+      reservation.kind,
+      reservation.collisionExtent,
+      reservation.pathObstructs,
+      reservation.attackSurfaceExtent,
+      reservation.mayDeepen,
+      "ranged-crowd-reservation",
+    );
+  }
   // A formation order assigns every member of the cohort its own destination.
   // The authorized tapes show those ordered allies reforming through one
   // another (including center crossings) instead of treating arrived members
@@ -163,9 +196,9 @@ export function resolvePairInteraction(left, right,
   // release surface must not block a later shared formation order. As soon as
   // either order ends, the unified reservation state publishes the pair's
   // current overlap as monotonically releasing geometry.
-  if (leftUnit.owner === rightUnit.owner
-      && leftUnit.moveOrder !== undefined && leftUnit.moveOrder !== null
-      && rightUnit.moveOrder !== undefined && rightUnit.moveOrder !== null) {
+  if (areAllies(leftUnit, rightUnit)
+      && formationTransitActive(leftUnit)
+      && formationTransitActive(rightUnit)) {
     return interaction(
       "formation-transit",
       0,
@@ -175,9 +208,6 @@ export function resolvePairInteraction(left, right,
       "shared-allied-formation-order",
     );
   }
-  const reservation = snapshot.contactReservations?.get(
-    dynamicPairKey(left.referenceId, right.referenceId),
-  );
   if (reservation) {
     return interaction(
       reservation.kind,
@@ -194,7 +224,7 @@ export function resolvePairInteraction(left, right,
     true,
     extent,
     false,
-    leftUnit.owner === rightUnit.owner
+    areAllies(leftUnit, rightUnit)
       ? "hard-allied-contact" : "hard-enemy-contact",
   );
 }

@@ -2,10 +2,13 @@ import { validateMapFixture } from "../src/map-model.js";
 import { formationUnits, validateFormationFixture } from "../src/formation-model.js";
 import { createBattlePage } from "./battle-page.js";
 import {
+  directFightRequest,
   kitingFightHref,
   kitingFightRequest,
   phase2WrongWinnerHref,
   phase2WrongWinnerRequest,
+  problemMatchupHref,
+  problemMatchupRequest,
   soloMovementRequest,
 } from "./battle-state.js";
 import { createMapRenderer } from "./map-renderer.js";
@@ -179,10 +182,12 @@ async function start() {
   const soloRequest = soloMovementRequest(window.location.href);
   const kitingRequest = kitingFightRequest(window.location.href);
   const wrongWinnerRequest = phase2WrongWinnerRequest(window.location.href);
+  const problemRequest = problemMatchupRequest(window.location.href);
+  const directRequest = directFightRequest(window.location.href);
   const navigationRequest = soloRequest ?? kitingRequest;
-  const autoRequest = navigationRequest ?? wrongWinnerRequest;
+  const autoRequest = navigationRequest ?? problemRequest ?? wrongWinnerRequest ?? directRequest;
   const [mapResponse, formationResponse, unitsResponse, catalogueResponse,
-    wrongWinnerResponse] = await Promise.all([
+    wrongWinnerResponse, problemResponse] = await Promise.all([
     fetch("api/map", { cache: "no-store" }),
     fetch("api/formation", { cache: "no-store" }),
     fetch("api/units", { cache: "no-store" }),
@@ -190,11 +195,15 @@ async function start() {
     wrongWinnerRequest
       ? fetch("api/phase2/wrong-winners", { cache: "no-store" })
       : Promise.resolve(null),
+    problemRequest
+      ? fetch("api/problem-matchups", { cache: "no-store" })
+      : Promise.resolve(null),
   ]);
   for (const [label, response] of [
     ["Map", mapResponse], ["Formation", formationResponse], ["Units", unitsResponse],
     ["Catalogue", catalogueResponse],
     ["Wrong-winner catalogue", wrongWinnerResponse],
+    ["Problem-matchup catalogue", problemResponse],
   ]) {
     if (!response) continue;
     if (!response.ok) throw new Error(`${label} API returned ${response.status}`);
@@ -204,6 +213,8 @@ async function start() {
   const catalogue = deepFreeze(await catalogueResponse.json());
   const wrongWinnerCatalogue = wrongWinnerResponse
     ? deepFreeze(await wrongWinnerResponse.json()) : null;
+  const problemCatalogue = problemResponse
+    ? deepFreeze(await problemResponse.json()) : null;
   const fixture = validateMapFixture(await mapResponse.json());
   const formation = validateFormationFixture(await formationResponse.json());
   const formationRoster = formationUnits(formation);
@@ -251,6 +262,9 @@ async function start() {
     : null;
   const wrongWinnerRow = wrongWinnerRequest
     ? wrongWinnerCatalogue?.rows.find(({ id }) => id === wrongWinnerRequest.rowId)
+    : null;
+  const problemRow = problemRequest
+    ? problemCatalogue?.rows.find(({ id }) => id === problemRequest.matchupId)
     : null;
 
   if (soloRequest) {
@@ -332,6 +346,48 @@ async function start() {
     byId("kitingMeleeField").hidden = false;
     byId("kitingMeleeCountField").hidden = false;
     byId("navigationVariant").value = kitingRequest.navigation;
+  } else if (problemRequest) {
+    if (!problemRow) {
+      throw new Error(`Problem matchup ${problemRequest.matchupId} is unavailable`);
+    }
+    document.body.classList.add("wrong-winner-review-mode", "problem-matchup-review-mode");
+    document.querySelector(".page-header h1").textContent = "Current Problem Matchup Viewer";
+    document.querySelector(".page-header .subtitle").textContent =
+      "Latest five-run comparison · exact golden scenario · representative mistaken playback";
+    byId("problemMatchupReview").hidden = false;
+    const matchupSelect = byId("problemMatchup");
+    for (const row of problemCatalogue.rows) {
+      matchupSelect.append(new Option(
+        `${row.label} · ${row.side2.count} vs ${row.side3.count} · ${row.issue}`,
+        row.id,
+      ));
+    }
+    matchupSelect.value = problemRow.id;
+    byId("problemMatchupLiveScore").textContent = signedScore(problemRow.liveScore);
+    byId("problemMatchupSimulationScore").textContent =
+      `${signedScore(problemRow.simulationScore)}${problemRow.simulationScoreIsPartial
+        ? " (partial)" : ""}`;
+    byId("problemMatchupIssue").textContent = problemRow.issue;
+    const timeoutNote = problemRow.timeoutSeeds.length
+      ? ` · timed-out seeds ${problemRow.timeoutSeeds.join(", ")} are labelled but cannot produce a completed replay`
+      : "";
+    const selectedSeed = problemRequest.openingSeed ?? problemRow.representativeSeed;
+    const representativeOutcome = problemRequest.openingSeed === undefined
+      && Number.isFinite(problemRow.representativeWinnerHp)
+      ? ` · seed result P${problemRow.representativeWinnerOwner} wins with ${problemRow.representativeWinnerHp.toFixed(1)} HP`
+      : "";
+    byId("problemMatchupConvention").textContent =
+      `Exact golden roster and triggers · viewing seed ${selectedSeed}`
+        + representativeOutcome
+        + ` · ${problemRequest.openingSeed === undefined
+          ? problemRow.representativeReason : "explicit viewer seed"}`
+        + timeoutNote;
+    byId("team1Rail").querySelector(".rail-title").textContent =
+      `${problemRow.side2.civ} ${problemRow.side2.label} · ${problemRow.side2.count} · Player 2`;
+    byId("team2Rail").querySelector(".rail-title").textContent =
+      `${problemRow.side3.civ} ${problemRow.side3.label} · ${problemRow.side3.count} · Player 3`;
+    byId("optionsCurrent").textContent =
+      `Golden roster · ${problemRow.side2.count} vs ${problemRow.side3.count}`;
   } else if (wrongWinnerRequest) {
     if (!wrongWinnerRow) {
       throw new Error(`Wrong-winner review row ${wrongWinnerRequest.rowId} is unavailable`);
@@ -513,12 +569,35 @@ async function start() {
     byId("player3Name").textContent = result.side3.label;
     byId("player2Count").textContent = String(result.side2.count);
     byId("player3Count").textContent = String(result.side3.count);
+    if (result.mode === "current-problem-matchup-review") {
+      const timeoutNote = result.review.timeoutSeeds.length
+        ? ` · timed-out seeds ${result.review.timeoutSeeds.join(", ")}`
+          + " are labelled but cannot produce a completed replay"
+        : "";
+      const outcome = result.winnerOwner === null
+        ? " · seed result is a draw"
+        : ` · seed result P${result.winnerOwner} wins with ${result.winnerHp.toFixed(1)} HP`;
+      byId("problemMatchupConvention").textContent =
+        `Exact golden roster and triggers · viewing seed ${result.review.representativeSeed}`
+          + outcome
+          + ` · ${result.review.representativeReason}`
+          + timeoutNote;
+    }
     byId("placementAudit").textContent = result.mode === "solo-movement"
       ? "21 owner-2 kite spawn cells · AI move orders every 80 ticks · no enemy roster"
-      : result.mode === "phase2-wrong-winner-review"
+      : result.mode === "current-problem-matchup-review"
+        ? `${result.side2.count + result.side3.count} principal golden spawn cells`
+          + ` · current ranged golden triggers · seed ${result.review.representativeSeed}`
+          + ` · ${result.review.id}`
+        : result.mode === "phase2-wrong-winner-review"
         ? `${result.side2.count + result.side3.count} exact golden spawn cells`
           + ` · current Phase 2 engine · ${result.review.rowId}`
-        : `${result.side2.count + result.side3.count} spawn cells · ${result.family} block`
+        : `${result.side2.count + result.side3.count} spawn cells · `
+          + (result.placementSource === "current-melee-golden"
+            ? "current melee golden formation"
+            : result.placementSource === "current-ranged-golden"
+              ? "current ranged golden formation"
+              : `${result.family} block`)
           + (result.orientationNormalised ? " · measured orientation" : "");
     byId("ledgerNumber").textContent = result.mode === "solo-movement"
       ? "SOLO 21" : `${result.side2.count}V${result.side3.count}`;
@@ -616,6 +695,11 @@ async function start() {
       window.location.assign(phase2WrongWinnerHref(window.location.href, event.target.value));
     });
   }
+  if (problemRequest) {
+    byId("problemMatchup").addEventListener("change", (event) => {
+      window.location.assign(problemMatchupHref(window.location.href, event.target.value));
+    });
+  }
 
   for (const [elementId, option] of [
     ["gridToggle", "grid"], ["objectsToggle", "objects"],
@@ -647,7 +731,7 @@ async function start() {
   byId("returnFormation").addEventListener("click", () => {
     setPlaying(false);
     renderer.showFormation();
-    setMapStatus("Locked 21 vs 21 source formation");
+    setMapStatus("Locked 27 vs 27 melee golden formation");
     byId("playbackMode").textContent = "formation";
   });
 
@@ -771,7 +855,14 @@ async function start() {
   observer.observe(canvas);
   renderer.resize();
   if (autoRequest) {
-    await loadSimulation(autoRequest.query, null, autoRequest.endpoint);
+    const directBattleState = directRequest ? {
+      mode: "count",
+      counts: { 1: directRequest.n2, 2: directRequest.n3 },
+    } : problemRequest ? {
+      mode: "problem-matchup",
+      matchupId: problemRequest.matchupId,
+    } : null;
+    await loadSimulation(autoRequest.query, directBattleState, autoRequest.endpoint);
   }
 }
 

@@ -49,13 +49,13 @@ test("server exposes the website-style Battle Simulation shell and literal map f
     assert.equal(mapResponse.headers.get("cache-control"), "no-store");
     const fixture = await mapResponse.json();
     assert.equal(fixture.schema_version, 1);
-    assert.equal(fixture.map.gaia_objects.length, 101);
+    assert.equal(fixture.map.gaia_objects.length, 152);
 
     const formationResponse = await fetch(`${baseUrl}/api/formation`);
     assert.equal(formationResponse.status, 200);
     const formation = await formationResponse.json();
-    assert.equal(formation.sides["2"].length, 21);
-    assert.equal(formation.sides["3"].length, 21);
+    assert.equal(formation.sides["2"].length, 27);
+    assert.equal(formation.sides["3"].length, 27);
 
     const module = await fetch(`${baseUrl}/src/map-model.js`);
     assert.equal(module.status, 200);
@@ -347,6 +347,233 @@ test("fight endpoint accepts a derived resource budget and rejects mixed sizing"
 });
 
 
+test("server exposes the comprehensive ranged comparison report", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/reports/ranged-combat`);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("content-type"), /text\/html/);
+    const body = await response.text();
+    assert.match(body, /AoE2 Ranged Combat — Patrol-Engine Accuracy/);
+    assert.match(body, /starlight\.tail82a190\.ts\.net\/golden-map/);
+    assert.match(body, /semantic/);
+  });
+});
+
+
+test("problem-matchup catalogue exposes the latest seven failures with viewable seeds", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/problem-matchups`);
+    assert.equal(response.status, 200);
+    const catalogue = await response.json();
+    assert.equal(catalogue.schemaVersion, 2);
+    assert.equal(catalogue.rows.length, 7);
+    assert.deepEqual(
+      new Set(catalogue.rows.map(({ id }) => id)),
+      new Set([
+        "arbalester_vs_heavy_cav_archer",
+        "arbalester_vs_paladin",
+        "heavy_cav_archer_vs_paladin",
+        "heavy_cav_archer_vs_elite_steppe",
+        "heavy_cav_archer_vs_champion",
+        "hand_cannoneer_vs_paladin",
+        "hand_cannoneer_vs_elite_steppe",
+      ]),
+    );
+    const wrongWinner = catalogue.rows.find(
+      ({ id }) => id === "hand_cannoneer_vs_paladin",
+    );
+    assert.equal(wrongWinner.representativeSeed, 1);
+    assert.equal(wrongWinner.wrongWinnerSeeds, 1);
+    assert.deepEqual(wrongWinner.wrongWinnerSeedNumbers, [1]);
+    assert.deepEqual(wrongWinner.side2, {
+      slug: "hand_cannoneer", label: "Hand Cannoneer", civ: "Spanish", count: 27,
+    });
+    assert.deepEqual(wrongWinner.side3, {
+      slug: "paladin", label: "Paladin", civ: "Spanish", count: 19,
+    });
+    assert.deepEqual(
+      catalogue.rows.find(
+        ({ id }) => id === "arbalester_vs_heavy_cav_archer",
+      ).wrongWinnerSeedNumbers,
+      [0, 1, 2, 3, 4],
+    );
+    assert.ok(catalogue.rows.every(({ representativeSeed }) => (
+      Number.isSafeInteger(representativeSeed) && representativeSeed >= 0
+    )));
+    assert.ok(catalogue.rows.every(({ timeoutSeeds }) => timeoutSeeds.length === 0));
+    assert.ok(catalogue.rows.every(({ viewerUrl }) => (
+      viewerUrl.startsWith("https://starlight.tail82a190.ts.net/golden-map/")
+    )));
+    for (const requestPath of [
+      "/api/problem-matchups?extra=1",
+      "/api/problem-matchup",
+      "/api/problem-matchup?matchup=bad%20row",
+      "/api/problem-matchup?matchup=arbalester_vs_paladin&extra=1",
+    ]) {
+      const rejected = await fetch(`${baseUrl}${requestPath}`);
+      assert.equal(rejected.status, 400, requestPath);
+    }
+  });
+});
+
+
+test("current melee golden endpoint runs the observed 23 Champion vs 27 Halberdier setup", async () => {
+  await withServer(async (baseUrl) => {
+    const [unitsResponse, fightResponse] = await Promise.all([
+      fetch(`${baseUrl}/api/units`),
+      fetch(`${baseUrl}/api/fight?side2=champion&n2=23&side3=halberdier&n3=27`),
+    ]);
+    assert.equal(unitsResponse.status, 200);
+    assert.equal(fightResponse.status, 200);
+    const units = await unitsResponse.json();
+    const fight = await fightResponse.json();
+    assert.deepEqual(units.capacityByFamily.waves, { side2: 27, side3: 27 });
+    assert.equal(fight.placementSource, "current-melee-golden");
+    assert.deepEqual(
+      { label: fight.side2.label, civ: fight.side2.civ, count: fight.side2.count },
+      { label: "Champion", civ: "Spanish", count: 23 },
+    );
+    assert.deepEqual(
+      { label: fight.side3.label, civ: fight.side3.civ, count: fight.side3.count },
+      { label: "Halberdier", civ: "Spanish", count: 27 },
+    );
+    assert.deepEqual(fight.snapshots[0].units[0].slice(1, 3), [14.5, 2.5]);
+    assert.deepEqual(fight.snapshots[0].units.at(-1).slice(1, 3), [6.5, 12.5]);
+  });
+});
+
+
+test("current melee golden endpoint runs the observed 27 Champion vs 16 Paladin setup", async () => {
+  await withServer(async (baseUrl) => {
+    const fightResponse = await fetch(
+      `${baseUrl}/api/fight?side2=champion&n2=27&side3=paladin&n3=16`,
+    );
+    assert.equal(fightResponse.status, 200);
+    const fight = await fightResponse.json();
+    assert.equal(fight.placementSource, "current-melee-golden");
+    assert.deepEqual(
+      { label: fight.side2.label, civ: fight.side2.civ, count: fight.side2.count },
+      { label: "Champion", civ: "Spanish", count: 27 },
+    );
+    assert.deepEqual(
+      { label: fight.side3.label, civ: fight.side3.civ, count: fight.side3.count },
+      { label: "Paladin", civ: "Spanish", count: 16 },
+    );
+    assert.deepEqual(fight.snapshots[0].units[0].slice(1, 3), [14.5, 2.5]);
+    assert.deepEqual(fight.snapshots[0].units.at(-1).slice(1, 3), [5.5, 12.5]);
+  });
+});
+
+
+test("current melee golden endpoint runs the observed 27 Paladin vs 21 Elephant setup", async () => {
+  await withServer(async (baseUrl) => {
+    const fightResponse = await fetch(
+      `${baseUrl}/api/fight?side2=paladin&n2=27&side3=elite_elephant&n3=21`,
+    );
+    assert.equal(fightResponse.status, 200);
+    const fight = await fightResponse.json();
+    assert.equal(fight.placementSource, "current-melee-golden");
+    assert.deepEqual(
+      { label: fight.side2.label, civ: fight.side2.civ, count: fight.side2.count },
+      { label: "Paladin", civ: "Spanish", count: 27 },
+    );
+    assert.deepEqual(
+      { label: fight.side3.label, civ: fight.side3.civ, count: fight.side3.count },
+      { label: "Elite Battle Elephant", civ: "Burmese", count: 21 },
+    );
+    assert.deepEqual(fight.snapshots[0].units[0].slice(1, 3), [14.5, 2.5]);
+    assert.deepEqual(fight.snapshots[0].units.at(-1).slice(1, 3), [3.5, 12.5]);
+  });
+});
+
+
+test("current ranged golden endpoint runs the observed Arbalester vs HCA setup", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/fight?side2=arbalester&n2=27&side3=heavy_cav_archer&n3=18`,
+    );
+    assert.equal(response.status, 200);
+    const fight = await response.json();
+    assert.equal(fight.placementSource, "current-ranged-golden");
+    assert.deepEqual(
+      { civ: fight.side2.civ, count: fight.side2.count },
+      { civ: "Chinese", count: 27 },
+    );
+    assert.deepEqual(
+      { civ: fight.side3.civ, count: fight.side3.count },
+      { civ: "Saracens", count: 18 },
+    );
+    assert.equal("rangedTargetPressureOwner" in fight, false);
+    assert.equal("rangedOpportunityRetargetOwner" in fight, false);
+    assert.equal("rangedWindupRetargetOwner" in fight, false);
+    assert.equal(fight.winnerOwner, 3);
+    assert.deepEqual(fight.snapshots[0].units[0].slice(1, 3), [14.5, 2.5]);
+  });
+});
+
+
+test("current ranged-vs-melee endpoint simulates Player 4 and its diplomacy trigger", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/fight?side2=arbalester&n2=27&side3=paladin&n3=14`,
+    );
+    assert.equal(response.status, 200);
+    const fight = await response.json();
+    assert.equal(fight.placementSource, "current-ranged-golden");
+    assert.equal("attackReleaseTickByOwner" in fight, false);
+    assert.deepEqual(
+      { civ: fight.side2.civ, count: fight.side2.count },
+      { civ: "Chinese", count: 27 },
+    );
+    assert.deepEqual(
+      { civ: fight.side3.civ, count: fight.side3.count },
+      { civ: "Spanish", count: 14 },
+    );
+    const player4 = Object.entries(fight.unitIndex)
+      .filter(([, { owner }]) => owner === 4);
+    assert.equal(player4.length, 9);
+    assert.equal(player4.every(([, { master, maxHp }]) => master === 448 && maxHp === 95), true);
+    const events = fight.snapshots.flatMap(({ events: rows }) => rows);
+    const diplomacy = events.find(({ type }) => type === "diplomacy-changed");
+    assert.deepEqual(
+      { sourceOwner: diplomacy.sourceOwner, targetOwner: diplomacy.targetOwner, diplomacy: diplomacy.diplomacy },
+      { sourceOwner: 3, targetOwner: 2, diplomacy: 3 },
+    );
+    assert.equal(events.some(({ type, tick, actorId, targetId }) => (
+      tick < diplomacy.tick
+        && type === "pursuit-acquired"
+        && fight.unitIndex[actorId]?.owner === 3
+        && fight.unitIndex[targetId]?.owner === 2
+    )), false);
+    assert.equal(fight.winnerOwner, 3);
+    assert.equal(fight.winnerHp, 1041);
+    assert.ok(fight.winnerHp >= 744 * 0.8 && fight.winnerHp <= 942 * 1.2);
+  });
+});
+
+
+test("current melee-vs-ranged endpoint keeps the reversed golden ownership", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/fight?side2=paladin&n2=14&side3=arbalester&n3=27`,
+    );
+    assert.equal(response.status, 200);
+    const fight = await response.json();
+    assert.equal(fight.orientationNormalised, false);
+    assert.equal(Object.values(fight.unitIndex).filter(({ owner }) => owner === 4).length, 9);
+    const diplomacy = fight.snapshots.flatMap(({ events }) => events)
+      .find(({ type }) => type === "diplomacy-changed");
+    assert.deepEqual(
+      { sourceOwner: diplomacy.sourceOwner, targetOwner: diplomacy.targetOwner },
+      { sourceOwner: 2, targetOwner: 3 },
+    );
+    assert.equal(fight.winnerOwner, 2);
+    assert.equal(fight.winnerHp, 1008);
+    assert.ok(Math.abs(fight.winnerHp - 924) / 924 < 0.2);
+  });
+});
+
+
 test("fight endpoint keeps units outside every visible Golden Arena obstruction", async () => {
   await withServer(async (baseUrl) => {
     const [mapResponse, fightResponse] = await Promise.all([
@@ -394,7 +621,7 @@ test("solo movement endpoint runs only 21 owner-2 Hand Cannoneers under kite ord
     assert.deepEqual(run.side2, {
       slug: "hand_cannoneer",
       label: "Hand Cannoneer",
-      civ: "Bohemians",
+      civ: "Spanish",
       count: 21,
       class: "mobile_ranged",
     });
@@ -440,7 +667,7 @@ test("Hand Cannoneer versus Champion observation uses the tape roster with a liv
     assert.deepEqual(run.side2, {
       slug: "hand_cannoneer",
       label: "Hand Cannoneer",
-      civ: "Bohemians",
+      civ: "Spanish",
       count: 14,
       class: "mobile_ranged",
     });
@@ -660,7 +887,7 @@ test("generalized kiting endpoint rejects units outside the tape-roster matrix",
 test("solo movement endpoint runs each selectable ranged unit with its own mechanics", async () => {
   await withServer(async (baseUrl) => {
     const expected = {
-      hand_cannoneer: { label: "Hand Cannoneer", civ: "Bohemians", master: 5, radius: 0.2 },
+      hand_cannoneer: { label: "Hand Cannoneer", civ: "Spanish", master: 5, radius: 0.2 },
       arbalester: { label: "Arbalester", civ: "Chinese", master: 492, radius: 0.2 },
       heavy_cav_archer: { label: "Heavy Cav Archer", civ: "Saracens", master: 474, radius: 0.25 },
       heavy_scorpion: { label: "Heavy Scorpion", civ: "Japanese", master: 542, radius: 0.5 },
@@ -1094,6 +1321,11 @@ test("viewer page exposes battle controls and local calibration tools without a 
       "wrongWinnerTapeScore",
       "wrongWinnerSimulationScore",
       "wrongWinnerDelta",
+      "problemMatchupReview",
+      "problemMatchup",
+      "problemMatchupLiveScore",
+      "problemMatchupSimulationScore",
+      "problemMatchupIssue",
     ]) {
       assert.match(body, new RegExp(`id=["']${id}["']`), id);
     }

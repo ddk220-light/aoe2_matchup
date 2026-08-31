@@ -86,6 +86,25 @@ test("allied formation orders share a zero-obstruction transit surface", () => {
 });
 
 
+test("scenario patrol transit ends when both allies complete first acquisition", () => {
+  const patrol = Object.freeze({ kind: "scenario-patrol", x: 8, y: 4 });
+  const beforeLeft = unit(1, 2, 4, { moveOrder: patrol });
+  const beforeRight = unit(2, 2, 4.5, { moveOrder: patrol });
+  const afterLeft = unit(1, 2, 4, {
+    moveOrder: patrol,
+    openingAcquisitionComplete: true,
+  });
+  const afterRight = unit(2, 2, 4.5, {
+    moveOrder: patrol,
+    openingAcquisitionComplete: true,
+  });
+
+  assert.equal(resolvePairInteraction(beforeLeft, beforeRight).kind, "formation-transit");
+  assert.equal(resolvePairInteraction(afterLeft, afterRight).kind, "hard");
+  assert.equal(resolvePairInteraction(afterLeft, afterRight).pathObstructs, true);
+});
+
+
 test("formation transit overrides a stale release until the shared order ends", () => {
   const snapshot = createPairInteractionSnapshot({
     contactReservations: new Map([["1:2", reservation({

@@ -32,6 +32,41 @@ const KITE_OBSERVATION_MELEE = new Set([
 ]);
 
 
+export function directFightRequest(urlValue) {
+  let url;
+  try {
+    url = new URL(urlValue, "http://127.0.0.1/");
+  } catch {
+    return null;
+  }
+  const allowed = new Set(["mode", "side2", "side3", "n2", "n3"]);
+  const keys = [...url.searchParams.keys()];
+  if (keys.some((key) => !allowed.has(key))) return null;
+  if (url.searchParams.getAll("mode").length !== 1
+      || url.searchParams.get("mode") !== "battle") return null;
+  for (const key of ["side2", "side3", "n2", "n3"]) {
+    if (url.searchParams.getAll(key).length !== 1) return null;
+  }
+  const side2 = url.searchParams.get("side2");
+  const side3 = url.searchParams.get("side3");
+  const raw2 = url.searchParams.get("n2");
+  const raw3 = url.searchParams.get("n3");
+  const slug = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
+  const count = /^(?:[1-9]|[1-9]\d)$/;
+  if (!slug.test(side2 ?? "") || !slug.test(side3 ?? "")
+      || !count.test(raw2 ?? "") || !count.test(raw3 ?? "")) return null;
+  const query = new URLSearchParams({ side2, side3, n2: raw2, n3: raw3 }).toString();
+  return Object.freeze({
+    endpoint: "api/fight",
+    side2,
+    side3,
+    n2: Number(raw2),
+    n3: Number(raw3),
+    query,
+  });
+}
+
+
 export function soloMovementRequest(urlValue) {
   let url;
   try {
@@ -192,6 +227,56 @@ export function phase2WrongWinnerHref(urlValue, rowId) {
   url.search = "";
   url.searchParams.set("mode", "phase2-wrong-winners");
   url.searchParams.set("row", rowId);
+  return url.href;
+}
+
+
+const PROBLEM_MATCHUP_ID = /^[a-z0-9]+(?:_[a-z0-9]+)*_vs_[a-z0-9]+(?:_[a-z0-9]+)*$/;
+
+
+export function problemMatchupRequest(urlValue) {
+  let url;
+  try {
+    url = new URL(urlValue, "http://127.0.0.1/");
+  } catch {
+    return null;
+  }
+  const keys = [...url.searchParams.keys()];
+  if (keys.some((key) => key !== "mode" && key !== "matchup" && key !== "seed")
+      || url.searchParams.getAll("mode").length !== 1
+      || url.searchParams.getAll("matchup").length !== 1
+      || url.searchParams.getAll("seed").length > 1
+      || url.searchParams.get("mode") !== "problem-matchups") return null;
+  const matchupId = url.searchParams.get("matchup");
+  if (!PROBLEM_MATCHUP_ID.test(matchupId ?? "")) return null;
+  const seedValue = url.searchParams.get("seed");
+  const openingSeed = seedValue === null ? undefined : Number(seedValue);
+  if (seedValue !== null && (!/^(?:0|[1-9]\d*)$/.test(seedValue)
+      || !Number.isSafeInteger(openingSeed))) return null;
+  const query = new URLSearchParams({ matchup: matchupId });
+  if (openingSeed !== undefined) query.set("seed", String(openingSeed));
+  return Object.freeze({
+    endpoint: "api/problem-matchup",
+    matchupId,
+    ...(openingSeed === undefined ? {} : { openingSeed }),
+    query: query.toString(),
+  });
+}
+
+
+export function problemMatchupHref(urlValue, matchupId, openingSeed = undefined) {
+  if (!PROBLEM_MATCHUP_ID.test(matchupId ?? "")) {
+    throw new RangeError(`invalid problem matchup id ${matchupId}`);
+  }
+  if (openingSeed !== undefined
+      && (!Number.isSafeInteger(openingSeed) || openingSeed < 0)) {
+    throw new RangeError(`invalid problem matchup seed ${openingSeed}`);
+  }
+  const url = new URL(urlValue, "http://127.0.0.1/");
+  url.search = "";
+  url.searchParams.set("mode", "problem-matchups");
+  url.searchParams.set("matchup", matchupId);
+  if (openingSeed !== undefined) url.searchParams.set("seed", String(openingSeed));
   return url.href;
 }
 

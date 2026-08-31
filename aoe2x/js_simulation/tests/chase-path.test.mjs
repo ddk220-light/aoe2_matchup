@@ -189,12 +189,124 @@ test("persistent chase route ends at clear egress and returns to live target tra
 });
 
 
+test("persistent ranged pursuit stops at the projectile attack envelope", () => {
+  const rangedMechanics = Object.freeze({
+    collision_size_tiles: Object.freeze({ x: 0.2, y: 0.2 }),
+    outline_size_tiles: Object.freeze({ x: 0.2, y: 0.2 }),
+    attack_range_tiles: 7,
+    ranged: Object.freeze({ projectile_speed_tiles_per_second: 7 }),
+  });
+  const mover = Object.freeze({
+    referenceId: 1,
+    owner: 3,
+    unitMaster: 474,
+    x: 1.125,
+    y: 4.125,
+    mechanics: rangedMechanics,
+  });
+  const target = Object.freeze({
+    referenceId: 2,
+    owner: 2,
+    unitMaster: 4,
+    x: 8.625,
+    y: 4.125,
+    mechanics: rangedMechanics,
+  });
+  const blocker = dynamicBody(3, 4, 4.125, 0.3, 3, 474);
+  const wideMap = Object.freeze({ width: 12, height: 8, obstacles: Object.freeze([]) });
+
+  assert.equal(planPersistentChaseRoute(mover, target, [blocker], wideMap), null);
+});
+
+
 test("persistent chase keeps the direct line through one transit-eligible ally", () => {
   const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
   const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
   const ally = dynamicBody(3, 3.25, 4, 0.2, 3, 75);
 
   assert.equal(planPersistentChaseRoute(mover, target, [ally], map), null);
+});
+
+
+test("blocked-pursuit recovery routes around a demonstrated soft contact surface", () => {
+  const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
+  const ally = dynamicBody(3, 3.25, 4, 0.2, 3, 75);
+  const pairInteractions = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:3", Object.freeze({
+      leftId: 1,
+      rightId: 3,
+      kind: "ranged-ingress",
+      collisionExtent: 0.4,
+      attackSurfaceExtent: 0.4,
+      pathObstructs: false,
+      mayDeepen: false,
+      initiatorId: 1,
+      targetId: null,
+      acquiredTick: 10,
+    })]]),
+  });
+
+  assert.equal(
+    planPersistentChaseRoute(mover, target, [ally], map, { pairInteractions }),
+    null,
+    "ordinary pursuit may attempt the published ingress lane",
+  );
+  const recoveryRoute = planPersistentChaseRoute(mover, target, [ally], map, {
+    pairInteractions,
+    includeNonObstructingContacts: true,
+  });
+
+  assert.ok(recoveryRoute && recoveryRoute.stand !== true);
+  assert.ok(
+    recoveryRoute.waypoints.some(({ y }) => Math.abs(y - mover.y) > 0.2),
+    "the recovery path must leave the blocked row instead of retrying it",
+  );
+});
+
+
+test("persistent routing can leave an already-compressed allied basin", () => {
+  const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
+  const upper = dynamicBody(3, 1.05, 3.85, 0.2, 3, 75);
+  const lower = dynamicBody(4, 1.05, 4.15, 0.2, 3, 75);
+  const reservation = (other) => Object.freeze({
+    leftId: 1,
+    rightId: other.referenceId,
+    kind: "ranged-crowd",
+    collisionExtent: 0.4,
+    attackSurfaceExtent: 0.4,
+    pathObstructs: false,
+    mayDeepen: false,
+    initiatorId: null,
+    targetId: null,
+    acquiredTick: 10,
+  });
+  const pairInteractions = createPairInteractionSnapshot({
+    contactReservations: new Map([
+      ["1:3", reservation(upper)],
+      ["1:4", reservation(lower)],
+    ]),
+  });
+
+  const route = planPersistentChaseRoute(
+    mover,
+    target,
+    [upper, lower],
+    map,
+    { pairInteractions, includeNonObstructingContacts: true },
+  );
+
+  assert.ok(route && route.stand !== true);
+  assert.ok(route.waypoints.length > 0);
+  const egress = route.waypoints.at(-1);
+  const overlappingAtEgress = [upper, lower].filter((ally) => (
+    Math.max(Math.abs(egress.x - ally.x), Math.abs(egress.y - ally.y)) < 0.4 - 1e-12
+  ));
+  assert.ok(
+    overlappingAtEgress.length < 2,
+    "the route must leave the three-body basin even when one shallow transit remains",
+  );
 });
 
 

@@ -71,7 +71,7 @@ test("fixture validation preserves all literal map records", async () => {
   assert.equal(fixture.map.width, 16);
   assert.equal(fixture.map.height, 16);
   assert.equal(fixture.map.tiles.length, 256);
-  assert.equal(fixture.map.gaia_objects.length, 101);
+  assert.equal(fixture.map.gaia_objects.length, 152);
   assert.equal(new Set(fixture.map.tiles.map(({ x, y }) => `${x},${y}`)).size, 256);
   assert.ok(Object.isFrozen(fixture));
   assert.ok(Object.isFrozen(fixture.map));

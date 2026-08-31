@@ -1,3 +1,6 @@
+import { isHostile } from "./diplomacy.js";
+
+
 function requireFinite(value, name) {
   if (!Number.isFinite(value)) throw new TypeError(`${name} must be finite`);
   return value;
@@ -139,7 +142,7 @@ function isLive(unit) {
 
 
 function isEnemy(unit, candidate) {
-  return candidate.referenceId !== unit.referenceId && candidate.owner !== unit.owner;
+  return isHostile(unit, candidate);
 }
 
 
@@ -250,9 +253,14 @@ export function isWithinReach(unit, target) {
 // swinging from ~0.1 tiles outside box contact, so physical overlap is never
 // required and usually never happens. Where the sweep solver did produce a
 // contact for a pair it is preserved for ordering and reporting.
-export function selectEngagementTarget(unit, snapshot, contacts) {
+export function selectEngagementTarget(unit, snapshot, contacts, {
+  targetAvailable = null,
+} = {}) {
   if (!Array.isArray(snapshot)) throw new TypeError("snapshot must be an array");
   if (!Array.isArray(contacts)) throw new TypeError("contacts must be an array");
+  if (targetAvailable !== null && typeof targetAvailable !== "function") {
+    throw new TypeError("target availability must be a function");
+  }
   if (!isLive(unit)) return Object.freeze({ target: null, contact: null });
   const byReference = new Map(snapshot.map((candidate) => [candidate.referenceId, candidate]));
   const contactFor = (targetId) => contacts.find(({ leftId, rightId }) => (
@@ -270,6 +278,7 @@ export function selectEngagementTarget(unit, snapshot, contacts) {
   const candidates = snapshot
     .filter((candidate) => (
       isLive(candidate) && isEnemy(unit, candidate) && isWithinReach(unit, candidate)
+        && (targetAvailable === null || targetAvailable(candidate))
     ))
     .map((target) => ({
       target,

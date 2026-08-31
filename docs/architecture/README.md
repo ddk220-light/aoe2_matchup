@@ -61,7 +61,7 @@ data/golden/aoe2_units.db          │                            │
 
   Side systems:
   • patches.db ← patch_pipeline.py (per-patch stat diffs, ranking deltas, matchup swings)
-  • /replay/* ← replay_core.py blueprint (mgz parsing, isometric playback SPA, WebM clips)
+  • replay tooling is not mounted by aoe2matchup.com (legacy viewer code remains under aoe2x/replay)
   • apps/video/ (validates sims against the real game), graphics/ (sprites + FLUX.2 art)
 ```
 

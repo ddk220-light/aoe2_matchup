@@ -19,8 +19,8 @@ to upstream ones.
 │     aoe2x/rank/       unit ranking / pool scoring
 │     aoe2x/batch/      batch sim runners + patch pipeline (PyPy3)
 │     aoe2x/replay/     replay-understanding classifier + THE viewer (blueprint + SPA)
-└ L5  apps/website/     aoe2matchup.com (Flask; mounts the viewer at /replay)
-      apps/viewer/      standalone replay viewer deployment (mounts it at /)
+└ L5  apps/website/     aoe2matchup.com (Flask; replay viewer retired)
+      apps/viewer/      legacy standalone replay viewer host (not deployed)
       apps/video/       YouTube matchup-video automation (runs the real game)
 ```
 
@@ -43,10 +43,10 @@ remain as frozen archives; production still deploys from them until cutover.
 
 ```bash
 pip install -e .                      # the aoe2x library (stdlib-only core)
-pip install -r apps/website/requirements.txt   # website/viewer extras
+pip install -r apps/website/requirements.txt   # website runtime
 
 PORT=5002 python apps/website/app.py  # the matchup website
-python apps/viewer/server.py          # the standalone replay viewer
+pip install -r apps/viewer/requirements.txt && python apps/viewer/server.py  # legacy viewer
 pytest                                # golden regression suite
 ```
 

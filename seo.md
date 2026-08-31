@@ -23,7 +23,7 @@ site's unique data (rankings, civ breakdowns) becomes visible to AI sources.
   `BING_SITE_VERIFICATION` env vars inject `<meta name="google-site-verification">`
   and `<meta name="msvalidate.01">` (`app.py` `inject_site_url`, `base.html`).
 - **Richer `sitemap.xml`** — `<lastmod>`/`<changefreq>`/`<priority>`, plus the
-  `/patches` and `/replay` hubs (`app.py` `sitemap_xml`).
+  `/patches` hub (`app.py` `sitemap_xml`).
 - **De-orphaned `/vs/` landing pages** — each now cross-links ~12 sibling
   matchups (`_related_matchups`), forming a crawlable internal-link graph
   instead of being reachable only via the sitemap.

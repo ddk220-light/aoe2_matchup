@@ -104,6 +104,20 @@ tmp/
 /aoe2x/js_simulation/calibration/raw/
 /aoe2x/js_simulation/calibration/extracted/
 
+# Project-local live captures are the calibration source of truth, but the raw
+# recordings are too large for Git.  Curated inventories and derived reports
+# remain trackable under calibration/.
+/aoe2x/js_simulation/calibration/live_observations/
+
+# Local simulation/viewer output and dependency scratch.
+/aoe2x/js_simulation/*.log
+/aoe2x/js_simulation/**/*.log
+/aoe2x/js_simulation/.tmp-genieutils/
+/.tools/
+/.pytest_cache/
+/apps/video/media/
+/apps/video/sim_v2/
+
 # Staging area for confirmed-then-manual deletion (user reviews, then deletes)
 delete_me/
 

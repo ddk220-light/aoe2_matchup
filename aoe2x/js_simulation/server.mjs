@@ -89,6 +89,14 @@ const LIVE_RANGED_OBSERVATIONS = Object.freeze({
     family: "ranged_vs_ranged", side2Count: 27, side3Count: 18,
     civs: Object.freeze({ 2: "Chinese", 3: "Saracens" }),
   }),
+  "heavy_scorpion|hand_cannoneer": Object.freeze({
+    family: "ranged_vs_ranged", side2Count: 17, side3Count: 27,
+    civs: Object.freeze({ 2: "Chinese", 3: "Spanish" }),
+  }),
+  "heavy_scorpion|heavy_cav_archer": Object.freeze({
+    family: "ranged_vs_ranged", side2Count: 18, side3Count: 27,
+    civs: Object.freeze({ 2: "Chinese", 3: "Saracens" }),
+  }),
   "arbalester|paladin": Object.freeze({
     family: "ranged_vs_melee", side2Count: 27, side3Count: 14,
     civs: Object.freeze({ 2: "Chinese", 3: "Spanish" }),
@@ -151,22 +159,13 @@ const RANGED_GOLDEN_SHA256 = Object.freeze({
 
 function publicFile(root, pathname) {
   if (pathname === "/") return path.join(root, "viewer", "index.html");
-  if (pathname === "/reports/ranged-combat" || pathname === "/reports/ranged-combat/") {
+  if (pathname === "/reports/completed-engine"
+      || pathname === "/reports/completed-engine/") {
     return path.join(
       root,
       "calibration",
       "reports",
-      "ranged_combat_comprehensive_2026-08-29",
-      "report.html",
-    );
-  }
-  if (pathname === "/reports/arbalester-hca-participation"
-      || pathname === "/reports/arbalester-hca-participation/") {
-    return path.join(
-      root,
-      "calibration",
-      "reports",
-      "arbalester_hca_participation_2026-08-30",
+      "completed_engine_2026-09-01",
       "report.html",
     );
   }
@@ -638,7 +637,7 @@ async function loadCurrentProblemCatalogue(root) {
     root,
     "calibration",
     "reports",
-    "ranged_combat_comprehensive_2026-08-29",
+    "completed_engine_2026-09-01",
     "viewer_problem_catalogue.json",
   ), "utf8");
   const catalogue = JSON.parse(body);
@@ -653,24 +652,21 @@ async function loadCurrentProblemCatalogue(root) {
       throw new Error(`invalid current matchup id ${row.id}`);
     }
     const [side2Slug, side3Slug] = row.id.split("_vs_");
-    const observation = LIVE_RANGED_OBSERVATIONS[`${side2Slug}|${side3Slug}`];
     const side2 = unitBySlug(side2Slug);
     const side3 = unitBySlug(side3Slug);
-    if (!observation || !side2 || !side3) {
-      throw new Error(`current matchup ${row.id} is not a live ranged observation`);
+    if (!side2 || !side3) {
+      throw new Error(`current matchup ${row.id} contains an unregistered unit`);
     }
-    if (row.side2?.count !== observation.side2Count
-        || row.side3?.count !== observation.side3Count
-        || row.side2?.civ !== observation.civs[2]
-        || row.side3?.civ !== observation.civs[3]) {
-      throw new Error(`current matchup ${row.id} roster disagrees with live observation`);
+    if (!Number.isSafeInteger(row.side2?.count) || row.side2.count < 1
+        || !Number.isSafeInteger(row.side3?.count) || row.side3.count < 1
+        || typeof row.side2?.civ !== "string" || typeof row.side3?.civ !== "string") {
+      throw new Error(`current matchup ${row.id} has an invalid roster`);
     }
     if (!Number.isSafeInteger(row.representativeSeed) || row.representativeSeed < 0) {
       throw new Error(`current matchup ${row.id} lacks a representative completed seed`);
     }
     return Object.freeze({
       ...row,
-      family: observation.family,
       side2: Object.freeze({ ...row.side2, slug: side2Slug, label: side2.label }),
       side3: Object.freeze({ ...row.side3, slug: side3Slug, label: side3.label }),
       timeoutSeeds: Object.freeze([...row.timeoutSeeds]),
@@ -701,18 +697,36 @@ async function runCurrentProblemMatchupPlayback(root, matchupId, openingSeed = u
         side3Slug: row.side3.slug,
         n3: row.side3.count,
       });
-      const placement = await placementConfigFor(root, selection);
-      if (!placement) throw new Error(`problem matchup ${matchupId} has no golden placement`);
-      const [map, openingConfig] = await Promise.all([
-        loadArenaPhysicsMap(root),
-        liveObservationOpeningConfig(root, selection),
-      ]);
+      let placement;
+      if (row.family === "melee_vs_melee") {
+        const melee = await loadMeleeFormation(root);
+        placement = Object.freeze({
+          placementByOwner: melee,
+          openingPatrolByOwner: melee.openingPatrolByOwner,
+          placementSource: "current-melee-golden",
+        });
+      } else {
+        const ranged = await loadRangedFormation(root, row.family);
+        placement = Object.freeze({
+          placementByOwner: ranged,
+          ...(ranged.auxiliaryArmiesByOwner
+            ? { auxiliaryArmiesByOwner: ranged.auxiliaryArmiesByOwner }
+            : {}),
+          diplomacyByOwner: ranged.diplomacyByOwner,
+          triggers: ranged.triggers,
+          victoryTeams: ranged.victoryTeams,
+          preserveOwnerOrientation: ranged.preserveOwnerOrientation,
+          placementSource: "current-ranged-golden",
+        });
+      }
+      const map = await loadArenaPhysicsMap(root);
       const fight = await runFight(pathToFileURL(path.join(root, "/")), {
         ...selection,
         map,
         ...placement,
-        displayCivBySide: liveObservationCivs(selection),
-        ...(openingConfig ?? {}),
+        displayCivBySide: Object.freeze({ 2: row.side2.civ, 3: row.side3.civ }),
+        disableAiOrders: true,
+        disableKiting: true,
         openingSeed: selectedSeed,
       });
       const review = Object.freeze({

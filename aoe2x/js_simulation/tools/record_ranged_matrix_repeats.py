@@ -1,8 +1,13 @@
-"""Record the current 14-matchup ranged matrix with five gRPC repeats each.
+"""Record the current ranged matrix or the mechanics-expansion roster.
 
 The driver uses only the verified project-local ranged goldens, preserves their
 literal first-N slot order, and validates every generated scenario and raw gRPC
 capture. Completed runs are skipped on restart, making the long batch resumable.
+
+The ``expanded`` matrix adds five requested units against the eight-unit current
+golden roster, plus every unique pairing among the five additions.  It selects
+the melee/ranged scenario family from the ordered unit roles and keeps the old
+14-row matrix as the default so historical capture commands remain stable.
 """
 from __future__ import annotations
 
@@ -24,7 +29,7 @@ sys.path.insert(0, str(VIDEO_DIR))
 from AoE2ScenarioParser import settings  # noqa: E402
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario  # noqa: E402
 from auto import grpc_capture, vision  # noqa: E402
-from auto.orchestrate_matchup import RUN_DIR, run_matchup  # noqa: E402
+from auto.orchestrate_matchup import RUN_DIR, resolve_side, run_matchup  # noqa: E402
 from build_run import unit_const  # noqa: E402
 
 
@@ -34,6 +39,14 @@ SOURCE_ROOT = (
     / "current_ranged_goldens_2026-08-29" / "source"
 )
 GOLDENS = {
+    "melee_vs_melee": {
+        "path": (
+            ROOT / "aoe2x" / "js_simulation" / "calibration"
+            / "live_observations" / "current_melee_golden_2026-08-28"
+            / "source" / "meleevsmelee.aoe2scenario"
+        ),
+        "sha256": "31f3bed38ce0512b484124d89d5aa4e97318b3ea55c398bb8dad27242c769f4e",
+    },
     "ranged_vs_ranged": {
         "path": SOURCE_ROOT / "rangedvsranged.aoe2scenario",
         "sha256": "f44097ef86e6b123c6dfeb4989842e548af91f0d492e69caf6de87148f040883",
@@ -42,10 +55,22 @@ GOLDENS = {
         "path": SOURCE_ROOT / "rangedvsmelee.aoe2scenario",
         "sha256": "13c41485a00943ef525cab848d835d1379259fc8fff38b83d4ec510bc8824783",
     },
+    "melee_vs_ranged": {
+        "path": SOURCE_ROOT / "meleevsranged.aoe2scenario",
+        "sha256": "faf8d616ac9bb4601c4582deccec0984e997617d8c121bc44d698c7963f038a8",
+    },
 }
 DEFAULT_OUTPUT = (
     ROOT / "aoe2x" / "js_simulation" / "calibration" / "live_observations"
     / "ranged_matrix_5x_2026-08-29"
+)
+EXPANDED_DEFAULT_OUTPUT = (
+    ROOT / "aoe2x" / "js_simulation" / "calibration" / "live_observations"
+    / "expanded_roster_5x_2026-08-31"
+)
+REQUESTED_DEFAULT_OUTPUT = (
+    ROOT / "aoe2x" / "js_simulation" / "calibration" / "live_observations"
+    / "requested_roster_vs_arb_paladin_1x_2026-08-31"
 )
 
 
@@ -55,6 +80,7 @@ class Side:
     slug: str
     label: str
     cost: int
+    role: str = "melee"
 
 
 @dataclass(frozen=True)
@@ -74,13 +100,57 @@ class Matchup:
         return max(1, (27 * self.side2.cost) // self.side1.cost), 27
 
 
-ARB = Side("Chinese", "arbalester", "Arbalester", 70)
-HC = Side("Spanish", "hand_cannoneer", "Hand Cannoneer", 95)
-HCA = Side("Saracens", "heavy_cav_archer", "Heavy Cavalry Archer", 100)
+ARB = Side("Chinese", "arbalester", "Arbalester", 70, "ranged")
+HC = Side("Spanish", "hand_cannoneer", "Hand Cannoneer", 95, "ranged")
+HCA = Side("Saracens", "heavy_cav_archer", "Heavy Cavalry Archer", 100, "ranged")
 PAL = Side("Spanish", "paladin", "Paladin", 135)
 STEPPE = Side("Cumans", "elite_steppe", "Elite Steppe Lancer", 110)
 HUSSAR = Side("Spanish", "hussar", "Hussar", 80)
 CHAMP = Side("Chinese", "champion", "Champion", 70)
+HALB = Side("Bulgarians", "halberdier", "Halberdier", 60)
+
+ELEPHANT = Side("Burmese", "elite_elephant", "Elite Battle Elephant", 170)
+SCORPION = Side("Chinese", "heavy_scorpion", "Heavy Scorpion", 150, "ranged")
+ONAGER = Side("Aztecs", "siege_onager", "Siege Onager", 295, "ranged")
+SKIRMISHER = Side("Chinese", "imp_elite_skirm", "Elite Skirmisher", 60, "ranged")
+CAMEL = Side("Turks", "heavy_camel", "Heavy Camel Rider", 115)
+
+# Fully-upgraded Imperial forms requested on 2026-08-31. Units without an
+# elite upgrade retain their one in-game form; every other row names the elite
+# scenario unit explicitly. Costs are unweighted per-unit food+wood+gold from
+# the current reference DB (Blackwood Archer's two-unit train batch is already
+# divided to 40 resources per placed unit).
+REQUESTED_ROSTER = (
+    Side("Wu", "jian_swordsman_wu", "Jian Swordsman", 95),
+    Side("Wei", "xianbei_raider_wei", "Xianbei Raider", 90, "ranged"),
+    Side("Khitans", "mounted_trebuchet_khitans", "Mounted Trebuchet", 350, "ranged"),
+    Side("Jurchens", "grenadier_jurchens", "Grenadier", 100, "ranged"),
+    Side("Shu", "war_chariot_shu", "War Chariot", 155, "ranged"),
+    Side("Shu", "elite_white_feather_guard_shu", "Elite White Feather Guard", 75),
+    Side("Wei", "elite_tiger_cavalry_wei", "Elite Tiger Cavalry", 140),
+    Side("Tupi", "elite_blackwood_archer_tupi", "Elite Blackwood Archer", 40, "ranged"),
+    Side("Tupi", "elite_ibirapema_warrior_tupi", "Elite Ibirapema Warrior", 90),
+    Side("Muisca", "elite_temple_guard_muisca", "Elite Temple Guard", 115),
+    Side("Muisca", "elite_guecha_warrior_muisca", "Elite Guecha Warrior", 110, "ranged"),
+    Side("Mapuche", "elite_bolas_rider_mapuche", "Elite Bolas Rider", 95, "ranged"),
+    Side("Mapuche", "elite_kona_mapuche", "Elite Kona", 105),
+    Side("Bohemians", "elite_hussite_wagon_bohemians", "Elite Hussite Wagon", 180, "ranged"),
+    Side("Japanese", "elite_samurai_japanese", "Elite Samurai", 75),
+    Side("Chinese", "elite_chu_ko_nu_chinese", "Elite Chu Ko Nu", 75, "ranged"),
+    Side("Cumans", "elite_kipchak_cumans", "Elite Kipchak", 95, "ranged"),
+    Side("Burgundians", "elite_coustillier_burgundians", "Elite Coustillier", 110),
+    Side("Poles", "elite_obuch_poles", "Elite Obuch", 75),
+)
+
+
+def family_for(side1: Side, side2: Side) -> str:
+    if side1.role == "melee" and side2.role == "melee":
+        return "melee_vs_melee"
+    if side1.role == "ranged" and side2.role == "ranged":
+        return "ranged_vs_ranged"
+    if side1.role == "ranged":
+        return "ranged_vs_melee"
+    return "melee_vs_ranged"
 
 MATCHUPS = (
     Matchup("ranged_vs_ranged", ARB, HC),
@@ -88,6 +158,21 @@ MATCHUPS = (
     *(Matchup("ranged_vs_melee", ranged, melee)
       for ranged in (ARB, HCA, HC)
       for melee in (PAL, STEPPE, HUSSAR, CHAMP)),
+)
+
+EXISTING_ROSTER = (CHAMP, HALB, PAL, STEPPE, HUSSAR, ARB, HC, HCA)
+ADDED_ROSTER = (ELEPHANT, SCORPION, ONAGER, SKIRMISHER, CAMEL)
+EXPANDED_MATCHUPS = (
+    *(Matchup(family_for(added, existing), added, existing)
+      for added in ADDED_ROSTER for existing in EXISTING_ROSTER),
+    *(Matchup(family_for(left, right), left, right)
+      for index, left in enumerate(ADDED_ROSTER)
+      for right in ADDED_ROSTER[index + 1:]),
+)
+REQUESTED_MATCHUPS = tuple(
+    Matchup(family_for(unit, reference), unit, reference)
+    for unit in REQUESTED_ROSTER
+    for reference in (ARB, PAL)
 )
 
 
@@ -128,7 +213,10 @@ def validate_generated_scenario(path: Path, matchup: Matchup) -> dict:
     source = AoE2DEScenario.from_file(str(golden))
     generated = AoE2DEScenario.from_file(str(path))
     counts = matchup.counts
-    masters = (unit_const(matchup.side1.slug), unit_const(matchup.side2.slug))
+    masters = tuple(unit_const(resolve_side(side.civ, side.slug)[1]) for side in (
+        matchup.side1,
+        matchup.side2,
+    ))
     expected = {
         player_id: source_slot_positions(source, player_id)[:count]
         for player_id, count in zip((2, 3), counts)
@@ -250,7 +338,16 @@ def main() -> None:
         pass
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repeats", type=int, default=5)
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--matrix",
+        choices=("current", "expanded", "requested"),
+        default="current",
+        help=(
+            "capture the historical 14 rows, five-unit expansion matrix, or the "
+            "requested fully-upgraded roster versus Arbalester and Paladin"
+        ),
+    )
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--cap", type=int, default=210)
     parser.add_argument(
         "--only",
@@ -258,31 +355,74 @@ def main() -> None:
         default=[],
         help="run only these matchup keys",
     )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        help="skip these matchup keys (also when resuming a larger manifest)",
+    )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="print the selected matchup plan without touching the game",
+    )
     args = parser.parse_args()
     if args.repeats < 1:
         raise SystemExit("--repeats must be positive")
+    candidates = (
+        MATCHUPS if args.matrix == "current"
+        else EXPANDED_MATCHUPS if args.matrix == "expanded"
+        else REQUESTED_MATCHUPS
+    )
+    if args.output is None:
+        args.output = (
+            DEFAULT_OUTPUT if args.matrix == "current"
+            else EXPANDED_DEFAULT_OUTPUT if args.matrix == "expanded"
+            else REQUESTED_DEFAULT_OUTPUT
+        )
     selected = [
-        matchup for matchup in MATCHUPS
-        if not args.only or matchup.key in args.only
+        matchup for matchup in candidates
+        if (not args.only or matchup.key in args.only)
+        and matchup.key not in args.exclude
     ]
-    unknown = sorted(set(args.only) - {matchup.key for matchup in MATCHUPS})
+    requested_keys = set(args.only) | set(args.exclude)
+    unknown = sorted(requested_keys - {matchup.key for matchup in candidates})
     if unknown:
-        raise SystemExit(f"unknown --only matchup keys: {unknown}")
+        raise SystemExit(f"unknown matchup keys: {unknown}")
+    if not selected:
+        raise SystemExit("no matchups selected")
+    if args.list:
+        for matchup in selected:
+            print(
+                f"{matchup.key}\t{matchup.family}\t"
+                f"{matchup.counts[0]}v{matchup.counts[1]}\t"
+                f"{matchup.side1.civ} {matchup.side1.label}\t"
+                f"{matchup.side2.civ} {matchup.side2.label}"
+            )
+        print(f"TOTAL\t{len(selected)}")
+        return
     for golden in GOLDENS.values():
         if not golden["path"].exists() or sha256(golden["path"]) != golden["sha256"]:
             raise SystemExit(f"golden is missing or changed: {golden['path']}")
     if not grpc_capture.available():
         raise SystemExit("gRPC capture stack is unavailable")
     state = vision.detect_state(vision.grab())
-    if state != "editor":
-        raise SystemExit(f"AoE2 must be in the Scenario Editor; detected {state!r}")
+    if state not in ("editor", "load_dialog"):
+        raise SystemExit(
+            "AoE2 must be in the Scenario Editor or its Load Scenario dialog; "
+            f"detected {state!r}"
+        )
 
     args.output.mkdir(parents=True, exist_ok=True)
     batch_path = args.output / "capture_manifest.json"
     if batch_path.exists():
         batch = json.loads(batch_path.read_text(encoding="utf-8"))
         expected_keys = [matchup.key for matchup in selected]
-        if batch.get("matchup_keys") != expected_keys or batch.get("repeats") != args.repeats:
+        manifest_keys = set(batch.get("matchup_keys", []))
+        if (
+            batch.get("repeats") != args.repeats
+            or not set(expected_keys).issubset(manifest_keys)
+        ):
             raise SystemExit("existing batch manifest does not match requested matrix")
     else:
         batch = {
@@ -296,6 +436,14 @@ def main() -> None:
         write_json(batch_path, batch)
 
     total = len(selected) * args.repeats
+    manifest_total = len(batch["matchup_keys"]) * args.repeats
+
+    def manifest_completed_runs() -> int:
+        return sum(
+            len({row.get("repeat") for row in batch["runs"].get(key, [])})
+            for key in batch["matchup_keys"]
+        )
+
     complete = 0
     for matchup_index, matchup in enumerate(selected, 1):
         matchup_dir = args.output / matchup.key
@@ -317,6 +465,8 @@ def main() -> None:
                     for row in batch["runs"][matchup.key]
                 ):
                     batch["runs"][matchup.key].append(existing)
+                    batch["completed_runs"] = manifest_completed_runs()
+                    batch["updated_at"] = datetime.now(timezone.utc).isoformat()
                     write_json(batch_path, batch)
                 continue
             run_dir.mkdir(exist_ok=True)
@@ -351,9 +501,9 @@ def main() -> None:
                 logfile=str(log_path),
                 template=GOLDENS[matchup.family]["path"],
             )
-            generated = (
-                RUN_DIR
-                / f"{matchup.side1.slug}_vs_{matchup.side2.slug}.aoe2scenario"
+            generated = RUN_DIR / (
+                f"{resolve_side(matchup.side1.civ, matchup.side1.slug)[1]}_vs_"
+                f"{resolve_side(matchup.side2.civ, matchup.side2.slug)[1]}.aoe2scenario"
             )
             scenario_copy = run_dir / f"{matchup.key}.aoe2scenario"
             shutil.copy2(generated, scenario_copy)
@@ -371,15 +521,23 @@ def main() -> None:
             ] + [run_manifest]
             batch["runs"][matchup.key].sort(key=lambda row: row["repeat"])
             complete += 1
-            batch["completed_runs"] = complete
+            batch["completed_runs"] = manifest_completed_runs()
             batch["updated_at"] = datetime.now(timezone.utc).isoformat()
             write_json(batch_path, batch)
             print(json.dumps(run_manifest["capture"], sort_keys=True), flush=True)
 
-    batch["completed_at"] = datetime.now(timezone.utc).isoformat()
-    batch["completed_runs"] = total
+    batch["completed_runs"] = manifest_completed_runs()
+    batch["updated_at"] = datetime.now(timezone.utc).isoformat()
+    if batch["completed_runs"] == manifest_total:
+        batch["completed_at"] = datetime.now(timezone.utc).isoformat()
+    else:
+        batch.pop("completed_at", None)
     write_json(batch_path, batch)
-    print(f"DONE {total} validated captures -> {args.output}", flush=True)
+    print(
+        f"DONE {total} selected captures; batch has "
+        f"{batch['completed_runs']}/{manifest_total} -> {args.output}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

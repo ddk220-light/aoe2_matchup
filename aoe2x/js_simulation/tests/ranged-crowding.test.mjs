@@ -20,6 +20,17 @@ const mechanics = Object.freeze({
   ranged: Object.freeze({ projectile_speed_tiles_per_second: 7 }),
 });
 
+const largeRangedMechanics = Object.freeze({
+  ...mechanics,
+  collision_size_tiles: Object.freeze({ x: 0.5, y: 0.5 }),
+  outline_size_tiles: Object.freeze({ x: 0.5, y: 0.5 }),
+});
+
+const siegeRangedMechanics = Object.freeze({
+  ...mechanics,
+  armor_classes: Object.freeze({ 20: 0 }),
+});
+
 
 const unit = (referenceId, x, y, overrides = {}) => Object.freeze({
   referenceId,
@@ -205,6 +216,69 @@ test("stationary firing ranged contacts persist and outrank formation phasing", 
   const interaction = resolvePairInteraction(units[0], units[1], snapshot);
 
   assert.equal(interaction.kind, "ranged-crowd");
+  // An inherited 0.30 separation must never contract merely because the pair
+  // entered its firing state.
+  assert.ok(Math.abs(interaction.collisionExtent - 0.3) < 1e-12);
+  assert.equal(interaction.pathObstructs, false);
+});
+
+
+test("a committed ordinary ranged rank remains compliant to fresh ingress", () => {
+  const units = [
+    unit(1, 1, 1, { action: "reload", attackTargetId: 9 }),
+    unit(2, 1.45, 1),
+  ];
+  const result = planRangedCrowding(
+    units,
+    [proposal(1, 0), proposal(2, -0.1)],
+    15,
+  );
+  const interaction = result.contactReservations.get("1:2");
+
+  assert.equal(interaction.kind, "ranged-crowd");
   assert.ok(interaction.collisionExtent < 0.4);
   assert.equal(interaction.pathObstructs, false);
+});
+
+
+test("a large mobile-ranged body remains compliant after committing", () => {
+  const units = [
+    unit(1, 1, 1, {
+      mechanics: largeRangedMechanics,
+      action: "reload",
+      attackTargetId: 9,
+    }),
+    unit(2, 1.45, 1, { mechanics: largeRangedMechanics }),
+  ];
+  const result = planRangedCrowding(
+    units,
+    [proposal(1, 0), proposal(2, -0.1)],
+    15,
+  );
+  const interaction = result.contactReservations.get("1:2");
+
+  assert.equal(interaction.kind, "ranged-crowd");
+  assert.ok(Math.abs(interaction.collisionExtent - 0.35) < 1e-12);
+  assert.equal(interaction.pathObstructs, false);
+});
+
+
+test("a committed Siege-class body obstructs regardless of its radius", () => {
+  const units = [
+    unit(1, 1, 1, {
+      mechanics: siegeRangedMechanics,
+      action: "reload",
+      attackTargetId: 9,
+    }),
+    unit(2, 1.3, 1, { mechanics: siegeRangedMechanics }),
+  ];
+  const result = planRangedCrowding(
+    units,
+    [proposal(1, 0), proposal(2, -0.05)],
+    16,
+  );
+  const interaction = result.contactReservations.get("1:2");
+
+  assert.ok(Math.abs(interaction.collisionExtent - 0.3) < 1e-12);
+  assert.equal(interaction.pathObstructs, true);
 });

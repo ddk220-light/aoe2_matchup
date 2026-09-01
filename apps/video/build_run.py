@@ -62,6 +62,10 @@ _KEY_CONST_OVERRIDE = {
     # The public/database slug omits "battle", while AoE2ScenarioParser uses
     # the full in-game enum name.
     "elite_elephant": int(UnitInfo.ELITE_BATTLE_ELEPHANT.ID),
+    # The simulator/public slug retains the historical ``imp_`` prefix, while
+    # AoE2ScenarioParser exposes the in-game enum as ELITE_SKIRMISHER.
+    "imp_elite_skirm": int(UnitInfo.ELITE_SKIRMISHER.ID),
+    "heavy_camel": int(UnitInfo.HEAVY_CAMEL_RIDER.ID),
     # The website slugs abbreviate these two established unit names.
     "heavy_cav_archer": int(UnitInfo.HEAVY_CAVALRY_ARCHER.ID),
     "elite_steppe": int(UnitInfo.ELITE_STEPPE_LANCER.ID),

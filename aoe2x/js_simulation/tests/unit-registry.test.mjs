@@ -2,7 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { UNIT_REGISTRY, UNIT_SLUGS, unitBySlug } from "../src/unit-registry.js";
+import {
+  UNIT_REGISTRY,
+  UNIT_SLUGS,
+  unitByMaster,
+  unitBySlug,
+} from "../src/unit-registry.js";
 
 // The cost scalars the calibrated corpus was purchased with.
 const CALIBRATED_COST = {
@@ -71,7 +76,10 @@ test("Spanish Hand Cannoneer fixture includes the sourced gunpowder reload bonus
   assert.equal(mechanics.reload_seconds, 2.9325);
   assert.equal(mechanics.provenance.reload_base_seconds, 3.45);
   assert.equal(mechanics.provenance.reload_multiplier, 0.85);
-  assert.match(mechanics.provenance.reload_evidence, /Spanish\.md$/);
+  assert.match(
+    mechanics.provenance.fields.reload_seconds,
+    /matching civilization tech-tree effect type 5/,
+  );
 });
 
 test("Batch 1 ranged units use the generic mobile-ranged controller", () => {
@@ -99,6 +107,12 @@ test("Warrior Priest is registered only as a melee combat unit", () => {
   const row = unitBySlug("warrior_priest");
   assert.equal(row.class, "melee");
   assert.equal(row.healing, undefined);
+});
+
+test("the Onager line carries reusable behavior-family metadata", () => {
+  assert.equal(unitBySlug("siege_onager").behaviorFamily, "onager");
+  assert.equal(unitByMaster(588).behaviorFamily, "onager");
+  assert.equal(unitBySlug("heavy_scorpion").behaviorFamily, undefined);
 });
 
 test("class matches the fixture's attack range", async () => {

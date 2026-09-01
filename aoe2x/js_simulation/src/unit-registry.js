@@ -15,6 +15,10 @@
 // final_cost_*: the purchase rule buys at dat base prices, so a Berbers Hussar
 // costs 80 here even though the civ bonus makes it 64 in game. Regenerate the
 // numbers with tools/export_unit_costs.py.
+//
+// `behaviorFamily` is optional unit-line metadata for a reusable AI mechanic,
+// never a matchup switch. The Rocket Cart replacements belong to the same
+// Onager line and must use the same `onager` family when they are registered.
 const ROWS = [
   { slug: "arbalester", label: "Arbalester", civ: "Chinese", master: 492,
     fixture: "arbalester_chinese_imperial.json", class: "mobile_ranged",
@@ -37,15 +41,15 @@ const ROWS = [
   { slug: "hand_cannoneer", label: "Hand Cannoneer", civ: "Spanish", master: 5,
     fixture: "hand_cannoneer_spanish_imperial.json", class: "mobile_ranged",
     baseCost: { food: 45, wood: 0, gold: 50 } },
-  { slug: "heavy_camel", label: "Heavy Camel Rider", civ: "Berbers", master: 330,
-    fixture: "heavy_camel_berbers_imperial.json", class: "melee",
+  { slug: "heavy_camel", label: "Heavy Camel Rider", civ: "Turks", master: 330,
+    fixture: "heavy_camel_turks_imperial.json", class: "melee",
     baseCost: { food: 55, wood: 0, gold: 60 } },
   { slug: "heavy_cav_archer", label: "Heavy Cav Archer", civ: "Saracens", master: 474,
     catalogueName: "Heavy Cavalry Archer",
     fixture: "heavy_cav_archer_saracens_imperial.json", class: "mobile_ranged",
     baseCost: { food: 0, wood: 40, gold: 60 } },
-  { slug: "heavy_scorpion", label: "Heavy Scorpion", civ: "Japanese", master: 542,
-    fixture: "heavy_scorpion_japanese_imperial.json", class: "siege_ranged",
+  { slug: "heavy_scorpion", label: "Heavy Scorpion", civ: "Chinese", master: 542,
+    fixture: "heavy_scorpion_chinese_imperial.json", class: "siege_ranged",
     baseCost: { food: 0, wood: 75, gold: 75 } },
   { slug: "hussar", label: "Hussar", civ: "Spanish", master: 441,
     fixture: "hussar_spanish_imperial.json", class: "melee",
@@ -56,8 +60,9 @@ const ROWS = [
   { slug: "paladin", label: "Paladin", civ: "Spanish", master: 569,
     fixture: "paladin_spanish_imperial.json", class: "melee",
     baseCost: { food: 60, wood: 0, gold: 75 } },
-  { slug: "siege_onager", label: "Siege Onager", civ: "Slavs", master: 588,
-    fixture: "siege_onager_slavs_imperial.json", class: "siege_ranged",
+  { slug: "siege_onager", label: "Siege Onager", civ: "Aztecs", master: 588,
+    fixture: "siege_onager_aztecs_imperial.json", class: "siege_ranged",
+    behaviorFamily: "onager",
     baseCost: { food: 0, wood: 160, gold: 135 } },
   { slug: "elite_longbowman", label: "Elite Longbowman", civ: "Britons", master: 530,
     fixture: "elite_longbowman_britons_imperial.json", class: "mobile_ranged",
@@ -140,7 +145,13 @@ export const SOLO_MOVEMENT_UNIT_SLUGS = Object.freeze([
 ]);
 
 const BY_SLUG = new Map(UNIT_REGISTRY.map((row) => [row.slug, row]));
+const BY_MASTER = new Map(UNIT_REGISTRY.map((row) => [row.master, row]));
 
 export function unitBySlug(slug) {
   return BY_SLUG.get(slug);
+}
+
+
+export function unitByMaster(master) {
+  return BY_MASTER.get(master);
 }

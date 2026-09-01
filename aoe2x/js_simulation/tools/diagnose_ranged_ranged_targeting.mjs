@@ -90,21 +90,17 @@ async function main() {
   const variants = {
     baseline: {},
     pressure: { rangedTargetPressureOwner: 3 },
-    pressure_opportunity: {
-      rangedTargetPressureOwner: 3,
-      rangedOpportunityRetargetOwner: 2,
-    },
     pressure_windup: {
       rangedTargetPressureOwner: 3,
       rangedWindupRetargetOwner: 3,
     },
-    all: {
-      rangedTargetPressureOwner: 3,
-      rangedOpportunityRetargetOwner: 2,
-      rangedWindupRetargetOwner: 3,
-    },
   };
-  const report = { schemaVersion: 1, variants, matchups: {} };
+  const report = {
+    schemaVersion: 1,
+    rangedOpportunityRetargeting: "generic-in-range-opportunity",
+    variants,
+    matchups: {},
+  };
   for (const [key, side2Slug, n2, side3Slug, n3] of matchups) {
     report.matchups[key] = {};
     for (const [variant, options] of Object.entries(variants)) {

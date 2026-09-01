@@ -97,6 +97,20 @@ test("ranged-vs-melee runs real Player 4 combat before directional hostility", a
   assert.equal(fight.winnerOwner, 3);
   assert.ok(fight.winnerHp > 0);
   assertTransition(fight, { meleeOwner: 3, rangedOwner: 2 });
+  const ownerOf = (referenceId) => fight.unitIndex[referenceId]?.owner;
+  const firstAuxiliaryTargetByActor = new Map();
+  for (const current of fight.snapshots.flatMap(({ events }) => events)) {
+    if (current.type !== "pursuit-acquired"
+        || ownerOf(current.actorId) !== 3
+        || ownerOf(current.targetId) !== 4
+        || firstAuxiliaryTargetByActor.has(current.actorId)) continue;
+    firstAuxiliaryTargetByActor.set(current.actorId, current.targetId);
+  }
+  assert.equal(firstAuxiliaryTargetByActor.size, 14);
+  assert.ok(
+    new Set(firstAuxiliaryTargetByActor.values()).size >= 2,
+    "the melee opening must fan across independently visible Player-4 bodies",
+  );
 });
 
 

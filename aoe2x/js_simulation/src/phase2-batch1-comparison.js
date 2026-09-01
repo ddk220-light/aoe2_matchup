@@ -59,6 +59,7 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
   const units = canonical.starting_units.map((unit) => {
     const mechanics = context.mechanicsByMaster.get(unit.master);
     if (!mechanics) throw new RangeError(`missing mechanics for master ${unit.master}`);
+    const registryUnit = unitByMaster.get(unit.master);
     return createUnitState({
       referenceId: unit.id,
       owner: unit.owner,
@@ -66,6 +67,9 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
       y: unit.y,
       facing: 0,
       mechanics,
+      ...(registryUnit?.behaviorFamily === undefined
+        ? {}
+        : { behaviorFamily: registryUnit.behaviorFamily }),
       acquisitionRank: ranks.get(unit.id),
       acquisitionCount: canonical.starting_units.length,
     });
@@ -126,8 +130,6 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
     map: context.map,
     ...(family === "rvr" && orderedRangedOwner === null ? {
       rangedTargetPressureOwner: 3,
-      rangedOpportunityRetargetOwner: 2,
-      rangedWindupRetargetOwner: 3,
     } : {}),
     ...(kiteOwner === null
       ? {}

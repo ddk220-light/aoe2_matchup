@@ -317,7 +317,10 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     # the small scenario loads in ~2s; a fixed wait beats an OCR poll here (each editor
     # check is a ~5s OCR). GATE C below catches the rare case where it wasn't ready.
     time.sleep(2.5)
-    _click_frac(*FP_MENU, logfile=logfile, label="Menu", dbl=True, settle=0.7)
+    # A double-click is not idempotent here: on current AoE2 builds the first
+    # click opens the editor menu and the second can immediately close it again.
+    # Use one click, then let the Test gate below verify the resulting dialog.
+    _click_frac(*FP_MENU, logfile=logfile, label="Menu", settle=0.7)
     # GATE C: the menu dialog (with 'Test') must be up; else OCR-find Menu (self-correcting)
     if not _wait_text("Test", R_DIALOG, tries=3):
         if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu"):

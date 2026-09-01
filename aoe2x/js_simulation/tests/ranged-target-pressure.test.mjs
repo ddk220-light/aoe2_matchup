@@ -14,6 +14,10 @@ const eliteGbeto = JSON.parse(await readFile(new URL(
   "../fixtures/unit_stats/elite_gbeto_malians_imperial.json",
   import.meta.url,
 ), "utf8"));
+const champion = JSON.parse(await readFile(new URL(
+  "../fixtures/unit_stats/champion_chinese_imperial.json",
+  import.meta.url,
+), "utf8"));
 
 
 function unit({ referenceId, owner, x, y, mechanics }) {
@@ -57,28 +61,51 @@ test("RvR AI target pressure prevents every equidistant shooter piling onto one 
 });
 
 
-test("the manual RvR side fires at an in-range target instead of chasing a distant lock", () => {
-  const world = createWorld({
-    ratio: "1v2-ranged-opportunity-test",
-    mapHash: "ranged-opportunity-test-map",
-    map: { width: 20, height: 20, obstacles: [] },
-    rangedOpportunityRetargetOwner: 2,
-    units: [
-      Object.freeze({
-        ...unit({ referenceId: 100, owner: 2, x: 5, y: 5, mechanics: heavyCavArcher }),
-        pursuitTargetId: 201,
-      }),
-      unit({ referenceId: 200, owner: 3, x: 5, y: 10, mechanics: eliteGbeto }),
-      unit({ referenceId: 201, owner: 3, x: 16, y: 16, mechanics: eliteGbeto }),
-    ],
-  });
+test("every ranged owner fires at an in-range target instead of chasing a distant lock", () => {
+  for (const shooterOwner of [2, 3]) {
+    const hostileOwner = shooterOwner === 2 ? 3 : 2;
+    const shooterId = shooterOwner === 2 ? 100 : 200;
+    const nearbyId = hostileOwner === 2 ? 100 : 200;
+    const distantId = nearbyId + 1;
+    const world = createWorld({
+      ratio: `owner-${shooterOwner}-ranged-opportunity-test`,
+      mapHash: `owner-${shooterOwner}-ranged-opportunity-test-map`,
+      map: { width: 20, height: 20, obstacles: [] },
+      units: [
+        Object.freeze({
+          ...unit({
+            referenceId: shooterId,
+            owner: shooterOwner,
+            x: 5,
+            y: 5,
+            mechanics: heavyCavArcher,
+          }),
+          pursuitTargetId: distantId,
+        }),
+        unit({
+          referenceId: nearbyId,
+          owner: hostileOwner,
+          x: 5,
+          y: 10,
+          mechanics: eliteGbeto,
+        }),
+        unit({
+          referenceId: distantId,
+          owner: hostileOwner,
+          x: 16,
+          y: 16,
+          mechanics: eliteGbeto,
+        }),
+      ],
+    });
 
-  const next = stepWorld(world);
-  const shooter = next.units.find(({ referenceId }) => referenceId === 100);
+    const next = stepWorld(world);
+    const shooter = next.units.find(({ referenceId }) => referenceId === shooterId);
 
-  assert.equal(shooter.pursuitTargetId, 200);
-  assert.equal(shooter.x, 5);
-  assert.equal(shooter.y, 5);
+    assert.equal(shooter.pursuitTargetId, nearbyId, `owner ${shooterOwner}`);
+    assert.equal(shooter.x, 5);
+    assert.equal(shooter.y, 5);
+  }
 });
 
 
@@ -136,6 +163,64 @@ test("the RvR AI side preserves an unreleased windup when its target dies", () =
 });
 
 
+test("an abandoned unreleased ranged swing refunds reload before reacquiring", () => {
+  const attacker = Object.freeze({
+    ...unit({ referenceId: 200, owner: 3, x: 5, y: 10, mechanics: eliteGbeto }),
+    pursuitTargetId: 100,
+    engagedTargetId: 100,
+    attackTargetId: 100,
+    action: "attacking",
+    actionTimers: Object.freeze({ windup: 30, reload: 0, swing: 30, acquire: 0 }),
+  });
+  let world = createWorld({
+    ratio: "1v2-ranged-cancel-reacquire-test",
+    mapHash: "ranged-cancel-reacquire-test-map",
+    map: { width: 20, height: 20, obstacles: [] },
+    units: [
+      unit({ referenceId: 100, owner: 2, x: 5, y: 5, mechanics: heavyCavArcher }),
+      unit({ referenceId: 101, owner: 2, x: 5.5, y: 5, mechanics: heavyCavArcher }),
+      attacker,
+    ],
+  });
+  world = Object.freeze({
+    ...world,
+    units: Object.freeze(world.units.map((entry) => (
+      entry.referenceId === 100
+        ? Object.freeze({
+          ...entry,
+          hp: 0,
+          alive: false,
+          action: "dead",
+          pursuitTargetId: null,
+          engagedTargetId: null,
+          attackTargetId: null,
+          actionTimers: Object.freeze({ windup: 0, reload: 0, swing: 0, acquire: 0 }),
+        })
+        : entry.referenceId === 200
+          ? Object.freeze({
+            ...entry,
+            actionTimers: Object.freeze({ ...entry.actionTimers, reload: 90 }),
+          })
+        : entry
+    ))),
+  });
+
+  const next = stepWorld(world);
+  const reacquired = next.units.find(({ referenceId }) => referenceId === 200);
+
+  assert.equal(reacquired.action, "attacking");
+  assert.equal(reacquired.pursuitTargetId, 101);
+  assert.equal(reacquired.attackTargetId, 101);
+  assert.equal(reacquired.actionTimers.swing, 0);
+  assert.equal(next.events.some(({ type, actorId, targetId }) => (
+    type === "attack-canceled" && actorId === 200 && targetId === 100
+  )), true);
+  assert.equal(next.events.some(({ type, actorId, targetId }) => (
+    type === "attack-start" && actorId === 200 && targetId === 101
+  )), true);
+});
+
+
 test("an isolated ranged pair compresses below its old one-lane DAT floor", () => {
   const world = createWorld({
     ratio: "2v1-ranged-ingress-test",
@@ -159,4 +244,40 @@ test("an isolated ranged pair compresses below its old one-lane DAT floor", () =
   assert.ok(separation < 0.4 - 1e-9, JSON.stringify({ front, rear, events: next.events }));
   assert.ok(separation >= 0.4 * 0.025 - 1e-9);
   assert.equal(next.pursuitRecoveryState.attempts.get(201) ?? 0, 0);
+});
+
+
+test("post-opening ranged patrol retargets apply a shared soft claim capacity", () => {
+  const patrolShooter = (referenceId, x, y = 5) => Object.freeze({
+    ...unit({ referenceId, owner: 2, x, y, mechanics: heavyCavArcher }),
+    moveOrder: Object.freeze({ kind: "scenario-patrol", x: 5, y: 15 }),
+    openingAcquisitionComplete: true,
+  });
+  const world = createWorld({
+    ratio: "18v2-post-opening-patrol-pressure-test",
+    mapHash: "post-opening-patrol-pressure-test-map",
+    map: { width: 20, height: 20, obstacles: [] },
+    units: [
+      ...Array.from({ length: 18 }, (_, index) => (
+        patrolShooter(100 + index, 4.8, 1 + index * 0.4)
+      )),
+      Object.freeze({
+        ...unit({ referenceId: 200, owner: 3, x: 4.8, y: 10, mechanics: champion }),
+      }),
+      Object.freeze({
+        ...unit({ referenceId: 201, owner: 3, x: 5.2, y: 10, mechanics: champion }),
+      }),
+    ],
+  });
+
+  const next = stepWorld(world);
+  const targets = next.units
+    .filter(({ owner }) => owner === 2)
+    .map(({ pursuitTargetId }) => pursuitTargetId);
+
+  assert.deepEqual(new Set(targets), new Set([200, 201]));
+  assert.ok(Math.max(
+    targets.filter((targetId) => targetId === 200).length,
+    targets.filter((targetId) => targetId === 201).length,
+  ) <= 12);
 });

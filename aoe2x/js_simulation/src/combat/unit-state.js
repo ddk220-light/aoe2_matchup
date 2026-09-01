@@ -1,4 +1,5 @@
 import { secondsToTicksNearest } from "../simulation-clock.js";
+import { unitByMaster } from "../unit-registry.js";
 import { chargeSpec } from "./attacks.js";
 import { acquisitionDelaySeconds } from "./targeting.js";
 
@@ -42,6 +43,7 @@ export function createUnitState({
   y,
   facing,
   mechanics,
+  behaviorFamily,
   actionTimers = null,
   acquisitionRank = 0,
   acquisitionCount = 1,
@@ -62,6 +64,11 @@ export function createUnitState({
 
   const unitMaster = requireSafeInteger(mechanics.unit_master, "unit mechanics unit master");
   if (unitMaster <= 0) throw new RangeError("unit mechanics master must be positive");
+  const resolvedBehaviorFamily = behaviorFamily ?? unitByMaster(unitMaster)?.behaviorFamily;
+  if (resolvedBehaviorFamily !== undefined
+      && (typeof resolvedBehaviorFamily !== "string" || resolvedBehaviorFamily.length === 0)) {
+    throw new TypeError("behavior family must be a nonempty string");
+  }
   const hp = requireFinite(mechanics.hp, "unit mechanics hp");
   if (hp <= 0) throw new RangeError("unit mechanics hp must be positive");
 
@@ -85,6 +92,9 @@ export function createUnitState({
     y,
     facing,
     mechanics,
+    ...(resolvedBehaviorFamily === undefined
+      ? {}
+      : { behaviorFamily: resolvedBehaviorFamily }),
     unitMaster,
     hp,
     // Charge units also remember their own reaction-lag draw: completing the

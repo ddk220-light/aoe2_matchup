@@ -53,6 +53,7 @@ import {
 import {
   chebyshevGap,
   isWithinReach,
+  outlineChebyshevGap,
   selectEngagementTarget,
   selectPursuitTarget,
 } from "./targeting.js";
@@ -78,6 +79,12 @@ import {
 } from "./attacks.js";
 import { collisionRadius } from "./targeting.js";
 import {
+  blastFalloffFraction,
+  displacedAimPoint,
+  selectProjectileLandingVictim,
+  siegeDebrisLandingPoints,
+} from "./projectile-mechanics.js";
+import {
   areOpponents,
   changeDiplomacy,
   createDiplomacyByOwner,
@@ -95,6 +102,21 @@ const DEFAULT_MAP = Object.freeze({
 const PATROL_FIRST_SCAN_MIN_SECONDS = 1.60;
 const AUXILIARY_PATROL_FIRST_SCAN_MIN_SECONDS = 1.48;
 const PATROL_FIRST_SCAN_MAX_SECONDS = 1.66;
+// An Onager-family cohort whose PATROL is issued while an enemy centre is
+// already in shared LOS receives the game's early opening scan. This is
+// intentionally a first-acquisition rule only: the 11-LOS Onager tapes expose
+// their first lock at 0.69 s. Rocket Cart variants share the same behavior-
+// family tag; Scorpions and ordinary ranged units remain on the normal scan.
+const VISIBLE_ONAGER_PATROL_FIRST_SCAN_MIN_SECONDS = 0.66;
+const VISIBLE_ONAGER_PATROL_FIRST_SCAN_MAX_SECONDS = 0.72;
+const VISIBLE_ONAGER_PATROL_EARLY_SHARE = 1 / 3;
+const PATROL_DETACHED_ONAGER_MEMBER_GAP_TILES = 2.0;
+const DETACHED_ONAGER_PATROL_FIRST_SCAN_MIN_SECONDS = 5.5;
+const DETACHED_ONAGER_PATROL_FIRST_SCAN_MEAN_TAIL_SECONDS = 12.0;
+const ONAGER_PATROL_DEFERRED_SCAN_SHARE = 1 / 3;
+const ONAGER_PATROL_LONG_TAIL_SHARE = 1 / 12;
+const ONAGER_PATROL_LONG_TAIL_MIN_SECONDS = 4.0;
+const ONAGER_PATROL_LONG_TAIL_MEAN_SECONDS = 8.0;
 const PATROL_RESCAN_SECONDS = 0.8;
 const PATROL_ORDER_REACTION_SECONDS = 1.0;
 const PATROL_BLOCKER_CAPTURE_TICKS = Math.round(PATROL_RESCAN_SECONDS * TICKS_PER_SECOND);
@@ -108,6 +130,31 @@ const BLOCKED_PURSUIT_PROGRESS_FRACTION = 0.05;
 // deep.  The engine exposes roughly that first physical rank to a cohort
 // PATROL instead of choosing anchors from arbitrary scenario roster order.
 const PATROL_OPENING_FRONT_BAND_TILES = 1.5;
+// A moving melee cohort exposes a shallow, bounded contact surface to an
+// approaching PATROL. Full-rate captures across 14-27-body fronts show one to
+// three first-lock lanes, all within one projected tile of the leading body.
+// This classifies current geometry only; it does not alter movement or damage.
+const PATROL_MELEE_CONTACT_FRONT_DEPTH_TILES = 1.0;
+const PATROL_CONTACT_LANE_LIMIT = 3;
+const PATROL_FORMATION_RANK_GAP_TILES = 0.32;
+const PATROL_FORMATION_DETACHED_LEAD_GAP_TILES = 0.50;
+// Group PATROL names a principal lane; lateral lanes are fallbacks for cohort
+// members sufficiently far from that axis. This measured opening-choice bias
+// is spatial and ends at first acquisition.
+const PATROL_OPENING_NEAR_FLANK_PENALTY_TILES = 0.25;
+const PATROL_OPENING_FAR_FLANK_PENALTY_TILES = 2.0;
+// The opening PATROL lock is intentionally allowed to concentrate. After a
+// locked target dies, however, live 18- and 27-body ranged cohorts across
+// Paladin, Steppe Lancer, Champion, and Heavy-Camel fronts retain a compact
+// target-claim band despite very different HP and damage-per-shot. Full-rate
+// mixed captures place the ordinary post-opening band around 9-14 claims; the
+// previous value of eight dispersed a 27-body archer line immediately after
+// its first kill, while the live line continued to transfer a roughly
+// twelve-member lane together. This is a soft acquisition score, not a hard
+// cap: geometry can still keep more actors on one target.
+const PATROL_RETARGET_SOFT_CAPACITY = 12;
+const ONAGER_OPENING_SOFT_TARGET_CAPACITY = 2;
+const ONAGER_BEHAVIOR_FAMILY = "onager";
 // Default runaway guard for a single fight, and the hard ceiling a caller may
 // raise it to. 60 s covers every recorded melee fight with margin, but the
 // ranged tapes' own 20v15 fights run 56.5-59.8 s and the sim legitimately
@@ -119,6 +166,68 @@ const MAX_WORLD_TICKS = 9000;
 
 function hasMeleeMode(unit) {
   return unit?.mechanics?.ranged === undefined || unit.mechanics.ranged === null;
+}
+
+
+function hasOnagerFamilyBehavior(unit) {
+  return unit?.behaviorFamily === ONAGER_BEHAVIOR_FAMILY;
+}
+
+
+function selectedMinimumRangeThreat(unit, snapshot) {
+  const minRange = unit?.mechanics?.ranged?.min_range_tiles ?? 0;
+  if (!(minRange > 0) || !Number.isSafeInteger(unit?.pursuitTargetId)) return null;
+  const target = snapshot.find(({ referenceId }) => (
+    referenceId === unit.pursuitTargetId
+  ));
+  if (!target?.alive || !isHostile(unit, target)) return null;
+  const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
+  return distance < minRange - 1e-9
+    ? Object.freeze({ target, distance })
+    : null;
+}
+
+
+function selectOnagerMinimumRangeAlternate(unit, snapshot) {
+  const minRange = unit.mechanics.ranged.min_range_tiles;
+  const candidates = snapshot.filter((candidate) => (
+    candidate.alive
+      && isHostile(unit, candidate)
+      && candidate.referenceId !== unit.pursuitTargetId
+      && Math.hypot(candidate.x - unit.x, candidate.y - unit.y)
+        >= minRange - 1e-9
+  ));
+  if (candidates.length === 0) return null;
+  // Prefer something the weapon can fire at immediately. If every legal
+  // target is beyond maximum range, ordinary pursuit closes on the nearest
+  // visible one instead.
+  const shootable = candidates.filter((candidate) => isWithinReach(unit, candidate));
+  return selectPursuitTarget(
+    { ...unit, pursuitTargetId: null },
+    shootable.length > 0 ? shootable : candidates,
+  );
+}
+
+
+function onagerRetreatHeadingAvailable(unit, threat, snapshot, map, pairInteractions) {
+  const distance = Math.hypot(unit.x - threat.x, unit.y - threat.y);
+  if (distance <= ZERO_STEP_EPSILON) return false;
+  const step = unit.mechanics.speed_tiles_per_second / TICKS_PER_SECOND;
+  if (step <= ZERO_STEP_EPSILON) return false;
+  const heading = Math.atan2(unit.y - threat.y, unit.x - threat.x);
+  const sides = unit.referenceId % 2 === 0 ? [1, -1] : [-1, 1];
+  const bounds = { width: map.width, height: map.height };
+  for (let turn = 0; turn <= STEER_MAX_TURNS; turn += 1) {
+    const turnSides = turn === 0 ? [0] : sides;
+    for (const side of turnSides) {
+      const angle = heading + side * turn * STEER_INCREMENT_RADIANS;
+      const dx = Math.cos(angle) * step;
+      const dy = Math.sin(angle) * step;
+      if (stepClearsBodies(unit, dx, dy, snapshot, bounds, pairInteractions)
+          && stepClearsMapObstacles(unit, dx, dy, map)) return true;
+    }
+  }
+  return false;
 }
 
 
@@ -211,6 +320,7 @@ function nextPursuitRecoveryState(previous = null) {
     attempts: new Map(previous?.attempts ?? []),
     routes: new Map(previous?.routes ?? []),
     retargetReady: new Set(previous?.retargetReady ?? []),
+    nextRetargetScanTick: new Map(previous?.nextRetargetScanTick ?? []),
     routeFailures: new Map(previous?.routeFailures ?? []),
     failedTargets: new Map([...(previous?.failedTargets ?? [])].map(
       ([referenceId, targets]) => [referenceId, new Set(targets)],
@@ -296,7 +406,7 @@ function recoveryAlternateTarget(unit, snapshot, pursuitRecoveryState, map,
 }
 
 
-function applyOpeningPatrol(units, openingPatrolByOwner, map) {
+function applyOpeningPatrol(units, openingPatrolByOwner, map, openingSeed = 0) {
   if (openingPatrolByOwner === undefined) return units;
   if (!openingPatrolByOwner || typeof openingPatrolByOwner !== "object"
       || Array.isArray(openingPatrolByOwner)) {
@@ -317,19 +427,47 @@ function applyOpeningPatrol(units, openingPatrolByOwner, map) {
     if (x < 0 || x >= map.width || y < 0 || y >= map.height) {
       throw new RangeError("opening patrol destination must be inside the map");
     }
-    destinations.set(owner, Object.freeze({ x, y, kind: "opening-patrol" }));
+    destinations.set(owner, Object.freeze({
+      x,
+      y,
+      kind: "opening-patrol",
+      // An authored PATROL command enters the same command-reaction phase
+      // whether it was issued by an at-start trigger (the mixed scenarios) or
+      // supplied directly by the melee golden scenario. Live melee formations
+      // remain at their authored cells through the first ~1 s and begin their
+      // patrol motion on the following AI beat; starting direct patrols on tick
+      // zero moved fast units more than a tile before the game did.
+      motionStartTick: Math.round(PATROL_ORDER_REACTION_SECONDS * TICKS_PER_SECOND),
+    }));
   }
   if (destinations.size !== owners.size) {
     throw new RangeError("opening patrol must provide every scenario owner");
   }
+  const origins = new Map([...owners].map((owner) => {
+    const cohort = units.filter((unit) => unit.owner === owner);
+    return [owner, {
+      x: cohort.reduce((total, unit) => total + unit.x, 0) / cohort.length,
+      y: cohort.reduce((total, unit) => total + unit.y, 0) / cohort.length,
+    }];
+  }));
   return units.map((unit) => {
     if (unit.moveOrder !== undefined && unit.moveOrder !== null) {
       throw new Error(`unit ${unit.referenceId} already has a move order`);
     }
     const destination = destinations.get(unit.owner);
+    const origin = origins.get(unit.owner);
     return {
       ...unit,
-      moveOrder: destination,
+      moveOrder: Object.freeze({
+        ...destination,
+        commandX: destination.x,
+        commandY: destination.y,
+        cohortOriginX: origin.x,
+        cohortOriginY: origin.y,
+        formationStartX: unit.x,
+        formationStartY: unit.y,
+        openingSeed,
+      }),
     };
   });
 }
@@ -379,48 +517,264 @@ function selectPatrolOpeningTarget(unit, snapshot, order) {
 }
 
 
+function selectCentralPatrolContactLanes(unit, snapshot, order, roster) {
+  const cohort = snapshot.filter((candidate) => (
+    candidate.alive && candidate.owner === unit.owner
+  ));
+  const originX = cohort.reduce((total, candidate) => total + candidate.x, 0)
+    / cohort.length;
+  const originY = cohort.reduce((total, candidate) => total + candidate.y, 0)
+    / cohort.length;
+  const directionX = (order.commandX ?? order.x) - originX;
+  const directionY = (order.commandY ?? order.y) - originY;
+  const length = Math.hypot(directionX, directionY);
+  if (length <= 1e-12) return null;
+  const projected = roster.map((candidate) => ({
+    candidate,
+    lateral: (
+      (candidate.x - originX) * -directionY
+        + (candidate.y - originY) * directionX
+    ) / length,
+  }));
+  const negative = projected
+    .filter(({ lateral }) => lateral < 0)
+    .sort((left, right) => Math.abs(left.lateral) - Math.abs(right.lateral)
+      || left.candidate.referenceId - right.candidate.referenceId)[0];
+  const positive = projected
+    .filter(({ lateral }) => lateral >= 0)
+    .sort((left, right) => Math.abs(left.lateral) - Math.abs(right.lateral)
+      || left.candidate.referenceId - right.candidate.referenceId)[0];
+  const centralLanes = [negative, positive].filter(Boolean);
+  if (centralLanes.length > 0) {
+    return centralLanes.map(({ candidate }) => candidate);
+  }
+  return projected
+    .sort((left, right) => Math.abs(left.lateral) - Math.abs(right.lateral)
+      || left.candidate.referenceId - right.candidate.referenceId)
+    .slice(0, Math.min(2, projected.length))
+    .map(({ candidate }) => candidate);
+}
+
+
+function selectOpeningPatrolContactLanes(unit, snapshot, order, roster) {
+  const lanes = selectCentralPatrolContactLanes(unit, snapshot, order, roster);
+  if (!lanes || lanes.length < 2) return lanes;
+  const directionX = (order.commandX ?? order.x) - order.cohortOriginX;
+  const directionY = (order.commandY ?? order.y) - order.cohortOriginY;
+  const length = Math.hypot(directionX, directionY);
+  if (length <= 1e-12) return lanes;
+  const lateral = (candidate) => Math.abs(
+    (candidate.x - order.cohortOriginX) * -directionY
+      + (candidate.y - order.cohortOriginY) * directionX,
+  ) / length;
+  return lanes.slice().sort((left, right) => (
+    lateral(left) - lateral(right)
+      || openingHash(order.openingSeed ?? 0, unit.owner, left.referenceId)
+        - openingHash(order.openingSeed ?? 0, unit.owner, right.referenceId)
+      || left.referenceId - right.referenceId
+  ));
+}
+
+
+function selectPatrolFormationContactLanes(unit, snapshot, order, roster) {
+  const directionX = (order.commandX ?? order.x) - order.cohortOriginX;
+  const directionY = (order.commandY ?? order.y) - order.cohortOriginY;
+  const length = Math.hypot(directionX, directionY);
+  if (length <= 1e-12 || roster.length === 0) return null;
+  const projected = roster.map((candidate) => {
+    const x = candidate.moveOrder?.kind === "scenario-patrol"
+        && Number.isFinite(candidate.moveOrder.formationStartX)
+      ? candidate.moveOrder.formationStartX
+      : candidate.x;
+    const y = candidate.moveOrder?.kind === "scenario-patrol"
+        && Number.isFinite(candidate.moveOrder.formationStartY)
+      ? candidate.moveOrder.formationStartY
+      : candidate.y;
+    const relativeX = x - order.cohortOriginX;
+    const relativeY = y - order.cohortOriginY;
+    return {
+      candidate,
+      longitudinal: (relativeX * directionX + relativeY * directionY) / length,
+      lateral: (relativeX * -directionY + relativeY * directionX) / length,
+    };
+  }).sort((left, right) => left.longitudinal - right.longitudinal
+    || left.lateral - right.lateral
+    || left.candidate.referenceId - right.candidate.referenceId);
+  const ranks = [];
+  for (const entry of projected) {
+    const current = ranks.at(-1);
+    if (!current
+        || entry.longitudinal - current.at(-1).longitudinal
+          > PATROL_FORMATION_RANK_GAP_TILES + 1e-12) {
+      ranks.push([entry]);
+    } else {
+      current.push(entry);
+    }
+  }
+  const front = ranks[0];
+  const next = ranks[1] ?? null;
+  const detachedFront = next !== null
+    && next[0].longitudinal - front.at(-1).longitudinal
+      >= PATROL_FORMATION_DETACHED_LEAD_GAP_TILES - 1e-12;
+  const nearFront = ranks.filter((rank) => (
+    rank[0].longitudinal
+      <= front.at(-1).longitudinal + PATROL_MELEE_CONTACT_FRONT_DEPTH_TILES + 1e-12
+  ));
+  const selectedRank = detachedFront
+    ? front
+    : nearFront.slice().sort((left, right) => right.length - left.length
+      || left[0].longitudinal - right[0].longitudinal
+      || left[0].candidate.referenceId - right[0].candidate.referenceId)[0];
+  const lateral = selectedRank.slice().sort((left, right) => left.lateral - right.lateral
+    || left.longitudinal - right.longitudinal
+    || left.candidate.referenceId - right.candidate.referenceId);
+  const main = lateral[Math.floor((lateral.length - 1) / 2)];
+  if (detachedFront || lateral.length < 3) return [main.candidate];
+  return [main, lateral[0], lateral.at(-1)]
+    .filter((entry, index, entries) => entries.indexOf(entry) === index)
+    .slice(0, PATROL_CONTACT_LANE_LIMIT)
+    .map(({ candidate }) => candidate);
+}
+
+
+function selectGeometricPatrolLaneIndex(unit, snapshot, order, referenceIds) {
+  const directionX = (order.commandX ?? order.x) - order.cohortOriginX;
+  const directionY = (order.commandY ?? order.y) - order.cohortOriginY;
+  const length = Math.hypot(directionX, directionY);
+  if (length <= 1e-12) return 0;
+  const lateral = (candidate) => (
+    (candidate.x - order.cohortOriginX) * -directionY
+      + (candidate.y - order.cohortOriginY) * directionX
+  ) / length;
+  const actorLateral = lateral(unit);
+  const targets = referenceIds
+    .map((referenceId, index) => ({
+      index,
+      candidate: snapshot.find((possible) => possible.referenceId === referenceId),
+    }))
+    .filter(({ candidate }) => candidate)
+    .sort((left, right) => lateral(left.candidate) - lateral(right.candidate)
+      || left.candidate.referenceId - right.candidate.referenceId);
+  if (targets.length === 0) return 0;
+  if (targets.length === 1) return targets[0].index;
+  const cohortSize = snapshot.filter((candidate) => (
+    candidate.alive && candidate.owner === unit.owner
+  )).length;
+  const hostileSize = snapshot.filter((candidate) => (
+    candidate.alive && isHostile(unit, candidate)
+  )).length;
+  const severelyOutnumbered = cohortSize * 2 < hostileSize;
+  const auxiliarySurface = targets.every(({ candidate }) => candidate.owner === 4);
+  // An auxiliary screen exposes spatial contact lanes, not one global
+  // principal body. Across the thirty current Onager/melee tapes, a 27-member
+  // patrol normally divides its first locks roughly 9-18 across the two
+  // central scouts (with only occasional locks on an adjacent scout). The
+  // previous one-in-eight fallback forced 23/4 and collapsed the whole melee
+  // formation into one shell-sized knot. Assign the nearest lateral lane from
+  // current geometry; opening randomness remains only an exact-tie breaker.
+  if (auxiliarySurface && targets.length === 2) {
+    const lateralChoice = targets.slice().sort((left, right) => (
+      Math.abs(lateral(left.candidate) - actorLateral)
+        - Math.abs(lateral(right.candidate) - actorLateral)
+        || openingHash(
+          order.openingSeed ?? 0,
+          unit.owner,
+          left.candidate.referenceId ^ unit.referenceId,
+        ) - openingHash(
+          order.openingSeed ?? 0,
+          unit.owner,
+          right.candidate.referenceId ^ unit.referenceId,
+        )
+        || left.candidate.referenceId - right.candidate.referenceId
+    ))[0];
+    return lateralChoice.index;
+  }
+  if (unit.moveOrder?.kind === "opening-patrol" && targets.length === 2) {
+    // Direct melee PATROLs overwhelmingly share the principal central body:
+    // across the five 18v27 captures, only 0-2 Elephants and 1-6 Camels use
+    // the second visible lane. A one-in-eight seeded fallback reproduces that
+    // generic group-acquisition behavior without prescribing any later target,
+    // path, attack time, damage, or outcome.
+    const roll = openingHash(
+      order.openingSeed ?? 0,
+      unit.owner,
+      unit.referenceId,
+    ) % 8;
+    return targets[roll === 0 ? 1 : 0].index;
+  }
+  // Principal contact lanes are spatial: left, centre, and right members of
+  // the approaching cohort acquire the corresponding visible front body.
+  // Current geometry—not roster identity or desired outcome—therefore assigns
+  // the lane. Opening hash is only an exact-tie breaker.
+  const lanePenalty = ({ index }) => {
+    // A small firing cohort facing a front more than twice its size has enough
+    // exposed lateral surface for every member to retain its geometric lane.
+    // The 7-vs-27 Onager repeats consistently split the six opening locks
+    // across lower/upper bodies instead of collapsing onto the command-axis
+    // principal. Comparable 17/18/27-body ranged fronts are not in this
+    // regime and retain their measured principal-lane bias.
+    if (severelyOutnumbered) return 0;
+    if (index === 0) return 0;
+    return index === 1
+      ? PATROL_OPENING_NEAR_FLANK_PENALTY_TILES
+      : PATROL_OPENING_FAR_FLANK_PENALTY_TILES;
+  };
+  return targets.slice().sort((left, right) => (
+    Math.abs(lateral(left.candidate) - actorLateral)
+      + lanePenalty(left)
+      - Math.abs(lateral(right.candidate) - actorLateral)
+      - lanePenalty(right)
+    || openingHash(order.openingSeed ?? 0, unit.owner,
+      left.candidate.referenceId ^ unit.referenceId)
+      - openingHash(order.openingSeed ?? 0, unit.owner,
+        right.candidate.referenceId ^ unit.referenceId)
+    || left.candidate.referenceId - right.candidate.referenceId
+  ))[0].index;
+}
+
+
 function selectPatrolCohortOpeningTargets(unit, snapshot, order) {
   // First confirm that shared player vision has exposed at least one hostile
   // body. The game's group decision then names a cohort anchor set, including
   // for members that do not individually see every anchor yet. Target choice
   // is the explicitly permitted opening stochastic boundary; roster order is stable
   // scenario input and is never consulted by subsequent retargeting.
-  if (selectPatrolOpeningTarget(unit, snapshot, order) === null) return null;
+  if (order.sharedVisionPrimed !== true
+      && selectPatrolOpeningTarget(unit, snapshot, order) === null) return null;
   const roster = snapshot.filter((candidate) => candidate.alive && isHostile(unit, candidate));
   if (roster.length === 0) return null;
   const cohortSize = snapshot.filter((candidate) => (
     candidate.alive && candidate.owner === unit.owner
   )).length;
+  const auxiliaryFront = roster.every(({ owner }) => owner === 4);
+  if (auxiliaryFront) {
+    // The live auxiliary screen exposes two central contact lanes: the scouts
+    // immediately to either side of the approaching cohort's command axis.
+    // Select those lanes from current geometry after shared vision confirms
+    // contact. This generalizes to any placement, type, and army size without
+    // encoding the golden scouts' IDs or an observed outcome.
+    return selectCentralPatrolContactLanes(unit, snapshot, order, roster);
+  }
+  if (order.kind === "opening-patrol") {
+    // The direct golden melee PATROL presents the two bodies immediately to
+    // either side of the command axis as its shared opening contact surface.
+    // Live 18v27 and 27v18 formations assign every first lock to those two
+    // bodies (usually with a dominant principal lane), rather than letting
+    // each unit independently choose a different nearest body. This is only
+    // the explicitly permitted first-target boundary; later retargeting is
+    // ordinary current-geometry AI.
+    return selectOpeningPatrolContactLanes(unit, snapshot, order, roster);
+  }
   const hostileFrontIsRanged = roster.every(({ mechanics }) => mechanics?.ranged);
-  if (!hostileFrontIsRanged || unit.owner === 4) {
-    // A melee roster presents one advancing contact surface. The scenario's
-    // stable creation order is also the game's group roster order: across the
-    // mixed captures its roughly 80%-depth member receives 60-100% of first
-    // locks, with fan-out only when the ranged cohort is outnumbered. Keep
-    // this explicitly inside the permitted first-target boundary; no later
-    // retarget or damage decision can inspect roster order.
-    const ordered = roster.slice().sort((left, right) => (
-      left.referenceId - right.referenceId
-    ));
-    const anchorCount = unit.owner === 4 || cohortSize >= ordered.length
-      ? 1
-      : Math.max(2, Math.floor(ordered.length / 4));
-    const defaultAnchor = Math.min(
-      ordered.length - 1,
-      Math.floor(ordered.length * 0.8),
-    );
-    const seedRoll = (order.openingSeed ?? 0) === 0
-      ? 2
-      : openingHash(order.openingSeed, unit.owner, ordered.length) % 5;
-    const center = Math.max(0, Math.min(
-      ordered.length - 1,
-      defaultAnchor + [-2, -1, 0, 1, 2][seedRoll],
-    ));
-    const first = Math.max(0, Math.min(
-      ordered.length - anchorCount,
-      center - Math.floor(anchorCount / 2),
-    ));
-    return ordered.slice(first, first + anchorCount);
+  if (!hostileFrontIsRanged) {
+    // A moving melee formation is acquired through its current leading contact
+    // surface. The live 14/19/20/23/24/27-body fronts expose at most three such
+    // lanes; detached leaders naturally collapse the set to one. This remains
+    // strictly inside the permitted first-acquisition boundary.
+    // Use the authored group lanes for both principal and auxiliary cohorts:
+    // temporary compression before a delayed first scan must not rewrite the
+    // patrol formation's contact surface.
+    return selectPatrolFormationContactLanes(unit, snapshot, order, roster);
   }
   const directionX = (order.commandX ?? order.x) - order.cohortOriginX;
   const directionY = (order.commandY ?? order.y) - order.cohortOriginY;
@@ -443,26 +797,43 @@ function selectPatrolCohortOpeningTargets(unit, snapshot, order) {
     .sort((left, right) => left.lateral - right.lateral
       || left.longitudinal - right.longitudinal
       || left.candidate.referenceId - right.candidate.referenceId);
-  // Player 4 is one committed auxiliary group. A principal cohort that is at
-  // least as large as the opposing roster names both exposed flanks; an
-  // outnumbered cohort samples the whole visible front rank. This is still
-  // only the explicitly permitted first-target boundary. Subsequent targeting
-  // is ordinary distance/contact AI and never consults formation membership.
-  const anchorCount = cohortSize >= roster.length
-    ? Math.min(2, frontBand.length)
-    : frontBand.length;
-  if (anchorCount >= frontBand.length) {
-    return frontBand.map(({ candidate }) => candidate);
-  }
-  if (anchorCount === 1) {
-    return [frontBand[Math.floor(frontBand.length / 2)].candidate];
-  }
-  const selected = [];
-  for (let index = 0; index < anchorCount; index += 1) {
-    const frontIndex = Math.round(index * (frontBand.length - 1) / (anchorCount - 1));
-    selected.push(frontBand[frontIndex].candidate);
-  }
-  return selected;
+  // A ranged PATROL first names the body closest to its command axis. The
+  // exposed lateral edges are bounded fallbacks for members that are already
+  // far from that principal lane; they are not an evenly sampled assignment
+  // pool. This is the permitted first-acquisition boundary only. Once a lock
+  // dies, ordinary geometry/contact AI owns every subsequent choice.
+  const principal = frontBand.slice().sort((left, right) => (
+    Math.abs(left.lateral) - Math.abs(right.lateral)
+      || left.longitudinal - right.longitudinal
+      || left.candidate.referenceId - right.candidate.referenceId
+  ))[0];
+  const below = frontBand.filter(({ lateral, candidate }) => (
+    candidate.referenceId !== principal.candidate.referenceId
+      && lateral < principal.lateral
+  ));
+  const above = frontBand.filter(({ lateral, candidate }) => (
+    candidate.referenceId !== principal.candidate.referenceId
+      && lateral >= principal.lateral
+  ));
+  const lowerEdge = below[0] ?? null;
+  const upperEdge = above.at(-1) ?? null;
+  const actorLateral = (
+    (unit.x - order.cohortOriginX) * -directionY
+      + (unit.y - order.cohortOriginY) * directionX
+  ) / length;
+  const nearSideIsLower = actorLateral < principal.lateral
+    || (Math.abs(actorLateral - principal.lateral) <= 1e-12
+      && openingHash(order.openingSeed ?? 0, unit.owner, unit.referenceId) % 2 === 0);
+  const nearFlank = nearSideIsLower ? lowerEdge ?? upperEdge : upperEdge ?? lowerEdge;
+  const farFlank = nearFlank === lowerEdge ? upperEdge : lowerEdge;
+  const anchorCount = Math.min(
+    frontBand.length,
+    cohortSize >= roster.length ? 2 : PATROL_CONTACT_LANE_LIMIT,
+  );
+  return [principal, nearFlank, farFlank]
+    .filter((entry, index, entries) => entry !== null && entries.indexOf(entry) === index)
+    .slice(0, anchorCount)
+    .map(({ candidate }) => candidate);
 }
 
 
@@ -511,6 +882,7 @@ export function createWorld(scenario) {
     scenario.units,
     scenario.openingPatrolByOwner,
     map,
+    scenario.openingSeed ?? 0,
   );
   const scenarioOwners = Object.freeze([...new Set(preparedUnits.map(({ owner }) => owner))]
     .sort((left, right) => left - right));
@@ -567,14 +939,6 @@ export function createWorld(scenario) {
   if (Number.isSafeInteger(scenario.rangedTargetPressureOwner)
       && !units.some(({ owner }) => owner === scenario.rangedTargetPressureOwner)) {
     throw new RangeError("ranged target pressure owner must identify a scenario owner");
-  }
-  if (scenario.rangedOpportunityRetargetOwner !== undefined
-      && !Number.isSafeInteger(scenario.rangedOpportunityRetargetOwner)) {
-    throw new TypeError("ranged opportunity retarget owner must be a safe integer");
-  }
-  if (Number.isSafeInteger(scenario.rangedOpportunityRetargetOwner)
-      && !units.some(({ owner }) => owner === scenario.rangedOpportunityRetargetOwner)) {
-    throw new RangeError("ranged opportunity retarget owner must identify a scenario owner");
   }
   if (scenario.rangedWindupRetargetOwner !== undefined
       && !Number.isSafeInteger(scenario.rangedWindupRetargetOwner)) {
@@ -704,9 +1068,6 @@ export function createWorld(scenario) {
     ...(Number.isSafeInteger(scenario.rangedTargetPressureOwner)
       ? { rangedTargetPressureOwner: scenario.rangedTargetPressureOwner }
       : {}),
-    ...(Number.isSafeInteger(scenario.rangedOpportunityRetargetOwner)
-      ? { rangedOpportunityRetargetOwner: scenario.rangedOpportunityRetargetOwner }
-      : {}),
     ...(Number.isSafeInteger(scenario.rangedWindupRetargetOwner)
       ? { rangedWindupRetargetOwner: scenario.rangedWindupRetargetOwner }
       : {}),
@@ -714,7 +1075,9 @@ export function createWorld(scenario) {
     diplomacyByOwner,
     victoryTeams,
     ...(scenarioTriggerState ? { scenarioTriggerState } : {}),
-    ...(scenarioTriggerState ? { patrolOpeningTargetByOwner: new Map() } : {}),
+    ...(scenarioTriggerState || units.some(({ moveOrder }) => (
+      moveOrder?.kind === "opening-patrol"
+    )) ? { patrolOpeningTargetByOwner: new Map() } : {}),
     contactReservationState,
     contactReservationDiagnostics: Object.freeze([]),
     ...(contactSteeringStates ? { contactSteeringStates } : {}),
@@ -823,7 +1186,12 @@ function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = 
           "attack-retargeted",
           unit.referenceId,
           replacement.referenceId,
-          { fromTargetId: invalidTargetId },
+          {
+            fromTargetId: invalidTargetId,
+            swingTick: unit.actionTimers.swing,
+            releaseTicks,
+            remainingWindupTicks: Math.max(0, releaseTicks - unit.actionTimers.swing),
+          },
         ));
         continue;
       }
@@ -836,9 +1204,16 @@ function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = 
       reason: !target?.alive ? "target-dead" : "target-invalidated",
     }));
     unit.attackTargetId = null;
+    const abandonedCharge = unit.attackKind === "charge";
     delete unit.attackKind;
     unit.actionTimers.windup = 0;
     unit.actionTimers.swing = 0;
+    // Reload belongs to a released weapon cycle. Full-rate tapes show ranged
+    // units whose victim dies during wind-up leave Action 7 for pursuit within
+    // 0.02-0.07 s; they do not enter the weapon's full reload state. Refunding
+    // an unreleased ordinary swing lets the unit acquire and aim again while
+    // preserving a charge weapon's separately accumulated charge.
+    if (!abandonedCharge) unit.actionTimers.reload = 0;
     unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
   }
 }
@@ -850,7 +1225,6 @@ function acquirePursuitTargets(
   events,
   kiteState = null,
   rangedTargetPressureOwner = null,
-  rangedOpportunityRetargetOwner = null,
   patrolOpeningTargetByOwner = null,
   pursuitRecoveryState = null,
   map = DEFAULT_MAP,
@@ -858,20 +1232,55 @@ function acquirePursuitTargets(
 ) {
   const snapshot = Object.freeze(units.map(freezeUnit));
   const targetPressureTiles = kiteState?.attackMoveTargetPressureTiles ?? 0;
+  // Once a ranged PATROL member has completed its seeded first acquisition,
+  // every later acquisition is ordinary unit AI. Those simultaneous cohort
+  // scans account for already claimed targets so a whole firing line does not
+  // pile every replacement shot onto the same nearest body. This is a patrol
+  // mechanic, not an outcome parameter; the opening assignment remains under
+  // the explicit first-target exception above.
+  const automaticPatrolPressure = (unit) => (
+    !hasMeleeMode(unit)
+      && unit.moveOrder?.kind === "scenario-patrol"
+      && unit.openingAcquisitionComplete === true
+      && snapshot.some((candidate) => (
+        candidate.alive && isHostile(unit, candidate) && hasMeleeMode(candidate)
+      ))
+  );
+  const automaticPatrolPressureActive = units.some((unit) => (
+    unit.alive && automaticPatrolPressure(unit)
+  ));
   const targetLoadById = targetPressureTiles > 0
       || Number.isSafeInteger(rangedTargetPressureOwner)
     ? new Map()
     : null;
-  if (targetLoadById) {
+  const automaticTargetCountById = automaticPatrolPressureActive ? new Map() : null;
+  const onagerOpeningTargetCountById = new Map();
+  for (const unit of units) {
+    if (!unit.alive || !hasOnagerFamilyBehavior(unit)
+        || unit.moveOrder?.kind !== "scenario-patrol"
+        || unit.openingAcquisitionComplete !== true
+        || !Number.isSafeInteger(unit.pursuitTargetId)) continue;
+    const target = snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId);
+    if (!target?.alive || !isHostile(unit, target)) continue;
+    onagerOpeningTargetCountById.set(
+      target.referenceId,
+      (onagerOpeningTargetCountById.get(target.referenceId) ?? 0) + 1,
+    );
+  }
+  if (targetLoadById || automaticTargetCountById) {
     for (const unit of units) {
       const kitePressureApplies = targetPressureTiles > 0
         && unit.owner !== kiteState.owner;
-      const rangedPressureApplies = unit.owner === rangedTargetPressureOwner;
-      if (!unit.alive || (!kitePressureApplies && !rangedPressureApplies)) continue;
+      const configuredRangedPressureApplies = unit.owner === rangedTargetPressureOwner;
+      const automaticPressureApplies = automaticPatrolPressure(unit)
+        && !kitePressureApplies && !configuredRangedPressureApplies;
+      if (!unit.alive || (!kitePressureApplies
+          && !configuredRangedPressureApplies && !automaticPressureApplies)) continue;
       if (unit.pursuitTargetId === null || unit.pursuitTargetId === undefined) continue;
-      targetLoadById.set(
+      const load = automaticPressureApplies ? automaticTargetCountById : targetLoadById;
+      load.set(
         unit.pursuitTargetId,
-        (targetLoadById.get(unit.pursuitTargetId) ?? 0) + 1,
+        (load.get(unit.pursuitTargetId) ?? 0) + 1,
       );
     }
   }
@@ -882,15 +1291,19 @@ function acquirePursuitTargets(
   if (patrolOpeningTargetByOwner !== null) {
     const openingOwners = [...new Set(units
       .filter((unit) => unit.alive
-        && unit.moveOrder?.kind === "scenario-patrol"
+        && (unit.moveOrder?.kind === "scenario-patrol"
+          || unit.moveOrder?.kind === "opening-patrol")
         && unit.openingAcquisitionComplete !== true
-        && tick >= unit.moveOrder.nextOpeningScanTick)
+        && (unit.moveOrder.kind === "scenario-patrol"
+          ? tick >= unit.moveOrder.nextOpeningScanTick
+          : unit.actionTimers.acquire <= 1))
       .map(({ owner }) => owner))]
       .sort((left, right) => left - right);
     for (const owner of openingOwners) {
       if (patrolOpeningTargetByOwner.has(owner)) continue;
       const detectors = units.filter((unit) => unit.alive && unit.owner === owner
-        && unit.moveOrder?.kind === "scenario-patrol"
+        && (unit.moveOrder?.kind === "scenario-patrol"
+          || unit.moveOrder?.kind === "opening-patrol")
         && unit.openingAcquisitionComplete !== true);
       for (const detector of detectors) {
         const targets = selectPatrolCohortOpeningTargets(
@@ -908,23 +1321,78 @@ function acquirePursuitTargets(
   }
   for (const unit of units) {
     if (!unit.alive) continue;
-    const openingPatrolOrder = unit.moveOrder?.kind === "scenario-patrol"
+    const patrolOpeningOrder = (unit.moveOrder?.kind === "scenario-patrol"
+      || unit.moveOrder?.kind === "opening-patrol")
       && unit.openingAcquisitionComplete !== true
       ? unit.moveOrder
+      : null;
+    const scenarioPatrolOrder = patrolOpeningOrder?.kind === "scenario-patrol"
+      ? patrolOpeningOrder
       : null;
     // Initial target-acquisition delay. Only the first acquisition waits; once a
     // unit has been in combat, re-acquisition is governed by its swing state.
     // A group PATROL scans on the game AI's shared opening cadence. Units that
     // do not yet have line of sight remain in formation until the next scan;
     // they do not poll continuously on every render tick.
-    if (openingPatrolOrder) {
-      if (tick < openingPatrolOrder.nextOpeningScanTick) continue;
+    if (scenarioPatrolOrder) {
+      if (tick < scenarioPatrolOrder.nextOpeningScanTick) continue;
       unit.actionTimers.acquire = 0;
     } else if (unit.actionTimers.acquire > 0) {
       unit.actionTimers.acquire -= 1;
       // Acquire on the very tick the delay expires, so no unit is ever briefly
       // idle with an expired timer and no target.
       if (unit.actionTimers.acquire > 0) continue;
+    }
+    // Onager-family combat has one small minimum-range state machine. A legal
+    // backward or side-backward step keeps the current lock and movement will
+    // execute that retreat below. If the current body graph and map leave no
+    // retreat heading, choose another visible target that is outside minimum
+    // range. This is current geometry only: no elapsed-time or matchup rule is
+    // involved, and Rocket Cart variants inherit it through behaviorFamily.
+    const minimumRangeThreat = hasOnagerFamilyBehavior(unit)
+        && unit.action !== "attacking"
+      ? selectedMinimumRangeThreat(unit, snapshot)
+      : null;
+    if (minimumRangeThreat
+        && !onagerRetreatHeadingAvailable(
+          unit,
+          minimumRangeThreat.target,
+          snapshot,
+          map,
+          pairInteractions,
+        )) {
+      const alternate = selectOnagerMinimumRangeAlternate(unit, snapshot);
+      if (alternate) {
+        const previousTargetId = unit.pursuitTargetId;
+        unit.pursuitTargetId = alternate.referenceId;
+        unit.engagedTargetId = null;
+        unit.attackTargetId = null;
+        unit.avoidance = null;
+        pursuitRecoveryState?.routes.delete(unit.referenceId);
+        pursuitRecoveryState?.attempts.delete(unit.referenceId);
+        pursuitRecoveryState?.retargetReady.delete(unit.referenceId);
+        pursuitRecoveryState?.routeFailures.delete(unit.referenceId);
+        pursuitRecoveryState?.failedTargets.delete(unit.referenceId);
+        events.push(event(tick, "pursuit-acquired", unit.referenceId,
+          alternate.referenceId, {
+            reason: "minimum-range-retarget",
+            previousTargetId,
+          }));
+        continue;
+      }
+    }
+    // A ranged PATROL's first acquired body is a committed opening lock. In
+    // the full-rate Onager traces every actor's first acquisition target is
+    // also its first attack target, including actors that have to close for
+    // more than a second. Path recovery may still steer toward that body, but
+    // it must not replace the lock before the first attack begins. After that
+    // boundary all ordinary opportunity and recovery retargeting resumes.
+    if (!hasMeleeMode(unit)
+        && unit.moveOrder?.kind === "scenario-patrol"
+        && unit.openingAcquisitionComplete === true
+        && unit.patrolOpeningAttackStarted !== true
+        && Number.isSafeInteger(unit.pursuitTargetId)) {
+      continue;
     }
     // A unit following a recovery detour may naturally reveal or enter range
     // of a different enemy. That is a real acquisition opportunity, not a
@@ -940,16 +1408,30 @@ function acquirePursuitTargets(
           && isWithinReach(unit, current)) {
         pursuitRecoveryState.routes.delete(unit.referenceId);
         pursuitRecoveryState.attempts.delete(unit.referenceId);
+        pursuitRecoveryState.nextRetargetScanTick.delete(unit.referenceId);
         pursuitRecoveryState.routeFailures.delete(unit.referenceId);
         pursuitRecoveryState.failedTargets.delete(unit.referenceId);
       }
       const retargetReady = pursuitRecoveryState.retargetReady.has(unit.referenceId);
-      const opportunity = (routeActive || retargetReady)
+      // PATROL recovery scans for a newly reachable body on the same ordinary
+      // AI rescan cadence as patrol acquisition. The motion/path itself still
+      // advances every tick; only changing its selected pursuit target is an
+      // AI decision. Polling this branch at 60 Hz made a blocked formation
+      // churn through substantially more target IDs than the live group while
+      // crossing the same body screen. Non-patrol pursuit keeps the immediate
+      // recovery behavior.
+      const nextRetargetScanTick = pursuitRecoveryState.nextRetargetScanTick
+        .get(unit.referenceId) ?? 0;
+      const initialScenarioPatrol = unit.moveOrder?.kind === "scenario-patrol"
+        && unit.moveOrder.sharedVisionPrimed !== true;
+      const recoveryScanDue = !initialScenarioPatrol
+        || tick >= nextRetargetScanTick;
+      const opportunity = recoveryScanDue && (routeActive || retargetReady)
           && current?.alive && !isWithinReach(unit, current)
         ? recoveryOpportunityTarget(unit, snapshot)
         : null;
       const alternate = opportunity ?? (
-        retargetReady
+        recoveryScanDue && retargetReady
           ? recoveryAlternateTarget(
             unit,
             snapshot,
@@ -959,7 +1441,16 @@ function acquirePursuitTargets(
           )
           : null
       );
-      pursuitRecoveryState.retargetReady.delete(unit.referenceId);
+      if (recoveryScanDue && (routeActive || retargetReady)
+          && initialScenarioPatrol) {
+        pursuitRecoveryState.nextRetargetScanTick.set(
+          unit.referenceId,
+          tick + Math.round(PATROL_RESCAN_SECONDS * TICKS_PER_SECOND),
+        );
+      }
+      if (recoveryScanDue) {
+        pursuitRecoveryState.retargetReady.delete(unit.referenceId);
+      }
       if (alternate) {
         const previousTargetId = unit.pursuitTargetId;
         unit.pursuitTargetId = alternate.referenceId;
@@ -994,8 +1485,13 @@ function acquirePursuitTargets(
     const pursued = unit.pursuitTargetId === null
       ? null
       : snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId);
-    const rangedOpportunity = unit.owner === rangedOpportunityRetargetOwner
-      && unit.mechanics?.ranged !== undefined
+    // Any ranged unit abandons an out-of-range pursuit when another hostile is
+    // already inside its firing envelope. This is ordinary geometry-driven
+    // target selection and therefore applies identically to every owner.
+    const rangedOpportunity = !hasMeleeMode(unit)
+      && !(unit.moveOrder?.kind === "scenario-patrol"
+        && unit.openingAcquisitionComplete === true
+        && unit.patrolOpeningAttackStarted !== true)
       && pursued?.alive === true
       && !isWithinReach(unit, pursued)
       && snapshot.some((candidate) => (
@@ -1008,90 +1504,76 @@ function acquirePursuitTargets(
     if (unit.pursuitTargetId !== null && !reevaluate) continue;
     const kitePressureApplies = targetPressureTiles > 0
       && unit.owner !== kiteState.owner;
-    const rangedPressureApplies = unit.owner === rangedTargetPressureOwner;
-    const pressureApplies = targetLoadById !== null
-      && (kitePressureApplies || rangedPressureApplies);
-    const pressureTiles = rangedPressureApplies
+    const configuredRangedPressureApplies = unit.owner === rangedTargetPressureOwner;
+    const automaticPressureApplies = automaticPatrolPressure(unit)
+      && !kitePressureApplies && !configuredRangedPressureApplies;
+    const pressureApplies = kitePressureApplies
+      || configuredRangedPressureApplies || automaticPressureApplies;
+    const pressureTiles = configuredRangedPressureApplies || automaticPressureApplies
       ? 2 * collisionRadius(unit)
       : targetPressureTiles;
     if (pressureApplies && reevaluate) {
-      const previousLoad = targetLoadById.get(unit.pursuitTargetId) ?? 0;
-      if (previousLoad <= 1) targetLoadById.delete(unit.pursuitTargetId);
-      else targetLoadById.set(unit.pursuitTargetId, previousLoad - 1);
+      const load = automaticPressureApplies ? automaticTargetCountById : targetLoadById;
+      const previousLoad = load.get(unit.pursuitTargetId) ?? 0;
+      if (previousLoad <= 1) load.delete(unit.pursuitTargetId);
+      else load.set(unit.pursuitTargetId, previousLoad - 1);
     }
+    const effectiveTargetLoadById = automaticPressureApplies
+      ? new Map(snapshot.filter((possible) => (
+        possible.alive && isHostile(unit, possible) && hasMeleeMode(possible)
+      )).map((possible) => {
+        const assigned = automaticTargetCountById.get(possible.referenceId) ?? 0;
+        return [
+          possible.referenceId,
+          Math.max(0, assigned - PATROL_RETARGET_SOFT_CAPACITY + 1),
+        ];
+      }))
+      : targetLoadById;
     const found = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
     // selectPursuitTarget short-circuits on a live locked target, so a
     // re-evaluation has to present the unit as unlocked to force a fresh scan.
     const candidate = reevaluate ? { ...found, pursuitTargetId: null } : found;
-    const scenarioPatrol = openingPatrolOrder;
+    const scenarioPatrol = patrolOpeningOrder;
     const lockedPatrolTargetIds = scenarioPatrol
       ? patrolOpeningTargetByOwner?.get(unit.owner)
       : null;
     const hasLockedPatrolTarget = Array.isArray(lockedPatrolTargetIds)
       && lockedPatrolTargetIds.length > 0;
-    const gateAnchorIndex = hasLockedPatrolTarget
-      ? openingHash(
-        scenarioPatrol.openingSeed ?? 0,
-        unit.owner,
-        unit.referenceId,
-      ) % lockedPatrolTargetIds.length
-      : null;
-    const rangedOpeningFront = hasLockedPatrolTarget
+    const auxiliaryOpeningFront = hasLockedPatrolTarget
       && lockedPatrolTargetIds.every((referenceId) => (
-        snapshot.find((possible) => possible.referenceId === referenceId)
-          ?.mechanics?.ranged
+        snapshot.find((possible) => possible.referenceId === referenceId)?.owner === 4
       ));
+    // Patrol formation lanes are spatial assignments. Once shared vision has
+    // exposed a contact surface, each cohort member keeps the best lateral
+    // lane instead of being evenly hashed across the opposing front. Opening
+    // randomness remains only as an exact-tie breaker.
+    const geometricPatrolLanes = hasLockedPatrolTarget
+      && lockedPatrolTargetIds.length > 1;
+    const gateAnchorIndex = hasLockedPatrolTarget
+      ? geometricPatrolLanes
+        ? selectGeometricPatrolLaneIndex(
+          unit, snapshot, scenarioPatrol, lockedPatrolTargetIds,
+        )
+        : openingHash(
+          scenarioPatrol.openingSeed ?? 0,
+          unit.owner,
+          unit.referenceId,
+        ) % lockedPatrolTargetIds.length
+      : null;
     const gatePatrolTarget = hasLockedPatrolTarget
       ? snapshot.find((possible) => (
         possible.referenceId === lockedPatrolTargetIds[gateAnchorIndex]
           && possible.alive
           && isHostile(unit, possible)
-          && Math.hypot(possible.x - unit.x, possible.y - unit.y)
-            - collisionRadius(possible)
-            <= unit.mechanics.line_of_sight_tiles + 1e-12
+          && (auxiliaryOpeningFront || scenarioPatrol.sharedVisionPrimed === true
+            || Math.hypot(possible.x - unit.x, possible.y - unit.y)
+              - collisionRadius(possible)
+              <= unit.mechanics.line_of_sight_tiles + 1e-12)
       )) ?? null
       : null;
-    const rangedAssignmentTargets = rangedOpeningFront
-      ? lockedPatrolTargetIds
-        .map((referenceId) => snapshot.find((possible) => (
-          possible.referenceId === referenceId
-            && possible.alive
-            && isHostile(unit, possible)
-        )) ?? null)
-        .filter((possible) => possible !== null)
-      : [];
-    const opposingRange = rangedAssignmentTargets.reduce((maximum, possible) => (
-      Math.max(maximum, possible.mechanics?.attack_range_tiles ?? 0)
-    ), 0);
-    const rangeDisadvantage = Math.max(
-      0,
-      opposingRange - (unit.mechanics?.attack_range_tiles ?? 0),
-    );
-    const outsideFiringEnvelope = rangedAssignmentTargets.filter((possible) => (
-      Math.hypot(possible.x - unit.x, possible.y - unit.y)
-        > collisionRadius(unit) + collisionRadius(possible)
-          + unit.mechanics.attack_range_tiles + rangeDisadvantage
-    ));
-    const nonGateOutside = outsideFiringEnvelope.filter((possible) => (
-      possible.referenceId !== gatePatrolTarget?.referenceId
-    ));
-    const assignmentPool = nonGateOutside.length > 0
-      ? nonGateOutside
-      : outsideFiringEnvelope.length > 0
-        ? outsideFiringEnvelope
-        : rangedAssignmentTargets;
-    const assignmentIndex = assignmentPool.length > 0
-      ? openingHash(
-        (scenarioPatrol.openingSeed ?? 0) ^ 0x6d2b79f5,
-        unit.owner,
-        unit.referenceId,
-      ) % assignmentPool.length
+    const lockedPatrolTargetId = hasLockedPatrolTarget
+      ? lockedPatrolTargetIds[gateAnchorIndex]
       : null;
-    const lockedPatrolTargetId = rangedOpeningFront
-      ? assignmentIndex === null ? null : assignmentPool[assignmentIndex].referenceId
-      : hasLockedPatrolTarget
-        ? lockedPatrolTargetIds[gateAnchorIndex]
-        : null;
     const lockedPatrolTarget = gatePatrolTarget
       ? snapshot.find((possible) => (
         possible.referenceId === lockedPatrolTargetId
@@ -1100,11 +1582,22 @@ function acquirePursuitTargets(
       )) ?? null
       : null;
     const target = scenarioPatrol
-      ? hasLockedPatrolTarget
-        ? lockedPatrolTarget
-        : selectPatrolOpeningTarget(candidate, snapshot, scenarioPatrol)
+      ? hasOnagerFamilyBehavior(unit)
+        ? selectPursuitTarget(candidate, snapshot, {
+          targetLoadById: new Map([...onagerOpeningTargetCountById].map(([
+            referenceId,
+            count,
+          ]) => [
+            referenceId,
+            Math.max(0, count - ONAGER_OPENING_SOFT_TARGET_CAPACITY + 1),
+          ])),
+          targetLoadPenaltyTiles: collisionRadius(unit),
+        })
+        : hasLockedPatrolTarget
+          ? lockedPatrolTarget
+          : selectPatrolOpeningTarget(candidate, snapshot, scenarioPatrol)
       : selectPursuitTarget(candidate, snapshot, pressureApplies
-        ? { targetLoadById, targetLoadPenaltyTiles: pressureTiles }
+        ? { targetLoadById: effectiveTargetLoadById, targetLoadPenaltyTiles: pressureTiles }
         : undefined);
     if (target === null) {
       if (scenarioPatrol) {
@@ -1114,15 +1607,23 @@ function acquirePursuitTargets(
         });
       }
       if (pressureApplies && reevaluate) {
-        targetLoadById.set(
+        const load = automaticPressureApplies ? automaticTargetCountById : targetLoadById;
+        load.set(
           unit.pursuitTargetId,
-          (targetLoadById.get(unit.pursuitTargetId) ?? 0) + 1,
+          (load.get(unit.pursuitTargetId) ?? 0) + 1,
         );
       }
       continue;
     }
     if (pressureApplies) {
-      targetLoadById.set(target.referenceId, (targetLoadById.get(target.referenceId) ?? 0) + 1);
+      const load = automaticPressureApplies ? automaticTargetCountById : targetLoadById;
+      load.set(target.referenceId, (load.get(target.referenceId) ?? 0) + 1);
+    }
+    if (scenarioPatrol && hasOnagerFamilyBehavior(unit)) {
+      onagerOpeningTargetCountById.set(
+        target.referenceId,
+        (onagerOpeningTargetCountById.get(target.referenceId) ?? 0) + 1,
+      );
     }
     if (target.referenceId !== unit.pursuitTargetId) {
       events.push(event(tick, "pursuit-acquired", unit.referenceId, target.referenceId));
@@ -1294,19 +1795,143 @@ function unitInsideArea(unit, area) {
 function applyPatrolEffect(units, effect, trigger, tick, events) {
   const ownerOpeningHash = openingHash(trigger.openingSeed ?? 0, effect.owner, 0);
   const openingFraction = ownerOpeningHash / 0xffffffff;
-  const firstScanMinimum = effect.owner === 4
+  const cohort = units.filter((unit) => (
+    unit.alive && unit.owner === effect.owner && unitInsideArea(unit, effect.area)
+  ));
+  // A seeded subset of already-visible members services the early shared-LOS
+  // AI slots. Other visible members remain on the ordinary group scan. Across
+  // the five seven-Onager repeats, 1-3 of the six non-detached members lock in
+  // the 0.60-0.80 s wave (10/30 member-runs), with the rest predominantly on
+  // the 1.51-1.61 s wave. This stays inside the explicitly stochastic
+  // first-acquisition boundary and prescribes no later target, route, attack,
+  // or outcome. Guaranteeing one detector avoids an empty early wave in a
+  // small cohort while the per-member 1/3 draw preserves measured variance.
+  const visibleRangedMembers = cohort.filter((unit) => (
+    hasOnagerFamilyBehavior(unit)
+      && Boolean(unit.mechanics?.ranged)
+      && units.some((candidate) => (
+        candidate.alive
+          && isHostile(unit, candidate)
+          && Math.hypot(candidate.x - unit.x, candidate.y - unit.y)
+            <= unit.mechanics.line_of_sight_tiles + 1e-12
+      ))
+  ));
+  const visibleByOpeningDraw = visibleRangedMembers.slice().sort((left, right) => (
+    openingHash(trigger.openingSeed ?? 0, effect.owner, right.referenceId)
+      - openingHash(trigger.openingSeed ?? 0, effect.owner, left.referenceId)
+    || left.referenceId - right.referenceId
+  ));
+  const earlyVisibleDetectorIds = new Set(visibleByOpeningDraw.filter((unit) => (
+    openingHash(trigger.openingSeed ?? 0, effect.owner, unit.referenceId) / 0xffffffff
+      >= 1 - VISIBLE_ONAGER_PATROL_EARLY_SHARE
+  )).map(({ referenceId }) => referenceId));
+  if (earlyVisibleDetectorIds.size === 0 && visibleByOpeningDraw.length > 0) {
+    earlyVisibleDetectorIds.add(visibleByOpeningDraw[0].referenceId);
+  }
+  // A genuinely detached ranged member is not serviced by the compact
+  // formation's opening scan wave. In the five Onager repeats the isolated
+  // seventh body (nearest friendly 2.83 tiles; formation spacing 1.41) first
+  // locks at 6.18/16.38/17.58/33.36 s or not before the fight ends. Model
+  // that generic first-acquisition latency with a seeded exponential tail.
+  // This is the explicit first-target timing exception only: the member keeps
+  // executing PATROL movement, and current visibility/geometry still chooses
+  // the target when its AI slot is eventually serviced.
+  const detachedFirstScanTickById = new Map();
+  if (cohort.length >= 3) {
+    for (const unit of cohort) {
+      if (!hasOnagerFamilyBehavior(unit) || !unit.mechanics?.ranged) continue;
+      const nearestFriendly = Math.min(...cohort
+        .filter((other) => other.referenceId !== unit.referenceId)
+        .map((other) => Math.hypot(other.x - unit.x, other.y - unit.y)));
+      const seesHostileCentre = units.some((candidate) => (
+        candidate.alive
+          && isHostile(unit, candidate)
+          && Math.hypot(candidate.x - unit.x, candidate.y - unit.y)
+            <= unit.mechanics.line_of_sight_tiles + 1e-12
+      ));
+      if (nearestFriendly <= PATROL_DETACHED_ONAGER_MEMBER_GAP_TILES + 1e-12
+          || seesHostileCentre) continue;
+      const roll = openingHash(
+        trigger.openingSeed ?? 0,
+        effect.owner,
+        unit.referenceId,
+      ) / 4294967296;
+      const seconds = DETACHED_ONAGER_PATROL_FIRST_SCAN_MIN_SECONDS
+        - Math.log(1 - roll) * DETACHED_ONAGER_PATROL_FIRST_SCAN_MEAN_TAIL_SECONDS;
+      detachedFirstScanTickById.set(
+        unit.referenceId,
+        tick + Math.round(seconds * TICKS_PER_SECOND),
+      );
+    }
+  }
+  const ordinaryFirstScanMinimum = effect.owner === 4
     ? AUXILIARY_PATROL_FIRST_SCAN_MIN_SECONDS
     : PATROL_FIRST_SCAN_MIN_SECONDS;
-  const firstScanTick = tick + Math.round((
-    firstScanMinimum
-      + openingFraction * (PATROL_FIRST_SCAN_MAX_SECONDS - firstScanMinimum)
+  const ordinaryFirstScanTick = tick + Math.round((
+    ordinaryFirstScanMinimum
+      + openingFraction * (PATROL_FIRST_SCAN_MAX_SECONDS - ordinaryFirstScanMinimum)
   ) * TICKS_PER_SECOND);
-  let selected = 0;
-  for (const unit of units) {
-    if (!unit.alive || unit.owner !== effect.owner || !unitInsideArea(unit, effect.area)) {
+  const earlyFirstScanTick = tick + Math.round((
+    VISIBLE_ONAGER_PATROL_FIRST_SCAN_MIN_SECONDS
+      + openingFraction * (
+        VISIBLE_ONAGER_PATROL_FIRST_SCAN_MAX_SECONDS
+          - VISIBLE_ONAGER_PATROL_FIRST_SCAN_MIN_SECONDS
+      )
+  ) * TICKS_PER_SECOND);
+  // Sparse Onager-family cohorts do not service every remaining member on one
+  // shared scan. Across 30 live Onager/melee captures, first acquisitions are
+  // distributed approximately 22% before 1 s, 45% at 1-2 s, 25% at 2-4 s,
+  // and 8% in a longer tail. The early-visible subset above owns the first
+  // band. Seed the other members into the ordinary wave, one/two 0.8-second
+  // deferred rescans, or an exponential long tail. This is solely the allowed
+  // first-acquisition timing policy; target choice remains current geometry
+  // and no later movement, retarget, attack, damage, or outcome is prescribed.
+  const onagerFirstScanTickById = new Map();
+  for (const unit of cohort) {
+    if (!hasOnagerFamilyBehavior(unit) || !unit.mechanics?.ranged
+        || earlyVisibleDetectorIds.has(unit.referenceId)
+        || detachedFirstScanTickById.has(unit.referenceId)) continue;
+    const bandRoll = openingHash(
+      trigger.openingSeed ?? 0,
+      effect.owner,
+      unit.referenceId ^ 0x5bd1e995,
+    ) / 4294967296;
+    if (bandRoll < ONAGER_PATROL_LONG_TAIL_SHARE) {
+      const tailRoll = openingHash(
+        trigger.openingSeed ?? 0,
+        effect.owner,
+        unit.referenceId ^ 0x27d4eb2d,
+      ) / 4294967296;
+      const seconds = ONAGER_PATROL_LONG_TAIL_MIN_SECONDS
+        - Math.log(1 - tailRoll) * ONAGER_PATROL_LONG_TAIL_MEAN_SECONDS;
+      onagerFirstScanTickById.set(
+        unit.referenceId,
+        tick + Math.round(seconds * TICKS_PER_SECOND),
+      );
       continue;
     }
-    selected += 1;
+    if (bandRoll < ONAGER_PATROL_LONG_TAIL_SHARE
+        + ONAGER_PATROL_DEFERRED_SCAN_SHARE) {
+      const waves = 1 + openingHash(
+        trigger.openingSeed ?? 0,
+        effect.owner,
+        unit.referenceId ^ 0x85ebca6b,
+      ) % 2;
+      onagerFirstScanTickById.set(
+        unit.referenceId,
+        ordinaryFirstScanTick
+          + waves * Math.round(PATROL_RESCAN_SECONDS * TICKS_PER_SECOND),
+      );
+    }
+  }
+  const cohortOriginX = cohort.length === 0 ? effect.x : cohort.reduce(
+    (total, unit) => total + unit.x, 0,
+  ) / cohort.length;
+  const cohortOriginY = cohort.length === 0 ? effect.y : cohort.reduce(
+    (total, unit) => total + unit.y, 0,
+  ) / cohort.length;
+  for (const unit of cohort) {
+    const combatExperienced = unit.openingAcquisitionComplete === true;
     unit.pursuitTargetId = null;
     unit.engagedTargetId = null;
     unit.attackTargetId = null;
@@ -1315,6 +1940,16 @@ function applyPatrolEffect(units, effect, trigger, tick, events) {
     unit.actionTimers.windup = 0;
     unit.actionTimers.swing = 0;
     unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
+    // Every authored PATROL command starts a new group-acquisition boundary.
+    // The first command still pays the measured opening reaction delay. A
+    // combat-experienced cohort that receives another patrol (for example
+    // after a diplomacy trigger) already has its AI scan primed, so it shares
+    // the newly visible hostile front on the next simulation tick instead of
+    // dropping into per-unit private-LOS polling. Live mixed captures show
+    // nearly every surviving melee unit holding a principal target within one
+    // second of the Player-4 defeat, including members outside private LOS.
+    unit.openingAcquisitionComplete = false;
+    unit.patrolOpeningAttackStarted = false;
     unit.moveOrder = Object.freeze({
       kind: "scenario-patrol",
       // The scenario trigger issues one patrol destination to the selected
@@ -1323,18 +1958,33 @@ function applyPatrolEffect(units, effect, trigger, tick, events) {
       y: effect.y,
       commandX: effect.x,
       commandY: effect.y,
+      cohortOriginX,
+      cohortOriginY,
+      formationStartX: unit.x,
+      formationStartY: unit.y,
       issuedTick: tick,
       triggerId: trigger.id,
       openingSeed: trigger.openingSeed ?? 0,
+      // A later patrol command is issued to a cohort that already participated
+      // in the fight and therefore starts from player-shared contact knowledge.
+      // This flag affects only that command's first target boundary; ordinary
+      // post-acquisition pursuit and visibility remain unchanged.
+      sharedVisionPrimed: combatExperienced,
       motionStartTick: tick + Math.round(PATROL_ORDER_REACTION_SECONDS * TICKS_PER_SECOND),
-      nextOpeningScanTick: firstScanTick,
+      nextOpeningScanTick: combatExperienced
+        ? tick + 1
+        : detachedFirstScanTickById.get(unit.referenceId)
+          ?? onagerFirstScanTickById.get(unit.referenceId)
+          ?? (earlyVisibleDetectorIds.has(unit.referenceId)
+            ? earlyFirstScanTick
+            : ordinaryFirstScanTick),
     });
   }
   events.push(event(tick, "patrol-issued", effect.owner, null, {
     owner: effect.owner,
     x: effect.x,
     y: effect.y,
-    selected,
+    selected: cohort.length,
     triggerId: trigger.id,
   }));
 }
@@ -1349,6 +1999,7 @@ function fireEligibleScenarioTriggers(
 ) {
   const fired = new Set(triggerState.firedTriggerIds);
   const defeated = new Set(triggerState.defeatedOwners);
+  const patrolOwners = new Set();
   let diplomacy = diplomacyByOwner;
   for (const trigger of triggerState.triggers) {
     if (fired.has(trigger.id) || !triggerConditionsMet(trigger, defeated)) continue;
@@ -1379,6 +2030,7 @@ function fireEligibleScenarioTriggers(
           triggerId: trigger.id,
         }));
       } else {
+        patrolOwners.add(effect.owner);
         applyPatrolEffect(units, effect, {
           ...trigger,
           openingSeed: triggerState.openingSeed ?? 0,
@@ -1394,6 +2046,7 @@ function fireEligibleScenarioTriggers(
       defeatedOwners: Object.freeze([...defeated].sort((left, right) => left - right)),
       openingSeed: triggerState.openingSeed ?? 0,
     }),
+    patrolOwners: Object.freeze([...patrolOwners].sort((left, right) => left - right)),
   };
 }
 
@@ -1403,6 +2056,7 @@ function advanceScenarioTriggers(world, units, tick, events) {
     return {
       diplomacyByOwner: world.diplomacyByOwner,
       triggerState: null,
+      patrolOwners: Object.freeze([]),
     };
   }
   const defeated = new Set(world.scenarioTriggerState.defeatedOwners);
@@ -1457,12 +2111,25 @@ function minRangeRetreat(unit, live) {
   if (unit.action === "attacking") return null;
   let nearest = null;
   let nearestDistance = Infinity;
-  for (const other of live) {
-    if (!isHostile(unit, other)) continue;
-    const distance = Math.hypot(other.x - unit.x, other.y - unit.y);
-    if (distance < spec.min_range_tiles - 1e-9 && distance < nearestDistance) {
-      nearest = other;
-      nearestDistance = distance;
+  if (hasOnagerFamilyBehavior(unit)) {
+    // An Onager backs away from its SELECTED target. If that retreat is boxed
+    // in, acquirePursuitTargets replaces the lock with another legal body and
+    // this branch naturally stops retreating so the new shot can begin.
+    const selected = selectedMinimumRangeThreat(unit, live);
+    if (selected) {
+      nearest = selected.target;
+      nearestDistance = selected.distance;
+    }
+  } else {
+    // Ordinary minimum-range ranged units react to the nearest pinner even
+    // when they are currently aiming at somebody else.
+    for (const other of live) {
+      if (!isHostile(unit, other)) continue;
+      const distance = Math.hypot(other.x - unit.x, other.y - unit.y);
+      if (distance < spec.min_range_tiles - 1e-9 && distance < nearestDistance) {
+        nearest = other;
+        nearestDistance = distance;
+      }
     }
   }
   if (!nearest || nearestDistance <= 1e-9) return null;
@@ -1890,6 +2557,46 @@ function moveUnits(units, map, tick, events, kiteState = null,
         persistentRoute: true,
       });
     }
+    // A direct two-army melee PATROL may plan around connected body geometry
+    // before walking straight into its target front when it has enough surplus
+    // pace to pay for the detour. Trigger-authored formation patrols instead
+    // try direct pursuit first and receive the ordinary five-failed-step
+    // recovery below; immediately solving their full body graph roughly
+    // doubled the live firing-line access rate. A clear corridor still returns
+    // null, while a blocked direct corridor supplies a stable tangent without
+    // an oscillation detector or elapsed-time/output rule.
+    if (hasMeleeMode(unit)
+        && unit.openingAcquisitionComplete === true
+        && unit.moveOrder?.kind !== "scenario-patrol"
+        && unit.mechanics.speed_tiles_per_second
+          > target.mechanics.speed_tiles_per_second * 1.2
+        && !isWithinReach(unit, target)) {
+      const obstacles = live.filter((other) => (
+        other.referenceId !== unit.referenceId
+          && other.referenceId !== target.referenceId
+      ));
+      const plannedRoute = planPersistentChaseRoute(unit, target, obstacles, map, {
+        pairInteractions,
+      });
+      if (plannedRoute && plannedRoute.stand !== true
+          && plannedRoute.waypoints.length > 0) {
+        recoveryRoutes.set(unit.referenceId, plannedRoute);
+        authoritativeRouteReferenceIds.add(unit.referenceId);
+        const waypoint = plannedRoute.waypoints[plannedRoute.waypointIndex];
+        events.push(event(tick, "pursuit-route-planned", unit.referenceId,
+          target.referenceId, {
+            reason: "scenario-melee-obstruction",
+            waypointCount: plannedRoute.waypoints.length,
+            waypointIndex: plannedRoute.waypointIndex,
+          }));
+        return Object.freeze({
+          x: waypoint.x,
+          y: waypoint.y,
+          pathWaypoint: true,
+          persistentRoute: true,
+        });
+      }
+    }
     if (!kiteState || unit.owner === kiteState.owner) return target;
     const obstacles = live.filter((other) => other.referenceId !== unit.referenceId
       && other.referenceId !== target.referenceId
@@ -2035,8 +2742,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
         || Number.isSafeInteger(unit.attackTargetId));
     if (unit.moveOrder && !suspendedScenarioPatrol
         && (unit.action !== "attacking" || unit.actionTimers.windup === 0)) {
-      if (unit.moveOrder.kind === "scenario-patrol"
-          && Number.isSafeInteger(unit.moveOrder.motionStartTick)
+      if (Number.isSafeInteger(unit.moveOrder.motionStartTick)
           && tick < unit.moveOrder.motionStartTick) {
         return Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
       }
@@ -2538,6 +3244,58 @@ const KITE_DWELL_HOLD_RADIUS_TILES = 1.0;
 // recorded switch distances sit exactly on the contact band (see the capture
 // comment in updateEngagements). A tolerance, not a physical constant.
 const CONTACT_CAPTURE_EPSILON = 0.02;
+// A body-blocked melee actor can retain a short tail of attack reach beyond
+// the ordinary range+0.1 start envelope. Full-rate Paladin/Steppe captures
+// bound those starts at outline gap <= attack range +0.24. This replaces both
+// an unphysical line-of-sight-wide stale lock and an equally incorrect hard
+// cutoff at +0.1.
+const BLOCKED_MELEE_TAIL_TOLERANCE_TILES = 0.24;
+
+
+function isWithinBlockedMeleeTailReach(unit, target) {
+  if (unit.mechanics?.ranged) return false;
+  return outlineChebyshevGap(unit, target)
+    <= (unit.mechanics?.attack_range_tiles ?? 0)
+      + BLOCKED_MELEE_TAIL_TOLERANCE_TILES + 1e-12;
+}
+
+
+function selectFrontalPatrolContactCapture(unit, snapshot, pairInteractions) {
+  const pursued = Number.isSafeInteger(unit.pursuitTargetId)
+    ? snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId)
+    : null;
+  if (!pursued?.alive || !isHostile(unit, pursued) || isWithinReach(unit, pursued)) {
+    return null;
+  }
+  const frontX = pursued.x - unit.x;
+  const frontY = pursued.y - unit.y;
+  let touched = null;
+  let touchedDistance = Infinity;
+  for (const candidate of snapshot) {
+    if (!candidate.alive || !isHostile(unit, candidate)
+        || candidate.referenceId === pursued.referenceId) continue;
+    const contactGap = Math.max(
+      Math.abs(candidate.x - unit.x),
+      Math.abs(candidate.y - unit.y),
+    ) - resolvePairInteraction(
+      unit,
+      candidate,
+      pairInteractions,
+    ).attackSurfaceExtent;
+    if (contactGap > CONTACT_CAPTURE_EPSILON) continue;
+    const towardX = candidate.x - unit.x;
+    const towardY = candidate.y - unit.y;
+    if (frontX * towardX + frontY * towardY <= 0) continue;
+    const distance = Math.hypot(towardX, towardY);
+    if (distance < touchedDistance - 1e-12
+        || (distance < touchedDistance + 1e-12
+          && (touched === null || candidate.referenceId < touched.referenceId))) {
+      touched = candidate;
+      touchedDistance = distance;
+    }
+  }
+  return touched;
+}
 
 
 function updateEngagements(units, contacts, tick, events, blockedIds, kiteState = null,
@@ -2747,15 +3505,46 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       }));
       continue;
     }
+    // The auxiliary screen is a physical contact surface. Live PATROLs begin
+    // with a concentrated two-lane lock, then moving melee members that touch
+    // another hostile body switch their pursuit to that body. This is the same
+    // frontal contact-capture rule used by ordinary chasers: it is symmetric,
+    // requires actual box contact, and becomes inert as soon as the captured
+    // body is in reach, preventing target ping-pong.
+    const currentPursuit = Number.isSafeInteger(unit.pursuitTargetId)
+      ? snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId)
+      : null;
+    const auxiliaryPatrolContact = unit.moveOrder?.kind === "scenario-patrol"
+      && hasMeleeMode(unit)
+      && currentPursuit?.alive === true
+      && (unit.owner === 4 || currentPursuit.owner === 4);
+    if (auxiliaryPatrolContact) {
+      const captured = selectFrontalPatrolContactCapture(
+        unit,
+        snapshot,
+        pairInteractions,
+      );
+      if (captured) {
+        const previousTargetId = unit.pursuitTargetId;
+        unit.pursuitTargetId = captured.referenceId;
+        unit.avoidance = null;
+        delete unit.patrolBlockerId;
+        delete unit.patrolBlockerTicks;
+        events.push(event(tick, "pursuit-acquired", unit.referenceId,
+          captured.referenceId, {
+            reason: "frontal-contact-capture",
+            previousTargetId,
+          }));
+      }
+    }
     // Attack-action persistence (measured, three archives): a unit shoved out
-    // of reach that TRIES to close and is fully blocked keeps its attack
-    // cycle on its live target — a pve 5v3 paladin swings from collision gap
-    // 0.523-0.575 for 25 straight seconds after the scrum separates the pair,
-    // and steppe lancers land tail hits lagging their reach by exactly one
-    // reload. A unit that CAN move chases instead (engagement drops below),
-    // which is what keeps fleeing-target pursuit intact. Line of sight is the
-    // outer sanity bound (dat-sourced); no swing was ever observed beyond
-    // outline gap +0.24, all from deep scrums.
+    // of reach during an already-committed swing keeps that cycle on its live
+    // target. Outside a committed swing, however, blocking must not preserve
+    // an unreachable engagement indefinitely. The next swing has an ordinary
+    // reach gate, so retaining that stale lock would leave the unit parked and
+    // unable either to attack or to select the hostile body blocking it. An
+    // in-reach blocked engagement may persist through reload; an out-of-reach
+    // one is released for normal local engagement selection below.
     if (
       previousTargetId !== null && previousTargetId !== undefined
       && blockedIds.has(unit.referenceId)
@@ -2763,24 +3552,34 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       const engaged = snapshot.find(({ referenceId }) => referenceId === previousTargetId);
       if (engaged && engaged.alive && isHostile(unit, engaged)) {
         const distance = Math.hypot(engaged.x - unit.x, engaged.y - unit.y);
-        if (distance <= unit.mechanics.line_of_sight_tiles) continue;
+        if (distance <= unit.mechanics.line_of_sight_tiles
+            && (unit.action === "attacking"
+              || isWithinReach(unit, engaged)
+              || isWithinBlockedMeleeTailReach(unit, engaged))) {
+          continue;
+        }
       }
     }
     const self = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
     const meleeReachRanks = unit.mechanics?.ranged
       ? 0
       : Math.max(0, Math.floor(unit.mechanics?.attack_range_tiles ?? 0));
-    // The two-claimant reservation is a body-contact surface. A reach fighter
-    // can occupy additional outline-reach ranks behind that surface without
-    // claiming another deep collision slot. Scale the engagement capacity by
-    // physical reach ranks; range-zero behavior remains exactly two.
-    const incomingEngagementCapacity = MAX_INCOMING_ENGAGEMENTS
-      + meleeReachRanks;
+    // The two-claimant reservation is a deep body-contact surface. A packed
+    // ranged line exposes one additional lateral contact; a melee body that is
+    // itself pressing through the scrum exposes both lateral sides. Across all
+    // five live Camel/HCA captures, per-ranged-target attacking load never
+    // exceeds three even though many more units hold pursuit claims. Direct
+    // Camel/Elephant contact independently requires the four-sided melee
+    // surface. Reach fighters may occupy one additional outline rank.
+    // Engagement capacity is not overlap depth: actors can stand on distinct
+    // sides while the contact solver still caps deep penetration.
+    const incomingEngagementCapacity = (candidate) => MAX_INCOMING_ENGAGEMENTS
+      + (candidate.mechanics?.ranged ? 1 : 2) + meleeReachRanks;
     const targetAvailable = (candidate) => (
       unit.mechanics?.ranged
       || candidate.referenceId === previousTargetId
       || (incomingMeleeEngagements.get(candidate.referenceId) ?? 0)
-        < incomingEngagementCapacity
+        < incomingEngagementCapacity(candidate)
     );
     const selection = selectEngagementTarget(self, snapshot, contacts, { targetAvailable });
     // Experiment harness: engagement follows pursuit. Off by default.
@@ -2793,10 +3592,11 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
     // champions parked idle waiting for rate-limited rescue orders (65.8
     // orders/fight vs the tape's 15, 38 after 15 s vs the tape's 1) and the
     // paladins won all 25 sampled runs where the tape flips.
-    const pursued = ENGAGEMENT_FOLLOWS_PURSUIT
-      && unit.pursuitTargetId !== null && unit.pursuitTargetId !== undefined
+    const pursuitTarget = unit.pursuitTargetId !== null
+        && unit.pursuitTargetId !== undefined
       ? snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId)
       : null;
+    const pursued = ENGAGEMENT_FOLLOWS_PURSUIT ? pursuitTarget : null;
     // The pursuit target takes priority only once the unit has CLOSED to its
     // movement stop range — the same distance at which the old collision-based
     // engine applied this rule for range-0 units, kept range-aware here.
@@ -2826,14 +3626,21 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
     // that physically blocks the route able to capture the engagement. Once
     // the trigger removes Player 4 and the two principal armies become
     // hostile, they use ordinary aggressive engagement selection.
-    const auxiliaryPatrolPursuit = unit.owner === 4 || pursued?.owner === 4;
+    const auxiliaryPatrolPursuit = unit.owner === 4 || pursuitTarget?.owner === 4;
     const auxiliaryPatrolPursuitLocked = unit.moveOrder?.kind === "scenario-patrol"
-      && pursued?.alive === true
+      && pursuitTarget?.alive === true
       && auxiliaryPatrolPursuit;
-    const openingRangedPatrolLocked = false;
+    // PATROL target acquisition suspends point motion and enters attack mode
+    // on that acquired target. A ranged member that cannot yet reach its lock
+    // does not freelance onto another body merely because that body is closer;
+    // it keeps closing/waiting until the lock dies or is invalidated. This is
+    // the same patrol mechanic in RvR and both mixed orientations.
+    const openingRangedPatrolLocked = unit.moveOrder?.kind === "scenario-patrol"
+      && unit.mechanics?.ranged
+      && pursuitTarget?.alive === true;
     const latchedPatrolBlocker = auxiliaryPatrolPursuitLocked
         && Number.isSafeInteger(previousTargetId)
-        && previousTargetId !== pursued.referenceId
+        && previousTargetId !== pursuitTarget.referenceId
       ? snapshot.find(({ referenceId }) => referenceId === previousTargetId)
       : null;
     const observedPatrolBlocker = auxiliaryPatrolPursuitLocked
@@ -2857,12 +3664,13 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
         ? observedPatrolBlocker
         : null;
     const nextTargetId = openingRangedPatrolLocked
-      ? (pursuedClosed && isWithinReach(self, pursued) && targetAvailable(pursued)
-        ? pursued.referenceId
+      ? (isWithinReach(self, pursuitTarget) && targetAvailable(pursuitTarget)
+        ? pursuitTarget.referenceId
         : null)
       : auxiliaryPatrolPursuitLocked
-      ? (pursuedClosed && isWithinReach(self, pursued) && targetAvailable(pursued)
-        ? pursued.referenceId
+      ? (isWithinStopRange(self, pursuitTarget, { pairInteractions })
+          && isWithinReach(self, pursuitTarget) && targetAvailable(pursuitTarget)
+        ? pursuitTarget.referenceId
         : patrolBlocker?.alive && isHostile(self, patrolBlocker)
             && isWithinReach(self, patrolBlocker) && targetAvailable(patrolBlocker)
           ? patrolBlocker.referenceId
@@ -2991,9 +3799,25 @@ function nextShotRoll(shotRng) {
 
 function releaseRangedShot(unit, target, spec, tick, events, projectiles, velocities, shotRng) {
   if (!target?.alive || !isHostile(unit, target)) return;
-  let aim = (spec.smartMode & 1) === 1
-    ? leadAimPoint(unit, target, spec, velocities)
-    : { x: target.x, y: target.y };
+  // A Mangonel-family unit can acquire and enter its attack animation while
+  // the freshly issued PATROL command is still in its reaction phase.  The
+  // live projectile keeps the command's ground destination in that boundary
+  // state; once patrol motion is active, subsequent shells use the ordinary
+  // target aim.  In every one of the five Onager/Paladin captures, shells
+  // released at 0.58-0.79 s land at the authored (2, 13) patrol point, while
+  // releases from 1.52 s onward land at their selected unit's fire position.
+  // This is command-state projectile behavior shared by the Onager family,
+  // not an outcome- or matchup-specific delay/waypoint.
+  const patrolCommandAim = hasOnagerFamilyBehavior(unit)
+    && unit.moveOrder?.kind === "scenario-patrol"
+    && tick < (unit.moveOrder.motionStartTick ?? -Infinity)
+    && Number.isFinite(unit.moveOrder.commandX)
+    && Number.isFinite(unit.moveOrder.commandY);
+  let aim = patrolCommandAim
+    ? { x: unit.moveOrder.commandX, y: unit.moveOrder.commandY }
+    : (spec.smartMode & 1) === 1
+      ? leadAimPoint(unit, target, spec, velocities)
+      : { x: target.x, y: target.y };
   let distance = Math.hypot(aim.x - unit.x, aim.y - unit.y);
   if (distance <= 1e-9) return;
   const stepLength = spec.projectileSpeed / TICKS_PER_SECOND;
@@ -3005,6 +3829,10 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
   // floor 1 damage each (their dat attack lists are EMPTY — the tapes'
   // repeated 1.0 quanta).
   if (spec.blastRadius > 0) {
+    // The raw projectile arc is exported for flight-time analysis, but the
+    // current tape-backed rule still uses ground distance / DAT speed. A
+    // parabola-length multiplier remains a hypothesis until the new live
+    // Onager tracks independently establish it.
     const flight = Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed));
     projectiles.push({
       kind: "shell",
@@ -3019,19 +3847,25 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       arrivalTick: tick + flight,
       index: 0,
     });
-    for (let s = 0; s < spec.secondaryCount; s += 1) {
-      const sx = (nextShotRoll(shotRng) - 0.5) * spec.spawnArea[0];
-      const sy = (nextShotRoll(shotRng) - 0.5) * spec.spawnArea[1];
+    const debris = siegeDebrisLandingPoints({
+      impactX: aim.x,
+      impactY: aim.y,
+      shooterX: unit.x,
+      shooterY: unit.y,
+      count: spec.secondaryCount,
+    });
+    for (const landing of debris) {
       projectiles.push({
         kind: "pebble",
         actorId: unit.referenceId,
         actorOwner: unit.owner,
         targetId: target.referenceId,
-        aimX: aim.x + sx,
-        aimY: aim.y + sy,
+        aimX: landing.x,
+        aimY: landing.y,
+        halfWidth: spec.secondaryHalfWidth,
         firedTick: tick,
         arrivalTick: tick + flight,
-        index: s + 1,
+        index: landing.index + 1,
       });
     }
     return;
@@ -3042,9 +3876,13 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
   // meets for HALF damage (tape full/half quanta pairs 22/11, 11/5.5, 8/4).
   if (spec.accuracyPercent < 100
       && nextShotRoll(shotRng) * 100 >= spec.accuracyPercent) {
-    const radius = spec.dispersionTiles * Math.sqrt(nextShotRoll(shotRng));
-    const angle = nextShotRoll(shotRng) * 2 * Math.PI;
-    aim = { x: aim.x + radius * Math.cos(angle), y: aim.y + radius * Math.sin(angle) };
+    aim = displacedAimPoint({
+      aimX: aim.x,
+      aimY: aim.y,
+      dispersionTiles: spec.dispersionTiles,
+      radialRoll: nextShotRoll(shotRng),
+      angleRoll: nextShotRoll(shotRng),
+    });
     distance = Math.hypot(aim.x - unit.x, aim.y - unit.y);
     if (distance <= 1e-9) return;
     projectiles.push({
@@ -3054,6 +3892,8 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       actorRelationByOwner: unit.relationByOwner,
       actorMechanics: unit.mechanics,
       targetId: target.referenceId,
+      aimX: aim.x,
+      aimY: aim.y,
       x: unit.x,
       y: unit.y,
       stepX: ((aim.x - unit.x) / distance) * stepLength,
@@ -3061,6 +3901,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       stepLength,
       traveled: 0,
       totalDistance: distance,
+      halfWidth: spec.projectileHalfWidth,
       firedTick: tick,
       arrivalTick: tick + Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed)),
       index: 0,
@@ -3117,7 +3958,8 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
 }
 
 
-function progressAttacks(units, tick, events, movedIds, projectiles, velocities, shotRng) {
+function progressAttacks(units, tick, events, movedIds, projectiles,
+  velocities, shotRng) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   const ready = [];
   for (const unit of units) {
@@ -3231,6 +4073,23 @@ function progressAttacks(units, tick, events, movedIds, projectiles, velocities,
       !target?.alive ||
       !isHostile(unit, target)
     ) continue;
+    // Blocking may preserve a live target lock, but it does not extend the
+    // unit's weapon. A committed windup above is allowed to finish after its
+    // target moves; every NEW swing must begin inside the ordinary DAT
+    // outline attack envelope. Without this gate, a stationary crowd member
+    // could repeatedly attack anything inside line of sight merely because
+    // collision prevented it from moving.
+    if (!isWithinReach(unit, target)) continue;
+    // A range-zero weapon begins a new cycle only on its physical stop
+    // surface. Across the fresh Paladin/Champion mixed tapes, Euclidean start
+    // maxima (0.732-0.806) are exactly the diagonal image of collision extents
+    // plus the 0.1 melee stop tolerance, never the wider outline envelope.
+    // Reach fighters retain outline reach so a Steppe Lancer can attack over
+    // its front rank; an already-released swing above may still finish after
+    // separation.
+    if (hasMeleeMode(unit)
+        && (unit.mechanics.attack_range_tiles ?? 0) === 0
+        && !isWithinStopRange(unit, target)) continue;
     if (!isWithinStopRange(unit, target) && movedIds.has(unit.referenceId)) continue;
 
     const delay = attackDelayTicks(unit.mechanics);
@@ -3242,18 +4101,31 @@ function progressAttacks(units, tick, events, movedIds, projectiles, velocities,
       readyTick,
     }));
     unit.action = "attacking";
+    if (unit.moveOrder?.kind === "scenario-patrol") {
+      unit.patrolOpeningAttackStarted = true;
+    }
     unit.attackTargetId = target.referenceId;
     unit.actionTimers.swing = 0;
     unit.actionTimers.windup = delay;
     unit.actionTimers.reload = reloadTicks(unit.mechanics);
     if (delay === 0) {
-      ready.push({
-        type: "attack-ready",
-        readyTick,
-        actorId: unit.referenceId,
-        targetId: target.referenceId,
-        amount: calculateDamage(unit, target),
-      });
+      const ranged = rangedSpec(unit.mechanics);
+      if (ranged) {
+        // A literal zero-frame projectile leaves on the swing-start tick. The
+        // ordinary attacking-loop release condition is crossed only by a
+        // positive windup, so service the zero boundary here rather than
+        // misclassifying it as an immediate melee hit.
+        releaseRangedShot(unit, target, ranged, tick, events, projectiles,
+          velocities, shotRng);
+      } else {
+        ready.push({
+          type: "attack-ready",
+          readyTick,
+          actorId: unit.referenceId,
+          targetId: target.referenceId,
+          amount: calculateDamage(unit, target),
+        });
+      }
     }
   }
   return ready;
@@ -3404,32 +4276,34 @@ function processChargeProjectiles(units, projectiles, tick, events) {
       continue;
     }
     if (projectile.kind === "stray") {
-      // Missed-accuracy shot: flies its scattered line and hits the FIRST
-      // enemy whose collision box contains the point — for HALF the
-      // per-victim class damage. Expires at the scattered aim point.
+      // Missed-accuracy shot: animate the scattered flight, but resolve only
+      // at its landing point. Crossing a formation during flight does not hit
+      // it; the nearest hostile body overlapping body + projectile radius at
+      // the landing takes exactly half its own final post-armor damage.
       projectile.x += projectile.stepX;
       projectile.y += projectile.stepY;
       projectile.traveled += projectile.stepLength;
-      let struck = false;
-      for (const victim of units) {
-        if (!victim.alive || !isHostile({
+      if (projectile.traveled < projectile.totalDistance - 1e-9
+          && tick < projectile.arrivalTick) {
+        remaining.push(projectile);
+        continue;
+      }
+      const actor = {
           referenceId: projectile.actorId,
           owner: projectile.actorOwner,
           relationByOwner: projectile.actorRelationByOwner,
-        }, victim)) continue;
-        const dx = Math.abs(victim.x - projectile.x);
-        const dy = Math.abs(victim.y - projectile.y);
-        if (Math.max(dx, dy) > collisionRadius(victim) + 1e-9) continue;
+      };
+      const victim = selectProjectileLandingVictim(
+        units.filter((candidate) => candidate.alive && isHostile(actor, candidate)),
+        projectile.aimX,
+        projectile.aimY,
+        projectile.halfWidth,
+      );
+      if (victim) {
         const full = calculateDamage({ mechanics: projectile.actorMechanics }, victim);
         applyCommittedDamage(units, projectile.actorId, victim,
-          Math.max(1, MISS_DAMAGE_FRACTION * full), tick, tick, events,
+          MISS_DAMAGE_FRACTION * full, tick, tick, events,
           { kind: "stray-projectile", projectileIndex: 0 });
-        struck = true;
-        break;
-      }
-      if (!struck && projectile.traveled < projectile.totalDistance - 1e-9
-          && tick < projectile.arrivalTick + 2) {
-        remaining.push(projectile);
       }
       continue;
     }
@@ -3445,14 +4319,9 @@ function processChargeProjectiles(units, projectiles, tick, events) {
       }
       for (const victim of units) {
         if (!victim.alive || victim.referenceId === projectile.actorId) continue;
-        const dx = Math.abs(victim.x - projectile.aimX);
-        const dy = Math.abs(victim.y - projectile.aimY);
-        const inBox = Math.max(dx, dy) <= collisionRadius(victim) + 1e-9;
-        const centerDistance = Math.hypot(dx, dy);
-        if (!inBox && centerDistance > projectile.blastRadius + 1e-9) continue;
-        const fraction = inBox
-          ? 1
-          : Math.max(0, 1 - centerDistance / projectile.blastRadius);
+        const fraction = blastFalloffFraction(
+          victim, projectile.aimX, projectile.aimY, projectile.blastRadius);
+        if (fraction === null) continue;
         const full = calculateDamage({ mechanics: projectile.actorMechanics }, victim);
         applyCommittedDamage(units, projectile.actorId, victim,
           Math.max(1, fraction * full), tick, tick, events,
@@ -3468,11 +4337,15 @@ function processChargeProjectiles(units, projectiles, tick, events) {
         remaining.push(projectile);
         continue;
       }
-      for (const victim of units) {
-        if (!victim.alive || victim.referenceId === projectile.actorId) continue;
-        const dx = Math.abs(victim.x - projectile.aimX);
-        const dy = Math.abs(victim.y - projectile.aimY);
-        if (Math.max(dx, dy) > collisionRadius(victim) + 1e-9) continue;
+      const victim = selectProjectileLandingVictim(
+        units.filter((candidate) => (
+          candidate.alive && candidate.referenceId !== projectile.actorId
+        )),
+        projectile.aimX,
+        projectile.aimY,
+        projectile.halfWidth,
+      );
+      if (victim) {
         applyCommittedDamage(units, projectile.actorId, victim, 1,
           tick, tick, events,
           { kind: "pebble-projectile", projectileIndex: projectile.index });
@@ -3553,6 +4426,9 @@ export function stepWorld(world) {
   const pursuitRecoveryState = nextPursuitRecoveryState(
     world.pursuitRecoveryState ?? null,
   );
+  const patrolOpeningTargetByOwner = world.patrolOpeningTargetByOwner
+    ? new Map(world.patrolOpeningTargetByOwner)
+    : null;
   const acquisitionPairInteractions = createPairInteractionSnapshot({
     contactReservations: world.contactReservationState?.reservations ?? new Map(),
   });
@@ -3569,8 +4445,7 @@ export function stepWorld(world) {
     events,
     world.kiteState ?? null,
     world.rangedTargetPressureOwner ?? null,
-    world.rangedOpportunityRetargetOwner ?? null,
-    world.patrolOpeningTargetByOwner ?? null,
+    patrolOpeningTargetByOwner,
     pursuitRecoveryState,
     world.map,
     acquisitionPairInteractions,
@@ -3625,13 +4500,16 @@ export function stepWorld(world) {
       ...(projectile.hitIds ? { hitIds: [...projectile.hitIds] } : {}),
     }))
     : null;
-  const ready = progressAttacks(units, tick, events, movedIds, projectiles,
-    velocities, world.shotRng ?? null);
+  const ready = progressAttacks(units, tick, events, movedIds,
+    projectiles, velocities, world.shotRng ?? null);
   commitReadyAttacks(units, ready, tick, events);
   const remainingProjectiles = projectiles
     ? processChargeProjectiles(units, projectiles, tick, events)
     : null;
   const scenarioUpdate = advanceScenarioTriggers(world, units, tick, events);
+  for (const owner of scenarioUpdate.patrolOwners) {
+    patrolOpeningTargetByOwner?.delete(owner);
+  }
 
   const publishedUnits = canonicalUnits(units);
   const publishedEvents = Object.freeze(events);
@@ -3653,6 +4531,9 @@ export function stepWorld(world) {
       : {}),
     ...(scenarioUpdate.triggerState
       ? { scenarioTriggerState: scenarioUpdate.triggerState }
+      : {}),
+    ...(patrolOpeningTargetByOwner
+      ? { patrolOpeningTargetByOwner }
       : {}),
     diplomacyByOwner: scenarioUpdate.diplomacyByOwner,
     tick,

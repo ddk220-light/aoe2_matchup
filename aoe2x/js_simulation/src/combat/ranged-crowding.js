@@ -9,7 +9,12 @@ const EPSILON = 1e-12;
 // body fractions, so they do not name a unit, formation, or matchup.
 const PAIR_GROWTH_WEIGHT = 0.75;
 const TRIPLE_GROWTH_WEIGHT = 96;
-const RANGED_BODY_CORE_FRACTION = 0.025;
+const RANGED_TRANSIT_BODY_CORE_FRACTION = 0.025;
+// A committed siege body is a path obstacle to later ingress. Classification
+// comes from AoE2's own Siege Weapon armor class (20), not body radius: large
+// mobile ranged units remain compliant, while every present and future siege
+// unit carrying that DAT class receives the same rule.
+const SIEGE_ARMOR_CLASS = "20";
 // Local crowd steering owns only the forward half-plane. A backwards move can
 // be correct when routing around a connected firing rank, but deciding that
 // from one tick of local pressure creates a memoryless A<->B oscillation. A
@@ -34,6 +39,12 @@ function requireReferenceId(value) {
 
 function isRanged(unit) {
   return unit?.mechanics?.ranged !== null && unit?.mechanics?.ranged !== undefined;
+}
+
+
+function isSiegeRanged(unit) {
+  return isRanged(unit)
+    && Object.hasOwn(unit?.mechanics?.armor_classes ?? {}, SIEGE_ARMOR_CLASS);
 }
 
 
@@ -156,7 +167,12 @@ function crowdMetrics(mover, moverPosition, allies, positions) {
       ]),
     );
   }
-  return Object.freeze({ pairCost, tripleArea, maximumFourArea });
+  return Object.freeze({
+    overlapCount: overlapping.length,
+    pairCost,
+    tripleArea,
+    maximumFourArea,
+  });
 }
 
 
@@ -192,7 +208,13 @@ function livePursuitOutsideReach(unit, byReference) {
 }
 
 
-function candidateScore(candidate, desired, currentMetrics, candidateMetrics, preferredSign) {
+function candidateScore(
+  candidate,
+  desired,
+  currentMetrics,
+  candidateMetrics,
+  preferredSign,
+) {
   if (candidateMetrics.maximumFourArea > currentMetrics.maximumFourArea + EPSILON) {
     return Number.POSITIVE_INFINITY;
   }
@@ -217,17 +239,33 @@ function candidateScore(candidate, desired, currentMetrics, candidateMetrics, pr
 }
 
 
-function crowdReservation(left, right, currentPosition, projectedPosition, tick) {
+function crowdReservation(
+  left,
+  right,
+  currentPosition,
+  projectedPosition,
+  tick,
+) {
   const fullExtent = extentBetween(left, right);
   const current = separation(currentPosition.get(left.referenceId), currentPosition.get(right.referenceId));
   const projected = separation(
     projectedPosition.get(left.referenceId),
     projectedPosition.get(right.referenceId),
   );
-  const collisionExtent = Math.max(
-    fullExtent * RANGED_BODY_CORE_FRACTION,
-    Math.min(fullExtent, current, projected),
-  );
+  const committedSiegeBody = [left, right].some((unit) => (
+    isSiegeRanged(unit) && (unit.action === "attacking" || unit.action === "reload")
+  ));
+  // Transit may consume this tick's compliant projection. Once either body
+  // has committed, only overlap that already exists may be inherited; a later
+  // row cannot manufacture fresh penetration through the established firing
+  // rank. Publishing the exact inherited separation is also important: a
+  // reservation cannot retroactively declare the current geometry invalid.
+  const collisionExtent = committedSiegeBody
+    ? Math.min(fullExtent, current)
+    : Math.max(
+      fullExtent * RANGED_TRANSIT_BODY_CORE_FRACTION,
+      Math.min(fullExtent, current, projected),
+    );
   const [leftId, rightId] = left.referenceId < right.referenceId
     ? [left.referenceId, right.referenceId]
     : [right.referenceId, left.referenceId];
@@ -237,7 +275,16 @@ function crowdReservation(left, right, currentPosition, projectedPosition, tick)
     kind: "ranged-crowd",
     collisionExtent,
     attackSurfaceExtent: fullExtent,
-    pathObstructs: false,
+    // Existing transit overlap may be inherited by a firing pair, but a
+    // committed firing/reload rank is an obstacle to NEW ingress. This is the
+    // distinction visible in the tapes: two or three already-stacked pairs
+    // can remain motionless for many seconds, while later rows fan around
+    // them instead of building a 20-body overlap chain.
+    // Non-siege ranged bodies stay compliant regardless of their radius. A
+    // committed Siege-class body obstructs fresh ingress and restores its
+    // inherited separation, so transit compression cannot turn the rear siege
+    // rank into an immediate second firing rank.
+    pathObstructs: committedSiegeBody,
     mayDeepen: false,
     initiatorId: null,
     targetId: null,

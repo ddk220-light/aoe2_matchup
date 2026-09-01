@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "status": "accepted completed mechanics baseline",
+  "recordedAt": "2026-09-01",
+  "metric": {
+    "name": "signed remaining HP percentage points",
+    "definition": "winning army remaining HP divided by its starting HP; owner 2 is positive and owner 3 is negative; comparison is simulation mean minus live mean"
+  },
+  "focusedComparison": {
+    "key": "siege_onager_vs_paladin",
+    "side2": { "unit": "Aztecs Siege Onager", "count": 12, "startingHp": 840 },
+    "side3": { "unit": "Spanish Paladin", "count": 27, "startingHp": 4860 },
+    "live": {
+      "sourceRoot": "aoe2x/js_simulation/calibration/live_observations/expanded_roster_5x_2026-08-31/siege_onager_vs_paladin",
+      "outcome": "owner 2 won 3/5; owner 3 won 2/5",
+      "meanSignedRemainingHpPercent": 42.533,
+      "runs": [
+        { "run": 1, "framesBin": "run_001/raw recordings/siege_onager_vs_paladin.frames.bin", "framesSha256": "e811f5b2835332cef48821279a0258bf5e140ea869dd3b5a44274c81da2fc913", "winnerOwner": 2, "winnerHp": 506.5 },
+        { "run": 2, "framesBin": "run_002/raw recordings/siege_onager_vs_paladin.frames.bin", "framesSha256": "5e8f1a60ba226182455a9bb67b611964a6f9eaecc1ba90a38050111d629e0e0a", "winnerOwner": 2, "winnerHp": 645.9 },
+        { "run": 3, "framesBin": "run_003/raw recordings/siege_onager_vs_paladin.frames.bin", "framesSha256": "d85ee251020644de5cdde9665c2f6713ba930139bdf903c8c356613940659b99", "winnerOwner": 2, "winnerHp": 662.0 },
+        { "run": 4, "framesBin": "run_004/raw recordings/siege_onager_vs_paladin.frames.bin", "framesSha256": "27a18918bcce22a9f6e86392e0d899a10e9bb59d9f4e8d60070bf29299a8d9d1", "winnerOwner": 3, "winnerHp": 71.5 },
+        { "run": 5, "framesBin": "run_005/raw recordings/siege_onager_vs_paladin.frames.bin", "framesSha256": "99cd81a2f38691ec643d5b5a9905fec45bc2c946309f49437537a08989dcc5c6", "winnerOwner": 3, "winnerHp": 90.6 }
+      ]
+    },
+    "simulation": {
+      "outcome": "owner 2 won 5/5",
+      "meanSignedRemainingHpPercent": 81.565,
+      "runs": [
+        { "openingSeed": 0, "winnerOwner": 2, "winnerHp": 647.9320260849863, "ticks": 969 },
+        { "openingSeed": 1, "winnerOwner": 2, "winnerHp": 631.378633467291, "ticks": 869 },
+        { "openingSeed": 2, "winnerOwner": 2, "winnerHp": 651.6508320432326, "ticks": 868 },
+        { "openingSeed": 3, "winnerOwner": 2, "winnerHp": 724.7814952811782, "ticks": 874 },
+        { "openingSeed": 4, "winnerOwner": 2, "winnerHp": 770.0, "ticks": 841 }
+      ]
+    },
+    "deltaPercentagePoints": 39.032,
+    "winnerDirectionCorrect": true,
+    "viewerUrl": "https://starlight.tail82a190.ts.net/golden-map/?mode=problem-matchups&matchup=siege_onager_vs_paladin&seed=2",
+    "acceptedLimitation": "The simple reusable Onager state machine is retained without an outcome correction."
+  }
+}

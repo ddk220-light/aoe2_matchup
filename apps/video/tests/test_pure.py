@@ -537,3 +537,5 @@ def test_abbreviated_unit_slugs_resolve_to_scenario_ids():
 
     assert unit_const("heavy_cav_archer") == 474
     assert unit_const("elite_steppe") == 1372
+    assert unit_const("imp_elite_skirm") == 6
+    assert unit_const("heavy_camel") == 330

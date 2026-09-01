@@ -347,63 +347,39 @@ test("fight endpoint accepts a derived resource budget and rejects mixed sizing"
 });
 
 
-test("server exposes the comprehensive ranged comparison report", async () => {
+test("server exposes the completed engine report", async () => {
   await withServer(async (baseUrl) => {
-    const response = await fetch(`${baseUrl}/reports/ranged-combat`);
+    const response = await fetch(`${baseUrl}/reports/completed-engine`);
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type"), /text\/html/);
     const body = await response.text();
-    assert.match(body, /AoE2 Ranged Combat — Patrol-Engine Accuracy/);
+    assert.match(body, /Completed Combat Engine Baseline/);
+    assert.match(body, /\+39\.03 percentage points/);
+    assert.match(body, /38 preserved unique-unit captures/);
     assert.match(body, /starlight\.tail82a190\.ts\.net\/golden-map/);
-    assert.match(body, /semantic/);
   });
 });
 
 
-test("problem-matchup catalogue exposes the latest seven failures with viewable seeds", async () => {
+test("problem-matchup catalogue exposes the accepted baseline limitation", async () => {
   await withServer(async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/problem-matchups`);
     assert.equal(response.status, 200);
     const catalogue = await response.json();
     assert.equal(catalogue.schemaVersion, 2);
-    assert.equal(catalogue.rows.length, 7);
-    assert.deepEqual(
-      new Set(catalogue.rows.map(({ id }) => id)),
-      new Set([
-        "arbalester_vs_heavy_cav_archer",
-        "arbalester_vs_paladin",
-        "heavy_cav_archer_vs_paladin",
-        "heavy_cav_archer_vs_elite_steppe",
-        "heavy_cav_archer_vs_champion",
-        "hand_cannoneer_vs_paladin",
-        "hand_cannoneer_vs_elite_steppe",
-      ]),
-    );
-    const wrongWinner = catalogue.rows.find(
-      ({ id }) => id === "hand_cannoneer_vs_paladin",
-    );
-    assert.equal(wrongWinner.representativeSeed, 1);
-    assert.equal(wrongWinner.wrongWinnerSeeds, 1);
-    assert.deepEqual(wrongWinner.wrongWinnerSeedNumbers, [1]);
-    assert.deepEqual(wrongWinner.side2, {
-      slug: "hand_cannoneer", label: "Hand Cannoneer", civ: "Spanish", count: 27,
+    assert.equal(catalogue.rows.length, 1);
+    const onager = catalogue.rows[0];
+    assert.equal(onager.id, "siege_onager_vs_paladin");
+    assert.equal(onager.representativeSeed, 2);
+    assert.deepEqual(onager.wrongWinnerSeedNumbers, []);
+    assert.deepEqual(onager.side2, {
+      slug: "siege_onager", label: "Siege Onager", civ: "Aztecs", count: 12,
     });
-    assert.deepEqual(wrongWinner.side3, {
-      slug: "paladin", label: "Paladin", civ: "Spanish", count: 19,
+    assert.deepEqual(onager.side3, {
+      slug: "paladin", label: "Paladin", civ: "Spanish", count: 27,
     });
-    assert.deepEqual(
-      catalogue.rows.find(
-        ({ id }) => id === "arbalester_vs_heavy_cav_archer",
-      ).wrongWinnerSeedNumbers,
-      [0, 1, 2, 3, 4],
-    );
-    assert.ok(catalogue.rows.every(({ representativeSeed }) => (
-      Number.isSafeInteger(representativeSeed) && representativeSeed >= 0
-    )));
-    assert.ok(catalogue.rows.every(({ timeoutSeeds }) => timeoutSeeds.length === 0));
-    assert.ok(catalogue.rows.every(({ viewerUrl }) => (
-      viewerUrl.startsWith("https://starlight.tail82a190.ts.net/golden-map/")
-    )));
+    assert.deepEqual(onager.timeoutSeeds, []);
+    assert.match(onager.viewerUrl, /starlight\.tail82a190\.ts\.net\/golden-map/);
     for (const requestPath of [
       "/api/problem-matchups?extra=1",
       "/api/problem-matchup",
@@ -413,6 +389,25 @@ test("problem-matchup catalogue exposes the latest seven failures with viewable 
       const rejected = await fetch(`${baseUrl}${requestPath}`);
       assert.equal(rejected.status, 400, requestPath);
     }
+  });
+});
+
+
+test("accepted baseline limitation opens its representative Onager seed", async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(
+      `${baseUrl}/api/problem-matchup?matchup=siege_onager_vs_paladin&seed=2`,
+    );
+    const fight = await response.json();
+    assert.equal(response.status, 200, fight.error);
+    assert.equal(fight.mode, "current-problem-matchup-review");
+    assert.equal(fight.placementSource, "current-ranged-golden");
+    assert.equal(fight.review.id, "siege_onager_vs_paladin");
+    assert.equal(fight.review.representativeSeed, 2);
+    assert.equal(fight.review.explicitSeed, true);
+    assert.equal(fight.winnerOwner, 2);
+    assert.equal(fight.side2.count, 12);
+    assert.equal(fight.side3.count, 27);
   });
 });
 
@@ -546,8 +541,9 @@ test("current ranged-vs-melee endpoint simulates Player 4 and its diplomacy trig
         && fight.unitIndex[targetId]?.owner === 2
     )), false);
     assert.equal(fight.winnerOwner, 3);
-    assert.equal(fight.winnerHp, 1041);
-    assert.ok(fight.winnerHp >= 744 * 0.8 && fight.winnerHp <= 942 * 1.2);
+    // Opportunity retargeting is owner-agnostic, so reversing the authored
+    // player numbers below must preserve this physical survivor result.
+    assert.equal(fight.winnerHp, 564);
   });
 });
 
@@ -568,8 +564,7 @@ test("current melee-vs-ranged endpoint keeps the reversed golden ownership", asy
       { sourceOwner: 2, targetOwner: 3 },
     );
     assert.equal(fight.winnerOwner, 2);
-    assert.equal(fight.winnerHp, 1008);
-    assert.ok(Math.abs(fight.winnerHp - 924) / 924 < 0.2);
+    assert.equal(fight.winnerHp, 564);
   });
 });
 

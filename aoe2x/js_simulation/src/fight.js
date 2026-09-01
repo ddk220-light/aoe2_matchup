@@ -214,7 +214,6 @@ export async function runFight(root, {
   aiOrderSweepStartSeconds,
   disableAiOrders,
   rangedTargetPressureOwner,
-  rangedOpportunityRetargetOwner,
   rangedWindupRetargetOwner,
   placementSource,
   displayCivBySide,
@@ -223,6 +222,7 @@ export async function runFight(root, {
   diplomacyByOwner,
   triggers,
   victoryTeams,
+  retainSnapshots = true,
 }) {
   if (kiteNavigation !== undefined) requireSoloNavigationVariant(kiteNavigation);
   if (kiteOwnerOverride !== undefined && kiteOwnerOverride !== 2 && kiteOwnerOverride !== 3) {
@@ -236,6 +236,9 @@ export async function runFight(root, {
   }
   if (typeof preserveOwnerOrientation !== "boolean") {
     throw new TypeError("preserve owner orientation must be boolean");
+  }
+  if (typeof retainSnapshots !== "boolean") {
+    throw new TypeError("retain snapshots must be boolean");
   }
   // Counts are optional: omit BOTH and they come from the purchase rule, so
   // the formula lives in purchase.js and nowhere else. One given without the
@@ -343,13 +346,16 @@ export async function runFight(root, {
     )),
   ];
 
-  const units = roster.map(({ owner, cell, index, mechanics }, rank) => createUnitState({
+  const units = roster.map(({ owner, cell, index, unit, mechanics }, rank) => createUnitState({
     referenceId: REFERENCE_BASE[owner] + index,
     owner,
     x: cell.x,
     y: cell.y,
     facing: 0,
     mechanics,
+    ...(unit.behaviorFamily === undefined
+      ? {}
+      : { behaviorFamily: unit.behaviorFamily }),
     acquisitionRank: rank,
     acquisitionCount: roster.length,
   }));
@@ -378,9 +384,6 @@ export async function runFight(root, {
     ...(triggers === undefined ? {} : { triggers }),
     ...(victoryTeams === undefined ? {} : { victoryTeams }),
     ...(rangedTargetPressureOwner === undefined ? {} : { rangedTargetPressureOwner }),
-    ...(rangedOpportunityRetargetOwner === undefined
-      ? {}
-      : { rangedOpportunityRetargetOwner }),
     ...(rangedWindupRetargetOwner === undefined ? {} : { rangedWindupRetargetOwner }),
     ...(innerKiteOwner === null
       ? {}
@@ -404,7 +407,7 @@ export async function runFight(root, {
     ...(preventiveContactSteering === true
       ? { preventiveContactSteering: true }
       : {}),
-  }), { maxTicks: MAX_TICKS });
+  }), { maxTicks: MAX_TICKS, retainSnapshots });
 
   // Owner relabelling. Reference ids stay exactly as the engine allocated
   // them -- the payload never promises an id block belongs to a side, and the
@@ -427,7 +430,10 @@ export async function runFight(root, {
       maxHp: mechanics.hp,
       master: mechanics.unit_master,
       collisionRadius: mechanics.collision_size_tiles.x,
+      outlineRadius: mechanics.outline_size_tiles.x,
       attackRange: mechanics.attack_range_tiles,
+      minRange: mechanics.ranged?.min_range_tiles ?? 0,
+      speed: mechanics.speed_tiles_per_second,
     });
   }
 
@@ -491,9 +497,6 @@ export async function runFight(root, {
     ...(openingSeed === undefined ? {} : { openingSeed }),
     kiteOwner: innerKiteOwner === null ? null : reportedOwner(innerKiteOwner),
     ...(rangedTargetPressureOwner === undefined ? {} : { rangedTargetPressureOwner }),
-    ...(rangedOpportunityRetargetOwner === undefined
-      ? {}
-      : { rangedOpportunityRetargetOwner }),
     ...(rangedWindupRetargetOwner === undefined ? {} : { rangedWindupRetargetOwner }),
     ticks: result.ticks,
     winnerOwner: reportedOwner(result.winner),
@@ -566,7 +569,10 @@ export async function runSoloRangedMovement(root, {
       maxHp: mechanics.hp,
       master: mechanics.unit_master,
       collisionRadius: mechanics.collision_size_tiles.x,
+      outlineRadius: mechanics.outline_size_tiles.x,
       attackRange: mechanics.attack_range_tiles,
+      minRange: mechanics.ranged?.min_range_tiles ?? 0,
+      speed: mechanics.speed_tiles_per_second,
     });
   }
   return Object.freeze({

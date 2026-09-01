@@ -389,6 +389,7 @@ test("range-one melee can reserve a non-target enemy in its pursuit corridor", (
   assert.equal(contact.pathObstructs, false);
 });
 
+
 test("range-one melee can pass one stopped ally while closing on its target", () => {
   const result = updateContactReservations({
     state: createContactReservationState(),

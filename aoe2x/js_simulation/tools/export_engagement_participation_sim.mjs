@@ -12,14 +12,14 @@ import { unitBySlug } from "../src/unit-registry.js";
 
 
 const ROOT = new URL("../", import.meta.url);
-const MATCHUP_KEY = "arbalester_vs_heavy_cav_archer";
+const DEFAULT_MATCHUP_KEY = "arbalester_vs_heavy_cav_archer";
 const WINDOW_SECONDS = 20;
 const OUTPUT = new URL(
   "../calibration/reports/arbalester_hca_participation_2026-08-30/"
     + "simulation_participation.json",
   import.meta.url,
 );
-const CAPTURE_ROOT = new URL(
+const DEFAULT_CAPTURE_ROOT = new URL(
   "../calibration/live_observations/ranged_matrix_5x_2026-08-29/",
   import.meta.url,
 );
@@ -65,6 +65,7 @@ function stateRows(run, mechanicsBySlug) {
     const priorById = new Map(prior.units.map((unit) => [unit[0], unit]));
     const byId = new Map(snapshot.units.map((unit) => [unit[0], unit]));
     const countsByOwner = {};
+    const targetIdsByOwner = { 2: [], 3: [] };
     for (const owner of [2, 3]) {
       countsByOwner[owner] = {
         alive: 0,
@@ -102,6 +103,7 @@ function stateRows(run, mechanicsBySlug) {
           x: targetRaw[1], y: targetRaw[2],
         }
         : null;
+      if (target) targetIdsByOwner[meta.owner].push(target.referenceId);
       const inReach = target ? withinReach(actor, target, mechanicsBySlug) : false;
       const firing = target && inReach && action === "attacking";
       if (firing) {
@@ -133,6 +135,23 @@ function stateRows(run, mechanicsBySlug) {
         counts[moving ? "untargetedMoving" : "untargetedStationary"] += 1;
       }
     }
+    for (const owner of [2, 3]) {
+      const targetCounts = new Map();
+      for (const targetId of targetIdsByOwner[owner]) {
+        targetCounts.set(targetId, (targetCounts.get(targetId) ?? 0) + 1);
+      }
+      countsByOwner[owner].uniqueTargets = targetCounts.size;
+      countsByOwner[owner].maximumTargetLoad = Math.max(0, ...targetCounts.values());
+      const own = snapshot.units.filter((raw) => (
+        raw[5] === 1 && index[raw[0]]?.owner === owner
+      ));
+      countsByOwner[owner].xSpan = own.length === 0
+        ? 0
+        : Math.max(...own.map((raw) => raw[1])) - Math.min(...own.map((raw) => raw[1]));
+      countsByOwner[owner].ySpan = own.length === 0
+        ? 0
+        : Math.max(...own.map((raw) => raw[2])) - Math.min(...own.map((raw) => raw[2]));
+    }
     rows.push({
       tick: snapshot.tick,
       countsByOwner,
@@ -152,6 +171,9 @@ function pairMetrics(snapshot, index, mechanicsBySlug) {
     let overlapPairs = 0;
     let overlapDepthSum = 0;
     let maxOverlapDepth = 0;
+    let committedCommittedOverlapPairs = 0;
+    let mixedCommittedOverlapPairs = 0;
+    let uncommittedUncommittedOverlapPairs = 0;
     let tripleStacks = 0;
     let fourStacks = 0;
     let maxSharedTripleFraction = 0;
@@ -178,6 +200,11 @@ function pairMetrics(snapshot, index, mechanicsBySlug) {
           maxOverlapDepth = Math.max(maxOverlapDepth, overlapDepth);
           overlapped.add(left[0]);
           overlapped.add(right[0]);
+          const leftCommitted = left[6] === "attacking" || left[6] === "reload";
+          const rightCommitted = right[6] === "attacking" || right[6] === "reload";
+          if (leftCommitted && rightCommitted) committedCommittedOverlapPairs += 1;
+          else if (leftCommitted || rightCommitted) mixedCommittedOverlapPairs += 1;
+          else uncommittedUncommittedOverlapPairs += 1;
         }
       }
     }
@@ -218,6 +245,9 @@ function pairMetrics(snapshot, index, mechanicsBySlug) {
       overlapPairs,
       overlapDepthSum,
       maxOverlapDepth,
+      committedCommittedOverlapPairs,
+      mixedCommittedOverlapPairs,
+      uncommittedUncommittedOverlapPairs,
       tripleStacks,
       fourStacks,
       maxSharedTripleFraction,
@@ -241,6 +271,15 @@ function summarizePairRows(rows, owner) {
     meanOverlappedUnits: round(sum("overlappedUnits") / Math.max(source.length, 1)),
     overlappedUnitShare: round(sum("overlappedUnits") / Math.max(sum("alive"), 1), 6),
     meanOverlapDepth: round(sum("overlapDepthSum") / Math.max(sum("overlapPairs"), 1), 6),
+    meanCommittedCommittedOverlapPairs: round(
+      sum("committedCommittedOverlapPairs") / Math.max(source.length, 1),
+    ),
+    meanMixedCommittedOverlapPairs: round(
+      sum("mixedCommittedOverlapPairs") / Math.max(source.length, 1),
+    ),
+    meanUncommittedUncommittedOverlapPairs: round(
+      sum("uncommittedUncommittedOverlapPairs") / Math.max(source.length, 1),
+    ),
     maxOverlapDepth: round(Math.max(0, ...source.map(({ maxOverlapDepth }) => maxOverlapDepth)), 6),
     meanTripleStacks: round(sum("tripleStacks") / Math.max(source.length, 1)),
     meanFourStacks: round(sum("fourStacks") / Math.max(source.length, 1)),
@@ -320,13 +359,26 @@ function perSecond(run, mechanicsBySlug) {
         && tick >= second * 60 && tick < (second + 1) * 60
         && indexOwner(run, actorId) === owner
       ));
+      const canceled = events.filter(({ type, tick, actorId }) => (
+        type === "attack-canceled"
+        && tick >= second * 60 && tick < (second + 1) * 60
+        && indexOwner(run, actorId) === owner
+      ));
+      const retargeted = events.filter(({ type, tick, actorId }) => (
+        type === "attack-retargeted"
+        && tick >= second * 60 && tick < (second + 1) * 60
+        && indexOwner(run, actorId) === owner
+      ));
       result[owner] = {
         ...metrics,
         ...summarizePairRows(samples, owner),
         shotStarts: attackStarts.length,
         uniqueShotStarters: new Set(attackStarts.map(({ actorId }) => actorId)).size,
         damageHits: damage.length,
+        damageAmount: round(damage.reduce((total, { amount }) => total + amount, 0)),
         uniqueDamageDealers: new Set(damage.map(({ actorId }) => actorId)).size,
+        attackCanceled: canceled.length,
+        attackRetargeted: retargeted.length,
       };
     }
     return result;
@@ -336,6 +388,73 @@ function perSecond(run, mechanicsBySlug) {
 
 function indexOwner(run, referenceId) {
   return run.unitIndex[referenceId]?.owner ?? null;
+}
+
+
+function eventSummary(run) {
+  const events = run.snapshots.flatMap(({ events }) => events);
+  return Object.fromEntries([2, 3].map((owner) => {
+    const owned = (type) => events.filter(({ type: current, actorId }) => (
+      current === type && indexOwner(run, actorId) === owner
+    ));
+    const starts = owned("attack-start");
+    const canceled = owned("attack-canceled");
+    const retargeted = owned("attack-retargeted");
+    const damage = owned("damage");
+    const firstAcquisitionByActor = new Map();
+    const firstAcquisitionSamples = [];
+    for (const acquired of owned("pursuit-acquired")) {
+      if (!firstAcquisitionByActor.has(acquired.actorId)) {
+        firstAcquisitionByActor.set(acquired.actorId, acquired.tick / 60);
+        const snapshot = run.snapshots[acquired.tick];
+        const actor = snapshot?.units.find((raw) => raw[0] === acquired.actorId);
+        const target = snapshot?.units.find((raw) => raw[0] === acquired.targetId);
+        firstAcquisitionSamples.push({
+          actorId: acquired.actorId,
+          targetId: acquired.targetId,
+          second: acquired.tick / 60,
+          centerDistance: actor && target
+            ? round(Math.hypot(target[1] - actor[1], target[2] - actor[2]), 6)
+            : null,
+        });
+      }
+    }
+    const invalidations = owned("pursuit-invalidated")
+      .filter(({ reason }) => reason === "target-dead");
+    const reacquisitionDelays = invalidations.map((lost) => {
+      const acquired = events.find(({ type, actorId, tick }) => (
+        type === "pursuit-acquired"
+        && actorId === lost.actorId
+        && tick >= lost.tick
+      ));
+      return acquired ? (acquired.tick - lost.tick) / 60 : null;
+    }).filter((value) => value !== null);
+    return [owner, {
+      attackStarts: starts.length,
+      attackCanceled: canceled.length,
+      attackCanceledByReason: Object.fromEntries([...new Set(canceled.map(({ reason }) => reason))]
+        .sort().map((reason) => [
+          reason,
+          canceled.filter((event) => event.reason === reason).length,
+        ])),
+      attackRetargeted: retargeted.length,
+      damageHits: damage.length,
+      damageAmount: round(damage.reduce((total, { amount }) => total + amount, 0)),
+      firstAcquisitionSeconds: [...firstAcquisitionByActor.values()]
+        .sort((left, right) => left - right),
+      firstAcquisitionSamples,
+      targetDeathInvalidations: invalidations.length,
+      targetDeathReacquisitions: reacquisitionDelays.length,
+      targetDeathReacquisitionDelaySeconds: reacquisitionDelays.length === 0
+        ? null
+        : {
+          mean: round(reacquisitionDelays.reduce((total, value) => total + value, 0)
+            / reacquisitionDelays.length, 6),
+          maximum: round(Math.max(...reacquisitionDelays), 6),
+          immediate: reacquisitionDelays.filter((value) => value === 0).length,
+        },
+    }];
+  }));
 }
 
 
@@ -356,14 +475,57 @@ function meanRows(runs) {
 
 async function main() {
   const singleRun = process.argv.includes("--single-run");
+  const seedArgument = process.argv.find((value) => value.startsWith("--seed="));
+  const outputArgument = process.argv.find((value) => value.startsWith("--output="));
+  const matchupArgument = process.argv.find((value) => value.startsWith("--matchup="));
+  const captureArgument = process.argv.find((value) => value.startsWith("--capture="));
+  const pressureOwnerArgument = process.argv.find(
+    (value) => value.startsWith("--ranged-target-pressure-owner="),
+  );
+  const windupOwnerArgument = process.argv.find(
+    (value) => value.startsWith("--ranged-windup-retarget-owner="),
+  );
+  const matchupKey = matchupArgument?.slice("--matchup=".length) ?? DEFAULT_MATCHUP_KEY;
+  const captureRoot = captureArgument === undefined
+    ? DEFAULT_CAPTURE_ROOT
+    : pathToFileURL(`${resolve(captureArgument.slice("--capture=".length))}\\`);
+  const rangedTargetPressureOwner = pressureOwnerArgument === undefined
+    ? null
+    : Number(pressureOwnerArgument.slice("--ranged-target-pressure-owner=".length));
+  const rangedWindupRetargetOwner = windupOwnerArgument === undefined
+    ? null
+    : Number(windupOwnerArgument.slice("--ranged-windup-retarget-owner=".length));
+  if (rangedTargetPressureOwner !== null
+      && (!Number.isSafeInteger(rangedTargetPressureOwner)
+        || rangedTargetPressureOwner < 1)) {
+    throw new RangeError("--ranged-target-pressure-owner must be a positive integer");
+  }
+  if (rangedWindupRetargetOwner !== null
+      && (!Number.isSafeInteger(rangedWindupRetargetOwner)
+        || rangedWindupRetargetOwner < 1)) {
+    throw new RangeError("--ranged-windup-retarget-owner must be a positive integer");
+  }
+  const requestedSeed = seedArgument === undefined
+    ? null
+    : Number(seedArgument.slice("--seed=".length));
+  if (requestedSeed !== null
+      && (!Number.isSafeInteger(requestedSeed) || requestedSeed < 0)) {
+    throw new RangeError("--seed must be a nonnegative integer");
+  }
+  const openingSeeds = requestedSeed === null
+    ? (singleRun ? [0] : [0, 1, 2, 3, 4])
+    : [requestedSeed];
+  const outputPath = outputArgument === undefined
+    ? fileURLToPath(OUTPUT)
+    : resolve(outputArgument.slice("--output=".length));
   const [capture, formations, mapFixture] = await Promise.all([
-    readFile(new URL("capture_manifest.json", CAPTURE_ROOT), "utf8").then(JSON.parse),
+    readFile(new URL("capture_manifest.json", captureRoot), "utf8").then(JSON.parse),
     readFile(new URL("../fixtures/current_ranged_golden_formations.json", import.meta.url), "utf8")
       .then(JSON.parse),
     readFile(new URL("../fixtures/golden_map.json", import.meta.url), "utf8").then(JSON.parse),
   ]);
-  const matchup = capture.matchups[MATCHUP_KEY];
-  if (!matchup) throw new Error(`missing ${MATCHUP_KEY} in capture manifest`);
+  const matchup = capture.matchups[matchupKey];
+  if (!matchup) throw new Error(`missing ${matchupKey} in capture manifest`);
   const side2 = unitBySlug(matchup.side1.slug);
   const side3 = unitBySlug(matchup.side2.slug);
   const [mechanics2, mechanics3] = await Promise.all([
@@ -377,13 +539,45 @@ async function main() {
     [side3.slug, slugMechanics(side3, mechanics3)],
   ]);
   const formation = formations.families[matchup.family];
+  const auxiliaryUnit = formation.sides["4"]?.length
+    ? {
+      slug: "scout_cavalry",
+      fixture: "scout_cavalry_spanish_imperial.json",
+    }
+    : null;
+  if (auxiliaryUnit !== null) {
+    const auxiliaryMechanics = JSON.parse(await readFile(new URL(
+      `../fixtures/unit_stats/${auxiliaryUnit.fixture}`,
+      import.meta.url,
+    ), "utf8"));
+    mechanicsBySlug.set(
+      auxiliaryUnit.slug,
+      slugMechanics(auxiliaryUnit, auxiliaryMechanics),
+    );
+  }
   const placementByOwner = {
     2: formation.sides["2"].map(({ position }) => ({ x: position.x, y: position.y })),
     3: formation.sides["3"].map(({ position }) => ({ x: position.x, y: position.y })),
   };
+  const auxiliaryArmiesByOwner = formation.sides["4"]?.length
+    ? {
+      4: {
+        slug: auxiliaryUnit.slug,
+        cells: formation.sides["4"].map(({ position }) => ({
+          x: position.x,
+          y: position.y,
+        })),
+      },
+    }
+    : undefined;
+  const victoryTeams = matchup.family === "ranged_vs_melee"
+    ? [{ winnerOwner: 2, owners: [2, 4] }, { winnerOwner: 3, owners: [3] }]
+    : matchup.family === "melee_vs_ranged"
+      ? [{ winnerOwner: 2, owners: [2] }, { winnerOwner: 3, owners: [3, 4] }]
+      : undefined;
   const map = buildArenaPhysicsMap(mapFixture);
   const runs = [];
-  for (const openingSeed of (singleRun ? [0] : [0, 1, 2, 3, 4])) {
+  for (const openingSeed of openingSeeds) {
     const run = await runFight(pathToFileURL(fileURLToPath(ROOT)), {
       side2Slug: side2.slug,
       n2: matchup.side1.count,
@@ -391,12 +585,20 @@ async function main() {
       n3: matchup.side2.count,
       map,
       placementByOwner,
+      ...(auxiliaryArmiesByOwner === undefined ? {} : { auxiliaryArmiesByOwner }),
       diplomacyByOwner: formation.initial_diplomacy,
       triggers: formation.triggers,
+      ...(victoryTeams === undefined ? {} : { victoryTeams }),
       preserveOwnerOrientation: true,
       disableAiOrders: true,
       disableKiting: true,
       openingSeed,
+      ...(rangedTargetPressureOwner === null
+        ? {}
+        : { rangedTargetPressureOwner }),
+      ...(rangedWindupRetargetOwner === null
+        ? {}
+        : { rangedWindupRetargetOwner }),
     });
     runs.push({
       openingSeed,
@@ -404,6 +606,7 @@ async function main() {
       winnerHp: run.winnerHp,
       ticks: run.ticks,
       attackStartRanges: attackStartRanges(run, mechanicsBySlug),
+      eventSummary: eventSummary(run),
       perSecond: perSecond(run, mechanicsBySlug),
     });
   }
@@ -411,7 +614,7 @@ async function main() {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     matchup: {
-      key: MATCHUP_KEY,
+      key: matchupKey,
       side2: { slug: side2.slug, civilization: matchup.side1.civ, count: matchup.side1.count },
       side3: { slug: side3.slug, civilization: matchup.side2.civ, count: matchup.side2.count },
     },
@@ -427,17 +630,23 @@ async function main() {
       engagementRange: "center and outline-edge distance at each attack-start event; nominalHeadroom is DAT range minus edge distance",
     },
     sources: {
-      captureManifest: fileURLToPath(new URL("capture_manifest.json", CAPTURE_ROOT)),
+      captureManifest: fileURLToPath(new URL("capture_manifest.json", captureRoot)),
       formationFixture: fileURLToPath(new URL("../fixtures/current_ranged_golden_formations.json", import.meta.url)),
       mapFixture: fileURLToPath(new URL("../fixtures/golden_map.json", import.meta.url)),
       engine: fileURLToPath(new URL("../src/fight.js", import.meta.url)),
     },
+    config: {
+      openingSeeds,
+      rangedTargetPressureOwner,
+      rangedOpportunityRetargeting: "generic-in-range-opportunity",
+      rangedWindupRetargetOwner,
+    },
     runs,
     meanPerSecond: meanRows(runs),
   };
-  await mkdir(dirname(fileURLToPath(OUTPUT)), { recursive: true });
-  await writeFile(OUTPUT, `${JSON.stringify(output, null, 2)}\n`, "utf8");
-  process.stdout.write(`${fileURLToPath(OUTPUT)}\n`);
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, `${JSON.stringify(output, null, 2)}\n`, "utf8");
+  process.stdout.write(`${outputPath}\n`);
 }
 
 

@@ -24,13 +24,13 @@ function argument(name) {
 }
 
 
-async function runWorker(key, outputRoot) {
+async function runWorker(key, outputRoot, seedCount) {
   const output = resolve(outputRoot, "runs", key);
   await mkdir(output, { recursive: true });
   await new Promise((resolvePromise, rejectPromise) => {
     const child = spawn(process.execPath, [
       RUNNER,
-      "--five-seeds",
+      `--seed-count=${seedCount}`,
       `--matchup=${key}`,
       `--output=${output}`,
     ], { stdio: ["ignore", "pipe", "pipe"] });
@@ -74,21 +74,27 @@ function mean(values) {
 
 const outputRoot = resolve(argument("output") ?? DEFAULT_OUTPUT);
 const concurrency = Number.parseInt(argument("concurrency") ?? "4", 10);
+const seedCount = Number.parseInt(argument("seed-count") ?? "5", 10);
 const keys = argument("matchups")?.split(",").filter(Boolean) ?? DEFAULT_KEYS;
 if (!Number.isSafeInteger(concurrency) || concurrency < 1) {
   throw new RangeError("concurrency must be a positive integer");
 }
+if (!Number.isSafeInteger(seedCount) || seedCount < 1) {
+  throw new RangeError("seed-count must be a positive integer");
+}
 await mkdir(outputRoot, { recursive: true });
-const reports = await mapLimit(keys, concurrency, (key) => runWorker(key, outputRoot));
+const reports = await mapLimit(
+  keys, concurrency, (key) => runWorker(key, outputRoot, seedCount),
+);
 const rows = reports.flatMap(({ rows }) => rows);
 const resolved = rows.filter(({ simulation }) => Number.isFinite(simulation.score));
 const report = {
   ...reports[0],
-  lane: "ranged_crowding_seven_previous_failures_five_seeds",
+  lane: "ranged_crowding_selected_previous_failures_multi_seed",
   generatedAt: new Date().toISOString(),
   execution: {
     processConcurrency: concurrency,
-    seedsPerMatchup: [0, 1, 2, 3, 4],
+    seedsPerMatchup: Array.from({ length: seedCount }, (_, seed) => seed),
     selectedMatchups: keys,
   },
   summary: {

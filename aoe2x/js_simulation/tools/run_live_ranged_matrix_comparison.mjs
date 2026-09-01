@@ -15,6 +15,10 @@ const CAPTURE_ROOT = new URL(
   "../calibration/live_observations/ranged_matrix_5x_2026-08-29/",
   import.meta.url,
 );
+const FRESH_CAPTURE_ROOT = new URL(
+  "../calibration/live_observations/remaining_six_fresh_5x_2026-08-31/",
+  import.meta.url,
+);
 const DEFAULT_OUTPUT = new URL(
   "../calibration/reports/ranged_matrix_current_engine_2026-08-29/",
   import.meta.url,
@@ -62,6 +66,25 @@ async function loadMechanics(unit) {
 function score(owner, hp, startingHp) {
   const magnitude = 100 * hp / startingHp[owner];
   return owner === 2 ? -magnitude : magnitude;
+}
+
+
+function loadSummary(targetIds) {
+  const counts = new Map();
+  for (const targetId of targetIds) {
+    counts.set(targetId, (counts.get(targetId) ?? 0) + 1);
+  }
+  const histogram = new Map();
+  for (const load of counts.values()) {
+    histogram.set(load, (histogram.get(load) ?? 0) + 1);
+  }
+  return {
+    actors: targetIds.length,
+    uniqueTargets: counts.size,
+    maximumLoad: Math.max(0, ...counts.values()),
+    loadHistogram: Object.fromEntries([...histogram].sort((left, right) => left[0] - right[0])),
+    targetCounts: Object.fromEntries([...counts].sort((left, right) => left[0] - right[0])),
+  };
 }
 
 
@@ -124,6 +147,34 @@ function simulationMechanics(run) {
       amount: rows.reduce((total, { amount }) => total + amount, 0),
     }];
   }));
+  const totalDamageByOwnerAndTargetOwner = Object.fromEntries([2, 3, 4].map((owner) => [
+    owner,
+    Object.fromEntries([2, 3, 4]
+      .filter((targetOwner) => targetOwner !== owner)
+      .map((targetOwner) => {
+        const rows = damage.filter(({ actorId, targetId }) => (
+          ownerOf(actorId) === owner && ownerOf(targetId) === targetOwner
+        ));
+        return [targetOwner, {
+          hits: rows.length,
+          amount: rows.reduce((total, { amount }) => total + amount, 0),
+        }];
+      })),
+  ]));
+  const attackStartDistanceByOwnerAndTargetOwner = Object.fromEntries(
+    [2, 3, 4].map((owner) => [
+      owner,
+      Object.fromEntries([2, 3, 4]
+        .filter((targetOwner) => targetOwner !== owner)
+        .map((targetOwner) => {
+          const distances = events.filter(({ type, actorId, targetId }) => (
+            type === "attack-start"
+              && ownerOf(actorId) === owner && ownerOf(targetId) === targetOwner
+          )).map((current) => eventDistance(snapshotByTick, current)).filter(Number.isFinite);
+          return [targetOwner, nullableSummary(distances)];
+        })),
+    ]),
+  );
   const firstDeathSecondsByOwner = Object.fromEntries([2, 3, 4].map((owner) => {
     const first = events.find(({ type, targetId }) => (
       type === "death" && ownerOf(targetId) === owner
@@ -205,6 +256,45 @@ function simulationMechanics(run) {
         hp: rows.reduce((total, [, , , , hp]) => total + hp, 0),
       }];
     }));
+  const targetLoadPerSecond = [];
+  for (let tick = 0; tick <= run.ticks; tick += 60) {
+    const snapshot = snapshotByTick.get(tick);
+    if (!snapshot) continue;
+    const byId = new Map(snapshot.units.map((row) => [row[0], row]));
+    const byOwner = Object.fromEntries([2, 3].map((owner) => {
+      const assigned = [];
+      const attacking = [];
+      const active = [];
+      const aliveRows = snapshot.units.filter(([referenceId, , , , , alive]) => (
+        alive === 1 && ownerOf(referenceId) === owner
+      ));
+      for (const [referenceId, , , , , alive, action,
+        pursuitTargetId, engagedTargetId, attackTargetId] of snapshot.units) {
+        if (alive !== 1 || ownerOf(referenceId) !== owner) continue;
+        const targetId = attackTargetId ?? engagedTargetId ?? pursuitTargetId;
+        const target = byId.get(targetId);
+        if (!target || target[5] !== 1 || ownerOf(targetId) === owner) continue;
+        assigned.push(targetId);
+        if (action === "attacking") attacking.push(targetId);
+        if (action === "attacking" || action === "reload") active.push(targetId);
+      }
+      return [owner, {
+        assigned: loadSummary(assigned),
+        attacking: loadSummary(attacking),
+        active: loadSummary(active),
+        geometry: aliveRows.length === 0 ? null : {
+          alive: aliveRows.length,
+          meanX: mean(aliveRows.map(([, x]) => x)),
+          meanY: mean(aliveRows.map(([, , y]) => y)),
+          minX: Math.min(...aliveRows.map(([, x]) => x)),
+          maxX: Math.max(...aliveRows.map(([, x]) => x)),
+          minY: Math.min(...aliveRows.map(([, , y]) => y)),
+          maxY: Math.max(...aliveRows.map(([, , y]) => y)),
+        },
+      }];
+    }));
+    targetLoadPerSecond.push({ tick, second: tick / 60, byOwner });
+  }
   return {
     firstTargetDistributionByOwner,
     firstDamageSeconds: firstDamageTick === null ? null : firstDamageTick / 60,
@@ -217,8 +307,11 @@ function simulationMechanics(run) {
     firstDeathSecondsByOwner,
     totalAttacksByOwner,
     totalDamageByOwner,
+    totalDamageByOwnerAndTargetOwner,
+    attackStartDistanceByOwnerAndTargetOwner,
     player4DefeatSeconds: player4DefeatTick === null ? null : player4DefeatTick / 60,
     stateByOwnerAtPlayer4Defeat,
+    targetLoadPerSecond,
   };
 }
 
@@ -232,22 +325,37 @@ export async function runComparison({
       || openingSeeds.some((seed) => !Number.isSafeInteger(seed) || seed < 0)) {
     throw new RangeError("opening seeds must be a nonempty array of nonnegative integers");
   }
-  const [capture, grpcAnalysis, formations, mapFixture] = await Promise.all([
+  const [capture, grpcAnalysis, freshCapture, freshGateAnalysis,
+    formations, mapFixture] = await Promise.all([
     readFile(new URL("capture_manifest.json", CAPTURE_ROOT), "utf8").then(JSON.parse),
     readFile(new URL("grpc_matrix_analysis.json", CAPTURE_ROOT), "utf8").then(JSON.parse),
+    readFile(new URL("capture_manifest.json", FRESH_CAPTURE_ROOT), "utf8").then(JSON.parse),
+    readFile(new URL("grpc_player4_gate_analysis.json", FRESH_CAPTURE_ROOT), "utf8")
+      .then(JSON.parse),
     readFile(new URL("../fixtures/current_ranged_golden_formations.json", import.meta.url), "utf8").then(JSON.parse),
     readFile(new URL("../fixtures/golden_map.json", import.meta.url), "utf8").then(JSON.parse),
   ]);
   if (capture.completed_runs !== 70) {
     throw new Error(`ranged capture matrix is incomplete: ${capture.completed_runs ?? 0}/70`);
   }
+  if (freshCapture.completed_runs !== 30) {
+    throw new Error(
+      `fresh remaining-six capture is incomplete: ${freshCapture.completed_runs ?? 0}/30`,
+    );
+  }
   const map = buildArenaPhysicsMap(mapFixture);
   const rows = [];
   const selectedKeys = matchupKeys ?? capture.matchup_keys;
   for (const key of selectedKeys) {
     if (!capture.matchup_keys.includes(key)) throw new RangeError(`unknown matchup key ${key}`);
-    const matchup = capture.matchups[key];
-    const runs = capture.runs[key].toSorted((left, right) => left.repeat - right.repeat);
+    const usesFreshCapture = freshCapture.matchup_keys.includes(key);
+    const selectedCapture = usesFreshCapture ? freshCapture : capture;
+    const selectedCaptureRoot = usesFreshCapture
+      ? "calibration/live_observations/remaining_six_fresh_5x_2026-08-31"
+      : "calibration/live_observations/ranged_matrix_5x_2026-08-29";
+    const matchup = selectedCapture.matchups[key];
+    const runs = selectedCapture.runs[key]
+      .toSorted((left, right) => left.repeat - right.repeat);
     if (runs.length !== 5) throw new Error(`${key} does not have five repeats`);
     const side2 = unitBySlug(matchup.side1.slug);
     const side3 = unitBySlug(matchup.side2.slug);
@@ -361,11 +469,18 @@ export async function runComparison({
       side3: { slug: side3.slug, civ: matchup.side2.civ, count: count3 },
       tape: {
         ...tape,
+        sourceCaptureManifest: `${selectedCaptureRoot}/capture_manifest.json`,
+        sources: runs.map(({ repeat }) => ({
+          repeat,
+          framesBin: `${selectedCaptureRoot}/${key}/run_${String(repeat).padStart(3, "0")}`
+            + `/raw recordings/${key}.frames.bin`,
+        })),
         winnerOwners: runs.map(({ capture: observed }) => observed.winner === side2.slug ? 2 : 3),
         survivorCounts: runs.map(({ capture: observed }) => observed.survivors),
         winnerHp: runs.map(({ capture: observed }) => observed.winner_hp),
         eliminationSeconds: runs.map(({ capture: observed }) => observed.elimination_time_s),
-        grpcOpening: grpcAnalysis.matchups[key]?.summary ?? null,
+        grpcOpening: (usesFreshCapture ? freshGateAnalysis : grpcAnalysis)
+          .matchups[key]?.summary ?? null,
       },
       simulation: simulationScore === null ? { runs: simulationRuns } : {
         runs: simulationRuns,
@@ -386,7 +501,11 @@ export async function runComparison({
     schemaVersion: 1,
     lane: "current_ranged_goldens_exact_first_n",
     source: {
-      captureManifest: "calibration/live_observations/ranged_matrix_5x_2026-08-29/capture_manifest.json",
+      captureManifests: [
+        "calibration/live_observations/ranged_matrix_5x_2026-08-29/capture_manifest.json",
+        "calibration/live_observations/remaining_six_fresh_5x_2026-08-31/capture_manifest.json",
+      ],
+      sourceSelection: "latest relevant five-run capture overrides the older matrix",
       formationFixture: "fixtures/current_ranged_golden_formations.json",
       mapFixture: "fixtures/golden_map.json",
     },
@@ -430,13 +549,20 @@ function resolveOutput(directory, filename) {
 if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
   const matchupArgument = process.argv.find((value) => value.startsWith("--matchup="));
   const outputArgument = process.argv.find((value) => value.startsWith("--output="));
+  const seedCountArgument = process.argv.find((value) => value.startsWith("--seed-count="));
+  const seedCount = seedCountArgument
+    ? Number.parseInt(seedCountArgument.slice("--seed-count=".length), 10)
+    : process.argv.includes("--five-seeds") ? 5 : 1;
+  if (!Number.isSafeInteger(seedCount) || seedCount < 1) {
+    throw new RangeError("--seed-count must be a positive integer");
+  }
   const report = await runComparison({
     outputDirectory: outputArgument
       ? resolve(outputArgument.slice("--output=".length))
       : matchupArgument
         ? new URL("../calibration/reports/ranged_matrix_mechanics_probe_2026-08-29/", import.meta.url)
         : DEFAULT_OUTPUT,
-    openingSeeds: process.argv.includes("--five-seeds") ? [0, 1, 2, 3, 4] : [0],
+    openingSeeds: Array.from({ length: seedCount }, (_, seed) => seed),
     matchupKeys: matchupArgument ? [matchupArgument.slice("--matchup=".length)] : null,
   });
   process.stdout.write(`${JSON.stringify(report.summary)}\n`);

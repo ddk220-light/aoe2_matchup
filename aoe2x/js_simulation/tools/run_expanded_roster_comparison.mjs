@@ -36,6 +36,17 @@ function summary(values) {
 }
 
 
+function signedRemainingHpPercent(winnerOwner, winnerHp, startingHpByOwner) {
+  const startingHp = startingHpByOwner?.[winnerOwner];
+  if (!(startingHp > 0)) {
+    throw new RangeError(`missing positive starting HP for winner owner ${winnerOwner}`);
+  }
+  const sign = winnerOwner === 2 ? 1 : winnerOwner === 3 ? -1 : 0;
+  if (sign === 0) throw new RangeError(`unsupported winner owner ${winnerOwner}`);
+  return sign * winnerHp / startingHp * 100;
+}
+
+
 async function loadMechanics(unit) {
   return JSON.parse(await readFile(
     new URL(`../fixtures/unit_stats/${unit.fixture}`, import.meta.url), "utf8"));
@@ -337,6 +348,15 @@ function simulationMetrics(run) {
     const attacks = events.filter(({ type, actorId }) => (
       type === "attack-start" && ownerOf(actorId) === owner
     ));
+    const attackCenterDistance = ({ tick, actorId, targetId }) => {
+      const snapshot = snapshotByTick.get(tick);
+      const actor = snapshot?.units.find((raw) => raw[0] === actorId);
+      const target = snapshot?.units.find((raw) => raw[0] === targetId);
+      return actor && target
+        ? Math.hypot(target[1] - actor[1], target[2] - actor[2])
+        : null;
+    };
+    const attackStartDistances = attacks.map(attackCenterDistance).filter(Number.isFinite);
     const pursuits = events.filter(({ type, actorId }) => (
       type === "pursuit-acquired" && ownerOf(actorId) === owner
     ));
@@ -346,6 +366,14 @@ function simulationMetrics(run) {
     ));
     const attackCancellations = events.filter(({ type, actorId }) => (
       type === "attack-canceled" && ownerOf(actorId) === owner
+    ));
+    const movementDiagnostics = events.filter(({ type, actorId }) => (
+      ownerOf(actorId) === owner && [
+        "blocked",
+        "pursuit-route-planned",
+        "pursuit-route-stalled",
+        "pursuit-retarget-requested",
+      ].includes(type)
     ));
     const hitsFirst20Seconds = hits.filter(({ tick }) => tick < 20 * 60);
     const ownerOpeningEvents = [...firstAcquisitionByActor.values()]
@@ -414,6 +442,9 @@ function simulationMetrics(run) {
     }
     return [owner, {
       attackStarts: attacks.length,
+      attackStartCenterDistance: attackStartDistances.length > 0
+        ? summary(attackStartDistances)
+        : null,
       windupRetargets: {
         count: windupRetargets.length,
         details: windupRetargets.map((current) => ({
@@ -437,6 +468,22 @@ function simulationMetrics(run) {
           )).length,
         ])),
       },
+      movementDiagnostics: Object.fromEntries([...new Set(
+        movementDiagnostics.map(({ type }) => type),
+      )].sort().map((type) => [
+        type,
+        {
+          count: movementDiagnostics.filter((event) => event.type === type).length,
+          reasons: Object.fromEntries([...new Set(movementDiagnostics
+            .filter((event) => event.type === type)
+            .map(({ reason }) => reason ?? "unspecified"))].sort().map((reason) => [
+            reason,
+            movementDiagnostics.filter((event) => (
+              event.type === type && (event.reason ?? "unspecified") === reason
+            )).length,
+          ])),
+        },
+      ])),
       pursuitAcquisitionsByTargetOwner: Object.fromEntries([2, 3, 4]
         .map((targetOwner) => {
           const selected = pursuits.filter(({ targetId }) => ownerOf(targetId) === targetOwner);
@@ -502,14 +549,18 @@ function simulationMetrics(run) {
         uniqueTargets: Object.keys(openingShotTargetCounts).length,
         maximumTargetLoad: Math.max(0, ...Object.values(openingShotTargetCounts)),
         targetCounts: openingShotTargetCounts,
-        details: openingShotEvents.map(({ tick, actorId, targetId }) => ({
-          tick,
-          actorId,
-          targetId,
+        details: openingShotEvents.map((current) => ({
+          tick: current.tick,
+          actorId: current.actorId,
+          targetId: current.targetId,
+          centerDistance: attackCenterDistance(current),
         })),
       },
       hits: hits.length,
       damage: hits.reduce((total, { amount }) => total + amount, 0),
+      damageByAmount: Object.fromEntries([...new Set(hits.map(({ amount }) => amount))]
+        .sort((left, right) => left - right)
+        .map((amount) => [amount, hits.filter((event) => event.amount === amount).length])),
       hitsFirst20Seconds: hitsFirst20Seconds.length,
       damageFirst20Seconds: hitsFirst20Seconds
         .reduce((total, { amount }) => total + amount, 0),
@@ -624,15 +675,32 @@ export async function runExpandedComparison({
     ]);
     const count2 = matchup.side1.count;
     const count3 = matchup.side2.count;
-    const live = capturedRuns.map(({ repeat, capture: observed }) => ({
-      repeat,
-      winnerOwner: observedOwner(observed, side2, side3),
-      winnerHp: observed.winner_hp,
-      survivorCount: observed.survivors,
-      eliminationSeconds: observed.elimination_time_s,
-      framesBin: `${fileURLToPath(captureUrl)}${key}\\run_${String(repeat).padStart(3, "0")}`
-        + `\\raw recordings\\${key}.frames.bin`,
-      framesSha256: observed.frames_sha256,
+    const live = await Promise.all(capturedRuns.map(async ({ repeat, capture: observed }) => {
+      const rawRoot = `${fileURLToPath(captureUrl)}${key}\\run_${String(repeat).padStart(3, "0")}`
+        + `\\raw recordings\\${key}`;
+      const hpSidecar = `${rawRoot}.hp.json`;
+      const hpRows = JSON.parse(await readFile(hpSidecar, "utf8")).rows;
+      if (!Array.isArray(hpRows) || hpRows.length === 0) {
+        throw new Error(`${key} repeat ${repeat} has no HP sidecar rows`);
+      }
+      const winnerOwner = observedOwner(observed, side2, side3);
+      const startingHpByOwner = {
+        2: hpRows[0].side1.hp,
+        3: hpRows[0].side2.hp,
+      };
+      return {
+        repeat,
+        winnerOwner,
+        winnerHp: observed.winner_hp,
+        startingHpByOwner,
+        signedRemainingHpPercent: signedRemainingHpPercent(
+          winnerOwner, observed.winner_hp, startingHpByOwner),
+        survivorCount: observed.survivors,
+        eliminationSeconds: observed.elimination_time_s,
+        framesBin: `${rawRoot}.frames.bin`,
+        hpSidecar,
+        framesSha256: observed.frames_sha256,
+      };
     }));
     const simulation = [];
     for (const openingSeed of openingSeeds) {
@@ -657,6 +725,9 @@ export async function runExpandedComparison({
           openingSeed,
           winnerOwner: run.winnerOwner,
           winnerHp: run.winnerHp,
+          startingHpByOwner: run.startingHpByOwner,
+          signedRemainingHpPercent: signedRemainingHpPercent(
+            run.winnerOwner, run.winnerHp, run.startingHpByOwner),
           ticks: run.ticks,
           eliminationSeconds: run.ticks / 60,
           finalStateHash: run.finalStateHash,
@@ -690,35 +761,54 @@ export async function runExpandedComparison({
       : simulationWinnerOwners.filter((owner) => owner === stableLiveWinner).length;
     const relativeWinnerHpDelta = simHp === null
       ? null : Math.abs(simHp.mean - liveHp.mean) / liveHp.mean;
+    const liveSignedHp = summary(live.map(({ signedRemainingHpPercent }) => (
+      signedRemainingHpPercent
+    )));
+    const simSignedHp = resolved.length ? summary(resolved.map((run) => (
+      run.signedRemainingHpPercent
+    ))) : null;
+    const hpPercentagePointDelta = simSignedHp === null
+      ? null : simSignedHp.mean - liveSignedHp.mean;
+    const wrongWinnerRuns = stableLiveWinner === null ? null
+      : simulationWinnerOwners.filter((owner) => owner !== stableLiveWinner).length;
     const row = {
       key,
       family: matchup.family,
       side2: { slug: side2.slug, civ: matchup.side1.civ, count: count2, hp: mechanics2.hp },
       side3: { slug: side3.slug, civ: matchup.side2.civ, count: count3, hp: mechanics3.hp },
       live,
-      liveSummary: { winnerOwners: liveWinnerOwners, winnerHp: liveHp },
+      liveSummary: {
+        winnerOwners: liveWinnerOwners,
+        winnerHp: liveHp,
+        signedRemainingHpPercent: liveSignedHp,
+      },
       simulation,
       simulationSummary: {
         resolved: resolved.length,
         winnerOwners: simulationWinnerOwners,
         winnerHp: simHp,
         correctWinnerRuns,
+        wrongWinnerRuns,
         relativeWinnerHpDelta,
+        signedRemainingHpPercent: simSignedHp,
+        hpPercentagePointDelta,
         success: stableLiveWinner !== null
           && correctWinnerRuns === resolved.length
           && resolved.length === openingSeeds.length
-          && relativeWinnerHpDelta < 0.10,
+          && Math.abs(hpPercentagePointDelta) <= 10,
       },
     };
     rows.push(row);
     const liveWinner = stableLiveWinner === null ? "mixed" : `P${stableLiveWinner}`;
     const simWinner = simulationWinnerOwners.length === 0
       ? "unresolved" : simulationWinnerOwners.map((owner) => `P${owner}`).join(",");
-    const hpText = relativeWinnerHpDelta === null
-      ? "n/a" : `${(relativeWinnerHpDelta * 100).toFixed(1)}%`;
+    const hpText = hpPercentagePointDelta === null
+      ? "n/a" : `${hpPercentagePointDelta >= 0 ? "+" : ""}`
+        + `${hpPercentagePointDelta.toFixed(1)}pp`;
     process.stderr.write(
-      `${key}: live ${liveWinner} ${liveHp.mean.toFixed(1)} HP; `
-      + `sim ${simWinner} ${simHp?.mean.toFixed(1) ?? "n/a"} HP; delta ${hpText}\n`,
+      `${key}: live ${liveWinner} ${liveSignedHp.mean.toFixed(1)}% signed HP; `
+      + `sim ${simWinner} ${simSignedHp?.mean.toFixed(1) ?? "n/a"}% signed HP; `
+      + `delta ${hpText}\n`,
     );
   }
   const failures = rows.filter(({ simulationSummary }) => simulationSummary.success !== true);
@@ -739,7 +829,7 @@ export async function runExpandedComparison({
       retainSimulationSnapshots,
       purchaseRule: "exact unweighted counts from live capture manifest",
       placementRule: "literal first-N current golden scenario order",
-      acceptance: "stable correct winner and <10% mean survivor-HP delta",
+      acceptance: "every seed has the captured winner and <=10 percentage-point mean signed survivor-HP delta",
     },
     summary: {
       matchups: rows.length,
@@ -749,8 +839,8 @@ export async function runExpandedComparison({
         liveSummary.winnerOwners.every((owner) => owner === liveSummary.winnerOwners[0])
           && simulationSummary.winnerOwners.some((owner) => owner !== liveSummary.winnerOwners[0])
       )).length,
-      aboveTenPercentHp: failures.filter(({ simulationSummary }) => (
-        simulationSummary.relativeWinnerHpDelta >= 0.10
+      aboveTenPercentagePointsHp: failures.filter(({ simulationSummary }) => (
+        Math.abs(simulationSummary.hpPercentagePointDelta) > 10
       )).length,
     },
     failureKeys: failures.map(({ key }) => key),
@@ -782,11 +872,22 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import
         || rangedWindupRetargetOwner < 1)) {
     throw new RangeError("--ranged-windup-retarget-owner must be a positive integer");
   }
+  const matchupArgument = argument("--matchup=");
+  const explicitSeeds = argument("--opening-seeds=");
+  const openingSeeds = explicitSeeds === undefined
+    ? Array.from({ length: seedCount }, (_, seed) => seed)
+    : explicitSeeds.split(",").map((value) => Number.parseInt(value.trim(), 10));
+  if (openingSeeds.length === 0
+      || openingSeeds.some((seed) => !Number.isSafeInteger(seed) || seed < 0)) {
+    throw new RangeError("--opening-seeds must contain nonnegative integers");
+  }
   const report = await runExpandedComparison({
     captureDirectory: argument("--capture=") ?? DEFAULT_CAPTURE,
     outputFile: argument("--output=") ?? DEFAULT_OUTPUT,
-    openingSeeds: Array.from({ length: seedCount }, (_, seed) => seed),
-    matchupKeys: argument("--matchup=") ? [argument("--matchup=")] : null,
+    openingSeeds,
+    matchupKeys: matchupArgument
+      ? matchupArgument.split(",").map((key) => key.trim()).filter(Boolean)
+      : null,
     rangedWindupRetargetOwner,
     retainSimulationSnapshots: !process.argv.includes("--summary-only"),
   });

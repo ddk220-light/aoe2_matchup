@@ -1,0 +1,203 @@
+{
+  "age": "Imperial",
+  "armor_classes": {
+    "19": 0,
+    "20": 0,
+    "3": 9,
+    "31": 0,
+    "37": 0,
+    "4": 3,
+    "8": 0
+  },
+  "attack_animation": {
+    "frame_duration_seconds": 0.0833333358168602,
+    "frames": 30,
+    "graphic": 12976,
+    "seconds": 2.500000074505806
+  },
+  "attack_classes": {
+    "11": 2,
+    "21": 0,
+    "27": 0,
+    "3": 9,
+    "31": 0,
+    "39": -3
+  },
+  "attack_delay_seconds": 0.2500000074505806,
+  "attack_graphic": 12976,
+  "attack_range_tiles": 7.0,
+  "blast": {
+    "attack_level": 3,
+    "damage_fraction": 1.0,
+    "defense_level": 3,
+    "friendly_fire_damage": 1.0,
+    "width_tiles": 0.0
+  },
+  "charge": null,
+  "civilization": "Shu",
+  "clearance_size_tiles": {
+    "x": 0.5,
+    "y": 0.5
+  },
+  "collision_size_tiles": {
+    "x": 0.5,
+    "y": 0.5,
+    "z": 2.0
+  },
+  "damage_reduction_by_attacker_category": null,
+  "derived": {
+    "damage_vs_self": 1
+  },
+  "effects": {
+    "base_accuracy": 100.0,
+    "extra_projectiles": 6,
+    "pass_through_count": 3,
+    "pass_through_percent": 0.5,
+    "splash_on_hit_fraction": 1.0
+  },
+  "frame_delay": 3,
+  "hp": 65,
+  "idle_animation": {
+    "frame_duration_seconds": 0.05000000074505806,
+    "frames": 60,
+    "graphic": 12978,
+    "seconds": 3.0000000447034836
+  },
+  "line_of_sight_tiles": 9.0,
+  "min_collision_size_multiplier": 1.0,
+  "mode_validation": {
+    "live_frames_bin": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\live_observations\\requested_roster_vs_arb_paladin_1x_2026-08-31\\war_chariot_shu_vs_arbalester\\run_001\\raw recordings\\war_chariot_shu_vs_arbalester.frames.bin",
+    "run": 1
+  },
+  "movement_blocks": {
+    "fly_mode": 0,
+    "hill_mode": 0,
+    "terrain_restriction": 20
+  },
+  "obstruction": {
+    "class": 2,
+    "type": 5
+  },
+  "outline_size_tiles": {
+    "x": 0.8,
+    "y": 0.8,
+    "z": 2.0
+  },
+  "population_space": 1.0,
+  "provenance": {
+    "dat_selector": "dat.civs[name='Shu'].units[1962]",
+    "dat_sha256": "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF",
+    "fields": {
+      "age": "ref_units.age",
+      "armor_classes": "aoe2x.dbgen.unit_analyzer.calculate_form_stats(civilization='Shu', unit_id=1962, max_age=4).armors",
+      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration",
+      "attack_animation.frames": "graphics[attack_graphic].frame_count",
+      "attack_animation.graphic": "unit.type_50.attack_graphic",
+      "attack_animation.seconds": "frames * frame_duration",
+      "attack_classes": "aoe2x.dbgen.unit_analyzer.calculate_form_stats(civilization='Shu', unit_id=1962, max_age=4).attacks",
+      "attack_delay_seconds": "hit on animation frame frame_delay: attack animation seconds * frame_delay / frames",
+      "attack_graphic": "unit.type_50.attack_graphic",
+      "attack_range_tiles": "aoe2x.dbgen.unit_analyzer.calculate_form_stats(civilization='Shu', unit_id=1962, max_age=4).range",
+      "blast.attack_level": "unit.type_50.blast_attack_level",
+      "blast.damage_fraction": "unit.type_50.blast_damage",
+      "blast.defense_level": "unit.blast_defense_level",
+      "blast.friendly_fire_damage": "unit.type_50.friendly_fire_damage",
+      "blast.width_tiles": "unit.type_50.blast_width",
+      "civilization": "ref_units.civ_name",
+      "clearance_size_tiles.x": "unit.clearance_size[0]",
+      "clearance_size_tiles.y": "unit.clearance_size[1]",
+      "collision_size_tiles.x": "unit.collision_size_x",
+      "collision_size_tiles.y": "unit.collision_size_y",
+      "collision_size_tiles.z": "unit.collision_size_z",
+      "derived.damage_vs_self": "AoE class rule(ref_units.final_attacks_json, ref_units.final_armors_json)",
+      "frame_delay": "unit.type_50.frame_delay",
+      "hp": "aoe2x.dbgen.unit_analyzer.calculate_form_stats(civilization='Shu', unit_id=1962, max_age=4).hp",
+      "idle_animation": "graphics[unit.standing_graphic[0]]",
+      "line_of_sight_tiles": "aoe2x.dbgen.unit_analyzer.calculate_form_stats(civilization='Shu', unit_id=1962, max_age=4).los",
+      "min_collision_size_multiplier": "unit.dead_fish.min_collision_size_multiplier",
+      "movement_blocks.fly_mode": "unit.fly_mode",
+      "movement_blocks.hill_mode": "unit.hill_mode",
+      "movement_blocks.terrain_restriction": "unit.terrain_restriction",
+      "obstruction.class": "unit.obstruction_class",
+      "obstruction.type": "unit.obstruction_type",
+      "outline_size_tiles.x": "unit.outline_size_x",
+      "outline_size_tiles.y": "unit.outline_size_y",
+      "outline_size_tiles.z": "unit.outline_size_z",
+      "population_space": "ref_units.pop_space",
+      "ranged.accuracy_dispersion_tiles": "unit.type_50.accuracy_dispersion",
+      "ranged.accuracy_percent": "concrete fully-teched form accuracy",
+      "ranged.base_accuracy_percent": "concrete unit.type_50.accuracy_percent",
+      "ranged.extra_projectile_attacks": "ref_units.extra_projectile_attacks_json",
+      "ranged.extra_projectile_count": "concrete DAT mode projectile count plus its sourced civilization technology bonus",
+      "ranged.first_attack_extra_projectiles": "ref_units.first_attack_extra_projectiles",
+      "ranged.impact_splash_damage_fraction": "ref_units.splash_on_hit_fraction",
+      "ranged.impact_splash_friendly_fire_fraction": "unit.type_50.friendly_fire_damage",
+      "ranged.impact_splash_radius_tiles": "ref_units.splash_on_hit_radius",
+      "ranged.min_range_tiles": "ref_units.min_range",
+      "ranged.pass_through": "dat.civs[0].units[1964].projectile.vanish_mode",
+      "ranged.pass_through_count": "ref_units.pass_through_count",
+      "ranged.pass_through_damage_fraction": "ref_units.pass_through_percent; dat pass-through defaults to 0.5",
+      "ranged.projectile_arc": "dat.civs[0].units[1964].projectile.projectile_arc",
+      "ranged.projectile_half_width_tiles": "dat.civs[0].units[1964].collision_size_x",
+      "ranged.projectile_spawning_area": "unit.creatable.projectile_spawning_area[0:2]",
+      "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[1964].speed",
+      "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
+      "ranged.reload_after_final_projectile": "full-rate same-actor volley start gap equals final release + DAT reload",
+      "ranged.secondary_projectile_count": "unit.creatable.total_projectiles - 1",
+      "ranged.secondary_projectile_half_width_tiles": "dat.civs[0].units[unit.creatable.secondary_projectile_unit].collision_size_x",
+      "ranged.secondary_projectile_unit": "unit.creatable.secondary_projectile_unit",
+      "ranged.smart_mode": "dat.civs[0].units[1964].projectile.smart_mode | 1 when dat tech 93 (Ballistics) sets attribute 19 on projectile 1964 (Imperial fully-teched model)",
+      "ranged.volley_release_interval_seconds": "war_chariot_shu_vs_arbalester run_001 frames.bin: complete seven-bolt Focus Fire volleys release at 0.334 s median intervals",
+      "ranged.volley_release_size": "war_chariot_shu_vs_arbalester run_001 frames.bin: complete seven-bolt Focus Fire volleys release at 0.334 s median intervals",
+      "ranged.weapon_mode": "concrete scenario/DAT weapon form",
+      "reload_seconds": "aoe2x.dbgen.unit_analyzer.calculate_form_stats(civilization='Shu', unit_id=1962, max_age=4).reload_time",
+      "speed_tiles_per_second": "aoe2x.dbgen.unit_analyzer.calculate_form_stats(civilization='Shu', unit_id=1962, max_age=4).speed",
+      "unit_master": "unit.id",
+      "walk_animation": "graphics[unit.dead_fish.walking_graphic]"
+    },
+    "reference_db_sha256": "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087",
+    "reference_selector": "ref_units WHERE unit_slug='war_chariot_shu' AND civ_name='Shu' AND age='Imperial'",
+    "reload_base_seconds": 6.5,
+    "reload_multiplier": 1.0
+  },
+  "ranged": {
+    "accuracy_dispersion_tiles": 0.33000001311302185,
+    "accuracy_percent": 100.0,
+    "base_accuracy_percent": 100.0,
+    "extra_projectile_attacks": null,
+    "extra_projectile_count": 6,
+    "first_attack_extra_projectiles": 0,
+    "impact_splash_damage_fraction": 1.0,
+    "impact_splash_friendly_fire_fraction": 1.0,
+    "impact_splash_radius_tiles": 0.0,
+    "min_range_tiles": 1.0,
+    "pass_through": true,
+    "pass_through_count": 3,
+    "pass_through_damage_fraction": 0.5,
+    "projectile_arc": -0.019999999552965164,
+    "projectile_half_width_tiles": 0.1,
+    "projectile_spawning_area": [
+      0.0,
+      0.0
+    ],
+    "projectile_speed_tiles_per_second": 8.0,
+    "projectile_unit": 1964,
+    "reload_after_final_projectile": true,
+    "secondary_projectile_count": 0,
+    "secondary_projectile_half_width_tiles": 0.0,
+    "secondary_projectile_unit": -1,
+    "smart_mode": 1,
+    "volley_release_interval_seconds": 0.3333333333333333,
+    "volley_release_size": 1,
+    "weapon_mode": "focus_fire"
+  },
+  "reload_seconds": 6.5,
+  "speed_tiles_per_second": 1.14,
+  "unit_master": 1962,
+  "walk_animation": {
+    "frame_duration_seconds": 0.029999999329447746,
+    "frames": 30,
+    "graphic": 12980,
+    "seconds": 0.8999999798834324
+  }
+}

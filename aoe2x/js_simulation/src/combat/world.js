@@ -74,7 +74,6 @@ import {
   isWithinStopRange,
   orderReadyAttacks,
   rangedSpec,
-  reloadTicks,
   trampleSpec,
 } from "./attacks.js";
 import { collisionRadius } from "./targeting.js";
@@ -169,6 +168,70 @@ function hasMeleeMode(unit) {
 }
 
 
+function unitEffects(unit) {
+  return unit?.mechanics?.effects ?? {};
+}
+
+
+function effectiveUnitSpeed(unit, tick) {
+  const effects = unitEffects(unit);
+  let speed = unit?.specialState?.transformed
+    && Number.isFinite(effects.transform_movement_speed)
+    && effects.transform_movement_speed > 0
+      ? effects.transform_movement_speed
+      : (unit?.specialState?.baseSpeed ?? unit.mechanics.speed_tiles_per_second);
+  if ((unit?.specialState?.slowUntilTick ?? 0) > tick) {
+    speed *= unit.specialState.slowMultiplier ?? 1;
+  }
+  if (unit?.specialState?.chargedSpeedActive === true) {
+    speed *= effects.charged_speed_multiplier ?? 1;
+  }
+  return speed;
+}
+
+
+function attackDelayTicksForUnit(unit) {
+  const transformedDelay = unit?.specialState?.transformed
+    ? unitEffects(unit).transform_attack_delay
+    : null;
+  return Number.isFinite(transformedDelay) && transformedDelay >= 0
+    ? Math.round(transformedDelay * TICKS_PER_SECOND)
+    : attackDelayTicks(unit.mechanics);
+}
+
+
+function reloadTicksForUnit(unit, tick) {
+  const effects = unitEffects(unit);
+  let seconds = unit.mechanics.reload_seconds;
+  if (unit?.specialState?.transformed
+      && Number.isFinite(effects.transform_attack_speed)
+      && effects.transform_attack_speed > 0) {
+    seconds = 1 / effects.transform_attack_speed;
+  }
+  const ramp = effects.attack_speed_ramp ?? 0;
+  if (ramp > 0 && unit.specialState) {
+    const cutoff = tick - 5 * TICKS_PER_SECOND;
+    unit.specialState.rampHitTicks = unit.specialState.rampHitTicks
+      .filter((hitTick) => hitTick > cutoff);
+    seconds = Math.max(effects.attack_speed_min ?? 1,
+      seconds - ramp * unit.specialState.rampHitTicks.length);
+  }
+  return secondsToTicksCeil(seconds);
+}
+
+
+function meleeAttackAmount(actor, target, tick) {
+  let amount = calculateDamage(actor, target);
+  const chargeDamage = unitEffects(actor).charge_attack_melee ?? 0;
+  const charged = chargeDamage > 0
+    && (actor?.specialState?.meleeChargeReadyTick ?? 0) <= tick;
+  // Charge is bonus attack on the ordinary melee strike. Armor has already
+  // been subtracted once by calculateDamage; do not subtract it a second time.
+  if (charged) amount += chargeDamage;
+  return { amount, charged };
+}
+
+
 function hasOnagerFamilyBehavior(unit) {
   return unit?.behaviorFamily === ONAGER_BEHAVIOR_FAMILY;
 }
@@ -234,6 +297,15 @@ function onagerRetreatHeadingAvailable(unit, threat, snapshot, map, pairInteract
 function freezeUnit(unit) {
   return Object.freeze({
     ...unit,
+    ...(unit.pendingVolley ? {
+      pendingVolley: Object.freeze({ ...unit.pendingVolley }),
+    } : {}),
+    ...(unit.specialState ? {
+      specialState: Object.freeze({
+        ...unit.specialState,
+        rampHitTicks: Object.freeze([...(unit.specialState.rampHitTicks ?? [])]),
+      }),
+    } : {}),
     ...(unit.relationByOwner
       ? { relationByOwner: Object.freeze({ ...unit.relationByOwner }) }
       : {}),
@@ -301,12 +373,189 @@ function canonicalUnits(units, { cloneMechanics = false } = {}) {
 function mutableUnit(unit) {
   return {
     ...unit,
+    ...(unit.pendingVolley ? {
+      pendingVolley: { ...unit.pendingVolley },
+    } : {}),
+    ...(unit.specialState ? {
+      specialState: {
+        ...unit.specialState,
+        rampHitTicks: [...(unit.specialState.rampHitTicks ?? [])],
+      },
+    } : {}),
     ...(unit.relationByOwner
       ? { relationByOwner: Object.freeze({ ...unit.relationByOwner }) }
       : {}),
     avoidance: unit.avoidance === null ? null : { ...unit.avoidance },
     actionTimers: { ...unit.actionTimers },
   };
+}
+
+
+function ensureSpecialState(unit) {
+  if (unit.specialState) return unit.specialState;
+  unit.maxHp = unit.mechanics.hp;
+  unit.specialState = {
+    baseMaxHp: unit.mechanics.hp,
+    baseSpeed: unit.mechanics.speed_tiles_per_second,
+    transformed: false,
+    firstAttackUsed: false,
+    killAttackBonus: 0,
+    hpGainedFromKills: 0,
+    armorStripped: 0,
+    nearbyAttackBonus: 0,
+    auraHpBonus: 0,
+    rampHitTicks: [],
+    bleedDamagePerSecond: 0,
+    bleedUntilTick: 0,
+    slowUntilTick: 0,
+    allyHealRemaining: 0,
+    allyHealPerTick: 0,
+    meleeChargeReadyTick: 0,
+  };
+  return unit.specialState;
+}
+
+
+function nearbyAllies(unit, units, radiusTiles = 5) {
+  return units.filter((candidate) => (
+    candidate.alive
+    && candidate.referenceId !== unit.referenceId
+    && candidate.owner === unit.owner
+    && Math.hypot(candidate.x - unit.x, candidate.y - unit.y) <= radiusTiles + 1e-12
+  ));
+}
+
+
+function refreshNearbyAuras(units) {
+  for (const unit of units) {
+    if (!unit.alive || !unit.specialState) continue;
+    const effects = unitEffects(unit);
+    const allies = nearbyAllies(unit, units);
+    const attackPerAlly = effects.attack_bonus_nearby ?? 0;
+    unit.specialState.nearbyAttackBonus = attackPerAlly > 0
+      ? attackPerAlly * Math.min(allies.length, effects.nearby_bonus_count ?? allies.length)
+      : 0;
+    const hpPercent = effects.hp_nearby_percent_per_unit ?? 0;
+    if (hpPercent <= 0) continue;
+    const qualifyingAllies = nearbyAllies(
+      unit,
+      units,
+      effects.hp_nearby_radius_tiles ?? 15,
+    ).filter((candidate) => (
+      (unitEffects(candidate).hp_nearby_percent_per_unit ?? 0) > 0
+    ));
+    const count = Math.min(
+      qualifyingAllies.length,
+      effects.hp_nearby_max_units ?? qualifyingAllies.length,
+    );
+    const nextBonus = unit.specialState.baseMaxHp * (hpPercent / 100) * count;
+    const previousMaxHp = unit.maxHp ?? (
+      unit.specialState.baseMaxHp + unit.specialState.auraHpBonus
+    );
+    unit.specialState.auraHpBonus = nextBonus;
+    unit.maxHp = unit.specialState.baseMaxHp + nextBonus;
+    if (Math.abs(unit.maxHp - previousMaxHp) > 1e-12 && unit.hp > 0) {
+      // Coiled Serpent Array preserves the unit's health percentage as its
+      // formation-dependent ceiling changes. A shrinking formation therefore
+      // reduces current HP proportionally, but cannot kill the unit outright.
+      unit.hp = Math.min(
+        unit.maxHp,
+        Math.max(1, unit.hp * unit.maxHp / previousMaxHp),
+      );
+    }
+  }
+}
+
+
+function initializeSpecialEffects(units) {
+  refreshNearbyAuras(units);
+}
+
+
+function advanceSpecialEffects(units, tick, events) {
+  const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
+  for (const unit of units) {
+    if (!unit.alive || !unit.specialState) continue;
+    const effects = unitEffects(unit);
+    const maxHp = unit.maxHp ?? unit.specialState.baseMaxHp;
+    const passiveRegen = effects.hp_regen ?? 0;
+    const combatRegen = effects.hp_regen_in_combat ?? 0;
+    const recentlyAttacked = tick - (unit.specialState.lastAttackTick ?? -Infinity)
+      <= 10 * TICKS_PER_SECOND;
+    const regen = passiveRegen + (recentlyAttacked ? combatRegen : 0);
+    if (regen > 0 && unit.hp < maxHp) {
+      unit.hp = Math.min(maxHp, unit.hp + regen / 60 / TICKS_PER_SECOND);
+    }
+    if (unit.specialState.allyHealRemaining > 0 && unit.hp < maxHp) {
+      const heal = Math.min(
+        unit.specialState.allyHealRemaining,
+        unit.specialState.allyHealPerTick,
+      );
+      unit.hp = Math.min(maxHp, unit.hp + heal);
+      unit.specialState.allyHealRemaining -= heal;
+    }
+    if (unit.specialState.bleedUntilTick > tick
+        && unit.specialState.bleedDamagePerSecond > 0) {
+      applyCommittedDamage(
+        units,
+        unit.specialState.bleedActorId ?? unit.referenceId,
+        unit,
+        unit.specialState.bleedDamagePerSecond / TICKS_PER_SECOND,
+        tick,
+        tick,
+        events,
+        { kind: "bleed" },
+      );
+      if (!unit.alive) continue;
+    }
+    const threshold = effects.hp_transform_threshold ?? 0;
+    if (!unit.specialState.transformed && threshold > 0
+        && unit.hp <= unit.specialState.baseMaxHp * threshold + 1e-12) {
+      unit.specialState.transformed = true;
+      if ((effects.transform_hp ?? 0) > 0) {
+        unit.specialState.baseMaxHp = effects.transform_hp;
+        unit.maxHp = effects.transform_hp + unit.specialState.auraHpBonus;
+        unit.hp = Math.min(unit.hp, unit.maxHp);
+      }
+      events.push(event(tick, "unit-transformed", unit.referenceId, null));
+    }
+    const target = byReference.get(unit.pursuitTargetId)
+      ?? byReference.get(unit.engagedTargetId);
+    const chargeReady = (unit.specialState.meleeChargeReadyTick ?? 0) <= tick;
+    const targetDistance = target?.alive
+      ? Math.hypot(target.x - unit.x, target.y - unit.y)
+      : Number.POSITIVE_INFINITY;
+    const hasSpeedCharge = Number.isFinite(effects.charged_speed_multiplier);
+    const targetId = target?.alive ? target.referenceId : null;
+    if (!chargeReady || !hasSpeedCharge || targetId === null) {
+      unit.specialState.chargedSpeedActive = false;
+      unit.specialState.chargedSpeedTargetId = null;
+    } else {
+      // The speed-charge task is entered when a ready unit approaches its
+      // target through the authored distance band. Crossing the band's lower
+      // boundary does not cancel the task: the charge remains committed until
+      // the strike lands (or that target ceases to be the active pursuit).
+      if (unit.specialState.chargedSpeedTargetId !== targetId) {
+        unit.specialState.chargedSpeedActive = false;
+        unit.specialState.chargedSpeedTargetId = null;
+      }
+      if (!unit.specialState.chargedSpeedActive
+          && targetDistance >= (effects.charged_speed_min_target_distance_tiles ?? 0)
+          && targetDistance <= (effects.charged_speed_max_target_distance_tiles
+            ?? Number.POSITIVE_INFINITY)) {
+        unit.specialState.chargedSpeedActive = true;
+        unit.specialState.chargedSpeedTargetId = targetId;
+      }
+    }
+    const speed = effectiveUnitSpeed(unit, tick);
+    if (unit.mechanics.speed_tiles_per_second !== speed) {
+      unit.mechanics = Object.freeze({
+        ...unit.mechanics,
+        speed_tiles_per_second: speed,
+      });
+    }
+  }
+  refreshNearbyAuras(units);
 }
 
 
@@ -569,8 +818,6 @@ function selectOpeningPatrolContactLanes(unit, snapshot, order, roster) {
   ) / length;
   return lanes.slice().sort((left, right) => (
     lateral(left) - lateral(right)
-      || openingHash(order.openingSeed ?? 0, unit.owner, left.referenceId)
-        - openingHash(order.openingSeed ?? 0, unit.owner, right.referenceId)
       || left.referenceId - right.referenceId
   ));
 }
@@ -692,15 +939,29 @@ function selectGeometricPatrolLaneIndex(unit, snapshot, order, referenceIds) {
   if (unit.moveOrder?.kind === "opening-patrol" && targets.length === 2) {
     // Direct melee PATROLs overwhelmingly share the principal central body:
     // across the five 18v27 captures, only 0-2 Elephants and 1-6 Camels use
-    // the second visible lane. A one-in-eight seeded fallback reproduces that
-    // generic group-acquisition behavior without prescribing any later target,
-    // path, attack time, damage, or outcome.
-    const roll = openingHash(
-      order.openingSeed ?? 0,
-      unit.owner,
-      unit.referenceId,
-    ) % 8;
-    return targets[roll === 0 ? 1 : 0].index;
+    // the second visible lane. Preserve that small fraction, but select its
+    // members by lateral geometry so a seed cannot move one fallback lock
+    // between unrelated formation rows and reorganize the entire collision
+    // flow. No later target, path, attack time, damage, or outcome is assigned.
+    const primary = targets.find(({ index }) => index === 0) ?? targets[0];
+    const secondary = targets.find(({ index }) => index === 1) ?? targets[1];
+    const cohort = snapshot.filter((candidate) => (
+      candidate.alive && candidate.owner === unit.owner
+    ));
+    const secondaryCount = Math.max(1, Math.round(cohort.length / 8));
+    const secondaryIds = new Set(cohort.map((candidate) => ({
+      candidate,
+      // Choose the members for whom the secondary lane is the smallest
+      // lateral detour relative to the principal lane. Formation order breaks
+      // exact geometric ties; a seed must not move a lane assignment between
+      // unrelated rows of the authored formation.
+      affinity: Math.abs(lateral(secondary.candidate) - lateral(candidate))
+        - Math.abs(lateral(primary.candidate) - lateral(candidate)),
+    })).sort((left, right) => left.affinity - right.affinity
+      || left.candidate.referenceId - right.candidate.referenceId)
+      .slice(0, secondaryCount)
+      .map(({ candidate }) => candidate.referenceId));
+    return secondaryIds.has(unit.referenceId) ? secondary.index : primary.index;
   }
   // Principal contact lanes are spatial: left, centre, and right members of
   // the approaching cohort acquire the corresponding visible front body.
@@ -918,6 +1179,7 @@ export function createWorld(scenario) {
     diplomacyByOwner = initial.diplomacyByOwner;
     scenarioTriggerState = initial.triggerState;
   }
+  initializeSpecialEffects(mutablePreparedUnits);
   const units = canonicalUnits(mutablePreparedUnits, { cloneMechanics: true });
   validateInitialAttackState(units);
   const victoryTeams = compileVictoryTeams(scenarioOwners, scenario.victoryTeams);
@@ -1052,6 +1314,9 @@ export function createWorld(scenario) {
   const anyCharge = units.some((unit) => (
     chargeSpec(unit.mechanics) !== null || rangedSpec(unit.mechanics) !== null
   ));
+  const anyHazard = units.some((unit) => (
+    (unitEffects(unit).impact_hazard_radius_tiles ?? 0) > 0
+  ));
   return Object.freeze({
     // Experiment-only mutable AI-player state; absent in baseline so world
     // shape and hashes are unchanged (the object is frozen but Maps inside
@@ -1082,6 +1347,7 @@ export function createWorld(scenario) {
     contactReservationDiagnostics: Object.freeze([]),
     ...(contactSteeringStates ? { contactSteeringStates } : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
+    ...(anyHazard ? { hazards: Object.freeze([]) } : {}),
     // Deterministic per-shot RNG, present only when a unit can miss or blast
     // (dat accuracy < 100 or blast width > 0 — nothing in the converged
     // corpus). Seeded with the golden constant; state lives OUTSIDE units so
@@ -1089,7 +1355,10 @@ export function createWorld(scenario) {
     ...(units.some((unit) => {
       const spec = rangedSpec(unit.mechanics);
       return spec && (spec.accuracyPercent < 100
-        || spec.blastRadius > 0 || spec.secondaryCount > 0);
+        || spec.baseAccuracyPercent < 100
+        || spec.blastRadius > 0 || spec.secondaryCount > 0
+        || (spec.extraProjectileCount + spec.firstAttackExtraProjectiles > 0
+          && spec.spawnArea.some((dimension) => dimension > 0)));
     }) ? { shotRng: { state: 20260411 >>> 0 } } : {}),
     tick: 0,
     ratio: scenario.ratio,
@@ -1113,6 +1382,7 @@ function validatePursuitTargets(units, tick, events) {
       unit.avoidance = null;
       unit.action = "dead";
       delete unit.attackKind;
+      delete unit.pendingVolley;
       delete unit.moveOrder;
       unit.actionTimers = { windup: 0, reload: 0, swing: 0, acquire: 0 };
       continue;
@@ -1162,7 +1432,7 @@ function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = 
     // own (later) frame; an abandoned unreleased charge keeps its charge.
     const releaseTicks = unit.attackKind === "charge"
       ? chargeSpec(unit.mechanics).windupTicks
-      : attackDelayTicks(unit.mechanics);
+      : attackDelayTicksForUnit(unit);
     if (unit.actionTimers.swing >= releaseTicks) continue;
     if (unit.owner === rangedWindupRetargetOwner
         && rangedSpec(unit.mechanics) !== null
@@ -1448,9 +1718,6 @@ function acquirePursuitTargets(
           tick + Math.round(PATROL_RESCAN_SECONDS * TICKS_PER_SECOND),
         );
       }
-      if (recoveryScanDue) {
-        pursuitRecoveryState.retargetReady.delete(unit.referenceId);
-      }
       if (alternate) {
         const previousTargetId = unit.pursuitTargetId;
         unit.pursuitTargetId = alternate.referenceId;
@@ -1461,6 +1728,7 @@ function acquirePursuitTargets(
         }
         pursuitRecoveryState.routes.delete(unit.referenceId);
         pursuitRecoveryState.attempts.delete(unit.referenceId);
+        pursuitRecoveryState.retargetReady.delete(unit.referenceId);
         pursuitRecoveryState.routeFailures.delete(unit.referenceId);
         if (opportunity) pursuitRecoveryState.failedTargets.delete(unit.referenceId);
         if (alternate.referenceId !== previousTargetId) {
@@ -1474,6 +1742,10 @@ function acquirePursuitTargets(
         }
         continue;
       }
+      // A recovery request is a durable pathing state, not a one-frame event.
+      // If this scan cannot yet see a reachable alternate, keep it armed for
+      // the next AI scan instead of sending the unit back through five more
+      // failed pushes against the same unreachable body screen.
     }
     // Experiment harness (docs/RETARGETING_INVESTIGATION.md). Off by default:
     // shouldReevaluatePursuit is false unless AOE2X_EXP_PURSUIT is set, so this
@@ -2093,7 +2365,7 @@ function holdsForChargeVolley(unit, target) {
   if ((unit.charge ?? 0) + 1e-9 < spec.maxCharge) return false;
   if (unit.actionTimers.reload > 0) return false;
   const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
-  return distance <= unit.mechanics.line_of_sight_tiles;
+  return distance <= spec.attackRangeTiles;
 }
 
 
@@ -2568,6 +2840,15 @@ function moveUnits(units, map, tick, events, kiteState = null,
     if (hasMeleeMode(unit)
         && unit.openingAcquisitionComplete === true
         && unit.moveOrder?.kind !== "scenario-patrol"
+        // Immediate full-route planning is a chase optimization: it applies
+        // while the quarry is still executing a movement order. In a mutual
+        // melee scrum, granting it solely to the faster unit lets that side
+        // route perfectly from frame one while the slower side must use the
+        // ordinary blocked-step recovery, creating a non-gameplay combat
+        // advantage. Stationary/engaged targets therefore use the symmetric
+        // five-failed-step recovery below.
+        && kiteState
+        && target.moveOrder
         && unit.mechanics.speed_tiles_per_second
           > target.mechanics.speed_tiles_per_second * 1.2
         && !isWithinReach(unit, target)) {
@@ -3724,7 +4005,8 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
 // (blocked, or already parked). The steppe tapes show approaching lancers
 // never swinging mid-walk — they close to collision gap <= 1.0 first — while
 // blocked back-line lancers swing from the wider outline envelope.
-function releaseChargeVolley(unit, target, spec, tick, events, projectiles) {
+function releaseChargeVolley(unit, target, spec, tick, events, projectiles,
+  velocities, shotRng) {
   // The volley leaves the unit whether or not anything is left to aim at; an
   // unreleased cycle abandoned earlier (validateAttackTargets) keeps its
   // charge instead.
@@ -3733,9 +4015,18 @@ function releaseChargeVolley(unit, target, spec, tick, events, projectiles) {
   const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
   const flight = Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed));
   const amount = chargeProjectileDamage(spec, target);
+  const ordinaryRanged = rangedSpec(unit.mechanics);
+  const accuracy = ordinaryRanged?.baseAccuracyPercent ?? 100;
+  let aimedProjectiles = 0;
   for (let index = 0; index < spec.projectileCount; index += 1) {
+    if (accuracy < 100 && nextShotRoll(shotRng) * 100 >= accuracy) continue;
+    aimedProjectiles += 1;
     projectiles.push({
+      kind: "charge",
       actorId: unit.referenceId,
+      actorOwner: unit.owner,
+      actorRelationByOwner: unit.relationByOwner,
+      actorMechanics: unit.mechanics,
       targetId: target.referenceId,
       firedTick: tick,
       arrivalTick: tick + flight,
@@ -3743,8 +4034,20 @@ function releaseChargeVolley(unit, target, spec, tick, events, projectiles) {
       amount,
     });
   }
+  if (spec.addsToNormalAttack) {
+    const ranged = rangedSpec(unit.mechanics);
+    if (ranged) {
+      releaseRangedShot(unit, target, ranged, tick, events, projectiles,
+        velocities, shotRng, { projectileIndex: spec.projectileCount });
+      if (unit.specialState
+          && ranged.firstAttackExtraProjectiles === spec.projectileCount) {
+        unit.specialState.firstAttackUsed = true;
+      }
+    }
+  }
   events.push(event(tick, "charge-volley", unit.referenceId, target.referenceId, {
     projectiles: spec.projectileCount,
+    aimedProjectiles,
     arrivalTick: tick + flight,
     amount,
   }));
@@ -3797,7 +4100,8 @@ function nextShotRoll(shotRng) {
 }
 
 
-function releaseRangedShot(unit, target, spec, tick, events, projectiles, velocities, shotRng) {
+function releaseRangedShot(unit, target, spec, tick, events, projectiles, velocities, shotRng,
+  options = {}) {
   if (!target?.alive || !isHostile(unit, target)) return;
   // A Mangonel-family unit can acquire and enter its attack animation while
   // the freshly issued PATROL command is still in its reaction phase.  The
@@ -3818,7 +4122,34 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
     : (spec.smartMode & 1) === 1
       ? leadAimPoint(unit, target, spec, velocities)
       : { x: target.x, y: target.y };
-  let distance = Math.hypot(aim.x - unit.x, aim.y - unit.y);
+  let originX = unit.x;
+  let originY = unit.y;
+  const spawnArea = options.spawnArea;
+  if (Array.isArray(spawnArea)
+      && ((spawnArea[0] ?? 0) > 0 || (spawnArea[1] ?? 0) > 0)) {
+    // DAT projectile-spawning area offsets secondary projectiles onto a
+    // parallel line rather than re-aiming every extra at the victim's centre.
+    // Width is lateral to the shot; length is along it. Moving both origin and
+    // aim by the same offset preserves projectile velocity while naturally
+    // allowing a displaced extra arrow to pass beside a small target.
+    const dx = aim.x - originX;
+    const dy = aim.y - originY;
+    const length = Math.hypot(dx, dy);
+    if (length > 1e-9) {
+      const forwardX = dx / length;
+      const forwardY = dy / length;
+      const lateralX = -forwardY;
+      const lateralY = forwardX;
+      const lateral = (nextShotRoll(shotRng) - 0.5) * spawnArea[0];
+      const longitudinal = (nextShotRoll(shotRng) - 0.5) * spawnArea[1];
+      const offsetX = lateralX * lateral + forwardX * longitudinal;
+      const offsetY = lateralY * lateral + forwardY * longitudinal;
+      originX += offsetX;
+      originY += offsetY;
+      aim = { x: aim.x + offsetX, y: aim.y + offsetY };
+    }
+  }
+  let distance = Math.hypot(aim.x - originX, aim.y - originY);
   if (distance <= 1e-9) return;
   const stepLength = spec.projectileSpeed / TICKS_PER_SECOND;
   // Mangonel-family shell: flies OVER intervening units to the aim point and
@@ -3850,8 +4181,8 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
     const debris = siegeDebrisLandingPoints({
       impactX: aim.x,
       impactY: aim.y,
-      shooterX: unit.x,
-      shooterY: unit.y,
+      shooterX: originX,
+      shooterY: originY,
       count: spec.secondaryCount,
     });
     for (const landing of debris) {
@@ -3874,8 +4205,42 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
   // 75): a missed shot scatters uniformly within the dat dispersion
   // half-radius and becomes a STRAY that hits the first enemy whose box it
   // meets for HALF damage (tape full/half quanta pairs 22/11, 11/5.5, 8/4).
-  if (spec.accuracyPercent < 100
-      && nextShotRoll(shotRng) * 100 >= spec.accuracyPercent) {
+  const accuracyPercent = options.accuracyPercent ?? spec.accuracyPercent;
+  const projectileIndex = options.projectileIndex ?? 0;
+  if (spec.impactSplashRadius > 0) {
+    if (accuracyPercent < 100
+        && nextShotRoll(shotRng) * 100 >= accuracyPercent) {
+      aim = displacedAimPoint({
+        aimX: aim.x,
+        aimY: aim.y,
+        dispersionTiles: spec.dispersionTiles,
+        radialRoll: nextShotRoll(shotRng),
+        angleRoll: nextShotRoll(shotRng),
+      });
+      distance = Math.hypot(aim.x - originX, aim.y - originY);
+    }
+    projectiles.push({
+      kind: "grenade",
+      actorId: unit.referenceId,
+      actorOwner: unit.owner,
+      actorRelationByOwner: unit.relationByOwner,
+      actorMechanics: unit.mechanics,
+      attackClasses: options.attackClasses ?? null,
+      targetId: target.referenceId,
+      aimX: aim.x,
+      aimY: aim.y,
+      blastRadius: spec.impactSplashRadius,
+      damageFraction: spec.impactSplashDamageFraction,
+      friendlyFireFraction: spec.impactSplashFriendlyFireFraction,
+      firedTick: tick,
+      arrivalTick: tick + Math.max(1,
+        secondsToTicksCeil(distance / spec.projectileSpeed)),
+      index: projectileIndex,
+    });
+    return;
+  }
+  if (accuracyPercent < 100
+      && nextShotRoll(shotRng) * 100 >= accuracyPercent) {
     aim = displacedAimPoint({
       aimX: aim.x,
       aimY: aim.y,
@@ -3883,7 +4248,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       radialRoll: nextShotRoll(shotRng),
       angleRoll: nextShotRoll(shotRng),
     });
-    distance = Math.hypot(aim.x - unit.x, aim.y - unit.y);
+    distance = Math.hypot(aim.x - originX, aim.y - originY);
     if (distance <= 1e-9) return;
     projectiles.push({
       kind: "stray",
@@ -3891,20 +4256,22 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       actorOwner: unit.owner,
       actorRelationByOwner: unit.relationByOwner,
       actorMechanics: unit.mechanics,
+      attackClasses: options.attackClasses ?? null,
       targetId: target.referenceId,
       aimX: aim.x,
       aimY: aim.y,
-      x: unit.x,
-      y: unit.y,
-      stepX: ((aim.x - unit.x) / distance) * stepLength,
-      stepY: ((aim.y - unit.y) / distance) * stepLength,
+      x: originX,
+      y: originY,
+      stepX: ((aim.x - originX) / distance) * stepLength,
+      stepY: ((aim.y - originY) / distance) * stepLength,
       stepLength,
       traveled: 0,
       totalDistance: distance,
       halfWidth: spec.projectileHalfWidth,
+      damageFraction: spec.fullDamageOnUnintended ? 1 : MISS_DAMAGE_FRACTION,
       firedTick: tick,
       arrivalTick: tick + Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed)),
-      index: 0,
+      index: projectileIndex,
     });
     return;
   }
@@ -3920,18 +4287,21 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       actorOwner: unit.owner,
       actorRelationByOwner: unit.relationByOwner,
       actorMechanics: unit.mechanics,
+      attackClasses: options.attackClasses ?? null,
       targetId: target.referenceId,
-      x: unit.x,
-      y: unit.y,
-      stepX: ((aim.x - unit.x) / distance) * stepLength,
-      stepY: ((aim.y - unit.y) / distance) * stepLength,
+      x: originX,
+      y: originY,
+      stepX: ((aim.x - originX) / distance) * stepLength,
+      stepY: ((aim.y - originY) / distance) * stepLength,
       stepLength,
       traveled: 0,
       totalDistance: total,
       halfWidth: spec.projectileHalfWidth,
+      passThroughDamageFraction: spec.passThroughDamageFraction,
+      passThroughCount: spec.passThroughCount,
       firedTick: tick,
       arrivalTick: tick + Math.max(1, secondsToTicksCeil(total / spec.projectileSpeed)),
-      index: 0,
+      index: projectileIndex,
       hitIds: [],
     });
     return;
@@ -3939,11 +4309,18 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
   projectiles.push({
     kind: "ranged",
     actorId: unit.referenceId,
+    actorOwner: unit.owner,
+    actorRelationByOwner: unit.relationByOwner,
+    actorMechanics: unit.mechanics,
+    attackClasses: options.attackClasses ?? null,
     targetId: target.referenceId,
-    x: unit.x,
-    y: unit.y,
-    stepX: ((aim.x - unit.x) / distance) * stepLength,
-    stepY: ((aim.y - unit.y) / distance) * stepLength,
+    originalTargetId: target.referenceId,
+    aimX: aim.x,
+    aimY: aim.y,
+    x: originX,
+    y: originY,
+    stepX: ((aim.x - originX) / distance) * stepLength,
+    stepY: ((aim.y - originY) / distance) * stepLength,
     stepLength,
     traveled: 0,
     totalDistance: distance,
@@ -3951,10 +4328,182 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
     // The stepping loop below is the authority; arrivalTick is a cap so a
     // projectile can never outlive its aim distance.
     arrivalTick: tick + Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed)),
-    index: 0,
+    index: projectileIndex,
     halfWidth: spec.projectileHalfWidth,
-    amount: calculateDamage(unit, target),
+    amount: calculateDamage(unit, target, {
+      attackClasses: options.attackClasses ?? undefined,
+    }),
+    impactSplashRadius: spec.impactSplashRadius,
+    impactSplashDamageFraction: spec.impactSplashDamageFraction,
+    impactSplashFriendlyFireFraction: spec.impactSplashFriendlyFireFraction,
+    impactHazard: unitEffects(unit).impact_hazard_radius_tiles > 0 ? {
+      radiusTiles: unitEffects(unit).impact_hazard_radius_tiles,
+      durationSeconds: unitEffects(unit).impact_hazard_duration_seconds,
+      damagePerSecond: unitEffects(unit).impact_hazard_damage_per_second,
+      stacks: unitEffects(unit).impact_hazard_stacks === true,
+    } : null,
   });
+}
+
+
+function rangedVolleyExtraCount(unit, spec) {
+  const openingExtras = unit.specialState?.firstAttackUsed === false
+    ? spec.firstAttackExtraProjectiles
+    : 0;
+  return spec.extraProjectileCount + openingExtras;
+}
+
+
+function releaseRangedExtraProjectile(unit, target, spec, tick, events,
+  projectiles, velocities, shotRng, projectileIndex) {
+  releaseRangedShot(unit, target, spec, tick, events, projectiles,
+    velocities, shotRng, {
+      projectileIndex,
+      attackClasses: spec.extraProjectileAttacks ?? undefined,
+      // Extra-arrow inaccuracy comes from its displaced DAT spawn lane. The
+      // final attack accuracy is shared with the primary; do not add a second
+      // independent base-accuracy scatter roll here.
+      accuracyPercent: spec.accuracyPercent,
+      spawnArea: spec.spawnArea,
+    });
+}
+
+
+function reloadTicksAfterFinalProjectile(unit, tick) {
+  // DAT reload is measured from the final projectile release to the next
+  // release. The next attack's windup therefore occupies the tail of that
+  // interval, just as an ordinary unit's windup sits inside its reload cycle.
+  return Math.max(0,
+    reloadTicksForUnit(unit, tick) - attackDelayTicksForUnit(unit));
+}
+
+
+function rangedVolleyReleaseSize(spec, remaining, shotRng) {
+  if (remaining <= 1) return 1;
+  if (spec.volleyDoubleReleasePercent > 0
+      && nextShotRoll(shotRng) * 100 < spec.volleyDoubleReleasePercent) {
+    return Math.min(2, remaining);
+  }
+  return Math.min(spec.volleyReleaseSize, remaining);
+}
+
+
+function pendingVolleyReplacementTarget(unit, units) {
+  const candidates = Object.freeze(units
+    .filter((candidate) => (
+      !isHostile(unit, candidate)
+      || (candidate.alive && isWithinReach(unit, candidate))
+    ))
+    .map(freezeUnit));
+  return selectPursuitTarget(
+    { ...freezeUnit(unit), pursuitTargetId: null },
+    candidates,
+  );
+}
+
+
+function releaseRangedVolley(unit, target, spec, tick, events, projectiles,
+  velocities, shotRng) {
+  releaseRangedShot(unit, target, spec, tick, events, projectiles,
+    velocities, shotRng, { projectileIndex: 0 });
+  const extraCount = rangedVolleyExtraCount(unit, spec);
+  if (spec.reloadAfterFinalProjectile && spec.volleyIntervalTicks > 0
+      && extraCount > 0) {
+    const totalProjectiles = extraCount + 1;
+    const firstReleaseCount = rangedVolleyReleaseSize(
+      spec, totalProjectiles, shotRng);
+    for (let index = 1; index < firstReleaseCount; index += 1) {
+      releaseRangedExtraProjectile(unit, target, spec, tick, events,
+        projectiles, velocities, shotRng, index);
+    }
+    if (firstReleaseCount < totalProjectiles) {
+      unit.pendingVolley = {
+        targetId: target.referenceId,
+        nextProjectileIndex: firstReleaseCount,
+        totalProjectiles,
+        nextReleaseTick: tick + spec.volleyIntervalTicks,
+      };
+    } else {
+      unit.actionTimers.reload = reloadTicksAfterFinalProjectile(unit, tick);
+    }
+    if (unit.specialState) unit.specialState.firstAttackUsed = true;
+    events.push(event(tick, "ranged-volley", unit.referenceId, target.referenceId, {
+      projectiles: totalProjectiles,
+      projectilesPerRelease: spec.volleyReleaseSize,
+      releaseIntervalTicks: spec.volleyIntervalTicks,
+      weaponMode: spec.weaponMode,
+    }));
+    return;
+  }
+  for (let index = 0; index < extraCount; index += 1) {
+    releaseRangedExtraProjectile(unit, target, spec, tick, events,
+      projectiles, velocities, shotRng, index + 1);
+  }
+  if (unit.specialState) unit.specialState.firstAttackUsed = true;
+  if (extraCount > 0) {
+    events.push(event(tick, "ranged-volley", unit.referenceId, target?.referenceId, {
+      projectiles: extraCount + 1,
+    }));
+  }
+}
+
+
+function finishPendingRangedVolley(unit, tick, events, reason) {
+  const pending = unit.pendingVolley;
+  if (!pending) return;
+  delete unit.pendingVolley;
+  unit.actionTimers.reload = reloadTicksAfterFinalProjectile(unit, tick);
+  events.push(event(tick, "ranged-volley-ended", unit.referenceId,
+    pending.targetId, {
+      reason,
+      releasedProjectiles: pending.nextProjectileIndex,
+      projectiles: pending.totalProjectiles,
+    }));
+}
+
+
+function progressPendingRangedVolley(unit, units, byReference, tick, events,
+  projectiles, velocities, shotRng) {
+  const pending = unit.pendingVolley;
+  if (!pending) return;
+  const spec = rangedSpec(unit.mechanics);
+  if (!spec?.reloadAfterFinalProjectile || spec.volleyIntervalTicks <= 0) {
+    throw new Error(`unit ${unit.referenceId} has invalid pending ranged volley`);
+  }
+  let target = byReference.get(pending.targetId);
+  if (!target?.alive || !isHostile(unit, target)) {
+    const invalidTargetId = pending.targetId;
+    target = pendingVolleyReplacementTarget(unit, units);
+    if (target === null) return;
+    pending.targetId = target.referenceId;
+    unit.attackTargetId = target.referenceId;
+    unit.engagedTargetId = target.referenceId;
+    unit.pursuitTargetId = target.referenceId;
+    events.push(event(tick, "ranged-volley-retargeted", unit.referenceId,
+      target.referenceId, {
+        fromTargetId: invalidTargetId,
+        nextProjectileIndex: pending.nextProjectileIndex,
+        projectiles: pending.totalProjectiles,
+      }));
+  }
+  if (tick < pending.nextReleaseTick) return;
+  const releaseSize = rangedVolleyReleaseSize(
+    spec,
+    pending.totalProjectiles - pending.nextProjectileIndex,
+    shotRng,
+  );
+  const endIndex = Math.min(pending.totalProjectiles,
+    pending.nextProjectileIndex + releaseSize);
+  for (let index = pending.nextProjectileIndex; index < endIndex; index += 1) {
+    releaseRangedExtraProjectile(unit, target, spec, tick, events,
+      projectiles, velocities, shotRng, index);
+  }
+  pending.nextProjectileIndex = endIndex;
+  if (pending.nextProjectileIndex >= pending.totalProjectiles) {
+    finishPendingRangedVolley(unit, tick, events, "complete");
+    return;
+  }
+  pending.nextReleaseTick += spec.volleyIntervalTicks;
 }
 
 
@@ -3965,6 +4514,8 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
   for (const unit of units) {
     if (!unit.alive) continue;
     if (unit.actionTimers.reload > 0) unit.actionTimers.reload -= 1;
+    progressPendingRangedVolley(unit, units, byReference, tick, events,
+      projectiles, velocities, shotRng);
     // Charge regeneration (dat recharge_rate per second). At the Fire
     // Lancer's 1/30 s no recorded fight lasts long enough for a refire, but
     // the rate is sourced and runs regardless.
@@ -3980,31 +4531,45 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
       // A charge cycle runs on the dat special_graphic animation with its own
       // (later) release frame; a melee cycle keeps the attack graphic timing.
       const charge = unit.attackKind === "charge" ? chargeSpec(unit.mechanics) : null;
-      const delay = charge ? charge.windupTicks : attackDelayTicks(unit.mechanics);
-      const animation = charge
+      const delay = charge ? charge.windupTicks : attackDelayTicksForUnit(unit);
+      const rawAnimation = charge
         ? charge.animationTicks
         : attackAnimationTicks(unit.mechanics);
+      // Ordinary attack graphics are playback-synchronised to the weapon
+      // cycle. A long source graphic must not impose a second, slower reload
+      // cap (most visibly, Elite Samurai's 1.60 s graphic versus its Japanese
+      // 1.425 s reload). Preserve the release frame, but finish recovery when
+      // the shorter weapon cycle has elapsed. Special charge animations keep
+      // their authored duration.
+      const animation = charge
+        ? rawAnimation
+        : Math.max(delay, Math.min(rawAnimation, reloadTicksForUnit(unit, tick)));
       unit.actionTimers.swing += 1;
       unit.actionTimers.windup = Math.max(0, delay - unit.actionTimers.swing);
       if (unit.actionTimers.swing === delay) {
         const target = byReference.get(unit.attackTargetId);
         const ranged = rangedSpec(unit.mechanics);
         if (charge) {
-          releaseChargeVolley(unit, target, charge, tick, events, projectiles);
+          releaseChargeVolley(unit, target, charge, tick, events, projectiles,
+            velocities, shotRng);
         } else if (ranged) {
-          releaseRangedShot(unit, target, ranged, tick, events, projectiles,
+          releaseRangedVolley(unit, target, ranged, tick, events, projectiles,
             velocities, shotRng);
         } else {
+          const strike = target ? meleeAttackAmount(unit, target, tick) : {
+            amount: 0, charged: false,
+          };
           ready.push({
             type: "attack-ready",
             readyTick: tick,
             actorId: unit.referenceId,
             targetId: unit.attackTargetId,
-            amount: target ? calculateDamage(unit, target) : 0,
+            amount: strike.amount,
+            charged: strike.charged,
           });
         }
       }
-      if (unit.actionTimers.swing >= animation) {
+      if (unit.actionTimers.swing >= animation && !unit.pendingVolley) {
         // Animation finished: the unit is free to retarget again. A unit whose
         // target died mid-recovery only becomes available here, which is why the
         // tapes show killers retargeting ~half an animation after the kill while
@@ -4048,7 +4613,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
         ?? byReference.get(unit.pursuitTargetId);
       if (chargeTarget?.alive && isHostile(unit, chargeTarget)) {
         const distance = Math.hypot(chargeTarget.x - unit.x, chargeTarget.y - unit.y);
-        if (distance <= unit.mechanics.line_of_sight_tiles) {
+        if (distance <= spec.attackRangeTiles) {
           events.push(createAttackStartEvent({
             tick,
             actorId: unit.referenceId,
@@ -4061,7 +4626,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
           unit.attackTargetId = chargeTarget.referenceId;
           unit.actionTimers.swing = 0;
           unit.actionTimers.windup = spec.windupTicks;
-          unit.actionTimers.reload = reloadTicks(unit.mechanics);
+          unit.actionTimers.reload = reloadTicksForUnit(unit, tick);
           continue;
         }
       }
@@ -4092,7 +4657,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
         && !isWithinStopRange(unit, target)) continue;
     if (!isWithinStopRange(unit, target) && movedIds.has(unit.referenceId)) continue;
 
-    const delay = attackDelayTicks(unit.mechanics);
+    const delay = attackDelayTicksForUnit(unit);
     const readyTick = tick + delay;
     events.push(createAttackStartEvent({
       tick,
@@ -4107,23 +4672,29 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
     unit.attackTargetId = target.referenceId;
     unit.actionTimers.swing = 0;
     unit.actionTimers.windup = delay;
-    unit.actionTimers.reload = reloadTicks(unit.mechanics);
+    const ranged = rangedSpec(unit.mechanics);
+    unit.actionTimers.reload = ranged?.reloadAfterFinalProjectile
+      && ranged.volleyIntervalTicks > 0
+      && rangedVolleyExtraCount(unit, ranged) > 0
+      ? 0
+      : reloadTicksForUnit(unit, tick);
     if (delay === 0) {
-      const ranged = rangedSpec(unit.mechanics);
       if (ranged) {
         // A literal zero-frame projectile leaves on the swing-start tick. The
         // ordinary attacking-loop release condition is crossed only by a
         // positive windup, so service the zero boundary here rather than
         // misclassifying it as an immediate melee hit.
-        releaseRangedShot(unit, target, ranged, tick, events, projectiles,
+        releaseRangedVolley(unit, target, ranged, tick, events, projectiles,
           velocities, shotRng);
       } else {
+        const strike = meleeAttackAmount(unit, target, tick);
         ready.push({
           type: "attack-ready",
           readyTick,
           actorId: unit.referenceId,
           targetId: target.referenceId,
-          amount: calculateDamage(unit, target),
+          amount: strike.amount,
+          charged: strike.charged,
         });
       }
     }
@@ -4168,7 +4739,17 @@ function commitReadyAttacks(units, ready, tick, events) {
     // The hit lands mid-animation; the actor stays committed to the rest of its
     // swing. Its reload was started at swing start, so the cadence is unaffected.
     applyCommittedDamage(units, attack.actorId, target, attack.amount,
-      attack.readyTick, tick, events, null);
+      attack.readyTick, tick, events, {
+        triggersOnHit: true,
+        charged: attack.charged === true,
+      });
+    if (attack.charged && actor.specialState) {
+      const rechargeSeconds = unitEffects(actor).charge_recharge_time ?? 0;
+      actor.specialState.meleeChargeReadyTick = tick
+        + secondsToTicksCeil(rechargeSeconds);
+      actor.specialState.chargedSpeedActive = false;
+      actor.specialState.chargedSpeedTargetId = null;
+    }
 
     // Trample: the committed hit also blasts every enemy whose collision box
     // intersects the attacker's blast circle (see trampleSpec for the sourced
@@ -4176,14 +4757,36 @@ function commitReadyAttacks(units, ready, tick, events) {
     // its own post-armor fraction; a killing trample clamps at 0 like any hit.
     const blast = trampleSpec(actor.mechanics);
     if (blast) {
+      const attackDx = target.x - actor.x;
+      const attackDy = target.y - actor.y;
+      const attackLength = Math.hypot(attackDx, attackDy) || 1;
+      const forwardX = attackDx / attackLength;
+      const forwardY = attackDy / attackLength;
       for (const victim of units) {
         if (!victim.alive || !isHostile(actor, victim)) continue;
         if (victim.referenceId === target.referenceId) continue;
-        const reach = Math.hypot(
-          Math.max(0, Math.abs(victim.x - actor.x) - collisionRadius(victim)),
-          Math.max(0, Math.abs(victim.y - actor.y) - collisionRadius(victim)),
-        );
-        if (reach > blast.widthTiles + 1e-12) continue;
+        const victimRadius = collisionRadius(victim);
+        const dx = victim.x - actor.x;
+        const dy = victim.y - actor.y;
+        if (blast.shape === "forward-cone") {
+          // AoE2 blast mode 162 is a one-tile, 90-degree cone in the attack
+          // direction. Unlike radial blast, the directional flag tests the
+          // victim's position in the forward wedge; collision size does not
+          // widen the cone (doing so turns a nominally narrow melee sweep into
+          // near-radial damage in a packed formation).
+          const forward = dx * forwardX + dy * forwardY;
+          const lateral = Math.abs(dx * -forwardY + dy * forwardX);
+          const sideSlope = Math.tan(blast.halfAngleRadians ?? Math.PI / 4);
+          if (forward <= 0
+              || forward > blast.widthTiles + 1e-12
+              || lateral > forward * sideSlope + 1e-12) continue;
+        } else {
+          const reach = Math.hypot(
+            Math.max(0, Math.abs(dx) - victimRadius),
+            Math.max(0, Math.abs(dy) - victimRadius),
+          );
+          if (reach > blast.widthTiles + 1e-12) continue;
+        }
         applyCommittedDamage(units, attack.actorId, victim,
           blast.damageFraction * calculateDamage(actor, victim),
           attack.readyTick, tick, events, { kind: "trample" });
@@ -4200,7 +4803,31 @@ function commitReadyAttacks(units, ready, tick, events) {
 // The tapes' residual in-flight scatter (2.58 of 3 land on average, 88% on
 // the target) is not resolvable at the recorder's 10 Hz missile sampling and
 // is accepted as a documented overshoot, not modelled.
-function processChargeProjectiles(units, projectiles, tick, events) {
+function addImpactHazard(projectile, x, y, tick, hazards, events) {
+  if (!projectile.impactHazard || !hazards) return;
+  const durationTicks = secondsToTicksCeil(
+    projectile.impactHazard.durationSeconds ?? 0,
+  );
+  if (durationTicks <= 0 || !(projectile.impactHazard.damagePerSecond > 0)) return;
+  hazards.push({
+    id: `${projectile.actorId}:${projectile.firedTick}:${projectile.index}`,
+    actorId: projectile.actorId,
+    actorOwner: projectile.actorOwner,
+    actorRelationByOwner: projectile.actorRelationByOwner,
+    x,
+    y,
+    radiusTiles: projectile.impactHazard.radiusTiles,
+    damagePerSecond: projectile.impactHazard.damagePerSecond,
+    stacks: projectile.impactHazard.stacks === true,
+    startTick: tick,
+    endTick: tick + durationTicks,
+  });
+  events.push(event(tick, "impact-hazard-created", projectile.actorId,
+    projectile.targetId, { x, y, endTick: tick + durationTicks }));
+}
+
+
+function processChargeProjectiles(units, projectiles, tick, events, hazards = null) {
   const remaining = [];
   const resolved = [];
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
@@ -4225,18 +4852,31 @@ function processChargeProjectiles(units, projectiles, tick, events) {
           relationByOwner: projectile.actorRelationByOwner,
         }, victim)) continue;
         if (projectile.hitIds.includes(victim.referenceId)) continue;
+        const priorPassVictims = projectile.hitIds.filter((id) => (
+          id !== projectile.targetId
+        )).length;
+        if (victim.referenceId !== projectile.targetId
+            && projectile.passThroughCount > 0
+            && priorPassVictims >= projectile.passThroughCount) continue;
         const dx = Math.abs(victim.x - projectile.x);
         const dy = Math.abs(victim.y - projectile.y);
         const reach = collisionRadius(victim) + projectile.halfWidth;
         if (Math.max(dx, dy) > reach + 1e-9) continue;
         projectile.hitIds.push(victim.referenceId);
-        const full = calculateDamage({ mechanics: projectile.actorMechanics }, victim);
+        const full = calculateDamage({ mechanics: projectile.actorMechanics }, victim, {
+          attackClasses: projectile.attackClasses ?? undefined,
+        });
         const amount = victim.referenceId === projectile.targetId
           ? full
-          : PASS_THROUGH_DAMAGE_FRACTION * full;
+          : (projectile.passThroughDamageFraction
+            ?? PASS_THROUGH_DAMAGE_FRACTION) * full;
         applyCommittedDamage(units, projectile.actorId, victim, amount,
           tick, tick, events,
-          { kind: "bolt-projectile", projectileIndex: projectile.hitIds.length - 1 });
+          {
+            kind: "bolt-projectile",
+            projectileIndex: projectile.index * 100 + projectile.hitIds.length - 1,
+            triggersOnHit: victim.referenceId === projectile.targetId,
+          });
       }
       if (projectile.traveled < projectile.totalDistance - 1e-9) {
         remaining.push(projectile);
@@ -4244,55 +4884,90 @@ function processChargeProjectiles(units, projectiles, tick, events) {
       continue;
     }
     if (projectile.kind === "ranged") {
-      // Physical point flight: advance one step along the line, hit the
-      // moment the target's collision box contains the point. Steps (7/60 =
-      // 0.117 tiles) are smaller than any collision box, so nothing tunnels.
+      // Physical point flight: hit the first hostile collision box. Assigned
+      // targets take full damage; unintended interceptions take half damage,
+      // floored to the universal one-damage minimum.
       projectile.x += projectile.stepX;
       projectile.y += projectile.stepY;
       projectile.traveled += projectile.stepLength;
-      const target = byReference.get(projectile.targetId);
-      if (target?.alive) {
-        const dx = Math.abs(target.x - projectile.x);
-        const dy = Math.abs(target.y - projectile.y);
-        // The arrow is a body too: it lands when its own dat half width
-        // (projectile unit collision_size_x, 0.1 for every archer projectile in
-        // the corpus) meets the victim's collision box -- the same rule the
-        // scorpion bolt already used. Measured on impact geometry: recorded
-        // arrows are last seen at a Chebyshev separation from the victim's
-        // centre whose p97 is 0.310 against champions (collision 0.20 -> 0.30)
-        // and 0.347 against heavy camels (collision 0.25 -> 0.35). The camel is
-        // the first victim in the corpus whose collision box differs from its
-        // outline, which is why a bare-collision rule survived this long.
-        if (Math.max(dx, dy) <= collisionRadius(target) + projectile.halfWidth + 1e-9) {
-          resolved.push(projectile);
-          continue;
-        }
+      const actor = {
+        referenceId: projectile.actorId,
+        owner: projectile.actorOwner,
+        relationByOwner: projectile.actorRelationByOwner,
+      };
+      const victim = units.filter((candidate) => {
+        if (!candidate.alive || !isHostile(actor, candidate)) return false;
+        const dx = Math.abs(candidate.x - projectile.x);
+        const dy = Math.abs(candidate.y - projectile.y);
+        return Math.max(dx, dy)
+          <= collisionRadius(candidate) + projectile.halfWidth + 1e-9;
+      }).sort((left, right) => (
+        Math.hypot(left.x - projectile.x, left.y - projectile.y)
+          - Math.hypot(right.x - projectile.x, right.y - projectile.y)
+        || left.referenceId - right.referenceId
+      ))[0];
+      if (victim) {
+        const intended = victim.referenceId === projectile.originalTargetId;
+        const full = calculateDamage(
+          { mechanics: projectile.actorMechanics }, victim, {
+            attackClasses: projectile.attackClasses ?? undefined,
+          });
+        projectile.targetId = victim.referenceId;
+        projectile.amount = intended
+          ? full
+          : Math.max(1, MISS_DAMAGE_FRACTION * full);
+        projectile.intendedHit = intended;
+        resolved.push(projectile);
+        continue;
       }
       // Expire at the aim point: the target died or left its box.
       if (projectile.traveled < projectile.totalDistance - 1e-9
           && tick < projectile.arrivalTick + 2) {
         remaining.push(projectile);
+      } else {
+        addImpactHazard(projectile, projectile.aimX, projectile.aimY,
+          tick, hazards, events);
       }
       continue;
     }
     if (projectile.kind === "stray") {
-      // Missed-accuracy shot: animate the scattered flight, but resolve only
-      // at its landing point. Crossing a formation during flight does not hit
-      // it; the nearest hostile body overlapping body + projectile radius at
-      // the landing takes exactly half its own final post-armor damage.
+      // Missed-accuracy shot: follow the scattered physical trajectory and
+      // deal half damage (minimum one) to the first hostile body it strikes.
       projectile.x += projectile.stepX;
       projectile.y += projectile.stepY;
       projectile.traveled += projectile.stepLength;
+      const actor = {
+        referenceId: projectile.actorId,
+        owner: projectile.actorOwner,
+        relationByOwner: projectile.actorRelationByOwner,
+      };
+      const crossing = units.filter((candidate) => {
+        if (!candidate.alive || !isHostile(actor, candidate)) return false;
+        const dx = Math.abs(candidate.x - projectile.x);
+        const dy = Math.abs(candidate.y - projectile.y);
+        return Math.max(dx, dy)
+          <= collisionRadius(candidate) + projectile.halfWidth + 1e-9;
+      }).sort((left, right) => (
+        Math.hypot(left.x - projectile.x, left.y - projectile.y)
+          - Math.hypot(right.x - projectile.x, right.y - projectile.y)
+        || left.referenceId - right.referenceId
+      ))[0];
+      if (crossing) {
+        const full = calculateDamage(
+          { mechanics: projectile.actorMechanics }, crossing, {
+            attackClasses: projectile.attackClasses ?? undefined,
+          });
+        applyCommittedDamage(units, projectile.actorId, crossing,
+          Math.max(1, (projectile.damageFraction ?? MISS_DAMAGE_FRACTION) * full),
+          tick, tick, events,
+          { kind: "stray-projectile", projectileIndex: projectile.index });
+        continue;
+      }
       if (projectile.traveled < projectile.totalDistance - 1e-9
           && tick < projectile.arrivalTick) {
         remaining.push(projectile);
         continue;
       }
-      const actor = {
-          referenceId: projectile.actorId,
-          owner: projectile.actorOwner,
-          relationByOwner: projectile.actorRelationByOwner,
-      };
       const victim = selectProjectileLandingVictim(
         units.filter((candidate) => candidate.alive && isHostile(actor, candidate)),
         projectile.aimX,
@@ -4300,10 +4975,47 @@ function processChargeProjectiles(units, projectiles, tick, events) {
         projectile.halfWidth,
       );
       if (victim) {
-        const full = calculateDamage({ mechanics: projectile.actorMechanics }, victim);
+        const full = calculateDamage({ mechanics: projectile.actorMechanics }, victim, {
+          attackClasses: projectile.attackClasses ?? undefined,
+        });
         applyCommittedDamage(units, projectile.actorId, victim,
-          MISS_DAMAGE_FRACTION * full, tick, tick, events,
-          { kind: "stray-projectile", projectileIndex: 0 });
+          Math.max(1, (projectile.damageFraction ?? MISS_DAMAGE_FRACTION) * full),
+          tick, tick, events,
+          { kind: "stray-projectile", projectileIndex: projectile.index });
+      }
+      continue;
+    }
+    if (projectile.kind === "grenade") {
+      if (projectile.arrivalTick > tick) {
+        remaining.push(projectile);
+        continue;
+      }
+      const actor = {
+        referenceId: projectile.actorId,
+        owner: projectile.actorOwner,
+        relationByOwner: projectile.actorRelationByOwner,
+        mechanics: projectile.actorMechanics,
+      };
+      for (const victim of units) {
+        if (!victim.alive || victim.referenceId === projectile.actorId) continue;
+        const hostile = isHostile(actor, victim);
+        if (!hostile && projectile.friendlyFireFraction <= 0) continue;
+        const reach = Math.hypot(
+          victim.x - projectile.aimX,
+          victim.y - projectile.aimY,
+        ) - collisionRadius(victim);
+        if (reach > projectile.blastRadius + 1e-12) continue;
+        const full = calculateDamage(actor, victim, {
+          attackClasses: projectile.attackClasses ?? undefined,
+        });
+        const fraction = projectile.damageFraction
+          * (hostile ? 1 : projectile.friendlyFireFraction);
+        applyCommittedDamage(units, projectile.actorId, victim,
+          Math.max(1, full * fraction), tick, tick, events, {
+            kind: "grenade-splash",
+            projectileIndex: projectile.index,
+            triggersOnHit: victim.referenceId === projectile.targetId,
+          });
       }
       continue;
     }
@@ -4367,13 +5079,77 @@ function processChargeProjectiles(units, projectiles, tick, events) {
       tick, tick, events, {
         kind: projectile.kind === "ranged" ? "ranged-projectile" : "charge-projectile",
         projectileIndex: projectile.index,
+        triggersOnHit: projectile.intendedHit !== false,
+        charge: projectile.kind === "charge",
       });
+    addImpactHazard(projectile, projectile.x ?? target.x,
+      projectile.y ?? target.y, tick, hazards, events);
+    if (projectile.kind !== "ranged" || !(projectile.impactSplashRadius > 0)) continue;
+    const actor = byReference.get(projectile.actorId)
+      ?? { mechanics: projectile.actorMechanics };
+    for (const victim of units) {
+      if (!victim.alive || victim.referenceId === target.referenceId
+          || victim.referenceId === projectile.actorId) continue;
+      const hostile = isHostile({
+        referenceId: projectile.actorId,
+        owner: projectile.actorOwner,
+        relationByOwner: projectile.actorRelationByOwner,
+      }, victim);
+      const friendlyFraction = projectile.impactSplashFriendlyFireFraction ?? 0;
+      if (!hostile && friendlyFraction <= 0) continue;
+      const reach = Math.hypot(victim.x - target.x, victim.y - target.y)
+        - collisionRadius(victim);
+      if (reach > projectile.impactSplashRadius + 1e-12) continue;
+      const full = calculateDamage(actor, victim, {
+        attackClasses: projectile.attackClasses ?? undefined,
+      });
+      const fraction = (projectile.impactSplashDamageFraction ?? 1)
+        * (hostile ? 1 : friendlyFraction);
+      applyCommittedDamage(units, projectile.actorId, victim,
+        Math.max(1, full * fraction), tick, tick, events, {
+          kind: "impact-splash",
+          projectileIndex: projectile.index,
+        });
+    }
   }
   return remaining;
 }
 
 
+function processImpactHazards(units, hazards, tick, events) {
+  if (!hazards) return null;
+  const active = hazards.filter((hazard) => tick < hazard.endTick);
+  for (const victim of units) {
+    if (!victim.alive) continue;
+    const touching = active.filter((hazard) => {
+      const actor = {
+        referenceId: hazard.actorId,
+        owner: hazard.actorOwner,
+        relationByOwner: hazard.actorRelationByOwner,
+      };
+      return isHostile(actor, victim)
+        && Math.hypot(victim.x - hazard.x, victim.y - hazard.y)
+          - collisionRadius(victim) <= hazard.radiusTiles + 1e-12;
+    });
+    if (touching.length === 0) continue;
+    const selected = touching.some(({ stacks }) => stacks)
+      ? touching
+      : [touching.toSorted((left, right) => (
+        right.damagePerSecond - left.damagePerSecond
+          || left.actorId - right.actorId
+      ))[0]];
+    const damage = selected.reduce((total, hazard) => (
+      total + hazard.damagePerSecond / TICKS_PER_SECOND
+    ), 0);
+    applyCommittedDamage(units, selected[0].actorId, victim, damage,
+      tick, tick, events, { kind: "impact-hazard" });
+  }
+  return active;
+}
+
+
 function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, events, extra) {
+  const actor = units.find((unit) => unit.referenceId === actorId);
   const hpBefore = target.hp;
   const hpAfter = Math.max(0, hpBefore - amount);
   target.hp = hpAfter;
@@ -4387,12 +5163,80 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
     hpAfter,
     ...(extra ?? {}),
   }));
+  if (extra?.triggersOnHit && actor?.specialState) {
+    const effects = unitEffects(actor);
+    actor.specialState.lastAttackTick = tick;
+    if ((effects.attack_speed_ramp ?? 0) > 0) {
+      const cutoff = tick - 5 * TICKS_PER_SECOND;
+      actor.specialState.rampHitTicks = actor.specialState.rampHitTicks
+        .filter((hitTick) => hitTick > cutoff);
+      actor.specialState.rampHitTicks.push(tick);
+      actor.actionTimers.reload = Math.max(
+        0,
+        reloadTicksForUnit(actor, tick) - actor.actionTimers.swing,
+      );
+    }
+    const strip = effects.armor_strip_per_hit ?? 0;
+    if (strip > 0 && hpAfter > 0) {
+      ensureSpecialState(target).armorStripped += strip;
+    }
+    const bleedDps = effects.bleed_dps ?? 0;
+    if (bleedDps > 0 && hpAfter > 0) {
+      const targetState = ensureSpecialState(target);
+      targetState.bleedDamagePerSecond = Math.max(
+        targetState.bleedDamagePerSecond,
+        bleedDps,
+      );
+      targetState.bleedUntilTick = tick
+        + secondsToTicksCeil(effects.bleed_duration ?? 0);
+      targetState.bleedActorId = actorId;
+    }
+    const slowPercent = extra?.charge
+      ? (effects.charge_slow_percent ?? 0)
+      : (effects.on_hit_slow_percent ?? 0);
+    const slowDuration = extra?.charge
+      ? (effects.charge_slow_duration ?? 0)
+      : (effects.on_hit_slow_duration_seconds ?? 0);
+    const excludesSiege = effects.on_hit_slow_excludes_siege === true;
+    const targetIsSiege = target.mechanics.armor_classes?.["20"] !== undefined;
+    if (slowPercent > 0 && slowDuration > 0
+        && !(excludesSiege && targetIsSiege)) {
+      const targetState = ensureSpecialState(target);
+      targetState.slowMultiplier = 1 - slowPercent;
+      targetState.slowUntilTick = Math.max(
+        targetState.slowUntilTick,
+        tick + secondsToTicksCeil(slowDuration),
+      );
+    }
+  }
   if (hpAfter > 0) return;
+
+  if (actor?.alive && actor.specialState) {
+    const effects = unitEffects(actor);
+    const attackCap = effects.attack_bonus_per_kill ?? 0;
+    if (attackCap > 0) {
+      actor.specialState.killAttackBonus = Math.min(
+        attackCap,
+        actor.specialState.killAttackBonus + 1,
+      );
+    }
+    const healPerKill = effects.hp_per_kill ?? 0;
+    const healCap = effects.hp_per_kill_max ?? 0;
+    if (healPerKill > 0 && actor.specialState.hpGainedFromKills < healCap) {
+      const heal = Math.min(
+        healPerKill,
+        healCap - actor.specialState.hpGainedFromKills,
+      );
+      actor.hp = Math.min(actor.maxHp ?? actor.mechanics.hp, actor.hp + heal);
+      actor.specialState.hpGainedFromKills += heal;
+    }
+  }
 
   target.alive = false;
   target.pursuitTargetId = null;
   target.engagedTargetId = null;
   target.attackTargetId = null;
+  delete target.pendingVolley;
   target.avoidance = null;
   target.action = "dead";
   target.actionTimers = { windup: 0, reload: 0, swing: 0, acquire: 0 };
@@ -4402,6 +5246,19 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
     targetId: target.referenceId,
     readyTick,
   }));
+  for (const ally of units) {
+    if (!ally.alive || ally.owner !== target.owner || !ally.specialState) continue;
+    const effects = unitEffects(ally);
+    const heal = effects.ally_death_heal ?? 0;
+    if (heal <= 0 || Math.hypot(ally.x - target.x, ally.y - target.y) > 5 + 1e-12) {
+      continue;
+    }
+    const duration = effects.ally_death_heal_duration ?? 0;
+    ally.specialState.allyHealRemaining = heal;
+    ally.specialState.allyHealPerTick = duration > 0
+      ? heal / secondsToTicksCeil(duration)
+      : heal;
+  }
   for (const engaged of units) {
     if (!engaged.alive || engaged.engagedTargetId !== target.referenceId) continue;
     engaged.engagedTargetId = null;
@@ -4423,6 +5280,7 @@ export function stepWorld(world) {
 
   const snapshot = Object.freeze([...world.units]);
   const units = snapshot.map(mutableUnit);
+  advanceSpecialEffects(units, tick, events);
   const pursuitRecoveryState = nextPursuitRecoveryState(
     world.pursuitRecoveryState ?? null,
   );
@@ -4500,11 +5358,17 @@ export function stepWorld(world) {
       ...(projectile.hitIds ? { hitIds: [...projectile.hitIds] } : {}),
     }))
     : null;
+  const hazards = world.hazards
+    ? world.hazards.map((hazard) => ({ ...hazard }))
+    : null;
   const ready = progressAttacks(units, tick, events, movedIds,
     projectiles, velocities, world.shotRng ?? null);
   commitReadyAttacks(units, ready, tick, events);
   const remainingProjectiles = projectiles
-    ? processChargeProjectiles(units, projectiles, tick, events)
+    ? processChargeProjectiles(units, projectiles, tick, events, hazards)
+    : null;
+  const remainingHazards = hazards
+    ? processImpactHazards(units, hazards, tick, events)
     : null;
   const scenarioUpdate = advanceScenarioTriggers(world, units, tick, events);
   for (const owner of scenarioUpdate.patrolOwners) {
@@ -4528,6 +5392,11 @@ export function stepWorld(world) {
     } : {}),
     ...(remainingProjectiles !== null
       ? { projectiles: Object.freeze(remainingProjectiles.map((p) => Object.freeze({ ...p }))) }
+      : {}),
+    ...(remainingHazards !== null
+      ? { hazards: Object.freeze(remainingHazards.map((hazard) => (
+        Object.freeze({ ...hazard })
+      ))) }
       : {}),
     ...(scenarioUpdate.triggerState
       ? { scenarioTriggerState: scenarioUpdate.triggerState }

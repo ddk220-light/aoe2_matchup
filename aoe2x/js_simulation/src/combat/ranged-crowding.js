@@ -9,6 +9,9 @@ const EPSILON = 1e-12;
 // body fractions, so they do not name a unit, formation, or matchup.
 const PAIR_GROWTH_WEIGHT = 0.75;
 const TRIPLE_GROWTH_WEIGHT = 96;
+const LARGE_BODY_PAIR_GROWTH_WEIGHT = 48;
+const LARGE_BODY_TRIPLE_GROWTH_WEIGHT = 768;
+const STANDARD_RANGED_BODY_RADIUS = 0.2;
 const RANGED_TRANSIT_BODY_CORE_FRACTION = 0.025;
 // A committed siege body is a path obstacle to later ingress. Classification
 // comes from AoE2's own Siege Weapon armor class (20), not body radius: large
@@ -214,6 +217,8 @@ function candidateScore(
   currentMetrics,
   candidateMetrics,
   preferredSign,
+  pairGrowthWeight,
+  tripleGrowthWeight,
 ) {
   if (candidateMetrics.maximumFourArea > currentMetrics.maximumFourArea + EPSILON) {
     return Number.POSITIVE_INFINITY;
@@ -233,8 +238,8 @@ function candidateScore(
     ? 0
     : 1e-9;
   return lostProgress
-    + PAIR_GROWTH_WEIGHT * pairGrowth
-    + TRIPLE_GROWTH_WEIGHT * tripleGrowth
+    + pairGrowthWeight * pairGrowth
+    + tripleGrowthWeight * tripleGrowth
     + tiePenalty;
 }
 
@@ -352,6 +357,18 @@ export function planRangedCrowding(units, proposals, tick, {
       currentPositions,
     );
     const preferredSign = mover.referenceId % 2 === 0 ? 1 : -1;
+    // Larger non-siege ranged bodies cannot pack through an infantry-width
+    // firing rank with the same compliance as foot archers. Classification
+    // comes solely from physical DAT body size; arrow count and unit identity
+    // are irrelevant. Siege uses its separate committed-body obstruction.
+    const largeMobileBody = !isSiegeRanged(mover)
+      && collisionRadius(mover) > STANDARD_RANGED_BODY_RADIUS + EPSILON;
+    const pairGrowthWeight = largeMobileBody
+      ? LARGE_BODY_PAIR_GROWTH_WEIGHT
+      : PAIR_GROWTH_WEIGHT;
+    const tripleGrowthWeight = largeMobileBody
+      ? LARGE_BODY_TRIPLE_GROWTH_WEIGHT
+      : TRIPLE_GROWTH_WEIGHT;
     const candidates = CANDIDATE_ANGLES.map((degrees) => rotateProposal(desired, degrees));
     candidates.push(Object.freeze({ ...desired, dx: 0, dy: 0 }));
     const ranked = candidates.map((candidate, order) => {
@@ -361,7 +378,8 @@ export function planRangedCrowding(units, proposals, tick, {
         candidate,
         metrics,
         order,
-        score: candidateScore(candidate, desired, currentMetrics, metrics, preferredSign),
+        score: candidateScore(candidate, desired, currentMetrics, metrics,
+          preferredSign, pairGrowthWeight, tripleGrowthWeight),
       };
     }).sort((left, right) => left.score - right.score || left.order - right.order);
     let selected = ranked[0];

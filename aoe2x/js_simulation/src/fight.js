@@ -372,7 +372,7 @@ export async function runFight(root, {
   }
   const kiter = innerKiteOwner === 2 ? inner2 : inner3;
   const chaserMechanics = innerKiteOwner === 2 ? mechanics3 : mechanics2;
-  const result = runWorld(createWorld({
+  const initialWorld = createWorld({
     ratio: `${innerCount2}v${innerCount3}`,
     units,
     ...(map ? { map } : {}),
@@ -407,7 +407,16 @@ export async function runFight(root, {
     ...(preventiveContactSteering === true
       ? { preventiveContactSteering: true }
       : {}),
-  }), { maxTicks: MAX_TICKS, retainSnapshots });
+  });
+  const startingHpByInnerOwner = Object.freeze(Object.fromEntries(
+    initialWorld.scenarioOwners.map((owner) => [
+      owner,
+      initialWorld.units
+        .filter((unit) => unit.owner === owner && unit.alive)
+        .reduce((total, unit) => total + unit.hp, 0),
+    ]),
+  ));
+  const result = runWorld(initialWorld, { maxTicks: MAX_TICKS, retainSnapshots });
 
   // Owner relabelling. Reference ids stay exactly as the engine allocated
   // them -- the payload never promises an id block belongs to a side, and the
@@ -503,6 +512,11 @@ export async function runFight(root, {
     winnerHp: live
       .filter((unit) => reportedOwner(unit.owner) === reportedOwner(result.winner))
       .reduce((total, unit) => total + unit.hp, 0),
+    startingHpByOwner: Object.freeze(Object.fromEntries(
+      Object.entries(startingHpByInnerOwner).map(([owner, hp]) => (
+        [reportedOwner(Number(owner)), hp]
+      )),
+    )),
     finalStateHash: hashCanonicalJson({
       tick: result.world.tick,
       ratio: `${innerCount2}v${innerCount3}`,

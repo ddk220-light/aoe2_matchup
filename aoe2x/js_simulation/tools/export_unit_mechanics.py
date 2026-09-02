@@ -7,11 +7,13 @@
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 import hashlib
 import json
 import math
 import sqlite3
 from pathlib import Path
+import sys
 from typing import Any
 
 
@@ -24,6 +26,100 @@ REFERENCE_TO_DAT_CIV = {
     "Byzantines": "Byzantine",
     "Franks": "French",
     "Mayans": "Mayan",
+}
+
+
+# Runtime ability columns are generated from dbgen/ability_registry.py into
+# ref_units.  Keeping this list in the fixture exporter means the JS combat
+# engine consumes the same fully-upgraded, civilization-specific values as the
+# reference site and the older engines, without naming a matchup or reading a
+# captured result.  JSON attack/form blocks are decoded below; scalar zeroes
+# and nulls are omitted from the fixture so ordinary units retain a compact
+# shape.
+REFERENCE_EFFECT_COLUMNS = (
+    "base_accuracy",
+    "extra_projectiles",
+    "extra_projectile_attacks_json",
+    "first_attack_extra_projectiles",
+    "charge_projectile_count",
+    "charge_projectile_attacks_json",
+    "charge_projectile_speed",
+    "charge_attack_range",
+    "charge_ignores_armor",
+    "trample_percent",
+    "trample_radius",
+    "trample_flat_damage",
+    "splash_on_hit_radius",
+    "splash_on_hit_fraction",
+    "bleed_dps",
+    "bleed_duration",
+    "attack_bonus_per_kill",
+    "hp_transform_threshold",
+    "hp_regen",
+    "hp_regen_in_combat",
+    "pass_through_percent",
+    "pass_through_count",
+    "extra_proj_scatter",
+    "miss_damage_percent",
+    "hp_per_kill",
+    "hp_per_kill_max",
+    "armor_strip_per_hit",
+    "charge_attack_melee",
+    "charge_recharge_time",
+    "damage_reflect_percent",
+    "attack_bonus_nearby",
+    "nearby_bonus_count",
+    "hp_nearby_percent_per_unit",
+    "hp_nearby_max_units",
+    "charge_slow_percent",
+    "charge_slow_duration",
+    "attack_speed_ramp",
+    "attack_speed_min",
+    "execute_damage_per_step",
+    "execute_hp_step",
+    "ally_death_heal",
+    "ally_death_heal_duration",
+    "transform_hp",
+    "transform_attack",
+    "transform_melee_armor",
+    "transform_pierce_armor",
+    "transform_attack_speed",
+    "transform_attack_delay",
+    "transform_movement_speed",
+    "transform_attacks_json",
+    "transform_armors_json",
+)
+
+
+JSON_EFFECT_COLUMNS = frozenset({
+    "extra_projectile_attacks_json",
+    "charge_projectile_attacks_json",
+    "transform_attacks_json",
+    "transform_armors_json",
+})
+
+
+# Some mechanics are command/mode semantics rather than scalar Genie unit
+# attributes.  They are still unit mechanics (never matchup calibration), and
+# are documented by the shipped game description / current reference corpus.
+CURATED_RUNTIME_EFFECTS = {
+    "elite_white_feather_guard_shu": {
+        "on_hit_slow_percent": 0.15,
+        "on_hit_slow_duration_seconds": 10.0,
+        "on_hit_slow_excludes_siege": True,
+        "hp_nearby_radius_tiles": 15.0,
+    },
+    "mounted_trebuchet_khitans": {
+        "impact_hazard_radius_tiles": 0.7,
+        "impact_hazard_duration_seconds": 10.0,
+        "impact_hazard_damage_per_second": 2.0,
+        "impact_hazard_stacks": False,
+    },
+    "elite_samurai_japanese": {
+        "charged_speed_multiplier": 1.25,
+        "charged_speed_min_target_distance_tiles": 2.0,
+        "charged_speed_max_target_distance_tiles": 7.0,
+    },
 }
 
 
@@ -40,8 +136,9 @@ def _read_reference_row(reference_db: Path, unit_slug: str, civ: str) -> dict[st
     uri = f"{reference_db.as_uri()}?mode=ro"
     with sqlite3.connect(uri, uri=True) as connection:
         connection.row_factory = sqlite3.Row
+        effect_columns = ",\n                ".join(REFERENCE_EFFECT_COLUMNS)
         rows = connection.execute(
-            """
+            f"""
             SELECT
                 id,
                 civ_name,
@@ -49,13 +146,15 @@ def _read_reference_row(reference_db: Path, unit_slug: str, civ: str) -> dict[st
                 final_hp,
                 final_speed,
                 final_range,
+                min_range,
                 final_reload_time,
                 final_attack_delay,
                 final_accuracy,
                 final_los,
                 final_attacks_json,
                 final_armors_json,
-                pop_space
+                pop_space,
+                {effect_columns}
             FROM ref_units
             WHERE unit_slug = ? AND civ_name = ? AND age = ?
             """,
@@ -97,6 +196,23 @@ def _read_reference_row(reference_db: Path, unit_slug: str, civ: str) -> dict[st
             f"{row['exact_speed']} vs {row['final_speed']}"
         )
     return row
+
+
+def _runtime_effects(reference: dict[str, Any], unit_slug: str) -> dict[str, Any] | None:
+    effects: dict[str, Any] = {}
+    for name in REFERENCE_EFFECT_COLUMNS:
+        value = reference.get(name)
+        if value is None or value == 0 or value == 0.0 or value == "":
+            continue
+        output_name = name.removesuffix("_json")
+        if name in JSON_EFFECT_COLUMNS:
+            parsed = _parse_classes(value)
+            if parsed:
+                effects[output_name] = parsed
+        else:
+            effects[output_name] = value
+    effects.update(CURATED_RUNTIME_EFFECTS.get(unit_slug, {}))
+    return effects or None
 
 
 def _parse_classes(raw: str) -> dict[str, int | float]:
@@ -219,6 +335,25 @@ def _raw_unit(dat_path: Path, civ: str, master: int):
     return data, unit
 
 
+@lru_cache(maxsize=1)
+def _unit_analyzer():
+    """Load the shared fully-teched stat evaluator once for concrete forms."""
+    repository_root = Path(__file__).resolve().parents[3]
+    if str(repository_root) not in sys.path:
+        sys.path.insert(0, str(repository_root))
+    from aoe2x.dbgen.unit_analyzer import UnitAnalyzer
+
+    return UnitAnalyzer()
+
+
+def _concrete_form_stats(civ: str, master: int):
+    """Fully upgrade a real DAT form rather than its public mode-switch shell."""
+    stats = _unit_analyzer().calculate_form_stats(civ, master, 4)
+    if stats is None:
+        raise ValueError(f"cannot derive fully-teched {civ} form master {master}")
+    return stats
+
+
 def _civilization_reload_multiplier(data, civ: str, unit) -> float:
     """Return direct civilization tech-tree multipliers for reload attribute 10.
 
@@ -260,21 +395,51 @@ def _animation_seconds(data, graphic_id: int, label: str) -> dict[str, Any]:
 
 
 def export_unit_mechanics(
-    reference_db: Path, dat_path: Path, unit_slug: str, civ: str, master: int
+    reference_db: Path,
+    dat_path: Path,
+    unit_slug: str,
+    civ: str,
+    master: int,
+    *,
+    concrete_form: bool = False,
+    extra_projectile_count: int | None = None,
+    volley_release_interval_seconds: float | None = None,
+    volley_release_size: int | None = None,
+    volley_double_release_percent: float | None = None,
+    volley_release_source: str | None = None,
+    weapon_mode: str | None = None,
 ) -> dict:
-    """Return the clean-room Imperial mechanics fixture for one unit x civ."""
+    """Return the Imperial mechanics fixture for one unit x civilization.
+
+    ``concrete_form`` is for real DAT units hidden behind a public transform or
+    weapon-mode shell.  It runs that concrete master through the same standard,
+    civilization, team, and unique-technology chain as an ordinary unit.  No
+    observed matchup result participates in the calculation.
+    """
     reference_db = Path(reference_db)
     dat_path = Path(dat_path)
     reference = _read_reference_row(reference_db, unit_slug, civ)
     data, unit = _raw_unit(dat_path, civ, master)
-    attack_classes = _parse_classes(reference["final_attacks_json"])
-    armor_classes = _parse_classes(reference["final_armors_json"])
+    form_stats = _concrete_form_stats(civ, master) if concrete_form else None
+    attack_classes = (
+        {str(class_id): amount for class_id, amount in sorted(form_stats.attacks.items())}
+        if form_stats else _parse_classes(reference["final_attacks_json"])
+    )
+    armor_classes = (
+        {str(class_id): amount for class_id, amount in sorted(form_stats.armors.items())}
+        if form_stats else _parse_classes(reference["final_armors_json"])
+    )
     damage_reduction = _damage_reduction_by_attacker_category(
         data, master, reference["applied_tech_ids"]
     )
-    reload_multiplier = _civilization_reload_multiplier(data, civ, unit)
+    reload_multiplier = (
+        1.0 if form_stats else _civilization_reload_multiplier(data, civ, unit)
+    )
     reload_seconds = round(
-        float(reference["final_reload_time"]) * reload_multiplier, 6)
+        float(form_stats.reload_time) if form_stats
+        else float(reference["final_reload_time"]) * reload_multiplier,
+        6,
+    )
 
     attack_animation = _animation_seconds(
         data, int(unit.type_50.attack_graphic), "attack")
@@ -385,6 +550,20 @@ def export_unit_mechanics(
             " ref_units.final_armors_json)"
         ),
     }
+    if form_stats:
+        concrete_source = (
+            "aoe2x.dbgen.unit_analyzer.calculate_form_stats"
+            f"(civilization='{civ}', unit_id={master}, max_age=4)"
+        )
+        fields.update({
+            "hp": concrete_source + ".hp",
+            "speed_tiles_per_second": concrete_source + ".speed",
+            "attack_range_tiles": concrete_source + ".range",
+            "reload_seconds": concrete_source + ".reload_time",
+            "line_of_sight_tiles": concrete_source + ".los",
+            "attack_classes": concrete_source + ".attacks",
+            "armor_classes": concrete_source + ".armors",
+        })
     if damage_reduction is not None:
         fields["damage_reduction_by_attacker_category.mounted"] = (
             "ref_techs_applied.tech_id 574 + dat tech 574/effect 'Royal Heirs': "
@@ -419,33 +598,56 @@ def export_unit_mechanics(
     #     ~1 damage/volley overshoot as an accepted residual.
     charge = None
     charge_type = int(getattr(unit.creatable, "charge_type", 0) or 0)
-    if charge_type:
+    if charge_type in (6, 7):
         proj_id = int(unit.creatable.charge_projectile_unit)
         proj = data.civs[0].units[proj_id] if proj_id >= 0 else None
         if proj is None:
             raise ValueError(f"charge_type {charge_type} without projectile unit")
         special_graphic = int(unit.creatable.special_graphic)
-        charge_animation = _animation_seconds(data, special_graphic, "charge")
-        if frame_delay <= 0:
-            raise ValueError("charge windup needs a nonzero frame_delay")
-        proj_attacks = {
-            str(a.class_): a.amount
-            for a in proj.type_50.attacks
-            if a.amount > 0
-        }
+        charge_animation = (
+            _animation_seconds(data, special_graphic, "charge")
+            if special_graphic >= 0 else attack_animation
+        )
+        reference_charge_attacks = reference.get("charge_projectile_attacks_json")
+        proj_attacks = (
+            _parse_classes(reference_charge_attacks)
+            if reference_charge_attacks else {
+                str(a.class_): a.amount
+                for a in proj.type_50.attacks
+                if a.amount > 0
+            }
+        )
+        reference_count = int(reference.get("charge_projectile_count") or 0)
+        projectile_count = reference_count or (
+            int(unit.creatable.max_total_projectiles)
+            if charge_type == 6 else
+            max(0, int(unit.creatable.max_total_projectiles)
+                - int(unit.creatable.total_projectiles))
+        )
+        if projectile_count <= 0:
+            raise ValueError(f"charge_type {charge_type} without charge projectiles")
+        reference_speed = float(reference.get("charge_projectile_speed") or 0)
+        recharge_seconds = float(reference.get("charge_recharge_time") or 0)
         charge = {
             "max_charge": float(unit.creatable.max_charge),
             "recharge_rate": float(unit.creatable.recharge_rate),
+            "recharge_seconds": recharge_seconds,
             "charge_type": charge_type,
             "charge_event": int(unit.creatable.charge_event),
             "projectile_unit": proj_id,
-            "projectile_count": int(unit.creatable.max_total_projectiles),
-            "projectile_speed_tiles_per_second": float(proj.speed),
+            "projectile_count": projectile_count,
+            "projectile_speed_tiles_per_second": reference_speed or float(proj.speed),
             "projectile_attacks": proj_attacks,
+            "attack_range_tiles": float(
+                reference.get("charge_attack_range") or reference["final_range"]),
+            "ignores_armor": bool(reference.get("charge_ignores_armor") or 0),
+            "adds_to_normal_attack": recharge_seconds > 0
+                and float(reference["final_range"]) > 0,
             "charge_animation": charge_animation,
             "windup_seconds": (
                 charge_animation["seconds"] * frame_delay
                 / charge_animation["frames"]
+                if frame_delay > 0 else attack_delay_seconds
             ),
         }
         fields.update({
@@ -454,15 +656,23 @@ def export_unit_mechanics(
             "charge.charge_type": "unit.creatable.charge_type",
             "charge.charge_event": "unit.creatable.charge_event",
             "charge.projectile_unit": "unit.creatable.charge_projectile_unit",
-            "charge.projectile_count": "unit.creatable.max_total_projectiles",
+            "charge.projectile_count": (
+                "ref_units.charge_projectile_count; fallback to the dat "
+                "charge_type-specific max/ordinary projectile delta"
+            ),
             "charge.projectile_speed_tiles_per_second": (
                 f"dat.civs[0].units[{proj_id}].speed"
             ),
             "charge.projectile_attacks": (
-                f"positive dat.civs[0].units[{proj_id}].type_50.attacks; the"
-                " engine applies class matching with armor values IGNORED"
-                " (all four victim types measure exactly the class-3 amount)"
+                "ref_units.charge_projectile_attacks_json; fallback to "
+                f"positive dat.civs[0].units[{proj_id}].type_50.attacks"
             ),
+            "charge.attack_range_tiles": "ref_units.charge_attack_range",
+            "charge.ignores_armor": "ref_units.charge_ignores_armor",
+            "charge.adds_to_normal_attack": (
+                "ranged charge volley with a positive sourced recharge time"
+            ),
+            "charge.recharge_seconds": "ref_units.charge_recharge_time",
             "charge.charge_animation": (
                 "graphics[unit.creatable.special_graphic]"
             ),
@@ -503,8 +713,17 @@ def export_unit_mechanics(
     projectile_id = int(unit.type_50.projectile_unit_id)
     if projectile_id >= 0 and float(reference["final_range"]) > 0:
         proj = data.civs[0].units[projectile_id]
-        pass_through = bool(getattr(proj.projectile, "vanish_mode", 0)) \
-            if proj.projectile is not None else False
+        projectile_arc = (
+            float(proj.projectile.projectile_arc)
+            if proj.projectile is not None else 0.0
+        )
+        # Vanish mode is overloaded in the DAT.  Flat bolts use it to keep
+        # travelling through bodies; arcing grenades/trebuchet stones use it
+        # to disappear at their ground impact and must not become line-piercing.
+        pass_through = (
+            bool(getattr(proj.projectile, "vanish_mode", 0))
+            and projectile_arc <= 0
+        ) if proj.projectile is not None else False
         # Projectile smart mode (dat attribute 19, a bitfield: 1 = ballistics
         # lead on moving targets, 2 = full damage on unintended targets). The
         # raw projectile record carries the pre-Ballistics value; the
@@ -527,13 +746,25 @@ def export_unit_mechanics(
         ranged = {
             "projectile_unit": projectile_id,
             "projectile_speed_tiles_per_second": float(proj.speed),
-            "projectile_arc": (
-                float(proj.projectile.projectile_arc)
-                if proj.projectile is not None else 0.0
+            "projectile_arc": projectile_arc,
+            "min_range_tiles": float(reference["min_range"]),
+            "accuracy_percent": float(
+                form_stats.accuracy if form_stats
+                else reference["final_accuracy"]
             ),
-            "min_range_tiles": float(unit.type_50.min_range),
-            "accuracy_percent": float(reference["final_accuracy"]),
+            "base_accuracy_percent": float(
+                unit.type_50.accuracy_percent if form_stats
+                else reference["base_accuracy"]
+            ),
             "pass_through": pass_through,
+            "pass_through_damage_fraction": (
+                (float(reference.get("pass_through_percent") or 0) or 0.5)
+                if pass_through else 0.0
+            ),
+            "pass_through_count": (
+                int(reference.get("pass_through_count") or 0)
+                if pass_through else 0
+            ),
             "projectile_half_width_tiles": round(float(proj.collision_size_x), 6),
             "smart_mode": smart_mode,
             # Miss scatter half-radius (dat accuracy_dispersion); only
@@ -542,8 +773,12 @@ def export_unit_mechanics(
             # Extra visual projectiles (mangonel line): total - 1 secondaries
             # with EMPTY attack lists — each lands scattered over the
             # spawning area and deals only the floor 1 damage.
-            "secondary_projectile_count": max(
-                0, int(unit.creatable.total_projectiles) - 1),
+            "secondary_projectile_count": (
+                max(0, int(unit.creatable.total_projectiles) - 1)
+                if int(unit.type_50.blast_attack_level) == 1
+                and float(unit.type_50.blast_width) > 0
+                else 0
+            ),
             "secondary_projectile_unit": int(
                 unit.creatable.secondary_projectile_unit),
             "secondary_projectile_half_width_tiles": (
@@ -556,6 +791,33 @@ def export_unit_mechanics(
                 float(unit.creatable.projectile_spawning_area[0]),
                 float(unit.creatable.projectile_spawning_area[1]),
             ],
+            "extra_projectile_count": int(
+                extra_projectile_count
+                if extra_projectile_count is not None
+                else reference.get("extra_projectiles") or 0
+            ),
+            "extra_projectile_attacks": (
+                _parse_classes(reference["extra_projectile_attacks_json"])
+                if reference.get("extra_projectile_attacks_json") else None
+            ),
+            "first_attack_extra_projectiles": int(
+                reference.get("first_attack_extra_projectiles") or 0),
+            "impact_splash_radius_tiles": float(
+                reference.get("splash_on_hit_radius") or 0),
+            "impact_splash_damage_fraction": float(
+                reference.get("splash_on_hit_fraction") or 1),
+            "impact_splash_friendly_fire_fraction": float(
+                unit.type_50.friendly_fire_damage),
+            **({
+                "volley_release_interval_seconds": float(
+                    volley_release_interval_seconds),
+                "volley_release_size": int(volley_release_size or 1),
+                **({"volley_double_release_percent": float(
+                    volley_double_release_percent)}
+                   if volley_double_release_percent is not None else {}),
+                "reload_after_final_projectile": True,
+            } if volley_release_interval_seconds is not None else {}),
+            **({"weapon_mode": weapon_mode} if weapon_mode else {}),
         }
         fields.update({
             "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
@@ -565,14 +827,19 @@ def export_unit_mechanics(
             "ranged.projectile_arc": (
                 f"dat.civs[0].units[{projectile_id}].projectile.projectile_arc"
             ),
-            "ranged.min_range_tiles": "unit.type_50.min_range",
+            "ranged.min_range_tiles": "ref_units.min_range",
             "ranged.accuracy_percent": (
                 "ref_units.final_accuracy (not simulated: 98.7% of tape shots"
                 " resolve deterministically; see measurement note)"
             ),
+            "ranged.base_accuracy_percent": "ref_units.base_accuracy",
             "ranged.pass_through": (
                 f"dat.civs[0].units[{projectile_id}].projectile.vanish_mode"
             ),
+            "ranged.pass_through_damage_fraction": (
+                "ref_units.pass_through_percent; dat pass-through defaults to 0.5"
+            ),
+            "ranged.pass_through_count": "ref_units.pass_through_count",
             "ranged.projectile_half_width_tiles": (
                 f"dat.civs[0].units[{projectile_id}].collision_size_x"
             ),
@@ -589,7 +856,83 @@ def export_unit_mechanics(
                 ".collision_size_x"
             ),
             "ranged.projectile_spawning_area": "unit.creatable.projectile_spawning_area[0:2]",
+            "ranged.extra_projectile_count": "ref_units.extra_projectiles",
+            "ranged.extra_projectile_attacks": (
+                "ref_units.extra_projectile_attacks_json"
+            ),
+            "ranged.first_attack_extra_projectiles": (
+                "ref_units.first_attack_extra_projectiles"
+            ),
+            "ranged.impact_splash_radius_tiles": "ref_units.splash_on_hit_radius",
+            "ranged.impact_splash_damage_fraction": (
+                "ref_units.splash_on_hit_fraction"
+            ),
+            "ranged.impact_splash_friendly_fire_fraction": (
+                "unit.type_50.friendly_fire_damage"
+            ),
         })
+        if extra_projectile_count is not None:
+            fields["ranged.extra_projectile_count"] = (
+                "concrete DAT mode projectile count plus its sourced "
+                "civilization technology bonus"
+            )
+        if volley_release_interval_seconds is not None:
+            fields.update({
+                "ranged.volley_release_interval_seconds": (
+                    volley_release_source
+                    or "full-rate live projectile births grouped by source actor; "
+                       "mechanics validation only"
+                ),
+                "ranged.reload_after_final_projectile": (
+                    "full-rate same-actor volley start gap equals final release "
+                    "+ DAT reload"
+                ),
+                "ranged.volley_release_size": (
+                    volley_release_source
+                    or "full-rate projectile births grouped by source actor"
+                ),
+                **({
+                    "ranged.volley_double_release_percent": (
+                        volley_release_source
+                        or "full-rate projectile births grouped by source actor"
+                    )
+                } if volley_double_release_percent is not None else {}),
+            })
+        if weapon_mode:
+            fields["ranged.weapon_mode"] = "concrete scenario/DAT weapon form"
+        if form_stats:
+            fields.update({
+                "ranged.accuracy_percent": (
+                    "concrete fully-teched form accuracy"
+                ),
+                "ranged.base_accuracy_percent": (
+                    "concrete unit.type_50.accuracy_percent"
+                ),
+            })
+
+    runtime_effects = _runtime_effects(reference, unit_slug)
+    if form_stats:
+        runtime_effects = dict(runtime_effects or {})
+        runtime_effects["base_accuracy"] = float(unit.type_50.accuracy_percent)
+        runtime_effects["extra_projectiles"] = int(
+            extra_projectile_count
+            if extra_projectile_count is not None
+            else reference.get("extra_projectiles") or 0
+        )
+        raw_trample = (
+            int(unit.type_50.blast_attack_level) == 2
+            and float(unit.type_50.blast_width) > 0
+            and 0 < float(unit.type_50.blast_damage) < 1
+        )
+        if not raw_trample:
+            runtime_effects.pop("trample_percent", None)
+            runtime_effects.pop("trample_radius", None)
+            runtime_effects.pop("trample_flat_damage", None)
+        if not ranged or not ranged["pass_through"]:
+            runtime_effects.pop("pass_through_percent", None)
+            runtime_effects.pop("pass_through_count", None)
+        if not runtime_effects:
+            runtime_effects = None
 
     # Melee blast ("trample"). Raw dat values, exported for every unit; the
     # engine gates on attack_level == 2 and 0 < damage_fraction < 1 (the
@@ -615,15 +958,19 @@ def export_unit_mechanics(
         "blast": blast,
         "charge": charge,
         "ranged": ranged,
-        "hp": int(reference["final_hp"]),
-        "speed_tiles_per_second": float(reference["exact_speed"]),
-        "attack_range_tiles": float(reference["final_range"]),
+        "effects": runtime_effects,
+        "hp": int(form_stats.hp if form_stats else reference["final_hp"]),
+        "speed_tiles_per_second": float(
+            form_stats.speed if form_stats else reference["exact_speed"]),
+        "attack_range_tiles": float(
+            form_stats.range if form_stats else reference["final_range"]),
         "reload_seconds": reload_seconds,
         "attack_delay_seconds": attack_delay_seconds,
         "attack_animation": attack_animation,
         "idle_animation": idle_animation,
         "walk_animation": walk_animation,
-        "line_of_sight_tiles": float(reference["final_los"]),
+        "line_of_sight_tiles": float(
+            form_stats.los if form_stats else reference["final_los"]),
         "attack_classes": attack_classes,
         "armor_classes": armor_classes,
         "population_space": float(reference["pop_space"]),
@@ -666,7 +1013,9 @@ def export_unit_mechanics(
             "dat_selector": (
                 f"dat.civs[name='{REFERENCE_TO_DAT_CIV.get(civ, civ)}'].units[{master}]"
             ),
-            "reload_base_seconds": float(reference["final_reload_time"]),
+            "reload_base_seconds": float(
+                form_stats.reload_time if form_stats
+                else reference["final_reload_time"]),
             "reload_multiplier": reload_multiplier,
             "fields": fields,
         },

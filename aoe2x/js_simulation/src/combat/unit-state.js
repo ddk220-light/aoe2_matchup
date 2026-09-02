@@ -85,6 +85,9 @@ export function createUnitState({
   // Gated on the mechanics block so non-charge fixtures keep their exact
   // canonical unit shape (and therefore their golden state hashes).
   const charge = chargeSpec(mechanics);
+  const hasSpecialEffects = mechanics.effects
+    && typeof mechanics.effects === "object"
+    && Object.keys(mechanics.effects).length > 0;
   return Object.freeze({
     referenceId,
     owner,
@@ -97,6 +100,29 @@ export function createUnitState({
       : { behaviorFamily: resolvedBehaviorFamily }),
     unitMaster,
     hp,
+    ...(hasSpecialEffects ? {
+      maxHp: hp,
+      specialState: Object.freeze({
+        baseMaxHp: hp,
+        baseSpeed: mechanics.speed_tiles_per_second,
+        transformed: false,
+        firstAttackUsed: false,
+        killAttackBonus: 0,
+        hpGainedFromKills: 0,
+        armorStripped: 0,
+        nearbyAttackBonus: 0,
+        auraHpBonus: 0,
+        rampHitTicks: Object.freeze([]),
+        bleedDamagePerSecond: 0,
+        bleedUntilTick: 0,
+        slowUntilTick: 0,
+        allyHealRemaining: 0,
+        allyHealPerTick: 0,
+        meleeChargeReadyTick: 0,
+        chargedSpeedActive: false,
+        chargedSpeedTargetId: null,
+      }),
+    } : {}),
     // Charge units also remember their own reaction-lag draw: completing the
     // charge cycle re-enters combat through the same acquisition gate (see
     // progressAttacks), and the tapes' post-charge first-melee-swing spread

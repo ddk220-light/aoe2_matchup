@@ -167,9 +167,16 @@ export function isWithinStopRange(actor, target, options = {}) {
 }
 
 
-export function calculateDamage(actor, target) {
-  const attacks = actor?.mechanics?.attack_classes;
-  const armors = target?.mechanics?.armor_classes;
+export function calculateDamage(actor, target, options = {}) {
+  const actorEffects = actor?.mechanics?.effects ?? {};
+  const targetEffects = target?.mechanics?.effects ?? {};
+  const attacks = options.attackClasses
+    ?? (actor?.specialState?.transformed && actorEffects.transform_attacks
+      ? actorEffects.transform_attacks
+      : actor?.mechanics?.attack_classes);
+  const armors = target?.specialState?.transformed && targetEffects.transform_armors
+    ? targetEffects.transform_armors
+    : target?.mechanics?.armor_classes;
   if (!attacks || typeof attacks !== "object") {
     throw new TypeError("attacker classes are required");
   }
@@ -190,17 +197,36 @@ export function calculateDamage(actor, target) {
   ) {
     throw new TypeError("attack and armor must share class 4 or class 3");
   }
-  const term = (attackValue, armorValue) => (
+  const strippedArmor = (classId, armorValue) => {
+    if (armorValue === undefined || options.ignoreArmor === true) return 0;
+    if (classId !== "3" && classId !== "4") return armorValue;
+    return Math.max(0, armorValue - (target?.specialState?.armorStripped ?? 0));
+  };
+  const term = (classId, attackValue, armorValue) => (
     attackValue === undefined || armorValue === undefined
       ? 0
-      : Math.max(0, attackValue - armorValue)
+      : Math.max(0, attackValue - strippedArmor(classId, armorValue))
   );
-  let damage = term(baseAttack, baseArmor) + term(pierceAttack, pierceArmor);
+  let damage = term("4", baseAttack, baseArmor) + term("3", pierceAttack, pierceArmor);
+  damage += actor?.specialState?.killAttackBonus ?? 0;
+  damage += actor?.specialState?.nearbyAttackBonus ?? 0;
   for (const [classId, attack] of Object.entries(attacks)) {
     if (classId === "4" || classId === "3" || attack <= 0) continue;
     const armor = classValue(armors, classId, "armor");
     if (armor === undefined) continue;
-    damage += Math.max(0, requireFinite(attack, `attack class ${classId}`) - armor);
+    damage += Math.max(0, requireFinite(attack, `attack class ${classId}`)
+      - (options.ignoreArmor === true ? 0 : armor));
+  }
+  const executeDamage = requireFinite(actorEffects.execute_damage_per_step ?? 0,
+    "execute damage per step");
+  const executeStep = requireFinite(actorEffects.execute_hp_step ?? 0,
+    "execute HP step");
+  const targetMaxHp = target?.maxHp ?? target?.specialState?.baseMaxHp
+    ?? target?.mechanics?.hp;
+  if (executeDamage > 0 && executeStep > 0 && targetMaxHp > 0) {
+    const missingFraction = Math.max(0, 1 - target.hp / targetMaxHp);
+    const normalizedStep = executeStep > 1 ? executeStep / 100 : executeStep;
+    damage += executeDamage * Math.floor(missingFraction / normalizedStep + 1e-12);
   }
   return Math.max(1, damage - conditionalDamageReduction(actor, target));
 }
@@ -218,14 +244,40 @@ export function calculateDamage(actor, target) {
 // Gate mirrors the Python ability registry: blast_attack_level == 2 with a
 // true fraction (the Champion carries width 0 / damage -5.0 sentinels).
 export function trampleSpec(mechanics) {
+  // Directional melee blast.  The high bit (128) changes the ordinary radial
+  // blast into a forward shape; mode 162 (= 128 + 32 + 2) is the Ibirapema
+  // 100%-damage cone.  Keep the authored one-tile width: unlike elephant
+  // trample, this is neither centred on the attacker nor radial.
   const blast = mechanics?.blast;
+  if (blast?.attack_level === 162) {
+    const width = requireFinite(blast.width_tiles, "blast width");
+    const fraction = requireFinite(blast.damage_fraction, "blast damage fraction");
+    if (width > 0 && fraction > 0) {
+      return {
+        shape: "forward-cone",
+        widthTiles: width,
+        halfAngleRadians: Math.PI / 8,
+        damageFraction: fraction,
+      };
+    }
+  }
+  const effectRadius = mechanics?.effects?.trample_radius;
+  const effectFraction = mechanics?.effects?.trample_percent;
+  if (Number.isFinite(effectRadius) && effectRadius > 0
+      && Number.isFinite(effectFraction) && effectFraction > 0) {
+    return {
+      shape: "radial",
+      widthTiles: effectRadius,
+      damageFraction: effectFraction > 1 ? effectFraction / 100 : effectFraction,
+    };
+  }
   if (!blast) return null;
   const width = requireFinite(blast.width_tiles, "blast width");
   const fraction = requireFinite(blast.damage_fraction, "blast damage fraction");
   if (blast.attack_level !== 2 || width <= 0 || fraction <= 0 || fraction >= 1) {
     return null;
   }
-  return { widthTiles: width, damageFraction: fraction };
+  return { shape: "radial", widthTiles: width, damageFraction: fraction };
 }
 
 
@@ -271,6 +323,8 @@ export function rangedSpec(mechanics) {
   // hand-cannoneer quanta 22/11, 11/5.5 and 8/4 across four defender
   // armors are exact full/half pairs).
   const accuracy = requireFinite(ranged.accuracy_percent ?? 100, "ranged accuracy");
+  const baseAccuracy = requireFinite(
+    ranged.base_accuracy_percent ?? accuracy, "ranged base accuracy");
   const dispersion = requireFinite(
     ranged.accuracy_dispersion_tiles ?? 0, "ranged dispersion");
   // Mangonel-family blast: the FIRING unit's blast width is the area radius
@@ -291,19 +345,83 @@ export function rangedSpec(mechanics) {
   const spawnArea = Array.isArray(ranged.projectile_spawning_area)
     ? ranged.projectile_spawning_area
     : [0, 0];
+  const spawnWidth = requireFinite(
+    spawnArea[0] ?? 0, "projectile spawning width");
+  const spawnLength = requireFinite(
+    spawnArea[1] ?? 0, "projectile spawning length");
+  if (spawnWidth < 0 || spawnLength < 0) {
+    throw new RangeError("projectile spawning dimensions must be nonnegative");
+  }
+  const volleyIntervalSeconds = requireFinite(
+    ranged.volley_release_interval_seconds ?? 0,
+    "volley release interval",
+  );
+  if (volleyIntervalSeconds < 0) {
+    throw new RangeError("volley release interval must be nonnegative");
+  }
+  const reloadAfterFinalProjectile = ranged.reload_after_final_projectile === true;
+  if (reloadAfterFinalProjectile && volleyIntervalSeconds <= 0) {
+    throw new RangeError(
+      "reload-after-final-projectile requires a positive volley interval",
+    );
+  }
+  const volleyReleaseSize = requireFinite(
+    ranged.volley_release_size ?? 1, "volley release size");
+  if (!Number.isSafeInteger(volleyReleaseSize) || volleyReleaseSize < 1) {
+    throw new RangeError("volley release size must be a positive integer");
+  }
+  const volleyDoubleReleasePercent = requireFinite(
+    ranged.volley_double_release_percent ?? 0,
+    "volley double-release percent",
+  );
+  if (volleyDoubleReleasePercent < 0 || volleyDoubleReleasePercent > 100) {
+    throw new RangeError("volley double-release percent must be between 0 and 100");
+  }
+  const weaponMode = ranged.weapon_mode ?? null;
+  if (weaponMode !== null
+      && (typeof weaponMode !== "string" || weaponMode.length === 0)) {
+    throw new TypeError("weapon mode must be a nonempty string");
+  }
   return {
     projectileSpeed: speed,
     minRangeTiles: minRange,
     passThrough,
     projectileHalfWidth: halfWidth,
     smartMode,
+    fullDamageOnUnintended: (smartMode & 2) === 2,
     projectileArc,
     accuracyPercent: accuracy,
+    baseAccuracyPercent: baseAccuracy,
     dispersionTiles: dispersion,
     blastRadius,
     secondaryCount,
     secondaryHalfWidth,
-    spawnArea,
+    spawnArea: [spawnWidth, spawnLength],
+    passThroughDamageFraction: requireFinite(
+      ranged.pass_through_damage_fraction ?? PASS_THROUGH_DAMAGE_FRACTION,
+      "pass-through damage fraction",
+    ),
+    passThroughCount: requireFinite(
+      ranged.pass_through_count ?? 0, "pass-through count"),
+    extraProjectileCount: requireFinite(
+      ranged.extra_projectile_count ?? 0, "extra projectile count"),
+    extraProjectileAttacks: ranged.extra_projectile_attacks ?? null,
+    firstAttackExtraProjectiles: requireFinite(
+      ranged.first_attack_extra_projectiles ?? 0, "first-attack extra projectile count"),
+    impactSplashRadius: requireFinite(
+      ranged.impact_splash_radius_tiles ?? 0, "impact splash radius"),
+    impactSplashDamageFraction: requireFinite(
+      ranged.impact_splash_damage_fraction ?? 1, "impact splash damage fraction"),
+    impactSplashFriendlyFireFraction: requireFinite(
+      ranged.impact_splash_friendly_fire_fraction ?? 0,
+      "impact splash friendly-fire fraction"),
+    volleyIntervalTicks: volleyIntervalSeconds > 0
+      ? secondsToTicksCeil(volleyIntervalSeconds)
+      : 0,
+    volleyReleaseSize,
+    volleyDoubleReleasePercent,
+    reloadAfterFinalProjectile,
+    weaponMode,
   };
 }
 
@@ -348,7 +466,7 @@ export const BOLT_OVERSHOOT_TILES = 3.0;
 export function chargeSpec(mechanics) {
   const charge = mechanics?.charge;
   if (!charge) return null;
-  if (charge.charge_type !== 6) {
+  if (charge.charge_type !== 6 && charge.charge_type !== 7) {
     throw new RangeError(`unsupported charge_type ${charge.charge_type}`);
   }
   const maxCharge = requireFinite(charge.max_charge, "max charge");
@@ -381,6 +499,12 @@ export function chargeSpec(mechanics) {
     projectileAttacks: attacks,
     windupTicks,
     animationTicks,
+    ignoresArmor: charge.ignores_armor === true,
+    addsToNormalAttack: charge.adds_to_normal_attack === true,
+    attackRangeTiles: requireFinite(
+      charge.attack_range_tiles ?? mechanics.line_of_sight_tiles,
+      "charge attack range",
+    ),
   };
 }
 
@@ -398,7 +522,10 @@ export function chargeProjectileDamage(spec, target) {
   for (const [classId, attack] of Object.entries(spec.projectileAttacks)) {
     if (attack <= 0) continue;
     if (classValue(armors, classId, "armor") === undefined) continue;
-    damage += requireFinite(attack, `charge attack class ${classId}`);
+    const armor = classValue(armors, classId, "armor");
+    damage += spec.ignoresArmor
+      ? requireFinite(attack, `charge attack class ${classId}`)
+      : Math.max(0, requireFinite(attack, `charge attack class ${classId}`) - armor);
   }
   return Math.max(1, damage);
 }

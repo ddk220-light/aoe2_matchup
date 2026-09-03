@@ -50,6 +50,66 @@ def _ability_fields():
 _ABILITY_FIELDS = _ability_fields()
 
 
+# ---------------------------------------------------------------------------
+# TRUE COLLISION SIZE (E11)
+#
+# The .dat carries TWO size fields per unit and this pipeline only ever
+# extracted the wrong one. ``outline_size_x`` is the SELECTION CIRCLE — the
+# visual footprint. ``collision_size_x`` is the physics radius that decides how
+# tightly units pack and where "in contact" is. They are NOT the same number
+# for anything mounted:
+#
+#     unit                     collision_size_x    outline_size_x
+#     champion / halberdier            0.20             0.20
+#     arbalester / skirm / HC          0.20             0.20
+#     paladin / hussar / camel         0.25             0.40
+#     elite steppe lancer              0.25             0.40
+#     heavy cavalry archer             0.25             0.40
+#     elite battle elephant            0.25             0.50   <-- big LOOKING
+#     heavy scorpion / siege onager    0.50             0.50
+#
+# (read from D:/SteamLibrary/.../empires2_x2_p1.dat via genieutils, 2026-07-30)
+#
+# The recorded tapes confirm this independently: the p10 of same-owner
+# nearest-neighbour distance over all 155 recordings is 0.394 tiles for
+# champions, 0.400 for halberdiers/fire lancers, 0.43-0.50 for every mounted
+# unit INCLUDING the elephant, and exactly 1.000 for scorpions and onagers —
+# i.e. 2 x collision_size_x in every class, never 2 x outline_size_x.
+#
+# ref_units stores outline_size_x but not collision_size_x (adding it would
+# mean re-extracting the .dat and regenerating aoe2_reference.db). It DOES
+# store unit_class, and that plus the outline reproduces the .dat's
+# collision_size_x exactly for every unit in the calibration corpus, and for
+# 920 of the 966 mobile units in the .dat overall (95.2%).
+#
+# The 46 exceptions are all units outside the corpus and outside normal
+# matchup play: rams and hussite wagons (class 13/55 outline 0.8 -> true 0.45,
+# we say 0.5), war chariots, ox carts, boats, animals and campaign heroes.
+_MOUNTED_CLASSES = frozenset({
+    12,   # Cavalry (knight line, camels, steppe lancers, battle elephants)
+    18,   # Monk-on-horse variants
+    19,   # (mounted misc)
+    23,   # Conquistador
+    35,   # Camel Rider (legacy class)
+    36,   # Cavalry Archer
+    47,   # (mounted misc)
+})
+
+# Physics radius caps, in tiles. Mounted units cap at a quarter tile however
+# large their selection circle is; everything on foot or on wheels uses its
+# own outline, capped at half a tile (the largest real siege collision).
+_MOUNTED_COLLISION_CAP = 0.25
+_DEFAULT_COLLISION_CAP = 0.5
+
+
+def collision_size_tiles(unit_class, outline_size):
+    """The unit's TRUE .dat collision radius in tiles (see the block above)."""
+    outline = outline_size or 0.2
+    cap = (_MOUNTED_COLLISION_CAP if unit_class in _MOUNTED_CLASSES
+           else _DEFAULT_COLLISION_CAP)
+    return min(outline, cap)
+
+
 def build_combat_dict_from_ref(row):
     """Build a combat-unit dict from a ref_units row.
 
@@ -65,7 +125,13 @@ def build_combat_dict_from_ref(row):
         "unit_name": row["unit_name"],
         "hp": row["final_hp"],
         "attack": row["final_attack"],
-        "attack_range": row["final_range"] if row["is_ranged"] else 0,
+        # final_range is real for melee too: the Steppe Lancer line, Kamayuk
+        # and Hulk carry 1.0 tile of melee reach (attack over the front rank).
+        # Zeroing it for is_ranged=0 units erased that trait from every engine.
+        # is_ranged must travel explicitly: consumers used to infer ranged-ness
+        # from attack_range >= 1, which a 1.0-reach melee unit now defeats.
+        "attack_range": row["final_range"] or 0,
+        "is_ranged": row["is_ranged"],
         "attack_speed": attack_speed,
         "attack_delay": row["final_attack_delay"] or 0,
         "melee_armor": row["final_melee_armor"],
@@ -85,10 +151,16 @@ def build_combat_dict_from_ref(row):
         # simulation.py to roll extra-projectile hits at the unit's natural
         # accuracy (e.g. 85% for Chu Ko Nu) rather than a flat 50% heuristic.
         "base_accuracy": row["base_accuracy"] or 100,
-        # Outline size — used by the position-aware sim (simulation_real.py)
-        # to compute unit radius for collision/range calculations.  Not used
-        # by the abstract tick-based sim in simulation.py.
+        # Outline size — the SELECTION CIRCLE, i.e. how big the unit LOOKS.
+        # Kept because simulation_real.py still derives its radius from it and
+        # the renderer wants the visual footprint. Not the physics radius.
         "outline_size": row["outline_size_x"] or 0.2,
+        # Collision size — the TRUE .dat physics radius in tiles, which is what
+        # decides packing, contact distance and melee reach. See the
+        # collision_size_tiles() block above for the .dat readout and the tape
+        # measurements that confirm it.
+        "collision_size": collision_size_tiles(
+            _get(row, "unit_class"), row["outline_size_x"]),
     }
 
     for name, column, type_, default in _ABILITY_FIELDS:

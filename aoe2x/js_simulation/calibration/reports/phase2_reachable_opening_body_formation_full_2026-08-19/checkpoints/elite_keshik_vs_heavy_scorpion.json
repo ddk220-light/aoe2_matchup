@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_keshik_vs_heavy_scorpion",
+  "completedAt": "2026-08-19T15:45:12.523Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 16.496392496392502,
+      "medianAbsoluteMeanDelta": 16.496392496392502,
+      "maximumAbsoluteMeanDelta": 16.496392496392502
+    },
+    "rows": [
+      {
+        "id": "elite_keshik_vs_heavy_scorpion",
+        "subjectSlug": "elite_keshik",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Heavy Scorpion vs Elite Keshik",
+        "side2": {
+          "count": 13,
+          "master": 542,
+          "owner": 2,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "side3": {
+          "count": 21,
+          "master": 1230,
+          "owner": 3,
+          "slug": "elite_keshik",
+          "unit": "Elite Keshik"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 87.18614718614718,
+          "min": 87.18614718614718,
+          "max": 87.18614718614718,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 70.68975468975468,
+          "min": 65.42568542568543,
+          "max": 74.57431457431457,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 16.496392496392502,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_keshik_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2509,
+            "score": 72.4098124098124,
+            "ticks": 1601,
+            "finalStateHash": "d02c9f5af10bbb58f81b99555e45106d540e9667dd3d3b4b07c4e2db973ab2c0",
+            "eventLogHash": "d0c8284395a1273cc680379563b2556ccae661929905e40fb7df678adb508c25"
+          },
+          {
+            "rowId": "elite_keshik_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2584,
+            "score": 74.57431457431457,
+            "ticks": 1634,
+            "finalStateHash": "e98098334a2ca85688ce20c0aeef574c0580b0d30ed26d8413293f197532a1bc",
+            "eventLogHash": "6ee1bed3cd7e322c48c6e777c1f3a6ddc329349abdb088e8d5c87ce32594561e"
+          },
+          {
+            "rowId": "elite_keshik_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2267,
+            "score": 65.42568542568543,
+            "ticks": 1849,
+            "finalStateHash": "ade5215180f31b4608e54b8fa5df456c3bd62af7a813da65f2338ba2516f5104",
+            "eventLogHash": "f510361e7284b3198a878b3feded1fbfa6c75a15c669b55b59fd18079275954b"
+          },
+          {
+            "rowId": "elite_keshik_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2435,
+            "score": 70.27417027417027,
+            "ticks": 1507,
+            "finalStateHash": "fb0ec165964473a17fd353a192c163cbf595147222355c01cda5baff627a7f2f",
+            "eventLogHash": "4b5b43baed553ef2aab6534a28a36fa7007366b87334e63fbc3d4c2092ecb230"
+          },
+          {
+            "rowId": "elite_keshik_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2452,
+            "score": 70.76479076479076,
+            "ticks": 1639,
+            "finalStateHash": "250b1437f13e69977d1a39c6f30e117128cb7c5feb5c573c88186b1cc4036bed",
+            "eventLogHash": "cab7952b7858ca6ec7839e8bbc54702611ad3d430e3d56dafd1729c5a84613bd"
+          }
+        ]
+      }
+    ]
+  }
+}

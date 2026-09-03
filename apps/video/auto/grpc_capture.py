@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 
 from auto.record_until_end import log
@@ -49,6 +50,32 @@ def start_logger(prefix, dur=270, logfile=None):
     lf.close()                                  # the child keeps its own handle
     log(f"[grpc] stream recorder started (pid {proc.pid}) -> {prefix}.*", logfile)
     return proc
+
+
+def wait_for_stream(prefix, proc, timeout=12.0, poll=0.25) -> bool:
+    """Require evidence that the game entered a gRPC-producing test session."""
+    frames = prefix + ".frames.bin"
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if proc is not None and proc.poll() is not None:
+            return False
+        try:
+            if os.path.getsize(frames) > 0:
+                return True
+        except OSError:
+            pass
+        time.sleep(poll)
+    return False
+
+
+def logger_diagnostic(prefix, max_lines=12) -> str:
+    """Return the tail of the isolated logger output for actionable failures."""
+    try:
+        with open(prefix + ".logger.log", encoding="utf-8", errors="replace") as source:
+            lines = source.read().splitlines()
+        return " | ".join(lines[-max_lines:])
+    except OSError as error:
+        return f"logger output unavailable: {error}"
 
 
 def redecode(prefix, logfile=None, timeout=240) -> bool:

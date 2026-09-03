@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Absolute tape source of truth
+
+For calibration and simulation-vs-tape work, use only the ignored project-local
+archive named by `calibration/source/source_of_truth.json`. Verify it before
+analysis and require every `calibration/fixtures/manifest.json` row to carry the
+locked hash. Never search the historical external workspace or substitute
+another corpus. If verification fails, stop and ask. Full policy:
+`calibration/docs/TAPE_SOURCE_OF_TRUTH.md`.
+
 ## Project
 
 Flask web app ([aoe2matchup.com](https://aoe2matchup.com)) that extracts Age of Empires II:DE unit data from the game's binary `.dat` file, computes fully-upgraded stats for **53 civilizations**, pre-simulates ~500k unit matchups, and serves battle-sim / rankings / matchup-advisor / patch-tracker / replay-analyzer tools. Deployed on Railway.
@@ -46,7 +55,7 @@ Full detail: `docs/architecture/README.md`. The short version:
 |---|---|---|
 | Abstract tick (no positions) | `aoe2x/sim/simulation.py` | `/api/matchup-sims` overlay (via `best_units.get_matchup_sims`) |
 | Position-based 2D | `aoe2x/sim/simulation_real.py` | ALL batch matchup data (`run_matchup_battles.py`, `rebuild_matchup_baseline.py`, `patch_resim.py`) |
-| Frontend canvas (`BattleUnit`) | `apps/website/static/js/simulate.js` | The interactive Battle Sim page at `/` — runs entirely client-side |
+| Frontend canvas (shared ESM engine) | `apps/website/static/js/engine/` (page shell: `simulate.js`, renderer: `sim_renderer.js`) | The interactive Battle Sim page at `/` and the lab harness at `/static/lab/sim_harness.html` — runs entirely client-side; also runs headless under node (`tools/simjs/headless.mjs`) |
 
 `aoe2x/sim/sim_version.py` hashes `simulation_real.py` + `aoe2x/dbgen/config_combat.py` into the matchup-row cache key: editing either auto-stales matchup data (re-simmed on next batch run). Editing `simulation.py` does **not** bump it.
 
@@ -57,13 +66,14 @@ aoe2x/dbgen/config_combat.py (+ config_units.py)
  → aoe2x/dbgen/generate_reference.py → aoe2_reference.db (ref_units)
   → aoe2x/sim/combat_unit_loader.py build_combat_dict_from_ref()
    → app.py /api/ref/combat-unit/<civ>/<slug>  (JSON)
-    → static/js/simulate.js BattleUnit (interactive page)
+    → static/js/engine/battle_unit.js BattleUnit (interactive page + lab harness + headless)
     → simulation.py / simulation_real.py prepare_combat_unit() (backend callers)
 ```
 
 ## Cross-File Sync Rules (forget one → bug)
 
-1. **New combat column/ability** = registry entry (`aoe2x/dbgen/ability_registry.py`) + `config_combat.py` value + one handler per engine (`simulation.py` / `simulation_real.py` / `static/js/simulate.js`) — the ref-DB schema/writer/audit and `combat_unit_loader.py` are GENERATED from the registry; only legacy `generate_main_db.py` still needs hand edits. Checklist: runbooks §3.
+1. **New combat column/ability** = registry entry (`aoe2x/dbgen/ability_registry.py`) + `config_combat.py` value + one handler per engine (`simulation.py` / `simulation_real.py` / `static/js/engine/battle_unit.js`) — the ref-DB schema/writer/audit and `combat_unit_loader.py` are GENERATED from the registry; only legacy `generate_main_db.py` still needs hand edits. Checklist: runbooks §3.
+   - **Parity gate — any edit under `apps/website/static/js/engine/` must re-run `node tools/simjs/parity_check.mjs`** (bit-exact replay of 205 golden fights; exit 0 = OK). A deliberate behavior change *will* fail it: that is the signal to re-capture the golden panel and record why in the commit. Also run `node --test tests/js/engine/`.
 2. **`UNIT_LINES`** — Python source is `aoe2x/sim/unit_lines.py` (imported by 8 modules); a JS copy lives in `static/js/rankings.js`. Update both.
 3. **Resource cost weights** — `simulation_real.py weighted_cost` ↔ `compute_battle_scores.calc_weighted_cost` (explicit keep-in-lockstep comment).
 4. **`PLAYER_COLORS`** — `replay_core.py` ↔ `clip_export.py` (intentionally different palettes; change together).

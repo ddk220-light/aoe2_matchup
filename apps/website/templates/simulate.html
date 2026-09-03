@@ -20,41 +20,41 @@
         <details class="sim-options" id="simOptions">
             <summary>
                 <span class="sim-options-toggle">Options</span>
-                <span class="sim-options-current" id="optionsCurrent">30 vs 30</span>
+                <span class="sim-options-current" id="optionsCurrent">15 vs 15</span>
             </summary>
             <div class="army-config">
                 <div class="formula-note" style="text-align:center;margin-bottom:8px;font-size:0.75rem;">
-                    Resource cost per unit =
+                    V3 resource cost per unit =
                     <strong style="color: var(--gold)">Wood + Food + Gold</strong>
                 </div>
                 <div class="mode-toggle">
                     <label class="mode-option">
                         <input type="radio" name="armyMode" value="count" checked />
-                        <span>30 vs 30</span>
+                        <span>Equal numbers</span>
                     </label>
                     <label class="mode-option">
                         <input type="radio" name="armyMode" value="resources" />
-                        <span>3,000 Resources</span>
-                    </label>
-                    <label class="mode-option">
-                        <input type="radio" name="armyMode" value="resources_upgrades" />
-                        <span>5,000 incl. Upgrades</span>
+                        <span>Equal resources</span>
                     </label>
                 </div>
                 <div class="count-inputs" id="countInputs">
                     <div>
                         <label>Team 1:</label>
-                        <input type="number" id="team1Count" value="30" min="1" max="200" />
+                        <input type="number" id="team1Count" value="15" min="1" max="27" />
                     </div>
                     <div>
                         <label>Team 2:</label>
-                        <input type="number" id="team2Count" value="30" min="1" max="200" />
+                        <input type="number" id="team2Count" value="15" min="1" max="27" />
                     </div>
                 </div>
                 <div class="resource-input" id="resourceInput" style="display: none">
                     <label>Resources per team:</label>
                     <input type="number" id="totalResources" value="3000" min="100" max="20000" step="100" />
                 </div>
+                <label class="buffer-option" title="Available for one ranged side versus one melee side">
+                    <input type="checkbox" id="rangedBuffer" />
+                    <span>Player 4 ranged buffer</span>
+                </label>
             </div>
         </details>
 
@@ -73,10 +73,7 @@
             </div>
         </div>
 
-        <!-- Right: damage-breakdown toggle (battle phase only) -->
-        <div class="sim-topbar-right">
-            <button class="dmg-toggle" id="dmgToggle" aria-expanded="false" hidden>Damage breakdown</button>
-        </div>
+        <div class="sim-topbar-right"></div>
     </div>
     <p class="start-hint" id="startHint">Pick a civ &amp; unit for both teams to start</p>
 
@@ -109,6 +106,7 @@
 
         <!-- CENTER — arena -->
         <div class="arena" id="arena">
+            <div class="v3-map-status" id="v3MapStatus" aria-live="polite">Golden Arena ready</div>
             <canvas id="battleCanvas" width="900" height="600"></canvas>
         </div>
 
@@ -137,13 +135,6 @@
         </aside>
     </div>
 
-    <!-- Damage breakdown — toggled open from the top bar during a battle -->
-    <div class="debug-panel" id="debugPanel" hidden>
-        <h3>Damage Breakdown</h3>
-        <div id="debugContent">
-            <p style="color: var(--text-muted)">Start a battle to see damage breakdown</p>
-        </div>
-    </div>
 </div>
 
 <section id="home-about" class="home-about" aria-label="About AoE2 Matchup">
@@ -172,5 +163,5 @@
     const UNIT_SEARCH = {{ unit_search | tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/sim_params.js') }}"></script>
-<script src="{{ url_for('static', filename='js/simulate.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/simulate.js') }}"></script>
 {% endblock %}

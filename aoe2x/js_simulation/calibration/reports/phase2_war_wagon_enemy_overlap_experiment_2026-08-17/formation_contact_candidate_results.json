@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2026-08-18T01:42:48.274Z",
+  "source": {
+    "archive": {
+      "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+      "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+      "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+    },
+    "archiveSha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+  },
+  "simulation": {
+    "sampleIndex": 0,
+    "seed": 20260817,
+    "formationSpacingTiles": 0.6,
+    "overlapDepthTiles": 0.2,
+    "overlapMode": "always",
+    "targetPressure": "chaser collision diameter",
+    "stickyPursuit": true
+  },
+  "comparisons": [
+    {
+      "rowId": "elite_war_wagon_vs_paladin",
+      "ratio": "15v17",
+      "tapeMean": 35.4412,
+      "tapeBand": {
+        "min": 30,
+        "max": 39.8039
+      },
+      "winnerOwner": 3,
+      "remainingHp": {
+        "owner2": 0,
+        "owner3": 1692
+      },
+      "score": 55.2941,
+      "absoluteDelta": 19.8529,
+      "correctWinner": true,
+      "ticks": 3950,
+      "attackStarts": {
+        "owner2": 274,
+        "owner3": 218
+      }
+    },
+    {
+      "rowId": "elite_war_wagon_vs_champion",
+      "ratio": "8v21",
+      "tapeMean": 20.102,
+      "tapeBand": {
+        "min": 9.1156,
+        "max": 25.4422
+      },
+      "winnerOwner": 2,
+      "remainingHp": {
+        "owner2": 470,
+        "owner3": 0
+      },
+      "score": -29.375,
+      "absoluteDelta": 49.477,
+      "correctWinner": false,
+      "ticks": 4866,
+      "attackStarts": {
+        "owner2": 196,
+        "owner3": 89
+      }
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "age": "Imperial",
+  "armor_classes": {
+    "1": 0,
+    "23": 0,
+    "29": 0,
+    "3": 5,
+    "31": 0,
+    "4": 5
+  },
+  "attack_animation": {
+    "frame_duration_seconds": 0.0416666679084301,
+    "frames": 30,
+    "graphic": 13068,
+    "seconds": 1.250000037252903
+  },
+  "attack_classes": {
+    "15": 0,
+    "16": 12,
+    "21": 3,
+    "23": 0,
+    "30": 12,
+    "4": 14,
+    "5": 15,
+    "8": 15
+  },
+  "attack_delay_seconds": 0.416666679084301,
+  "attack_graphic": 13068,
+  "attack_range_tiles": 0.0,
+  "blast": {
+    "attack_level": 2,
+    "damage_fraction": -5.0,
+    "defense_level": 3,
+    "friendly_fire_damage": 1.0,
+    "width_tiles": 0.0
+  },
+  "charge": {
+    "charge_animation": {
+      "frame_duration_seconds": 0.06666667014360428,
+      "frames": 30,
+      "graphic": 13067,
+      "seconds": 2.0000001043081284
+    },
+    "charge_event": 5,
+    "charge_type": 6,
+    "max_charge": 1.0,
+    "projectile_attacks": {
+      "17": 2,
+      "3": 3
+    },
+    "projectile_count": 3,
+    "projectile_speed_tiles_per_second": 7.5,
+    "projectile_unit": 1925,
+    "recharge_rate": 0.03333333507180214,
+    "windup_seconds": 0.6666667014360428
+  },
+  "civilization": "Chinese",
+  "clearance_size_tiles": {
+    "x": 0.2,
+    "y": 0.2
+  },
+  "collision_size_tiles": {
+    "x": 0.2,
+    "y": 0.2,
+    "z": 2.0
+  },
+  "derived": {
+    "damage_vs_self": 9
+  },
+  "frame_delay": 10,
+  "hp": 85,
+  "idle_animation": {
+    "frame_duration_seconds": 0.05000000074505806,
+    "frames": 60,
+    "graphic": 13070,
+    "seconds": 3.0000000447034836
+  },
+  "line_of_sight_tiles": 6.0,
+  "min_collision_size_multiplier": 0.800000011920929,
+  "movement_blocks": {
+    "fly_mode": 0,
+    "hill_mode": 0,
+    "terrain_restriction": 7
+  },
+  "obstruction": {
+    "class": 2,
+    "type": 5
+  },
+  "outline_size_tiles": {
+    "x": 0.2,
+    "y": 0.2,
+    "z": 2.0
+  },
+  "provenance": {
+    "dat_selector": "dat.civs[name='Chinese'].units[1903]",
+    "dat_sha256": "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF",
+    "fields": {
+      "age": "ref_units.age",
+      "armor_classes": "ref_units.final_armors_json",
+      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration",
+      "attack_animation.frames": "graphics[attack_graphic].frame_count",
+      "attack_animation.graphic": "unit.type_50.attack_graphic",
+      "attack_animation.seconds": "frames * frame_duration",
+      "attack_classes": "ref_units.final_attacks_json",
+      "attack_delay_seconds": "hit on animation frame frame_delay: attack animation seconds * frame_delay / frames",
+      "attack_graphic": "unit.type_50.attack_graphic",
+      "attack_range_tiles": "ref_units.final_range",
+      "blast.attack_level": "unit.type_50.blast_attack_level",
+      "blast.damage_fraction": "unit.type_50.blast_damage",
+      "blast.defense_level": "unit.blast_defense_level",
+      "blast.friendly_fire_damage": "unit.type_50.friendly_fire_damage",
+      "blast.width_tiles": "unit.type_50.blast_width",
+      "charge.charge_animation": "graphics[unit.creatable.special_graphic]",
+      "charge.charge_event": "unit.creatable.charge_event",
+      "charge.charge_type": "unit.creatable.charge_type",
+      "charge.max_charge": "unit.creatable.max_charge",
+      "charge.projectile_attacks": "positive dat.civs[0].units[1925].type_50.attacks; the engine applies class matching with armor values IGNORED (all four victim types measure exactly the class-3 amount)",
+      "charge.projectile_count": "unit.creatable.max_total_projectiles",
+      "charge.projectile_speed_tiles_per_second": "dat.civs[0].units[1925].speed",
+      "charge.projectile_unit": "unit.creatable.charge_projectile_unit",
+      "charge.recharge_rate": "unit.creatable.recharge_rate",
+      "charge.windup_seconds": "charge animation seconds * frame_delay / frames",
+      "civilization": "ref_units.civ_name",
+      "clearance_size_tiles.x": "unit.clearance_size[0]",
+      "clearance_size_tiles.y": "unit.clearance_size[1]",
+      "collision_size_tiles.x": "unit.collision_size_x",
+      "collision_size_tiles.y": "unit.collision_size_y",
+      "collision_size_tiles.z": "unit.collision_size_z",
+      "derived.damage_vs_self": "AoE class rule(ref_units.final_attacks_json, ref_units.final_armors_json)",
+      "frame_delay": "unit.type_50.frame_delay",
+      "hp": "ref_units.final_hp",
+      "idle_animation": "graphics[unit.standing_graphic[0]]",
+      "line_of_sight_tiles": "ref_units.final_los",
+      "min_collision_size_multiplier": "unit.dead_fish.min_collision_size_multiplier",
+      "movement_blocks.fly_mode": "unit.fly_mode",
+      "movement_blocks.hill_mode": "unit.hill_mode",
+      "movement_blocks.terrain_restriction": "unit.terrain_restriction",
+      "obstruction.class": "unit.obstruction_class",
+      "obstruction.type": "unit.obstruction_type",
+      "outline_size_tiles.x": "unit.outline_size_x",
+      "outline_size_tiles.y": "unit.outline_size_y",
+      "outline_size_tiles.z": "unit.outline_size_z",
+      "reload_seconds": "ref_units.final_reload_time",
+      "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
+      "unit_master": "unit.id",
+      "walk_animation": "graphics[unit.dead_fish.walking_graphic]"
+    },
+    "reference_db_sha256": "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087",
+    "reference_selector": "ref_units WHERE unit_slug='elite_fire_lancer' AND civ_name='Chinese' AND age='Imperial'"
+  },
+  "reload_seconds": 2.0,
+  "speed_tiles_per_second": 1.1616010928017475,
+  "unit_master": 1903,
+  "walk_animation": {
+    "frame_duration_seconds": 0.03487500175833702,
+    "frames": 30,
+    "graphic": 13072,
+    "seconds": 1.0462500527501106
+  }
+}

@@ -1,0 +1,1294 @@
+{
+  "schemaVersion": 1,
+  "lane": "dedicated_golden_exact_repeat_starts",
+  "source": {
+    "manifest": "aoe2x/js_simulation/calibration/source/dedicated_ranged_melee_sources.json",
+    "truth": "aoe2x/js_simulation/calibration/fixtures/dedicated_ranged_melee/dedicated_ranged_melee_truth.json",
+    "archives": [
+      {
+        "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+        "zipSha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+      },
+      {
+        "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+        "zipSha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+      },
+      {
+        "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+        "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+      },
+      {
+        "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+        "zipSha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+      },
+      {
+        "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+        "zipSha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+      },
+      {
+        "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+        "zipSha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+      },
+      {
+        "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+        "zipSha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+      },
+      {
+        "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+        "zipSha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+      },
+      {
+        "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+        "zipSha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+      },
+      {
+        "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+        "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+      },
+      {
+        "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+        "zipSha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+      },
+      {
+        "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+        "zipSha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+      },
+      {
+        "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+        "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+      },
+      {
+        "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+        "zipSha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+      },
+      {
+        "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+        "zipSha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+      },
+      {
+        "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+        "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+      },
+      {
+        "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+        "zipSha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+      },
+      {
+        "archive": "aoe2_golden_kiting_hcvschampion_2026-08-14.zip",
+        "zipSha256": "468AB6CDBAD27FAEED9690E47A6B8BE4865A555DDD1063CFDE8B2A2D8D5C3A99"
+      },
+      {
+        "archive": "aoe2_golden_kiting_hcvspaladin_2026-08-14.zip",
+        "zipSha256": "F472C648A06913B6E0DDAD1A7E2E9DAD17E70A7F62F113C5C2CD6A6F9AEC50F2"
+      }
+    ]
+  },
+  "config": {
+    "engine": "current checked-out JavaScript engine",
+    "placements": "exact starting_units from each individual tape repeat",
+    "goldenMap": true,
+    "navigation": "cohesive",
+    "meleeOpeningOrder": "attack-move-all",
+    "chaseCapture": true,
+    "meleeEngagementDwellTicks": 0,
+    "pairwiseAlliedTransit": false,
+    "reachMeleeWedgeTransit": true,
+    "preventiveContactSteering": true,
+    "kitingClock": "mechanics-derived",
+    "maxTicks": 9000
+  },
+  "schedule": {
+    "matchups": 2,
+    "rows": 10,
+    "tapeRunsPerRow": 5,
+    "totalRuns": 50,
+    "execution": "recoverable-per-row-checkpoints"
+  },
+  "summary": {
+    "matchups": 2,
+    "rows": 10,
+    "totalRuns": 50,
+    "resolvedRuns": 50,
+    "unresolvedRuns": 0,
+    "fullyUnresolvedRows": 0,
+    "partiallyUnresolvedRows": 0,
+    "rowsOver25PointDelta": 0,
+    "rowsInsideTapeBand": 8,
+    "wrongWinnerRuns": 0,
+    "meanAbsoluteMeanDelta": 3.674444444444444,
+    "medianAbsoluteMeanDelta": 1.4166666666666679,
+    "maximumAbsoluteMeanDelta": 19.799999999999997
+  },
+  "matchupSummaries": [
+    {
+      "matchupId": "hand_cannoneer_vs_champion",
+      "matchup": "Hand Cannoneer vs Champion",
+      "rangedSlug": "hand_cannoneer",
+      "meleeSlug": "champion",
+      "rows": 5,
+      "tapeRuns": 25,
+      "meanAbsoluteMeanDelta": 5.159999999999999,
+      "maxAbsoluteMeanDelta": 19.799999999999997,
+      "rowsOver25PointDelta": 0,
+      "rowsInsideTapeBand": 4,
+      "wrongWinnerRuns": 0,
+      "unresolvedRuns": 0
+    },
+    {
+      "matchupId": "hand_cannoneer_vs_paladin",
+      "matchup": "Hand Cannoneer vs Paladin",
+      "rangedSlug": "hand_cannoneer",
+      "meleeSlug": "paladin",
+      "rows": 5,
+      "tapeRuns": 25,
+      "meanAbsoluteMeanDelta": 2.188888888888889,
+      "maxAbsoluteMeanDelta": 7,
+      "rowsOver25PointDelta": 0,
+      "rowsInsideTapeBand": 4,
+      "wrongWinnerRuns": 0,
+      "unresolvedRuns": 0
+    }
+  ],
+  "rows": [
+    {
+      "id": "hand_cannoneer_vs_champion_10v5",
+      "matchupId": "hand_cannoneer_vs_champion",
+      "matchup": "Hand Cannoneer vs Champion",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 10
+      },
+      "melee": {
+        "slug": "champion",
+        "label": "Champion",
+        "count": 5
+      },
+      "ratio": "10v5",
+      "archive": "aoe2_golden_kiting_hcvschampion_2026-08-14.zip",
+      "zipSha256": "468AB6CDBAD27FAEED9690E47A6B8BE4865A555DDD1063CFDE8B2A2D8D5C3A99",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": -100,
+          "min": -100,
+          "max": -100,
+          "owner3WinRate": 0
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": -100,
+          "min": -100,
+          "max": -100,
+          "owner3WinRate": 0
+        },
+        "meanDelta": 0,
+        "absoluteMeanDelta": 0,
+        "tapeBandError": 0,
+        "tapeBandCoverage": 1,
+        "repeatDeltas": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_champion_10v5",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 400,
+          "score": -100,
+          "ticks": 534,
+          "tapeScore": -100,
+          "delta": 0,
+          "finalStateHash": "4490e124a33c65d6a81c628b678848c2fca881c9665967016d8ba21c99f82f7f",
+          "eventLogHash": "d68de7552f6629909ae54f065b875d8c757e8d7d8b60d2afe8edda14042de235"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_10v5",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 400,
+          "score": -100,
+          "ticks": 534,
+          "tapeScore": -100,
+          "delta": 0,
+          "finalStateHash": "4490e124a33c65d6a81c628b678848c2fca881c9665967016d8ba21c99f82f7f",
+          "eventLogHash": "d68de7552f6629909ae54f065b875d8c757e8d7d8b60d2afe8edda14042de235"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_10v5",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 400,
+          "score": -100,
+          "ticks": 534,
+          "tapeScore": -100,
+          "delta": 0,
+          "finalStateHash": "4490e124a33c65d6a81c628b678848c2fca881c9665967016d8ba21c99f82f7f",
+          "eventLogHash": "d68de7552f6629909ae54f065b875d8c757e8d7d8b60d2afe8edda14042de235"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_10v5",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 400,
+          "score": -100,
+          "ticks": 534,
+          "tapeScore": -100,
+          "delta": 0,
+          "finalStateHash": "4490e124a33c65d6a81c628b678848c2fca881c9665967016d8ba21c99f82f7f",
+          "eventLogHash": "d68de7552f6629909ae54f065b875d8c757e8d7d8b60d2afe8edda14042de235"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_10v5",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 400,
+          "score": -100,
+          "ticks": 534,
+          "tapeScore": -100,
+          "delta": 0,
+          "finalStateHash": "4490e124a33c65d6a81c628b678848c2fca881c9665967016d8ba21c99f82f7f",
+          "eventLogHash": "d68de7552f6629909ae54f065b875d8c757e8d7d8b60d2afe8edda14042de235"
+        }
+      ]
+    },
+    {
+      "id": "hand_cannoneer_vs_champion_15v20",
+      "matchupId": "hand_cannoneer_vs_champion",
+      "matchup": "Hand Cannoneer vs Champion",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 15
+      },
+      "melee": {
+        "slug": "champion",
+        "label": "Champion",
+        "count": 20
+      },
+      "ratio": "15v20",
+      "archive": "aoe2_golden_kiting_hcvschampion_2026-08-14.zip",
+      "zipSha256": "468AB6CDBAD27FAEED9690E47A6B8BE4865A555DDD1063CFDE8B2A2D8D5C3A99",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": -89.8,
+          "min": -93,
+          "max": -81.66666666666667,
+          "owner3WinRate": 0
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": -93,
+          "min": -93,
+          "max": -93,
+          "owner3WinRate": 0
+        },
+        "meanDelta": -3.200000000000003,
+        "absoluteMeanDelta": 3.200000000000003,
+        "tapeBandError": 0,
+        "tapeBandCoverage": 1,
+        "repeatDeltas": [
+          -4.666666666666671,
+          0,
+          0,
+          -11.333333333333329,
+          0
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_champion_15v20",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 558,
+          "score": -93,
+          "ticks": 1491,
+          "tapeScore": -88.33333333333333,
+          "delta": -4.666666666666671,
+          "finalStateHash": "220ed51a4d18eae1d869576ddecfeafe598e0a99050bee32fb43695625fc26be",
+          "eventLogHash": "47960aebb5b9c418b453d2ecb5a07d8543c150c2379b51ce5527538568a07b21"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_15v20",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 558,
+          "score": -93,
+          "ticks": 1491,
+          "tapeScore": -93,
+          "delta": 0,
+          "finalStateHash": "220ed51a4d18eae1d869576ddecfeafe598e0a99050bee32fb43695625fc26be",
+          "eventLogHash": "47960aebb5b9c418b453d2ecb5a07d8543c150c2379b51ce5527538568a07b21"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_15v20",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 558,
+          "score": -93,
+          "ticks": 1491,
+          "tapeScore": -93,
+          "delta": 0,
+          "finalStateHash": "220ed51a4d18eae1d869576ddecfeafe598e0a99050bee32fb43695625fc26be",
+          "eventLogHash": "47960aebb5b9c418b453d2ecb5a07d8543c150c2379b51ce5527538568a07b21"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_15v20",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 558,
+          "score": -93,
+          "ticks": 1491,
+          "tapeScore": -81.66666666666667,
+          "delta": -11.333333333333329,
+          "finalStateHash": "220ed51a4d18eae1d869576ddecfeafe598e0a99050bee32fb43695625fc26be",
+          "eventLogHash": "47960aebb5b9c418b453d2ecb5a07d8543c150c2379b51ce5527538568a07b21"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_15v20",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 558,
+          "score": -93,
+          "ticks": 1491,
+          "tapeScore": -93,
+          "delta": 0,
+          "finalStateHash": "220ed51a4d18eae1d869576ddecfeafe598e0a99050bee32fb43695625fc26be",
+          "eventLogHash": "47960aebb5b9c418b453d2ecb5a07d8543c150c2379b51ce5527538568a07b21"
+        }
+      ]
+    },
+    {
+      "id": "hand_cannoneer_vs_champion_20v15",
+      "matchupId": "hand_cannoneer_vs_champion",
+      "matchup": "Hand Cannoneer vs Champion",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 20
+      },
+      "melee": {
+        "slug": "champion",
+        "label": "Champion",
+        "count": 15
+      },
+      "ratio": "20v15",
+      "archive": "aoe2_golden_kiting_hcvschampion_2026-08-14.zip",
+      "zipSha256": "468AB6CDBAD27FAEED9690E47A6B8BE4865A555DDD1063CFDE8B2A2D8D5C3A99",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": -98.6,
+          "min": -100,
+          "max": -96.5,
+          "owner3WinRate": 0
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": -98.25,
+          "min": -98.25,
+          "max": -98.25,
+          "owner3WinRate": 0
+        },
+        "meanDelta": 0.3499999999999943,
+        "absoluteMeanDelta": 0.3499999999999943,
+        "tapeBandError": 0,
+        "tapeBandCoverage": 1,
+        "repeatDeltas": [
+          -1.75,
+          -1.75,
+          1.75,
+          1.75,
+          1.75
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v15",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 786,
+          "score": -98.25,
+          "ticks": 1004,
+          "tapeScore": -96.5,
+          "delta": -1.75,
+          "finalStateHash": "0160891d939888261f8637d21dc1f332653a80040db705d23c9c02abdad60afc",
+          "eventLogHash": "8d922cce779b9966a5931ddd7a2544149f8012eb337f060da80f5a91293f30bc"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v15",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 786,
+          "score": -98.25,
+          "ticks": 1004,
+          "tapeScore": -96.5,
+          "delta": -1.75,
+          "finalStateHash": "0160891d939888261f8637d21dc1f332653a80040db705d23c9c02abdad60afc",
+          "eventLogHash": "8d922cce779b9966a5931ddd7a2544149f8012eb337f060da80f5a91293f30bc"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v15",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 786,
+          "score": -98.25,
+          "ticks": 1004,
+          "tapeScore": -100,
+          "delta": 1.75,
+          "finalStateHash": "0160891d939888261f8637d21dc1f332653a80040db705d23c9c02abdad60afc",
+          "eventLogHash": "8d922cce779b9966a5931ddd7a2544149f8012eb337f060da80f5a91293f30bc"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v15",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 786,
+          "score": -98.25,
+          "ticks": 1004,
+          "tapeScore": -100,
+          "delta": 1.75,
+          "finalStateHash": "0160891d939888261f8637d21dc1f332653a80040db705d23c9c02abdad60afc",
+          "eventLogHash": "8d922cce779b9966a5931ddd7a2544149f8012eb337f060da80f5a91293f30bc"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v15",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 786,
+          "score": -98.25,
+          "ticks": 1004,
+          "tapeScore": -100,
+          "delta": 1.75,
+          "finalStateHash": "0160891d939888261f8637d21dc1f332653a80040db705d23c9c02abdad60afc",
+          "eventLogHash": "8d922cce779b9966a5931ddd7a2544149f8012eb337f060da80f5a91293f30bc"
+        }
+      ]
+    },
+    {
+      "id": "hand_cannoneer_vs_champion_20v20",
+      "matchupId": "hand_cannoneer_vs_champion",
+      "matchup": "Hand Cannoneer vs Champion",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 20
+      },
+      "melee": {
+        "slug": "champion",
+        "label": "Champion",
+        "count": 20
+      },
+      "ratio": "20v20",
+      "archive": "aoe2_golden_kiting_hcvschampion_2026-08-14.zip",
+      "zipSha256": "468AB6CDBAD27FAEED9690E47A6B8BE4865A555DDD1063CFDE8B2A2D8D5C3A99",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": -98.95,
+          "min": -100,
+          "max": -98.25,
+          "owner3WinRate": 0
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": -96.5,
+          "min": -96.5,
+          "max": -96.5,
+          "owner3WinRate": 0
+        },
+        "meanDelta": 2.450000000000003,
+        "absoluteMeanDelta": 2.450000000000003,
+        "tapeBandError": 1.75,
+        "tapeBandCoverage": 0,
+        "repeatDeltas": [
+          1.75,
+          3.5,
+          1.75,
+          3.5,
+          1.75
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v20",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 772,
+          "score": -96.5,
+          "ticks": 1242,
+          "tapeScore": -98.25,
+          "delta": 1.75,
+          "finalStateHash": "9809c8875c8208231bf25a2e1af6c88227e6df289a41c6ff9fa8a63fe1208af2",
+          "eventLogHash": "c0ec5da792212e7a4514036b1428920033cde9208ef1b481b58d16cca2118779"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v20",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 772,
+          "score": -96.5,
+          "ticks": 1242,
+          "tapeScore": -100,
+          "delta": 3.5,
+          "finalStateHash": "9809c8875c8208231bf25a2e1af6c88227e6df289a41c6ff9fa8a63fe1208af2",
+          "eventLogHash": "c0ec5da792212e7a4514036b1428920033cde9208ef1b481b58d16cca2118779"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v20",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 772,
+          "score": -96.5,
+          "ticks": 1242,
+          "tapeScore": -98.25,
+          "delta": 1.75,
+          "finalStateHash": "9809c8875c8208231bf25a2e1af6c88227e6df289a41c6ff9fa8a63fe1208af2",
+          "eventLogHash": "c0ec5da792212e7a4514036b1428920033cde9208ef1b481b58d16cca2118779"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v20",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 772,
+          "score": -96.5,
+          "ticks": 1242,
+          "tapeScore": -100,
+          "delta": 3.5,
+          "finalStateHash": "9809c8875c8208231bf25a2e1af6c88227e6df289a41c6ff9fa8a63fe1208af2",
+          "eventLogHash": "c0ec5da792212e7a4514036b1428920033cde9208ef1b481b58d16cca2118779"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_20v20",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 772,
+          "score": -96.5,
+          "ticks": 1242,
+          "tapeScore": -98.25,
+          "delta": 1.75,
+          "finalStateHash": "9809c8875c8208231bf25a2e1af6c88227e6df289a41c6ff9fa8a63fe1208af2",
+          "eventLogHash": "c0ec5da792212e7a4514036b1428920033cde9208ef1b481b58d16cca2118779"
+        }
+      ]
+    },
+    {
+      "id": "hand_cannoneer_vs_champion_5v10",
+      "matchupId": "hand_cannoneer_vs_champion",
+      "matchup": "Hand Cannoneer vs Champion",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 5
+      },
+      "melee": {
+        "slug": "champion",
+        "label": "Champion",
+        "count": 10
+      },
+      "ratio": "5v10",
+      "archive": "aoe2_golden_kiting_hcvschampion_2026-08-14.zip",
+      "zipSha256": "468AB6CDBAD27FAEED9690E47A6B8BE4865A555DDD1063CFDE8B2A2D8D5C3A99",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": -39.2,
+          "min": -59,
+          "max": -12,
+          "owner3WinRate": 0
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": -59,
+          "min": -59,
+          "max": -59,
+          "owner3WinRate": 0
+        },
+        "meanDelta": -19.799999999999997,
+        "absoluteMeanDelta": 19.799999999999997,
+        "tapeBandError": 0,
+        "tapeBandCoverage": 1,
+        "repeatDeltas": [
+          -39,
+          0,
+          -47,
+          -6,
+          -7
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_champion_5v10",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 118,
+          "score": -59,
+          "ticks": 1960,
+          "tapeScore": -20,
+          "delta": -39,
+          "finalStateHash": "34efd33768adf29292b76adaf6cfe27149a931e46169c1b553a76d0bba3f79ad",
+          "eventLogHash": "b54c70ed0e2e6aa0bb902b7e45753d4af8f9c4327552db1cb821cf2fbc00b287"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_5v10",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 118,
+          "score": -59,
+          "ticks": 1960,
+          "tapeScore": -59,
+          "delta": 0,
+          "finalStateHash": "34efd33768adf29292b76adaf6cfe27149a931e46169c1b553a76d0bba3f79ad",
+          "eventLogHash": "b54c70ed0e2e6aa0bb902b7e45753d4af8f9c4327552db1cb821cf2fbc00b287"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_5v10",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 118,
+          "score": -59,
+          "ticks": 1960,
+          "tapeScore": -12,
+          "delta": -47,
+          "finalStateHash": "34efd33768adf29292b76adaf6cfe27149a931e46169c1b553a76d0bba3f79ad",
+          "eventLogHash": "b54c70ed0e2e6aa0bb902b7e45753d4af8f9c4327552db1cb821cf2fbc00b287"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_5v10",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 118,
+          "score": -59,
+          "ticks": 1960,
+          "tapeScore": -53,
+          "delta": -6,
+          "finalStateHash": "34efd33768adf29292b76adaf6cfe27149a931e46169c1b553a76d0bba3f79ad",
+          "eventLogHash": "b54c70ed0e2e6aa0bb902b7e45753d4af8f9c4327552db1cb821cf2fbc00b287"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_champion_5v10",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 118,
+          "score": -59,
+          "ticks": 1960,
+          "tapeScore": -52,
+          "delta": -7,
+          "finalStateHash": "34efd33768adf29292b76adaf6cfe27149a931e46169c1b553a76d0bba3f79ad",
+          "eventLogHash": "b54c70ed0e2e6aa0bb902b7e45753d4af8f9c4327552db1cb821cf2fbc00b287"
+        }
+      ]
+    },
+    {
+      "id": "hand_cannoneer_vs_paladin_10v5",
+      "matchupId": "hand_cannoneer_vs_paladin",
+      "matchup": "Hand Cannoneer vs Paladin",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 10
+      },
+      "melee": {
+        "slug": "paladin",
+        "label": "Paladin",
+        "count": 5
+      },
+      "ratio": "10v5",
+      "archive": "aoe2_golden_kiting_hcvspaladin_2026-08-14.zip",
+      "zipSha256": "F472C648A06913B6E0DDAD1A7E2E9DAD17E70A7F62F113C5C2CD6A6F9AEC50F2",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": 12.666666666666668,
+          "min": 5,
+          "max": 17.22222222222222,
+          "owner3WinRate": 1
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": 13.88888888888889,
+          "min": 13.88888888888889,
+          "max": 13.88888888888889,
+          "owner3WinRate": 1
+        },
+        "meanDelta": 1.2222222222222214,
+        "absoluteMeanDelta": 1.2222222222222214,
+        "tapeBandError": 0,
+        "tapeBandCoverage": 1,
+        "repeatDeltas": [
+          8.88888888888889,
+          -3.333333333333332,
+          -1.1111111111111107,
+          0.5555555555555554,
+          1.1111111111111107
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_paladin_10v5",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 125,
+          "score": 13.88888888888889,
+          "ticks": 3665,
+          "tapeScore": 5,
+          "delta": 8.88888888888889,
+          "finalStateHash": "43af9d676877900c86dd3549c6f1acb317e276088e2804340039db506e7bc8b7",
+          "eventLogHash": "5ef9cb0a1833ecb1b53f758d5127605a5c20021b6f98f275625de7b4529be1b6"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_10v5",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 125,
+          "score": 13.88888888888889,
+          "ticks": 3665,
+          "tapeScore": 17.22222222222222,
+          "delta": -3.333333333333332,
+          "finalStateHash": "43af9d676877900c86dd3549c6f1acb317e276088e2804340039db506e7bc8b7",
+          "eventLogHash": "5ef9cb0a1833ecb1b53f758d5127605a5c20021b6f98f275625de7b4529be1b6"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_10v5",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 125,
+          "score": 13.88888888888889,
+          "ticks": 3665,
+          "tapeScore": 15,
+          "delta": -1.1111111111111107,
+          "finalStateHash": "43af9d676877900c86dd3549c6f1acb317e276088e2804340039db506e7bc8b7",
+          "eventLogHash": "5ef9cb0a1833ecb1b53f758d5127605a5c20021b6f98f275625de7b4529be1b6"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_10v5",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 125,
+          "score": 13.88888888888889,
+          "ticks": 3665,
+          "tapeScore": 13.333333333333334,
+          "delta": 0.5555555555555554,
+          "finalStateHash": "43af9d676877900c86dd3549c6f1acb317e276088e2804340039db506e7bc8b7",
+          "eventLogHash": "5ef9cb0a1833ecb1b53f758d5127605a5c20021b6f98f275625de7b4529be1b6"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_10v5",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 125,
+          "score": 13.88888888888889,
+          "ticks": 3665,
+          "tapeScore": 12.777777777777779,
+          "delta": 1.1111111111111107,
+          "finalStateHash": "43af9d676877900c86dd3549c6f1acb317e276088e2804340039db506e7bc8b7",
+          "eventLogHash": "5ef9cb0a1833ecb1b53f758d5127605a5c20021b6f98f275625de7b4529be1b6"
+        }
+      ]
+    },
+    {
+      "id": "hand_cannoneer_vs_paladin_15v20",
+      "matchupId": "hand_cannoneer_vs_paladin",
+      "matchup": "Hand Cannoneer vs Paladin",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 15
+      },
+      "melee": {
+        "slug": "paladin",
+        "label": "Paladin",
+        "count": 20
+      },
+      "ratio": "15v20",
+      "archive": "aoe2_golden_kiting_hcvspaladin_2026-08-14.zip",
+      "zipSha256": "F472C648A06913B6E0DDAD1A7E2E9DAD17E70A7F62F113C5C2CD6A6F9AEC50F2",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": 73.11111111111111,
+          "min": 70.97222222222223,
+          "max": 76.38888888888889,
+          "owner3WinRate": 1
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": 74.72222222222223,
+          "min": 74.72222222222223,
+          "max": 74.72222222222223,
+          "owner3WinRate": 1
+        },
+        "meanDelta": 1.6111111111111143,
+        "absoluteMeanDelta": 1.6111111111111143,
+        "tapeBandError": 0,
+        "tapeBandCoverage": 1,
+        "repeatDeltas": [
+          3.75,
+          1.944444444444457,
+          2.083333333333343,
+          1.944444444444457,
+          -1.6666666666666572
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_paladin_15v20",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2690,
+          "score": 74.72222222222223,
+          "ticks": 2495,
+          "tapeScore": 70.97222222222223,
+          "delta": 3.75,
+          "finalStateHash": "e2d7edc42dbb71d43fa576833152065b977b777d5c2083f4daff2698c3c3b847",
+          "eventLogHash": "eff2b02f6cb49323da19fdfb43155896573b69e337ddca09932c617e30a64e23"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_15v20",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2690,
+          "score": 74.72222222222223,
+          "ticks": 2495,
+          "tapeScore": 72.77777777777777,
+          "delta": 1.944444444444457,
+          "finalStateHash": "e2d7edc42dbb71d43fa576833152065b977b777d5c2083f4daff2698c3c3b847",
+          "eventLogHash": "eff2b02f6cb49323da19fdfb43155896573b69e337ddca09932c617e30a64e23"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_15v20",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2690,
+          "score": 74.72222222222223,
+          "ticks": 2495,
+          "tapeScore": 72.63888888888889,
+          "delta": 2.083333333333343,
+          "finalStateHash": "e2d7edc42dbb71d43fa576833152065b977b777d5c2083f4daff2698c3c3b847",
+          "eventLogHash": "eff2b02f6cb49323da19fdfb43155896573b69e337ddca09932c617e30a64e23"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_15v20",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2690,
+          "score": 74.72222222222223,
+          "ticks": 2495,
+          "tapeScore": 72.77777777777777,
+          "delta": 1.944444444444457,
+          "finalStateHash": "e2d7edc42dbb71d43fa576833152065b977b777d5c2083f4daff2698c3c3b847",
+          "eventLogHash": "eff2b02f6cb49323da19fdfb43155896573b69e337ddca09932c617e30a64e23"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_15v20",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2690,
+          "score": 74.72222222222223,
+          "ticks": 2495,
+          "tapeScore": 76.38888888888889,
+          "delta": -1.6666666666666572,
+          "finalStateHash": "e2d7edc42dbb71d43fa576833152065b977b777d5c2083f4daff2698c3c3b847",
+          "eventLogHash": "eff2b02f6cb49323da19fdfb43155896573b69e337ddca09932c617e30a64e23"
+        }
+      ]
+    },
+    {
+      "id": "hand_cannoneer_vs_paladin_20v15",
+      "matchupId": "hand_cannoneer_vs_paladin",
+      "matchup": "Hand Cannoneer vs Paladin",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 20
+      },
+      "melee": {
+        "slug": "paladin",
+        "label": "Paladin",
+        "count": 15
+      },
+      "ratio": "20v15",
+      "archive": "aoe2_golden_kiting_hcvspaladin_2026-08-14.zip",
+      "zipSha256": "F472C648A06913B6E0DDAD1A7E2E9DAD17E70A7F62F113C5C2CD6A6F9AEC50F2",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": 30.518518518518523,
+          "min": 23.51851851851852,
+          "max": 39.25925925925926,
+          "owner3WinRate": 1
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": 30.185185185185183,
+          "min": 30.185185185185187,
+          "max": 30.185185185185187,
+          "owner3WinRate": 1
+        },
+        "meanDelta": -0.33333333333333925,
+        "absoluteMeanDelta": 0.33333333333333925,
+        "tapeBandError": 0,
+        "tapeBandCoverage": 1,
+        "repeatDeltas": [
+          -9.074074074074073,
+          2.7777777777777786,
+          2.4074074074074083,
+          6.666666666666668,
+          -4.444444444444439
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v15",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 815,
+          "score": 30.185185185185187,
+          "ticks": 4376,
+          "tapeScore": 39.25925925925926,
+          "delta": -9.074074074074073,
+          "finalStateHash": "7dc822df27d6efdb4aa30f3e32dc7d5b49b93a029bcead152f534519e8af3f65",
+          "eventLogHash": "484a8f44b61a7ce8637af6f36d8e1acad8cb423f6661d273c5d45fe7b73d1af0"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v15",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 815,
+          "score": 30.185185185185187,
+          "ticks": 4376,
+          "tapeScore": 27.40740740740741,
+          "delta": 2.7777777777777786,
+          "finalStateHash": "7dc822df27d6efdb4aa30f3e32dc7d5b49b93a029bcead152f534519e8af3f65",
+          "eventLogHash": "484a8f44b61a7ce8637af6f36d8e1acad8cb423f6661d273c5d45fe7b73d1af0"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v15",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 815,
+          "score": 30.185185185185187,
+          "ticks": 4376,
+          "tapeScore": 27.77777777777778,
+          "delta": 2.4074074074074083,
+          "finalStateHash": "7dc822df27d6efdb4aa30f3e32dc7d5b49b93a029bcead152f534519e8af3f65",
+          "eventLogHash": "484a8f44b61a7ce8637af6f36d8e1acad8cb423f6661d273c5d45fe7b73d1af0"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v15",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 815,
+          "score": 30.185185185185187,
+          "ticks": 4376,
+          "tapeScore": 23.51851851851852,
+          "delta": 6.666666666666668,
+          "finalStateHash": "7dc822df27d6efdb4aa30f3e32dc7d5b49b93a029bcead152f534519e8af3f65",
+          "eventLogHash": "484a8f44b61a7ce8637af6f36d8e1acad8cb423f6661d273c5d45fe7b73d1af0"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v15",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 815,
+          "score": 30.185185185185187,
+          "ticks": 4376,
+          "tapeScore": 34.629629629629626,
+          "delta": -4.444444444444439,
+          "finalStateHash": "7dc822df27d6efdb4aa30f3e32dc7d5b49b93a029bcead152f534519e8af3f65",
+          "eventLogHash": "484a8f44b61a7ce8637af6f36d8e1acad8cb423f6661d273c5d45fe7b73d1af0"
+        }
+      ]
+    },
+    {
+      "id": "hand_cannoneer_vs_paladin_20v20",
+      "matchupId": "hand_cannoneer_vs_paladin",
+      "matchup": "Hand Cannoneer vs Paladin",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 20
+      },
+      "melee": {
+        "slug": "paladin",
+        "label": "Paladin",
+        "count": 20
+      },
+      "ratio": "20v20",
+      "archive": "aoe2_golden_kiting_hcvspaladin_2026-08-14.zip",
+      "zipSha256": "F472C648A06913B6E0DDAD1A7E2E9DAD17E70A7F62F113C5C2CD6A6F9AEC50F2",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": 49.25,
+          "min": 43.333333333333336,
+          "max": 59.44444444444444,
+          "owner3WinRate": 1
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": 56.25,
+          "min": 56.25,
+          "max": 56.25,
+          "owner3WinRate": 1
+        },
+        "meanDelta": 7,
+        "absoluteMeanDelta": 7,
+        "tapeBandError": 0,
+        "tapeBandCoverage": 1,
+        "repeatDeltas": [
+          -3.194444444444443,
+          12.916666666666664,
+          9.722222222222221,
+          3.8888888888888857,
+          11.666666666666664
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v20",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2025,
+          "score": 56.25,
+          "ticks": 3686,
+          "tapeScore": 59.44444444444444,
+          "delta": -3.194444444444443,
+          "finalStateHash": "9e887d49bc4f3b19362ef6e85e5843291c4cef5906df22420fa4f16f8569f268",
+          "eventLogHash": "52293d723bea11826e8a2848408424578f3655ab7322d053f43c6c375b495f1d"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v20",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2025,
+          "score": 56.25,
+          "ticks": 3686,
+          "tapeScore": 43.333333333333336,
+          "delta": 12.916666666666664,
+          "finalStateHash": "9e887d49bc4f3b19362ef6e85e5843291c4cef5906df22420fa4f16f8569f268",
+          "eventLogHash": "52293d723bea11826e8a2848408424578f3655ab7322d053f43c6c375b495f1d"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v20",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2025,
+          "score": 56.25,
+          "ticks": 3686,
+          "tapeScore": 46.52777777777778,
+          "delta": 9.722222222222221,
+          "finalStateHash": "9e887d49bc4f3b19362ef6e85e5843291c4cef5906df22420fa4f16f8569f268",
+          "eventLogHash": "52293d723bea11826e8a2848408424578f3655ab7322d053f43c6c375b495f1d"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v20",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2025,
+          "score": 56.25,
+          "ticks": 3686,
+          "tapeScore": 52.361111111111114,
+          "delta": 3.8888888888888857,
+          "finalStateHash": "9e887d49bc4f3b19362ef6e85e5843291c4cef5906df22420fa4f16f8569f268",
+          "eventLogHash": "52293d723bea11826e8a2848408424578f3655ab7322d053f43c6c375b495f1d"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_20v20",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 2025,
+          "score": 56.25,
+          "ticks": 3686,
+          "tapeScore": 44.583333333333336,
+          "delta": 11.666666666666664,
+          "finalStateHash": "9e887d49bc4f3b19362ef6e85e5843291c4cef5906df22420fa4f16f8569f268",
+          "eventLogHash": "52293d723bea11826e8a2848408424578f3655ab7322d053f43c6c375b495f1d"
+        }
+      ]
+    },
+    {
+      "id": "hand_cannoneer_vs_paladin_5v10",
+      "matchupId": "hand_cannoneer_vs_paladin",
+      "matchup": "Hand Cannoneer vs Paladin",
+      "ranged": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "count": 5
+      },
+      "melee": {
+        "slug": "paladin",
+        "label": "Paladin",
+        "count": 10
+      },
+      "ratio": "5v10",
+      "archive": "aoe2_golden_kiting_hcvspaladin_2026-08-14.zip",
+      "zipSha256": "F472C648A06913B6E0DDAD1A7E2E9DAD17E70A7F62F113C5C2CD6A6F9AEC50F2",
+      "comparison": {
+        "tape": {
+          "runs": 5,
+          "mean": 87.55555555555556,
+          "min": 86.66666666666667,
+          "max": 88.05555555555556,
+          "owner3WinRate": 1
+        },
+        "simulation": {
+          "runs": 5,
+          "mean": 88.33333333333333,
+          "min": 88.33333333333333,
+          "max": 88.33333333333333,
+          "owner3WinRate": 1
+        },
+        "meanDelta": 0.7777777777777715,
+        "absoluteMeanDelta": 0.7777777777777715,
+        "tapeBandError": 0.27777777777777146,
+        "tapeBandCoverage": 0,
+        "repeatDeltas": [
+          0.8333333333333286,
+          1.6666666666666572,
+          0.5555555555555571,
+          0.27777777777777146,
+          0.5555555555555571
+        ],
+        "unresolvedRuns": 0,
+        "wrongWinnerRuns": 0
+      },
+      "samples": [
+        {
+          "rowId": "hand_cannoneer_vs_paladin_5v10",
+          "repeat": 1,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1590,
+          "score": 88.33333333333333,
+          "ticks": 1491,
+          "tapeScore": 87.5,
+          "delta": 0.8333333333333286,
+          "finalStateHash": "45d28dd6155bcfc65b2d05bed17e77c963ce462993e38d311413b64231a241fc",
+          "eventLogHash": "bda5d7665b1008dbc013aea9b20ae612236d88745068e9721262a9535c296603"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_5v10",
+          "repeat": 2,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1590,
+          "score": 88.33333333333333,
+          "ticks": 1491,
+          "tapeScore": 86.66666666666667,
+          "delta": 1.6666666666666572,
+          "finalStateHash": "45d28dd6155bcfc65b2d05bed17e77c963ce462993e38d311413b64231a241fc",
+          "eventLogHash": "bda5d7665b1008dbc013aea9b20ae612236d88745068e9721262a9535c296603"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_5v10",
+          "repeat": 3,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1590,
+          "score": 88.33333333333333,
+          "ticks": 1491,
+          "tapeScore": 87.77777777777777,
+          "delta": 0.5555555555555571,
+          "finalStateHash": "45d28dd6155bcfc65b2d05bed17e77c963ce462993e38d311413b64231a241fc",
+          "eventLogHash": "bda5d7665b1008dbc013aea9b20ae612236d88745068e9721262a9535c296603"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_5v10",
+          "repeat": 4,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1590,
+          "score": 88.33333333333333,
+          "ticks": 1491,
+          "tapeScore": 88.05555555555556,
+          "delta": 0.27777777777777146,
+          "finalStateHash": "45d28dd6155bcfc65b2d05bed17e77c963ce462993e38d311413b64231a241fc",
+          "eventLogHash": "bda5d7665b1008dbc013aea9b20ae612236d88745068e9721262a9535c296603"
+        },
+        {
+          "rowId": "hand_cannoneer_vs_paladin_5v10",
+          "repeat": 5,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1590,
+          "score": 88.33333333333333,
+          "ticks": 1491,
+          "tapeScore": 87.77777777777777,
+          "delta": 0.5555555555555571,
+          "finalStateHash": "45d28dd6155bcfc65b2d05bed17e77c963ce462993e38d311413b64231a241fc",
+          "eventLogHash": "bda5d7665b1008dbc013aea9b20ae612236d88745068e9721262a9535c296603"
+        }
+      ]
+    }
+  ]
+}

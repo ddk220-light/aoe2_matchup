@@ -1,0 +1,1977 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Dedicated Golden Ranged-vs-Melee Engine Comparison",
+    "description": "Exact-repeat comparison of the current JavaScript engine against 17 explicitly authorized dedicated golden archives.",
+    "generatedAt": "2026-08-14T16:27:52.986Z",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Dedicated Golden Ranged-vs-Melee Engine Comparison"
+      },
+      {
+        "id": "technical-summary",
+        "type": "markdown",
+        "sourceId": "results-source",
+        "body": "## The resolved rows are often close, but the suite is not yet broadly reliable\n\nThe run preserved all **425 exact tape-repeat attempts** across 17 dedicated golden matchups. The engine produced outcomes for **295 attempts**; because failures affect whole ratio rows, 69.41% of both attempts and ratio rows resolved. It recorded collision-convergence failures for 130 attempts (30.59%). No failed attempt was silently dropped.\n\nAmong the 59 comparable ratio rows, the median absolute tape delta is **6.7 percentage points** and **50/59 (84.75%)** are at or below 25 points. However, 9 rows exceed 25 points, six of them are Heavy Scorpion rows, and 31/295 resolved attempts (10.51%) pick the wrong winner. The honest conclusion is: promising on most resolved non-Scorpion rows, not yet a clean corpus-wide pass."
+      },
+      {
+        "id": "key-findings-heading",
+        "type": "markdown",
+        "body": "## Scorpion dominates the large errors; HCA-versus-Champion is close\n\nHeavy Scorpion contributes six of the nine rows above 25 points and 20 of the 31 wrong-winner attempts. The largest miss is Heavy Scorpion versus Paladin at 15v20: tape **+76.71** (Paladin wins) versus simulation **-87.67** (Scorpion wins), a **164.38-point** swing.\n\nBy contrast, the fully resolved Heavy Cavalry Archer versus Champion matchup has a 7.84-point mean absolute row delta, a 21.18-point maximum, no wrong winners, and no engine failures.",
+        "sourceId": "results-source"
+      },
+      {
+        "id": "matchup-chart-block",
+        "type": "chart",
+        "chartId": "matchup-accuracy-chart",
+        "layout": "full"
+      },
+      {
+        "id": "large-delta-chart-block",
+        "type": "chart",
+        "chartId": "large-delta-chart",
+        "layout": "full"
+      },
+      {
+        "id": "threshold-interpretation",
+        "type": "markdown",
+        "body": "### The >25-point list is short but consequential\n\nThe table below is the complete threshold list, not a sample. Positive signed scores mean the melee side won with that percentage of its starting HP; negative scores mean the ranged side won. A wrong sign is therefore a winner flip, while a same-sign delta reflects survivor-HP severity."
+      },
+      {
+        "id": "large-delta-table-block",
+        "type": "table",
+        "tableId": "large-delta-table",
+        "layout": "full"
+      },
+      {
+        "id": "failures-heading",
+        "type": "markdown",
+        "sourceId": "results-source",
+        "body": "## All 130 unresolved attempts share one engine failure\n\nExactly 26 ratio rows are fully unresolved; there are no partially unresolved rows. Every one reports **collision constraints did not converge after 4096 sweeps** near a map obstacle. These rows are excluded from delta averages rather than treated as zero error. This is why the 19.19-point mean absolute row delta describes only the 59 resolved rows, not the full 85-row corpus."
+      },
+      {
+        "id": "failure-table-block",
+        "type": "table",
+        "tableId": "failure-table",
+        "layout": "full"
+      },
+      {
+        "id": "scope-definitions",
+        "type": "markdown",
+        "sourceId": "results-source",
+        "body": "## Scope, data, and metric definitions\n\n- **Corpus:** 17 project-local, SHA-256-manifested dedicated golden archives only: five Arbalester matchups, five Elite Skirmisher matchups, five Heavy Cavalry Archer matchups, and two Heavy Scorpion matchups. No Standard Units substitution, Hand Cannoneer, Heavy Camel, Onager, or Panther row is included.\n- **Rows and repeats:** each matchup has five tape ratios and each ratio has five recorded repeats, giving 85 rows and 425 attempts.\n- **Starting state:** every simulation uses the exact `starting_units` positions from its corresponding tape repeat; automatic placement is not used.\n- **Signed outcome score:** ranged/owner-2 wins are negative and melee/owner-3 wins are positive; magnitude is winner remaining HP divided by that owner's starting HP, in percent.\n- **Absolute mean delta:** absolute difference, in percentage points, between the mean simulation score and mean tape score for a ratio row.\n- **Tape-band hit:** the simulation mean lies inside that row's five-repeat tape minimum-to-maximum band.\n- **Wrong winner:** simulation and tape signed scores have opposite signs for the same repeat."
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "body": "## Exact-repeat methodology\n\nEach external golden ZIP was hashed before intake, copied byte-for-byte into the clean-room source directory, hashed again, and recorded in the active dedicated manifest. `frames.bin`, `summary.json`, and exact starting-unit records were imported reproducibly into the dedicated truth fixture. The current checked-out JavaScript engine then ran each repeat on the golden map with cohesive kiting, mechanics-derived kiting clock, melee attack-move-all, chase capture enabled, zero melee engagement dwell, preventive contact steering enabled, and a 9,000-tick limit.\n\nThe runner catches an individual engine exception as a typed unresolved result so later attempts continue. Four deterministic matchup shards produced the completed run; a strict merge rejected duplicate or incomplete coverage and verified exactly 17 matchups, 85 rows, and 425 attempts."
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "sourceId": "results-source",
+        "body": "## Limitations, uncertainty, and robustness\n\nThe aggregate accuracy metrics are conditional on successful engine completion: 26 rows (30.6% of the corpus) have no simulation score. Reporting them as missing is materially different from claiming the engine is within 19.19 points across the full suite. The engine is deterministic for a given exact starting state; tape variability comes from five distinct recorded repeats, not repeated random seeds from one state. Outcome score measures winner and survivor HP, but does not by itself establish that movement, targeting, damage timing, or battle duration followed the tape.\n\nRobustness checks passed for provenance and schedule completeness: 17 unique authorized archives, five ratios per matchup, five repeats per ratio, exact repeat starts, no duplicate rows, and no partially written results. Failure classification is also stable: all unresolved attempts are the same collision-convergence family."
+      },
+      {
+        "id": "all-rows-table-block",
+        "type": "table",
+        "tableId": "all-rows-table",
+        "layout": "full"
+      },
+      {
+        "id": "next-steps",
+        "type": "markdown",
+        "body": "## Recommended next steps\n\n1. Treat collision convergence as the first reliability blocker: rerun the 26 failed rows only after that physics failure is corrected.\n2. Keep Scorpion outcome work separate from the general ranged-kiting result; its six large-delta rows dominate the current accuracy gap.\n3. Recheck the three remaining non-Scorpion rows above 25 points: HCA versus Elite Steppe Lancer at 20v15 and 20v20, and Elite Skirmisher versus Champion at 10v5.\n4. Use the new recoverable runner for every future corpus job. It targets 80% of available CPU with independent Node processes, atomically checkpoints each complete matchup, records live progress/ETA, validates a run signature, and resumes only missing matchups."
+      },
+      {
+        "id": "further-questions",
+        "type": "markdown",
+        "body": "## Further questions\n\n- After collision convergence is fixed, do the recovered 26 rows preserve the current 6.7-point median or reveal a density-related accuracy bias?\n- Is Heavy Scorpion's winner reversal caused primarily by projectile behavior, kiting eligibility/timing, obstruction geometry, or melee acquisition?\n- For the three non-Scorpion >25 rows, do survivor HP and winner error come from the same physical mechanism or from distinct unit-class interactions?"
+      }
+    ],
+    "charts": [
+      {
+        "id": "matchup-accuracy-chart",
+        "title": "Mean absolute outcome delta by dedicated matchup",
+        "subtitle": "Percentage points across resolved ratio rows only; failed rows are shown in tooltips",
+        "showDescription": true,
+        "question": "Which dedicated matchups are closest to or furthest from their tape outcomes?",
+        "rationale": "Sorted horizontal bars preserve long unit names and make the Scorpion outliers immediately visible.",
+        "intent": "comparison",
+        "type": "horizontalBar",
+        "dataset": "matchup_summaries",
+        "sourceId": "matchup-source",
+        "encodings": {
+          "x": {
+            "field": "matchup",
+            "type": "nominal",
+            "label": "Matchup"
+          },
+          "y": {
+            "field": "mean_absolute_delta",
+            "type": "quantitative",
+            "format": "number",
+            "label": "Mean absolute delta",
+            "unit": "pp"
+          },
+          "tooltip": [
+            {
+              "field": "resolved_rows",
+              "type": "quantitative",
+              "format": "number",
+              "label": "Resolved rows"
+            },
+            {
+              "field": "failed_rows",
+              "type": "quantitative",
+              "format": "number",
+              "label": "Failed rows"
+            },
+            {
+              "field": "rows_over_25",
+              "type": "quantitative",
+              "format": "number",
+              "label": "Rows >25 pp"
+            },
+            {
+              "field": "wrong_winner_runs",
+              "type": "quantitative",
+              "format": "number",
+              "label": "Wrong-winner attempts"
+            }
+          ]
+        },
+        "valueFormat": "number",
+        "layout": "full",
+        "maxRows": 17,
+        "surface": {
+          "legend": "none",
+          "valueLabels": true
+        }
+      },
+      {
+        "id": "large-delta-chart",
+        "title": "Resolved ratio rows above 25-point absolute delta",
+        "subtitle": "Absolute difference between simulation mean and five-repeat tape mean; percentage points",
+        "showDescription": true,
+        "question": "How large are the remaining outcome misses above the agreed 25-point threshold?",
+        "rationale": "A ranked single-series horizontal bar shows magnitude without obscuring winner-sign details retained in the table.",
+        "intent": "ranking",
+        "type": "horizontalBar",
+        "dataset": "rows_over_25",
+        "sourceId": "results-source",
+        "encodings": {
+          "x": {
+            "field": "label",
+            "type": "nominal",
+            "label": "Matchup and ratio"
+          },
+          "y": {
+            "field": "absolute_mean_delta",
+            "type": "quantitative",
+            "format": "number",
+            "label": "Absolute mean delta",
+            "unit": "pp"
+          },
+          "tooltip": [
+            {
+              "field": "tape_mean",
+              "type": "quantitative",
+              "format": "number",
+              "label": "Tape mean"
+            },
+            {
+              "field": "simulation_mean",
+              "type": "quantitative",
+              "format": "number",
+              "label": "Simulation mean"
+            },
+            {
+              "field": "wrong_winner_runs",
+              "type": "quantitative",
+              "format": "number",
+              "label": "Wrong-winner attempts"
+            }
+          ]
+        },
+        "valueFormat": "number",
+        "layout": "full",
+        "maxRows": 9,
+        "surface": {
+          "legend": "none",
+          "valueLabels": true
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "large-delta-table",
+        "title": "Complete >25-point threshold list",
+        "subtitle": "Tape and simulation values are signed outcome scores; pp = percentage points",
+        "showDescription": true,
+        "dataset": "rows_over_25",
+        "sourceId": "results-source",
+        "defaultSort": {
+          "field": "absolute_mean_delta",
+          "direction": "desc"
+        },
+        "density": "compact",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "matchup",
+            "label": "Matchup",
+            "type": "text"
+          },
+          {
+            "field": "ratio",
+            "label": "Ratio",
+            "type": "text"
+          },
+          {
+            "field": "tape_mean",
+            "label": "Tape mean",
+            "format": "number",
+            "role": "value"
+          },
+          {
+            "field": "simulation_mean",
+            "label": "Simulation mean",
+            "format": "number",
+            "role": "value"
+          },
+          {
+            "field": "mean_delta",
+            "label": "Signed delta",
+            "format": "number",
+            "role": "value"
+          },
+          {
+            "field": "absolute_mean_delta",
+            "label": "Absolute delta",
+            "format": "number",
+            "role": "value"
+          },
+          {
+            "field": "wrong_winner_runs",
+            "label": "Wrong winners",
+            "format": "number",
+            "role": "value"
+          }
+        ]
+      },
+      {
+        "id": "failure-table",
+        "title": "Unresolved attempt categories",
+        "subtitle": "Rows are fully unresolved when all five exact tape-repeat starts fail",
+        "showDescription": true,
+        "dataset": "failure_categories",
+        "sourceId": "results-source",
+        "defaultSort": {
+          "field": "attempts",
+          "direction": "desc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "category",
+            "label": "Failure category",
+            "type": "text"
+          },
+          {
+            "field": "rows",
+            "label": "Ratio rows",
+            "format": "number",
+            "role": "value"
+          },
+          {
+            "field": "attempts",
+            "label": "Attempts",
+            "format": "number",
+            "role": "value"
+          }
+        ]
+      },
+      {
+        "id": "all-rows-table",
+        "title": "All 85 dedicated golden ratio rows",
+        "subtitle": "Exact audit view; unresolved rows retain their failure status and have no simulation delta",
+        "showDescription": true,
+        "dataset": "all_rows",
+        "sourceId": "results-source",
+        "defaultSort": {
+          "field": "row_id",
+          "direction": "asc"
+        },
+        "density": "compact",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "row_id",
+            "label": "Row",
+            "type": "text"
+          },
+          {
+            "field": "status",
+            "label": "Status",
+            "type": "text"
+          },
+          {
+            "field": "tape_mean",
+            "label": "Tape",
+            "format": "number",
+            "role": "value"
+          },
+          {
+            "field": "simulation_mean",
+            "label": "Simulation",
+            "format": "number",
+            "role": "value"
+          },
+          {
+            "field": "absolute_mean_delta",
+            "label": "Abs delta",
+            "format": "number",
+            "role": "value"
+          },
+          {
+            "field": "wrong_winner_runs",
+            "label": "Wrong winners",
+            "format": "number",
+            "role": "value"
+          },
+          {
+            "field": "unresolved_runs",
+            "label": "Failed attempts",
+            "format": "number",
+            "role": "value"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "results-source",
+        "label": "Dedicated golden current-engine result rows",
+        "path": "aoe2x/js_simulation/calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/results.json",
+        "query": {
+          "engine": "DuckDB",
+          "language": "SQL",
+          "description": "Loads and recursively expands the 85 reviewed ratio rows from the completed dedicated-golden JSON report.",
+          "executed_at": "2026-08-14T16:27:52.986Z",
+          "tables_used": [
+            "aoe2x/js_simulation/calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/results.json"
+          ],
+          "filters": [
+            "17 authorized dedicated golden matchups",
+            "5 ratios per matchup",
+            "5 exact tape-repeat starts per ratio"
+          ],
+          "metric_definitions": [
+            "Absolute mean delta is abs(simulation mean signed outcome score - tape mean signed outcome score) in percentage points"
+          ],
+          "sql": "WITH document AS (SELECT rows FROM read_json_auto('aoe2x/js_simulation/calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/results.json', format = 'auto')) SELECT unnest(rows, recursive := true) FROM document"
+        }
+      },
+      {
+        "id": "matchup-source",
+        "label": "Dedicated golden current-engine matchup summaries",
+        "path": "aoe2x/js_simulation/calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/results.json",
+        "query": {
+          "engine": "DuckDB",
+          "language": "SQL",
+          "description": "Loads and recursively expands the 17 reviewed matchup summaries from the completed dedicated-golden JSON report.",
+          "executed_at": "2026-08-14T16:27:52.986Z",
+          "tables_used": [
+            "aoe2x/js_simulation/calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/results.json"
+          ],
+          "filters": [
+            "Resolved ratio rows contribute to delta aggregates",
+            "Unresolved attempts are retained as failure counts"
+          ],
+          "metric_definitions": [
+            "Mean absolute mean delta averages the absolute ratio-row mean deltas over resolved rows only"
+          ],
+          "sql": "WITH document AS (SELECT matchupSummaries FROM read_json_auto('aoe2x/js_simulation/calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/results.json', format = 'auto')) SELECT unnest(matchupSummaries, recursive := true) FROM document"
+        }
+      },
+      {
+        "id": "manifest-source",
+        "label": "Authorized dedicated golden archive manifest",
+        "path": "aoe2x/js_simulation/calibration/source/dedicated_ranged_melee_sources.json"
+      },
+      {
+        "id": "truth-source",
+        "label": "Imported exact-repeat dedicated golden truth",
+        "path": "aoe2x/js_simulation/calibration/fixtures/dedicated_ranged_melee/dedicated_ranged_melee_truth.json"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-08-14T16:27:52.986Z",
+    "status": "ready",
+    "datasets": {
+      "matchup_summaries": [
+        {
+          "matchup": "Heavy Scorpion vs Paladin",
+          "mean_absolute_delta": 114.65,
+          "maximum_absolute_delta": 164.38,
+          "resolved_rows": 4,
+          "failed_rows": 1,
+          "rows_over_25": 3,
+          "rows_inside_tape_band": 0,
+          "wrong_winner_runs": 15
+        },
+        {
+          "matchup": "Heavy Scorpion vs Champion",
+          "mean_absolute_delta": 53.29,
+          "maximum_absolute_delta": 133.02,
+          "resolved_rows": 4,
+          "failed_rows": 1,
+          "rows_over_25": 3,
+          "rows_inside_tape_band": 0,
+          "wrong_winner_runs": 5
+        },
+        {
+          "matchup": "Heavy Cav Archer vs Elite Steppe Lancer",
+          "mean_absolute_delta": 23.35,
+          "maximum_absolute_delta": 58.98,
+          "resolved_rows": 5,
+          "failed_rows": 0,
+          "rows_over_25": 2,
+          "rows_inside_tape_band": 1,
+          "wrong_winner_runs": 5
+        },
+        {
+          "matchup": "Elite Skirmisher vs Champion",
+          "mean_absolute_delta": 20.35,
+          "maximum_absolute_delta": 50.06,
+          "resolved_rows": 3,
+          "failed_rows": 2,
+          "rows_over_25": 1,
+          "rows_inside_tape_band": 0,
+          "wrong_winner_runs": 5
+        },
+        {
+          "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+          "mean_absolute_delta": 11.89,
+          "maximum_absolute_delta": 22.54,
+          "resolved_rows": 5,
+          "failed_rows": 0,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 2,
+          "wrong_winner_runs": 1
+        },
+        {
+          "matchup": "Elite Skirmisher vs Elite Fire Lancer",
+          "mean_absolute_delta": 11.11,
+          "maximum_absolute_delta": 19.11,
+          "resolved_rows": 2,
+          "failed_rows": 3,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 0,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Arbalester vs Elite Fire Lancer",
+          "mean_absolute_delta": 10.11,
+          "maximum_absolute_delta": 16.15,
+          "resolved_rows": 4,
+          "failed_rows": 1,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 0,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Arbalester vs Elite Steppe Lancer",
+          "mean_absolute_delta": 9.56,
+          "maximum_absolute_delta": 21.2,
+          "resolved_rows": 3,
+          "failed_rows": 2,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 1,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Arbalester vs Champion",
+          "mean_absolute_delta": 9.04,
+          "maximum_absolute_delta": 24,
+          "resolved_rows": 3,
+          "failed_rows": 2,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 2,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Heavy Cav Archer vs Champion",
+          "mean_absolute_delta": 7.84,
+          "maximum_absolute_delta": 21.18,
+          "resolved_rows": 5,
+          "failed_rows": 0,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 2,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Heavy Cav Archer vs Paladin",
+          "mean_absolute_delta": 6.86,
+          "maximum_absolute_delta": 14.52,
+          "resolved_rows": 4,
+          "failed_rows": 1,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 3,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Arbalester vs Paladin",
+          "mean_absolute_delta": 4.05,
+          "maximum_absolute_delta": 8.33,
+          "resolved_rows": 4,
+          "failed_rows": 1,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 1,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Heavy Cav Archer vs Elite Battle Elephant",
+          "mean_absolute_delta": 2.69,
+          "maximum_absolute_delta": 6.5,
+          "resolved_rows": 3,
+          "failed_rows": 2,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 1,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Arbalester vs Elite Battle Elephant",
+          "mean_absolute_delta": 2.23,
+          "maximum_absolute_delta": 4.15,
+          "resolved_rows": 2,
+          "failed_rows": 3,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 0,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+          "mean_absolute_delta": 1.93,
+          "maximum_absolute_delta": 3.28,
+          "resolved_rows": 3,
+          "failed_rows": 2,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 1,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Elite Skirmisher vs Paladin",
+          "mean_absolute_delta": 0.84,
+          "maximum_absolute_delta": 1.49,
+          "resolved_rows": 2,
+          "failed_rows": 3,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 0,
+          "wrong_winner_runs": 0
+        },
+        {
+          "matchup": "Elite Skirmisher vs Elite Battle Elephant",
+          "mean_absolute_delta": 0.65,
+          "maximum_absolute_delta": 1.2,
+          "resolved_rows": 3,
+          "failed_rows": 2,
+          "rows_over_25": 0,
+          "rows_inside_tape_band": 2,
+          "wrong_winner_runs": 0
+        }
+      ],
+      "rows_over_25": [
+        {
+          "label": "Heavy Scorpion vs Paladin 15v20",
+          "matchup": "Heavy Scorpion vs Paladin",
+          "ratio": "15v20",
+          "tape_mean": 76.71,
+          "simulation_mean": -87.67,
+          "mean_delta": -164.38,
+          "absolute_mean_delta": 164.38,
+          "wrong_winner_runs": 5
+        },
+        {
+          "label": "Heavy Scorpion vs Paladin 20v15",
+          "matchup": "Heavy Scorpion vs Paladin",
+          "ratio": "20v15",
+          "tape_mean": 62.16,
+          "simulation_mean": -81.5,
+          "mean_delta": -143.66,
+          "absolute_mean_delta": 143.66,
+          "wrong_winner_runs": 5
+        },
+        {
+          "label": "Heavy Scorpion vs Champion 5v10",
+          "matchup": "Heavy Scorpion vs Champion",
+          "ratio": "5v10",
+          "tape_mean": 58.69,
+          "simulation_mean": -74.33,
+          "mean_delta": -133.02,
+          "absolute_mean_delta": 133.02,
+          "wrong_winner_runs": 5
+        },
+        {
+          "label": "Heavy Scorpion vs Paladin 10v5",
+          "matchup": "Heavy Scorpion vs Paladin",
+          "ratio": "10v5",
+          "tape_mean": 55.29,
+          "simulation_mean": -71.5,
+          "mean_delta": -126.79,
+          "absolute_mean_delta": 126.79,
+          "wrong_winner_runs": 5
+        },
+        {
+          "label": "Heavy Cav Archer vs Elite Steppe Lancer 20v20",
+          "matchup": "Heavy Cav Archer vs Elite Steppe Lancer",
+          "ratio": "20v20",
+          "tape_mean": 29.6,
+          "simulation_mean": -29.37,
+          "mean_delta": -58.97,
+          "absolute_mean_delta": 58.98,
+          "wrong_winner_runs": 5
+        },
+        {
+          "label": "Elite Skirmisher vs Champion 10v5",
+          "matchup": "Elite Skirmisher vs Champion",
+          "ratio": "10v5",
+          "tape_mean": 47.2,
+          "simulation_mean": -2.86,
+          "mean_delta": -50.06,
+          "absolute_mean_delta": 50.06,
+          "wrong_winner_runs": 5
+        },
+        {
+          "label": "Heavy Scorpion vs Champion 20v20",
+          "matchup": "Heavy Scorpion vs Champion",
+          "ratio": "20v20",
+          "tape_mean": -53.5,
+          "simulation_mean": -95,
+          "mean_delta": -41.5,
+          "absolute_mean_delta": 41.5,
+          "wrong_winner_runs": 0
+        },
+        {
+          "label": "Heavy Scorpion vs Champion 20v15",
+          "matchup": "Heavy Scorpion vs Champion",
+          "ratio": "20v15",
+          "tape_mean": -66.78,
+          "simulation_mean": -98.58,
+          "mean_delta": -31.8,
+          "absolute_mean_delta": 31.8,
+          "wrong_winner_runs": 0
+        },
+        {
+          "label": "Heavy Cav Archer vs Elite Steppe Lancer 20v15",
+          "matchup": "Heavy Cav Archer vs Elite Steppe Lancer",
+          "ratio": "20v15",
+          "tape_mean": -26.5,
+          "simulation_mean": -53.12,
+          "mean_delta": -26.62,
+          "absolute_mean_delta": 26.63,
+          "wrong_winner_runs": 0
+        }
+      ],
+      "failure_categories": [
+        {
+          "category": "collision convergence",
+          "rows": 26,
+          "attempts": 130
+        }
+      ],
+      "all_rows": [
+        {
+          "row_id": "arbalester_vs_champion_10v5",
+          "matchup": "Arbalester vs Champion",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": -98.5,
+          "simulation_mean": -96.25,
+          "mean_delta": 2.25,
+          "absolute_mean_delta": 2.25,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zip_sha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "row_id": "arbalester_vs_champion_15v20",
+          "matchup": "Arbalester vs Champion",
+          "ratio": "15v20",
+          "status": "engine failure",
+          "tape_mean": -58.33,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zip_sha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "row_id": "arbalester_vs_champion_20v15",
+          "matchup": "Arbalester vs Champion",
+          "ratio": "20v15",
+          "status": "engine failure",
+          "tape_mean": -94.87,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zip_sha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "row_id": "arbalester_vs_champion_20v20",
+          "matchup": "Arbalester vs Champion",
+          "ratio": "20v20",
+          "status": "resolved",
+          "tape_mean": -92.75,
+          "simulation_mean": -68.75,
+          "mean_delta": 24,
+          "absolute_mean_delta": 24,
+          "tape_band_error": 22.5,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zip_sha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "row_id": "arbalester_vs_champion_5v10",
+          "matchup": "Arbalester vs Champion",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 53.71,
+          "simulation_mean": 52.86,
+          "mean_delta": -0.86,
+          "absolute_mean_delta": 0.86,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zip_sha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "row_id": "arbalester_vs_elite_elephant_10v5",
+          "matchup": "Arbalester vs Elite Battle Elephant",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": 86.04,
+          "simulation_mean": 90.19,
+          "mean_delta": 4.15,
+          "absolute_mean_delta": 4.15,
+          "tape_band_error": 2.13,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zip_sha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "row_id": "arbalester_vs_elite_elephant_15v20",
+          "matchup": "Arbalester vs Elite Battle Elephant",
+          "ratio": "15v20",
+          "status": "engine failure",
+          "tape_mean": 96.82,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zip_sha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "row_id": "arbalester_vs_elite_elephant_20v15",
+          "matchup": "Arbalester vs Elite Battle Elephant",
+          "ratio": "20v15",
+          "status": "engine failure",
+          "tape_mean": 92.24,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zip_sha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "row_id": "arbalester_vs_elite_elephant_20v20",
+          "matchup": "Arbalester vs Elite Battle Elephant",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": 95.99,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zip_sha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "row_id": "arbalester_vs_elite_elephant_5v10",
+          "matchup": "Arbalester vs Elite Battle Elephant",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 98.18,
+          "simulation_mean": 98.5,
+          "mean_delta": 0.32,
+          "absolute_mean_delta": 0.32,
+          "tape_band_error": 0.13,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zip_sha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "row_id": "arbalester_vs_elite_fire_lancer_10v5",
+          "matchup": "Arbalester vs Elite Fire Lancer",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": -87.2,
+          "simulation_mean": -80.5,
+          "mean_delta": 6.7,
+          "absolute_mean_delta": 6.7,
+          "tape_band_error": 4.5,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "row_id": "arbalester_vs_elite_fire_lancer_15v20",
+          "matchup": "Arbalester vs Elite Fire Lancer",
+          "ratio": "15v20",
+          "status": "resolved",
+          "tape_mean": 31.71,
+          "simulation_mean": 44.71,
+          "mean_delta": 13,
+          "absolute_mean_delta": 13,
+          "tape_band_error": 4.71,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "row_id": "arbalester_vs_elite_fire_lancer_20v15",
+          "matchup": "Arbalester vs Elite Fire Lancer",
+          "ratio": "20v15",
+          "status": "resolved",
+          "tape_mean": -77.03,
+          "simulation_mean": -60.87,
+          "mean_delta": 16.15,
+          "absolute_mean_delta": 16.15,
+          "tape_band_error": 10.75,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "row_id": "arbalester_vs_elite_fire_lancer_20v20",
+          "matchup": "Arbalester vs Elite Fire Lancer",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": -50.17,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "row_id": "arbalester_vs_elite_fire_lancer_5v10",
+          "matchup": "Arbalester vs Elite Fire Lancer",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 68.94,
+          "simulation_mean": 73.53,
+          "mean_delta": 4.59,
+          "absolute_mean_delta": 4.59,
+          "tape_band_error": 0.59,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "row_id": "arbalester_vs_elite_steppe_10v5",
+          "matchup": "Arbalester vs Elite Steppe Lancer",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": -49.2,
+          "simulation_mean": -28,
+          "mean_delta": 21.2,
+          "absolute_mean_delta": 21.2,
+          "tape_band_error": 10,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zip_sha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "row_id": "arbalester_vs_elite_steppe_15v20",
+          "matchup": "Arbalester vs Elite Steppe Lancer",
+          "ratio": "15v20",
+          "status": "resolved",
+          "tape_mean": 71.84,
+          "simulation_mean": 74.2,
+          "mean_delta": 2.36,
+          "absolute_mean_delta": 2.36,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zip_sha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "row_id": "arbalester_vs_elite_steppe_20v15",
+          "matchup": "Arbalester vs Elite Steppe Lancer",
+          "ratio": "20v15",
+          "status": "engine failure",
+          "tape_mean": 25.44,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zip_sha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "row_id": "arbalester_vs_elite_steppe_20v20",
+          "matchup": "Arbalester vs Elite Steppe Lancer",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": 51.88,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zip_sha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "row_id": "arbalester_vs_elite_steppe_5v10",
+          "matchup": "Arbalester vs Elite Steppe Lancer",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 83.28,
+          "simulation_mean": 88.4,
+          "mean_delta": 5.12,
+          "absolute_mean_delta": 5.12,
+          "tape_band_error": 4.4,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zip_sha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "row_id": "arbalester_vs_paladin_10v5",
+          "matchup": "Arbalester vs Paladin",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": 57.67,
+          "simulation_mean": 66,
+          "mean_delta": 8.33,
+          "absolute_mean_delta": 8.33,
+          "tape_band_error": 6,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zip_sha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "row_id": "arbalester_vs_paladin_15v20",
+          "matchup": "Arbalester vs Paladin",
+          "ratio": "15v20",
+          "status": "resolved",
+          "tape_mean": 87.02,
+          "simulation_mean": 88.58,
+          "mean_delta": 1.57,
+          "absolute_mean_delta": 1.57,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zip_sha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "row_id": "arbalester_vs_paladin_20v15",
+          "matchup": "Arbalester vs Paladin",
+          "ratio": "20v15",
+          "status": "engine failure",
+          "tape_mean": 69.02,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zip_sha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "row_id": "arbalester_vs_paladin_20v20",
+          "matchup": "Arbalester vs Paladin",
+          "ratio": "20v20",
+          "status": "resolved",
+          "tape_mean": 78.9,
+          "simulation_mean": 84.58,
+          "mean_delta": 5.68,
+          "absolute_mean_delta": 5.68,
+          "tape_band_error": 2.42,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zip_sha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "row_id": "arbalester_vs_paladin_5v10",
+          "matchup": "Arbalester vs Paladin",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 92.9,
+          "simulation_mean": 93.5,
+          "mean_delta": 0.6,
+          "absolute_mean_delta": 0.6,
+          "tape_band_error": 0.33,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zip_sha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_champion_10v5",
+          "matchup": "Heavy Cav Archer vs Champion",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": -99.02,
+          "simulation_mean": -91.87,
+          "mean_delta": 7.15,
+          "absolute_mean_delta": 7.15,
+          "tape_band_error": 6.5,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zip_sha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_champion_15v20",
+          "matchup": "Heavy Cav Archer vs Champion",
+          "ratio": "15v20",
+          "status": "resolved",
+          "tape_mean": -56.98,
+          "simulation_mean": -78.17,
+          "mean_delta": -21.18,
+          "absolute_mean_delta": 21.18,
+          "tape_band_error": 8.67,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zip_sha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_champion_20v15",
+          "matchup": "Heavy Cav Archer vs Champion",
+          "ratio": "20v15",
+          "status": "resolved",
+          "tape_mean": -96.07,
+          "simulation_mean": -87.69,
+          "mean_delta": 8.39,
+          "absolute_mean_delta": 8.39,
+          "tape_band_error": 4.88,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zip_sha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_champion_20v20",
+          "matchup": "Heavy Cav Archer vs Champion",
+          "ratio": "20v20",
+          "status": "resolved",
+          "tape_mean": -83.41,
+          "simulation_mean": -83.62,
+          "mean_delta": -0.21,
+          "absolute_mean_delta": 0.21,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zip_sha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_champion_5v10",
+          "matchup": "Heavy Cav Archer vs Champion",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 44.57,
+          "simulation_mean": 42.29,
+          "mean_delta": -2.29,
+          "absolute_mean_delta": 2.29,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zip_sha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_elephant_10v5",
+          "matchup": "Heavy Cav Archer vs Elite Battle Elephant",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": 75.13,
+          "simulation_mean": 81.63,
+          "mean_delta": 6.5,
+          "absolute_mean_delta": 6.5,
+          "tape_band_error": 5.25,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zip_sha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_elephant_15v20",
+          "matchup": "Heavy Cav Archer vs Elite Battle Elephant",
+          "ratio": "15v20",
+          "status": "engine failure",
+          "tape_mean": 92.3,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zip_sha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_elephant_20v15",
+          "matchup": "Heavy Cav Archer vs Elite Battle Elephant",
+          "ratio": "20v15",
+          "status": "resolved",
+          "tape_mean": 82.91,
+          "simulation_mean": 82.33,
+          "mean_delta": -0.58,
+          "absolute_mean_delta": 0.58,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zip_sha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_elephant_20v20",
+          "matchup": "Heavy Cav Archer vs Elite Battle Elephant",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": 88.84,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zip_sha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_elephant_5v10",
+          "matchup": "Heavy Cav Archer vs Elite Battle Elephant",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 96,
+          "simulation_mean": 97,
+          "mean_delta": 1,
+          "absolute_mean_delta": 1,
+          "tape_band_error": 0.69,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zip_sha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_fire_lancer_10v5",
+          "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": -92.57,
+          "simulation_mean": -76.87,
+          "mean_delta": 15.7,
+          "absolute_mean_delta": 15.7,
+          "tape_band_error": 9.63,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_fire_lancer_15v20",
+          "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+          "ratio": "15v20",
+          "status": "resolved",
+          "tape_mean": 37.31,
+          "simulation_mean": 43.59,
+          "mean_delta": 6.28,
+          "absolute_mean_delta": 6.28,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_fire_lancer_20v15",
+          "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+          "ratio": "20v15",
+          "status": "resolved",
+          "tape_mean": -57.92,
+          "simulation_mean": -65.06,
+          "mean_delta": -7.14,
+          "absolute_mean_delta": 7.14,
+          "tape_band_error": 1.75,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_fire_lancer_20v20",
+          "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+          "ratio": "20v20",
+          "status": "resolved",
+          "tape_mean": -32.47,
+          "simulation_mean": -9.94,
+          "mean_delta": 22.54,
+          "absolute_mean_delta": 22.54,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 1,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_fire_lancer_5v10",
+          "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 71.48,
+          "simulation_mean": 79.29,
+          "mean_delta": 7.81,
+          "absolute_mean_delta": 7.81,
+          "tape_band_error": 1.29,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zip_sha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_steppe_10v5",
+          "matchup": "Heavy Cav Archer vs Elite Steppe Lancer",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": -86.25,
+          "simulation_mean": -71.25,
+          "mean_delta": 15,
+          "absolute_mean_delta": 15,
+          "tape_band_error": 8.75,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zip_sha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_steppe_15v20",
+          "matchup": "Heavy Cav Archer vs Elite Steppe Lancer",
+          "ratio": "15v20",
+          "status": "resolved",
+          "tape_mean": 59.2,
+          "simulation_mean": 45.75,
+          "mean_delta": -13.45,
+          "absolute_mean_delta": 13.45,
+          "tape_band_error": 8.75,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zip_sha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_steppe_20v15",
+          "matchup": "Heavy Cav Archer vs Elite Steppe Lancer",
+          "ratio": "20v15",
+          "status": "resolved",
+          "tape_mean": -26.5,
+          "simulation_mean": -53.12,
+          "mean_delta": -26.62,
+          "absolute_mean_delta": 26.63,
+          "tape_band_error": 20.63,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zip_sha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_steppe_20v20",
+          "matchup": "Heavy Cav Archer vs Elite Steppe Lancer",
+          "ratio": "20v20",
+          "status": "resolved",
+          "tape_mean": 29.6,
+          "simulation_mean": -29.37,
+          "mean_delta": -58.97,
+          "absolute_mean_delta": 58.98,
+          "tape_band_error": 52.88,
+          "wrong_winner_runs": 5,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zip_sha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_elite_steppe_5v10",
+          "matchup": "Heavy Cav Archer vs Elite Steppe Lancer",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 80.2,
+          "simulation_mean": 77.5,
+          "mean_delta": -2.7,
+          "absolute_mean_delta": 2.7,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zip_sha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_paladin_10v5",
+          "matchup": "Heavy Cav Archer vs Paladin",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": -39.9,
+          "simulation_mean": -25.37,
+          "mean_delta": 14.52,
+          "absolute_mean_delta": 14.52,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zip_sha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_paladin_15v20",
+          "matchup": "Heavy Cav Archer vs Paladin",
+          "ratio": "15v20",
+          "status": "resolved",
+          "tape_mean": 76.2,
+          "simulation_mean": 73,
+          "mean_delta": -3.2,
+          "absolute_mean_delta": 3.2,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zip_sha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_paladin_20v15",
+          "matchup": "Heavy Cav Archer vs Paladin",
+          "ratio": "20v15",
+          "status": "resolved",
+          "tape_mean": 39.5,
+          "simulation_mean": 29.78,
+          "mean_delta": -9.72,
+          "absolute_mean_delta": 9.72,
+          "tape_band_error": 2.96,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zip_sha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_paladin_20v20",
+          "matchup": "Heavy Cav Archer vs Paladin",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": 61.36,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zip_sha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "row_id": "heavy_cav_archer_vs_paladin_5v10",
+          "matchup": "Heavy Cav Archer vs Paladin",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 88.22,
+          "simulation_mean": 88.22,
+          "mean_delta": 0,
+          "absolute_mean_delta": 0,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zip_sha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_champion_10v5",
+          "matchup": "Heavy Scorpion vs Champion",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": -90.33,
+          "simulation_mean": -97.17,
+          "mean_delta": -6.83,
+          "absolute_mean_delta": 6.83,
+          "tape_band_error": 5.67,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zip_sha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_champion_15v20",
+          "matchup": "Heavy Scorpion vs Champion",
+          "ratio": "15v20",
+          "status": "engine failure",
+          "tape_mean": 28.2,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zip_sha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_champion_20v15",
+          "matchup": "Heavy Scorpion vs Champion",
+          "ratio": "20v15",
+          "status": "resolved",
+          "tape_mean": -66.78,
+          "simulation_mean": -98.58,
+          "mean_delta": -31.8,
+          "absolute_mean_delta": 31.8,
+          "tape_band_error": 18.5,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zip_sha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_champion_20v20",
+          "matchup": "Heavy Scorpion vs Champion",
+          "ratio": "20v20",
+          "status": "resolved",
+          "tape_mean": -53.5,
+          "simulation_mean": -95,
+          "mean_delta": -41.5,
+          "absolute_mean_delta": 41.5,
+          "tape_band_error": 19.92,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zip_sha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_champion_5v10",
+          "matchup": "Heavy Scorpion vs Champion",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 58.69,
+          "simulation_mean": -74.33,
+          "mean_delta": -133.02,
+          "absolute_mean_delta": 133.02,
+          "tape_band_error": 117.76,
+          "wrong_winner_runs": 5,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zip_sha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_paladin_10v5",
+          "matchup": "Heavy Scorpion vs Paladin",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": 55.29,
+          "simulation_mean": -71.5,
+          "mean_delta": -126.79,
+          "absolute_mean_delta": 126.79,
+          "tape_band_error": 122.17,
+          "wrong_winner_runs": 5,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zip_sha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_paladin_15v20",
+          "matchup": "Heavy Scorpion vs Paladin",
+          "ratio": "15v20",
+          "status": "resolved",
+          "tape_mean": 76.71,
+          "simulation_mean": -87.67,
+          "mean_delta": -164.38,
+          "absolute_mean_delta": 164.38,
+          "tape_band_error": 154.33,
+          "wrong_winner_runs": 5,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zip_sha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_paladin_20v15",
+          "matchup": "Heavy Scorpion vs Paladin",
+          "ratio": "20v15",
+          "status": "resolved",
+          "tape_mean": 62.16,
+          "simulation_mean": -81.5,
+          "mean_delta": -143.66,
+          "absolute_mean_delta": 143.66,
+          "tape_band_error": 137.06,
+          "wrong_winner_runs": 5,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zip_sha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_paladin_20v20",
+          "matchup": "Heavy Scorpion vs Paladin",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": 68.11,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zip_sha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        },
+        {
+          "row_id": "heavy_scorpion_vs_paladin_5v10",
+          "matchup": "Heavy Scorpion vs Paladin",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 90.67,
+          "simulation_mean": 66.89,
+          "mean_delta": -23.78,
+          "absolute_mean_delta": 23.78,
+          "tape_band_error": 22,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zip_sha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_champion_10v5",
+          "matchup": "Elite Skirmisher vs Champion",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": 47.2,
+          "simulation_mean": -2.86,
+          "mean_delta": -50.06,
+          "absolute_mean_delta": 50.06,
+          "tape_band_error": 42.29,
+          "wrong_winner_runs": 5,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zip_sha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_champion_15v20",
+          "matchup": "Elite Skirmisher vs Champion",
+          "ratio": "15v20",
+          "status": "resolved",
+          "tape_mean": 86.69,
+          "simulation_mean": 77.29,
+          "mean_delta": -9.4,
+          "absolute_mean_delta": 9.4,
+          "tape_band_error": 5.86,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zip_sha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_champion_20v15",
+          "matchup": "Elite Skirmisher vs Champion",
+          "ratio": "20v15",
+          "status": "engine failure",
+          "tape_mean": 58.9,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zip_sha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_champion_20v20",
+          "matchup": "Elite Skirmisher vs Champion",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": 80.14,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zip_sha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_champion_5v10",
+          "matchup": "Elite Skirmisher vs Champion",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 91.89,
+          "simulation_mean": 90.29,
+          "mean_delta": -1.6,
+          "absolute_mean_delta": 1.6,
+          "tape_band_error": 0.57,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zip_sha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_elephant_10v5",
+          "matchup": "Elite Skirmisher vs Elite Battle Elephant",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": 94.89,
+          "simulation_mean": 94.25,
+          "mean_delta": -0.64,
+          "absolute_mean_delta": 0.64,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zip_sha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_elephant_15v20",
+          "matchup": "Elite Skirmisher vs Elite Battle Elephant",
+          "ratio": "15v20",
+          "status": "engine failure",
+          "tape_mean": 99.09,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zip_sha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_elephant_20v15",
+          "matchup": "Elite Skirmisher vs Elite Battle Elephant",
+          "ratio": "20v15",
+          "status": "resolved",
+          "tape_mean": 97.1,
+          "simulation_mean": 95.9,
+          "mean_delta": -1.2,
+          "absolute_mean_delta": 1.2,
+          "tape_band_error": 0.46,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zip_sha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_elephant_20v20",
+          "matchup": "Elite Skirmisher vs Elite Battle Elephant",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": 98.48,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zip_sha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_elephant_5v10",
+          "matchup": "Elite Skirmisher vs Elite Battle Elephant",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 99.21,
+          "simulation_mean": 99.09,
+          "mean_delta": -0.11,
+          "absolute_mean_delta": 0.11,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zip_sha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_fire_lancer_10v5",
+          "matchup": "Elite Skirmisher vs Elite Fire Lancer",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": 59.81,
+          "simulation_mean": 40.71,
+          "mean_delta": -19.11,
+          "absolute_mean_delta": 19.11,
+          "tape_band_error": 12,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zip_sha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_fire_lancer_15v20",
+          "matchup": "Elite Skirmisher vs Elite Fire Lancer",
+          "ratio": "15v20",
+          "status": "engine failure",
+          "tape_mean": 90.99,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zip_sha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_fire_lancer_20v15",
+          "matchup": "Elite Skirmisher vs Elite Fire Lancer",
+          "ratio": "20v15",
+          "status": "engine failure",
+          "tape_mean": 76.53,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zip_sha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_fire_lancer_20v20",
+          "matchup": "Elite Skirmisher vs Elite Fire Lancer",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": 88.61,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zip_sha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_fire_lancer_5v10",
+          "matchup": "Elite Skirmisher vs Elite Fire Lancer",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 94.78,
+          "simulation_mean": 97.88,
+          "mean_delta": 3.11,
+          "absolute_mean_delta": 3.11,
+          "tape_band_error": 2.59,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zip_sha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_steppe_10v5",
+          "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": 89.88,
+          "simulation_mean": 86.6,
+          "mean_delta": -3.28,
+          "absolute_mean_delta": 3.28,
+          "tape_band_error": 3,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zip_sha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_steppe_15v20",
+          "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+          "ratio": "15v20",
+          "status": "engine failure",
+          "tape_mean": 97.91,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zip_sha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_steppe_20v15",
+          "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+          "ratio": "20v15",
+          "status": "engine failure",
+          "tape_mean": 93.37,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zip_sha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_steppe_20v20",
+          "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+          "ratio": "20v20",
+          "status": "resolved",
+          "tape_mean": 96.97,
+          "simulation_mean": 94.5,
+          "mean_delta": -2.47,
+          "absolute_mean_delta": 2.47,
+          "tape_band_error": 1.95,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zip_sha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_elite_steppe_5v10",
+          "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 98.16,
+          "simulation_mean": 98.2,
+          "mean_delta": 0.04,
+          "absolute_mean_delta": 0.04,
+          "tape_band_error": 0,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zip_sha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_paladin_10v5",
+          "matchup": "Elite Skirmisher vs Paladin",
+          "ratio": "10v5",
+          "status": "resolved",
+          "tape_mean": 94.16,
+          "simulation_mean": 92.67,
+          "mean_delta": -1.49,
+          "absolute_mean_delta": 1.49,
+          "tape_band_error": 1.11,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zip_sha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_paladin_15v20",
+          "matchup": "Elite Skirmisher vs Paladin",
+          "ratio": "15v20",
+          "status": "engine failure",
+          "tape_mean": 98.48,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zip_sha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_paladin_20v15",
+          "matchup": "Elite Skirmisher vs Paladin",
+          "ratio": "20v15",
+          "status": "engine failure",
+          "tape_mean": 95.51,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zip_sha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_paladin_20v20",
+          "matchup": "Elite Skirmisher vs Paladin",
+          "ratio": "20v20",
+          "status": "engine failure",
+          "tape_mean": 97.51,
+          "simulation_mean": null,
+          "mean_delta": null,
+          "absolute_mean_delta": null,
+          "tape_band_error": null,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 5,
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zip_sha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        },
+        {
+          "row_id": "imp_elite_skirm_vs_paladin_5v10",
+          "matchup": "Elite Skirmisher vs Paladin",
+          "ratio": "5v10",
+          "status": "resolved",
+          "tape_mean": 98.92,
+          "simulation_mean": 98.72,
+          "mean_delta": -0.2,
+          "absolute_mean_delta": 0.2,
+          "tape_band_error": 0.06,
+          "wrong_winner_runs": 0,
+          "unresolved_runs": 0,
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zip_sha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "results-source",
+      "label": "Dedicated golden current-engine results",
+      "path": "aoe2x/js_simulation/calibration/reports/dedicated_ranged_melee_current_engine_2026-08-14/results.json"
+    }
+  ]
+}

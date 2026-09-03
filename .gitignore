@@ -49,6 +49,9 @@ env/
 *.tmp
 *.temp
 ANALYSIS.md
+# Generated matchup simulation/calibration data (historical files already
+# tracked by Git remain available; source fixtures/configs elsewhere are unaffected).
+/aoe2x/js_simulation/calibration/reports/**/*.json
 
 # User data
 apps/website/matchup_votes.jsonl
@@ -70,6 +73,7 @@ new-civ-view.md
 
 # Claude Code worktree state
 .claude/worktrees/
+.worktrees/
 apps/website/backups/
 
 # Raw extracted game graphics (19GB local dump; never commit)
@@ -88,8 +92,40 @@ graphics/youtube/*.png
 # Scratch / working files
 .scratch/
 .scratch_nb/
+
+# Local standard-unit calibration inputs and generated outcomes.
+/calibration/source/*.zip
+/calibration/tapes/
+/calibration/runs/
+/.scratch/calibration/
 tmp/
 .tmp_research/
+/.pytest-tmp-task12-review/
+
+# Clean-room Champion calibration source and regenerated raw material.
+/aoe2x/js_simulation/calibration/source/*.zip
+/aoe2x/js_simulation/calibration/raw/
+/aoe2x/js_simulation/calibration/extracted/
+
+# Project-local live captures are the calibration source of truth, but the raw
+# recordings are too large for Git.  Curated inventories and derived reports
+# remain trackable under calibration/.
+/aoe2x/js_simulation/calibration/live_observations/
+
+# Portable AOE2 Lab runtime artifacts. Plans, live gRPC captures, videos,
+# simulation playbacks, checkpoints, and viewer process metadata are all
+# reproducible local outputs and can be very large.
+/aoe2x/js_simulation/calibration/lab/
+/aoe2lab.toml
+
+# Local simulation/viewer output and dependency scratch.
+/aoe2x/js_simulation/*.log
+/aoe2x/js_simulation/**/*.log
+/aoe2x/js_simulation/.tmp-genieutils/
+/.tools/
+/.pytest_cache/
+/apps/video/media/
+/apps/video/sim_v2/
 
 # Staging area for confirmed-then-manual deletion (user reviews, then deletes)
 delete_me/

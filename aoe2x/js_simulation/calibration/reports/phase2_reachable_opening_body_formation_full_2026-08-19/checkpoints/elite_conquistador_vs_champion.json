@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_conquistador_vs_champion",
+  "completedAt": "2026-08-19T15:41:10.773Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 21.444444444444443,
+      "medianAbsoluteMeanDelta": 21.444444444444443,
+      "maximumAbsoluteMeanDelta": 21.444444444444443
+    },
+    "rows": [
+      {
+        "id": "elite_conquistador_vs_champion",
+        "subjectSlug": "elite_conquistador",
+        "opponentSlug": "champion",
+        "matchup": "Elite Conquistador vs Champion",
+        "side2": {
+          "count": 10,
+          "master": 773,
+          "owner": 2,
+          "slug": "elite_conquistador",
+          "unit": "Elite Conquistador"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -78.44444444444444,
+          "min": -78.44444444444444,
+          "max": -78.44444444444444,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -57,
+          "min": -57,
+          "max": -57,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 21.444444444444443,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_conquistador_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 513,
+            "score": -57,
+            "ticks": 3429,
+            "finalStateHash": "1de34fa88c5251401de43d625de5158a692fd9d47678a20493fc63ac82e1308f",
+            "eventLogHash": "55a3c3c03264d0344b98b3281b7c96bf5fdb13e9987befea588a6aa34739902e"
+          },
+          {
+            "rowId": "elite_conquistador_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 513,
+            "score": -57,
+            "ticks": 3429,
+            "finalStateHash": "1de34fa88c5251401de43d625de5158a692fd9d47678a20493fc63ac82e1308f",
+            "eventLogHash": "7b1366ba6bbcbcef71d23a90b2e854ecb90e101fa9bf8a85a89576853639959e"
+          },
+          {
+            "rowId": "elite_conquistador_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 513,
+            "score": -57,
+            "ticks": 3429,
+            "finalStateHash": "1de34fa88c5251401de43d625de5158a692fd9d47678a20493fc63ac82e1308f",
+            "eventLogHash": "3bf944a21744cd5976d5810c86145e64dea532b6eec59739153a1db7cdadc99a"
+          },
+          {
+            "rowId": "elite_conquistador_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 513,
+            "score": -57,
+            "ticks": 3429,
+            "finalStateHash": "1de34fa88c5251401de43d625de5158a692fd9d47678a20493fc63ac82e1308f",
+            "eventLogHash": "b84bfc8d9c6a89c03159fbd0ccb813cfb4d09257188824341d75e85de931a48d"
+          },
+          {
+            "rowId": "elite_conquistador_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 513,
+            "score": -57,
+            "ticks": 3429,
+            "finalStateHash": "1de34fa88c5251401de43d625de5158a692fd9d47678a20493fc63ac82e1308f",
+            "eventLogHash": "1f56da42eb1f01a1c874625fb6404c643a684cb62dd577073caf61b18934deec"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,1005 @@
+// Drives the JS battle engine over every recorded calibration fight
+// (calibration/fixtures/manifest.json), 20 seeds per fight, with sim.eventLog
+// turned on, and writes one tape-shaped event file per (fight, seed) to
+// calibration/runs/<run_id>/seed-<n>.json for
+// aoe2x/calibration/extract.py (the SAME extractor tape events go through)
+// to score.
+//
+//     python tools/simjs/dump_calib_dicts.py      # (re)build combat dicts first
+//     python tools/simjs/dump_calib_spawns.py     # (re)build tape spawn positions
+//     node tools/simjs/calib_runner.mjs --seeds 20
+//
+// PARALLELISM (--workers, default cores-2). Every (fight, seed) is an
+// independent, fully deterministic unit of work -- the engine draws only from
+// a mulberry32 rng constructed fresh from that fight-seed's own seed
+// (scenario.js `new Simulation(..., makeRng(seed))`), never Math.random, never
+// a clock; and scenario.js deep-copies each team's combat dict
+// (`JSON.parse(JSON.stringify(spec.combatDict))`) before a unit can touch it,
+// so the shared `dicts` object is read-only in practice. There is therefore no
+// cross-fight and no cross-seed state, and a worker pool produces
+// BYTE-IDENTICAL files to the sequential loop. `--workers 1` keeps the
+// original single-process loop verbatim, so the two are always A/B-able.
+//
+// SUBSETS (--melee-only / --tags / --match). A melee experiment has no
+// business waiting on the 124 fights it cannot affect. The named slug sets
+// come from calibration/fixtures/fight_sets.json, which aoe2x/calibration/
+// filters.py reads too, so the runner and the scorer can never disagree about
+// what "melee-only" means:
+//
+//     node tools/simjs/calib_runner.mjs --melee-only --seeds 20 --out-dir <dir>
+//     python -m aoe2x.calibration.score --melee-only --sim-runs-dir <dir>
+//
+// SCENARIO GEOMETRY (E12): the default is `--arena tapebox` -- each army spawns
+// at its recording's own first-frame positions inside the walled 13.6-tile box
+// the tapes are fought in. `--arena plain-legacy` reproduces the pre-E12
+// scenario (no arena, single-file columns 28 tiles apart) bit for bit, and is
+// how every scoreboard through E11 was produced. See the --arena block in the
+// CLI below for the full list and the re-baseline warning.
+//
+// Deliberate constraints (mirroring the headless runner):
+//   * imports buildFight (NOT runFight) -- runFight's `final` shape is frozen
+//     for parity_check.mjs; this file drives its own tick loop with
+//     sim.eventLog enabled instead. headless.mjs itself is never modified;
+//   * ZERO count arithmetic -- counts come straight from each manifest
+//     fight's side1.count/side2.count (the real recorded army sizes), never
+//     a cost rule (three incompatible ones exist elsewhere in this repo);
+//   * seeds are 1..N, never 0-based (rng.js's `(seed >>> 0) || 1` aliases
+//     seed 0 to seed 1, which would silently double-count a seed);
+//   * integer tick budget (Math.round(maxSeconds * 60)), matching
+//     headless.mjs and the 600s cap used across the rest of the toolchain.
+//
+// Owner remapping: buildFight always plays the manifest's side1 as engine
+// team 1 and side2 as engine team 2 (structural slots), but the REAL in-game
+// owner is each side's own `owner` field (2/3 in today's corpus -- see the
+// manifest's module docs). sim.eventLog's attacker_owner/victim_owner (and
+// each missile's owner) are the engine's raw team numbers, so this file
+// remaps team 1 -> side1.owner and team 2 -> side2.owner before writing
+// anything to disk. That is what lets extract.py's `composition` (keyed
+// "side<owner>") score sim events exactly like tape events, without the
+// scorer having to know about engine-internal team numbering at all.
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { Worker, isMainThread } from "node:worker_threads";
+
+import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
+import { calibrationPaths } from "./calibration_paths.mjs";
+import {
+    R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
+    C2A, setC2A, C2B, setC2B, C2C, setC2C, C3, setC3, C4, setC4,
+    D2, setD2, E1, setE1, W1, setW1, W2, setW2,
+} from "../../apps/website/static/js/engine/constants.js";
+
+// ---- Round-5b rule flags --------------------------------------------------
+// `--r5b <spec>` A/B's the four R5b ranged rules without editing engine source
+// between runs, which is what makes the marginal table (base / D1 / D1+D2 /
+// ... / all) a single scripted sweep. Spec grammar:
+//
+//   --r5b off                 every rule off  == pre-R5b engine, bit-identical
+//   --r5b stopToFire          ONLY that rule on, the other three off
+//   --r5b stopToFire,ballisticLead     ... those two on
+//   (flag absent)             engine defaults, i.e. all four on
+//
+// Parsed in the parent and forwarded verbatim to every worker through
+// workerData, so a parallel run and a `--workers 1` run configure the engine
+// identically.
+export function applyR5BSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(R5B);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--r5b: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setR5B(cfg);
+    return cfg;
+}
+
+// `--r5d1 <spec>` does the same for the Round-5d-1 projectile/aim rules
+// (reducedDamageHits, trailingWindowLead). Same grammar, same
+// parent-parses-and-forwards plumbing:
+//
+//   --r5d1 off                          both off == the R5b engine (71cd4a9)
+//   --r5d1 reducedDamageHits            ONLY P1
+//   --r5d1 trailingWindowLead           ONLY P2
+//   (flag absent)                       engine defaults
+export function applyR5D1Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(R5D1);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--r5d1: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setR5D1(cfg);
+    return cfg;
+}
+
+// ---- Round-5d rule flags --------------------------------------------------
+// Identical grammar to --r5b, over the SEPARATE R5D object (perShotSelect,
+// sameTickClaims, reapproach). Kept separate for the same reason the flag
+// objects are: `--r5b off` has to keep meaning "the pre-R5b engine" exactly,
+// so an R5d A/B must not be expressible through it.
+//
+//   --r5d off                 all three off == the post-R5b / pre-R5d engine
+//   --r5d perShotSelect       ONLY that rule on
+//   (flag absent)             engine defaults (T1+T2 on, T3 off)
+export function applyR5DSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(R5D);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--r5d: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setR5D(cfg);
+    return cfg;
+}
+
+// ---- Phase-B2 rule flag ----------------------------------------------------
+// Identical grammar again, over the SEPARATE B2 object (one rule:
+// resolverContactBump). `--b2 off` is the pre-B2 engine (716a522) and must be
+// byte-identical to it -- which is the whole point of having the switch:
+//
+//   --b2 off                  the rule off == pre-B2 engine, bit-identical
+//   --b2 resolverContactBump  explicitly on (the engine default)
+//   (flag absent)             engine default, i.e. on
+export function applyB2Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(B2);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--b2: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setB2(cfg);
+    return cfg;
+}
+
+// ---- Round-5f rule flags --------------------------------------------------
+// Identical grammar again, over the SEPARATE R5F object (silenceAdvance,
+// persistVictim, failedRollPlannedDamage).
+//
+//   --r5f off                 all three off == the R5d engine (716a522)
+//   --r5f persistVictim       ONLY that rule on
+//   (flag absent)             engine defaults
+export function applyR5FSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(R5F);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--r5f: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setR5F(cfg);
+    return cfg;
+}
+
+// ---- Phase-C2a rule flags --------------------------------------------------
+// Identical grammar again, over the SEPARATE C2A object (contactBreak,
+// breakPriority). `--c2a off` is the pre-C2 engine (0e2dbc5) and must be
+// byte-identical to it:
+//
+//   --c2a off                 both off == pre-C2 engine, bit-identical
+//   --c2a contactBreak        the break's BEARING only, no priority over fire
+//   (flag absent)             engine defaults
+export function applyC2ASpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C2A);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c2a: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC2A(cfg);
+    return cfg;
+}
+
+// ---- Phase-C2-B rule flags -------------------------------------------------
+// Identical grammar again, over the SEPARATE C2B object (stopToSwing,
+// committedSwingLands -- the melee swing's gate and its landing rule).
+//
+//   --c2b off                                the pre-C2 engine (0e2dbc5)
+//   --c2b stopToSwing                        ONLY C-b
+//   --c2b stopToSwing,committedSwingLands    both
+//   (flag absent)                            engine defaults
+export function applyC2BSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C2B);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c2b: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC2B(cfg);
+    return cfg;
+}
+
+// ---- Phase-C2-C rule flags -------------------------------------------------
+// Identical grammar again, over the SEPARATE C2C object (pureFlight -- the
+// composition of the retreat while a C2A contact break is live). Meaningless
+// without `--c2a contactBreak`: with no break ever latched the flag can never
+// fire, so the intended combined gate is
+// `--c2a contactBreak,breakPriority --c2c pureFlight`.
+//
+//   --c2c off                 the pre-C2C engine, bit-identical
+//   --c2c pureFlight          break bearing + collision avoidance only
+//   (flag absent)             engine defaults
+export function applyC2CSpec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C2C);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c2c: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC2C(cfg);
+    return cfg;
+}
+
+// ---- Phase-D2 rule flags ---------------------------------------------------
+// Identical grammar again, over the SEPARATE D2 object (boltCorridor,
+// blastZeroPoint, projectileArc, blastDebris -- the siege projectile and blast
+// mechanics). `--d2 off` is the pre-D2 engine (bb2e6fa) and must be
+// byte-identical to it:
+//
+//   --d2 off                                 both families off == pre-D2 engine
+//   --d2 boltCorridor                        ONLY the scorpion line rule
+//   --d2 blastZeroPoint,projectileArc        ONLY the onager rules
+//   (flag absent)                            engine defaults
+export function applyD2Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(D2);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--d2: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setD2(cfg);
+    return cfg;
+}
+
+// ---- C3 post-swing rules ------------------------------------------------------
+// Identical grammar again, over the SEPARATE C3 object (postSwingPlant -- the
+// measured 0.7 s movement lock; postSwingRecovery -- the same measured
+// backswing added before the next reload against a RANGED victim).
+// `--c3 off` is the pre-C3 engine and must be bit-identical to it
+// (structural: the stamp is behind `if (C3.postSwingPlant ...)` and the shared
+// meleeMoveLocked() predicate short-circuits with the flag off while
+// MELEE_SWING_RECOVERY_S is 0). The intended pairing for the C3 iteration
+// round is `--e1 orbitKite --c3 postSwingPlant`; `--c3 postSwingPlant` alone
+// measures the plant without the orbit.
+//
+//   --c3 off                  both rules off == pre-C3 engine, bit-identical
+//   --c3 postSwingPlant       movement lock only
+//   --c3 postSwingRecovery    additive attack recovery only
+//   (flag absent)             engine defaults, i.e. both off
+export function applyC3Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C3);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c3: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC3(cfg);
+    return cfg;
+}
+
+// ---- C4 flee-during-reload rule flag -----------------------------------------
+// Identical grammar again, over the SEPARATE C4 object (fleeDuringReload --
+// the hunted kiter's run-commitment through its reload window). `--c4 off` is
+// the pre-C4 engine and must be bit-identical to it (structural: the
+// c4FleeDuringReload predicate returns false before reading anything with the
+// flag off, so every branch composes its pre-C4 expression). The intended
+// pairing for the C4 iteration round is
+// `--e1 orbitKite --c3 postSwingPlant --c4 fleeDuringReload`;
+// `--c4 fleeDuringReload` alone measures the run-commitment without the
+// orbit or the chaser plant.
+//
+//   --c4 off                  the rule off == pre-C4 engine, bit-identical
+//   --c4 fleeDuringReload     explicitly on
+//   (flag absent)             engine default, i.e. off
+export function applyC4Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(C4);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--c4: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setC4(cfg);
+    return cfg;
+}
+
+// ---- W1 scrum-walk rule flag ---------------------------------------------------
+// Identical grammar again, over the SEPARATE W1 object (scrumWalk -- the
+// blocked melee attacker's tangential drift around the scrum face, from
+// docs/calibration/ps_live_forensics.md). `--w1 off` is the pre-W1 engine and
+// must be bit-identical to it (structural: w1ScrumBlocked() short-circuits on
+// the flag before reading anything, and the basis swap in moveTowardTarget is
+// behind `if (W1.scrumWalk)`). Melee-vs-melee scoped: ranged units and melee
+// pursuing ranged never reach the predicate, so ranged/siege families are
+// byte-identical with the flag ON too.
+//
+//   --w1 off                  the rule off == pre-W1 engine, bit-identical
+//   --w1 scrumWalk            explicitly on
+//   (flag absent)             engine default, i.e. off
+export function applyW1Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(W1);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--w1: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setW1(cfg);
+    return cfg;
+}
+
+// ---- W2 reaction-window rule flag ----------------------------------------------
+// Identical grammar again, over the SEPARATE W2 object (reactionWindow -- the
+// melee opening's per-unit aggro stagger, measured 1.2–2.0 s first-move
+// window; see constants.js W2). `--w2 off` is the pre-W2 engine and must be
+// bit-identical to it (structural: w2ReactionHold() short-circuits on the
+// flag before reading anything, and the hold branch in update() is behind
+// that predicate). All-melee scoped: fights with any ranged unit never reach
+// the hold, so ranged/siege families are byte-identical with the flag ON too.
+//
+//   --w2 off                  the rule off == pre-W2 engine, bit-identical
+//   --w2 reactionWindow       explicitly on
+//   (flag absent)             engine default, i.e. off
+export function applyW2Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(W2);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--w2: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setW2(cfg);
+    return cfg;
+}
+
+// ---- E1 orbit-kite rule flags ------------------------------------------------
+// Identical grammar again, over the SEPARATE E1 object (orbitKite, orbitBlend —
+// the kiter's clockwise-arc retreat basis). `--e1 off` is the pre-E1 engine and
+// must be byte-identical to it (structural: every E1 statement in
+// battle_unit.js is behind `if (E1.orbitKite ...)`):
+//
+//   --e1 off                       both off == pre-E1 engine, bit-identical
+//   --e1 orbitKite                 the pure-tangent arc basis
+//   --e1 orbitKite,orbitBlend      arc basis blended 1.77:1 with the radial
+//   (flag absent)                  engine defaults
+export function applyE1Spec(spec) {
+    if (spec == null) return null;
+    const all = Object.keys(E1);
+    const wanted = spec === "off"
+        ? []
+        : spec.split(",").map((s) => s.trim()).filter(Boolean);
+    const unknown = wanted.filter((w) => !all.includes(w));
+    if (unknown.length) {
+        throw new Error(
+            `--e1: unknown rule(s): ${unknown.join(", ")} (have: ${all.join(", ")})`);
+    }
+    const cfg = Object.fromEntries(all.map((k) => [k, wanted.includes(k)]));
+    setE1(cfg);
+    return cfg;
+}
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const REPO = path.resolve(HERE, "../..");
+const CALIBRATION = calibrationPaths(REPO);
+const DEFAULT_OUT_DIR = CALIBRATION.runs;
+
+export function loadManifest() {
+    // Quarantined recordings (manifest `quarantined`: known-bad truth, e.g.
+    // the 2026-07-30 paladin_vs_steppe capture flaw) are never simmed or
+    // scored -- kept in the file for provenance only. Mirrors the same
+    // unconditional drop in aoe2x/calibration/filters.py.
+    return JSON.parse(readFileSync(CALIBRATION.manifest, "utf8"))
+        .fights.filter((f) => !f.quarantined);
+}
+
+export function loadCalibDicts() {
+    return JSON.parse(readFileSync(CALIBRATION.combatDicts, "utf8"));
+}
+
+// Tape first-frame spawn positions, keyed by tag then by the recording's OWNER
+// number: { tag: { "2": [[tileX, tileY], ...], "3": [...] } }. Written by
+// tools/simjs/dump_calib_spawns.py straight off the .units.jsonl.gz streams.
+export function loadCalibSpawns() {
+    return JSON.parse(readFileSync(CALIBRATION.spawns, "utf8"));
+}
+
+// Turn one fight's spawn entry into buildFight's `{1: [...], 2: [...]}` — i.e.
+// out of RECORDING OWNER space and into ENGINE TEAM space, the same remap
+// runCalibFight applies to events, in the same place and in the same
+// direction. Owner keys are looked up off side1/side2's own `owner` field
+// because the side labels do NOT follow the tag's word order.
+export function spawnsForFight(spawns, fight) {
+    const entry = spawns[fight.tag];
+    if (!entry) {
+        throw new Error(
+            `no spawn entry for tag "${fight.tag}" — re-run ` +
+            "tools/simjs/dump_calib_spawns.py",
+        );
+    }
+    const pick = (side) => {
+        const pts = entry[String(side.owner)];
+        if (!pts) {
+            throw new Error(
+                `fight "${fight.run_id}": spawns.json has no owner ` +
+                `${side.owner} (has ${Object.keys(entry).join(", ")})`,
+            );
+        }
+        if (pts.length !== side.count) {
+            throw new Error(
+                `fight "${fight.run_id}" owner ${side.owner}: manifest says ` +
+                `${side.count} units, spawns.json has ${pts.length}`,
+            );
+        }
+        return pts;
+    };
+    return { 1: pick(fight.side1), 2: pick(fight.side2) };
+}
+
+// ---- corpus subsets -------------------------------------------------------
+// The named slug sets (melee, basic_melee) live in ONE file that Python reads
+// too -- see the SUBSETS note at the top and aoe2x/calibration/filters.py.
+export function loadFightSets() {
+    const raw = JSON.parse(readFileSync(CALIBRATION.fightSets, "utf8"));
+    const out = {};
+    for (const [k, v] of Object.entries(raw)) {
+        if (!k.startsWith("_")) out[k] = new Set(v);
+    }
+    return out;
+}
+
+// Both-sides-in-the-set membership, evaluated against each fight's OWN
+// side1/side2 slugs -- never a frozen list of tags, so a newly ingested
+// recording of a melee matchup joins the set automatically.
+function bothSidesIn(fight, slugs) {
+    return slugs.has(fight.side1.slug) && slugs.has(fight.side2.slug);
+}
+
+// The exact counterpart of filters.py's `filter_fights`: same three filters,
+// AND-combined, manifest order preserved. A typo'd --tags value throws rather
+// than silently shrinking the run into a plausible-looking small subset.
+export function filterFights(
+    fights,
+    { tags = null, match = null, meleeOnly = false, rangedOnly = false } = {},
+) {
+    let out = fights;
+    if (tags && tags.length) {
+        const wanted = new Set(tags);
+        const have = new Set(fights.map((f) => f.tag));
+        const unknown = [...wanted].filter((t) => !have.has(t)).sort();
+        if (unknown.length) {
+            throw new Error(`--tags: no manifest fight with tag(s): ${unknown.join(", ")}`);
+        }
+        out = out.filter((f) => wanted.has(f.tag));
+    }
+    if (match) {
+        const rx = new RegExp(match);
+        out = out.filter((f) => rx.test(f.run_id));
+    }
+    if (meleeOnly) {
+        const melee = loadFightSets().melee;
+        out = out.filter((f) => bothSidesIn(f, melee));
+    }
+    if (rangedOnly) {
+        const ranged = loadFightSets().ranged;
+        out = out.filter((f) => bothSidesIn(f, ranged));
+    }
+    return out;
+}
+
+export function describeFilter({
+    tags = null, match = null, meleeOnly = false, rangedOnly = false,
+} = {}) {
+    const parts = [];
+    if (meleeOnly) parts.push("melee-only");
+    if (rangedOnly) parts.push("ranged-only");
+    if (tags && tags.length) parts.push(`tags=${tags.join(",")}`);
+    if (match) parts.push(`match=${match}`);
+    return parts.length ? parts.join("+") : null;
+}
+
+function sideSummary(team, side) {
+    const alive = team.filter((u) => u.state !== "dead");
+    return {
+        owner: side.owner,
+        unit_name: side.unit_name,
+        civ: side.civ,
+        slug: side.slug,
+        start_count: side.count,
+        survivors: alive.length,
+        hp_remaining: alive.reduce((sum, u) => sum + u.currentHp, 0),
+    };
+}
+
+// Run one manifest fight at one seed. Returns the tape-shaped record the
+// extractor and Task 5's scorer need: {run_id, seed, duration_s, winner,
+// sides (keyed by REAL owner number), damage, missiles}.
+//
+// `arena` is createSimulation's opt-in battlefield field; `positions` is the
+// per-team tape spawn list. The CLI below pairs them ("tapebox" + positions,
+// or plain-legacy + none) — this function itself just forwards whatever it is
+// handed, so a caller can build any combination it can defend.
+export function runCalibFight({
+    dicts,
+    fight,
+    seed,
+    maxSeconds = MAX_SECONDS,
+    arena = null,
+    positions = null,
+}) {
+    const s1 = fight.side1, s2 = fight.side2;
+    // Guard against a same-owner manifest entry: if s1.owner === s2.owner,
+    // `sides` would silently collapse to one key and BOTH teams' events
+    // would remap to that one owner -- total, silent corruption. Fail loudly
+    // with both values instead of ever writing a corrupted file.
+    if (s1.owner === s2.owner) {
+        throw new Error(
+            `runCalibFight: fight "${fight.run_id}" has side1.owner === side2.owner ` +
+            `(both ${s1.owner}) -- cannot distinguish sides, refusing to run`,
+        );
+    }
+    const row = {
+        civ1: s1.civ, slug1: s1.slug, n1: s1.count,
+        civ2: s2.civ, slug2: s2.slug, n2: s2.count,
+    };
+    const sim = buildFight({ dicts, row, seed, arena, positions });
+    sim.eventLog = { damage: [], missiles: [] };
+
+    const maxTicks = Math.round(maxSeconds * 60);
+    let ticks = 0;
+    while (sim.winner === null && ticks < maxTicks) {
+        sim.step(STEP);
+        ticks++;
+    }
+
+    // team 1 -> side1's real owner, team 2 -> side2's real owner (see the
+    // module-level comment on why this remap has to happen here).
+    const ownerOf = { 1: s1.owner, 2: s2.owner };
+
+    const damage = sim.eventLog.damage.map((e) => ({
+        ...e,
+        attacker_owner: ownerOf[e.attacker_owner],
+        victim_owner: ownerOf[e.victim_owner],
+    }));
+    const missiles = sim.eventLog.missiles.map((m) => ({
+        ...m,
+        owner: ownerOf[m.owner],
+    }));
+
+    return {
+        run_id: fight.run_id,
+        tag: fight.tag,
+        matchup: fight.matchup,
+        seed,
+        duration_s: sim.battleTime,
+        // `winner` is in ENGINE TEAM space, `winner_owner` is in RECORDING
+        // OWNER space -- these are NOT interchangeable, do not mix them up.
+        // winner: raw engine value, never coerced (same discipline as
+        // headless.mjs's final.winner): 1 | 2 (structural team slot) | 0
+        // (mutual annihilation) | null (hit the tick cap with both sides
+        // alive). Kept for provenance; not consumed by extract_card.
+        winner: sim.winner,
+        // winner_owner: the SAME outcome translated through the SAME
+        // `ownerOf` table used above for event remapping (not a second,
+        // independently-hardcoded map that could drift from it), so a
+        // consumer can safely do `sides[String(winner_owner)]` to get the
+        // winning side. `ownerOf` only has keys 1 and 2, so a draw
+        // (winner 0) or timeout (winner null) both miss the table and
+        // `?? null` turns that lookup miss into an explicit null -- a
+        // consumer indexing `sides[String(winner)]` instead would silently
+        // read the WRONG side whenever winner (team number) collides with
+        // the other side's owner number (e.g. winner===2 meaning "team 2
+        // won" while owner 2 is side1 -- exactly today's corpus, where
+        // side1.owner is always 2).
+        winner_owner: ownerOf[sim.winner] ?? null,
+        sides: {
+            [String(s1.owner)]: sideSummary(sim.team1, s1),
+            [String(s2.owner)]: sideSummary(sim.team2, s2),
+        },
+        damage,
+        missiles,
+    };
+}
+
+// Run one (fight, seed) and write its file. THE ONLY PLACE a seed-<n>.json is
+// produced -- the sequential loop and every pool worker call this same
+// function with the same arguments, so "parallel output is byte-identical to
+// sequential output" is a property of there being one writer, not of two
+// code paths being kept in step by hand. The directory must already exist
+// (the caller mkdirs it once per fight, before any worker is dispatched, so
+// workers never race on mkdir).
+export function runAndWriteFightSeed({
+    dicts, fight, seed, maxSeconds, arena, positions, outDir,
+}) {
+    const record = runCalibFight({ dicts, fight, seed, maxSeconds, arena, positions });
+    writeFileSync(
+        path.join(outDir, fight.run_id, `seed-${seed}.json`),
+        JSON.stringify(record),
+    );
+    return { nDamage: record.damage.length, nMissiles: record.missiles.length };
+}
+
+// ---- CLI: run every manifest fight x N seeds, writing files to disk -------
+// `isMainThread` is load-bearing, not belt-and-braces: calib_worker.mjs
+// IMPORTS this module, and a worker thread inherits the parent's process.argv
+// tail. Without the guard, every worker would re-enter this block and spawn a
+// pool of its own — a fork bomb, not a test failure.
+if (isMainThread && process.argv[1]
+    && import.meta.url === pathToFileURL(process.argv[1]).href) {
+    const argv = process.argv.slice(2);
+    const flag = (name, dflt) => {
+        const i = argv.indexOf(name);
+        return i >= 0 && i + 1 < argv.length ? argv[i + 1] : dflt;
+    };
+    const nSeeds = Number(flag("--seeds", "20"));
+    const maxSeconds = Number(flag("--max-seconds", String(MAX_SECONDS)));
+    const outDir = flag("--out-dir", DEFAULT_OUT_DIR);
+    // --arena picks the scenario geometry:
+    //
+    //   tapebox      (DEFAULT, E12) the tapes' own initial conditions -- the
+    //                walled 13.6-tile box and each army spawned at the
+    //                recording's first-frame positions. This is the scoring
+    //                configuration.
+    //   plain-legacy the pre-E12 scenario: no arena at all, both armies in
+    //                single-file columns 28 tiles apart on the open canvas.
+    //                Bit-identical to every scoreboard through E11 -- kept so
+    //                those runs stay reproducible, NOT as a fallback.
+    //   golden       the diamond arena with the tree cluster (engine/arena.js).
+    //                A lab visual; its obstruction is deliberately not part of
+    //                scoring.
+    //
+    // NOTE FOR ANYONE COMPARING SCOREBOARDS: tapebox is a RE-BASELINE. A
+    // tapebox run and a pre-E12 run are not comparable numbers -- the fights
+    // start 8 tiles apart instead of 28, inside walls, in blocks. Any table
+    // that puts them in adjacent rows has to say so.
+    const arenaArg = flag("--arena", "tapebox");
+    const ARENAS = { tapebox: "tapebox", golden: "golden", "plain-legacy": null };
+    if (!(arenaArg in ARENAS)) {
+        console.error(
+            `unknown --arena "${arenaArg}" (want one of: ` +
+            `${Object.keys(ARENAS).join(", ")})`,
+        );
+        process.exit(2);
+    }
+    const arena = ARENAS[arenaArg];
+    const spawns = arenaArg === "tapebox" ? loadCalibSpawns() : null;
+
+    // --workers N: size of the (fight, seed) worker pool.
+    //
+    // The default is deliberately NOT "logical CPUs minus a couple". Measured
+    // on the 12-core / 24-thread 9900X this corpus is actually run on, full
+    // corpus x 10 seeds, wall seconds and the SUM of per-task wall times:
+    //
+    //     workers   wall    summed task time   speedup
+    //        1      42.5s        41.9s           1.0x
+    //        4      11.3s        44.1s           3.8x
+    //        6       8.7s        51.1s           4.9x
+    //        8       7.9s        61.9s           5.4x   <- default
+    //       12       7.7s        90.8s           5.5x   (wall optimum)
+    //       16       8.4s       132.0s           5.1x
+    //       22       9.1s       193.1s           4.7x   ("cores - 2")
+    //
+    // The engine's hot loop is a neighbour scan over unit arrays -- memory
+    // bound, not ALU bound -- so past a handful of workers they fight over L3
+    // and memory bandwidth rather than adding throughput. Per-task time
+    // inflates 4.6x at 22 workers, and the wall-clock curve does not just
+    // flatten, it INVERTS: 22 workers is 15% slower than 8 while burning
+    // three times the machine. 8 sits within 3% of the wall optimum for two
+    // thirds of the cost, which also leaves real headroom for the concurrent
+    // sim runs this box usually has going in other sessions.
+    //
+    // `--workers 1` takes the original single-process loop verbatim -- the
+    // A/B reference that proves parallel output is byte-identical.
+    const DEFAULT_WORKERS = Math.max(1, Math.min(8, os.cpus().length - 2));
+    const nWorkers = Math.max(1, Number(flag("--workers", String(DEFAULT_WORKERS))));
+
+    // Subset filters -- see the SUBSETS note at the top of this file. These
+    // are the same three filters `python -m aoe2x.calibration.score` takes,
+    // reading the same calibration/fixtures/fight_sets.json.
+    // `--tags-file` reads the same comma/whitespace-separated list from a file.
+    // The C2 ranged-vs-melee corpus is 86 tags, which is past what a shell will
+    // pass through comfortably; c1_chase_probe.mjs already takes its list this
+    // way, so the two tools can be handed the identical file.
+    const tagsArg = flag("--tags", null);
+    const tagsFile = flag("--tags-file", null);
+    if (tagsArg && tagsFile) {
+        console.error("--tags and --tags-file are mutually exclusive");
+        process.exit(2);
+    }
+    const rawTags = tagsFile ? readFileSync(tagsFile, "utf8") : tagsArg;
+    const filterOpts = {
+        tags: rawTags
+            ? rawTags.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean)
+            : null,
+        match: flag("--match", null),
+        meleeOnly: argv.includes("--melee-only"),
+        rangedOnly: argv.includes("--ranged-only"),
+    };
+
+    // Round-5b rule selection (see applyR5BSpec above). Applied in the parent
+    // for the sequential path and forwarded to workers for the parallel one.
+    const r5bSpec = flag("--r5b", null);
+    const r5bCfg = applyR5BSpec(r5bSpec);
+    if (r5bCfg) {
+        const on = Object.entries(r5bCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`r5b rules: ${on.length ? on.join(", ") : "(none -- pre-R5b engine)"}`);
+    }
+    const r5d1Spec = flag("--r5d1", null);
+    const r5d1Cfg = applyR5D1Spec(r5d1Spec);
+    if (r5d1Cfg) {
+        const on = Object.entries(r5d1Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`r5d1 rules: ${on.length ? on.join(", ") : "(none -- the R5b engine)"}`);
+    }
+    const r5dSpec = flag("--r5d", null);
+    const r5dCfg = applyR5DSpec(r5dSpec);
+    if (r5dCfg) {
+        const on = Object.entries(r5dCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`r5d rules: ${on.length ? on.join(", ") : "(none -- pre-R5d engine)"}`);
+    }
+    const b2Spec = flag("--b2", null);
+    const b2Cfg = applyB2Spec(b2Spec);
+    if (b2Cfg) {
+        const on = Object.entries(b2Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`b2 rules: ${on.length ? on.join(", ") : "(none -- pre-B2 engine)"}`);
+    }
+    const r5fSpec = flag("--r5f", null);
+    const r5fCfg = applyR5FSpec(r5fSpec);
+    if (r5fCfg) {
+        const on = Object.entries(r5fCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`r5f rules: ${on.length ? on.join(", ") : "(none -- pre-R5f engine)"}`);
+    }
+    const c2aSpec = flag("--c2a", null);
+    const c2aCfg = applyC2ASpec(c2aSpec);
+    if (c2aCfg) {
+        const on = Object.entries(c2aCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c2a rules: ${on.length ? on.join(", ") : "(none -- pre-C2 engine)"}`);
+    }
+    const c2bSpec = flag("--c2b", null);
+    const c2bCfg = applyC2BSpec(c2bSpec);
+    if (c2bCfg) {
+        const on = Object.entries(c2bCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c2b rules: ${on.length ? on.join(", ") : "(none -- pre-C2 engine)"}`);
+    }
+    const c2cSpec = flag("--c2c", null);
+    const c2cCfg = applyC2CSpec(c2cSpec);
+    if (c2cCfg) {
+        const on = Object.entries(c2cCfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c2c rules: ${on.length ? on.join(", ") : "(none -- pre-C2C engine)"}`);
+    }
+    const c3Spec = flag("--c3", null);
+    const c3Cfg = applyC3Spec(c3Spec);
+    if (c3Cfg) {
+        const on = Object.entries(c3Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c3 rules: ${on.length ? on.join(", ") : "(none -- pre-C3 engine)"}`);
+    }
+    const c4Spec = flag("--c4", null);
+    const c4Cfg = applyC4Spec(c4Spec);
+    if (c4Cfg) {
+        const on = Object.entries(c4Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`c4 rules: ${on.length ? on.join(", ") : "(none -- pre-C4 engine)"}`);
+    }
+    const d2Spec = flag("--d2", null);
+    const d2Cfg = applyD2Spec(d2Spec);
+    if (d2Cfg) {
+        const on = Object.entries(d2Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`d2 rules: ${on.length ? on.join(", ") : "(none -- pre-D2 engine)"}`);
+    }
+    const e1Spec = flag("--e1", null);
+    const e1Cfg = applyE1Spec(e1Spec);
+    if (e1Cfg) {
+        const on = Object.entries(e1Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`e1 rules: ${on.length ? on.join(", ") : "(none -- pre-E1 engine)"}`);
+    }
+    const w1Spec = flag("--w1", null);
+    const w1Cfg = applyW1Spec(w1Spec);
+    if (w1Cfg) {
+        const on = Object.entries(w1Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`w1 rules: ${on.length ? on.join(", ") : "(none -- pre-W1 engine)"}`);
+    }
+    const w2Spec = flag("--w2", null);
+    const w2Cfg = applyW2Spec(w2Spec);
+    if (w2Cfg) {
+        const on = Object.entries(w2Cfg).filter(([, v]) => v).map(([k]) => k);
+        console.log(`w2 rules: ${on.length ? on.join(", ") : "(none -- pre-W2 engine)"}`);
+    }
+
+    const dicts = loadCalibDicts();
+    const allFights = loadManifest();
+    let fights;
+    try {
+        fights = filterFights(allFights, filterOpts);
+    } catch (err) {
+        console.error(String(err.message || err));
+        process.exit(2);
+    }
+    const filterLabel = describeFilter(filterOpts);
+    if (filterLabel) {
+        console.log(
+            `SUBSET RUN: ${fights.length}/${allFights.length} fights, ` +
+            `filter: ${filterLabel}`,
+        );
+        if (!fights.length) {
+            console.error("filter selected zero fights — nothing to do");
+            process.exit(2);
+        }
+    }
+
+    // Create every output directory up front, in the parent, before any work
+    // is dispatched: workers then only ever write files, never mkdir, so
+    // there is no directory-creation race to reason about.
+    for (const fight of fights) {
+        mkdirSync(path.join(outDir, fight.run_id), { recursive: true });
+    }
+
+    const t0 = process.hrtime.bigint();
+    let nFiles = 0, nDamage = 0, nMissiles = 0;
+
+    if (nWorkers <= 1) {
+        // ---- sequential: the original loop, untouched --------------------
+        for (const fight of fights) {
+            const positions = spawns ? spawnsForFight(spawns, fight) : null;
+            const fightT0 = process.hrtime.bigint();
+            for (let seed = 1; seed <= nSeeds; seed++) {
+                const r = runAndWriteFightSeed({
+                    dicts, fight, seed, maxSeconds, arena, positions, outDir,
+                });
+                nDamage += r.nDamage;
+                nMissiles += r.nMissiles;
+                nFiles++;
+            }
+            const fightWallS = Number(process.hrtime.bigint() - fightT0) / 1e9;
+            console.log(`  ${fight.run_id} (${nSeeds} seeds, ${fightWallS.toFixed(1)}s)`);
+        }
+    } else {
+        // ---- parallel: a (fight, seed) work queue over worker_threads ----
+        //
+        // Granularity is ONE (fight, seed), not one fight: per-fight cost in
+        // this corpus spans two orders of magnitude (a 3k-tick rout vs. a
+        // fight that rides the 36000-tick cap), so whole-fight chunks would
+        // leave the pool idling on a long tail. Workers pull the next index
+        // when they finish one, which is self-balancing and needs no
+        // estimate of how long anything takes.
+        //
+        // Messages carry a run_id, never a fight object: each worker loads
+        // the manifest / dicts / spawns itself through the very same loaders
+        // this file uses, so there is no serialise-and-hope step that could
+        // hand a worker subtly different inputs.
+        const tasks = [];
+        for (const fight of fights) {
+            for (let seed = 1; seed <= nSeeds; seed++) tasks.push({ runId: fight.run_id, seed });
+        }
+        const poolSize = Math.min(nWorkers, tasks.length);
+        console.log(
+            `parallel: ${poolSize} workers over ${tasks.length} (fight, seed) tasks ` +
+            `(${os.cpus().length} logical CPUs)`,
+        );
+
+        // Per-fight completion bookkeeping so progress can still be printed
+        // in MANIFEST ORDER, exactly like the sequential run: a fight's line
+        // is held back until every fight before it has also finished. Only
+        // the ordering of console lines is affected; files are written the
+        // moment their task completes.
+        const order = new Map(fights.map((f, i) => [f.run_id, i]));
+        const done = fights.map(() => ({ left: nSeeds, cpuMs: 0 }));
+        let nextToPrint = 0;
+        const flushPrints = () => {
+            while (nextToPrint < fights.length && done[nextToPrint].left === 0) {
+                const secs = (done[nextToPrint].cpuMs / 1000).toFixed(1);
+                console.log(`  ${fights[nextToPrint].run_id} (${nSeeds} seeds, ${secs}s cpu)`);
+                nextToPrint++;
+            }
+        };
+
+        let next = 0;
+        await new Promise((resolve, reject) => {
+            let live = poolSize;
+            const workerPath = path.join(HERE, "calib_worker.mjs");
+            for (let w = 0; w < poolSize; w++) {
+                const worker = new Worker(workerPath, {
+                    workerData: {
+                        arenaArg, maxSeconds, outDir,
+                        r5bSpec, r5d1Spec, r5dSpec, b2Spec, r5fSpec, c2aSpec,
+                        c2bSpec, c2cSpec, c3Spec, c4Spec, d2Spec, e1Spec,
+                        w1Spec, w2Spec,
+                    },
+                });
+                const pump = () => {
+                    if (next < tasks.length) worker.postMessage(tasks[next++]);
+                    else worker.postMessage({ done: true });
+                };
+                worker.on("message", (msg) => {
+                    if (msg.ready) { pump(); return; }
+                    if (msg.error) {
+                        reject(new Error(
+                            `worker failed on ${msg.runId} seed ${msg.seed}: ${msg.error}`));
+                        return;
+                    }
+                    nDamage += msg.nDamage;
+                    nMissiles += msg.nMissiles;
+                    nFiles++;
+                    const idx = order.get(msg.runId);
+                    done[idx].left--;
+                    done[idx].cpuMs += msg.elapsedMs;
+                    flushPrints();
+                    pump();
+                });
+                worker.on("error", reject);
+                worker.on("exit", (code) => {
+                    if (code !== 0) reject(new Error(`worker exited with code ${code}`));
+                    else if (--live === 0) resolve();
+                });
+            }
+        });
+        flushPrints();
+    }
+
+    const wallS = Number(process.hrtime.bigint() - t0) / 1e9;
+    console.log(`arena: ${arenaArg}${spawns ? " (tape first-frame spawns)" : ""}`);
+    if (filterLabel) {
+        console.log(`SUBSET: ${fights.length}/${allFights.length} fights, filter: ${filterLabel}`);
+    }
+    console.log(`wrote ${nFiles} files (${fights.length} fights x ${nSeeds} seeds) -> ${outDir}`);
+    console.log(`damage events: ${nDamage}, missile events: ${nMissiles}`);
+    console.log(`wall time: ${wallS.toFixed(1)}s (workers: ${nWorkers})`);
+}

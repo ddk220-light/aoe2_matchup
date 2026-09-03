@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_genoese_crossbowman_vs_champion",
+  "completedAt": "2026-08-19T15:35:01.741Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 9.25,
+      "medianAbsoluteMeanDelta": 9.25,
+      "maximumAbsoluteMeanDelta": 9.25
+    },
+    "rows": [
+      {
+        "id": "elite_genoese_crossbowman_vs_champion",
+        "subjectSlug": "elite_genoese_crossbowman",
+        "opponentSlug": "champion",
+        "matchup": "Elite Genoese Crossbowman vs Champion",
+        "side2": {
+          "count": 16,
+          "master": 868,
+          "owner": 2,
+          "slug": "elite_genoese_crossbowman",
+          "unit": "Elite Genoese Crossbowman"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -74.25,
+          "min": -74.25,
+          "max": -74.25,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -65,
+          "min": -65,
+          "max": -65,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 9.25,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_genoese_crossbowman_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 520,
+            "score": -65,
+            "ticks": 2561,
+            "finalStateHash": "be6fa221b2e293cbe2942148eb6ac44d00739eed75b448d1cbeacb9e2a6fd03a",
+            "eventLogHash": "53501c463f303700f154f9186786c147631d6c92ce965376385cc96da51784e8"
+          },
+          {
+            "rowId": "elite_genoese_crossbowman_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 520,
+            "score": -65,
+            "ticks": 2561,
+            "finalStateHash": "be6fa221b2e293cbe2942148eb6ac44d00739eed75b448d1cbeacb9e2a6fd03a",
+            "eventLogHash": "0635942c9d5ac5b4989c8551e8b2c8a361d802104c30a8d78518a1ae0ae17e6c"
+          },
+          {
+            "rowId": "elite_genoese_crossbowman_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 520,
+            "score": -65,
+            "ticks": 2561,
+            "finalStateHash": "be6fa221b2e293cbe2942148eb6ac44d00739eed75b448d1cbeacb9e2a6fd03a",
+            "eventLogHash": "f82fec5717bf56902e3c8e8dfaf0a05f9f12b959396013e794000dd87398028a"
+          },
+          {
+            "rowId": "elite_genoese_crossbowman_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 520,
+            "score": -65,
+            "ticks": 2561,
+            "finalStateHash": "be6fa221b2e293cbe2942148eb6ac44d00739eed75b448d1cbeacb9e2a6fd03a",
+            "eventLogHash": "396985e504c62c9f8e0ae06e1f217d9cdc65fc32cb694b82113c3a4c8b731d09"
+          },
+          {
+            "rowId": "elite_genoese_crossbowman_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 520,
+            "score": -65,
+            "ticks": 2561,
+            "finalStateHash": "be6fa221b2e293cbe2942148eb6ac44d00739eed75b448d1cbeacb9e2a6fd03a",
+            "eventLogHash": "edbfef8f2a03e6bc9d894c29fbac88ea7754c8cf5d2ea978b4ab45d1ed822f26"
+          }
+        ]
+      }
+    ]
+  }
+}

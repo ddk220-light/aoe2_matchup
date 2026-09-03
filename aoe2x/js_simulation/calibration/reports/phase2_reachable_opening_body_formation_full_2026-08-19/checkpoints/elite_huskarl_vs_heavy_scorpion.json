@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_huskarl_vs_heavy_scorpion",
+  "completedAt": "2026-08-19T15:31:38.966Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 11.857142857142847,
+      "medianAbsoluteMeanDelta": 11.857142857142847,
+      "maximumAbsoluteMeanDelta": 11.857142857142847
+    },
+    "rows": [
+      {
+        "id": "elite_huskarl_vs_heavy_scorpion",
+        "subjectSlug": "elite_huskarl",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Heavy Scorpion vs Elite Huskarl",
+        "side2": {
+          "count": 10,
+          "master": 542,
+          "owner": 2,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "side3": {
+          "count": 21,
+          "master": 555,
+          "owner": 3,
+          "slug": "elite_huskarl",
+          "unit": "Elite Huskarl"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 76.9047619047619,
+          "min": 76.9047619047619,
+          "max": 76.9047619047619,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 65.04761904761905,
+          "min": 60.714285714285715,
+          "max": 69.76190476190476,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 11.857142857142847,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_huskarl_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 892.5,
+            "score": 60.714285714285715,
+            "ticks": 1147,
+            "finalStateHash": "3a2c3b62a23bfbb92c13c1c5e9608f865d1b57feba2c912126a6a0fc1d99fef7",
+            "eventLogHash": "64b215519a91a0c76ed98143ea6ca1813df3390ef55d892591614ce94cf9dfb3"
+          },
+          {
+            "rowId": "elite_huskarl_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 994,
+            "score": 67.61904761904762,
+            "ticks": 1300,
+            "finalStateHash": "2d9027a565056da9523114b03e5919b9f16a0dce11d6309fb5b9dcc3fd16af09",
+            "eventLogHash": "5894159d7ca254ec1c70e3576327f804f7f023183e0502ed76df510734587cba"
+          },
+          {
+            "rowId": "elite_huskarl_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 931,
+            "score": 63.333333333333336,
+            "ticks": 1411,
+            "finalStateHash": "6dd931513d56c9b69b1c24e7e79a645379a10663f46116ddcabd0c2a084f740b",
+            "eventLogHash": "0f4e269c80f0e5aad3fc6f24cfd92286a3fc30112a16dec652e74b51b6326cb0"
+          },
+          {
+            "rowId": "elite_huskarl_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1025.5,
+            "score": 69.76190476190476,
+            "ticks": 1402,
+            "finalStateHash": "ca69a04b55000b69a301b72f5514047931d6640bb5f4dc42ddf8ebed7d323293",
+            "eventLogHash": "fb798317257b4d8248715e5622cc117d5a262122fb96442705da1924604435e2"
+          },
+          {
+            "rowId": "elite_huskarl_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 938,
+            "score": 63.80952380952381,
+            "ticks": 1354,
+            "finalStateHash": "8b757dcb852ad0e614005107545b27e68cdcfd73f669bd994739a198712277b7",
+            "eventLogHash": "050afd53b0087e172e14ff8b4832009a114e0b14023743e59ef5190b0d6f0c08"
+          }
+        ]
+      }
+    ]
+  }
+}

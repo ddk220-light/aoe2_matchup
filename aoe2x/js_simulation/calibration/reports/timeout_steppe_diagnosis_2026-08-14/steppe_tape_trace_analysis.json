@@ -1,0 +1,50 @@
+{
+  "source": "aoe2x/js_simulation/calibration/reports/timeout_steppe_diagnosis_2026-08-14/tape/20v20.tape_trace.jsonl",
+  "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+  "zipSha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373",
+  "ratio": "20v20",
+  "repeat": 1,
+  "tapeOutcome": {
+    "winnerOwner": 3,
+    "winnerHp": 515,
+    "signedScore": 25.75
+  },
+  "firstHpLossSeconds": {
+    "owner2Hca": 4.038,
+    "owner3Steppe": 1.612
+  },
+  "attackActionEntries": {
+    "owner2Hca": 390,
+    "owner3Steppe": 169,
+    "uniqueHcaAttackers": 20,
+    "uniqueSteppeAttackers": 19,
+    "firstSteppeAttackSeconds": 3.71,
+    "steppeCenterDistance": {
+      "count": 169,
+      "min": 0.466,
+      "median": 1.583,
+      "max": 2.114
+    },
+    "steppeChebyshevDistance": {
+      "count": 169,
+      "min": 0.421,
+      "median": 1.458,
+      "max": 1.859
+    }
+  },
+  "visibleHpDropDamage": {
+    "hcaToSteppe": 1485,
+    "steppeToHca": 1600,
+    "note": "Excludes lethal hits because dead units disappear before an hp=0 row."
+  },
+  "movement": {
+    "owner2Hca": {
+      "movingStepShare": 0.2723,
+      "distanceTiles": 358.687
+    },
+    "owner3Steppe": {
+      "movingStepShare": 0.4748,
+      "distanceTiles": 868.719
+    }
+  }
+}

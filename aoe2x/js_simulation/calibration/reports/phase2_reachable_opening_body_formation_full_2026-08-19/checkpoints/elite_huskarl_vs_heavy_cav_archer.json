@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_huskarl_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T15:33:46.240Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 1.8367346938775455,
+      "medianAbsoluteMeanDelta": 1.8367346938775455,
+      "maximumAbsoluteMeanDelta": 1.8367346938775455
+    },
+    "rows": [
+      {
+        "id": "elite_huskarl_vs_heavy_cav_archer",
+        "subjectSlug": "elite_huskarl",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Heavy Cavalry Archer vs Elite Huskarl",
+        "side2": {
+          "count": 14,
+          "master": 474,
+          "owner": 2,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "side3": {
+          "count": 21,
+          "master": 555,
+          "owner": 3,
+          "slug": "elite_huskarl",
+          "unit": "Elite Huskarl"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 93.12925170068027,
+          "min": 93.12925170068027,
+          "max": 93.12925170068027,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 91.29251700680273,
+          "min": 91.0204081632653,
+          "max": 91.49659863945578,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 1.8367346938775455,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_huskarl_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1338,
+            "score": 91.0204081632653,
+            "ticks": 2625,
+            "finalStateHash": "cea20090ad09385110c7c7f6800ac53ba610548960d36aac8571e3bd918d6c4d",
+            "eventLogHash": "e1c83aaee9f8aa72b37a24cd941b1d82ec0c38d6f12584d45e9f654f677ce7d6"
+          },
+          {
+            "rowId": "elite_huskarl_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1341,
+            "score": 91.22448979591837,
+            "ticks": 2603,
+            "finalStateHash": "d3ad6a63c889763f61a8db6d93f58a822129d0c2641b149130159395bb5170ec",
+            "eventLogHash": "8305c5d3a312c613222159e8ec603731b8030cbb97b8bc70c4bc5d5121770844"
+          },
+          {
+            "rowId": "elite_huskarl_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1345,
+            "score": 91.49659863945578,
+            "ticks": 2516,
+            "finalStateHash": "924d21b20e97457455d65d306885596855ba6f836bad4a974075fab61e349472",
+            "eventLogHash": "611a7bbb6ab84ea566eb157ef1d67427d99304fe40a7ddeb085c0649aaf0a1c3"
+          },
+          {
+            "rowId": "elite_huskarl_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1341,
+            "score": 91.22448979591837,
+            "ticks": 2603,
+            "finalStateHash": "1e7321043eb260a919d3ef79a95ba06d532044b332b34abee424c86632c1a4c6",
+            "eventLogHash": "1ed735e110274dca7c2fc909aa790dc990fcb9023c52d7447be16b41cb204aad"
+          },
+          {
+            "rowId": "elite_huskarl_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1345,
+            "score": 91.49659863945578,
+            "ticks": 2516,
+            "finalStateHash": "924d21b20e97457455d65d306885596855ba6f836bad4a974075fab61e349472",
+            "eventLogHash": "98d2076a45ab34d53bee78503230baf6447cc44030e8a0ceb7efa0c6184e4dd5"
+          }
+        ]
+      }
+    ]
+  }
+}

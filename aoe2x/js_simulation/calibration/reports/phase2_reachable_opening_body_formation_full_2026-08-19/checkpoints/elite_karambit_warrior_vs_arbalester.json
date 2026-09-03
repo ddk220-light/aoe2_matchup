@@ -1,0 +1,280 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_karambit_warrior_vs_arbalester",
+  "completedAt": "2026-08-19T15:46:24.219Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 0,
+      "volatileRows": 1,
+      "totalRuns": 15
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 15,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 1,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 1,
+      "meanAbsoluteMeanDelta": 10.5,
+      "medianAbsoluteMeanDelta": 10.5,
+      "maximumAbsoluteMeanDelta": 10.5
+    },
+    "rows": [
+      {
+        "id": "elite_karambit_warrior_vs_arbalester",
+        "subjectSlug": "elite_karambit_warrior",
+        "opponentSlug": "arbalester",
+        "matchup": "Arbalester vs Elite Karambit Warrior",
+        "side2": {
+          "count": 10,
+          "master": 492,
+          "owner": 2,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "side3": {
+          "count": 21,
+          "master": 1125,
+          "owner": 3,
+          "slug": "elite_karambit_warrior",
+          "unit": "Elite Karambit Warrior"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 7.25,
+          "min": -8.5,
+          "max": 17.857142857142858,
+          "side3WinRate": 0.75,
+          "volatile": true
+        },
+        "tapeClassification": "knife-edge",
+        "comparison": {
+          "simulationRuns": 15,
+          "unresolvedRuns": 0,
+          "mean": -3.25,
+          "min": -3.25,
+          "max": -3.25,
+          "side3WinRate": 0,
+          "side3WinRateError": 0.75,
+          "bandError": 0,
+          "tapeBandCoverage": 1,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 5,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 6,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 7,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 8,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 9,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 10,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 11,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 12,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 13,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_arbalester",
+            "sampleIndex": 14,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 13,
+            "score": -3.25,
+            "ticks": 4108,
+            "finalStateHash": "55fa7d10b886bf68bf703abca278264b246faa1b3c37d822bd2a17fcf0b276e0",
+            "eventLogHash": "37125d248997fee17a137c02e12068d6c67b6e85c591d274481cfe1478f93c35"
+          }
+        ]
+      }
+    ]
+  }
+}

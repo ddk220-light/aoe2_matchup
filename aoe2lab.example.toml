@@ -1,0 +1,43 @@
+# Copy this file to aoe2lab.toml. The local file is gitignored so machine paths
+# and credentials never enter source control. Relative paths resolve from the
+# repository root.
+
+[paths]
+artifacts = "aoe2x/js_simulation/calibration/lab"
+node = "node"
+
+[game]
+# The lab validates this path when supplied. Game-bound commands still require
+# AoE2:DE to already be open in the normal Scenario Editor UI.
+# executable = "C:/Program Files (x86)/Steam/steamapps/common/AoE2DE/AoE2DE_s.exe"
+# scenario_directory = "C:/Users/me/Games/Age of Empires 2 DE/<steamid>/resources/_common/scenario"
+window_title = "Age of Empires II: Definitive Edition"
+
+[grpc]
+# Defaults point at this repository's video venv and aoe2x/grpc scripts.
+# python = "apps/video/.venv/Scripts/python.exe"
+# logger = "aoe2x/grpc/grpc_hp_log.py"
+# redecoder = "aoe2x/grpc/redecode_hp.py"
+
+[simulation]
+# 0 uses all logical CPUs, bounded by the number of requested seeds.
+workers = 0
+seeds = 5
+
+[live]
+cap_seconds = 210
+# Default: retain decoded HP/time-series statistics and run manifests, but
+# delete large video and raw gRPC/reseed streams after each run validates.
+# Use "archive" only when raw recordings were explicitly requested, or "raw"
+# for short-lived debugging where expanded files are intentionally required.
+retention = "stats"
+# Capture refuses to touch the game unless this safety reserve plus the
+# estimated peak recording size is available on every involved volume.
+min_free_gb = 2
+estimated_recording_gb = 1
+
+[viewer]
+host = "127.0.0.1"
+port = 5012
+tailnet_route = "/golden-map"
+tailscale = "tailscale"

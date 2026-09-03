@@ -1,0 +1,32 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Current cohesive HCA-versus-Champion outcome comparison",
+    "description": "Five recorded HCA-versus-Champion ratios compared with the deterministic cohesive preventive-contact viewer engine.",
+    "generatedAt": "2026-08-13",
+    "blocks": [
+      {
+        "id": "report",
+        "type": "markdown",
+        "path": "report.md",
+        "layout": "full",
+        "sourceId": "analysis-source"
+      }
+    ],
+    "sources": [
+      {
+        "id": "analysis-source",
+        "label": "Reproducible five-ratio viewer comparison",
+        "path": "aoe2x/js_simulation/calibration/analysis/hca_champion_current_outcomes_2026-08-13.mjs"
+      },
+      {
+        "id": "authorized-archive",
+        "label": "Authorized HCA versus Champion golden archive",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+        "sha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+      }
+    ]
+  }
+}

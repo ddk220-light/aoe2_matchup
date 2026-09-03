@@ -41,6 +41,9 @@ remain as frozen archives; production still deploys from them until cutover.
 
 ## Quick start
 
+For the portable live-capture + JavaScript simulation + Tailnet workflow, use
+[AOE2 Lab](docs/aoe2-lab.md).
+
 ```bash
 pip install -e .                      # the aoe2x library (stdlib-only core)
 pip install -r apps/website/requirements.txt   # website runtime

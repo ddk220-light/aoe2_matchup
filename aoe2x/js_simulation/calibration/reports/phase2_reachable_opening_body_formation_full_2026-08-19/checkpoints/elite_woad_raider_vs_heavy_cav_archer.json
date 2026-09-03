@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_woad_raider_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T15:44:16.441Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 18.540616246498598,
+      "medianAbsoluteMeanDelta": 18.540616246498598,
+      "maximumAbsoluteMeanDelta": 18.540616246498598
+    },
+    "rows": [
+      {
+        "id": "elite_woad_raider_vs_heavy_cav_archer",
+        "subjectSlug": "elite_woad_raider",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Heavy Cavalry Archer vs Elite Woad Raider",
+        "side2": {
+          "count": 17,
+          "master": 474,
+          "owner": 2,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "side3": {
+          "count": 21,
+          "master": 534,
+          "owner": 3,
+          "slug": "elite_woad_raider",
+          "unit": "Elite Woad Raider"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 20.33613445378151,
+          "min": 12.380952380952381,
+          "max": 29.859943977591037,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 1.7955182072829132,
+          "min": -24.41176470588235,
+          "max": 18.37535014005602,
+          "side3WinRate": 0.8,
+          "side3WinRateError": 0.19999999999999996,
+          "bandError": 10.585434173669467,
+          "tapeBandCoverage": 0.2,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_woad_raider_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 332,
+            "score": -24.41176470588235,
+            "ticks": 3704,
+            "finalStateHash": "16e23a090ed233466538bf112be1d3ffe1b969d08f02ee6cb23bdfaa266fdb80",
+            "eventLogHash": "883a48609d073fe809e878c3b1f0da3d76cd45cc7d37aecbcbfae19ce44e4d1c"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 110,
+            "score": 6.162464985994398,
+            "ticks": 5061,
+            "finalStateHash": "39d886babb31cd9ecba6f8c1845a179cb8158a471c24bf9a3d2c472a76ed9854",
+            "eventLogHash": "28f2a165e7bd85a24dcf993c388dc211969bf1e8f793b0a59fdd6ba96bf79c00"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 328,
+            "score": 18.37535014005602,
+            "ticks": 4177,
+            "finalStateHash": "a620f0758e788e7675fb320e04f44e239c98917e1e50b65f18bca2ea28c2d0aa",
+            "eventLogHash": "bed1584d45d646fb74cc4b5633fb893b558e9a1198ec0ef21dd1dab03abb0b5a"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 79,
+            "score": 4.42577030812325,
+            "ticks": 5160,
+            "finalStateHash": "e5c9208b97f3d5206120dbb0038a9dc25962d5b449813b5828b896deacc3f3c8",
+            "eventLogHash": "689a1695f40736f48bf7a45abdd0b45aced39cdd0e602a39e90c569d2065f1ab"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 79,
+            "score": 4.42577030812325,
+            "ticks": 5160,
+            "finalStateHash": "e5c9208b97f3d5206120dbb0038a9dc25962d5b449813b5828b896deacc3f3c8",
+            "eventLogHash": "ccfef2a806a9841f9c1db4bad2d2569254ca0f70bbe1530c470edc4ee9c1e8e2"
+          }
+        ]
+      }
+    ]
+  }
+}

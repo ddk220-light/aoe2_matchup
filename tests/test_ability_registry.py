@@ -16,7 +16,8 @@ Five assertion layers, all against COMMITTED artifacts (no regeneration):
   (d) registry<->engines — PRESENCE-ONLY check: each param's identifier appears
                           in the source of every engine the registry claims
                           implements it (snake_case for Python; snake OR
-                          camelCase for simulate.js). This proves the engines
+                          camelCase for the browser engine modules under
+                          apps/website/static/js/engine/). This proves the engines
                           mention the property, NOT that the semantics match —
                           semantic parity lives in tests/test_position_sim_abilities.py
                           and tests/test_frontend_projectile_miss.js.
@@ -58,7 +59,18 @@ REF_DB = ROOT / "data" / "golden" / "aoe2_reference.db"
 ENGINE_SOURCES = {
     "abstract": (ROOT / "aoe2x" / "sim" / "simulation.py").read_text(encoding="utf-8"),
     "position": (ROOT / "aoe2x" / "sim" / "simulation_real.py").read_text(encoding="utf-8"),
-    "js": (ROOT / "apps" / "website" / "static" / "js" / "simulate.js").read_text(encoding="utf-8"),
+    # The browser engine is a set of ES modules under static/js/engine/ since the
+    # 2026-07-28 cutover, so the "js" source is the concatenation of the modules
+    # that implement combat — plus simulate.js, which is no longer an engine but
+    # still owns the browser-side pieces that never were combat: army sizing
+    # reads `pop_space` there, exactly as it did before the split.
+    "js": "\n".join(
+        [
+            (ROOT / "apps" / "website" / "static" / "js" / "engine" / f).read_text(encoding="utf-8")
+            for f in ("battle_unit.js", "sim.js", "scenario.js", "projectile.js", "melee_effect.js")
+        ]
+        + [(ROOT / "apps" / "website" / "static" / "js" / "simulate.js").read_text(encoding="utf-8")]
+    ),
 }
 
 
@@ -452,8 +464,8 @@ def _identifiers(param_name, engine):
 
     Python engines consume snake_case; the `_json` suffix may be stripped
     after parsing (e.g. prepare_combat_unit emits `extra_projectile_attacks`).
-    simulate.js reads snake_case off the stats dict and uses camelCase
-    internally — accept either.
+    The browser engine (static/js/engine/) reads snake_case off the stats dict
+    and uses camelCase internally — accept either.
     """
     names = {param_name}
     if param_name.endswith("_json"):

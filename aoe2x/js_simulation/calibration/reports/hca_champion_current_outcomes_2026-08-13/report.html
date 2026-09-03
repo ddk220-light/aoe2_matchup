@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Current cohesive HCA-versus-Champion outcome comparison</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0; background: #10151d; color: #e7edf5; }
+    main { max-width: 1120px; margin: 0 auto; padding: 48px 24px 72px; }
+    h1 { font-size: clamp(2rem, 5vw, 3.6rem); line-height: 1.04; margin: 0 0 16px; }
+    h2 { margin-top: 42px; }
+    p, li { color: #bac6d4; line-height: 1.65; }
+    .lede { max-width: 850px; font-size: 1.16rem; }
+    .scorecards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 28px 0; }
+    .score { background: #182230; border: 1px solid #2a3a4e; border-radius: 14px; padding: 18px; }
+    .score strong { display: block; color: #8ee3b6; font-size: 1.65rem; }
+    .score span { color: #9daec0; font-size: .9rem; }
+    .table-wrap { overflow-x: auto; border: 1px solid #2a3a4e; border-radius: 14px; }
+    table { width: 100%; border-collapse: collapse; min-width: 900px; background: #141d28; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid #263548; text-align: left; vertical-align: top; }
+    th { background: #1b2837; color: #dce8f4; }
+    td { color: #bac6d4; }
+    tr:last-child td { border-bottom: 0; }
+    .ok { color: #8ee3b6; }
+    .fail { color: #ffb18b; }
+    .note { border-left: 4px solid #f2c96d; background: #201e19; padding: 16px 18px; border-radius: 8px; }
+    code { color: #a9d8ff; }
+    @media (max-width: 760px) { .scorecards { grid-template-columns: repeat(2, minmax(0, 1fr)); } main { padding: 28px 16px 56px; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Current cohesive HCA-versus-Champion outcome comparison</h1>
+  <p class="lede">The preventive-contact engine is promising on every ratio that completes: all three completed ratios reproduce the tape winner, with a median absolute end-state gap of 6.50 points. Two dense ratios still stop at the collision-convergence guard, so the engine is not yet validated across the full corpus.</p>
+
+  <section class="scorecards" aria-label="Comparison scorecard">
+    <div class="score"><strong>3 / 3</strong><span>completed winners correct</span></div>
+    <div class="score"><strong>6.50 pts</strong><span>median absolute outcome gap</span></div>
+    <div class="score"><strong>1 / 3</strong><span>winner HP inside tape range</span></div>
+    <div class="score"><strong class="fail">2 / 5</strong><span>ratios blocked by solver</span></div>
+  </section>
+
+  <h2>Exact comparison</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>HCA vs Champion</th><th>Tape result</th><th>Current simulation</th><th>Outcome delta</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td>5v10</td><td>Champion; 316 HP (256–344); 41.08 s</td><td>Champion; 262 HP; 4 survivors; 44.00 s</td><td>7.71 pts toward HCA</td><td class="ok">Correct winner; HP in range; duration 0.166 s above tape maximum</td></tr>
+        <tr><td>10v5</td><td>HCA; 787 HP (787–800); 14.91 s</td><td>HCA; 735 HP; 10 survivors; 15.70 s</td><td>6.50 pts toward Champion</td><td class="ok">Correct winner and survivor count; HP below range</td></tr>
+        <tr><td>15v20</td><td>HCA; 674 HP (598–834); 49.78 s</td><td class="fail">No result</td><td>—</td><td class="fail">Collision constraints did not converge</td></tr>
+        <tr><td>20v15</td><td>HCA; 1,522 HP (1,481–1,587); 24.62 s</td><td>HCA; 1,429 HP; 19 survivors; 21.93 s</td><td>5.81 pts toward Champion</td><td class="ok">Correct winner; duration and survivors in range</td></tr>
+        <tr><td>20v20</td><td>HCA; 1,349 HP (1,176–1,418); 35.73 s</td><td class="fail">No result</td><td>—</td><td class="fail">Collision constraints did not converge</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What changed in the visually reviewed 5v10 case</h2>
+  <p>The current battle ends with a Champion win at 262 HP after 44.00 seconds. Remaining HP is inside the tape range, duration is almost inside it, and no four-Champion mutual-contact clique forms. Compact triples occupy 7.12% of frames, down from the previous engine's 31.88%, though still above the tape's 1.05%. Four Champions survive versus six to eight on tape.</p>
+
+  <p class="note"><strong>Interpretation:</strong> keep the preventive steering. The completed outcomes are close enough to be useful and the 5v10 crowd behavior improved sharply. Resolve the two dense solver failures before tuning any combat or movement parameter from end results.</p>
+
+  <h2>Method and confidence</h2>
+  <p>Each row calls the exact local viewer endpoint with Heavy Cavalry Archer owner 2, Champion owner 3, cohesive navigation, the recorded ratio placement, and preventive contact-graph steering. Tape medians and ranges use five repeats from the SHA-256-verified authorized archive. Confidence is high in the three deterministic outcomes and the two deterministic failures, but only moderate that the three-row aggregate represents the full engine because the missing cases are the densest battles.</p>
+  <p>Reproduce with <code>node aoe2x/js_simulation/calibration/analysis/hca_champion_current_outcomes_2026-08-13.mjs</code>.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "runSignature": "c7c6624be1aee2b97ea5875a5ae94f1fcb28e9abf31a7c537e2288ed60ebdd81",
+  "cpuUtilizationTarget": 0.8,
+  "availableParallelism": 24,
+  "workers": 2,
+  "rowIds": [
+    "elite_war_wagon_vs_paladin",
+    "elite_war_wagon_vs_champion"
+  ],
+  "checkpointUnit": "one complete exact golden matchup row",
+  "checkpointWrite": "temporary file, flush, atomic rename",
+  "resumePolicy": "validate signature and shape, skip completed row checkpoints",
+  "stableSamples": 5,
+  "volatileSamples": 15
+}

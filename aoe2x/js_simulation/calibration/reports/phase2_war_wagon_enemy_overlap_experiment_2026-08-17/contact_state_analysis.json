@@ -1,0 +1,2068 @@
+{
+  "generatedAt": "2026-08-18T00:20:33.154Z",
+  "source": {
+    "archive": {
+      "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+      "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+      "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+    },
+    "archiveSha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+  },
+  "definitions": {
+    "overlap": "Chebyshev separation below sourced summed collision half-extents",
+    "moving": "center displacement greater than 1e-7 tiles from the preceding tape frame",
+    "attacking": "decoded action_state equals 7",
+    "directTarget": "opponent target_id equals this War Wagon's canonical reference ID",
+    "episode": "consecutive decoded frames in which the same canonical pair overlaps"
+  },
+  "matchups": [
+    {
+      "rowId": "elite_war_wagon_vs_paladin",
+      "matchup": "Elite War Wagon vs Paladin",
+      "ratio": "15v17",
+      "runs": [
+        {
+          "tag": "elite_war_wagon_koreans__vs__paladin",
+          "pairObservations": 916006,
+          "overlappingPairObservations": 6591,
+          "overlappingPairObservationShare": 0.0072,
+          "depthTiles": {
+            "min": 0,
+            "median": 0.0686,
+            "p90": 0.2737,
+            "max": 0.5774
+          },
+          "episodeCount": 142,
+          "episodeDurationSeconds": {
+            "min": 0,
+            "median": 0.332,
+            "p90": 1.838,
+            "max": 5.338
+          },
+          "episodeMaximumDepthTiles": {
+            "min": 0,
+            "median": 0.0413,
+            "p90": 0.221,
+            "max": 0.5774
+          },
+          "categories": [
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+              "pairObservations": 9356,
+              "overlapObservations": 1694,
+              "overlapRate": 0.1811,
+              "shareOfAllOverlap": 0.257,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0612,
+                "p90": 0.2828,
+                "max": 0.4369
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 91716,
+              "overlapObservations": 1190,
+              "overlapRate": 0.013,
+              "shareOfAllOverlap": 0.1805,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1623,
+                "p90": 0.3084,
+                "max": 0.3948
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 90615,
+              "overlapObservations": 908,
+              "overlapRate": 0.01,
+              "shareOfAllOverlap": 0.1378,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0.201,
+                "max": 0.3948
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+              "pairObservations": 8010,
+              "overlapObservations": 880,
+              "overlapRate": 0.1099,
+              "shareOfAllOverlap": 0.1335,
+              "depthTiles": {
+                "min": 0.0002,
+                "median": 0.0688,
+                "p90": 0.2484,
+                "max": 0.5774
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 79066,
+              "overlapObservations": 809,
+              "overlapRate": 0.0102,
+              "shareOfAllOverlap": 0.1227,
+              "depthTiles": {
+                "min": 0.0003,
+                "median": 0.1052,
+                "p90": 0.245,
+                "max": 0.4376
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 290076,
+              "overlapObservations": 431,
+              "overlapRate": 0.0015,
+              "shareOfAllOverlap": 0.0654,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0.0764,
+                "max": 0.2338
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 6457,
+              "overlapObservations": 225,
+              "overlapRate": 0.0348,
+              "shareOfAllOverlap": 0.0341,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1395,
+                "p90": 0.3044,
+                "max": 0.4369
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 47047,
+              "overlapObservations": 176,
+              "overlapRate": 0.0037,
+              "shareOfAllOverlap": 0.0267,
+              "depthTiles": {
+                "min": 0.0004,
+                "median": 0.1055,
+                "p90": 0.2069,
+                "max": 0.2536
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 3560,
+              "overlapObservations": 169,
+              "overlapRate": 0.0475,
+              "shareOfAllOverlap": 0.0256,
+              "depthTiles": {
+                "min": 0.0001,
+                "median": 0.0716,
+                "p90": 0.1812,
+                "max": 0.4132
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 236044,
+              "overlapObservations": 76,
+              "overlapRate": 0.0003,
+              "shareOfAllOverlap": 0.0115,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0386,
+                "p90": 0.1512,
+                "max": 0.2792
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 23870,
+              "overlapObservations": 18,
+              "overlapRate": 0.0008,
+              "shareOfAllOverlap": 0.0027,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0019,
+                "p90": 0.038,
+                "max": 0.1546
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 29358,
+              "overlapObservations": 7,
+              "overlapRate": 0.0002,
+              "shareOfAllOverlap": 0.0011,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0104,
+                "p90": 0.0447,
+                "max": 0.0471
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 556,
+              "overlapObservations": 6,
+              "overlapRate": 0.0108,
+              "shareOfAllOverlap": 0.0009,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0029,
+                "p90": 0.049,
+                "max": 0.0853
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 189,
+              "overlapObservations": 2,
+              "overlapRate": 0.0106,
+              "shareOfAllOverlap": 0.0003,
+              "depthTiles": {
+                "min": 0.0546,
+                "median": 0.0546,
+                "p90": 0.0546,
+                "max": 0.2967
+              }
+            }
+          ]
+        },
+        {
+          "tag": "elite_war_wagon_koreans__vs__paladin_r2",
+          "pairObservations": 849034,
+          "overlappingPairObservations": 8516,
+          "overlappingPairObservationShare": 0.01,
+          "depthTiles": {
+            "min": 0,
+            "median": 0.1088,
+            "p90": 0.2668,
+            "max": 0.6961
+          },
+          "episodeCount": 162,
+          "episodeDurationSeconds": {
+            "min": 0,
+            "median": 0.49,
+            "p90": 2.278,
+            "max": 3.924
+          },
+          "episodeMaximumDepthTiles": {
+            "min": 0,
+            "median": 0.0979,
+            "p90": 0.2957,
+            "max": 0.6961
+          },
+          "categories": [
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 79059,
+              "overlapObservations": 2368,
+              "overlapRate": 0.03,
+              "shareOfAllOverlap": 0.2781,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1122,
+                "p90": 0.2668,
+                "max": 0.6122
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 85603,
+              "overlapObservations": 2135,
+              "overlapRate": 0.0249,
+              "shareOfAllOverlap": 0.2507,
+              "depthTiles": {
+                "min": 0.0001,
+                "median": 0.1181,
+                "p90": 0.2462,
+                "max": 0.6194
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+              "pairObservations": 8979,
+              "overlapObservations": 1036,
+              "overlapRate": 0.1154,
+              "shareOfAllOverlap": 0.1217,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1264,
+                "p90": 0.2909,
+                "max": 0.6961
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+              "pairObservations": 8437,
+              "overlapObservations": 936,
+              "overlapRate": 0.1109,
+              "shareOfAllOverlap": 0.1099,
+              "depthTiles": {
+                "min": 0.0048,
+                "median": 0.1003,
+                "p90": 0.2749,
+                "max": 0.52
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 75992,
+              "overlapObservations": 598,
+              "overlapRate": 0.0079,
+              "shareOfAllOverlap": 0.0702,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1055,
+                "p90": 0.2668,
+                "max": 0.52
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 259789,
+              "overlapObservations": 517,
+              "overlapRate": 0.002,
+              "shareOfAllOverlap": 0.0607,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0699,
+                "p90": 0.301,
+                "max": 0.6122
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 42582,
+              "overlapObservations": 372,
+              "overlapRate": 0.0087,
+              "shareOfAllOverlap": 0.0437,
+              "depthTiles": {
+                "min": 0.0005,
+                "median": 0.1198,
+                "p90": 0.2168,
+                "max": 0.2638
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 5573,
+              "overlapObservations": 295,
+              "overlapRate": 0.0529,
+              "shareOfAllOverlap": 0.0346,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1003,
+                "p90": 0.229,
+                "max": 0.52
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 3738,
+              "overlapObservations": 134,
+              "overlapRate": 0.0358,
+              "shareOfAllOverlap": 0.0157,
+              "depthTiles": {
+                "min": 0.0002,
+                "median": 0.1059,
+                "p90": 0.225,
+                "max": 0.2603
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 226712,
+              "overlapObservations": 86,
+              "overlapRate": 0.0004,
+              "shareOfAllOverlap": 0.0101,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0956,
+                "p90": 0.2935,
+                "max": 0.3556
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 706,
+              "overlapObservations": 18,
+              "overlapRate": 0.0255,
+              "shareOfAllOverlap": 0.0021,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0918,
+                "p90": 0.405,
+                "max": 0.6122
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 23939,
+              "overlapObservations": 17,
+              "overlapRate": 0.0007,
+              "shareOfAllOverlap": 0.002,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0193,
+                "p90": 0.1291,
+                "max": 0.2814
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 27763,
+              "overlapObservations": 4,
+              "overlapRate": 0.0001,
+              "shareOfAllOverlap": 0.0005,
+              "depthTiles": {
+                "min": 0.0048,
+                "median": 0.1787,
+                "p90": 0.1799,
+                "max": 0.2749
+              }
+            }
+          ]
+        },
+        {
+          "tag": "elite_war_wagon_koreans__vs__paladin_r3",
+          "pairObservations": 965082,
+          "overlappingPairObservations": 7483,
+          "overlappingPairObservationShare": 0.0078,
+          "depthTiles": {
+            "min": 0,
+            "median": 0.0684,
+            "p90": 0.2313,
+            "max": 0.559
+          },
+          "episodeCount": 164,
+          "episodeDurationSeconds": {
+            "min": 0,
+            "median": 0.384,
+            "p90": 2.016,
+            "max": 5.088
+          },
+          "episodeMaximumDepthTiles": {
+            "min": 0,
+            "median": 0.0628,
+            "p90": 0.2238,
+            "max": 0.559
+          },
+          "categories": [
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 98147,
+              "overlapObservations": 1970,
+              "overlapRate": 0.0201,
+              "shareOfAllOverlap": 0.2633,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1037,
+                "p90": 0.2313,
+                "max": 0.3555
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 82488,
+              "overlapObservations": 1442,
+              "overlapRate": 0.0175,
+              "shareOfAllOverlap": 0.1927,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0936,
+                "p90": 0.2191,
+                "max": 0.559
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+              "pairObservations": 9538,
+              "overlapObservations": 1001,
+              "overlapRate": 0.1049,
+              "shareOfAllOverlap": 0.1338,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0345,
+                "p90": 0.2461,
+                "max": 0.2512
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+              "pairObservations": 8061,
+              "overlapObservations": 897,
+              "overlapRate": 0.1113,
+              "shareOfAllOverlap": 0.1199,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0948,
+                "p90": 0.2321,
+                "max": 0.4594
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 85410,
+              "overlapObservations": 804,
+              "overlapRate": 0.0094,
+              "shareOfAllOverlap": 0.1074,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0269,
+                "p90": 0.2313,
+                "max": 0.3555
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 314228,
+              "overlapObservations": 540,
+              "overlapRate": 0.0017,
+              "shareOfAllOverlap": 0.0722,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0198,
+                "p90": 0.1071,
+                "max": 0.3386
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 49424,
+              "overlapObservations": 387,
+              "overlapRate": 0.0078,
+              "shareOfAllOverlap": 0.0517,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1008,
+                "p90": 0.225,
+                "max": 0.3031
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 3740,
+              "overlapObservations": 154,
+              "overlapRate": 0.0412,
+              "shareOfAllOverlap": 0.0206,
+              "depthTiles": {
+                "min": 0.0009,
+                "median": 0.1852,
+                "p90": 0.2391,
+                "max": 0.2877
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 5996,
+              "overlapObservations": 151,
+              "overlapRate": 0.0252,
+              "shareOfAllOverlap": 0.0202,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1229,
+                "p90": 0.2512,
+                "max": 0.2512
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 253201,
+              "overlapObservations": 101,
+              "overlapRate": 0.0004,
+              "shareOfAllOverlap": 0.0135,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.041,
+                "p90": 0.1222,
+                "max": 0.1945
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 23851,
+              "overlapObservations": 23,
+              "overlapRate": 0.001,
+              "shareOfAllOverlap": 0.0031,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0133,
+                "p90": 0.0329,
+                "max": 0.0986
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 681,
+              "overlapObservations": 8,
+              "overlapRate": 0.0117,
+              "shareOfAllOverlap": 0.0011,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.013,
+                "p90": 0.1813,
+                "max": 0.2
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 30108,
+              "overlapObservations": 4,
+              "overlapRate": 0.0001,
+              "shareOfAllOverlap": 0.0005,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.007,
+                "p90": 0.0342,
+                "max": 0.0761
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 123,
+              "overlapObservations": 1,
+              "overlapRate": 0.0081,
+              "shareOfAllOverlap": 0.0001,
+              "depthTiles": {
+                "min": 0.112,
+                "median": 0.112,
+                "p90": 0.112,
+                "max": 0.112
+              }
+            }
+          ]
+        },
+        {
+          "tag": "elite_war_wagon_koreans__vs__paladin_r4",
+          "pairObservations": 850549,
+          "overlappingPairObservations": 9043,
+          "overlappingPairObservationShare": 0.0106,
+          "depthTiles": {
+            "min": 0,
+            "median": 0.1006,
+            "p90": 0.3039,
+            "max": 0.6403
+          },
+          "episodeCount": 160,
+          "episodeDurationSeconds": {
+            "min": 0,
+            "median": 0.48,
+            "p90": 2.54,
+            "max": 4.186
+          },
+          "episodeMaximumDepthTiles": {
+            "min": 0,
+            "median": 0.0862,
+            "p90": 0.2857,
+            "max": 0.6403
+          },
+          "categories": [
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+              "pairObservations": 9169,
+              "overlapObservations": 2236,
+              "overlapRate": 0.2439,
+              "shareOfAllOverlap": 0.2473,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.135,
+                "p90": 0.3866,
+                "max": 0.403
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 78360,
+              "overlapObservations": 1853,
+              "overlapRate": 0.0236,
+              "shareOfAllOverlap": 0.2049,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1145,
+                "p90": 0.2522,
+                "max": 0.6403
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 87575,
+              "overlapObservations": 1418,
+              "overlapRate": 0.0162,
+              "shareOfAllOverlap": 0.1568,
+              "depthTiles": {
+                "min": 0.0003,
+                "median": 0.0658,
+                "p90": 0.2704,
+                "max": 0.5812
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+              "pairObservations": 8111,
+              "overlapObservations": 1312,
+              "overlapRate": 0.1618,
+              "shareOfAllOverlap": 0.1451,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1204,
+                "p90": 0.3144,
+                "max": 0.518
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 75110,
+              "overlapObservations": 614,
+              "overlapRate": 0.0082,
+              "shareOfAllOverlap": 0.0679,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.006,
+                "p90": 0.2009,
+                "max": 0.5812
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 46241,
+              "overlapObservations": 492,
+              "overlapRate": 0.0106,
+              "shareOfAllOverlap": 0.0544,
+              "depthTiles": {
+                "min": 0.0005,
+                "median": 0.1307,
+                "p90": 0.2237,
+                "max": 0.3744
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 262065,
+              "overlapObservations": 418,
+              "overlapRate": 0.0016,
+              "shareOfAllOverlap": 0.0462,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0071,
+                "p90": 0.1008,
+                "max": 0.2354
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 5611,
+              "overlapObservations": 375,
+              "overlapRate": 0.0668,
+              "shareOfAllOverlap": 0.0415,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.2009,
+                "p90": 0.3866,
+                "max": 0.403
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 3981,
+              "overlapObservations": 167,
+              "overlapRate": 0.0419,
+              "shareOfAllOverlap": 0.0185,
+              "depthTiles": {
+                "min": 0.0013,
+                "median": 0.1286,
+                "p90": 0.2436,
+                "max": 0.2732
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 224099,
+              "overlapObservations": 120,
+              "overlapRate": 0.0005,
+              "shareOfAllOverlap": 0.0133,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0878,
+                "p90": 0.2245,
+                "max": 0.274
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 22456,
+              "overlapObservations": 30,
+              "overlapRate": 0.0013,
+              "shareOfAllOverlap": 0.0033,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0206,
+                "p90": 0.1367,
+                "max": 0.2306
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 27029,
+              "overlapObservations": 5,
+              "overlapRate": 0.0002,
+              "shareOfAllOverlap": 0.0006,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0.007,
+                "max": 0.0863
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 524,
+              "overlapObservations": 2,
+              "overlapRate": 0.0038,
+              "shareOfAllOverlap": 0.0002,
+              "depthTiles": {
+                "min": 0.02,
+                "median": 0.02,
+                "p90": 0.02,
+                "max": 0.0651
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 144,
+              "overlapObservations": 1,
+              "overlapRate": 0.0069,
+              "shareOfAllOverlap": 0.0001,
+              "depthTiles": {
+                "min": 0.0536,
+                "median": 0.0536,
+                "p90": 0.0536,
+                "max": 0.0536
+              }
+            }
+          ]
+        }
+      ],
+      "pooled": {
+        "pairObservations": 3580671,
+        "overlappingPairObservations": 31633,
+        "overlappingPairObservationShare": 0.0088,
+        "repeatMedianDepthTiles": {
+          "min": 0.0684,
+          "median": 0.0686,
+          "p90": 0.1006,
+          "max": 0.1088
+        },
+        "repeatMedianEpisodeDurationSeconds": {
+          "min": 0.332,
+          "median": 0.384,
+          "p90": 0.48,
+          "max": 0.49
+        },
+        "repeatMedianEpisodeMaximumDepthTiles": {
+          "min": 0.0413,
+          "median": 0.0628,
+          "p90": 0.0862,
+          "max": 0.0979
+        },
+        "categories": [
+          {
+            "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+            "pairObservations": 356497,
+            "overlapObservations": 6946,
+            "overlapRate": 0.0195,
+            "shareOfAllOverlap": 0.2196,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+            "pairObservations": 325517,
+            "overlapObservations": 6239,
+            "overlapRate": 0.0192,
+            "shareOfAllOverlap": 0.1972,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+            "pairObservations": 36500,
+            "overlapObservations": 5867,
+            "overlapRate": 0.1607,
+            "shareOfAllOverlap": 0.1855,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+            "pairObservations": 33161,
+            "overlapObservations": 4125,
+            "overlapRate": 0.1244,
+            "shareOfAllOverlap": 0.1304,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+            "pairObservations": 327127,
+            "overlapObservations": 2924,
+            "overlapRate": 0.0089,
+            "shareOfAllOverlap": 0.0924,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+            "pairObservations": 1126158,
+            "overlapObservations": 1906,
+            "overlapRate": 0.0017,
+            "shareOfAllOverlap": 0.0603,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+            "pairObservations": 185294,
+            "overlapObservations": 1427,
+            "overlapRate": 0.0077,
+            "shareOfAllOverlap": 0.0451,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+            "pairObservations": 23637,
+            "overlapObservations": 1046,
+            "overlapRate": 0.0443,
+            "shareOfAllOverlap": 0.0331,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+            "pairObservations": 15019,
+            "overlapObservations": 624,
+            "overlapRate": 0.0415,
+            "shareOfAllOverlap": 0.0197,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+            "pairObservations": 940056,
+            "overlapObservations": 383,
+            "overlapRate": 0.0004,
+            "shareOfAllOverlap": 0.0121,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+            "pairObservations": 94116,
+            "overlapObservations": 88,
+            "overlapRate": 0.0009,
+            "shareOfAllOverlap": 0.0028,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+            "pairObservations": 2467,
+            "overlapObservations": 34,
+            "overlapRate": 0.0138,
+            "shareOfAllOverlap": 0.0011,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+            "pairObservations": 114258,
+            "overlapObservations": 20,
+            "overlapRate": 0.0002,
+            "shareOfAllOverlap": 0.0006,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-moving|opponent-attacking|other-wagon",
+            "pairObservations": 456,
+            "overlapObservations": 4,
+            "overlapRate": 0.0088,
+            "shareOfAllOverlap": 0.0001,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          }
+        ]
+      }
+    },
+    {
+      "rowId": "elite_war_wagon_vs_champion",
+      "matchup": "Elite War Wagon vs Champion",
+      "ratio": "8v21",
+      "runs": [
+        {
+          "tag": "elite_war_wagon_koreans__vs__champion",
+          "pairObservations": 503399,
+          "overlappingPairObservations": 3330,
+          "overlappingPairObservationShare": 0.0066,
+          "depthTiles": {
+            "min": 0,
+            "median": 0.101,
+            "p90": 0.2428,
+            "max": 0.4799
+          },
+          "episodeCount": 66,
+          "episodeDurationSeconds": {
+            "min": 0,
+            "median": 0.438,
+            "p90": 2.086,
+            "max": 2.936
+          },
+          "episodeMaximumDepthTiles": {
+            "min": 0,
+            "median": 0.0718,
+            "p90": 0.2548,
+            "max": 0.4799
+          },
+          "categories": [
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+              "pairObservations": 5170,
+              "overlapObservations": 684,
+              "overlapRate": 0.1323,
+              "shareOfAllOverlap": 0.2054,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.112,
+                "p90": 0.3204,
+                "max": 0.3204
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 21238,
+              "overlapObservations": 650,
+              "overlapRate": 0.0306,
+              "shareOfAllOverlap": 0.1952,
+              "depthTiles": {
+                "min": 0.0001,
+                "median": 0.1175,
+                "p90": 0.2262,
+                "max": 0.3203
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 23289,
+              "overlapObservations": 594,
+              "overlapRate": 0.0255,
+              "shareOfAllOverlap": 0.1784,
+              "depthTiles": {
+                "min": 0.0213,
+                "median": 0.0851,
+                "p90": 0.2387,
+                "max": 0.2756
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+              "pairObservations": 4537,
+              "overlapObservations": 439,
+              "overlapRate": 0.0968,
+              "shareOfAllOverlap": 0.1318,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1194,
+                "p90": 0.3392,
+                "max": 0.4799
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 165614,
+              "overlapObservations": 317,
+              "overlapRate": 0.0019,
+              "shareOfAllOverlap": 0.0952,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0353,
+                "p90": 0.1544,
+                "max": 0.2508
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 45276,
+              "overlapObservations": 227,
+              "overlapRate": 0.005,
+              "shareOfAllOverlap": 0.0682,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1086,
+                "p90": 0.2756,
+                "max": 0.2756
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 6527,
+              "overlapObservations": 163,
+              "overlapRate": 0.025,
+              "shareOfAllOverlap": 0.0489,
+              "depthTiles": {
+                "min": 0.0237,
+                "median": 0.1556,
+                "p90": 0.3204,
+                "max": 0.3204
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 23038,
+              "overlapObservations": 106,
+              "overlapRate": 0.0046,
+              "shareOfAllOverlap": 0.0318,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1731,
+                "p90": 0.2235,
+                "max": 0.2778
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 138017,
+              "overlapObservations": 70,
+              "overlapRate": 0.0005,
+              "shareOfAllOverlap": 0.021,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0906,
+                "p90": 0.2432,
+                "max": 0.2991
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 4621,
+              "overlapObservations": 62,
+              "overlapRate": 0.0134,
+              "shareOfAllOverlap": 0.0186,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0412,
+                "p90": 0.1554,
+                "max": 0.1786
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 30192,
+              "overlapObservations": 13,
+              "overlapRate": 0.0004,
+              "shareOfAllOverlap": 0.0039,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0416,
+                "p90": 0.1705,
+                "max": 0.3122
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 35573,
+              "overlapObservations": 3,
+              "overlapRate": 0.0001,
+              "shareOfAllOverlap": 0.0009,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0148,
+                "p90": 0.0148,
+                "max": 0.0481
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 202,
+              "overlapObservations": 2,
+              "overlapRate": 0.0099,
+              "shareOfAllOverlap": 0.0006,
+              "depthTiles": {
+                "min": 0.0213,
+                "median": 0.0213,
+                "p90": 0.0213,
+                "max": 0.1746
+              }
+            }
+          ]
+        },
+        {
+          "tag": "elite_war_wagon_koreans__vs__champion_r2",
+          "pairObservations": 480666,
+          "overlappingPairObservations": 3038,
+          "overlappingPairObservationShare": 0.0063,
+          "depthTiles": {
+            "min": 0,
+            "median": 0.0918,
+            "p90": 0.3224,
+            "max": 0.441
+          },
+          "episodeCount": 65,
+          "episodeDurationSeconds": {
+            "min": 0,
+            "median": 0.5,
+            "p90": 2.026,
+            "max": 2.852
+          },
+          "episodeMaximumDepthTiles": {
+            "min": 0,
+            "median": 0.0636,
+            "p90": 0.3321,
+            "max": 0.441
+          },
+          "categories": [
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+              "pairObservations": 4602,
+              "overlapObservations": 627,
+              "overlapRate": 0.1362,
+              "shareOfAllOverlap": 0.2064,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0686,
+                "p90": 0.3224,
+                "max": 0.3224
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+              "pairObservations": 5247,
+              "overlapObservations": 551,
+              "overlapRate": 0.105,
+              "shareOfAllOverlap": 0.1814,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1132,
+                "p90": 0.3728,
+                "max": 0.441
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 23187,
+              "overlapObservations": 512,
+              "overlapRate": 0.0221,
+              "shareOfAllOverlap": 0.1685,
+              "depthTiles": {
+                "min": 0.0125,
+                "median": 0.1568,
+                "p90": 0.3571,
+                "max": 0.3571
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 26846,
+              "overlapObservations": 429,
+              "overlapRate": 0.016,
+              "shareOfAllOverlap": 0.1412,
+              "depthTiles": {
+                "min": 0.0005,
+                "median": 0.1358,
+                "p90": 0.2599,
+                "max": 0.3571
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 159335,
+              "overlapObservations": 297,
+              "overlapRate": 0.0019,
+              "shareOfAllOverlap": 0.0978,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0.2268,
+                "max": 0.4201
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 3596,
+              "overlapObservations": 167,
+              "overlapRate": 0.0464,
+              "shareOfAllOverlap": 0.055,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0576,
+                "p90": 0.1497,
+                "max": 0.4225
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 23187,
+              "overlapObservations": 134,
+              "overlapRate": 0.0058,
+              "shareOfAllOverlap": 0.0441,
+              "depthTiles": {
+                "min": 0.0012,
+                "median": 0.0932,
+                "p90": 0.1478,
+                "max": 0.4224
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 37866,
+              "overlapObservations": 111,
+              "overlapRate": 0.0029,
+              "shareOfAllOverlap": 0.0365,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0893,
+                "p90": 0.1568,
+                "max": 0.3571
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 4328,
+              "overlapObservations": 111,
+              "overlapRate": 0.0256,
+              "shareOfAllOverlap": 0.0365,
+              "depthTiles": {
+                "min": 0.0286,
+                "median": 0.2308,
+                "p90": 0.3224,
+                "max": 0.3224
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 141015,
+              "overlapObservations": 76,
+              "overlapRate": 0.0005,
+              "shareOfAllOverlap": 0.025,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0489,
+                "p90": 0.1429,
+                "max": 0.4223
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 24065,
+              "overlapObservations": 16,
+              "overlapRate": 0.0007,
+              "shareOfAllOverlap": 0.0053,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0147,
+                "p90": 0.0733,
+                "max": 0.2591
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 27058,
+              "overlapObservations": 6,
+              "overlapRate": 0.0002,
+              "shareOfAllOverlap": 0.002,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0.0096,
+                "max": 0.0225
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 238,
+              "overlapObservations": 1,
+              "overlapRate": 0.0042,
+              "shareOfAllOverlap": 0.0003,
+              "depthTiles": {
+                "min": 0.0853,
+                "median": 0.0853,
+                "p90": 0.0853,
+                "max": 0.0853
+              }
+            }
+          ]
+        },
+        {
+          "tag": "elite_war_wagon_koreans__vs__champion_r3",
+          "pairObservations": 477921,
+          "overlappingPairObservations": 2096,
+          "overlappingPairObservationShare": 0.0044,
+          "depthTiles": {
+            "min": 0,
+            "median": 0.0869,
+            "p90": 0.2274,
+            "max": 0.622
+          },
+          "episodeCount": 44,
+          "episodeDurationSeconds": {
+            "min": 0,
+            "median": 0.322,
+            "p90": 1.836,
+            "max": 3.348
+          },
+          "episodeMaximumDepthTiles": {
+            "min": 0,
+            "median": 0.0582,
+            "p90": 0.2504,
+            "max": 0.622
+          },
+          "categories": [
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+              "pairObservations": 4924,
+              "overlapObservations": 509,
+              "overlapRate": 0.1034,
+              "shareOfAllOverlap": 0.2428,
+              "depthTiles": {
+                "min": 0.0001,
+                "median": 0.0944,
+                "p90": 0.2627,
+                "max": 0.622
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 21761,
+              "overlapObservations": 356,
+              "overlapRate": 0.0164,
+              "shareOfAllOverlap": 0.1698,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1272,
+                "p90": 0.3022,
+                "max": 0.3022
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+              "pairObservations": 4912,
+              "overlapObservations": 279,
+              "overlapRate": 0.0568,
+              "shareOfAllOverlap": 0.1331,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0869,
+                "p90": 0.133,
+                "max": 0.133
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 22896,
+              "overlapObservations": 211,
+              "overlapRate": 0.0092,
+              "shareOfAllOverlap": 0.1007,
+              "depthTiles": {
+                "min": 0.0008,
+                "median": 0.1272,
+                "p90": 0.2405,
+                "max": 0.3051
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 153848,
+              "overlapObservations": 199,
+              "overlapRate": 0.0013,
+              "shareOfAllOverlap": 0.0949,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0084,
+                "p90": 0.0928,
+                "max": 0.0957
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 37783,
+              "overlapObservations": 161,
+              "overlapRate": 0.0043,
+              "shareOfAllOverlap": 0.0768,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.048,
+                "p90": 0.1272,
+                "max": 0.3022
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 4771,
+              "overlapObservations": 136,
+              "overlapRate": 0.0285,
+              "shareOfAllOverlap": 0.0649,
+              "depthTiles": {
+                "min": 0.0792,
+                "median": 0.1208,
+                "p90": 0.204,
+                "max": 0.204
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 23278,
+              "overlapObservations": 117,
+              "overlapRate": 0.005,
+              "shareOfAllOverlap": 0.0558,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1307,
+                "p90": 0.225,
+                "max": 0.2938
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 143383,
+              "overlapObservations": 65,
+              "overlapRate": 0.0005,
+              "shareOfAllOverlap": 0.031,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.118,
+                "p90": 0.2958,
+                "max": 0.4108
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 3746,
+              "overlapObservations": 47,
+              "overlapRate": 0.0125,
+              "shareOfAllOverlap": 0.0224,
+              "depthTiles": {
+                "min": 0.0021,
+                "median": 0.1302,
+                "p90": 0.2101,
+                "max": 0.4248
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 27098,
+              "overlapObservations": 11,
+              "overlapRate": 0.0004,
+              "shareOfAllOverlap": 0.0052,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0138,
+                "p90": 0.1164,
+                "max": 0.1736
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 29189,
+              "overlapObservations": 2,
+              "overlapRate": 0.0001,
+              "shareOfAllOverlap": 0.001,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0,
+                "max": 0.0354
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 237,
+              "overlapObservations": 2,
+              "overlapRate": 0.0084,
+              "shareOfAllOverlap": 0.001,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0,
+                "max": 0.0208
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 28,
+              "overlapObservations": 1,
+              "overlapRate": 0.0357,
+              "shareOfAllOverlap": 0.0005,
+              "depthTiles": {
+                "min": 0.0629,
+                "median": 0.0629,
+                "p90": 0.0629,
+                "max": 0.0629
+              }
+            }
+          ]
+        },
+        {
+          "tag": "elite_war_wagon_koreans__vs__champion_r4",
+          "pairObservations": 462637,
+          "overlappingPairObservations": 2647,
+          "overlappingPairObservationShare": 0.0057,
+          "depthTiles": {
+            "min": 0,
+            "median": 0.0346,
+            "p90": 0.225,
+            "max": 0.5961
+          },
+          "episodeCount": 52,
+          "episodeDurationSeconds": {
+            "min": 0,
+            "median": 0.49,
+            "p90": 2.202,
+            "max": 2.804
+          },
+          "episodeMaximumDepthTiles": {
+            "min": 0,
+            "median": 0.0064,
+            "p90": 0.2565,
+            "max": 0.5961
+          },
+          "categories": [
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+              "pairObservations": 4933,
+              "overlapObservations": 736,
+              "overlapRate": 0.1492,
+              "shareOfAllOverlap": 0.2781,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0899,
+                "p90": 0.225,
+                "max": 0.2935
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+              "pairObservations": 4780,
+              "overlapObservations": 414,
+              "overlapRate": 0.0866,
+              "shareOfAllOverlap": 0.1564,
+              "depthTiles": {
+                "min": 0.0004,
+                "median": 0.1389,
+                "p90": 0.2683,
+                "max": 0.5961
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 37979,
+              "overlapObservations": 313,
+              "overlapRate": 0.0082,
+              "shareOfAllOverlap": 0.1182,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0.1579,
+                "max": 0.1618
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 23283,
+              "overlapObservations": 302,
+              "overlapRate": 0.013,
+              "shareOfAllOverlap": 0.1141,
+              "depthTiles": {
+                "min": 0.0098,
+                "median": 0.0267,
+                "p90": 0.1618,
+                "max": 0.1618
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+              "pairObservations": 157038,
+              "overlapObservations": 281,
+              "overlapRate": 0.0018,
+              "shareOfAllOverlap": 0.1062,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0.0118,
+                "max": 0.3183
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+              "pairObservations": 23448,
+              "overlapObservations": 221,
+              "overlapRate": 0.0094,
+              "shareOfAllOverlap": 0.0835,
+              "depthTiles": {
+                "min": 0.0007,
+                "median": 0.1364,
+                "p90": 0.26,
+                "max": 0.3153
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 5174,
+              "overlapObservations": 161,
+              "overlapRate": 0.0311,
+              "shareOfAllOverlap": 0.0608,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1865,
+                "p90": 0.2935,
+                "max": 0.2935
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 20362,
+              "overlapObservations": 87,
+              "overlapRate": 0.0043,
+              "shareOfAllOverlap": 0.0329,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0293,
+                "p90": 0.0819,
+                "max": 0.2386
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+              "pairObservations": 127592,
+              "overlapObservations": 77,
+              "overlapRate": 0.0006,
+              "shareOfAllOverlap": 0.0291,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.1166,
+                "p90": 0.3405,
+                "max": 0.4197
+              }
+            },
+            {
+              "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 3375,
+              "overlapObservations": 38,
+              "overlapRate": 0.0113,
+              "shareOfAllOverlap": 0.0144,
+              "depthTiles": {
+                "min": 0.0013,
+                "median": 0.1526,
+                "p90": 0.2684,
+                "max": 0.4434
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+              "pairObservations": 24577,
+              "overlapObservations": 11,
+              "overlapRate": 0.0004,
+              "shareOfAllOverlap": 0.0042,
+              "depthTiles": {
+                "min": 0,
+                "median": 0.0454,
+                "p90": 0.1289,
+                "max": 0.2464
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+              "pairObservations": 29734,
+              "overlapObservations": 5,
+              "overlapRate": 0.0002,
+              "shareOfAllOverlap": 0.0019,
+              "depthTiles": {
+                "min": 0,
+                "median": 0,
+                "p90": 0.0066,
+                "max": 0.0087
+              }
+            },
+            {
+              "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+              "pairObservations": 241,
+              "overlapObservations": 1,
+              "overlapRate": 0.0041,
+              "shareOfAllOverlap": 0.0004,
+              "depthTiles": {
+                "min": 0.0267,
+                "median": 0.0267,
+                "p90": 0.0267,
+                "max": 0.0267
+              }
+            }
+          ]
+        }
+      ],
+      "pooled": {
+        "pairObservations": 1924623,
+        "overlappingPairObservations": 11111,
+        "overlappingPairObservationShare": 0.0058,
+        "repeatMedianDepthTiles": {
+          "min": 0.0346,
+          "median": 0.0869,
+          "p90": 0.0918,
+          "max": 0.101
+        },
+        "repeatMedianEpisodeDurationSeconds": {
+          "min": 0.322,
+          "median": 0.438,
+          "p90": 0.49,
+          "max": 0.5
+        },
+        "repeatMedianEpisodeMaximumDepthTiles": {
+          "min": 0.0064,
+          "median": 0.0582,
+          "p90": 0.0636,
+          "max": 0.0718
+        },
+        "categories": [
+          {
+            "category": "opponent-stopped|wagon-stopped|opponent-attacking|direct-target",
+            "pairObservations": 19617,
+            "overlapObservations": 2326,
+            "overlapRate": 0.1186,
+            "shareOfAllOverlap": 0.2093,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-moving|opponent-attacking|direct-target",
+            "pairObservations": 19488,
+            "overlapObservations": 1913,
+            "overlapRate": 0.0982,
+            "shareOfAllOverlap": 0.1722,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-stopped|opponent-attacking|other-wagon",
+            "pairObservations": 91520,
+            "overlapObservations": 1764,
+            "overlapRate": 0.0193,
+            "shareOfAllOverlap": 0.1588,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-moving|opponent-attacking|other-wagon",
+            "pairObservations": 94428,
+            "overlapObservations": 1511,
+            "overlapRate": 0.016,
+            "shareOfAllOverlap": 0.136,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-stopped|opponent-not-attacking|other-wagon",
+            "pairObservations": 635835,
+            "overlapObservations": 1094,
+            "overlapRate": 0.0017,
+            "shareOfAllOverlap": 0.0985,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|other-wagon",
+            "pairObservations": 158904,
+            "overlapObservations": 812,
+            "overlapRate": 0.0051,
+            "shareOfAllOverlap": 0.0731,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-stopped|opponent-not-attacking|direct-target",
+            "pairObservations": 20800,
+            "overlapObservations": 571,
+            "overlapRate": 0.0275,
+            "shareOfAllOverlap": 0.0514,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-moving|opponent-not-attacking|other-wagon",
+            "pairObservations": 89865,
+            "overlapObservations": 444,
+            "overlapRate": 0.0049,
+            "shareOfAllOverlap": 0.04,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-stopped|wagon-moving|opponent-not-attacking|direct-target",
+            "pairObservations": 15338,
+            "overlapObservations": 314,
+            "overlapRate": 0.0205,
+            "shareOfAllOverlap": 0.0283,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-moving|opponent-not-attacking|other-wagon",
+            "pairObservations": 550007,
+            "overlapObservations": 288,
+            "overlapRate": 0.0005,
+            "shareOfAllOverlap": 0.0259,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-moving|opponent-not-attacking|direct-target",
+            "pairObservations": 105932,
+            "overlapObservations": 51,
+            "overlapRate": 0.0005,
+            "shareOfAllOverlap": 0.0046,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-stopped|opponent-not-attacking|direct-target",
+            "pairObservations": 121554,
+            "overlapObservations": 16,
+            "overlapRate": 0.0001,
+            "shareOfAllOverlap": 0.0014,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-stopped|opponent-attacking|other-wagon",
+            "pairObservations": 918,
+            "overlapObservations": 6,
+            "overlapRate": 0.0065,
+            "shareOfAllOverlap": 0.0005,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          },
+          {
+            "category": "opponent-moving|wagon-moving|opponent-attacking|other-wagon",
+            "pairObservations": 28,
+            "overlapObservations": 1,
+            "overlapRate": 0.0357,
+            "shareOfAllOverlap": 0.0001,
+            "depthTiles": {
+              "min": null,
+              "median": null,
+              "p90": null,
+              "max": null
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

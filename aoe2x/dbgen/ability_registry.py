@@ -160,7 +160,7 @@ ABILITIES = {
         engines=ALL_ENGINES,
         description="Sustained volley: N extra projectiles on every attack "
                     "(Chu Ko Nu, Kipchak, Organ Gun, War Chariot, Shu Bolt "
-                    "Magazine, Mayan Hul'che, Jurchen Thunderclap Bombs, Wu "
+                    "Magazine, Mayan Hul'che, Wu "
                     "Fire Archer).",
         quirks=(
             "ACCURACY: extras roll the unit's base_accuracy (pre-Thumb-Ring; "
@@ -283,6 +283,33 @@ ABILITIES = {
                     "blast level 11, radius 0.65).",
         quirks="Grenadier (Jurchens) is the only unit with a radius in the "
                "committed DB.",
+    ),
+    "delayed_ground_explosion": Ability(
+        name="delayed_ground_explosion",
+        family="area_damage",
+        params=(),
+        source="runtime:v3_runtime_config.RUNTIME_EFFECTS_BY_CIV_SLUG",
+        engines=(ENGINE_JS,),
+        description="A projectile landing schedules one or more hostile-only "
+                    "melee-damage explosions at the fixed impact point.",
+        quirks="Per-family payloads are runtime-only because this compound "
+               "technology is not represented by scalar ref_units columns: "
+               "Grenadier 4 attack / 0.65 radius / 1.5s x3; Rocket Cart 4 / "
+               "1.25 / 2s; Lou Chuan 20 / 2 / 2s. Lou Chuan gates the "
+               "effect to its trebuchet/grenade weapon mode, never its "
+               "ordinary tower arrows.",
+    ),
+    "death_explosion": Ability(
+        name="death_explosion",
+        family="area_damage",
+        params=(),
+        source="runtime:v3_runtime_config.RUNTIME_EFFECTS_BY_CIV_SLUG",
+        engines=(ENGINE_JS,),
+        description="The affected unit deals hostile-only melee area damage "
+                    "at its position immediately when it dies.",
+        quirks="Grenadier 15 attack / 0.75 radius; Rocket Cart 15 / 1; "
+               "Lou Chuan 45 / 2. Thunderclap secondary and death explosions "
+               "do not damage allies.",
     ),
     "trample": Ability(
         name="trample",
@@ -418,9 +445,9 @@ ABILITIES = {
         engines=ALL_ENGINES,
         description="Damage over time applied on hit (Liao Dao bleed, Tupi "
                     "Curare poison).",
-        quirks="One bleed slot per target, refreshed on hit — the real game "
-               "stacks per-shot, so multi-shooter Curare is undermodeled "
-               "(documented in config_combat.py).",
+        quirks="Each successful projectile creates an independently expiring "
+               "damage-over-time stack; active stacks are accumulated by "
+               "source actor each simulation tick.",
     ),
     # ------------------------------------------------------------------
     # on_kill
@@ -662,6 +689,9 @@ ABILITIES = {
             _p("hp_transform_threshold", float, 0,
                audit="HP threshold for form change",
                quirks="Curated ratio (45/70) — genuinely not in the dat."),
+            _p("hp_transform_reversible", bool, False, ref_column=None,
+               audit="Whether healing across the threshold restores the base form",
+               quirks="Jian Swordsman restores its shield at 45 HP."),
             _p("transform_unit_id", int, 0, ref_column=None, engines=(),
                in_combat_dict=False,
                quirks="Generation-time input only (dat unit 1976); unlike "
@@ -690,8 +720,10 @@ ABILITIES = {
         engines=ALL_ENGINES,
         description="Below an HP threshold the unit swaps to a second stat "
                     "block (Jian Swordsman -> dual-wield form, dat unit 1976).",
-        quirks="One-way, once per unit. The transform block keeps current_hp; "
-               "max_hp becomes transform_hp.",
+        quirks="The transform block keeps current_hp and max_hp becomes "
+               "transform_hp. Jian's swap is reversible: below 45 HP enters "
+               "the unshielded form and regeneration to 45 HP restores the "
+               "shielded form.",
     ),
     "paired_forms": Ability(
         name="paired_forms",

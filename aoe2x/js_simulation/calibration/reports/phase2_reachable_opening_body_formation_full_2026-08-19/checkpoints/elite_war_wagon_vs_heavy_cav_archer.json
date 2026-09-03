@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_war_wagon_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T15:41:14.679Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 14.199999999999996,
+      "medianAbsoluteMeanDelta": 14.199999999999996,
+      "maximumAbsoluteMeanDelta": 14.199999999999996
+    },
+    "rows": [
+      {
+        "id": "elite_war_wagon_vs_heavy_cav_archer",
+        "subjectSlug": "elite_war_wagon",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Elite War Wagon vs Heavy Cavalry Archer",
+        "side2": {
+          "count": 14,
+          "master": 829,
+          "owner": 2,
+          "slug": "elite_war_wagon",
+          "unit": "Elite War Wagon"
+        },
+        "side3": {
+          "count": 21,
+          "master": 474,
+          "owner": 3,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -66.67857142857143,
+          "min": -66.67857142857143,
+          "max": -66.67857142857143,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -52.478571428571435,
+          "min": -54.32142857142857,
+          "max": -50.67857142857143,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 14.199999999999996,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_war_wagon_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1511,
+            "score": -53.964285714285715,
+            "ticks": 4948,
+            "finalStateHash": "073aff54930977884572c059fe47f214f982971267703c35f90438586ee319c3",
+            "eventLogHash": "aa8da41e1bedaa6a6d9c8d5269eb0f29e32d71712ccfa77bcdd6cce75cdf0a73"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1466,
+            "score": -52.357142857142854,
+            "ticks": 4927,
+            "finalStateHash": "d7b314940efe350e923bf8191486c61118cbb5150c2ba8bd8a9caba0ae5ff13b",
+            "eventLogHash": "5f1914a49b9df9ed8b70bd95807b2e07a2023beb7ffee81f9ab8db1b8f38dd46"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1430,
+            "score": -51.07142857142857,
+            "ticks": 5123,
+            "finalStateHash": "8e7e64347bf30b923bf976ee2921499df2a68a32b2ca18480245b1cc841ec19f",
+            "eventLogHash": "122a8357f88145db0eceb92bd72e790a17624c295d0910feefc6bc6f71128cd0"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1521,
+            "score": -54.32142857142857,
+            "ticks": 5254,
+            "finalStateHash": "85228e1fae37cfe9890d106519ea5e9f5dda379e52155b4c08c3b46f99eb1f4f",
+            "eventLogHash": "6c3005c0e080c58ea8bf7f6e2981e0967fce0af025f51df8abba7de9068906c8"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1419,
+            "score": -50.67857142857143,
+            "ticks": 5109,
+            "finalStateHash": "e0ce6ca54ad498a2b6e890e25762f79ad901bce89d43bd722bd2a450fa5bc8e3",
+            "eventLogHash": "c4bd0d33a66baf91a2b583abb2034460959f8f38ca8346fe4918af8ef3cf3357"
+          }
+        ]
+      }
+    ]
+  }
+}

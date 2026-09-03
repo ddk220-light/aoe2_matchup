@@ -1,0 +1,280 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_woad_raider_vs_paladin",
+  "completedAt": "2026-08-19T15:33:04.336Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 0,
+      "volatileRows": 1,
+      "totalRuns": 15
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 15,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 1,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 1,
+      "meanAbsoluteMeanDelta": 18.547032488208963,
+      "medianAbsoluteMeanDelta": 18.547032488208963,
+      "maximumAbsoluteMeanDelta": 18.547032488208963
+    },
+    "rows": [
+      {
+        "id": "elite_woad_raider_vs_paladin",
+        "subjectSlug": "elite_woad_raider",
+        "opponentSlug": "paladin",
+        "matchup": "Elite Woad Raider vs Paladin",
+        "side2": {
+          "count": 21,
+          "master": 534,
+          "owner": 2,
+          "slug": "elite_woad_raider",
+          "unit": "Elite Woad Raider"
+        },
+        "side3": {
+          "count": 13,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 14.655246714070245,
+          "min": -19.327731092436974,
+          "max": 42.30769230769231,
+          "side3WinRate": 0.75,
+          "volatile": true
+        },
+        "tapeClassification": "knife-edge",
+        "comparison": {
+          "simulationRuns": 15,
+          "unresolvedRuns": 0,
+          "mean": 33.20227920227921,
+          "min": 14.615384615384615,
+          "max": 48.29059829059829,
+          "side3WinRate": 1,
+          "side3WinRateError": 0.25,
+          "bandError": 0,
+          "tapeBandCoverage": 0.8666666666666667,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1116,
+            "score": 47.69230769230769,
+            "ticks": 2017,
+            "finalStateHash": "5c0b4977217650a17c1027b64a58ce7f273a18efa736ae9488ea422c36496a56",
+            "eventLogHash": "1cd00d59ab6bac6b130edc3d9e365279e5b5045f19fff0e32ec005016ae61635"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 728,
+            "score": 31.11111111111111,
+            "ticks": 2276,
+            "finalStateHash": "aa5fb31b93ce41354616cd395c34a9d61bb2e9de991adc38e31136b3b47d29b9",
+            "eventLogHash": "9d95d733d5e0a1a9731acbb256549c8c8b1ac4c5befd706e8b50c9284889c3e6"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 892,
+            "score": 38.11965811965812,
+            "ticks": 1958,
+            "finalStateHash": "ebb717c156aa81dce26f772d0cfcb7005cd84bd69a1b49f07162139f80d970ed",
+            "eventLogHash": "451c7f0e41388a83d2d9e6fb1c187324adf6cbef7f762cd2538eacf7cf3f18fb"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1130,
+            "score": 48.29059829059829,
+            "ticks": 1958,
+            "finalStateHash": "115b5101d518d39fae579475154de3b94cb371e567c33f21ed4dfc031f44de0d",
+            "eventLogHash": "c8492a8dd46d98988f1e93f09414f67d40574f4ea290c1056f60af681652093b"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 758,
+            "score": 32.39316239316239,
+            "ticks": 2278,
+            "finalStateHash": "2e7554e4f9f7b29fb48c99452885e464dfc2e94b4c53e29bf187db852076d65f",
+            "eventLogHash": "6b65fefb335c2e631aa89753a3725752dc159ceb273f97ec436f984ba35ccd2a"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 5,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 948,
+            "score": 40.51282051282051,
+            "ticks": 2148,
+            "finalStateHash": "e794305a13e6b28cedebf0d467dd76bc3b10024e8ff3a92b833eca9cfa201459",
+            "eventLogHash": "5cc88fc1bd01e1d6c55df2b1753216d47f696dafd0e7bdee2f2fec5e198608fb"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 6,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 686,
+            "score": 29.316239316239315,
+            "ticks": 2283,
+            "finalStateHash": "9a93d842877e61cb2bdbf7b8b73f6847e82fa483d12674033264f92505d0b4d3",
+            "eventLogHash": "c19acec4d2b95270d1b909ed84e93257789f5d07eba44992c2a083215d53d018"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 7,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 948,
+            "score": 40.51282051282051,
+            "ticks": 1973,
+            "finalStateHash": "f6f5e26efc417d6b06bc84871ff3e54d0fb917f843e98f1e4b5f80daad364335",
+            "eventLogHash": "1f11093e055c3077916db2c7758205d8a0248df60763a2328fc0591e591b6829"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 8,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 578,
+            "score": 24.700854700854702,
+            "ticks": 2653,
+            "finalStateHash": "bca367e02d43301c39451ea47a64223b283bd01f94c5917ae7cce006f0d0fcf6",
+            "eventLogHash": "e6636224d8b3abc839842dba214571921789f4768745d7dc66215ffd0e6866a5"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 9,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 674,
+            "score": 28.803418803418804,
+            "ticks": 2582,
+            "finalStateHash": "12f48d1eb8c4505a45bfe2716a7a09241f735cbc6a50c525d4b1d749a49b6f2d",
+            "eventLogHash": "09e07b8a6d34efcddb8c9bc72b8eb9f0b5971eb2701069d5a769ba042e14d679"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 10,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 604,
+            "score": 25.811965811965813,
+            "ticks": 2595,
+            "finalStateHash": "631616d23ca4362b027084d2a8f583458881287ffdf00c37020aa0bda4afcfcb",
+            "eventLogHash": "e7e38613595944d00b311305a620186cfb846073150bbc5cd3cb0c67b1e61a4e"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 11,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 342,
+            "score": 14.615384615384615,
+            "ticks": 2324,
+            "finalStateHash": "0a04086b733d33f01e9b2760e2b93379e9f014050c04b6aa0009d29a518c3655",
+            "eventLogHash": "9f4920e14bdfbb9388423dfc3e625c1f49c2b0a90b9e43d677dda28b68ff6278"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 12,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 824,
+            "score": 35.21367521367522,
+            "ticks": 1990,
+            "finalStateHash": "63f4f62df5fecba027d39024f4f12389fa4a9c255151fee0632828c98af0ce0d",
+            "eventLogHash": "0b2c23680bd1c8da842e91f20806c53965bb4c897278163cb817ab0f9d782aef"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 13,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 824,
+            "score": 35.21367521367522,
+            "ticks": 2203,
+            "finalStateHash": "d445f6ef9413cf004ab650042bed675c383ae301f886565128f66b8fb1fadf3a",
+            "eventLogHash": "3a0b5af7c88991e67ad20416863aa63719aea148c8b8d76954d34c90d7310d83"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_paladin",
+            "sampleIndex": 14,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 602,
+            "score": 25.726495726495727,
+            "ticks": 2417,
+            "finalStateHash": "f30710b1974c9fc5a2e37874deb79c735623555a21ed0ae14899cd2dc4985c52",
+            "eventLogHash": "adb3873a308c30fd566927c72373bd3e04cfe7d2b333c7b1d1604ba90b77d035"
+          }
+        ]
+      }
+    ]
+  }
+}

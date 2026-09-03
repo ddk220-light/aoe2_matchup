@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_war_wagon_vs_heavy_scorpion",
+  "completedAt": "2026-08-19T15:41:53.562Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 7.500833333333329,
+      "medianAbsoluteMeanDelta": 7.500833333333329,
+      "maximumAbsoluteMeanDelta": 7.500833333333329
+    },
+    "rows": [
+      {
+        "id": "elite_war_wagon_vs_heavy_scorpion",
+        "subjectSlug": "elite_war_wagon",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Elite War Wagon vs Heavy Scorpion",
+        "side2": {
+          "count": 15,
+          "master": 829,
+          "owner": 2,
+          "slug": "elite_war_wagon",
+          "unit": "Elite War Wagon"
+        },
+        "side3": {
+          "count": 16,
+          "master": 542,
+          "owner": 3,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -17.545833333333334,
+          "min": -19.033333333333335,
+          "max": -15.716666666666667,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -25.046666666666663,
+          "min": -26.4,
+          "max": -23.016666666666666,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 6.013333333333328,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_war_wagon_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 791.5,
+            "score": -26.383333333333333,
+            "ticks": 4808,
+            "finalStateHash": "3a1699099d03e66bc89485598f3948f466261205817cc751bc4ab19359069c08",
+            "eventLogHash": "b74ccaa65f96d7a2407aae184faa63dd813c0ce1d0709359fe044a807ea2907f"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 792,
+            "score": -26.4,
+            "ticks": 4573,
+            "finalStateHash": "28362145afe44dfc163154216d05911298c91dffe647232ddca5011ecc1dd5f7",
+            "eventLogHash": "0923c1b6ba96d180d6de5adfa6e8a8bc79a17d96dee024f4d223d9cf31207301"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 690.5,
+            "score": -23.016666666666666,
+            "ticks": 4254,
+            "finalStateHash": "6b143c29e5faf969eac1416de17114c71e623fdc1e233f6ce48636e36eb54b27",
+            "eventLogHash": "5905ea22c6a33a4d170319921776298eea9f789ee4d637bf9104136c5b219bb7"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 774.5,
+            "score": -25.816666666666666,
+            "ticks": 4528,
+            "finalStateHash": "acfda8e908b33c4cf8b991c158a538883932a0b0640c2bea6d75143bc0786792",
+            "eventLogHash": "05119a0557fd6e49d54e6fb067c9911a9fe7c62ec9d110adf0c43e63ef8f01c3"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 708.5,
+            "score": -23.616666666666667,
+            "ticks": 4137,
+            "finalStateHash": "03ce84e031649294071ad0c921d78d1547910aa151aa7ca686e12b139add840a",
+            "eventLogHash": "3dd141ef203fcce521b4934d036add2949685f87d4557bb1435ca4cda8671c91"
+          }
+        ]
+      }
+    ]
+  }
+}

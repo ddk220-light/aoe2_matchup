@@ -16,6 +16,7 @@ import html as _html
 import json
 import os
 import re as _re
+import secrets
 import sqlite3
 import sys
 from collections import defaultdict
@@ -29,7 +30,16 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__f
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from flask import Flask, Response, abort, jsonify, redirect, render_template, request
+from flask import (
+    Flask,
+    Response,
+    abort,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+)
 from aoe2x.advisor.best_units import (
     load_civ_power_units,
     get_matchup_recommendations,
@@ -39,6 +49,12 @@ from aoe2x.advisor.best_units import (
     _parse_techs_and_bonuses as parse_techs_and_bonuses,
 )
 from aoe2x.sim.combat_unit_loader import build_combat_dict_from_ref
+from aoe2x.dbgen.v3_mechanics import (
+    MECHANICS_SCHEMA_VERSION,
+    mechanics_hash as calculate_mechanics_hash,
+    validate_runtime_profile,
+)
+from aoe2x.js_simulation.scenario_config import build_scenario_payload
 from aoe2x.advisor.top_units import load_top_units, compute_top_units
 from aoe2x.sim.unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
 from aoe2x.rank.pool_scores_query import load_pool_scores
@@ -51,6 +67,25 @@ app = Flask(__name__)
 app.json.sort_keys = False
 # Reject unexpectedly large request bodies before Flask buffers them.
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+
+_V3_RUNTIME_ROOT = os.path.join(_REPO_ROOT, "aoe2x", "js_simulation")
+
+
+@app.get("/v3-runtime/<path:filename>")
+def v3_runtime_module(filename):
+    """Serve the checked-in shared V3 engine directly to browser workers.
+
+    Only JavaScript under the host-agnostic engine tree and the shared Golden
+    Arena renderer are public. Fixtures, calibration captures, reports, tests,
+    and Node-only runners stay outside the HTTP surface.
+    """
+    normalized = filename.replace("\\", "/")
+    allowed = normalized.startswith("src/") or normalized == "viewer/map-renderer.js"
+    if not allowed or not normalized.endswith(".js"):
+        abort(404)
+    response = send_from_directory(_V3_RUNTIME_ROOT, normalized, conditional=True)
+    response.cache_control.no_cache = True
+    return response
 
 # Public site URL — used for canonical URLs, sitemap, OG tags.
 # Override with SITE_URL env var if you ever change domains.
@@ -1277,6 +1312,132 @@ def api_ref_civ(civ_name):
 # build_combat_dict_from_ref() is imported from combat_unit_loader
 
 
+def _find_ref_unit(rc, civ_name, unit_slug, age):
+    rc.execute(
+        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
+        (civ_name, unit_slug, age),
+    )
+    row = rc.fetchone()
+    if row is None:
+        rc.execute(
+            "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=?",
+            (civ_name, unit_slug),
+        )
+        row = rc.fetchone()
+    return row
+
+
+def _load_v3_mechanics(rc, ref_unit_id, requested_mode=None):
+    modes = rc.execute(
+        """
+        SELECT mode, is_default, schema_version, mechanics_json,
+               mechanics_hash, source_build
+        FROM ref_unit_mechanics
+        WHERE ref_unit_id=?
+        ORDER BY is_default DESC, mode
+        """,
+        (ref_unit_id,),
+    ).fetchall()
+    if not modes:
+        raise LookupError(f"V3 mechanics missing for ref_unit_id={ref_unit_id}")
+    selected = next(
+        (
+            row for row in modes
+            if row["mode"] == requested_mode
+        ),
+        None,
+    ) if requested_mode else next((row for row in modes if row["is_default"]), None)
+    if selected is None:
+        available = ", ".join(row["mode"] for row in modes)
+        raise ValueError(f"unknown mechanics mode {requested_mode!r}; available: {available}")
+    if selected["schema_version"] != MECHANICS_SCHEMA_VERSION:
+        raise RuntimeError(
+            f"mechanics schema {selected['schema_version']} is incompatible with "
+            f"server schema {MECHANICS_SCHEMA_VERSION}"
+        )
+    try:
+        mechanics = json.loads(selected["mechanics_json"])
+        validate_runtime_profile(mechanics)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(
+            f"invalid mechanics payload for ref_unit_id={ref_unit_id}"
+        ) from exc
+    actual_hash = calculate_mechanics_hash(mechanics)
+    if actual_hash != selected["mechanics_hash"]:
+        raise RuntimeError(f"mechanics hash mismatch for ref_unit_id={ref_unit_id}")
+    return {
+        "mechanics": mechanics,
+        "mechanics_hash": actual_hash,
+        "mechanics_schema_version": selected["schema_version"],
+        "mechanics_source_build": selected["source_build"],
+        "mechanics_mode": selected["mode"],
+        "mechanics_modes": [row["mode"] for row in modes],
+    }
+
+
+def _load_v3_auxiliary_mechanics(rc, actor_slug, mode="default"):
+    row = rc.execute(
+        """
+        SELECT schema_version, mechanics_json, mechanics_hash, source_build
+        FROM ref_auxiliary_mechanics
+        WHERE actor_slug=? AND mode=?
+        """,
+        (actor_slug, mode),
+    ).fetchone()
+    if row is None:
+        raise LookupError(f"V3 auxiliary mechanics missing for {actor_slug}:{mode}")
+    if row["schema_version"] != MECHANICS_SCHEMA_VERSION:
+        raise RuntimeError(
+            f"auxiliary mechanics schema {row['schema_version']} is incompatible"
+        )
+    try:
+        mechanics = json.loads(row["mechanics_json"])
+        validate_runtime_profile(mechanics)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(
+            f"invalid auxiliary mechanics payload for {actor_slug}:{mode}"
+        ) from exc
+    actual_hash = calculate_mechanics_hash(mechanics)
+    if actual_hash != row["mechanics_hash"]:
+        raise RuntimeError(f"auxiliary mechanics hash mismatch for {actor_slug}:{mode}")
+    return {
+        "mechanics": mechanics,
+        "mechanics_hash": actual_hash,
+        "mechanics_source_build": row["source_build"],
+    }
+
+
+def _combat_response(rc, row, requested_mode=None, include_stat_chain=True):
+    result = build_combat_dict_from_ref(row)
+    if include_stat_chain:
+        rc.execute(
+            """SELECT step_order, tech_name, tech_type, attack, melee_armor, pierce_armor,
+                      attacks_json, armors_json
+               FROM ref_stat_chain WHERE ref_unit_id=? ORDER BY step_order""",
+            (row["id"],),
+        )
+        result["stat_chain"] = [
+            {
+                "step": sc["step_order"],
+                "tech": sc["tech_name"],
+                "type": sc["tech_type"],
+                "attacks_json": sc["attacks_json"],
+                "armors_json": sc["armors_json"],
+            }
+            for sc in rc.fetchall()
+        ]
+    result["name"] = row["unit_name"]
+    result["civ"] = row["civ_name"]
+    result["total_cost"] = (
+        (row["final_cost_food"] or 0)
+        + (row["final_cost_wood"] or 0)
+        + (row["final_cost_gold"] or 0)
+    )
+    result["outline_size"] = row["outline_size_x"] or 0.2
+    result.update(_load_v3_mechanics(rc, row["id"], requested_mode))
+    return result
+
+
 @app.route("/api/ref/stat-chain/<int:ref_unit_id>")
 def api_ref_stat_chain(ref_unit_id):
     """Get stat chain and techs applied for a single ref unit (for hover cards)."""
@@ -1317,54 +1478,226 @@ def api_ref_combat_unit(civ_name, unit_slug):
     ref_conn = get_ref_db()
     rc = ref_conn.cursor()
 
-    # Prefer requested age; fall back to any age if not found
-    rc.execute(
-        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
-        (civ_name, unit_slug, age),
-    )
-    row = rc.fetchone()
-    if not row:
-        rc.execute(
-            "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=?",
-            (civ_name, unit_slug),
-        )
-        row = rc.fetchone()
+    row = _find_ref_unit(rc, civ_name, unit_slug, age)
     if not row:
         ref_conn.close()
         return jsonify({"error": f"Unit {unit_slug} not found for {civ_name}"}), 404
-
-    result = build_combat_dict_from_ref(row)
-
-    # Add stat chain for debug breakdown (HTTP endpoint only)
-    rc.execute(
-        """SELECT step_order, tech_name, tech_type, attack, melee_armor, pierce_armor,
-                  attacks_json, armors_json
-           FROM ref_stat_chain WHERE ref_unit_id=? ORDER BY step_order""",
-        (row["id"],),
-    )
-    result["stat_chain"] = [
-        {
-            "step": sc["step_order"],
-            "tech": sc["tech_name"],
-            "type": sc["tech_type"],
-            "attacks_json": sc["attacks_json"],
-            "armors_json": sc["armors_json"],
-        }
-        for sc in rc.fetchall()
-    ]
-
-    # Extra fields for HTTP response
-    result["name"] = row["unit_name"]
-    result["civ"] = civ_name
-    result["total_cost"] = (
-        (row["final_cost_food"] or 0)
-        + (row["final_cost_wood"] or 0)
-        + (row["final_cost_gold"] or 0)
-    )
-    result["outline_size"] = row["outline_size_x"] or 0.2
-
+    try:
+        result = _combat_response(rc, row, request.args.get("mode"))
+    except ValueError as exc:
+        ref_conn.close()
+        return jsonify({"error": str(exc)}), 400
+    except (LookupError, RuntimeError, sqlite3.DatabaseError) as exc:
+        ref_conn.close()
+        app.logger.error("V3 mechanics unavailable: %s", exc)
+        return jsonify({"error": "V3 mechanics unavailable", "detail": str(exc)}), 503
     ref_conn.close()
-    return jsonify(result)
+    response = jsonify(result)
+    response.set_etag(result["mechanics_hash"])
+    response.cache_control.private = True
+    response.cache_control.max_age = 3600
+    return response.make_conditional(request)
+
+
+_V3_FAMILY_CAPACITIES = {
+    "rvr": (21, 21),
+    "kite": (21, 21),
+    "siege": (16, 21),
+    "waves": (21, 21),
+}
+
+
+def _v3_engine_family(class2, class3):
+    ranged = {"mobile_ranged", "siege_ranged"}
+    if class2 in ranged and class3 in ranged:
+        return "rvr"
+    if "mobile_ranged" in (class2, class3):
+        return "kite"
+    if "siege_ranged" in (class2, class3):
+        return "siege"
+    return "waves"
+
+
+def _v3_visual_family(class2, class3):
+    ranged = {"mobile_ranged", "siege_ranged"}
+    if class2 not in ranged and class3 not in ranged:
+        return "melee_vs_melee"
+    if class2 in ranged and class3 in ranged:
+        return "ranged_vs_ranged"
+    return "ranged_vs_melee" if class2 in ranged else "melee_vs_ranged"
+
+
+def _v3_public_capacities(class2, class3, family):
+    inner2, inner3 = _V3_FAMILY_CAPACITIES[family]
+    role = {"kite": "mobile_ranged", "siege": "siege_ranged"}.get(family)
+    normalized = role is not None and class3 == role
+    return ((inner3, inner2) if normalized else (inner2, inner3)), normalized
+
+
+def _positive_number(value, label, *, maximum=None):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+        raise ValueError(f"{label} must be a positive number")
+    if maximum is not None and value > maximum:
+        raise ValueError(f"{label} must be <= {maximum}")
+    return float(value)
+
+
+def _nonnegative_number(value, label, *, maximum=None):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+        raise ValueError(f"{label} must be a nonnegative number")
+    if maximum is not None and value > maximum:
+        raise ValueError(f"{label} must be <= {maximum}")
+    return float(value)
+
+
+def _bounded_integer(value, label, *, minimum, maximum):
+    if isinstance(value, bool):
+        raise ValueError(f"{label} must be an integer")
+    try:
+        integer = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{label} must be an integer") from exc
+    if integer != value or integer < minimum or integer > maximum:
+        raise ValueError(f"{label} must be between {minimum} and {maximum}")
+    return integer
+
+
+def _v3_counts(army, teams, capacities):
+    if not isinstance(army, dict):
+        raise ValueError("army must be an object")
+    mode = army.get("mode", "equal_resources")
+    cap = _bounded_integer(army.get("cap", 27), "army.cap", minimum=1, maximum=27)
+    limits = (min(cap, capacities[0]), min(cap, capacities[1]))
+    if mode == "explicit":
+        counts = tuple(
+            _bounded_integer(
+                team.get("count"), f"team {index} count", minimum=1, maximum=limit
+            )
+            for index, (team, limit) in enumerate(zip(teams, limits), 1)
+        )
+    elif mode == "equal_count":
+        count = _bounded_integer(
+            army.get("count", 20), "army.count", minimum=1, maximum=min(limits)
+        )
+        counts = (count, count)
+    elif mode == "equal_resources":
+        budget = _positive_number(army.get("budget", 3000), "army.budget", maximum=20000)
+        weights = army.get("weights", {})
+        if not isinstance(weights, dict):
+            raise ValueError("army.weights must be an object")
+        wf = _nonnegative_number(weights.get("food", 1), "food weight", maximum=10)
+        ww = _nonnegative_number(weights.get("wood", 1), "wood weight", maximum=10)
+        wg = _nonnegative_number(weights.get("gold", 1), "gold weight", maximum=10)
+        if wf + ww + wg <= 0:
+            raise ValueError("at least one resource weight must be positive")
+        costs = []
+        for team in teams:
+            cost = team["mechanics"]["cost"]
+            costs.append(cost["food"] * wf + cost["wood"] * ww + cost["gold"] * wg)
+        if costs[0] <= 0 or costs[1] <= 0:
+            raise ValueError("selected unit has zero weighted resource cost")
+        cheap = 0 if costs[0] <= costs[1] else 1
+        dear = 1 - cheap
+        counts = [0, 0]
+        counts[cheap] = min(limits[cheap], int(budget // costs[cheap]))
+        counts[dear] = min(limits[dear], max(1, int((counts[cheap] * costs[cheap]) // costs[dear])))
+        counts = tuple(counts)
+    else:
+        raise ValueError("army.mode must be explicit, equal_count, or equal_resources")
+    for index, (count, limit) in enumerate(zip(counts, limits), 1):
+        if count < 1 or count > limit:
+            raise ValueError(f"team {index} count must be between 1 and {limit}")
+    return counts
+
+
+@app.post("/api/v3/battle-config")
+def api_v3_battle_config():
+    document = request.get_json(silent=True)
+    if not isinstance(document, dict):
+        return jsonify({"error": "JSON object required"}), 400
+    selections = document.get("teams")
+    if not isinstance(selections, list) or len(selections) != 2:
+        return jsonify({"error": "teams must contain exactly two selections"}), 400
+    connection = get_ref_db()
+    cursor = connection.cursor()
+    teams = []
+    try:
+        for selection in selections:
+            if not isinstance(selection, dict):
+                raise ValueError("each team selection must be an object")
+            civ = selection.get("civ")
+            slug = selection.get("unit_slug")
+            age = selection.get("age", "Imperial")
+            if _validate_civ_name(civ) is not None:
+                raise ValueError(f"unknown civilization {civ!r}")
+            if _validate_age(age) is not None:
+                raise ValueError(f"invalid age {age!r}")
+            row = _find_ref_unit(cursor, civ, slug, age)
+            if row is None:
+                raise ValueError(f"unit {slug!r} is unavailable for {civ}")
+            combat = _combat_response(
+                cursor, row, selection.get("mode"), include_stat_chain=False
+            )
+            teams.append({
+                "civ": civ,
+                "unit_slug": slug,
+                "unit_name": row["unit_name"],
+                "mode": combat["mechanics_mode"],
+                "mechanics_hash": combat["mechanics_hash"],
+                "mechanics": combat["mechanics"],
+                "count": selection.get("count"),
+            })
+        classes = (teams[0]["mechanics"]["behavior_class"], teams[1]["mechanics"]["behavior_class"])
+        engine_family = _v3_engine_family(*classes)
+        visual_family = _v3_visual_family(*classes)
+        capacities, normalized = _v3_public_capacities(*classes, engine_family)
+        counts = _v3_counts(document.get("army", {}), teams, capacities)
+        for team, count in zip(teams, counts):
+            team["count"] = count
+        engagement = document.get("engagement_mode", "direct")
+        if engagement not in ("direct", "ranged_buffer"):
+            raise ValueError("engagement_mode must be direct or ranged_buffer")
+        if engagement == "ranged_buffer" and visual_family not in (
+            "ranged_vs_melee", "melee_vs_ranged"
+        ):
+            raise ValueError("ranged_buffer requires exactly one ranged side")
+        scenario = build_scenario_payload(
+            visual_family,
+            engine_family=engine_family,
+            include_buffer=engagement == "ranged_buffer",
+        )
+        if engagement == "ranged_buffer":
+            buffer_combat = _load_v3_auxiliary_mechanics(cursor, "scout_cavalry")
+            buffer = scenario["auxiliaryArmiesByOwner"]["4"]
+            buffer.update(
+                {
+                    "unit_name": "Scout Cavalry",
+                    "mechanics_hash": buffer_combat["mechanics_hash"],
+                    "mechanics": buffer_combat["mechanics"],
+                }
+            )
+        seed = document.get("seed")
+        if seed is None:
+            seed = secrets.randbits(32)
+        if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= 0xFFFFFFFF:
+            raise ValueError("seed must be a uint32")
+    except (LookupError, RuntimeError, sqlite3.DatabaseError) as exc:
+        connection.close()
+        app.logger.error("V3 mechanics unavailable: %s", exc)
+        return jsonify({"error": "V3 mechanics unavailable", "detail": str(exc)}), 503
+    except ValueError as exc:
+        connection.close()
+        return jsonify({"error": str(exc)}), 400
+    connection.close()
+    return jsonify({
+        "schemaVersion": 1,
+        "engineVersion": "simulationv3",
+        "mechanicsSchemaVersion": MECHANICS_SCHEMA_VERSION,
+        "seed": seed,
+        "engagementMode": engagement,
+        "teams": teams,
+        "scenario": {**scenario, "orientationNormalized": normalized},
+    })
 
 
 INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}

@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_throwing_axeman_vs_champion",
+  "completedAt": "2026-08-19T15:23:39.049Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 11.111111111111114,
+      "medianAbsoluteMeanDelta": 11.111111111111114,
+      "maximumAbsoluteMeanDelta": 11.111111111111114
+    },
+    "rows": [
+      {
+        "id": "elite_throwing_axeman_vs_champion",
+        "subjectSlug": "elite_throwing_axeman",
+        "opponentSlug": "champion",
+        "matchup": "Elite Throwing Axeman vs Champion",
+        "side2": {
+          "count": 18,
+          "master": 531,
+          "owner": 2,
+          "slug": "elite_throwing_axeman",
+          "unit": "Elite Throwing Axeman"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -67.77777777777777,
+          "min": -67.77777777777777,
+          "max": -67.77777777777777,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -78.88888888888889,
+          "min": -78.88888888888889,
+          "max": -78.88888888888889,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 11.111111111111114,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_throwing_axeman_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 994,
+            "score": -78.88888888888889,
+            "ticks": 1498,
+            "finalStateHash": "bc86cdf5d02c702bfae123fec48f18c1a970b5f216117eb13f695ab92238b203",
+            "eventLogHash": "8d2e5865302bd9ca1cb138cb22e297439ece0f4b6872a7d9ebad570b087ab5f0"
+          },
+          {
+            "rowId": "elite_throwing_axeman_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 994,
+            "score": -78.88888888888889,
+            "ticks": 1498,
+            "finalStateHash": "bc86cdf5d02c702bfae123fec48f18c1a970b5f216117eb13f695ab92238b203",
+            "eventLogHash": "c642d857afb7093b91db7d2161fde677db88ed231037881ac2f913d558be9ed3"
+          },
+          {
+            "rowId": "elite_throwing_axeman_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 994,
+            "score": -78.88888888888889,
+            "ticks": 1498,
+            "finalStateHash": "bc86cdf5d02c702bfae123fec48f18c1a970b5f216117eb13f695ab92238b203",
+            "eventLogHash": "7fc269ad619020ee851b6db1745f87cf91327d863b00478d04801f21e36dd38e"
+          },
+          {
+            "rowId": "elite_throwing_axeman_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 994,
+            "score": -78.88888888888889,
+            "ticks": 1498,
+            "finalStateHash": "bc86cdf5d02c702bfae123fec48f18c1a970b5f216117eb13f695ab92238b203",
+            "eventLogHash": "084b4b15eb30386184206903d33c0ef71874bd70e08587fa76cf858b731496b2"
+          },
+          {
+            "rowId": "elite_throwing_axeman_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 994,
+            "score": -78.88888888888889,
+            "ticks": 1498,
+            "finalStateHash": "bc86cdf5d02c702bfae123fec48f18c1a970b5f216117eb13f695ab92238b203",
+            "eventLogHash": "652ebe075eb37a54e5dd9dfa7f525664bf53596120dd6f327bbfc8eca6f93e79"
+          }
+        ]
+      }
+    ]
+  }
+}

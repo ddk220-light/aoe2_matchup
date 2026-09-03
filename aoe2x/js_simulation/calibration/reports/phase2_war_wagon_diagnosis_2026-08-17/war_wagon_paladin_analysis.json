@@ -1,0 +1,1393 @@
+{
+  "generatedAt": "2026-08-17T23:14:43.227Z",
+  "matchup": "Elite War Wagon vs Paladin",
+  "ratio": "15v17",
+  "tapeRuns": [
+    {
+      "source": "tape",
+      "tag": "elite_war_wagon_koreans__vs__paladin",
+      "combatStartSeconds": 0.02,
+      "combatEndSeconds": 105.374,
+      "combatDurationSeconds": 105.354,
+      "finalHpByOwner": {
+        "2": 0,
+        "3": 1068
+      },
+      "finalAliveByOwner": {
+        "2": 0,
+        "3": 10
+      },
+      "attackStartsByOwner": {
+        "2": 379,
+        "3": 223
+      },
+      "attackStartTargetingByOwner": {
+        "2": {
+          "volleys": 37,
+          "opening": {
+            "time": 0.02,
+            "attackers": 15,
+            "distinctTargets": 4,
+            "largestTargetShare": 0.533
+          },
+          "medianAttackersPerVolley": 11,
+          "medianDistinctTargetsPerVolley": 1,
+          "medianLargestTargetShare": 1
+        },
+        "3": {
+          "volleys": 221,
+          "opening": {
+            "time": 2.912,
+            "attackers": 1,
+            "distinctTargets": 1,
+            "largestTargetShare": 1
+          },
+          "medianAttackersPerVolley": 1,
+          "medianDistinctTargetsPerVolley": 1,
+          "medianLargestTargetShare": 1
+        }
+      },
+      "unitsStartingAttacksByOwner": {
+        "2": 15,
+        "3": 17
+      },
+      "damageEventsByOwner": {
+        "2": 277,
+        "3": 210
+      },
+      "damageDealtByOwner": {
+        "2": 1992,
+        "3": 3000
+      },
+      "damageEventsPerAttackStartByOwner": {
+        "2": 0.7309,
+        "3": 0.9417
+      },
+      "firstDamageSecondsByOwner": {
+        "2": 1.456,
+        "3": 3.576
+      },
+      "deathsByOwner": {
+        "2": 15,
+        "3": 7
+      },
+      "firstDeathSecondsByOwner": {
+        "2": 10.524,
+        "3": 13.234
+      },
+      "targetChangesByOwner": {
+        "2": 582,
+        "3": 261
+      },
+      "meanPathTilesPerStartingUnit": {
+        "2": 41.252,
+        "3": 78.35
+      },
+      "aliveUnitSecondsByOwner": {
+        "2": 1087.222,
+        "3": 1406.334
+      },
+      "attackStartsPer100AliveUnitSeconds": {
+        "2": 34.859,
+        "3": 15.857
+      },
+      "effectiveSpeedWhileMovingTilesPerSecond": {
+        "2": 1.3,
+        "3": 1.485
+      },
+      "progressSpeedAcrossAliveTimeTilesPerSecond": {
+        "2": 0.569,
+        "3": 0.947
+      },
+      "movingShareOfAliveObservations": {
+        "2": 0.438,
+        "3": 0.6376
+      },
+      "attackingShareOfAliveObservations": {
+        "2": 0.5429,
+        "3": 0.2079
+      },
+      "stalledShareOfPaladinChaseObservations": 0.1358,
+      "paladinPursuitTargetConcentration": {
+        "medianDistinctTargets": 5,
+        "medianLargestTargetShare": 0.429,
+        "maximumPaladinsOnOneTarget": 11,
+        "openingTenSecondsMedianDistinctTargets": 6,
+        "openingTenSecondsMedianLargestTargetShare": 0.471
+      },
+      "paladinNearestWagonSurfaceGapTiles": {
+        "min": -0.561,
+        "p10": 0.149,
+        "median": 1.023,
+        "p90": 2.498,
+        "max": 6.371
+      },
+      "paladinProximityShare": {
+        "within0_10": 0.0674,
+        "within0_25": 0.16,
+        "within0_50": 0.2579,
+        "within1_00": 0.4904
+      },
+      "maximumSimultaneousPaladinsNearWagon": {
+        "within0_10": 5,
+        "within0_25": 8,
+        "within0_50": 10,
+        "within1_00": 14
+      },
+      "maximumSimultaneousAttackers": {
+        "2": 15,
+        "3": 8
+      },
+      "overlap": {
+        "wagonWagon": {
+          "pairObservations": 338091,
+          "overlappingPairObservations": 58323,
+          "overlappingPairObservationShare": 0.1725,
+          "framesWithAnyOverlapShare": 0.9169,
+          "closestPairSurfaceGapTilesByFrame": {
+            "min": -0.899,
+            "p10": -0.803,
+            "median": -0.667,
+            "p90": -0.246,
+            "max": 0.496
+          },
+          "overlapDepthTilesWhenOverlapping": {
+            "min": 0,
+            "p10": 0.055,
+            "median": 0.299,
+            "p90": 0.664,
+            "max": 0.899
+          },
+          "leftUnitObservationOverlapShare": 0.6687,
+          "maximumSimultaneousOverlapPairs": 35,
+          "maximumContactsOnOneLeftUnit": 9,
+          "deepestOverlapExample": {
+            "time": 23.066,
+            "leftId": 1270,
+            "rightId": 1550,
+            "leftPosition": {
+              "x": 11.499,
+              "y": 5.5
+            },
+            "rightPosition": {
+              "x": 11.498,
+              "y": 5.5
+            },
+            "centerDistanceTiles": 0.001,
+            "surfaceGapTiles": -0.899,
+            "overlapDepthTiles": 0.899
+          }
+        },
+        "wagonPaladin": {
+          "pairObservations": 915751,
+          "overlappingPairObservations": 2819,
+          "overlappingPairObservationShare": 0.0031,
+          "framesWithAnyOverlapShare": 0.2602,
+          "closestPairSurfaceGapTilesByFrame": {
+            "min": -0.561,
+            "p10": -0.227,
+            "median": 0.079,
+            "p90": 0.473,
+            "max": 3.3
+          },
+          "overlapDepthTilesWhenOverlapping": {
+            "min": 0,
+            "p10": 0.023,
+            "median": 0.113,
+            "p90": 0.28,
+            "max": 0.561
+          },
+          "leftUnitObservationOverlapShare": 0.0394,
+          "maximumSimultaneousOverlapPairs": 6,
+          "maximumContactsOnOneLeftUnit": 3,
+          "deepestOverlapExample": {
+            "time": 4.666,
+            "leftId": 1271,
+            "rightId": 1606,
+            "leftPosition": {
+              "x": 4.986,
+              "y": 7.239
+            },
+            "rightPosition": {
+              "x": 4.97,
+              "y": 7.378
+            },
+            "centerDistanceTiles": 0.139,
+            "surfaceGapTiles": -0.561,
+            "overlapDepthTiles": 0.561
+          },
+          "rightUnitObservationOverlapShare": 0.0267,
+          "maximumContactsOnOneRightUnit": 4
+        }
+      }
+    },
+    {
+      "source": "tape",
+      "tag": "elite_war_wagon_koreans__vs__paladin_r2",
+      "combatStartSeconds": 0.302,
+      "combatEndSeconds": 106.884,
+      "combatDurationSeconds": 106.582,
+      "finalHpByOwner": {
+        "2": 0,
+        "3": 1134
+      },
+      "finalAliveByOwner": {
+        "2": 0,
+        "3": 10
+      },
+      "attackStartsByOwner": {
+        "2": 377,
+        "3": 220
+      },
+      "attackStartTargetingByOwner": {
+        "2": {
+          "volleys": 38,
+          "opening": {
+            "time": 0.302,
+            "attackers": 15,
+            "distinctTargets": 4,
+            "largestTargetShare": 0.533
+          },
+          "medianAttackersPerVolley": 12,
+          "medianDistinctTargetsPerVolley": 1,
+          "medianLargestTargetShare": 1
+        },
+        "3": {
+          "volleys": 217,
+          "opening": {
+            "time": 3.204,
+            "attackers": 1,
+            "distinctTargets": 1,
+            "largestTargetShare": 1
+          },
+          "medianAttackersPerVolley": 1,
+          "medianDistinctTargetsPerVolley": 1,
+          "medianLargestTargetShare": 1
+        }
+      },
+      "unitsStartingAttacksByOwner": {
+        "2": 15,
+        "3": 17
+      },
+      "damageEventsByOwner": {
+        "2": 241,
+        "3": 209
+      },
+      "damageDealtByOwner": {
+        "2": 1926,
+        "3": 3000
+      },
+      "damageEventsPerAttackStartByOwner": {
+        "2": 0.6393,
+        "3": 0.95
+      },
+      "firstDamageSecondsByOwner": {
+        "2": 1.444,
+        "3": 3.576
+      },
+      "deathsByOwner": {
+        "2": 15,
+        "3": 7
+      },
+      "firstDeathSecondsByOwner": {
+        "2": 13.788,
+        "3": 6.752
+      },
+      "targetChangesByOwner": {
+        "2": 526,
+        "3": 239
+      },
+      "meanPathTilesPerStartingUnit": {
+        "2": 41.981,
+        "3": 75.834
+      },
+      "aliveUnitSecondsByOwner": {
+        "2": 1043.128,
+        "3": 1356.264
+      },
+      "attackStartsPer100AliveUnitSeconds": {
+        "2": 36.141,
+        "3": 16.221
+      },
+      "effectiveSpeedWhileMovingTilesPerSecond": {
+        "2": 1.306,
+        "3": 1.485
+      },
+      "progressSpeedAcrossAliveTimeTilesPerSecond": {
+        "2": 0.604,
+        "3": 0.951
+      },
+      "movingShareOfAliveObservations": {
+        "2": 0.462,
+        "3": 0.6401
+      },
+      "attackingShareOfAliveObservations": {
+        "2": 0.5269,
+        "3": 0.2162
+      },
+      "stalledShareOfPaladinChaseObservations": 0.1273,
+      "paladinPursuitTargetConcentration": {
+        "medianDistinctTargets": 5,
+        "medianLargestTargetShare": 0.455,
+        "maximumPaladinsOnOneTarget": 11,
+        "openingTenSecondsMedianDistinctTargets": 5,
+        "openingTenSecondsMedianLargestTargetShare": 0.471
+      },
+      "paladinNearestWagonSurfaceGapTiles": {
+        "min": -0.696,
+        "p10": 0.144,
+        "median": 1.101,
+        "p90": 2.639,
+        "max": 6.371
+      },
+      "paladinProximityShare": {
+        "within0_10": 0.0739,
+        "within0_25": 0.1524,
+        "within0_50": 0.247,
+        "within1_00": 0.4614
+      },
+      "maximumSimultaneousPaladinsNearWagon": {
+        "within0_10": 4,
+        "within0_25": 6,
+        "within0_50": 8,
+        "within1_00": 12
+      },
+      "maximumSimultaneousAttackers": {
+        "2": 15,
+        "3": 8
+      },
+      "overlap": {
+        "wagonWagon": {
+          "pairObservations": 335858,
+          "overlappingPairObservations": 76551,
+          "overlappingPairObservationShare": 0.2279,
+          "framesWithAnyOverlapShare": 0.809,
+          "closestPairSurfaceGapTilesByFrame": {
+            "min": -0.9,
+            "p10": -0.859,
+            "median": -0.643,
+            "p90": 0.232,
+            "max": 0.573
+          },
+          "overlapDepthTilesWhenOverlapping": {
+            "min": 0,
+            "p10": 0.062,
+            "median": 0.308,
+            "p90": 0.679,
+            "max": 0.9
+          },
+          "leftUnitObservationOverlapShare": 0.7539,
+          "maximumSimultaneousOverlapPairs": 56,
+          "maximumContactsOnOneLeftUnit": 12,
+          "deepestOverlapExample": {
+            "time": 13.554,
+            "leftId": 1264,
+            "rightId": 1550,
+            "leftPosition": {
+              "x": 8.493,
+              "y": 4.505
+            },
+            "rightPosition": {
+              "x": 8.493,
+              "y": 4.505
+            },
+            "centerDistanceTiles": 0,
+            "surfaceGapTiles": -0.9,
+            "overlapDepthTiles": 0.9
+          }
+        },
+        "wagonPaladin": {
+          "pairObservations": 848779,
+          "overlappingPairObservations": 5169,
+          "overlappingPairObservationShare": 0.0061,
+          "framesWithAnyOverlapShare": 0.4083,
+          "closestPairSurfaceGapTilesByFrame": {
+            "min": -0.696,
+            "p10": -0.205,
+            "median": 0.045,
+            "p90": 0.469,
+            "max": 3.3
+          },
+          "overlapDepthTilesWhenOverlapping": {
+            "min": 0,
+            "p10": 0.024,
+            "median": 0.1,
+            "p90": 0.264,
+            "max": 0.696
+          },
+          "leftUnitObservationOverlapShare": 0.0795,
+          "maximumSimultaneousOverlapPairs": 8,
+          "maximumContactsOnOneLeftUnit": 2,
+          "deepestOverlapExample": {
+            "time": 4.894,
+            "leftId": 1271,
+            "rightId": 1621,
+            "leftPosition": {
+              "x": 4.684,
+              "y": 6.448
+            },
+            "rightPosition": {
+              "x": 4.685,
+              "y": 6.452
+            },
+            "centerDistanceTiles": 0.004,
+            "surfaceGapTiles": -0.696,
+            "overlapDepthTiles": 0.696
+          },
+          "rightUnitObservationOverlapShare": 0.0375,
+          "maximumContactsOnOneRightUnit": 6
+        }
+      }
+    },
+    {
+      "source": "tape",
+      "tag": "elite_war_wagon_koreans__vs__paladin_r3",
+      "combatStartSeconds": 0.216,
+      "combatEndSeconds": 105.83,
+      "combatDurationSeconds": 105.614,
+      "finalHpByOwner": {
+        "2": 0,
+        "3": 918
+      },
+      "finalAliveByOwner": {
+        "2": 0,
+        "3": 10
+      },
+      "attackStartsByOwner": {
+        "2": 400,
+        "3": 223
+      },
+      "attackStartTargetingByOwner": {
+        "2": {
+          "volleys": 36,
+          "opening": {
+            "time": 0.216,
+            "attackers": 15,
+            "distinctTargets": 4,
+            "largestTargetShare": 0.533
+          },
+          "medianAttackersPerVolley": 12,
+          "medianDistinctTargetsPerVolley": 1,
+          "medianLargestTargetShare": 1
+        },
+        "3": {
+          "volleys": 219,
+          "opening": {
+            "time": 3.138,
+            "attackers": 1,
+            "distinctTargets": 1,
+            "largestTargetShare": 1
+          },
+          "medianAttackersPerVolley": 1,
+          "medianDistinctTargetsPerVolley": 1,
+          "medianLargestTargetShare": 1
+        }
+      },
+      "unitsStartingAttacksByOwner": {
+        "2": 15,
+        "3": 17
+      },
+      "damageEventsByOwner": {
+        "2": 264,
+        "3": 209
+      },
+      "damageDealtByOwner": {
+        "2": 2142,
+        "3": 3000
+      },
+      "damageEventsPerAttackStartByOwner": {
+        "2": 0.66,
+        "3": 0.9372
+      },
+      "firstDamageSecondsByOwner": {
+        "2": 1.452,
+        "3": 3.604
+      },
+      "deathsByOwner": {
+        "2": 15,
+        "3": 7
+      },
+      "firstDeathSecondsByOwner": {
+        "2": 34.096,
+        "3": 7.138
+      },
+      "targetChangesByOwner": {
+        "2": 649,
+        "3": 223
+      },
+      "meanPathTilesPerStartingUnit": {
+        "2": 44.112,
+        "3": 79.086
+      },
+      "aliveUnitSecondsByOwner": {
+        "2": 1159,
+        "3": 1405.47
+      },
+      "attackStartsPer100AliveUnitSeconds": {
+        "2": 34.513,
+        "3": 15.867
+      },
+      "effectiveSpeedWhileMovingTilesPerSecond": {
+        "2": 1.306,
+        "3": 1.485
+      },
+      "progressSpeedAcrossAliveTimeTilesPerSecond": {
+        "2": 0.571,
+        "3": 0.957
+      },
+      "movingShareOfAliveObservations": {
+        "2": 0.4376,
+        "3": 0.6447
+      },
+      "attackingShareOfAliveObservations": {
+        "2": 0.5471,
+        "3": 0.211
+      },
+      "stalledShareOfPaladinChaseObservations": 0.1296,
+      "paladinPursuitTargetConcentration": {
+        "medianDistinctTargets": 6,
+        "medianLargestTargetShare": 0.385,
+        "maximumPaladinsOnOneTarget": 9,
+        "openingTenSecondsMedianDistinctTargets": 5,
+        "openingTenSecondsMedianLargestTargetShare": 0.412
+      },
+      "paladinNearestWagonSurfaceGapTiles": {
+        "min": -0.514,
+        "p10": 0.151,
+        "median": 1.05,
+        "p90": 2.477,
+        "max": 6.371
+      },
+      "paladinProximityShare": {
+        "within0_10": 0.0696,
+        "within0_25": 0.1546,
+        "within0_50": 0.2518,
+        "within1_00": 0.4771
+      },
+      "maximumSimultaneousPaladinsNearWagon": {
+        "within0_10": 5,
+        "within0_25": 8,
+        "within0_50": 8,
+        "within1_00": 14
+      },
+      "maximumSimultaneousAttackers": {
+        "2": 15,
+        "3": 7
+      },
+      "overlap": {
+        "wagonWagon": {
+          "pairObservations": 395829,
+          "overlappingPairObservations": 120259,
+          "overlappingPairObservationShare": 0.3038,
+          "framesWithAnyOverlapShare": 0.9344,
+          "closestPairSurfaceGapTilesByFrame": {
+            "min": -0.9,
+            "p10": -0.886,
+            "median": -0.721,
+            "p90": -0.159,
+            "max": 0.659
+          },
+          "overlapDepthTilesWhenOverlapping": {
+            "min": 0,
+            "p10": 0.063,
+            "median": 0.325,
+            "p90": 0.705,
+            "max": 0.9
+          },
+          "leftUnitObservationOverlapShare": 0.8041,
+          "maximumSimultaneousOverlapPairs": 81,
+          "maximumContactsOnOneLeftUnit": 13,
+          "deepestOverlapExample": {
+            "time": 21.428,
+            "leftId": 1265,
+            "rightId": 1269,
+            "leftPosition": {
+              "x": 10.299,
+              "y": 4.13
+            },
+            "rightPosition": {
+              "x": 10.299,
+              "y": 4.13
+            },
+            "centerDistanceTiles": 0,
+            "surfaceGapTiles": -0.9,
+            "overlapDepthTiles": 0.9
+          }
+        },
+        "wagonPaladin": {
+          "pairObservations": 964827,
+          "overlappingPairObservations": 3519,
+          "overlappingPairObservationShare": 0.0036,
+          "framesWithAnyOverlapShare": 0.2869,
+          "closestPairSurfaceGapTilesByFrame": {
+            "min": -0.514,
+            "p10": -0.134,
+            "median": 0.083,
+            "p90": 0.408,
+            "max": 3.3
+          },
+          "overlapDepthTilesWhenOverlapping": {
+            "min": 0,
+            "p10": 0.02,
+            "median": 0.066,
+            "p90": 0.179,
+            "max": 0.514
+          },
+          "leftUnitObservationOverlapShare": 0.0504,
+          "maximumSimultaneousOverlapPairs": 7,
+          "maximumContactsOnOneLeftUnit": 2,
+          "deepestOverlapExample": {
+            "time": 57.826,
+            "leftId": 1269,
+            "rightId": 1619,
+            "leftPosition": {
+              "x": 5.762,
+              "y": 9.387
+            },
+            "rightPosition": {
+              "x": 5.668,
+              "y": 9.226
+            },
+            "centerDistanceTiles": 0.186,
+            "surfaceGapTiles": -0.514,
+            "overlapDepthTiles": 0.514
+          },
+          "rightUnitObservationOverlapShare": 0.0237,
+          "maximumContactsOnOneRightUnit": 6
+        }
+      }
+    },
+    {
+      "source": "tape",
+      "tag": "elite_war_wagon_koreans__vs__paladin_r4",
+      "combatStartSeconds": 0.216,
+      "combatEndSeconds": 94.394,
+      "combatDurationSeconds": 94.178,
+      "finalHpByOwner": {
+        "2": 0,
+        "3": 1218
+      },
+      "finalAliveByOwner": {
+        "2": 0,
+        "3": 11
+      },
+      "attackStartsByOwner": {
+        "2": 352,
+        "3": 219
+      },
+      "attackStartTargetingByOwner": {
+        "2": {
+          "volleys": 33,
+          "opening": {
+            "time": 0.216,
+            "attackers": 15,
+            "distinctTargets": 4,
+            "largestTargetShare": 0.533
+          },
+          "medianAttackersPerVolley": 11,
+          "medianDistinctTargetsPerVolley": 1,
+          "medianLargestTargetShare": 1
+        },
+        "3": {
+          "volleys": 215,
+          "opening": {
+            "time": 3.13,
+            "attackers": 1,
+            "distinctTargets": 1,
+            "largestTargetShare": 1
+          },
+          "medianAttackersPerVolley": 1,
+          "medianDistinctTargetsPerVolley": 1,
+          "medianLargestTargetShare": 1
+        }
+      },
+      "unitsStartingAttacksByOwner": {
+        "2": 15,
+        "3": 17
+      },
+      "damageEventsByOwner": {
+        "2": 247,
+        "3": 210
+      },
+      "damageDealtByOwner": {
+        "2": 1842,
+        "3": 3000
+      },
+      "damageEventsPerAttackStartByOwner": {
+        "2": 0.7017,
+        "3": 0.9589
+      },
+      "firstDamageSecondsByOwner": {
+        "2": 1.464,
+        "3": 3.6
+      },
+      "deathsByOwner": {
+        "2": 15,
+        "3": 6
+      },
+      "firstDeathSecondsByOwner": {
+        "2": 7.534,
+        "3": 17.6
+      },
+      "targetChangesByOwner": {
+        "2": 484,
+        "3": 232
+      },
+      "meanPathTilesPerStartingUnit": {
+        "2": 37.957,
+        "3": 72.538
+      },
+      "aliveUnitSecondsByOwner": {
+        "2": 970.726,
+        "3": 1317.636
+      },
+      "attackStartsPer100AliveUnitSeconds": {
+        "2": 36.262,
+        "3": 16.621
+      },
+      "effectiveSpeedWhileMovingTilesPerSecond": {
+        "2": 1.3,
+        "3": 1.485
+      },
+      "progressSpeedAcrossAliveTimeTilesPerSecond": {
+        "2": 0.587,
+        "3": 0.936
+      },
+      "movingShareOfAliveObservations": {
+        "2": 0.452,
+        "3": 0.6306
+      },
+      "attackingShareOfAliveObservations": {
+        "2": 0.5268,
+        "3": 0.2209
+      },
+      "stalledShareOfPaladinChaseObservations": 0.1334,
+      "paladinPursuitTargetConcentration": {
+        "medianDistinctTargets": 5,
+        "medianLargestTargetShare": 0.385,
+        "maximumPaladinsOnOneTarget": 11,
+        "openingTenSecondsMedianDistinctTargets": 6,
+        "openingTenSecondsMedianLargestTargetShare": 0.471
+      },
+      "paladinNearestWagonSurfaceGapTiles": {
+        "min": -0.62,
+        "p10": 0.1,
+        "median": 1.052,
+        "p90": 2.567,
+        "max": 6.371
+      },
+      "paladinProximityShare": {
+        "within0_10": 0.1005,
+        "within0_25": 0.1803,
+        "within0_50": 0.2779,
+        "within1_00": 0.4807
+      },
+      "maximumSimultaneousPaladinsNearWagon": {
+        "within0_10": 8,
+        "within0_25": 11,
+        "within0_50": 13,
+        "within1_00": 15
+      },
+      "maximumSimultaneousAttackers": {
+        "2": 15,
+        "3": 10
+      },
+      "overlap": {
+        "wagonWagon": {
+          "pairObservations": 312117,
+          "overlappingPairObservations": 61433,
+          "overlappingPairObservationShare": 0.1968,
+          "framesWithAnyOverlapShare": 0.9118,
+          "closestPairSurfaceGapTilesByFrame": {
+            "min": -0.9,
+            "p10": -0.877,
+            "median": -0.674,
+            "p90": -0.248,
+            "max": 0.382
+          },
+          "overlapDepthTilesWhenOverlapping": {
+            "min": 0,
+            "p10": 0.064,
+            "median": 0.304,
+            "p90": 0.659,
+            "max": 0.9
+          },
+          "leftUnitObservationOverlapShare": 0.7164,
+          "maximumSimultaneousOverlapPairs": 37,
+          "maximumContactsOnOneLeftUnit": 10,
+          "deepestOverlapExample": {
+            "time": 5.108,
+            "leftId": 1273,
+            "rightId": 1552,
+            "leftPosition": {
+              "x": 6.508,
+              "y": 5.006
+            },
+            "rightPosition": {
+              "x": 6.508,
+              "y": 5.006
+            },
+            "centerDistanceTiles": 0,
+            "surfaceGapTiles": -0.9,
+            "overlapDepthTiles": 0.9
+          }
+        },
+        "wagonPaladin": {
+          "pairObservations": 850294,
+          "overlappingPairObservations": 5179,
+          "overlappingPairObservationShare": 0.0061,
+          "framesWithAnyOverlapShare": 0.4371,
+          "closestPairSurfaceGapTilesByFrame": {
+            "min": -0.62,
+            "p10": -0.235,
+            "median": 0.027,
+            "p90": 0.326,
+            "max": 3.3
+          },
+          "overlapDepthTilesWhenOverlapping": {
+            "min": 0,
+            "p10": 0.016,
+            "median": 0.113,
+            "p90": 0.357,
+            "max": 0.62
+          },
+          "leftUnitObservationOverlapShare": 0.0725,
+          "maximumSimultaneousOverlapPairs": 6,
+          "maximumContactsOnOneLeftUnit": 3,
+          "deepestOverlapExample": {
+            "time": 46.57,
+            "leftId": 1269,
+            "rightId": 1607,
+            "leftPosition": {
+              "x": 6.238,
+              "y": 10.298
+            },
+            "rightPosition": {
+              "x": 6.178,
+              "y": 10.351
+            },
+            "centerDistanceTiles": 0.08,
+            "surfaceGapTiles": -0.62,
+            "overlapDepthTiles": 0.62
+          },
+          "rightUnitObservationOverlapShare": 0.055,
+          "maximumContactsOnOneRightUnit": 5
+        }
+      }
+    }
+  ],
+  "tapeBand": {
+    "combatDurationSeconds": {
+      "min": 94.178,
+      "p10": 94.178,
+      "median": 105.354,
+      "p90": 105.614,
+      "max": 106.582
+    },
+    "wagonAttackStarts": {
+      "min": 352,
+      "p10": 352,
+      "median": 377,
+      "p90": 379,
+      "max": 400
+    },
+    "paladinAttackStarts": {
+      "min": 219,
+      "p10": 219,
+      "median": 220,
+      "p90": 223,
+      "max": 223
+    },
+    "wagonDamageEvents": {
+      "min": 241,
+      "p10": 241,
+      "median": 247,
+      "p90": 264,
+      "max": 277
+    },
+    "paladinDamageEvents": {
+      "min": 209,
+      "p10": 209,
+      "median": 209,
+      "p90": 210,
+      "max": 210
+    },
+    "wagonDamageDealt": {
+      "min": 1842,
+      "p10": 1842,
+      "median": 1926,
+      "p90": 1992,
+      "max": 2142
+    },
+    "paladinDamageDealt": {
+      "min": 3000,
+      "p10": 3000,
+      "median": 3000,
+      "p90": 3000,
+      "max": 3000
+    },
+    "paladinFirstDamageSeconds": {
+      "min": 3.576,
+      "p10": 3.576,
+      "median": 3.576,
+      "p90": 3.6,
+      "max": 3.604
+    },
+    "wagonFirstDeathSeconds": {
+      "min": 7.534,
+      "p10": 7.534,
+      "median": 10.524,
+      "p90": 13.788,
+      "max": 34.096
+    },
+    "paladinAttackShare": {
+      "min": 0.208,
+      "p10": 0.208,
+      "median": 0.211,
+      "p90": 0.216,
+      "max": 0.221
+    },
+    "paladinStalledChaseShare": {
+      "min": 0.127,
+      "p10": 0.127,
+      "median": 0.13,
+      "p90": 0.133,
+      "max": 0.136
+    },
+    "paladinMedianSurfaceGap": {
+      "min": 1.023,
+      "p10": 1.023,
+      "median": 1.05,
+      "p90": 1.052,
+      "max": 1.101
+    },
+    "paladinP10SurfaceGap": {
+      "min": 0.1,
+      "p10": 0.1,
+      "median": 0.144,
+      "p90": 0.149,
+      "max": 0.151
+    },
+    "paladinWithin0_25Share": {
+      "min": 0.152,
+      "p10": 0.152,
+      "median": 0.155,
+      "p90": 0.16,
+      "max": 0.18
+    },
+    "maxPaladinsWithin0_25": {
+      "min": 6,
+      "p10": 6,
+      "median": 8,
+      "p90": 8,
+      "max": 11
+    },
+    "maxSimultaneousPaladinAttackers": {
+      "min": 7,
+      "p10": 7,
+      "median": 8,
+      "p90": 8,
+      "max": 10
+    },
+    "overlap": {
+      "wagonWagon": {
+        "overlappingPairObservationShare": {
+          "min": 0.172,
+          "p10": 0.172,
+          "median": 0.197,
+          "p90": 0.228,
+          "max": 0.304
+        },
+        "framesWithAnyOverlapShare": {
+          "min": 0.809,
+          "p10": 0.809,
+          "median": 0.912,
+          "p90": 0.917,
+          "max": 0.934
+        },
+        "medianOverlapDepthTiles": {
+          "min": 0.299,
+          "p10": 0.299,
+          "median": 0.304,
+          "p90": 0.308,
+          "max": 0.325
+        },
+        "p90OverlapDepthTiles": {
+          "min": 0.659,
+          "p10": 0.659,
+          "median": 0.664,
+          "p90": 0.679,
+          "max": 0.705
+        },
+        "maximumOverlapDepthTiles": {
+          "min": 0.899,
+          "p10": 0.899,
+          "median": 0.9,
+          "p90": 0.9,
+          "max": 0.9
+        },
+        "leftUnitObservationOverlapShare": {
+          "min": 0.669,
+          "p10": 0.669,
+          "median": 0.716,
+          "p90": 0.754,
+          "max": 0.804
+        },
+        "rightUnitObservationOverlapShare": {
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "maximumSimultaneousOverlapPairs": {
+          "min": 35,
+          "p10": 35,
+          "median": 37,
+          "p90": 56,
+          "max": 81
+        },
+        "maximumContactsOnOneLeftUnit": {
+          "min": 9,
+          "p10": 9,
+          "median": 10,
+          "p90": 12,
+          "max": 13
+        },
+        "maximumContactsOnOneRightUnit": {
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "wagonPaladin": {
+        "overlappingPairObservationShare": {
+          "min": 0.003,
+          "p10": 0.003,
+          "median": 0.004,
+          "p90": 0.006,
+          "max": 0.006
+        },
+        "framesWithAnyOverlapShare": {
+          "min": 0.26,
+          "p10": 0.26,
+          "median": 0.287,
+          "p90": 0.408,
+          "max": 0.437
+        },
+        "medianOverlapDepthTiles": {
+          "min": 0.066,
+          "p10": 0.066,
+          "median": 0.1,
+          "p90": 0.113,
+          "max": 0.113
+        },
+        "p90OverlapDepthTiles": {
+          "min": 0.179,
+          "p10": 0.179,
+          "median": 0.264,
+          "p90": 0.28,
+          "max": 0.357
+        },
+        "maximumOverlapDepthTiles": {
+          "min": 0.514,
+          "p10": 0.514,
+          "median": 0.561,
+          "p90": 0.62,
+          "max": 0.696
+        },
+        "leftUnitObservationOverlapShare": {
+          "min": 0.039,
+          "p10": 0.039,
+          "median": 0.05,
+          "p90": 0.072,
+          "max": 0.08
+        },
+        "rightUnitObservationOverlapShare": {
+          "min": 0.024,
+          "p10": 0.024,
+          "median": 0.027,
+          "p90": 0.037,
+          "max": 0.055
+        },
+        "maximumSimultaneousOverlapPairs": {
+          "min": 6,
+          "p10": 6,
+          "median": 6,
+          "p90": 7,
+          "max": 8
+        },
+        "maximumContactsOnOneLeftUnit": {
+          "min": 2,
+          "p10": 2,
+          "median": 2,
+          "p90": 3,
+          "max": 3
+        },
+        "maximumContactsOnOneRightUnit": {
+          "min": 4,
+          "p10": 4,
+          "median": 5,
+          "p90": 6,
+          "max": 6
+        }
+      }
+    }
+  },
+  "simulation": {
+    "source": "simulation",
+    "tag": "sample_0",
+    "combatStartSeconds": 0.6,
+    "combatEndSeconds": 102.8,
+    "combatDurationSeconds": 102.2,
+    "finalHpByOwner": {
+      "2": 2500,
+      "3": 0
+    },
+    "finalAliveByOwner": {
+      "2": 14,
+      "3": 0
+    },
+    "attackStartsByOwner": {
+      "2": 542,
+      "3": 35
+    },
+    "attackStartTargetingByOwner": {
+      "2": {
+        "volleys": 38,
+        "opening": {
+          "time": 2.667,
+          "attackers": 15,
+          "distinctTargets": 2,
+          "largestTargetShare": 0.8
+        },
+        "medianAttackersPerVolley": 14,
+        "medianDistinctTargetsPerVolley": 2,
+        "medianLargestTargetShare": 0.786
+      },
+      "3": {
+        "volleys": 35,
+        "opening": {
+          "time": 3.383,
+          "attackers": 1,
+          "distinctTargets": 1,
+          "largestTargetShare": 1
+        },
+        "medianAttackersPerVolley": 1,
+        "medianDistinctTargetsPerVolley": 1,
+        "medianLargestTargetShare": 1
+      }
+    },
+    "unitsStartingAttacksByOwner": {
+      "2": 15,
+      "3": 13
+    },
+    "damageEventsByOwner": {
+      "2": 432,
+      "3": 34
+    },
+    "damageDealtByOwner": {
+      "2": 3060,
+      "3": 500
+    },
+    "damageEventsPerAttackStartByOwner": {
+      "2": 0.797,
+      "3": 0.9714
+    },
+    "firstDamageSecondsByOwner": {
+      "2": 3.333,
+      "3": 3.45
+    },
+    "deathsByOwner": {
+      "2": 1,
+      "3": 17
+    },
+    "firstDeathSecondsByOwner": {
+      "2": 26.367,
+      "3": 11.7
+    },
+    "targetChangesByOwner": {
+      "2": 344,
+      "3": 291
+    },
+    "meanPathTilesPerStartingUnit": {
+      "2": 49.883,
+      "3": 33.326
+    },
+    "aliveUnitSecondsByOwner": {
+      "2": 1457.167,
+      "3": 958.217
+    },
+    "attackStartsPer100AliveUnitSeconds": {
+      "2": 37.195,
+      "3": 3.653
+    },
+    "effectiveSpeedWhileMovingTilesPerSecond": {
+      "2": 1.32,
+      "3": 0.955
+    },
+    "progressSpeedAcrossAliveTimeTilesPerSecond": {
+      "2": 0.513,
+      "3": 0.591
+    },
+    "movingShareOfAliveObservations": {
+      "2": 0.3892,
+      "3": 0.6188
+    },
+    "attackingShareOfAliveObservations": {
+      "2": 0.5199,
+      "3": 0.0552
+    },
+    "stalledShareOfPaladinChaseObservations": 0.3491,
+    "paladinPursuitTargetConcentration": {
+      "medianDistinctTargets": 1,
+      "medianLargestTargetShare": 1,
+      "maximumPaladinsOnOneTarget": 17,
+      "openingTenSecondsMedianDistinctTargets": 1,
+      "openingTenSecondsMedianLargestTargetShare": 1
+    },
+    "paladinNearestWagonSurfaceGapTiles": {
+      "min": 0.055,
+      "p10": 0.573,
+      "median": 1.41,
+      "p90": 2.534,
+      "max": 6.347
+    },
+    "paladinProximityShare": {
+      "within0_10": 0.0002,
+      "within0_25": 0.0019,
+      "within0_50": 0.0799,
+      "within1_00": 0.3059
+    },
+    "maximumSimultaneousPaladinsNearWagon": {
+      "within0_10": 1,
+      "within0_25": 1,
+      "within0_50": 4,
+      "within1_00": 9
+    },
+    "maximumSimultaneousAttackers": {
+      "2": 15,
+      "3": 2
+    },
+    "overlap": {
+      "wagonWagon": {
+        "pairObservations": 580251,
+        "overlappingPairObservations": 203080,
+        "overlappingPairObservationShare": 0.35,
+        "framesWithAnyOverlapShare": 0.9915,
+        "closestPairSurfaceGapTilesByFrame": {
+          "min": -0.894,
+          "p10": -0.587,
+          "median": -0.43,
+          "p90": -0.42,
+          "max": 0.1
+        },
+        "overlapDepthTilesWhenOverlapping": {
+          "min": 0,
+          "p10": 0.221,
+          "median": 0.42,
+          "p90": 0.421,
+          "max": 0.894
+        },
+        "leftUnitObservationOverlapShare": 0.9789,
+        "maximumSimultaneousOverlapPairs": 46,
+        "maximumContactsOnOneLeftUnit": 10,
+        "deepestOverlapExample": {
+          "time": 7.017,
+          "leftId": 1273,
+          "rightId": 1550,
+          "leftPosition": {
+            "x": 10.213,
+            "y": 4.771
+          },
+          "rightPosition": {
+            "x": 10.208,
+            "y": 4.767
+          },
+          "centerDistanceTiles": 0.006,
+          "surfaceGapTiles": -0.894,
+          "overlapDepthTiles": 0.894
+        }
+      },
+      "wagonPaladin": {
+        "pairObservations": 829794,
+        "overlappingPairObservations": 0,
+        "overlappingPairObservationShare": 0,
+        "framesWithAnyOverlapShare": 0,
+        "closestPairSurfaceGapTilesByFrame": {
+          "min": 0.055,
+          "p10": 0.283,
+          "median": 0.547,
+          "p90": 1.204,
+          "max": 3.277
+        },
+        "overlapDepthTilesWhenOverlapping": {
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "leftUnitObservationOverlapShare": 0,
+        "maximumSimultaneousOverlapPairs": 0,
+        "maximumContactsOnOneLeftUnit": 0,
+        "deepestOverlapExample": {
+          "time": 63.683,
+          "leftId": 1268,
+          "rightId": 1605,
+          "leftPosition": {
+            "x": 11.502,
+            "y": 5.18
+          },
+          "rightPosition": {
+            "x": 10.76,
+            "y": 5.041
+          },
+          "centerDistanceTiles": 0.755,
+          "surfaceGapTiles": 0.055,
+          "overlapDepthTiles": 0
+        },
+        "rightUnitObservationOverlapShare": 0,
+        "maximumContactsOnOneRightUnit": 0
+      }
+    },
+    "winnerOwner": 2,
+    "ticks": 6168,
+    "score": -83.33333333333333
+  },
+  "eventTypes": {
+    "ai-location-order": 17,
+    "move": 72250,
+    "pursuit-acquired": 449,
+    "blocked": 43281,
+    "kite-move": 556,
+    "ai-order": 542,
+    "engagement-started": 565,
+    "attack-start": 577,
+    "damage": 544,
+    "engagement-ended": 39,
+    "death": 18,
+    "pursuit-invalidated": 158,
+    "contact-capture": 1
+  },
+  "source": {
+    "archive": {
+      "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+      "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+      "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+    },
+    "tapeMembers": [
+      "phase2/raw recordings/elite_war_wagon_koreans__vs__paladin.frames.bin",
+      "phase2/raw recordings/elite_war_wagon_koreans__vs__paladin_r2.frames.bin",
+      "phase2/raw recordings/elite_war_wagon_koreans__vs__paladin_r3.frames.bin",
+      "phase2/raw recordings/elite_war_wagon_koreans__vs__paladin_r4.frames.bin"
+    ],
+    "startingUnitsHash": "34074FBB2D63255EFF811088E532A2DA6427D2E457A6C53F3EAA9B159538DCAF",
+    "simulationSample": {
+      "sampleIndex": 0,
+      "seed": 20260817
+    }
+  }
+}

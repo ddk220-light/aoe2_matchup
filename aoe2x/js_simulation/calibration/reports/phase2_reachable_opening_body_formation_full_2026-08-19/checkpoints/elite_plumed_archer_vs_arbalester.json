@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "46c5a6fed8e0a643b2393783d398b734dada35ddb301f201146bddc15e562bcd",
+  "matchupId": "elite_plumed_archer_vs_arbalester",
+  "completedAt": "2026-08-19T15:35:08.011Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 16.0161943319838,
+      "medianAbsoluteMeanDelta": 16.0161943319838,
+      "maximumAbsoluteMeanDelta": 16.0161943319838
+    },
+    "rows": [
+      {
+        "id": "elite_plumed_archer_vs_arbalester",
+        "subjectSlug": "elite_plumed_archer",
+        "opponentSlug": "arbalester",
+        "matchup": "Elite Plumed Archer vs Arbalester",
+        "side2": {
+          "count": 19,
+          "master": 765,
+          "owner": 2,
+          "slug": "elite_plumed_archer",
+          "unit": "Elite Plumed Archer"
+        },
+        "side3": {
+          "count": 21,
+          "master": 492,
+          "owner": 3,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -47.935222672064775,
+          "min": -47.935222672064775,
+          "max": -47.935222672064775,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -31.919028340080974,
+          "min": -34.493927125506076,
+          "max": -27.611336032388664,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 16.0161943319838,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_plumed_archer_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 356,
+            "score": -28.82591093117409,
+            "ticks": 2598,
+            "finalStateHash": "1acbb406596f810bea2a5a7a43c61a0d83358b98c393b00a9a9f7b598ae39add",
+            "eventLogHash": "26d90ed9e4c4c5be483c976f5dfbbd4a27ce2f5576495a781569974cf588ba14"
+          },
+          {
+            "rowId": "elite_plumed_archer_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 426,
+            "score": -34.493927125506076,
+            "ticks": 2521,
+            "finalStateHash": "fa35eb53a0cc6a0eef6c71a16ef20b26cd618ebcb49e48a2de9c05ca1706dc04",
+            "eventLogHash": "87a4eb9d193460cecc83556b5237d73151510d0c0486122e7045c67824539b10"
+          },
+          {
+            "rowId": "elite_plumed_archer_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 422,
+            "score": -34.17004048582996,
+            "ticks": 2729,
+            "finalStateHash": "d70b22912ebd55cd18c9f57d49cf4f23d974615c87865f1e636773fbd8109bf0",
+            "eventLogHash": "69dd26481cf91c28aee31f106cacbd51a16882e57bae0605c4fc3ad3b42eedca"
+          },
+          {
+            "rowId": "elite_plumed_archer_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 426,
+            "score": -34.493927125506076,
+            "ticks": 2529,
+            "finalStateHash": "b2310e3476a2a0b9ed150fb8ab2ed2036b7a4e409a885e431c08265dbe55d338",
+            "eventLogHash": "6f0cca1613f8b52bdc07e8b76924f4492823f196dc19a702340e77a1e7afadc4"
+          },
+          {
+            "rowId": "elite_plumed_archer_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 341,
+            "score": -27.611336032388664,
+            "ticks": 2498,
+            "finalStateHash": "6be245bff4584f6f0205f2cb4ca13770bafbb448f07ebe512a704fa086556aaf",
+            "eventLogHash": "fb76295495229b13f745968af386cce02a9da666a26b3610ab77b30094360597"
+          }
+        ]
+      }
+    ]
+  }
+}

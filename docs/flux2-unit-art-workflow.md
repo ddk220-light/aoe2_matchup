@@ -5,9 +5,9 @@ renders of AoE2:DE elite unique units, using FLUX.2-dev (4-bit) with multi-angle
 + the in-game icon. Proven on Temple Guard, Janissary, Berserker, Paladin.
 
 ## Environment
-- Diffusion env: `C:/Users/ddk22/miniconda3/envs/visomaster/python.exe` (torch 2.8 cu129, diffusers 0.38, bitsandbytes 0.49, RTX 5090).
+- Diffusion env: `D:/miniconda3/envs/visomaster/python.exe` (torch 2.8 cu129, diffusers 0.38, bitsandbytes 0.49, RTX 5090).
 - Model: `diffusers/FLUX.2-dev-bnb-4bit` (cached, ~32 GB). Load with `Flux2Pipeline.from_pretrained(..., torch_dtype=bfloat16)` + `enable_model_cpu_offload()`.
-- rembg cut: base conda `C:/Users/ddk22/miniconda3/python.exe` (`new_session('isnet-general-use')`).
+- rembg cut: base conda `D:/miniconda3/python.exe` (`new_session('isnet-general-use')`).
 - SLD decode: `graphics/sld_decode.py` (`D.parse`, `D.decode_main(player_color=None)`, `D._finish(crop=True, margin=4)`).
 
 ## Inputs per unit

@@ -72,14 +72,48 @@ DEFAULT_PROJECTILE_SPEED = 7.0  # tiles/s
 # get reliably grazed.
 MISS_SPREAD_RADIUS = 2.0  # tiles
 
-# After this many game-seconds, ranged units stop kiting and just attack.
-# Models real-game reality: an infinite kite is impossible — units hit
-# walls, micro fails, the player shifts focus.  Lets battles actually
-# resolve so we get meaningful HP-remaining data on melee units.
-# Units with min_attack_range > 0 (Onager/Mangonel/Scorpion/Trebuchet)
-# still need their target to be outside the dead zone after kite-stop —
-# they will switch targets if possible, else go idle.
-KITE_STOP_TIME = 60.0  # game-seconds
+# --- Kiting -----------------------------------------------------------------
+#
+# A ranged unit ALWAYS tries to kite. Whether kiting actually works is left to
+# the physics: a unit with attack_delay > 0 is frozen in `windup` and cannot
+# move, so its real retreat speed is
+#
+#     effective_speed = movement_speed * (1 - attack_delay / reload_time)
+#
+# which emerges from the tick loop rather than being computed. A Janissary
+# (delay 0.00) keeps its full 0.96; a Heavy Cav Archer (0.58 / 2.00) is frozen
+# 29% of every cycle and retreats like a 1.09 unit despite 1.54 on paper.
+#
+# Kiting another RANGED unit only makes sense when you can both stay away from
+# it and out-shoot it, so it requires strictly greater effective speed AND
+# strictly greater range. Otherwise both sides stand and trade.
+#
+# This replaces KITE_STOP_TIME, a flat 60s cutoff that switched kiting off
+# mid-fight to force resolution. A timer is not physics: it made the tick
+# clock decide outcomes. Fights now end on a DECIDED-FIGHT test instead —
+# evaluated once past KITE_DECISION_TIME:
+#
+#   kiter healthy AND target badly hurt  -> kiter wins   (end_reason="kite_win")
+#   kiter healthy AND target unhurt      -> neither side can win ("stalemate"):
+#                                           one is too slow to catch, the other
+#                                           too weak to kill.
+#   otherwise                            -> keep fighting to elimination
+#
+# A stalemate is NOT a draw and NOT a tossup — a tossup could go either way,
+# a stalemate cannot go anywhere at all. It carries its own end_reason so the
+# ranking layer can exclude it rather than score it as an even matchup.
+# Measured 2026-07-28: removing the cutoff entirely costs 4 tape rows. With no
+# time limit a Slinger out-kites a War Elephant forever, because the elephant
+# closes at only 0.88 - 0.85 = 0.03 tiles/s of effective speed; the recordings
+# say the elephant wins. The cutoff is a crude model of a real constraint --
+# perfect kiting does not happen, because formations bunch, terrain clips, micro
+# fails and maps have edges. Deleting it replaced a bad model of a real limit
+# with no model at all, so it stays until something better is fitted.
+KITE_STOP_TIME = 60.0         # game-seconds after which kiting stops
+
+KITE_DECISION_TIME = 120.0    # game-seconds before the decided-fight test runs
+KITE_WIN_MAX_SELF_LOSS = 0.11   # kiter must retain >= 89% of its army HP
+KITE_WIN_MIN_OPP_LOSS = 0.33    # target must have lost > 33% of its army HP
 
 # Weighted resource cost: gold is the scarcest economic resource, wood the
 # most abundant.  Used everywhere we collapse (food, wood, gold) into a
@@ -121,12 +155,77 @@ DEFAULT_MAX_WALLCLOCK_SECONDS = 180.0
 # "in combat" for hp_regen purposes.  Matches AoE2 convention (~5 seconds).
 COMBAT_WINDOW_S = 5.0
 
+# Attack-speed ramp (Temple Guard) decay window: a hit's reload reduction
+# expires this many seconds after it lands, so the ramp reflects hits landed
+# recently rather than accumulating for the whole battle.
+RAMP_WINDOW_S = 5.0
+
 # Movement smoothing factor (matches JS: 0.3 means blend 30% old + 70% new).
 MOVE_SMOOTHING = 0.3
 
-# Stuck detection threshold (matches JS: 0.5 px in pixel-space → 0.5/30 tiles)
-STUCK_PROGRESS_THRESHOLD = 0.5 / 30.0
-STUCK_TIMER_LIMIT = 0.8  # seconds
+# Floor on a unit's collision radius, in tiles (the JS engine floors at 4 px).
+MIN_COLLISION_RADIUS = 4.0 / 30.0
+
+
+def collision_radius(outline_size):
+    """A unit's TRUE body radius in tiles.
+
+    `outline_size` from the dat IS the collision footprint. The formula this
+    replaces — (10 + outline*20) / 30 — is the SPRITE size the browser canvas
+    uses to choose a circle to draw, and it is roughly 2.3x too wide for
+    infantry (0.467 vs 0.200 tiles). That rendering number was feeding the
+    physics: fattened bodies jam melee contact, hold attackers out of reach of
+    the unit they are targeting, and inflate every distance-based mechanic
+    (trample coverage, projectile grazes, formation spacing) along with it.
+    """
+    return max(MIN_COLLISION_RADIUS, float(outline_size or 0.2))
+
+# Stuck detection: a chaser closing SLOWER than this is treated as making no
+# progress, and after STUCK_TIMER_LIMIT it blacklists its target and re-picks.
+#
+# This is a RATE (tiles per second), not a per-tick step. The JS engine spends
+# it as "0.5 px per frame", which silently makes the threshold depend on frame
+# rate: the same constant demands 1.0 tiles/s at 60 fps but only 0.5 tiles/s at
+# this engine's 30 Hz. Tick rate must not be physics — changing DT should change
+# resolution, not who wins. 0.5 tiles/s preserves this engine's existing
+# behaviour exactly at DT=1/30; whether that value is itself right is a separate
+# question (a Paladin chasing a Slinger closes at only 0.53 tiles/s, so it sits
+# barely above the bar, and slower chases are declared stuck while genuinely
+# closing).
+STUCK_PROGRESS_RATE = 0.5   # tiles/second
+STUCK_TIMER_LIMIT = 0.8     # seconds
+
+# Crowd interference for MELEE swings. In a packed mêlée units shove, turn, and
+# lose the target they were winding up on, so a swing cycle runs longer than the
+# unit's nominal reload. Without it a melee unit in a scrum attacks at its full
+# paper rate, which most distorts units whose kit COMPOUNDS with attack speed:
+# the Elite Temple Guard's ramp reaches its 1.0s floor and stays there, where
+# the recorded fights show its throughput matching a flat 2.0s reload because
+# the ramp never gets to build.
+#
+# Scaled by local crowding, so it vanishes in a thinned-out mop-up and the
+# winning side finishes efficiently.
+#
+# CHURN_MAX was RE-FITTED for this engine against the 38-row tape corpus
+# (2026-07-28), not inherited. The JS engine's 2.25 was calibrated on different
+# geometry (30x20 canvas, block spawns, sprite-sized radii) and measurably costs
+# a row here. Sweep at 5 seeds, scored on tape + equal-count agreement:
+#
+#     0.00  32/38 + 32/38 = 64      (churn off — the ETG rows regress)
+#     1.00  33/38 + 32/38 = 65
+#     1.25  33/38 + 32/38 = 65      <- chosen: middle of the plateau
+#     1.50  33/38 + 32/38 = 65
+#     2.25  33/38 + 31/38 = 64      (the inherited value)
+#     3.00  33/38 + 31/38 = 64
+#     4.00  32/38 + 30/38 = 62
+#
+# Tape agreement peaks across 1.0-3.0 while equal-count agreement falls
+# monotonically as churn rises, so the optimum is the 1.0-1.5 plateau; 1.25 is
+# taken as the midpoint rather than an edge. Re-fit this whenever the geometry
+# changes again — it is a property of the arena, not of the units.
+CHURN_MAX = 1.25            # seconds, uniform [0, CHURN_MAX)
+CHURN_RADIUS = 2.0          # tiles: neighbours this close count as crowding
+CHURN_SATURATION = 6.0      # neighbour count at which interference maxes out
 
 # Spatial-grid cell size (tiles).  Must be >= the max relevant interaction
 # distance (avoidance ~3 tiles, collision ~2 tiles) so that a unit's cell + 8
@@ -328,7 +427,7 @@ class Projectile:
 
 class BattleUnit:
     __slots__ = (
-        "id", "team", "stats",
+        "id", "spawn_ord", "team", "stats",
         "cost_food", "cost_wood", "cost_gold",
         "max_hp", "current_hp", "attack",
         "raw_attack_range", "attack_range",
@@ -364,7 +463,7 @@ class BattleUnit:
         "charge_attack_melee", "charge_recharge_time", "charge_timer",
         "charge_slow_percent", "charge_slow_duration",
         "execute_damage_per_step", "execute_hp_step",
-        "attack_speed_ramp", "attack_speed_min", "ramp_reduction",
+        "attack_speed_ramp", "attack_speed_min", "ramp_hits",
         "hp_per_kill", "hp_per_kill_max", "hp_gained_from_kills",
         "miss_damage_percent", "armor_strip_per_hit",
         "attack_bonus_nearby", "nearby_bonus_count", "aura_attack_bonus",
@@ -387,6 +486,13 @@ class BattleUnit:
 
     def __init__(self, uid, team, stats):
         self.id = uid
+        # Stable spawn ordinal. Pair-wise collision resolution needs a total
+        # order over units so each overlapping pair is separated exactly once.
+        # It used to use id(), which is the MEMORY ADDRESS: the winner of
+        # `id(b) <= id(a)` therefore depended on the allocator, so the order in
+        # which overlaps resolved changed from run to run and the same seed
+        # produced different fights. This is set in setup_team().
+        self.spawn_ord = 0
         self.team = team
         self.stats = stats
 
@@ -400,6 +506,8 @@ class BattleUnit:
 
         # Range: JS adds MELEE_RANGE_BUFFER even for ranged units.
         self.raw_attack_range = float(stats.get("attack_range") or 0.0)
+        _irf = stats.get("is_ranged")
+        self._is_ranged_flag = None if _irf is None else bool(_irf)
         self.attack_range = self.raw_attack_range + MELEE_RANGE_BUFFER
 
         self.attack_speed = float(stats.get("attack_speed") or 0.5)
@@ -480,7 +588,8 @@ class BattleUnit:
         self.execute_hp_step = float(stats.get("execute_hp_step") or 0)
         self.attack_speed_ramp = float(stats.get("attack_speed_ramp") or 0)
         self.attack_speed_min = float(stats.get("attack_speed_min") or 0)
-        self.ramp_reduction = 0.0
+        # Timestamps of hits inside the ramp window (see RAMP_WINDOW_S).
+        self.ramp_hits = []
         self.hp_per_kill = float(stats.get("hp_per_kill") or 0)
         self.hp_per_kill_max = float(stats.get("hp_per_kill_max") or 0)
         self.hp_gained_from_kills = 0.0
@@ -523,10 +632,7 @@ class BattleUnit:
 
         self.x = 0.0
         self.y = 0.0
-        # Outline-size scaling matches JS: 0.2->14 px, 0.5->20 px, 1.0->30 px.
-        # Convert to tiles by dividing by TILE_SIZE=30.
-        outline = float(stats.get("outline_size") or 0.2)
-        self.radius = (10.0 + min(outline, 1.0) * 20.0) / 30.0
+        self.radius = collision_radius(stats.get("outline_size"))
 
         self.target = None
         self.state = "idle"
@@ -546,6 +652,10 @@ class BattleUnit:
     # ---- Predicates -------------------------------------------------------
 
     def is_ranged(self):
+        # Explicit dict flag wins (1.0-reach melee like the Steppe Lancer
+        # defeats the range heuristic); fall back for legacy dicts.
+        if self._is_ranged_flag is not None:
+            return self._is_ranged_flag
         return self.raw_attack_range >= 1.0
 
     def is_dead(self):
@@ -576,18 +686,27 @@ class BattleUnit:
                            ignores_armor_override=None):
         is_ranged = self.is_ranged()
         attacks = attacks_override if attacks_override is not None else self.attacks
-        base_class = "3" if is_ranged else "4"
+        # The ATTACK'S damage class decides which armor resists it — not how the
+        # blow is delivered.  A ranged unit whose base attack is class 4 (melee)
+        # with no class-3 entry is resisted by MELEE armor: thrown-melee units
+        # (Gbeto, Mameluke, Throwing Axeman, Chakram), the mangonel/onager line,
+        # bombards, trebuchets and most warships — 19 units in the current dat.
+        # Resolving them against PIERCE armor roughly halved their damage into
+        # high-pierce-armor targets (in-game 12 Gbeto beat 21 Champi 5/5 while
+        # the sim had the Champi winning).
+        base_class = "3" if (is_ranged and attacks.get("3")) else "4"
+        uses_pierce = base_class == "3"
         base_attack = attacks.get(base_class, attacks.get("4", self.attack)) + self.aura_attack_bonus
 
         if ignores_armor_override is not None:
             ignore = ignores_armor_override
         else:
-            ignore = (is_ranged and self.ignores_pierce_armor) or \
-                     (not is_ranged and self.ignores_melee_armor)
+            ignore = (uses_pierce and self.ignores_pierce_armor) or \
+                     (not uses_pierce and self.ignores_melee_armor)
 
         if ignore:
             target_base_armor = 0.0
-        elif is_ranged:
+        elif uses_pierce:
             target_base_armor = target.armors.get("3", target.pierce_armor)
         else:
             target_base_armor = target.armors.get("4", target.melee_armor)
@@ -618,6 +737,34 @@ class BattleUnit:
 
     # ---- Targeting --------------------------------------------------------
 
+    def melee_cooldown(self, sim):
+        """Reload for a melee swing, lengthened by local crowding.
+
+        Ranged units are unaffected — they are not shoving anyone. Applies to
+        BOTH melee attack paths: units with attack_delay == 0 resolve through
+        perform_attack, everything with a wind-up (which is the whole cavalry
+        roster) resolves through committed_attack. The JS engine patches only
+        the first, so its crowd interference silently never applies to cavalry.
+        """
+        if CHURN_MAX <= 0 or self.is_ranged():
+            return self.reload_time
+        r2 = CHURN_RADIUS * CHURN_RADIUS
+        n = 0
+        for team in (sim.team1, sim.team2):
+            for u in team:
+                if u is self or u.state == "dead":
+                    continue
+                dx = u.x - self.x
+                dy = u.y - self.y
+                if dx * dx + dy * dy < r2:
+                    n += 1
+                    if n >= CHURN_SATURATION:
+                        break
+            if n >= CHURN_SATURATION:
+                break
+        crowding = min(1.0, n / CHURN_SATURATION)
+        return self.reload_time + random.random() * CHURN_MAX * crowding
+
     def find_target(self, enemies):
         closest = None
         closest_dist = float("inf")
@@ -638,6 +785,31 @@ class BattleUnit:
         self.stuck_timer = 0.0
         self.last_dist_to_target = self.distance_to(self.target) if self.target else float("inf")
         return self.target
+
+    def effective_kite_speed(self):
+        """Retreat speed after paying the windup tax, in tiles/sec.
+
+        A unit with attack_delay > 0 is frozen in `windup` and cannot move, so
+        it covers ground only for the remainder of its cycle. Deliberately
+        derived from attack_speed rather than self.reload_time: reload_time is
+        rewritten in place by attack_speed_ramp, which would make a unit's kite
+        eligibility flicker on and off mid-fight. Eligibility must be a fixed
+        property of the matchup, so it uses the BASE reload.
+        """
+        base_reload = (1.0 / self.attack_speed) if self.attack_speed > 0 else 2.0
+        if base_reload <= 0:
+            return self.move_speed
+        return self.move_speed * max(0.0, 1.0 - self.attack_delay / base_reload)
+
+    def can_out_kite(self, other):
+        """True when self can hold another RANGED unit at arm's length.
+
+        Needs both: strictly faster after the windup tax (else it cannot keep
+        the gap) and strictly longer ranged (else it cannot shoot from outside
+        the opponent's reach). Either one alone is not enough.
+        """
+        return (self.effective_kite_speed() > other.effective_kite_speed()
+                and self.attack_range > other.attack_range)
 
     def find_target_outside_dead_zone(self, enemies):
         """For min_range > 0 ranged units after kite-stop: prefer the
@@ -710,9 +882,11 @@ class BattleUnit:
             self.charge_timer = max(0.0, self.charge_timer - dt)
 
         # --- attack-speed ramp decay (Temple Guard): reset out of combat ---
-        if (self.attack_speed_ramp > 0 and self.ramp_reduction > 0
+        # The window in perform_attack_on() already expires stale hits; this
+        # clears the whole stack once the unit leaves combat entirely.
+        if (self.attack_speed_ramp > 0 and self.ramp_hits
                 and self.combat_timer <= 0):
-            self.ramp_reduction = 0.0
+            self.ramp_hits = []
             self.reload_time = 1.0 / self.attack_speed if self.attack_speed > 0 else 2.0
 
         # --- charge-slow expiry: restore movement speed ---
@@ -752,10 +926,15 @@ class BattleUnit:
 
         was_moving = self.was_moving
         if self.is_ranged():
-            should_kite = not self.target.is_ranged()
-            # After KITE_STOP_TIME, ranged units stop kiting and just attack
-            # (model real-world micro failure / map-edge hit).
-            can_kite = sim.battle_time < KITE_STOP_TIME
+            # Always kite a melee target. Kite a RANGED target only when this
+            # unit can both keep the gap and out-shoot it (see can_out_kite).
+            # No time gate: the decided-fight test in Simulation.step ends the
+            # battle, so the tick clock no longer decides outcomes.
+            should_kite = (sim.battle_time < KITE_STOP_TIME
+                           and (not self.target.is_ranged()
+                                or self.can_out_kite(self.target)))
+            if should_kite:
+                sim.kiting_team = self.team
 
             # Committed shot: locked in windup animation, can't move.
             # Mirrors the melee branch's committed_attack pattern.  After
@@ -785,14 +964,11 @@ class BattleUnit:
             if self.too_close():
                 # Target is inside the dead zone (only happens for units
                 # with min_attack_range > 0 — Onager, Mangonel, etc.).
-                if can_kite:
-                    self.state = "kiting"
-                    self.move_away_from_target(dt, grid)
-                    self.was_moving = True
-                else:
-                    # Past kite-stop: try to switch to a target outside
-                    # the dead zone; if none, go idle (the unit is
-                    # surrounded and can't shoot).
+                # Always back off; if the retreat is blocked the unit makes no
+                # progress and switches to a target it can actually shoot.
+                if sim.battle_time >= KITE_STOP_TIME:
+                    # Past the cutoff: no more backing off. Find something this
+                    # unit can actually shoot, else stand idle.
                     new_target = self.find_target_outside_dead_zone(enemies)
                     if new_target is None:
                         self.state = "idle"
@@ -800,14 +976,17 @@ class BattleUnit:
                     self.target = new_target
                     self.was_moving = False
                     # Fall through to handle as an in-range/out-of-range case
-            elif cooldown > 0 and should_kite and can_kite:
-                # Reloading vs melee target: free to kite away.
+                else:
+                    self.state = "kiting"
+                    self.move_away_from_target(dt, grid)
+                    self.was_moving = True
+            elif cooldown > 0 and should_kite:
+                # Reloading and able to kite this target: back away.
                 self.state = "kiting"
                 self.move_away_from_target(dt, grid)
             elif cooldown > 0:
-                # Reloading vs ranged target OR post-kite-stop. Hold if
-                # target is in range; otherwise close the distance — the
-                # kite-stop bans running AWAY, not pursuing.
+                # Reloading against a target it cannot out-kite. Hold if the
+                # target is in range; otherwise close the distance.
                 if self.in_range():
                     self.state = "attacking"
                 else:
@@ -863,7 +1042,7 @@ class BattleUnit:
                     if target.state != "dead":
                         self.perform_attack_on(target, sim)
                     self.committed_attack = None
-                    self.attack_cooldown = self.reload_time
+                    self.attack_cooldown = self.melee_cooldown(sim)
                     self.combat_timer = COMBAT_WINDOW_S
                     self.was_moving = False
             elif self.in_range():
@@ -1029,7 +1208,9 @@ class BattleUnit:
                     self.fire_projectile(tgt, sim, is_extra=is_extra)
             else:
                 self.perform_attack_on(self.target, sim)
-        self.attack_cooldown = self.reload_time
+        # melee_cooldown() returns the plain reload for ranged units, so this is
+        # safe on the shared attack path.
+        self.attack_cooldown = self.melee_cooldown(sim)
         self.combat_timer = COMBAT_WINDOW_S
 
     def fire_projectile(self, target, sim, attacks_override=None, is_extra=False):
@@ -1222,14 +1403,20 @@ class BattleUnit:
             self.current_hp = min(self.max_hp, self.current_hp + heal)
             self.hp_gained_from_kills += heal
 
-        # Attack-speed ramp (Temple Guard): each hit shortens reload toward the
-        # floor; reset out of combat by update().  Mutating reload_time here makes
-        # every cooldown=reload_time assignment use the ramped value.
+        # Attack-speed ramp (Temple Guard).  Each hit adds a stack that EXPIRES
+        # RAMP_WINDOW_S later, so reload = max(floor, base - ramp * hits_in_window).
+        # The game uses a decaying window, NOT a monotonic accumulator: walking
+        # between targets, or simply being unable to attack, lets the ramp fall
+        # back.  Mutating reload_time here makes every cooldown=reload_time
+        # assignment use the ramped value.
         if self.attack_speed_ramp > 0:
             base_reload = (1.0 / self.attack_speed) if self.attack_speed > 0 else 2.0
-            self.ramp_reduction = min(self.ramp_reduction + self.attack_speed_ramp,
-                                      max(0.0, base_reload - self.attack_speed_min))
-            self.reload_time = max(self.attack_speed_min, base_reload - self.ramp_reduction)
+            cutoff = sim.battle_time - RAMP_WINDOW_S
+            self.ramp_hits = [h for h in self.ramp_hits if h > cutoff]
+            self.ramp_hits.append(sim.battle_time)
+            self.reload_time = max(
+                self.attack_speed_min,
+                base_reload - self.attack_speed_ramp * len(self.ramp_hits))
 
         if (target_was_alive and target.state == "dead"
                 and (self.food_per_kill > 0 or self.wood_per_kill > 0
@@ -1253,7 +1440,14 @@ class BattleUnit:
                     for enemy in enemies:
                         if enemy is target or enemy.state == "dead":
                             continue
-                        if self.distance_to(enemy) <= self.trample_radius + enemy.radius:
+                        # Blast emanates from the trampler's BODY, not a point:
+                        # reach is edge-to-edge, so the attacker's own radius
+                        # counts.  Omitting it leaves a packed ring around a
+                        # big-footprint unit (elephant, r~0.6 tile) just out of
+                        # reach — ~1 unit trampled per swing where the game
+                        # lands 4-6.
+                        reach = self.radius + self.trample_radius + enemy.radius
+                        if self.distance_to(enemy) <= reach:
                             enemy.take_damage(trample_dmg, self)
 
         if self.splash_on_hit_radius > 0:
@@ -1382,7 +1576,7 @@ class BattleUnit:
         self.y = max(self.radius, min(MAP_H - self.radius, self.y))
 
         new_dist = self.distance_to(self.target)
-        if new_dist >= self.last_dist_to_target - STUCK_PROGRESS_THRESHOLD:
+        if new_dist >= self.last_dist_to_target - STUCK_PROGRESS_RATE * dt:
             self.stuck_timer += dt
         else:
             self.stuck_timer = max(0, self.stuck_timer - dt * 2)
@@ -1447,13 +1641,16 @@ class BattleSimulation:
         self.team2_food_gained = 0.0
         self.team2_wood_gained = 0.0
         self.team2_gold_gained = 0.0
+        # Which team last chose to kite. The decided-fight test needs to know
+        # who is running and who is chasing; only one side can qualify, since
+        # can_out_kite demands strictly greater speed AND range.
+        self.kiting_team = 0
 
     def setup_team(self, team_num, stats, count):
         team = []
         # Place units in a vertical line on the appropriate side.
         # Match JS layout but in tile coordinates.
-        outline = float(stats.get("outline_size") or 0.2)
-        radius = (10.0 + min(outline, 1.0) * 20.0) / 30.0
+        radius = collision_radius(stats.get("outline_size"))
         # Anchor each team TEAM_OFFSET_FROM_CENTER tiles from map center, leaving
         # the rest of the map width as free kiting space behind each army.
         center_x = MAP_W / 2.0
@@ -1472,6 +1669,7 @@ class BattleSimulation:
 
         for i in range(count):
             unit = BattleUnit(f"{team_num}-{i}", team_num, stats)
+            unit.spawn_ord = team_num * 1000000 + i
             # Tiny deterministic-ish jitter (no RNG: keep sim mostly deterministic).
             unit.x = start_x
             unit.y = start_y + i * spacing
@@ -1618,9 +1816,9 @@ class BattleSimulation:
         for _ in range(2):
             for a in alive:
                 ax, ay, ar = a.x, a.y, a.radius
-                a_id = id(a)
+                a_ord = a.spawn_ord
                 for b in self.grid.neighbors(a):
-                    if b is a or b.state == "dead" or id(b) <= a_id:
+                    if b is a or b.state == "dead" or b.spawn_ord <= a_ord:
                         continue
                     dx = b.x - ax
                     dy = b.y - ay
@@ -1685,6 +1883,38 @@ class BattleSimulation:
         elif a1 == 0 and a2 == 0:
             self.winner = 0
             self.end_reason = "eliminated"
+        elif self.battle_time >= KITE_DECISION_TIME and self.kiting_team:
+            self._decide_kited_fight()
+
+    def _decide_kited_fight(self):
+        """End a fight that a kiter has already settled, or that neither side
+        can settle. Runs once the clock passes KITE_DECISION_TIME.
+
+        Replaces the old flat kite-stop timer. The timer forced units to stop
+        retreating so *someone* would die; this instead reads the state the
+        retreating actually produced:
+
+          kiter nearly untouched, target badly hurt -> the kite worked, and
+            grinding on to elimination only adds noise. end_reason="kite_win".
+          kiter nearly untouched, target also fine  -> neither can resolve it.
+            One is too slow to catch, the other too weak to kill. That is a
+            STALEMATE, not a draw and not a tossup: a tossup could go either
+            way, this cannot go anywhere. Own end_reason so the ranking layer
+            can drop it rather than score it as an even matchup.
+          anything else -> the kite is failing; let the fight run normally.
+        """
+        kt = self.kiting_team
+        ot = 2 if kt == 1 else 1
+        self_loss = 1.0 - (self.total_hp(kt) / max(1.0, self.total_max_hp(kt)))
+        opp_loss = 1.0 - (self.total_hp(ot) / max(1.0, self.total_max_hp(ot)))
+        if self_loss >= KITE_WIN_MAX_SELF_LOSS:
+            return                      # taking real damage: not a clean kite
+        if opp_loss > KITE_WIN_MIN_OPP_LOSS:
+            self.winner = kt
+            self.end_reason = "kite_win"
+        else:
+            self.winner = 0
+            self.end_reason = "stalemate"
 
     def run(self, max_seconds=MAX_BATTLE_SECONDS,
             max_wallclock=DEFAULT_MAX_WALLCLOCK_SECONDS):

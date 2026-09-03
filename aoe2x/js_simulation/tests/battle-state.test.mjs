@@ -5,6 +5,8 @@ import * as battleStateModule from "../viewer/battle-state.js";
 import {
   buildFightQuery,
   createBattleState,
+  labRunHref,
+  labRunRequest,
   searchCatalogue,
   selectCivilization,
   selectUnit,
@@ -14,6 +16,26 @@ import {
   setResourceBudget,
   unitsForCivilization,
 } from "../viewer/battle-state.js";
+
+
+test("persisted AOE2 Lab links accept only canonical job and seed selectors", () => {
+  assert.deepEqual(
+    labRunRequest("https://host/golden-map/?mode=lab&job=arb_vs_paladin&seed=5"),
+    {
+      endpoint: "api/lab/result",
+      jobId: "arb_vs_paladin",
+      openingSeed: 5,
+      query: "job=arb_vs_paladin&seed=5",
+    },
+  );
+  assert.equal(labRunRequest("https://host/?mode=lab&job=../escape&seed=1"), null);
+  assert.equal(labRunRequest("https://host/?mode=lab&job=arb&seed=0"), null);
+  assert.equal(labRunRequest("https://host/?mode=lab&job=arb&seed=1&extra=x"), null);
+  assert.equal(
+    labRunHref("https://host/golden-map/?old=true", "arb_vs_paladin", 3),
+    "https://host/golden-map/?mode=lab&job=arb_vs_paladin&seed=3",
+  );
+});
 
 
 const catalogue = {

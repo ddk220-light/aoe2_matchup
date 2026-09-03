@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -951,6 +951,127 @@ async function handleFightApi({ request, response, root, url }) {
 }
 
 
+function validLabId(value) {
+  return /^[a-z0-9]+(?:_[a-z0-9]+)*$/.test(value ?? "");
+}
+
+
+async function loadLabJobs(labRoot) {
+  const runsRoot = path.join(labRoot, "runs");
+  let entries;
+  try {
+    entries = await readdir(runsRoot, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === "ENOENT") return Object.freeze({ schemaVersion: 1, jobs: [] });
+    throw error;
+  }
+  const jobs = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !validLabId(entry.name)) continue;
+    try {
+      const manifest = JSON.parse(await readFile(
+        path.join(runsRoot, entry.name, "manifest.json"), "utf8",
+      ));
+      const plan = JSON.parse(await readFile(
+        path.join(runsRoot, entry.name, "plan.json"), "utf8",
+      ));
+      const requestedSeeds = manifest.simulation?.completedSeeds ?? [];
+      if (manifest.jobId !== entry.name || plan.jobId !== entry.name
+          || manifest.planHash !== plan.planHash || !Array.isArray(requestedSeeds)) continue;
+      const seeds = [];
+      for (const seed of [...new Set(requestedSeeds)].sort((left, right) => left - right)) {
+        if (!Number.isSafeInteger(seed) || seed < 1) continue;
+        const seedPath = path.join(
+          runsRoot, entry.name, "simulation", "seeds",
+          `seed_${String(seed).padStart(3, "0")}.json`,
+        );
+        try {
+          if ((await stat(seedPath)).size > 0) seeds.push(seed);
+        } catch (error) {
+          if (error?.code !== "ENOENT") throw error;
+        }
+      }
+      if (seeds.length === 0) continue;
+      const viewerSeed = seeds.includes(manifest.comparison?.representativeSeed)
+        ? manifest.comparison.representativeSeed : seeds[0];
+      jobs.push(Object.freeze({
+        jobId: entry.name,
+        state: manifest.state,
+        updatedAt: manifest.updatedAt,
+        matchupId: plan.matchupId,
+        planHash: plan.planHash,
+        label: `${plan.side2.civ} ${plan.side2.label} vs ${plan.side3.civ} ${plan.side3.label}`,
+        side2: plan.side2,
+        side3: plan.side3,
+        scenario: plan.scenario,
+        balance: plan.balance,
+        seeds: Object.freeze([...seeds].sort((left, right) => left - right)),
+        viewerSeed,
+        comparison: manifest.comparison ?? null,
+      }));
+    } catch (error) {
+      if (error?.code !== "ENOENT" && !(error instanceof SyntaxError)) throw error;
+    }
+  }
+  jobs.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  return Object.freeze({ schemaVersion: 1, jobs: Object.freeze(jobs) });
+}
+
+
+async function handleLabApi({ request, response, labRoot, url }) {
+  if (!url.pathname.startsWith("/api/lab/")) return false;
+  if (request.method !== "GET") {
+    sendJson(response, 405, { error: "AOE2 Lab artifacts are read-only" });
+    return true;
+  }
+  if (url.pathname === "/api/lab/jobs") {
+    if ([...url.searchParams.keys()].length !== 0) {
+      sendJson(response, 400, { error: "lab job catalogue accepts no parameters" });
+      return true;
+    }
+    sendJson(response, 200, await loadLabJobs(labRoot));
+    return true;
+  }
+  if (url.pathname === "/api/lab/result") {
+    const keys = [...url.searchParams.keys()];
+    const job = url.searchParams.get("job");
+    const seedText = url.searchParams.get("seed");
+    const seed = Number(seedText);
+    if (keys.some((key) => key !== "job" && key !== "seed")
+        || url.searchParams.getAll("job").length !== 1
+        || url.searchParams.getAll("seed").length !== 1
+        || !validLabId(job)
+        || !/^[1-9]\d*$/.test(seedText ?? "")
+        || !Number.isSafeInteger(seed)) {
+      sendJson(response, 400, { error: "lab result requires one valid job and positive seed" });
+      return true;
+    }
+    const jobs = await loadLabJobs(labRoot);
+    const selected = jobs.jobs.find(({ jobId }) => jobId === job);
+    if (!selected || !selected.seeds.includes(seed)) {
+      sendJson(response, 404, { error: "completed lab seed not found" });
+      return true;
+    }
+    const resultPath = path.join(
+      labRoot, "runs", job, "simulation", "seeds", `seed_${String(seed).padStart(3, "0")}.json`,
+    );
+    const result = JSON.parse(await readFile(resultPath, "utf8"));
+    if (result.mode !== "aoe2-lab" || result.lab?.jobId !== job
+        || result.lab?.planHash !== selected.planHash
+        || result.lab?.scenarioFamily !== selected.scenario.family
+        || result.lab?.goldenSha256 !== selected.scenario.goldenSha256
+        || result.openingSeed !== seed) {
+      sendJson(response, 409, { error: "lab seed artifact failed provenance validation" });
+      return true;
+    }
+    sendJson(response, 200, result);
+    return true;
+  }
+  sendJson(response, 404, { error: "not found" });
+  return true;
+}
+
+
 async function handleMatchupApi({ request, response, root, url }) {
   if (!url.pathname.startsWith("/api/matchup/")) return false;
   if (request.method !== "GET") {
@@ -1065,17 +1186,21 @@ async function handleChampionApi({ request, response, root, url }) {
 }
 
 
-export function createMapServer({ root }) {
+export function createMapServer({ root, labRoot = undefined }) {
   const resolvedRoot = path.resolve(root);
+  const resolvedLabRoot = path.resolve(
+    labRoot ?? path.join(resolvedRoot, "calibration", "lab"),
+  );
   return createServer(async (request, response) => {
     const url = new URL(request.url, "http://localhost");
     try {
       if (await handleFightApi({ request, response, root: resolvedRoot, url })) return;
+      if (await handleLabApi({ request, response, labRoot: resolvedLabRoot, url })) return;
       if (await handleMatchupApi({ request, response, root: resolvedRoot, url })) return;
       if (await handleChampionApi({ request, response, root: resolvedRoot, url })) return;
     } catch (error) {
       console.error(error);
-      sendJson(response, 500, { error: "Champion diagnostics unavailable" });
+      sendJson(response, 500, { error: "Simulation diagnostics unavailable" });
       return;
     }
     const pathname = url.pathname;
@@ -1105,12 +1230,14 @@ export function createMapServer({ root }) {
 
 
 function parseArgs(argv) {
-  const options = { host: "127.0.0.1", port: 5011 };
+  const options = { host: "127.0.0.1", port: 5011, labRoot: undefined };
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === "--host" && argv[index + 1]) {
       options.host = argv[index += 1];
     } else if (argv[index] === "--port" && argv[index + 1]) {
       options.port = Number(argv[index += 1]);
+    } else if (argv[index] === "--lab-root" && argv[index + 1]) {
+      options.labRoot = path.resolve(argv[index += 1]);
     } else {
       throw new Error(`unknown or incomplete option: ${argv[index]}`);
     }
@@ -1125,8 +1252,8 @@ function parseArgs(argv) {
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
 if (isMain) {
   const root = path.dirname(fileURLToPath(import.meta.url));
-  const { host, port } = parseArgs(process.argv.slice(2));
-  const server = createMapServer({ root });
+  const { host, port, labRoot } = parseArgs(process.argv.slice(2));
+  const server = createMapServer({ root, labRoot });
   server.listen(port, host, () => {
     const address = server.address();
     console.log(`Golden Arena map inspector: http://${host}:${address.port}`);

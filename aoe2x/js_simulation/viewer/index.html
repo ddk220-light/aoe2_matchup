@@ -166,6 +166,20 @@
           <div class="is-delta"><span>Known issue</span><strong id="problemMatchupIssue">—</strong></div>
         </div>
       </section>
+      <section class="wrong-winner-review" id="labRunReview" hidden
+               aria-labelledby="labRunReviewTitle">
+        <div class="wrong-winner-picker">
+          <span class="review-kicker">AOE2 Lab artifact</span>
+          <label id="labRunReviewTitle" for="labJob">Completed simulation</label>
+          <select id="labJob" aria-describedby="labRunConvention"></select>
+          <small id="labRunConvention">Canonical golden scenario · persisted engine output</small>
+        </div>
+        <div class="wrong-winner-metrics" aria-label="AOE2 Lab run selection">
+          <div><span>Seed</span><select id="labSeed" aria-label="Simulation seed"></select></div>
+          <div><span>Family</span><strong id="labFamily">—</strong></div>
+          <div class="is-delta"><span>Comparison</span><strong id="labComparison">—</strong></div>
+        </div>
+      </section>
       <p class="start-hint" id="startHint">Pick a calibrated civ &amp; unit for both teams to start</p>
 
       <div class="sim-stage" id="simStage">

@@ -49,8 +49,9 @@ env/
 *.tmp
 *.temp
 ANALYSIS.md
-# Generated per-seed matchup reports (source seed configs elsewhere remain tracked)
-/aoe2x/js_simulation/calibration/reports/**/*seed*.json
+# Generated matchup simulation/calibration data (historical files already
+# tracked by Git remain available; source fixtures/configs elsewhere are unaffected).
+/aoe2x/js_simulation/calibration/reports/**/*.json
 
 # User data
 apps/website/matchup_votes.jsonl
@@ -110,6 +111,12 @@ tmp/
 # recordings are too large for Git.  Curated inventories and derived reports
 # remain trackable under calibration/.
 /aoe2x/js_simulation/calibration/live_observations/
+
+# Portable AOE2 Lab runtime artifacts. Plans, live gRPC captures, videos,
+# simulation playbacks, checkpoints, and viewer process metadata are all
+# reproducible local outputs and can be very large.
+/aoe2x/js_simulation/calibration/lab/
+/aoe2lab.toml
 
 # Local simulation/viewer output and dependency scratch.
 /aoe2x/js_simulation/*.log

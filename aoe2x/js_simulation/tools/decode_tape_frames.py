@@ -17,9 +17,11 @@ import os
 import struct
 import sys
 import zipfile
+from pathlib import Path
 
-GRPC_DIR = r"D:\AI\aoe2_matchup\aoe2x\grpc"
-sys.path.insert(0, GRPC_DIR)
+SCRIPT = Path(__file__).resolve()
+REPO_ROOT = SCRIPT.parents[3]
+sys.path.insert(0, str(REPO_ROOT / "aoe2x" / "grpc"))
 
 # Local protobuf runtime is 6.33.4, the checked-in gencode says 6.33.5. The
 # generated descriptor itself is unchanged by that patch bump; skip the guard.
@@ -80,8 +82,8 @@ def action_of(doc, entity):
     }
 
 
-def decode(archive, base, prefix, tag, masters, out_dir):
-    path = frames_path(archive, base, prefix, tag, out_dir)
+def decode_path(path, tag, masters, out_dir):
+    path = os.fspath(path)
     doc = es = world_id = None
     rows = []
     kills = []
@@ -172,23 +174,42 @@ def decode(archive, base, prefix, tag, masters, out_dir):
     return meta
 
 
+def decode(archive, base, prefix, tag, masters, out_dir):
+    path = frames_path(archive, base, prefix, tag, out_dir)
+    return decode_path(path, tag, masters, out_dir)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--archive", required=True,
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--archive",
                         help="golden-basics .zip holding `raw recordings/`")
+    source.add_argument("--frames", type=Path, action="append",
+                        help="local .frames.bin path (repeatable)")
     parser.add_argument("--unit-master", type=int, action="append", default=[],
                         help="keep only these unit masters (repeatable)")
     parser.add_argument("--out-dir", default=os.path.dirname(
         os.path.abspath(__file__)))
-    parser.add_argument("tags", nargs="+", help="fight tags, e.g. 1v1 1v1_r2")
+    parser.add_argument("tags", nargs="*", help="archive fight tags, e.g. 1v1 1v1_r2")
     args = parser.parse_args()
 
-    base, prefix = archive_layout(args.archive)
     os.makedirs(args.out_dir, exist_ok=True)
-    for tag in args.tags:
-        meta = decode(args.archive, base, prefix, tag,
-                      set(args.unit_master), args.out_dir)
-        print(json.dumps({k: v for k, v in meta.items() if k != "kills"}))
+    if args.frames:
+        if args.tags:
+            parser.error("positional tags are only valid with --archive")
+        for path in args.frames:
+            suffix = ".frames.bin"
+            tag = path.name[:-len(suffix)] if path.name.endswith(suffix) else path.stem
+            meta = decode_path(path, tag, set(args.unit_master), args.out_dir)
+            print(json.dumps({k: v for k, v in meta.items() if k != "kills"}))
+    else:
+        if not args.tags:
+            parser.error("--archive requires at least one fight tag")
+        base, prefix = archive_layout(args.archive)
+        for tag in args.tags:
+            meta = decode(args.archive, base, prefix, tag,
+                          set(args.unit_master), args.out_dir)
+            print(json.dumps({k: v for k, v in meta.items() if k != "kills"}))
 
 
 if __name__ == "__main__":

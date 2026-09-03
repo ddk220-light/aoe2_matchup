@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
-import { readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
@@ -24,6 +26,85 @@ async function withServer(run) {
     await once(server, "close");
   }
 }
+
+
+async function withLabServer(run) {
+  const labRoot = await mkdtemp(join(tmpdir(), "aoe2lab-server-test-"));
+  const jobId = "arb_vs_paladin_test";
+  const jobRoot = join(labRoot, "runs", jobId);
+  await mkdir(join(jobRoot, "simulation", "seeds"), { recursive: true });
+  await writeFile(join(jobRoot, "manifest.json"), JSON.stringify({
+    schemaVersion: 1,
+    jobId,
+    planHash: "plan-abc",
+    state: "SIMULATION_COMPLETE",
+    updatedAt: "2026-09-02T00:00:00Z",
+    simulation: { completedSeeds: [1] },
+  }));
+  await writeFile(join(jobRoot, "plan.json"), JSON.stringify({
+    schemaVersion: 1,
+    jobId,
+    planHash: "plan-abc",
+    matchupId: "arbalester_vs_paladin",
+    side2: { slug: "arbalester", civ: "Chinese", label: "Arbalester", count: 27 },
+    side3: { slug: "paladin", civ: "Spanish", label: "Paladin", count: 14 },
+    scenario: { family: "ranged_vs_melee", goldenSha256: "abc" },
+    balance: { mode: "equal_resources" },
+  }));
+  await writeFile(
+    join(jobRoot, "simulation", "seeds", "seed_001.json"),
+    JSON.stringify({
+      mode: "aoe2-lab",
+      openingSeed: 1,
+      lab: {
+        jobId,
+        planHash: "plan-abc",
+        scenarioFamily: "ranged_vs_melee",
+        goldenSha256: "abc",
+      },
+      snapshots: [{ tick: 0, units: [], events: [] }],
+    }),
+  );
+  const server = createMapServer({ root, labRoot });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  try {
+    await run(`http://127.0.0.1:${address.port}`, jobId);
+  } finally {
+    server.close();
+    await once(server, "close");
+    await rm(labRoot, { recursive: true, force: true });
+  }
+}
+
+
+test("server lists and serves provenance-checked AOE2 Lab seed artifacts", async () => {
+  await withLabServer(async (baseUrl, jobId) => {
+    const catalogueResponse = await fetch(`${baseUrl}/api/lab/jobs`);
+    assert.equal(catalogueResponse.status, 200);
+    const catalogue = await catalogueResponse.json();
+    assert.equal(catalogue.jobs.length, 1);
+    assert.equal(catalogue.jobs[0].jobId, jobId);
+    assert.deepEqual(catalogue.jobs[0].seeds, [1]);
+    assert.equal(catalogue.jobs[0].viewerSeed, 1);
+
+    const resultResponse = await fetch(
+      `${baseUrl}/api/lab/result?job=${jobId}&seed=1`,
+    );
+    assert.equal(resultResponse.status, 200);
+    const result = await resultResponse.json();
+    assert.equal(result.mode, "aoe2-lab");
+    assert.equal(result.openingSeed, 1);
+
+    assert.equal((await fetch(
+      `${baseUrl}/api/lab/result?job=${jobId}&seed=2`,
+    )).status, 404);
+    assert.equal((await fetch(
+      `${baseUrl}/api/lab/result?job=..%2Fescape&seed=1`,
+    )).status, 400);
+  });
+});
 
 
 test("server exposes the website-style Battle Simulation shell and literal map fixture", async () => {
@@ -1273,7 +1354,7 @@ test("wrong-winner playback rejects unresolved, passing, and malformed rows", as
 });
 
 
-test("viewer page exposes battle controls and local calibration tools without a seed control", async () => {
+test("viewer page exposes battle controls, lab seed selection, and calibration tools", async () => {
   await withServer(async (baseUrl) => {
     const response = await fetch(`${baseUrl}/?ratio=5v3&repeat=3`);
     const body = await response.text();
@@ -1321,10 +1402,14 @@ test("viewer page exposes battle controls and local calibration tools without a 
       "problemMatchupLiveScore",
       "problemMatchupSimulationScore",
       "problemMatchupIssue",
+      "labRunReview",
+      "labJob",
+      "labSeed",
+      "labFamily",
+      "labComparison",
     ]) {
       assert.match(body, new RegExp(`id=["']${id}["']`), id);
     }
-    assert.doesNotMatch(body, /id=["'][^"']*seed/i);
     assert.match(body, /5,000 incl\. Upgrades/);
     assert.match(body, /value=["']resources_upgrades["'][^>]*disabled/);
     assert.match(body, /Calibration tools/);

@@ -3,6 +3,8 @@ import { formationUnits, validateFormationFixture } from "../src/formation-model
 import { createBattlePage } from "./battle-page.js";
 import {
   directFightRequest,
+  labRunHref,
+  labRunRequest,
   kitingFightHref,
   kitingFightRequest,
   phase2WrongWinnerHref,
@@ -184,10 +186,12 @@ async function start() {
   const wrongWinnerRequest = phase2WrongWinnerRequest(window.location.href);
   const problemRequest = problemMatchupRequest(window.location.href);
   const directRequest = directFightRequest(window.location.href);
+  const labRequest = labRunRequest(window.location.href);
   const navigationRequest = soloRequest ?? kitingRequest;
-  const autoRequest = navigationRequest ?? problemRequest ?? wrongWinnerRequest ?? directRequest;
+  const autoRequest = navigationRequest ?? labRequest ?? problemRequest
+    ?? wrongWinnerRequest ?? directRequest;
   const [mapResponse, formationResponse, unitsResponse, catalogueResponse,
-    wrongWinnerResponse, problemResponse] = await Promise.all([
+    wrongWinnerResponse, problemResponse, labResponse] = await Promise.all([
     fetch("api/map", { cache: "no-store" }),
     fetch("api/formation", { cache: "no-store" }),
     fetch("api/units", { cache: "no-store" }),
@@ -198,12 +202,16 @@ async function start() {
     problemRequest
       ? fetch("api/problem-matchups", { cache: "no-store" })
       : Promise.resolve(null),
+    labRequest
+      ? fetch("api/lab/jobs", { cache: "no-store" })
+      : Promise.resolve(null),
   ]);
   for (const [label, response] of [
     ["Map", mapResponse], ["Formation", formationResponse], ["Units", unitsResponse],
     ["Catalogue", catalogueResponse],
     ["Wrong-winner catalogue", wrongWinnerResponse],
     ["Problem-matchup catalogue", problemResponse],
+    ["AOE2 Lab catalogue", labResponse],
   ]) {
     if (!response) continue;
     if (!response.ok) throw new Error(`${label} API returned ${response.status}`);
@@ -215,6 +223,8 @@ async function start() {
     ? deepFreeze(await wrongWinnerResponse.json()) : null;
   const problemCatalogue = problemResponse
     ? deepFreeze(await problemResponse.json()) : null;
+  const labCatalogue = labResponse
+    ? deepFreeze(await labResponse.json()) : null;
   const fixture = validateMapFixture(await mapResponse.json());
   const formation = validateFormationFixture(await formationResponse.json());
   const formationRoster = formationUnits(formation);
@@ -265,6 +275,9 @@ async function start() {
     : null;
   const problemRow = problemRequest
     ? problemCatalogue?.rows.find(({ id }) => id === problemRequest.matchupId)
+    : null;
+  const labJob = labRequest
+    ? labCatalogue?.jobs.find(({ jobId }) => jobId === labRequest.jobId)
     : null;
 
   if (soloRequest) {
@@ -346,6 +359,40 @@ async function start() {
     byId("kitingMeleeField").hidden = false;
     byId("kitingMeleeCountField").hidden = false;
     byId("navigationVariant").value = kitingRequest.navigation;
+  } else if (labRequest) {
+    if (!labJob || !labJob.seeds.includes(labRequest.openingSeed)) {
+      throw new Error(`AOE2 Lab job ${labRequest.jobId} seed ${labRequest.openingSeed} is unavailable`);
+    }
+    document.body.classList.add("wrong-winner-review-mode", "problem-matchup-review-mode");
+    document.querySelector(".page-header h1").textContent = "AOE2 Lab Simulation Viewer";
+    document.querySelector(".page-header .subtitle").textContent =
+      "Persisted parallel-engine output · canonical live-game conditions";
+    byId("labRunReview").hidden = false;
+    const jobSelect = byId("labJob");
+    for (const job of labCatalogue.jobs) {
+      jobSelect.append(new Option(
+        `${job.label} · ${job.side2.count} vs ${job.side3.count}`,
+        job.jobId,
+      ));
+    }
+    jobSelect.value = labJob.jobId;
+    const seedSelect = byId("labSeed");
+    for (const seed of labJob.seeds) seedSelect.append(new Option(`Seed ${seed}`, String(seed)));
+    seedSelect.value = String(labRequest.openingSeed);
+    byId("labFamily").textContent = prettyName(labJob.scenario.family);
+    const comparison = labJob.comparison;
+    byId("labComparison").textContent = comparison
+      ? `${comparison.absoluteDeltaPoints.toFixed(2)} pp · ${comparison.accepted ? "accepted" : "review"}`
+      : "simulation only";
+    byId("labRunConvention").textContent =
+      `${labJob.scenario.family} · golden ${labJob.scenario.goldenSha256.slice(0, 12)}…`
+      + ` · ${labJob.balance.mode.replaceAll("_", " ")}`;
+    byId("team1Rail").querySelector(".rail-title").textContent =
+      `${labJob.side2.civ} ${labJob.side2.label} · ${labJob.side2.count} · Player 2`;
+    byId("team2Rail").querySelector(".rail-title").textContent =
+      `${labJob.side3.civ} ${labJob.side3.label} · ${labJob.side3.count} · Player 3`;
+    byId("optionsCurrent").textContent =
+      `AOE2 Lab · ${labJob.side2.count} vs ${labJob.side3.count} · seed ${labRequest.openingSeed}`;
   } else if (problemRequest) {
     if (!problemRow) {
       throw new Error(`Problem matchup ${problemRequest.matchupId} is unavailable`);
@@ -585,6 +632,10 @@ async function start() {
     }
     byId("placementAudit").textContent = result.mode === "solo-movement"
       ? "21 owner-2 kite spawn cells · AI move orders every 80 ticks · no enemy roster"
+      : result.mode === "aoe2-lab"
+        ? `${result.side2.count + result.side3.count} canonical golden spawn cells`
+          + ` · ${result.lab.scenarioFamily} · seed ${result.openingSeed}`
+          + ` · plan ${result.lab.planHash.slice(0, 12)}…`
       : result.mode === "current-problem-matchup-review"
         ? `${result.side2.count + result.side3.count} principal golden spawn cells`
           + ` · current ranged golden triggers · seed ${result.review.representativeSeed}`
@@ -698,6 +749,21 @@ async function start() {
   if (problemRequest) {
     byId("problemMatchup").addEventListener("change", (event) => {
       window.location.assign(problemMatchupHref(window.location.href, event.target.value));
+    });
+  }
+  if (labRequest) {
+    const navigateLab = () => {
+      const jobId = byId("labJob").value;
+      const selected = labCatalogue.jobs.find((job) => job.jobId === jobId);
+      const currentSeed = Number(byId("labSeed").value);
+      const seed = selected.seeds.includes(currentSeed) ? currentSeed : selected.seeds[0];
+      window.location.assign(labRunHref(window.location.href, jobId, seed));
+    };
+    byId("labJob").addEventListener("change", navigateLab);
+    byId("labSeed").addEventListener("change", () => {
+      window.location.assign(labRunHref(
+        window.location.href, byId("labJob").value, Number(byId("labSeed").value),
+      ));
     });
   }
 
@@ -858,6 +924,10 @@ async function start() {
     const directBattleState = directRequest ? {
       mode: "count",
       counts: { 1: directRequest.n2, 2: directRequest.n3 },
+    } : labRequest ? {
+      mode: "lab",
+      jobId: labRequest.jobId,
+      seed: labRequest.openingSeed,
     } : problemRequest ? {
       mode: "problem-matchup",
       matchupId: problemRequest.matchupId,

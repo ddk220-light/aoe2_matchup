@@ -1,0 +1,12 @@
+# Complete live-capture dependency set for AOE2 Lab on Windows.
+# Install through scripts/bootstrap_aoe2lab.ps1 so the editable project and
+# this file always land in the same repository-local virtual environment.
+AoE2ScenarioParser
+rapidocr-onnxruntime
+opencv-python
+Pillow
+numpy
+grpcio>=1.81.0
+protobuf>=6.33.5
+tomli>=2.0; python_version < "3.11"
+-r ../../apps/video/auto/requirements_windows.txt

@@ -45,13 +45,18 @@ ARMY_MT = (9, 11, 12)                # combat-entity model types
 SCOUT = 448                          # never counted (the AI's explorer)
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(D_DIR, "run")
 DUR = float(sys.argv[2]) if len(sys.argv) > 2 else 240.0
+# Some combat units replace themselves only after a death animation.  Require
+# a stable zero interval longer than the known transition window before ending
+# capture, while dynamically admitting any replacement that appears meanwhile.
+ZERO_ARMY_GRACE_SECONDS = 4.0
 
 
 class LiveEnd:
     """Incremental decode of the stream for ONE purpose: write <out>.END the moment
     exactly one army reaches 0 alive. Mirrors redecode_hp's army rules (owner 2/3,
-    model type 9/11/12, master != scout, seed HP > 30; clock reset = new instance).
-    Requires 3 consecutive zero reads so a single corrupt frame can't end a run."""
+    model type 9/11/12, master != scout, positive HP; clock reset = new instance).
+    A four-second stable-zero grace rejects both corrupt frames and temporary
+    spawn-replacement gaps."""
 
     def __init__(self, out):
         self.out = out
@@ -59,7 +64,7 @@ class LiveEnd:
         self.doc = self.es = self.world_id = None
         self.army = None
         self.last_sec = None
-        self.zero_streak = 0
+        self.zero_since = None
         self.done = False
 
     def _derive_army(self):
@@ -83,6 +88,11 @@ class LiveEnd:
                 n += 1
         return n
 
+    def _refresh_army(self):
+        current = self._derive_army()
+        for owner in (2, 3):
+            self.army[owner].update(current[owner])
+
     def feed(self, fr):
         if not self.ok or self.done or not fr.patch:
             return
@@ -100,7 +110,7 @@ class LiveEnd:
                 self.es = es
                 a = self._derive_army()
                 self.army = a if min(len(a[2]), len(a[3])) >= 2 else None
-                self.zero_streak = 0
+                self.zero_since = None
                 if self.army:
                     print(f"[live] armies seeded {len(a[2])} vs {len(a[3])} "
                           f"at stream t={t:.1f}s", flush=True)
@@ -110,10 +120,12 @@ class LiveEnd:
             D.apply_patch(self.doc, p, self.es, self.world_id)
             if not self.army:
                 return
+            self._refresh_army()
             a1, a2 = self._alive(2), self._alive(3)
             if (a1 == 0) != (a2 == 0):
-                self.zero_streak += 1
-                if self.zero_streak >= 3:
+                if self.zero_since is None:
+                    self.zero_since = t
+                if t - self.zero_since >= ZERO_ARMY_GRACE_SECONDS:
                     self.done = True
                     with open(self.out + ".END", "w") as f:
                         json.dump({"end_stream_s": round(t, 2), "side1": a1,
@@ -122,7 +134,7 @@ class LiveEnd:
                     print(f"[live] FIGHT END at stream {t:.1f}s  "
                           f"s1={a1} s2={a2} -> {self.out}.END", flush=True)
             else:
-                self.zero_streak = 0
+                self.zero_since = None
         except Exception as e:
             self.ok = False
             print(f"[live] live decode disabled ({type(e).__name__}: {str(e)[:80]}) "

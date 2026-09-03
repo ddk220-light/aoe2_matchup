@@ -1,5 +1,17 @@
 # Running the matchup automation on Windows
 
+> **Primary workflow:** New matchup capture/simulation work should use
+> `aoe2lab`; see [`docs/aoe2-lab.md`](../../../docs/aoe2-lab.md). The commands
+> below remain the lower-level automation reference used by that workflow.
+
+The committed AOE2 Lab goldens intentionally keep Players 2–4 as `NoneAi`, AI
+type 2, with their embedded `(disable-self)` script. Do not replace those
+players with Human or point the runner at another `.per` file. The game extracts
+the embedded script to `%TEMP%\AOE2DE_Temp\NoneAI.per`; AOE2 Lab recreates the
+scratch parent and validates the complete AI configuration before Test. If the
+game shows an extraction/error dialog, the driver stops after one bounded menu
+request and records diagnostics instead of repeatedly sending F10.
+
 The automation is one cross-platform codebase. The only OS-specific bits live in
 **`auto/platform_io.py`**, which has a macOS backend (the verified one) and a
 **Windows backend** selected automatically on Windows. Everything else — scenario

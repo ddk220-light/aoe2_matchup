@@ -17,6 +17,7 @@ import json
 import shutil
 import sys
 import tempfile
+import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,39 +25,39 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 VIDEO_DIR = ROOT / "apps" / "video"
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(VIDEO_DIR))
 
 from AoE2ScenarioParser import settings  # noqa: E402
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario  # noqa: E402
-from auto import grpc_capture, vision  # noqa: E402
+from auto import grpc_capture, platform_io, vision  # noqa: E402
 from auto.orchestrate_matchup import RUN_DIR, resolve_side, run_matchup  # noqa: E402
 from build_run import unit_const  # noqa: E402
+from aoe2x.lab.retention import (  # noqa: E402
+    apply_run_retention,
+    validate_retained_statistics,
+)
 
 
 settings.PRINT_STATUS_UPDATES = False
-SOURCE_ROOT = (
-    ROOT / "aoe2x" / "js_simulation" / "calibration" / "live_observations"
-    / "current_ranged_goldens_2026-08-29" / "source"
-)
+SOURCE_ROOT = ROOT / "apps" / "video" / "templates" / "lab_goldens"
 GOLDENS = {
     "melee_vs_melee": {
         "path": (
-            ROOT / "aoe2x" / "js_simulation" / "calibration"
-            / "live_observations" / "current_melee_golden_2026-08-28"
-            / "source" / "meleevsmelee.aoe2scenario"
+            SOURCE_ROOT / "melee_vs_melee.aoe2scenario"
         ),
         "sha256": "31f3bed38ce0512b484124d89d5aa4e97318b3ea55c398bb8dad27242c769f4e",
     },
     "ranged_vs_ranged": {
-        "path": SOURCE_ROOT / "rangedvsranged.aoe2scenario",
+        "path": SOURCE_ROOT / "ranged_vs_ranged.aoe2scenario",
         "sha256": "f44097ef86e6b123c6dfeb4989842e548af91f0d492e69caf6de87148f040883",
     },
     "ranged_vs_melee": {
-        "path": SOURCE_ROOT / "rangedvsmelee.aoe2scenario",
+        "path": SOURCE_ROOT / "ranged_vs_melee.aoe2scenario",
         "sha256": "13c41485a00943ef525cab848d835d1379259fc8fff38b83d4ec510bc8824783",
     },
     "melee_vs_ranged": {
-        "path": SOURCE_ROOT / "meleevsranged.aoe2scenario",
+        "path": SOURCE_ROOT / "melee_vs_ranged.aoe2scenario",
         "sha256": "faf8d616ac9bb4601c4582deccec0984e997617d8c121bc44d698c7963f038a8",
     },
 }
@@ -71,6 +72,10 @@ EXPANDED_DEFAULT_OUTPUT = (
 REQUESTED_DEFAULT_OUTPUT = (
     ROOT / "aoe2x" / "js_simulation" / "calibration" / "live_observations"
     / "requested_roster_vs_arb_paladin_1x_2026-08-31"
+)
+NEXT_UNIQUE_DEFAULT_OUTPUT = (
+    ROOT / "aoe2x" / "js_simulation" / "calibration" / "live_observations"
+    / "next_unique_roster_vs_arb_paladin_5x_2026-09-02"
 )
 
 
@@ -142,6 +147,21 @@ REQUESTED_ROSTER = (
     Side("Poles", "elite_obuch_poles", "Elite Obuch", 75),
 )
 
+# Second fully-upgraded unique-unit capture batch. Ratha's weapon modes are
+# deliberately separate live rows. Elite Konnik is placed mounted; AoE2 itself
+# creates its dismounted continuation when that body is defeated.
+NEXT_UNIQUE_ROSTER = (
+    Side("Bengalis", "elite_ratha_(melee)_bengalis", "Elite Ratha (Melee)", 120),
+    Side("Bengalis", "elite_ratha_(ranged)_bengalis", "Elite Ratha (Ranged)", 120, "ranged"),
+    Side("Bulgarians", "elite_konnik_bulgarians", "Elite Konnik", 130),
+    Side("Burmese", "elite_arambai_burmese", "Elite Arambai", 135, "ranged"),
+    Side("Dravidians", "elite_urumi_swordsman_dravidians", "Elite Urumi Swordsman", 85),
+    Side("Gurjaras", "elite_shrivamsha_rider_gurjaras", "Elite Shrivamsha Rider", 82),
+    Side("Khitans", "elite_liao_dao_khitans", "Elite Liao Dao", 80),
+    Side("Khmer", "elite_ballista_elephant_khmer", "Elite Ballista Elephant", 180, "ranged"),
+    Side("Wu", "elite_fire_archer_wu", "Elite Fire Archer", 90, "ranged"),
+)
+
 
 def family_for(side1: Side, side2: Side) -> str:
     if side1.role == "melee" and side2.role == "melee":
@@ -172,6 +192,11 @@ EXPANDED_MATCHUPS = (
 REQUESTED_MATCHUPS = tuple(
     Matchup(family_for(unit, reference), unit, reference)
     for unit in REQUESTED_ROSTER
+    for reference in (ARB, PAL)
+)
+NEXT_UNIQUE_MATCHUPS = tuple(
+    Matchup(family_for(unit, reference), unit, reference)
+    for unit in NEXT_UNIQUE_ROSTER
     for reference in (ARB, PAL)
 )
 
@@ -242,12 +267,31 @@ def validate_generated_scenario(path: Path, matchup: Matchup) -> dict:
     ]
     if p4_generated != p4_source:
         raise RuntimeError("Player-4 diplomacy roster or positions changed")
+    def ai_configuration(scenario: AoE2DEScenario) -> tuple:
+        players = tuple(
+            (int(player.player_id), bool(player.human), bool(player.lock_personality))
+            for player in scenario.player_manager.players
+            if int(player.player_id) in (1, 2, 3, 4)
+        )
+        retrievers = scenario.sections["PlayerDataTwo"].retriever_map
+        return (
+            players,
+            tuple(retrievers["ai_names"].data[:4]),
+            tuple(int(value) for value in retrievers["ai_type"].data[:4]),
+            tuple(
+                row.retriever_map["ai_per_file_text"].data
+                for row in retrievers["ai_files"].data[:4]
+            ),
+        )
+    if ai_configuration(generated) != ai_configuration(source):
+        raise RuntimeError("generated scenario AI configuration differs from its golden")
     return {
         "sha256": sha256(path),
         "counts": {"player2": counts[0], "player3": counts[1]},
         "position_rule": "first_n_units_in_player_order",
         "positions_match_family_golden": True,
         "player4_unchanged": True,
+        "ai_configuration_matches_family_golden": True,
     }
 
 
@@ -286,6 +330,10 @@ def validate_capture(run_dir: Path, matchup: Matchup) -> dict:
         raise RuntimeError(f"unexpected final gRPC roster for {matchup.key}: {end}")
     winner_index = 0 if end[0] > 0 else 1
     winner_side = matchup.side1 if winner_index == 0 else matchup.side2
+    winner_key = f"side{winner_index + 1}"
+    winner_hp = float(final[winner_key]["hp"])
+    winner_starting_hp = float(first[winner_key]["hp"])
+    winner_hp_percent = winner_hp / winner_starting_hp * 100
     eliminated_key = "side2" if winner_index == 0 else "side1"
     elimination = next(row for row in rows if row[eliminated_key]["count"] == 0)
     return {
@@ -293,7 +341,12 @@ def validate_capture(run_dir: Path, matchup: Matchup) -> dict:
         "start_counts": list(start),
         "winner": winner_side.slug,
         "survivors": end[winner_index],
-        "winner_hp": final[f"side{winner_index + 1}"]["hp"],
+        "winner_hp": winner_hp,
+        "winner_starting_hp": winner_starting_hp,
+        "winner_remaining_hp_percent": winner_hp_percent,
+        "signed_remaining_hp_percent": (
+            winner_hp_percent if winner_index == 0 else -winner_hp_percent
+        ),
         "elimination_time_s": elimination["game_s"],
         "grpc_rows": len(rows),
         "frames_bytes": frames.stat().st_size,
@@ -340,15 +393,25 @@ def main() -> None:
     parser.add_argument("--repeats", type=int, default=5)
     parser.add_argument(
         "--matrix",
-        choices=("current", "expanded", "requested"),
+        choices=("current", "expanded", "requested", "next_unique"),
         default="current",
         help=(
             "capture the historical 14 rows, five-unit expansion matrix, or the "
-            "requested fully-upgraded roster versus Arbalester and Paladin"
+            "requested fully-upgraded roster versus Arbalester and Paladin, or "
+            "the next unique-unit roster versus those same references"
         ),
     )
     parser.add_argument("--output", type=Path)
     parser.add_argument("--cap", type=int, default=210)
+    parser.add_argument(
+        "--retention",
+        choices=("stats", "archive", "raw"),
+        default="stats",
+        help=(
+            "stats keeps decoded HP/results and deletes recordings/raw streams; "
+            "archive zips raw files; raw retains everything"
+        ),
+    )
     parser.add_argument(
         "--only",
         action="append",
@@ -366,19 +429,29 @@ def main() -> None:
         action="store_true",
         help="print the selected matchup plan without touching the game",
     )
+    parser.add_argument(
+        "--prune-only",
+        action="store_true",
+        help=(
+            "validate existing run statistics and apply --retention without "
+            "touching the game or starting new captures"
+        ),
+    )
     args = parser.parse_args()
     if args.repeats < 1:
         raise SystemExit("--repeats must be positive")
     candidates = (
         MATCHUPS if args.matrix == "current"
         else EXPANDED_MATCHUPS if args.matrix == "expanded"
-        else REQUESTED_MATCHUPS
+        else REQUESTED_MATCHUPS if args.matrix == "requested"
+        else NEXT_UNIQUE_MATCHUPS
     )
     if args.output is None:
         args.output = (
             DEFAULT_OUTPUT if args.matrix == "current"
             else EXPANDED_DEFAULT_OUTPUT if args.matrix == "expanded"
-            else REQUESTED_DEFAULT_OUTPUT
+            else REQUESTED_DEFAULT_OUTPUT if args.matrix == "requested"
+            else NEXT_UNIQUE_DEFAULT_OUTPUT
         )
     selected = [
         matchup for matchup in candidates
@@ -401,19 +474,100 @@ def main() -> None:
             )
         print(f"TOTAL\t{len(selected)}")
         return
+    if args.prune_only:
+        batch_path = args.output / "capture_manifest.json"
+        if not batch_path.exists():
+            raise SystemExit(f"capture manifest does not exist: {batch_path}")
+        batch = json.loads(batch_path.read_text(encoding="utf-8"))
+        pruned_runs = 0
+        deleted_bytes = 0
+        for matchup in selected:
+            for repeat in range(1, args.repeats + 1):
+                run_dir = args.output / matchup.key / f"run_{repeat:03d}"
+                run_manifest_path = run_dir / "capture_manifest.json"
+                if not run_manifest_path.exists():
+                    continue
+                existing = json.loads(run_manifest_path.read_text(encoding="utf-8"))
+                existing["capture"] = validate_retained_statistics(
+                    run_dir, existing, matchup.counts
+                )
+                existing_mode = (existing.get("retention") or {}).get("mode", "raw")
+                if args.retention == "stats" and existing_mode == "raw":
+                    existing["retention"] = apply_run_retention(run_dir, "stats")
+                    existing["original_raw_video"] = existing.get("raw_video")
+                    existing["raw_video"] = None
+                elif args.retention == "archive" and existing_mode == "raw":
+                    existing["retention"] = apply_run_retention(run_dir, "archive")
+                    existing["original_raw_video"] = existing.get("raw_video")
+                    existing["raw_video"] = None
+                elif args.retention != existing_mode and not (
+                    args.retention == "stats" and existing_mode == "archive"
+                ):
+                    raise SystemExit(
+                        f"{run_dir} is retained as {existing_mode}; cannot change it "
+                        f"to {args.retention} without recapture"
+                    )
+                write_json(run_manifest_path, existing)
+                deleted_bytes += int(
+                    (existing.get("retention") or {}).get("deletedRawBytes", 0)
+                )
+                rows = batch.setdefault("runs", {}).setdefault(matchup.key, [])
+                batch["runs"][matchup.key] = [
+                    row for row in rows if row.get("repeat") != repeat
+                ] + [existing]
+                batch["runs"][matchup.key].sort(key=lambda row: row["repeat"])
+                pruned_runs += 1
+        batch["updated_at"] = datetime.now(timezone.utc).isoformat()
+        write_json(batch_path, batch)
+        print(
+            f"PRUNED {pruned_runs} validated runs; freed "
+            f"{deleted_bytes / 1024 ** 3:.2f} GiB; retention={args.retention}",
+            flush=True,
+        )
+        return
     for golden in GOLDENS.values():
         if not golden["path"].exists() or sha256(golden["path"]) != golden["sha256"]:
             raise SystemExit(f"golden is missing or changed: {golden['path']}")
     if not grpc_capture.available():
         raise SystemExit("gRPC capture stack is unavailable")
+    # DE extracts the golden's embedded NoneAi disable-self personalities into
+    # this scratch directory when Scenario Editor Test starts. Windows temp
+    # cleanup can remove it between otherwise identical runs. Restoring the
+    # empty directory repairs the environment without changing the scenario.
+    (Path(tempfile.gettempdir()) / "AOE2DE_Temp").mkdir(exist_ok=True)
+    args.output.mkdir(parents=True, exist_ok=True)
+    # Fail before touching the game instead of letting AoE2 or ffmpeg discover a
+    # full disk mid-fight. Stats retention only needs one peak recording because
+    # every validated run is pruned immediately; raw/archive accumulate repeats.
+    reserve = 2 * 1024 ** 3
+    estimated_recording = 1 * 1024 ** 3
+    retained_recordings = 1 if args.retention == "stats" else len(selected) * args.repeats
+    required_free = reserve + retained_recordings * estimated_recording
+    volumes = {}
+    for storage_path in (args.output, Path(tempfile.gettempdir())):
+        resolved = storage_path.resolve()
+        anchor = resolved.anchor.lower() or str(resolved)
+        if anchor in volumes:
+            continue
+        free = shutil.disk_usage(resolved).free
+        volumes[anchor] = free
+        if free < required_free:
+            raise SystemExit(
+                f"storage preflight failed on {anchor}: {free / 1024 ** 3:.2f} GiB "
+                f"free, {required_free / 1024 ** 3:.2f} GiB required for "
+                f"retention={args.retention}"
+            )
+
+    platform_io.activate_game()
+    time.sleep(1.0)
     state = vision.detect_state(vision.grab())
-    if state not in ("editor", "load_dialog"):
+    if state not in ("editor", "load_dialog", "main_menu"):
         raise SystemExit(
-            "AoE2 must be in the Scenario Editor or its Load Scenario dialog; "
+            "AoE2 must be in the Scenario Editor, its Load Scenario dialog, or "
+            "the editor's main menu; "
             f"detected {state!r}"
         )
 
-    args.output.mkdir(parents=True, exist_ok=True)
     batch_path = args.output / "capture_manifest.json"
     if batch_path.exists():
         batch = json.loads(batch_path.read_text(encoding="utf-8"))
@@ -454,7 +608,25 @@ def main() -> None:
             run_manifest_path = run_dir / "capture_manifest.json"
             if run_manifest_path.exists():
                 existing = json.loads(run_manifest_path.read_text(encoding="utf-8"))
-                validate_capture(run_dir, matchup)
+                existing["capture"] = validate_retained_statistics(
+                    run_dir, existing, matchup.counts
+                )
+                existing_mode = (existing.get("retention") or {}).get("mode", "raw")
+                if args.retention == "stats" and existing_mode == "raw":
+                    existing["retention"] = apply_run_retention(run_dir, "stats")
+                    existing["original_raw_video"] = existing.get("raw_video")
+                    existing["raw_video"] = None
+                    write_json(run_manifest_path, existing)
+                elif args.retention == "stats" and existing_mode == "archive":
+                    # Preserve a prior explicitly requested archive.
+                    write_json(run_manifest_path, existing)
+                elif args.retention != existing_mode:
+                    raise RuntimeError(
+                        f"validated run {repeat} was retained as {existing_mode}; "
+                        f"it cannot be resumed as {args.retention} without recapture"
+                    )
+                else:
+                    write_json(run_manifest_path, existing)
                 complete += 1
                 print(
                     f"SKIP validated {complete}/{total} {matchup.key} run {repeat}",
@@ -500,6 +672,14 @@ def main() -> None:
                 dismiss_after=True,
                 logfile=str(log_path),
                 template=GOLDENS[matchup.family]["path"],
+                ranged_override=(
+                    matchup.side1.role == "ranged",
+                    matchup.side2.role == "ranged",
+                ),
+                scenario_validator=lambda generated: validate_generated_scenario(
+                    generated, matchup
+                ),
+                require_grpc=True,
             )
             generated = RUN_DIR / (
                 f"{resolve_side(matchup.side1.civ, matchup.side1.slug)[1]}_vs_"
@@ -513,6 +693,11 @@ def main() -> None:
                 "scenario": validate_generated_scenario(scenario_copy, matchup),
                 "capture": validate_capture(run_dir, matchup),
             }
+            write_json(run_manifest_path, run_manifest)
+            run_manifest["retention"] = apply_run_retention(run_dir, args.retention)
+            if args.retention != "raw":
+                run_manifest["original_raw_video"] = run_manifest["raw_video"]
+                run_manifest["raw_video"] = None
             write_json(run_manifest_path, run_manifest)
             batch["runs"][matchup.key] = [
                 row

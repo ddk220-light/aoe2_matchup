@@ -410,7 +410,14 @@ function auxiliaryContactGeometry({ fight, family, meleeOwner, event, ownerOf })
 
 
 const result = [];
-const seeds = process.argv.includes("--five-seeds") ? [0, 1, 2, 3, 4] : [0];
+const explicitSeeds = argument("opening-seeds");
+const seeds = explicitSeeds
+  ? explicitSeeds.split(",").map((value) => Number.parseInt(value.trim(), 10))
+  : process.argv.includes("--five-seeds") ? [0, 1, 2, 3, 4] : [0];
+if (seeds.length === 0
+    || seeds.some((seed) => !Number.isSafeInteger(seed) || seed < 0)) {
+  throw new RangeError("--opening-seeds must contain nonnegative integers");
+}
 const familiesToRun = process.argv.includes("--rvm-only")
   ? ["ranged_vs_melee"]
   : process.argv.includes("--mvr-only") ? ["melee_vs_ranged"]

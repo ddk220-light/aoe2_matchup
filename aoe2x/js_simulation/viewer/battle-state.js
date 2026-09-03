@@ -67,6 +67,43 @@ export function directFightRequest(urlValue) {
 }
 
 
+export function labRunRequest(urlValue) {
+  let url;
+  try {
+    url = new URL(urlValue, "http://127.0.0.1/");
+  } catch {
+    return null;
+  }
+  const keys = [...url.searchParams.keys()];
+  if (keys.some((key) => !["mode", "job", "seed"].includes(key))
+      || url.searchParams.getAll("mode").length !== 1
+      || url.searchParams.get("mode") !== "lab"
+      || url.searchParams.getAll("job").length !== 1
+      || url.searchParams.getAll("seed").length !== 1) return null;
+  const jobId = url.searchParams.get("job");
+  const seedText = url.searchParams.get("seed");
+  if (!/^[a-z0-9]+(?:_[a-z0-9]+)*$/.test(jobId ?? "")
+      || !/^[1-9]\d*$/.test(seedText ?? "")) return null;
+  const openingSeed = Number(seedText);
+  if (!Number.isSafeInteger(openingSeed)) return null;
+  return Object.freeze({
+    endpoint: "api/lab/result",
+    jobId,
+    openingSeed,
+    query: new URLSearchParams({ job: jobId, seed: seedText }).toString(),
+  });
+}
+
+
+export function labRunHref(urlValue, jobId, seed) {
+  const url = new URL(urlValue, "http://127.0.0.1/");
+  url.search = new URLSearchParams({
+    mode: "lab", job: jobId, seed: String(seed),
+  }).toString();
+  return url.href;
+}
+
+
 export function soloMovementRequest(urlValue) {
   let url;
   try {

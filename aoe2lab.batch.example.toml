@@ -1,0 +1,22 @@
+schemaVersion = 1
+
+[defaults]
+seeds = 5
+cap = 27
+count = 27
+balance = { mode = "equal_resources" }
+weights = { food = 1.0, wood = 1.0, gold = 1.0 }
+
+[[matchups]]
+id = "arb_vs_paladin_check"
+side2 = "arbalester"
+civ2 = "Chinese"
+side3 = "paladin"
+civ3 = "Spanish"
+
+[[matchups]]
+id = "hca_vs_arb_check"
+side2 = "heavy_cav_archer"
+civ2 = "Saracens"
+side3 = "arbalester"
+civ3 = "Chinese"

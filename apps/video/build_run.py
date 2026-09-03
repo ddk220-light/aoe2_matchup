@@ -159,6 +159,25 @@ def _swap_army_inplace(um, pid, old_const, new_const, count):
         um.add_unit(player=pid, unit_const=new_const, x=px, y=py)
 
 
+def _ai_configuration(scenario):
+    """Return the golden player/AI fields that generation must not change."""
+    players = tuple(
+        (int(player.player_id), bool(player.human), bool(player.lock_personality))
+        for player in scenario.player_manager.players
+        if int(player.player_id) in (P_SPECTATOR, P_SIDE1, P_SIDE2, 4)
+    )
+    retrievers = scenario.sections["PlayerDataTwo"].retriever_map
+    return (
+        players,
+        tuple(retrievers["ai_names"].data[:4]),
+        tuple(int(value) for value in retrievers["ai_type"].data[:4]),
+        tuple(
+            row.retriever_map["ai_per_file_text"].data
+            for row in retrievers["ai_files"].data[:4]
+        ),
+    )
+
+
 def _strip_camp(um, pid, keep_const):
     """Remove every object player `pid` owns that ISN'T its army (`keep_const`) or the
     keep-alive scout. The template decorates each side with buildings/camp props (a yurt,
@@ -280,6 +299,7 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
 
     scn = AoE2DEScenario.from_file(str(template))
     pm, um = scn.player_manager, scn.unit_manager
+    source_ai_configuration = _ai_configuration(scn)
 
     def player(pid):
         return next(p for p in pm.players if p.player_id == pid)
@@ -306,6 +326,8 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
         kind = "midpoint" if ranged[0] == ranged[1] else "ranged army"
         print(f"[build_run] camera on the {kind} at {cam} "
               f"(trees and containment are the template's own — not touched)")
+    if _ai_configuration(scn) != source_ai_configuration:
+        raise RuntimeError("generated scenario changed the golden AI configuration")
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

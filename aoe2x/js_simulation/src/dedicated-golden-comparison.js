@@ -18,7 +18,7 @@ export async function loadDedicatedComparisonContext(root) {
     "champion", "elite_elephant", "elite_fire_lancer", "paladin", "elite_steppe",
   ];
   const [mapFixture, mechanicsEntries] = await Promise.all([
-    readFile(new URL("fixtures/golden_map.json", root), "utf8").then(JSON.parse),
+    readFile(new URL("fixtures/golden_map_legacy.json", root), "utf8").then(JSON.parse),
     Promise.all(slugs.map(async (slug) => {
       const unit = unitBySlug.get(slug);
       const mechanics = JSON.parse(await readFile(

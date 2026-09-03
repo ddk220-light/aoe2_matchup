@@ -262,6 +262,8 @@ export function rangedSpec(mechanics) {
   // list), bit 2 = full damage on unintended targets. Absent on fixtures
   // exported before the attribute was sourced; those fly unled.
   const smartMode = requireFinite(ranged.smart_mode ?? 0, "ranged smart mode");
+  const projectileArc = requireFinite(
+    ranged.projectile_arc ?? 0, "ranged projectile arc");
   // Accuracy (dat accuracy_percent < 100 gates the whole mechanic; every
   // converged-corpus archer is 100): an aim-true roll per shot; a missed
   // shot scatters within the dat dispersion half-radius and deals HALF
@@ -280,6 +282,12 @@ export function rangedSpec(mechanics) {
     : requireFinite(mechanics?.blast?.width_tiles ?? 0, "blast width");
   const secondaryCount = requireFinite(
     ranged.secondary_projectile_count ?? 0, "secondary projectile count");
+  const secondaryHalfWidth = requireFinite(
+    ranged.secondary_projectile_half_width_tiles ?? halfWidth,
+    "secondary projectile half width");
+  if (secondaryCount > 0 && secondaryHalfWidth <= 0) {
+    throw new RangeError("secondary projectiles need a positive projectile width");
+  }
   const spawnArea = Array.isArray(ranged.projectile_spawning_area)
     ? ranged.projectile_spawning_area
     : [0, 0];
@@ -289,10 +297,12 @@ export function rangedSpec(mechanics) {
     passThrough,
     projectileHalfWidth: halfWidth,
     smartMode,
+    projectileArc,
     accuracyPercent: accuracy,
     dispersionTiles: dispersion,
     blastRadius,
     secondaryCount,
+    secondaryHalfWidth,
     spawnArea,
   };
 }

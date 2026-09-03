@@ -1,60 +1,51 @@
 # Project Agent Instructions
 
-## Clean-room tape sources of truth
+## Live capture sources of truth
 
-The JavaScript simulation is being rebuilt from scratch. Every tape archive
-used for calibration, tape forensics, or simulation-vs-tape work must be an
-explicitly authorized golden archive, stored project-locally under:
+This JavaScript simulation is a new engine built from scratch. The newest
+relevant project-local live `frames.bin` capture may be used directly for tape
+forensics, calibration, and simulation comparisons.
 
-`aoe2x/js_simulation/calibration/source/`
+- No ZIP archive intake, clean-room manifest, source authorization, or SHA-256
+  verification is required before using a live capture.
+- Prefer the latest relevant capture under
+  `aoe2x/js_simulation/calibration/live_observations/`.
+- Record the exact capture path and run number in any new derived report so the
+  evidence remains traceable.
+- New decoded tapes, fixtures, and comparison reports must remain under
+  `aoe2x/js_simulation/calibration/`.
+- Historical archive manifests and reports are legacy inputs only. They do not
+  restrict or override the live-capture workflow.
 
-The original Champion-versus-Champion archive remains authorized for its
-clean-room matchup corpus:
+## Simulation modeling invariant
 
-`aoe2x/js_simulation/calibration/source/aoe2_golden_basics_championvschampion_2026-08-04.zip`
+The simulation must reproduce reusable game mechanics, not fit individual
+matchup outputs. Captured outcomes and `frames.bin` observations are validation
+evidence only; they must never become matchup-specific runtime parameters such
+as release delays, forced target assignments, fixed engagement timestamps,
+waypoints copied from a run, HP corrections, or winner/outcome overrides.
 
-Required SHA-256:
+Allowed engine changes must describe mechanics that can generalize to any unit
+type and army size: scenario-authored diplomacy and triggers, movement speed,
+acceleration, collision and overlap rules, pathing, target acquisition and
+retargeting rules, attack/reload/projectile behavior, or other independently
+supported game-system behavior. Exact golden-scenario positions, unit rosters,
+orders, diplomacy, and trigger effects are scenario inputs and may be reproduced
+faithfully. If a discrepancy cannot yet be explained by a reusable mechanic,
+report it as an unresolved delta instead of force-fitting it.
 
-`33F4051CB1BE014CDF1D3813E7AB74EF619B468CB6196B5E92E7482508AA1BDE`
+The first target choice and the delay before a unit's first acquisition are an
+explicit exception: they may be supplied by a generic stochastic/seeded opening
+acquisition policy because the game varies them between otherwise identical
+runs. This exception ends at first acquisition. It must not encode a desired
+winner or survivor HP, and it must not prescribe later waypoints, target changes,
+engagement times, pauses, or any other continuous fight behavior.
 
-The expanded **standard-units golden archive is also authorized** for multi-unit
-calibration and simulation comparisons. Its exact project-local filename and
-SHA-256 must be recorded in the active clean-room manifest before use.
+## Comparison report viewer invariant
 
-### Archive intake authorization
-
-The Champion archive may initially be copied only from:
-
-`C:\Users\ddk22\Downloads\aoe2_golden_basics_championvschampion_2026-08-04.zip`
-
-The standard-units golden archive may be copied from the user-designated local
-source after its exact filename and SHA-256 have been established.
-
-Before copying an archive, verify the external file's SHA-256. Copy it
-byte-for-byte into the project-local source directory, verify the copied file
-has the same SHA-256, and record that hash in the active clean-room manifest.
-After intake, use only the project-local copy.
-
-### Non-negotiable rules
-
-- Use only explicitly authorized golden archives whose project-local file and
-  SHA-256 are recorded in the active clean-room manifest.
-- The standard-units golden archive is permitted. Do not substitute an older,
-  unmanifested standard-units archive or tape-derived corpus for it.
-- Existing material under the old `calibration/` workflow must not be treated as
-  evidence for the clean-room rebuild.
-- All new extracted tapes, fixtures, manifests, reports, and simulation
-  comparisons must live under `aoe2x/js_simulation/calibration/`.
-- Before tape analysis, verify the selected project-local archive SHA-256.
-- Every active clean-room manifest entry must record the selected archive's
-  SHA-256 as `zip_sha256`.
-- If no clean-room manifest exists yet, it may be bootstrapped only from a
-  verified, explicitly authorized project-local golden archive.
-- If the archive is missing or its hash differs, stop and ask the user. Never
-  substitute another tape.
-- Derived fixtures must be reproducible from the verified archive and must not
-  be manually edited to fit simulation results.
-
-The Champion-versus-Champion basics archive is the original focused ground
-truth. The standard-units golden archive is the expanded ground truth for
-multi-unit movement, target acquisition, and fight-outcome comparisons.
+Every published simulation-versus-live report must expose each failing matchup
+directly in the Tailnet engine viewer. Wrong-winner rows must open an actual
+wrong-winner seed. Stable-winner rows whose survivor HP is outside the accepted
+delta must open a completed seed representative of that HP miss. The report's
+failure list and the viewer's problem-matchup dropdown must be generated from
+the same current comparison output so they cannot drift apart.

@@ -240,7 +240,11 @@ test("swapping melee player numbers leaves the physical trajectory unchanged", a
     original = stepWorld(original);
     swapped = stepWorld(swapped);
   }
-  const physicalState = (world) => world.units.map(({ owner, ...unit }) => unit);
+  const physicalState = (world) => world.units.map(({
+    owner,
+    relationByOwner,
+    ...unit
+  }) => unit);
   const canonicalEvents = (world) => [...world.eventLog]
     .toSorted((left, right) => left.id.localeCompare(right.id));
 
@@ -296,8 +300,8 @@ test("a shorter-range subject remains in ordinary ranged-versus-ranged combat", 
   assert.equal(scenario.kiteOwner, undefined);
   assert.equal(scenario.kiteOpponentMode, undefined);
   assert.equal(scenario.rangedTargetPressureOwner, 3);
-  assert.equal(scenario.rangedOpportunityRetargetOwner, 2);
-  assert.equal(scenario.rangedWindupRetargetOwner, 3);
+  assert.equal("rangedOpportunityRetargetOwner" in scenario, false);
+  assert.equal("rangedWindupRetargetOwner" in scenario, false);
 });
 
 

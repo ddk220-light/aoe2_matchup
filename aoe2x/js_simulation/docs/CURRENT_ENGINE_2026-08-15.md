@@ -1,4 +1,4 @@
-# Current clean-room JavaScript engine — 2026-08-15
+# Current clean-room JavaScript engine — updated 2026-08-29
 
 This document describes the engine that is currently executed by
 `src/combat/world.js`, the fight assembly in `src/fight.js`, and the dedicated
@@ -13,7 +13,8 @@ rules are reconstructed from explicitly authorized golden recordings.
 
 ## Current evidence boundary
 
-- The registry contains 14 units with generated mechanics fixtures.
+- The registry contains 34 units with generated mechanics fixtures: the 14-unit
+  standard core plus 20 Batch-1 units.
 - The dedicated ranged-versus-melee corpus contains 19 authorized archives,
   95 ratio rows, and 475 tape repeats.
 - Every dedicated row has five tape repeats and preserves the exact recorded
@@ -25,6 +26,10 @@ rules are reconstructed from explicitly authorized golden recordings.
   historical evidence because it predates the newest native-siege,
   minimum-range-retreat, exclusive-overlap, and Hand Cannoneer corpus changes.
   Do not present it as a current 19-archive run.
+- The current user-authored ranged golden matrix adds 14 RvR/RvM matchups and
+  70 new live game runs. The engine gets all 14 winner directions correct with
+  a 14.758-point mean absolute normalized winner-HP delta. See
+  `docs/RANGED_MATRIX_LIVE_OBSERVATIONS_2026-08-29.md`.
 
 ## Architecture
 
@@ -109,6 +114,9 @@ between ticks.
 hash, and field-level provenance. A unit cannot be instantiated without this
 provenance.
 
+The table below names the standard core; the registry also contains the 20
+Batch-1 fixtures covered by its generated-fixture tests.
+
 | Class | Units | Engine role |
 |---|---|---|
 | Mobile ranged | Arbalester, Hand Cannoneer, Heavy Cavalry Archer, Elite Skirmisher | May use the mechanics-derived cohesive kite controller |
@@ -163,6 +171,22 @@ After the initial delay:
 - ordinary AI idle rescue can designate an enemy outside line of sight so
   separated survivors do not remain permanently blind.
 
+Two scenario-level acquisition mechanisms are now explicit:
+
+- Current mixed goldens instantiate the Player-4 diplomacy/front-line gate as
+  nine live units. A principal melee owner remains allied to the ranged owner
+  until Player 4 is physically defeated; the authored trigger then changes
+  that one directional diplomacy edge and issues the next PATROL.
+- Current ranged goldens use a generic seeded first-scan and first-target
+  policy. A non-outnumbered cohort concentrates on one opening anchor, while
+  an outnumbered principal cohort fans across about one anchor per four
+  enemies. That policy ends at first acquisition.
+
+After acquisition, all movement, obstruction, engagement, retargeting, attack,
+projectile, damage, diplomacy, and trigger behavior comes from the shared
+engine. Scenario PATROL units are prohibited from beginning an attack before
+their own first acquisition event.
+
 The committed default is `engagement=pursuit`: a unit prioritizes its pursued
 target once it has closed to the movement stop range. A blocked unit can still
 fight another legally reachable enemy rather than idling beside it.
@@ -208,6 +232,13 @@ Damage uses the unit's attack classes against the victim's matching armor
 classes. Base melee class 4 and base pierce class 3 are handled by the same
 rule, positive bonus classes stack, and every hit has a minimum of 1 damage.
 Fractional damage is retained for splash and pass-through mechanics.
+
+Civilization modifiers belong in the generated mechanics fixture. In
+particular, Spanish Hand Cannoneer reload is `3.45 × 0.85 = 2.9325 s`, sourced
+from the documented Spanish 18%-faster gunpowder bonus and independently
+supported by a `2.894 s` median clean damage-wave interval in the current live
+captures. The exporter records the base value, multiplier, evidence-file hash,
+and final reload; the combat loop has no Spanish-specific branch.
 
 ## Ranged projectiles
 
@@ -475,6 +506,39 @@ steering, and stable ordering of simultaneous events.
 
 These policy choices must remain general. They may not name a particular
 matchup merely to force its score toward tape.
+
+## Current mixed-family scenario engine (2026-08-29)
+
+The current ranged-vs-melee and melee-vs-ranged goldens no longer approximate
+their front-line gate with a delay. They instantiate Player 4 as nine live
+Spanish Imperial Scouts at the exact authored positions. Diplomacy is
+directional, owner defeat comes from live unit state, and the authored trigger
+changes only the configured diplomacy edge before issuing the next PATROL.
+Victory is evaluated by scenario teams so Player 4 is allied with the ranged
+side without becoming the reported principal winner.
+
+PATROL movement uses sourced DAT speed, collision/overlap, LOS, reach, physical
+obstruction, and ordinary targeting/attack state. The first target and first
+scan time are a generic seeded boundary. Non-outnumbered cohorts concentrate
+on one opening anchor; outnumbered principal cohorts fan across a set derived
+from hostile roster size, while P4 remains one committed group. No later
+target, waypoint, engagement time, release time, HP, or outcome is supplied
+from a replay. The earlier
+per-matchup release-clock fixture and per-unit observed-trajectory world API
+were retired because they fit recorded outputs rather than recreate reusable
+mechanics.
+
+The current PATROL transit preserves the authored relative offsets until a
+unit acquires a target. Replay frames show that the game instead compresses
+and reforms groups with temporary catch-up speed and extensive allied overlap.
+A first compaction prototype was rejected because it flipped three winners;
+formation reflow remains an identified general-engine gap, not an active
+calibration constant.
+
+Focused five-seed Arbalester/Paladin validation currently preserves the game
+winner in both orientations and stays below a 20% mean winner-HP delta. See
+`docs/RANGED_MATRIX_LIVE_OBSERVATIONS_2026-08-29.md` for hashes, raw-clock
+comparison, and the remaining capture work.
 
 ## Known limitations
 

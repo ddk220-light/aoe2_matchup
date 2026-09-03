@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Completed Combat Engine Baseline</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; background: #11151d; color: #edf2f7; }
+    body { margin: 0; }
+    main { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 72px; }
+    h1 { margin: 0 0 8px; font-size: clamp(2rem, 7vw, 3.6rem); line-height: 1.02; }
+    h2 { margin-top: 38px; }
+    p, li { color: #bdc8d8; line-height: 1.65; }
+    .eyebrow { color: #73c7b8; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .card { margin-top: 26px; padding: 24px; border: 1px solid #344153; border-radius: 16px; background: #19212d; }
+    .metric { font-size: 1.6rem; color: #fff; font-weight: 750; }
+    a { color: #82d8c8; }
+    code { color: #f4cf79; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">AoE2 simulation · 2026-09-01</div>
+  <h1>Completed Combat Engine Baseline</h1>
+  <p>The current golden-scenario combat engine is frozen as the mechanics baseline for the next unique-unit expansion. Its movement, overlap, pathing, diplomacy, targeting, projectile, trample, Scorpion, and Onager behavior is reusable rather than matchup-fitted.</p>
+
+  <section class="card">
+    <div class="metric">Correct winner · +39.03 percentage points</div>
+    <p>Aztecs Siege Onager (12) versus Spanish Paladin (27): live was +42.533% signed remaining HP and simulation was +81.565%. The survivor-HP difference is retained as an accepted limitation; no output correction is applied.</p>
+    <p><a href="https://starlight.tail82a190.ts.net/golden-map/?mode=problem-matchups&amp;matchup=siege_onager_vs_paladin&amp;seed=2">Open the representative completed seed in the Tailnet engine viewer</a></p>
+  </section>
+
+  <h2>What is preserved for next</h2>
+  <p><strong>38 preserved unique-unit captures</strong> are untouched: 19 requested units versus Chinese Arbalester and Spanish Paladin, including both Jian Swordsman runs. The 38 local <code>frames.bin</code> files total 638,427,583 bytes and remain under <code>calibration/live_observations/requested_roster_vs_arb_paladin_1x_2026-08-31/</code>.</p>
+
+  <h2>Evidence</h2>
+  <ul>
+    <li><code>baseline.json</code> — exact five-run live and simulation values</li>
+    <li><code>unique_unit_capture_inventory.json</code> — preserved capture inventory</li>
+    <li><code>viewer_problem_catalogue.json</code> — viewer limitation catalogue</li>
+  </ul>
+</main>
+</body>
+</html>

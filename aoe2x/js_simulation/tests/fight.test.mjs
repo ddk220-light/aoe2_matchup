@@ -234,7 +234,7 @@ test("exactly one explicit count is rejected, not silently re-derived", async ()
 test("an explicit count that exceeds its side's family capacity is rejected", async () => {
   // The siege unit always runs as owner 2 (the archive's orientation, 16/16),
   // and the owner-2 siege block holds only 16 cells -- the global
-  // FIGHT_SIDE_CAP (21) alone would let this slip through to placeArmy. The
+  // The global HTTP cap alone would let this slip through to placeArmy. The
   // ceiling follows the siege unit into whichever dropdown it was picked in,
   // so both orders are rejected and both name the same block.
   await assert.rejects(

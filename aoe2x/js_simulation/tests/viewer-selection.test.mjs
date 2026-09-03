@@ -11,6 +11,7 @@ test("the local viewer uses the production Battle Simulation control structure",
     "totalResources", "startBtn", "pauseBtn", "resetBtn", "speedSlider",
     "team1Rail", "team2Rail", "team1Search", "team2Search",
     "team1Selection", "team2Selection", "mapCanvas",
+    "problemMatchupReview", "problemMatchup", "problemMatchupIssue",
   ]) {
     assert.ok(html.includes(`id="${id}"`), `missing #${id}`);
   }

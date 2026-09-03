@@ -22,19 +22,19 @@ test("render scene preserves every source tile and Gaia object", async () => {
   const scene = buildRenderScene(fixture.map);
 
   assert.equal(scene.tiles.length, 256);
-  assert.equal(scene.objects.length, 101);
+  assert.equal(scene.objects.length, 152);
   assert.deepEqual(
-    scene.objects.find((object) => object.name === "PANDA_ROCK"),
+    scene.objects[0],
     {
-      reference_id: 1604,
-      unit_const: 2082,
-      name: "PANDA_ROCK",
-      x: 9,
-      y: 7,
+      reference_id: 1540,
+      unit_const: 1053,
+      name: "BUSH_B",
+      x: 0.5,
+      y: 0.5,
       z: 0,
-      rotation: 0,
+      rotation: 2,
       status: 2,
-      kind: "rock",
+      kind: "bush",
     },
   );
 });
@@ -60,6 +60,9 @@ test("render scene recognizes every vegetation category in the scenario", async 
     "TREE_OAK_FOREST",
     "BUSH_B",
     "TREE_RAINFOREST",
+    "TREE_JUNGLE",
+    "TREE_BIRCH",
+    "TREE_OAK_AUTUMN",
   ]));
   assert.deepEqual(
     scene.objects.map((object) => object.x + object.y),
@@ -101,6 +104,15 @@ test("formation scene preserves source coordinates and uses rotated depth", () =
   assert.deepEqual(scene[0].position, { x: 14.5, y: 4.5 });
   assert.equal(scene[0].team, "p3");
   assert.equal(scene[1].team, "p2");
+});
+
+
+test("Player 4 is assigned its own yellow render team", () => {
+  const scene = buildFormationScene([
+    { reference_id: 4, player_id: 4, position: { x: 6, y: 6 }, rotation: 0 },
+  ]);
+
+  assert.equal(scene[0].team, "p4");
 });
 
 

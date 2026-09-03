@@ -1,4 +1,4 @@
-"""Export the exact 21v21 formation retained by the golden scenario builder."""
+"""Export the exact 27v27 formation from the current melee golden scenario."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from pathlib import Path
 
 import AoE2ScenarioParser
 from AoE2ScenarioParser import settings
+from AoE2ScenarioParser.datasets.effects import EffectId
 from AoE2ScenarioParser.datasets.other import OtherInfo
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
@@ -18,10 +19,10 @@ from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 settings.PRINT_STATUS_UPDATES = False
 
 EXPECTED_SOURCE_SHA256 = (
-    "f10508cbe6ec6211d611c35d411ad7e40b38c96b6ef0d6b0d651daa42df645a4"
+    "31f3bed38ce0512b484124d89d5aa4e97318b3ea55c398bb8dad27242c769f4e"
 )
 FOREST_TERRAIN_IDS = frozenset({10, 56, 128})
-RETAINED_PER_SIDE = 21
+RETAINED_PER_SIDE = 27
 
 
 def _sha256(path: Path) -> str:
@@ -41,7 +42,7 @@ def _cell(x: float, y: float) -> tuple[int, int]:
 
 
 def extract_formation(path: Path) -> dict:
-    """Return the literal first 21 P2/P3 records and their placement audit."""
+    """Return the literal first 27 P2/P3 records and their placement audit."""
     path = Path(path).resolve()
     source_hash = _sha256(path)
     if source_hash != EXPECTED_SOURCE_SHA256:
@@ -57,7 +58,9 @@ def extract_formation(path: Path) -> dict:
         units = list(scenario.unit_manager.get_player_units(player_id))
         retained = units[:RETAINED_PER_SIDE]
         if len(retained) != RETAINED_PER_SIDE:
-            raise ValueError(f"player {player_id} has fewer than 21 source units")
+            raise ValueError(
+                f"player {player_id} has fewer than {RETAINED_PER_SIDE} source units"
+            )
         sides[str(player_id)] = [
             {
                 "reference_id": int(unit.reference_id),
@@ -73,6 +76,40 @@ def extract_formation(path: Path) -> dict:
             }
             for unit in retained
         ]
+
+    patrol_effect = int(EffectId.PATROL)
+    opening_patrol_by_owner: dict[str, dict] = {}
+    for trigger_index, trigger in enumerate(scenario.trigger_manager.triggers):
+        if not bool(trigger.enabled):
+            continue
+        for effect_index, effect in enumerate(trigger.effects):
+            if int(effect.effect_type) != patrol_effect:
+                continue
+            owner = int(effect.source_player)
+            if owner not in (2, 3):
+                continue
+            owner_key = str(owner)
+            if owner_key in opening_patrol_by_owner:
+                raise ValueError(f"multiple opening patrol effects for player {owner}")
+            x = int(effect.location_x)
+            y = int(effect.location_y)
+            if not (0 <= x < scenario.map_manager.map_width
+                    and 0 <= y < scenario.map_manager.map_height):
+                raise ValueError(f"player {owner} patrol destination is outside the map")
+            opening_patrol_by_owner[owner_key] = {
+                "x": x,
+                "y": y,
+                "trigger_index": trigger_index,
+                "effect_index": effect_index,
+                "area": {
+                    "x1": int(effect.area_x1),
+                    "y1": int(effect.area_y1),
+                    "x2": int(effect.area_x2),
+                    "y2": int(effect.area_y2),
+                },
+            }
+    if set(opening_patrol_by_owner) != {"2", "3"}:
+        raise ValueError("golden melee scenario must contain one opening patrol per side")
 
     gaia_cells = {
         _cell(float(unit.x), float(unit.y))
@@ -111,11 +148,15 @@ def extract_formation(path: Path) -> dict:
             "scenario_version": float(scenario.scenario_version),
             "parser": "AoE2ScenarioParser",
             "parser_version": str(AoE2ScenarioParser.__version__),
-            "selection_rule": "first_21_units_in_player_order",
+            "selection_rule": "first_27_units_in_player_order",
         },
         "map": {
             "width": int(scenario.map_manager.map_width),
             "height": int(scenario.map_manager.map_height),
+        },
+        "opening_patrol": {
+            "effect_id": patrol_effect,
+            "by_owner": opening_patrol_by_owner,
         },
         "sides": sides,
         "validation": {"valid": not conflicts, "conflicts": conflicts},
@@ -133,7 +174,10 @@ def main() -> None:
         json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    print(f"wrote {args.output} (21 P2 units, 21 P3 units)")
+    print(
+        f"wrote {args.output} "
+        f"({RETAINED_PER_SIDE} P2 units, {RETAINED_PER_SIDE} P3 units)"
+    )
 
 
 if __name__ == "__main__":

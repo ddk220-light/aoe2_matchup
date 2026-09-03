@@ -219,6 +219,29 @@ def _raw_unit(dat_path: Path, civ: str, master: int):
     return data, unit
 
 
+def _civilization_reload_multiplier(data, civ: str, unit) -> float:
+    """Return direct civilization tech-tree multipliers for reload attribute 10.
+
+    The reference DB's final_reload_time does not apply civilization tech-tree
+    effects such as the Spanish 15% faster gunpowder reload. Genie effect type
+    5 multiplies an attribute; a == -1/b == class targets a unit class, while
+    a == unit.id targets one master. Deriving this from the selected civ's raw
+    tech-tree effect keeps the exporter generic and source-backed.
+    """
+    dat_civ = REFERENCE_TO_DAT_CIV.get(civ, civ)
+    civilization = next(current for current in data.civs if current.name == dat_civ)
+    effect = data.effects[int(civilization.tech_tree_id)]
+    multiplier = 1.0
+    for command in effect.effect_commands:
+        if int(command.type) != 5 or int(command.c) != 10:
+            continue
+        targets_unit = int(command.a) == int(unit.id)
+        targets_class = int(command.a) == -1 and int(command.b) == int(unit.class_)
+        if targets_unit or targets_class:
+            multiplier *= float(command.d)
+    return round(multiplier, 6)
+
+
 def _animation_seconds(data, graphic_id: int, label: str) -> dict[str, Any]:
     """Duration of a Genie animation = frame_count x frame_duration."""
     if graphic_id is None or graphic_id < 0:
@@ -249,6 +272,9 @@ def export_unit_mechanics(
     damage_reduction = _damage_reduction_by_attacker_category(
         data, master, reference["applied_tech_ids"]
     )
+    reload_multiplier = _civilization_reload_multiplier(data, civ, unit)
+    reload_seconds = round(
+        float(reference["final_reload_time"]) * reload_multiplier, 6)
 
     attack_animation = _animation_seconds(
         data, int(unit.type_50.attack_graphic), "attack")
@@ -267,9 +293,11 @@ def export_unit_mechanics(
 
     # Genie hit timing. The hit lands on animation frame `frame_delay`, so
     #   attack_delay = animation_seconds * frame_delay / frame_count
-    # `frame_delay == 0` is an UNSET sentinel, not "instant damage": the engine
-    # then falls back to the animation midpoint. The split is on frame_delay,
-    # NOT on melee-vs-ranged -- the Paladin is melee with frame_delay 13.
+    # `frame_delay == 0` is normally an UNSET sentinel, so ordinary attacks
+    # fall back to the animation midpoint. Mangonel-family blast projectiles
+    # are the measured exception: the primary shell appears on the very next
+    # recorder frame after action-state 7 begins (0.016-0.018 s), so their
+    # zero frame is a literal immediate release rather than the sentinel.
     #
     # Both branches are confirmed against the authorized tapes, which is why
     # this is a sourced rule and not a fitted one:
@@ -281,7 +309,17 @@ def export_unit_mechanics(
     # ref_units.final_attack_delay must NOT be used: it stores frame_delay/60
     # (0.217 s for the Paladin), which the tape rules out by a factor of three.
     frame_delay = int(unit.type_50.frame_delay)
-    if frame_delay == 0:
+    immediate_blast_projectile = (
+        frame_delay == 0
+        and int(unit.type_50.blast_attack_level) == 1
+        and float(unit.type_50.blast_width) > 0
+    )
+    if immediate_blast_projectile:
+        attack_delay_seconds = 0.0
+        attack_delay_source = (
+            "zero-frame-delay blast projectile: immediate shell release"
+        )
+    elif frame_delay == 0:
         attack_delay_seconds = attack_animation["seconds"] / 2
         attack_delay_source = (
             "frame_delay unset (0): hit at the attack-animation midpoint"
@@ -309,7 +347,10 @@ def export_unit_mechanics(
             "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)"
         ),
         "attack_range_tiles": "ref_units.final_range",
-        "reload_seconds": "ref_units.final_reload_time",
+        "reload_seconds": (
+            "ref_units.final_reload_time * matching civilization tech-tree "
+            "effect type 5 on reload attribute 10"
+        ),
         "attack_delay_seconds": attack_delay_source,
         "attack_animation.graphic": "unit.type_50.attack_graphic",
         "attack_animation.frames": "graphics[attack_graphic].frame_count",
@@ -486,6 +527,10 @@ def export_unit_mechanics(
         ranged = {
             "projectile_unit": projectile_id,
             "projectile_speed_tiles_per_second": float(proj.speed),
+            "projectile_arc": (
+                float(proj.projectile.projectile_arc)
+                if proj.projectile is not None else 0.0
+            ),
             "min_range_tiles": float(unit.type_50.min_range),
             "accuracy_percent": float(reference["final_accuracy"]),
             "pass_through": pass_through,
@@ -499,6 +544,14 @@ def export_unit_mechanics(
             # spawning area and deals only the floor 1 damage.
             "secondary_projectile_count": max(
                 0, int(unit.creatable.total_projectiles) - 1),
+            "secondary_projectile_unit": int(
+                unit.creatable.secondary_projectile_unit),
+            "secondary_projectile_half_width_tiles": (
+                round(float(data.civs[0].units[
+                    int(unit.creatable.secondary_projectile_unit)
+                ].collision_size_x), 6)
+                if int(unit.creatable.secondary_projectile_unit) >= 0 else 0.0
+            ),
             "projectile_spawning_area": [
                 float(unit.creatable.projectile_spawning_area[0]),
                 float(unit.creatable.projectile_spawning_area[1]),
@@ -508,6 +561,9 @@ def export_unit_mechanics(
             "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
             "ranged.projectile_speed_tiles_per_second": (
                 f"dat.civs[0].units[{projectile_id}].speed"
+            ),
+            "ranged.projectile_arc": (
+                f"dat.civs[0].units[{projectile_id}].projectile.projectile_arc"
             ),
             "ranged.min_range_tiles": "unit.type_50.min_range",
             "ranged.accuracy_percent": (
@@ -527,6 +583,11 @@ def export_unit_mechanics(
             ),
             "ranged.accuracy_dispersion_tiles": "unit.type_50.accuracy_dispersion",
             "ranged.secondary_projectile_count": "unit.creatable.total_projectiles - 1",
+            "ranged.secondary_projectile_unit": "unit.creatable.secondary_projectile_unit",
+            "ranged.secondary_projectile_half_width_tiles": (
+                "dat.civs[0].units[unit.creatable.secondary_projectile_unit]"
+                ".collision_size_x"
+            ),
             "ranged.projectile_spawning_area": "unit.creatable.projectile_spawning_area[0:2]",
         })
 
@@ -557,7 +618,7 @@ def export_unit_mechanics(
         "hp": int(reference["final_hp"]),
         "speed_tiles_per_second": float(reference["exact_speed"]),
         "attack_range_tiles": float(reference["final_range"]),
-        "reload_seconds": float(reference["final_reload_time"]),
+        "reload_seconds": reload_seconds,
         "attack_delay_seconds": attack_delay_seconds,
         "attack_animation": attack_animation,
         "idle_animation": idle_animation,
@@ -605,6 +666,8 @@ def export_unit_mechanics(
             "dat_selector": (
                 f"dat.civs[name='{REFERENCE_TO_DAT_CIV.get(civ, civ)}'].units[{master}]"
             ),
+            "reload_base_seconds": float(reference["final_reload_time"]),
+            "reload_multiplier": reload_multiplier,
             "fields": fields,
         },
     }

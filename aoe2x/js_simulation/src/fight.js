@@ -22,10 +22,9 @@ import { kitingObservationMatchup } from "./kiting-observation-matchups.js";
 import { SOLO_MOVEMENT_UNIT_SLUGS, unitBySlug } from "./unit-registry.js";
 
 
-// Capacity is per (owner, family); this is the largest any of them offers.
-// Individual requests are bounded by the real per-(owner, family) capacity
-// (see validateCount below), which is never larger than this.
-export const FIGHT_SIDE_CAP = 21;
+// The current melee golden scenario exposes 27 cells per side. Other families
+// keep their smaller tape-derived capacity and are still validated below.
+export const FIGHT_SIDE_CAP = 27;
 
 // Movement is fully observable from each snapshot's positions (every unit's
 // x/y is already in the units array every tick), and at 60 Hz it is ~97% of
@@ -37,10 +36,20 @@ export const FIGHT_SIDE_CAP = 21;
 // exclusion cannot hide a determinism regression.
 const WIRE_EVENT_TYPES_EXCLUDED = Object.freeze(new Set(["move", "blocked"]));
 
-const REFERENCE_BASE = { 2: 9000, 3: 9500 };
+const REFERENCE_BASE = { 2: 9000, 3: 9500, 4: 10000 };
 const MAX_TICKS = 9000;
 const SOLO_MOVEMENT_TICKS = 3600;
 const mechanicsCache = new Map();
+const AUXILIARY_UNITS = Object.freeze({
+  scout_cavalry: Object.freeze({
+    slug: "scout_cavalry",
+    label: "Scout Cavalry",
+    civ: "Spanish",
+    master: 448,
+    fixture: "scout_cavalry_spanish_imperial.json",
+    class: "melee",
+  }),
+});
 
 
 async function loadMechanics(root, unit) {
@@ -60,6 +69,13 @@ async function loadMechanics(root, unit) {
 function requireUnit(slug) {
   const unit = unitBySlug(slug);
   if (!unit) throw new RangeError(`unknown unit ${slug}`);
+  return unit;
+}
+
+
+function requireAuxiliaryUnit(slug) {
+  const unit = AUXILIARY_UNITS[slug];
+  if (!unit) throw new RangeError(`unknown auxiliary unit ${slug}`);
   return unit;
 }
 
@@ -187,15 +203,42 @@ export async function runFight(root, {
   kiteNavigation,
   kiteMeleeOpeningOrder,
   kiteOwnerOverride,
+  disableKiting,
   kiteChaseCapture,
   kiteChaseDwellTicks,
   persistentMeleePursuitRouting,
   preventiveContactSteering,
   placementByOwner,
+  openingPatrolByOwner,
+  openingSeed,
+  aiOrderSweepStartSeconds,
+  disableAiOrders,
+  rangedTargetPressureOwner,
+  rangedWindupRetargetOwner,
+  placementSource,
+  displayCivBySide,
+  preserveOwnerOrientation = false,
+  auxiliaryArmiesByOwner,
+  diplomacyByOwner,
+  triggers,
+  victoryTeams,
+  retainSnapshots = true,
 }) {
   if (kiteNavigation !== undefined) requireSoloNavigationVariant(kiteNavigation);
   if (kiteOwnerOverride !== undefined && kiteOwnerOverride !== 2 && kiteOwnerOverride !== 3) {
     throw new RangeError("kite owner override must be owner 2 or 3");
+  }
+  if (disableKiting !== undefined && typeof disableKiting !== "boolean") {
+    throw new TypeError("disable kiting must be boolean");
+  }
+  if (disableKiting === true && kiteOwnerOverride !== undefined) {
+    throw new RangeError("disabled kiting cannot also override the kite owner");
+  }
+  if (typeof preserveOwnerOrientation !== "boolean") {
+    throw new TypeError("preserve owner orientation must be boolean");
+  }
+  if (typeof retainSnapshots !== "boolean") {
+    throw new TypeError("retain snapshots must be boolean");
   }
   // Counts are optional: omit BOTH and they come from the purchase rule, so
   // the formula lives in purchase.js and nowhere else. One given without the
@@ -228,11 +271,17 @@ export async function runFight(root, {
 
   // INTERNAL orientation. `inner2`/`inner3` are what the engine runs; `side2`
   // and `side3` stay the user's picks and are what the response reports.
-  const orientationNormalised = orientationNormalisedFor(family, side2, side3);
+  const orientationNormalised = !preserveOwnerOrientation
+    && orientationNormalisedFor(family, side2, side3);
   const inner2 = orientationNormalised ? side3 : side2;
   const inner3 = orientationNormalised ? side2 : side3;
-  const capacity2 = sideCapacity(2, family);
-  const capacity3 = sideCapacity(3, family);
+  const placementPool2 = placementByOwner?.[2];
+  const placementPool3 = placementByOwner?.[3];
+  if ((placementPool2 === undefined) !== (placementPool3 === undefined)) {
+    throw new RangeError("explicit placement must provide both owners");
+  }
+  const capacity2 = placementPool2?.length ?? sideCapacity(2, family);
+  const capacity3 = placementPool3?.length ?? sideCapacity(3, family);
 
   // Both the purchase rule and the capacity ceilings are applied in the
   // internal orientation, so the same pairing at the same counts derives the
@@ -250,13 +299,34 @@ export async function runFight(root, {
   const count2 = orientationNormalised ? innerCount3 : innerCount2;
   const count3 = orientationNormalised ? innerCount2 : innerCount3;
 
-  const [mechanics2, mechanics3] = await Promise.all([
+  const auxiliarySpecs = auxiliaryArmiesByOwner === undefined
+    ? []
+    : Object.entries(auxiliaryArmiesByOwner).map(([ownerText, specification]) => {
+      const owner = Number(ownerText);
+      if (!Number.isSafeInteger(owner) || owner === 2 || owner === 3
+          || REFERENCE_BASE[owner] === undefined) {
+        throw new RangeError(`unsupported auxiliary army owner ${ownerText}`);
+      }
+      if (!specification || typeof specification !== "object"
+          || !Array.isArray(specification.cells) || specification.cells.length === 0) {
+        throw new TypeError(`auxiliary army ${owner} must provide nonempty cells`);
+      }
+      return Object.freeze({
+        owner,
+        unit: requireAuxiliaryUnit(specification.slug),
+        cells: specification.cells,
+      });
+    });
+  const [mechanics2, mechanics3, ...auxiliaryMechanics] = await Promise.all([
     loadMechanics(root, inner2),
     loadMechanics(root, inner3),
+    ...auxiliarySpecs.map(({ unit }) => loadMechanics(root, unit)),
   ]);
 
-  const cells2 = placementByOwner?.[2] ?? placeArmy({ owner: 2, count: innerCount2, family });
-  const cells3 = placementByOwner?.[3] ?? placeArmy({ owner: 3, count: innerCount3, family });
+  const cells2 = placementPool2?.slice(0, innerCount2)
+    ?? placeArmy({ owner: 2, count: innerCount2, family });
+  const cells3 = placementPool3?.slice(0, innerCount3)
+    ?? placeArmy({ owner: 3, count: innerCount3, family });
   if (cells2.length !== innerCount2 || cells3.length !== innerCount3) {
     throw new RangeError("explicit placement counts must match the fight counts");
   }
@@ -265,15 +335,27 @@ export async function runFight(root, {
       .map((cell, index) => ({ owner: 2, cell, index, unit: inner2, mechanics: mechanics2 })),
     ...cells3
       .map((cell, index) => ({ owner: 3, cell, index, unit: inner3, mechanics: mechanics3 })),
+    ...auxiliarySpecs.flatMap(({ owner, unit, cells }, auxiliaryIndex) => (
+      cells.map((cell, index) => ({
+        owner,
+        cell,
+        index,
+        unit,
+        mechanics: auxiliaryMechanics[auxiliaryIndex],
+      }))
+    )),
   ];
 
-  const units = roster.map(({ owner, cell, index, mechanics }, rank) => createUnitState({
+  const units = roster.map(({ owner, cell, index, unit, mechanics }, rank) => createUnitState({
     referenceId: REFERENCE_BASE[owner] + index,
     owner,
     x: cell.x,
     y: cell.y,
     facing: 0,
     mechanics,
+    ...(unit.behaviorFamily === undefined
+      ? {}
+      : { behaviorFamily: unit.behaviorFamily }),
     acquisitionRank: rank,
     acquisitionCount: roster.length,
   }));
@@ -282,7 +364,9 @@ export async function runFight(root, {
   // normalising buys); `kiteOwner` below is the same fact stated in the
   // user's orientation, and the two agree because the response relabels
   // owners rather than renumbering units.
-  const innerKiteOwner = kiteOwnerOverride ?? kiteOwnerFor(inner2, inner3);
+  const innerKiteOwner = disableKiting === true
+    ? null
+    : (kiteOwnerOverride ?? kiteOwnerFor(inner2, inner3));
   if (kiteNavigation !== undefined && innerKiteOwner === null) {
     throw new RangeError("kite navigation requires one ranged kiting side");
   }
@@ -292,6 +376,15 @@ export async function runFight(root, {
     ratio: `${innerCount2}v${innerCount3}`,
     units,
     ...(map ? { map } : {}),
+    ...(openingPatrolByOwner ? { openingPatrolByOwner } : {}),
+    ...(openingSeed === undefined ? {} : { openingSeed }),
+    ...(aiOrderSweepStartSeconds === undefined ? {} : { aiOrderSweepStartSeconds }),
+    ...(disableAiOrders === undefined ? {} : { disableAiOrders }),
+    ...(diplomacyByOwner === undefined ? {} : { diplomacyByOwner }),
+    ...(triggers === undefined ? {} : { triggers }),
+    ...(victoryTeams === undefined ? {} : { victoryTeams }),
+    ...(rangedTargetPressureOwner === undefined ? {} : { rangedTargetPressureOwner }),
+    ...(rangedWindupRetargetOwner === undefined ? {} : { rangedWindupRetargetOwner }),
     ...(innerKiteOwner === null
       ? {}
       : {
@@ -314,7 +407,7 @@ export async function runFight(root, {
     ...(preventiveContactSteering === true
       ? { preventiveContactSteering: true }
       : {}),
-  }), { maxTicks: MAX_TICKS });
+  }), { maxTicks: MAX_TICKS, retainSnapshots });
 
   // Owner relabelling. Reference ids stay exactly as the engine allocated
   // them -- the payload never promises an id block belongs to a side, and the
@@ -324,7 +417,7 @@ export async function runFight(root, {
   // the canonical internal run, which is what makes them equal for the two
   // dropdown orders of the same fight.
   const reportedOwner = orientationNormalised
-    ? (owner) => (owner === 2 ? 3 : 2)
+    ? (owner) => (owner === 2 ? 3 : owner === 3 ? 2 : owner)
     : (owner) => owner;
 
   const live = result.world.units.filter(({ alive }) => alive);
@@ -337,7 +430,10 @@ export async function runFight(root, {
       maxHp: mechanics.hp,
       master: mechanics.unit_master,
       collisionRadius: mechanics.collision_size_tiles.x,
+      outlineRadius: mechanics.outline_size_tiles.x,
       attackRange: mechanics.attack_range_tiles,
+      minRange: mechanics.ranged?.min_range_tiles ?? 0,
+      speed: mechanics.speed_tiles_per_second,
     });
   }
 
@@ -374,19 +470,39 @@ export async function runFight(root, {
       }
       : (kiteNavigation === undefined ? {} : { contactSteeringMode: "off" })),
     side2: Object.freeze({
-      slug: side2.slug, label: side2.label, civ: side2.civ, count: count2, class: side2.class }),
+      slug: side2.slug,
+      label: side2.label,
+      civ: displayCivBySide?.[2] ?? side2.civ,
+      ...(displayCivBySide?.[2] ? { mechanicsCiv: side2.civ } : {}),
+      count: count2,
+      class: side2.class,
+    }),
     side3: Object.freeze({
-      slug: side3.slug, label: side3.label, civ: side3.civ, count: count3, class: side3.class }),
+      slug: side3.slug,
+      label: side3.label,
+      civ: displayCivBySide?.[3] ?? side3.civ,
+      ...(displayCivBySide?.[3] ? { mechanicsCiv: side3.civ } : {}),
+      count: count3,
+      class: side3.class,
+    }),
     family,
+    placementSource: placementPool2
+      ? (placementSource ?? "explicit-golden-formation")
+      : "archive-family",
     derivedCounts,
     budget: derivedCounts ? purchaseBudget : null,
     // True when the pair was run in the archive's measured orientation rather
     // than the user's pick order (the role unit always fights as owner 2).
     orientationNormalised,
+    ...(openingSeed === undefined ? {} : { openingSeed }),
     kiteOwner: innerKiteOwner === null ? null : reportedOwner(innerKiteOwner),
+    ...(rangedTargetPressureOwner === undefined ? {} : { rangedTargetPressureOwner }),
+    ...(rangedWindupRetargetOwner === undefined ? {} : { rangedWindupRetargetOwner }),
     ticks: result.ticks,
-    winnerOwner: live.length ? reportedOwner(live[0].owner) : null,
-    winnerHp: live.reduce((total, unit) => total + unit.hp, 0),
+    winnerOwner: reportedOwner(result.winner),
+    winnerHp: live
+      .filter((unit) => reportedOwner(unit.owner) === reportedOwner(result.winner))
+      .reduce((total, unit) => total + unit.hp, 0),
     finalStateHash: hashCanonicalJson({
       tick: result.world.tick,
       ratio: `${innerCount2}v${innerCount3}`,
@@ -453,7 +569,10 @@ export async function runSoloRangedMovement(root, {
       maxHp: mechanics.hp,
       master: mechanics.unit_master,
       collisionRadius: mechanics.collision_size_tiles.x,
+      outlineRadius: mechanics.outline_size_tiles.x,
       attackRange: mechanics.attack_range_tiles,
+      minRange: mechanics.ranged?.min_range_tiles ?? 0,
+      speed: mechanics.speed_tiles_per_second,
     });
   }
   return Object.freeze({

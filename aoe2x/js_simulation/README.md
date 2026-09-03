@@ -1,36 +1,48 @@
-# Clean-room JavaScript simulation
+# Live-capture JavaScript simulation
 
-This directory is the isolated replacement simulator laboratory: a
-deterministic 60-tick/s combat engine (`src/combat/`) rebuilt from scratch
-against authorized game recordings, with every constant either dat-sourced
-or measured on tape — none fitted. It loads no production engine code.
+This directory is the replacement simulator laboratory: a deterministic
+60-tick/s combat engine (`src/combat/`) rebuilt from scratch against the newest
+relevant project-local live game recordings, with every constant either
+dat-sourced or measured on tape — none fitted. It loads no production engine
+code.
 
 ## Current status
 
-The registry currently contains 14 generated unit-mechanics fixtures. The
-active dedicated golden corpus contains 19 separately authorized matchup
-archives, 95 ratio rows, and 475 exact tape repeats. The newest current-engine
-acceptance slice covers Hand Cannoneer versus Champion and Paladin: 50/50
-resolved simulations, no wrong winners, no row above 25 points, and 3.67-point
-mean absolute row delta.
+The mechanics baseline was frozen on 2026-09-01 after the current golden-map,
+ranged crowding, Player-4 diplomacy, projectile, siege, and Onager passes. See
+[Completed engine baseline](docs/COMPLETED_ENGINE_2026-09-01.md) for the tick
+pipeline, modeled mechanics, validation boundary, accepted limitations, test
+commands, and preserved evidence inventory.
 
-The older 2026-08-06 calibration and 17-archive 2026-08-14 full-suite reports
-remain historical evidence. They predate the current native-siege,
-minimum-range-retreat, exclusive allied-overlap, and Hand Cannoneer corpus
-changes and must not be presented as a current full-portfolio result.
+The next calibration set has already been captured and is intentionally not
+consumed by this baseline. It contains 38 single live runs covering 19 unique
+units against Chinese Arbalester and Spanish Paladin. Its compact inventory is
+committed at
+[`calibration/reports/completed_engine_2026-09-01/unique_unit_capture_inventory.json`](calibration/reports/completed_engine_2026-09-01/unique_unit_capture_inventory.json);
+the 638,427,583 bytes of raw local `frames.bin` evidence remain under
+`calibration/live_observations/requested_roster_vs_arb_paladin_1x_2026-08-31/`.
+
+Older dated reports remain historical evidence. They predate one or more
+current mechanics and must not be presented as the completed-engine result.
 
 ## Documentation map
 
-- [Current engine and mechanics](docs/CURRENT_ENGINE_2026-08-15.md) — the
-  authoritative description of the active tick loop, targeting, attacks,
-  projectiles, kiting, navigation, collision, crowding, and limitations.
+- [Completed engine baseline](docs/COMPLETED_ENGINE_2026-09-01.md) — the
+  authoritative description of the active tick loop, scenario layer,
+  targeting, movement, overlap, projectiles, siege behavior, validation, and
+  preserved next-run evidence.
+- [Previous current-engine snapshot](docs/CURRENT_ENGINE_2026-08-15.md) — a
+  historical architecture snapshot retained for provenance.
 - [Golden tape comparison workflow](docs/GOLDEN_TAPE_COMPARISON_WORKFLOW.md) —
-  authorization, hashing, archive intake, `frames.bin` import, exact-repeat
-  scenarios, parallel recovery, scoring, and verification.
+  the legacy archive workflow, retained only for interpreting historical
+  reports. New work uses the latest relevant live `frames.bin` directly.
 - [Recoverable benchmark runner](docs/RECOVERABLE_DEDICATED_BENCHMARKS.md) —
   operational details for full and selective runs.
 - [Hand Cannoneer current-engine result](calibration/reports/hand_cannoneer_current_engine_2026-08-15/README.md) —
   the newest 10-row/50-run comparison.
+- [Current ranged golden matrix](docs/RANGED_MATRIX_LIVE_OBSERVATIONS_2026-08-29.md) —
+  70 live runs across 14 RvR/RvM matchups, observed targeting and diplomacy
+  behavior, mechanics changes, full result table, and remaining residuals.
 - [Historical 17-archive report](docs/DEDICATED_GOLDEN_RANGED_MELEE_2026-08-14.md) —
   the last full portfolio before the current changes.
 - [Kiting AI order layer](docs/KITING_AI_ORDER_LAYER_2026-08-06.md) and
@@ -41,8 +53,8 @@ Calibration circuit metric: signed winner-HP% (winner's remaining HP as a
 percent of its own starting pool) with the sim's 25-sampled-order median
 scored against the tape's five-repeat band per ratio.
 
-Held-out check on the standard-units archive (101 distinct matchups, 14
-units, nothing in it used to set a constant): winner correct in 97/101,
+Historical held-out check on the standard-units archive (101 distinct matchups,
+14 units, nothing in it used to set a constant): winner correct in 97/101,
 mean winner-HP% delta 14.7 — **[full table per matchup, with the
 independently derived purchase and the tape's own numbers, in the standard
 units summary](docs/STANDARD_UNITS_SUMMARY_2026-08-07.md)**.
@@ -50,32 +62,21 @@ units summary](docs/STANDARD_UNITS_SUMMARY_2026-08-07.md)**.
 ## Locked milestone
 
 [Milestone 01: Golden melee arena locked](docs/MILESTONE_01_GOLDEN_MELEE_ARENA.md)
-defines the canonical map and 21-versus-21 starting positions for every
-melee-versus-melee clean-room simulation.
+records the earlier milestone. The active viewer now uses the current
+27-versus-27 melee golden map and ordered starting slots captured on 2026-08-28.
 
 ## Authoritative map fixture
 
 The checked-in source is:
 
-`fixtures/source/golden_meleevsmelee.aoe2scenario`
+`calibration/live_observations/current_melee_golden_2026-08-28/source/meleevsmelee.aoe2scenario`
 
-SHA-256:
+The latest project-local live scenario source is used directly. No archive,
+manifest, or hash prerequisite applies to the active workflow.
 
-`f10508cbe6ec6211d611c35d411ad7e40b38c96b6ef0d6b0d651daa42df645a4`
-
-Repository source:
-
-`origin/staging:apps/video/templates/golden_meleevsmelee.aoe2scenario`
-
-The fight-specific staging scenarios, including `golden_meleevsmelee`, were
-parsed with AoE2ScenarioParser 0.8.2 before selection. The dedicated melee
-scenario preserves the same terrain hash
-`b26cb070467b57e64d6b28450d9a64bbc95121499f3053f7b9a97698ce7d9c4d`
-and Gaia-object hash
-`4cfd18f4aae0466863ec32bf02a62bdff9866d24bc71bcba008b0fa5a8301254`.
-
-`golden_meleevsmelee` is used because it is the current dedicated golden
-melee-versus-melee engagement template on staging.
+The source was parsed with AoE2ScenarioParser 0.8.3. The literal export contains
+256 terrain tiles and 152 Gaia objects; no inferred map geometry is written to
+the viewer fixture.
 
 ## Run the viewer
 
@@ -85,21 +86,25 @@ From the repository root:
 node aoe2x/js_simulation/server.mjs --host 127.0.0.1 --port 5011
 ```
 
-The calibrated configuration (`engagement=pursuit`, `orders=1`) is now the
-committed default in `src/engine-config.js`; the `AOE2X_EXP_*` environment
-variables still override it for experiment sweeps. To get the
-pre-calibration baseline engine back, set `AOE2X_EXP_ENGAGEMENT=free` and
-`AOE2X_EXP_ORDERS=0` -- in PowerShell, `$env:AOE2X_EXP_ENGAGEMENT = ""`
-*deletes* the variable rather than setting it empty, so `free` is the only
-way to reach the baseline `engagement=""` arm from this project's documented
-shell.
+The checked-in default configuration is the completed engine. `AOE2X_EXP_*`
+overrides are retained only as internal calibration controls for reproducing
+old probes; they are not supported viewer or simulation settings.
 
 Open `http://127.0.0.1:5011/`.
 
+The fight endpoint uses the requested unit fixtures and the appropriate golden
+scenario inputs. Scenario-authored positions, patrols, diplomacy, Player-4
+screen, and diplomacy-changing triggers are reproduced literally; continuous
+combat behavior is generated by reusable mechanics. For example:
+
+`?mode=battle&side2=arbalester&n2=27&side3=heavy_cav_archer&n3=18`
+
+`?mode=battle&side2=hand_cannoneer&n2=27&side3=elite_steppe&n3=23`
+
 The local page mirrors the web app's civilization-first Battle Simulation
-picker while keeping the clean-room engine isolated from the production
+picker while keeping the replacement engine isolated from the production
 simulator. The full Imperial-age catalogue is visible; units without a
-clean-room mechanics profile remain disabled and are labelled **Not yet
+mechanics profile remain disabled and are labelled **Not yet
 calibrated**. The 14 registry-backed civ/unit combinations can be run with
 either explicit army counts or an equal-resource budget. The centre stage
 uses the isometric Golden Arena renderer and exposes deterministic playback,
@@ -152,8 +157,8 @@ units for visual experimentation: Hand Cannoneer, Elite Skirmisher, Heavy
 Cavalry Archer, Arbalester, Heavy Scorpion, and Siege Onager against Champion,
 Halberdier, Hussar, Heavy Camel Rider, Paladin, Elite Battle Elephant, Elite
 Steppe Lancer, or Elite Fire Lancer. Manual `n2`/`n3` values remain available.
-Viewer availability is not evidence that a matchup has a dedicated golden
-tape; only the dedicated clean-room corpus below is used for tape comparison.
+Viewer availability is not evidence that a matchup has a current live capture;
+new comparisons use the newest relevant project-local `frames.bin`.
 
 Local:
 
@@ -212,7 +217,7 @@ python aoe2x/js_simulation/tools/export_golden_map.py `
   --output aoe2x/js_simulation/fixtures/golden_map.json
 ```
 
-The exporter preserves all 256 terrain tiles and all 101 Gaia objects. Unknown
+The exporter preserves all 256 terrain tiles and all 152 Gaia objects. Unknown
 terrain or object IDs are retained with an `UNKNOWN_<id>` name rather than
 being discarded.
 
@@ -246,14 +251,14 @@ The map fixture is read-only. Viewer controls affect only presentation.
 
 ## Formation fixture
 
-`fixtures/golden_formation_21v21.json` contains the exact first 21 Player 2
-records and first 21 Player 3 records retained by the golden scenario builder:
+`fixtures/golden_formation_27v27.json` contains the exact first 27 Player 2
+records and first 27 Player 3 records in source order:
 
-- Player 2 references 1628–1648: Elite Jaguar Warrior, unit constant 726.
-- Player 3 references 1699–1719: Militia, unit constant 74.
+- Player 2: Militia placeholders, unit constant 74.
+- Player 3: Woad Raider placeholders, unit constant 232.
 
 All coordinates and rotations are copied from the source scenario. The initial
-42 positions have no Gaia-cell, forest-terrain, or duplicate-cell conflicts.
+54 positions have no Gaia-cell, forest-terrain, or duplicate-cell conflicts.
 Markers in the viewer communicate placement and facing only; their drawn size
 is not a calibrated collision radius.
 
@@ -265,6 +270,5 @@ terrain and object coordinates in `golden_map.json` remain unchanged. Render
 depth and pointer picking use the same forward/inverse transform.
 
 For the 16-by-16 source map, tile boundaries span `0..16`, so `(8, 8)` is the
-exact centre. The dirt arena centroid is `(7.949, 8.051)`. The Panda Rock is
-literally stored at `(9, 7)`, so the small visual offset of the central obstacle
-is source-authored and must not be removed by recentering the camera.
+exact centre. Camera rotation does not recenter, transpose, or otherwise alter
+the source-authored terrain, trees, or unit slots.

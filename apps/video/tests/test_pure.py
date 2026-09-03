@@ -276,12 +276,12 @@ class TestEqualResourceCounts:
         assert equal_resource_counts("C1", "a", "C2", "b") == (23, 28)
 
     def test_cost_weights_match_the_website(self):
-        # overlay_data mirrors webapp/simulation_real.py — fail loudly on drift
+        # overlay_data mirrors aoe2x/sim/simulation_real.py — fail loudly on drift
         import re
         from pathlib import Path
         from overlay import overlay_data as od
-        src = (Path(__file__).resolve().parents[2]
-               / "webapp" / "simulation_real.py").read_text(encoding="utf-8")
+        src = (Path(__file__).resolve().parents[3]
+               / "aoe2x" / "sim" / "simulation_real.py").read_text(encoding="utf-8")
         for name, val in (("FOOD", od.COST_WEIGHT_FOOD), ("WOOD", od.COST_WEIGHT_WOOD),
                           ("GOLD", od.COST_WEIGHT_GOLD)):
             m = re.search(rf"COST_WEIGHT_{name}\s*=\s*([0-9.]+)", src)
@@ -291,7 +291,7 @@ class TestEqualResourceCounts:
 
 @pytest.mark.skipif(
     not __import__("pathlib").Path(__file__).resolve()
-        .parents[2].joinpath("webapp", "aoe2_reference.db").exists(),
+        .parents[3].joinpath("data", "golden", "aoe2_reference.db").exists(),
     reason="reference DB not built")
 class TestUnitCardCosts:
     def test_blackwood_archer_batch_of_two(self):
@@ -493,13 +493,49 @@ class TestChoosePositions:
         pos = [(0, 0), (1, 0), (0, 1), (1, 1)]
         assert _choose_positions(pos, 4) == pos
 
-    def test_fewer_keeps_compact_core(self):
+    def test_fewer_keeps_authored_first_n_slots(self):
         from build_run import _choose_positions
-        pos = [(0, 0), (1, 0), (0, 1), (1, 1), (10, 10)]
-        out = _choose_positions(pos, 4)
-        assert len(out) == 4 and (10, 10) not in out
+        # Golden templates encode their intended edge-to-centre fill order in
+        # the unit list.  Selection must not re-sort those authored slots.
+        pos = [(10, 10), (0, 0), (1, 0), (0, 1), (1, 1)]
+        assert _choose_positions(pos, 4) == pos[:4]
 
     def test_more_adds_extras(self):
         from build_run import _choose_positions
         out = _choose_positions([(0, 0), (2, 0)], 5)
         assert len(out) == 5
+
+
+class TestSourceArmyUnits:
+    def test_uses_all_27_mixed_placeholder_records(self):
+        from types import SimpleNamespace
+
+        from build_run import _source_army_units
+
+        units = [
+            SimpleNamespace(unit_const=1126 if index < 22 else 1128)
+            for index in range(27)
+        ]
+        manager = SimpleNamespace(get_player_units=lambda _pid: units)
+
+        assert _source_army_units(manager, 2, 1126) == units
+
+    def test_keeps_legacy_most_common_unit_fallback(self):
+        from types import SimpleNamespace
+
+        from build_run import SCOUT_CONST, _source_army_units
+
+        army = [SimpleNamespace(unit_const=763) for _ in range(30)]
+        props = [SimpleNamespace(unit_const=109), SimpleNamespace(unit_const=SCOUT_CONST)]
+        manager = SimpleNamespace(get_player_units=lambda _pid: army + props)
+
+        assert _source_army_units(manager, 3, 763) == army
+
+
+def test_abbreviated_unit_slugs_resolve_to_scenario_ids():
+    from build_run import unit_const
+
+    assert unit_const("heavy_cav_archer") == 474
+    assert unit_const("elite_steppe") == 1372
+    assert unit_const("imp_elite_skirm") == 6
+    assert unit_const("heavy_camel") == 330

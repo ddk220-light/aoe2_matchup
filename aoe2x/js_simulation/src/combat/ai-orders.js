@@ -49,13 +49,17 @@ const GROUP_ADJACENCY_TILES = 1.5;
 const MAX_GROUP = 4;
 
 
-export function createOrderState(units) {
+export function createOrderState(units, { sweepStartTick = SWEEP_START_TICK } = {}) {
+  if (!Number.isSafeInteger(sweepStartTick) || sweepStartTick < 0) {
+    throw new RangeError("AI sweep start tick must be a nonnegative safe integer");
+  }
   const owners = [...new Set(units.map(({ owner }) => owner))].sort((a, b) => a - b);
   return {
+    sweepStartTick,
     perOwner: new Map(owners.map((owner) => [owner, {
       swept: new Set(),        // reference ids already ordered in the sweep
       designated: new Set(),   // enemy ids already designated this sweep
-      nextOrderTick: SWEEP_START_TICK,
+      nextOrderTick: sweepStartTick,
       sweepDone: false,
       nextMidOrderTick: 0,
     }])),
@@ -115,6 +119,7 @@ function designateSweep(enemies, designated) {
 
 
 function applyOrder(unit, target, tick, events, makeEvent) {
+  if (unit.moveOrder?.kind === "opening-patrol") delete unit.moveOrder;
   unit.pursuitTargetId = target.referenceId;
   unit.avoidance = null;
   // Orders are immediate: an engaged unit abandons its current engagement and
@@ -835,7 +840,7 @@ export function issueOrders(state, units, tick, events, makeEvent, kiteOwner = n
   for (const owner of owners) sweepOrder(state, units, owner, tick, events, makeEvent);
   if (RESCUE_DISABLED) return;
   const allSwept = owners.every((owner) => state.perOwner.get(owner).sweepDone);
-  if (allSwept || tick > SWEEP_START_TICK + 20 * TICKS_PER_SECOND) {
+  if (allSwept || tick > state.sweepStartTick + 20 * TICKS_PER_SECOND) {
     idleRescue(state, units.filter((unit) => unit.owner !== kiteOwner),
       tick, events, makeEvent);
   }

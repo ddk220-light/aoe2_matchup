@@ -25,6 +25,8 @@ function unit({
   pursuitTargetId = null,
   avoidance = null,
   alive = true,
+  moveOrder = null,
+  openingAcquisitionComplete = undefined,
 } = {}) {
   return Object.freeze({
     referenceId,
@@ -35,6 +37,8 @@ function unit({
     pursuitTargetId,
     avoidance,
     alive,
+    moveOrder,
+    openingAcquisitionComplete,
     mechanics,
   });
 }
@@ -83,6 +87,46 @@ test("a direct path creates no avoidance state", () => {
   assert.equal(result.units.find(({ referenceId }) => referenceId === 1).avoidance, null);
   assert.deepEqual(result.proposals.find(({ referenceId }) => referenceId === 1), direct);
   assert.deepEqual(result.routes, []);
+});
+
+
+test("scenario patrol starts pursuit avoidance only at an immediate allied-body block", () => {
+  const patrol = Object.freeze({ kind: "scenario-patrol", x: 8, y: 5 });
+  const blocker = unit({ referenceId: 2, owner: 2, x: 4, y: 5 });
+  const target = unit({ referenceId: 3, owner: 3, x: 6, y: 5 });
+  const before = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 2,
+    y: 5,
+    pursuitTargetId: 3,
+    moveOrder: patrol,
+    openingAcquisitionComplete: false,
+  });
+  const after = unit({
+    referenceId: 1,
+    owner: 2,
+    x: 3.2,
+    y: 5,
+    pursuitTargetId: 3,
+    moveOrder: patrol,
+    openingAcquisitionComplete: true,
+  });
+  const direct = Object.freeze({
+    ...proposal(1, STEP, 0),
+    movementIntent: "pursuit",
+  });
+
+  const formationTransit = planLocalAvoidance([before, blocker, target], [direct]);
+  const pursuit = planLocalAvoidance([after, blocker, target], [direct]);
+  const pursuitUnit = pursuit.units.find(({ referenceId }) => referenceId === 1);
+  const pursuitProposal = pursuit.proposals.find(({ referenceId }) => referenceId === 1);
+
+  assert.deepEqual(formationTransit.proposals.find(({ referenceId }) => (
+    referenceId === 1
+  )), direct);
+  assert.notEqual(pursuitUnit.avoidance, null);
+  assert.notEqual(pursuitProposal.dy, 0);
 });
 
 
@@ -418,7 +462,7 @@ test("route selection rejects paths swept through a second body or map obstacle"
       break;
     }
   }
-  assert.equal(reachedContact, true);
+  assert.equal(reachedContact, true, `ended at ${current.x},${current.y}`);
 
   const obstacleMap = Object.freeze({
     width: 10,

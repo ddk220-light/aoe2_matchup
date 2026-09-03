@@ -1,4 +1,4 @@
-// TEMPORARY experiment harness for the retargeting investigation.
+// Calibration compatibility switches.
 //
 // AOE2X_EXP_ENGAGEMENT and AOE2X_EXP_ORDERS are pinned to their calibrated
 // values ("pursuit" and on) as the committed default -- see
@@ -7,8 +7,9 @@
 // by default. To get the pre-calibration baseline engine back, set
 // AOE2X_EXP_ENGAGEMENT=free (engine-config.js maps that sentinel to "", since
 // PowerShell's `$env:X = ""` deletes rather than sets) and
-// AOE2X_EXP_ORDERS=0. Delete this module and its two call sites in world.js
-// once the retargeting rule is settled.
+// AOE2X_EXP_ORDERS=0. These switches reproduce historical comparison probes;
+// the checked-in defaults are the completed engine and the viewer must not
+// expose these values as user-selectable simulation behavior.
 //
 // See docs/RETARGETING_INVESTIGATION.md for the matrix these flags implement.
 //

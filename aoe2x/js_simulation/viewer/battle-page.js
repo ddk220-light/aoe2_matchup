@@ -204,7 +204,7 @@ export function createBattlePage({ catalogue, units, onStart, onPauseToggle, onN
       container.append(selectionBadge({
         kind: "unit",
         name: selected.name,
-        subtitle: "Clean-room measured profile",
+        subtitle: "Live-capture measured profile",
         onChange: () => {
           state = selectCivilization(state, team, selected.civ);
           renderTeam(team);
@@ -309,7 +309,7 @@ export function createBattlePage({ catalogue, units, onStart, onPauseToggle, onN
   function setBusy(value) {
     busy = Boolean(value);
     byId("startBtn").textContent = busy ? "Running engine…" : "Start Battle";
-    if (busy) setHint("Running the deterministic clean-room engine…");
+    if (busy) setHint("Running the deterministic simulation engine…");
     syncReady();
   }
 

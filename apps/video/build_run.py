@@ -59,6 +59,16 @@ P_SPECTATOR, P_SIDE1, P_SIDE2 = 1, 2, 3         # player slots in the template
 # + UnitInfo[KEY] lookup (e.g. the Bengali Ratha's slug carries a "(melee)"/"(ranged)"
 # mode tag the dataset spells without parentheses).
 _KEY_CONST_OVERRIDE = {
+    # The public/database slug omits "battle", while AoE2ScenarioParser uses
+    # the full in-game enum name.
+    "elite_elephant": int(UnitInfo.ELITE_BATTLE_ELEPHANT.ID),
+    # The simulator/public slug retains the historical ``imp_`` prefix, while
+    # AoE2ScenarioParser exposes the in-game enum as ELITE_SKIRMISHER.
+    "imp_elite_skirm": int(UnitInfo.ELITE_SKIRMISHER.ID),
+    "heavy_camel": int(UnitInfo.HEAVY_CAMEL_RIDER.ID),
+    # The website slugs abbreviate these two established unit names.
+    "heavy_cav_archer": int(UnitInfo.HEAVY_CAVALRY_ARCHER.ID),
+    "elite_steppe": int(UnitInfo.ELITE_STEPPE_LANCER.ID),
     "elite_ratha_(melee)": int(UnitInfo.ELITE_RATHA_MELEE.ID),
     "elite_ratha_(ranged)": int(UnitInfo.ELITE_RATHA_RANGED.ID),
     "ratha_(melee)": int(UnitInfo.RATHA_MELEE.ID),
@@ -101,26 +111,47 @@ def _grid_positions(count, cx, cy, spacing=1.0):
 
 def _choose_positions(positions, count, spacing=1.0):
     """Pick `count` placement points, PRESERVING the template's hand-placed formation.
-    count == len -> use as-is; count < len -> keep the `count` closest to the formation
-    centroid (a compact core); count > len -> keep all and add a small grid of extras at
-    the centroid."""
+    The current golden's unit order is itself the authored edge-to-center fill order,
+    so count < len must take the literal first N slots.  count > len keeps all authored
+    slots and adds a small grid of extras at the centroid."""
     positions = list(positions)
     if count <= 0 or not positions:
         return positions[:max(0, count)]
     if count == len(positions):
         return positions
+    if count < len(positions):
+        return positions[:count]
     cx = sum(x for x, _ in positions) / len(positions)
     cy = sum(y for _, y in positions) / len(positions)
-    if count < len(positions):
-        return sorted(positions, key=lambda p: (p[0] - cx) ** 2 + (p[1] - cy) ** 2)[:count]
     return positions + _grid_positions(count - len(positions), cx, cy, spacing)
 
 
+def _source_army_units(um, pid, old_const):
+    """Return the authored army records for one fighting player.
+
+    The four 27-slot goldens deliberately mix normal and elite placeholder ids in
+    a few formations. Those variants are still one army and their literal record
+    order is the edge-to-centre fill order. When a player owns exactly 27
+    non-scout records, therefore, all 27 are formation slots. Older templates can
+    contain camps/buildings or 30-unit armies, so they retain the historical
+    most-common-unit fallback.
+    """
+    candidates = [
+        unit for unit in um.get_player_units(pid)
+        if unit.unit_const != SCOUT_CONST
+    ]
+    if len(candidates) == 27:
+        return candidates
+    return [unit for unit in candidates if unit.unit_const == old_const]
+
+
 def _swap_army_inplace(um, pid, old_const, new_const, count):
-    """Replace player `pid`'s army (units of `old_const`) with `count` units of
-    `new_const`, KEEPING the template's positions — the user hand-placed the formation,
-    so we only swap the unit TYPE. See _choose_positions for count != template-size."""
-    army = [u for u in um.get_player_units(pid) if u.unit_const == old_const]
+    """Replace player `pid`'s authored army with `count` units of `new_const`.
+
+    Positions stay in literal template order, including mixed normal/elite
+    placeholder records in the 27-slot goldens.
+    """
+    army = _source_army_units(um, pid, old_const)
     positions = [(u.x, u.y) for u in army]
     for u in army:
         um.remove_unit(unit=u)

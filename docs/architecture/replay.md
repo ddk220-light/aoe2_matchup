@@ -1,25 +1,25 @@
-# Replay Analyzer
+# Replay Analyzer (retired from the website)
 
-*Last verified: 2026-06-09 · game build 177723 · branch `staging`*
+*Website integration retired: 2026-08-30 · subsystem details last verified: 2026-06-09*
 
-The Replay Analyzer is a self-contained subsystem that downloads or accepts AoE2:DE recorded games (`.aoe2record`), parses them server-side with the `mgz` library, reconstructs unit identities and a map backdrop, and plays the match back in an isometric canvas SPA. It also exports short shareable WebM highlight clips. It shares no data with the simulation engines (see [simulation-engines.md](simulation-engines.md)) or the data pipeline (see [data-pipeline.md](data-pipeline.md)); its only tie to the rest of the webapp is the `/replay` page route and nav entry in `apps/website/app.py` (see [webapp.md](webapp.md)).
+The Replay Analyzer is a self-contained subsystem that downloads or accepts AoE2:DE recorded games (`.aoe2record`), parses them server-side with the `mgz` library, reconstructs unit identities and a map backdrop, and plays the match back in an isometric canvas SPA. It also exports short shareable WebM highlight clips. It shares no data with the simulation engines (see [simulation-engines.md](simulation-engines.md)) or the data pipeline (see [data-pipeline.md](data-pipeline.md)). The production website no longer mounts or links this subsystem; the code remains for offline research and an explicitly separate host.
 
 ## Mounting and routes
 
-`aoe2x/replay/blueprint.py` defines a Flask `Blueprint` named `replay` (line 38). `apps/website/app.py` registers it at import time inside a `try/except` (lines 54–67): the blueprint pulls heavy optional dependencies (`mgz`, `requests`, and — transitively through `clip_export.py` — Pillow and imageio-ffmpeg), so if any import fails the blueprint is simply not registered, a warning is logged, and the core simulator site boots without it. `REPLAY_ENABLED` gates the rest of the integration: a context processor (`inject_replay_enabled`) exposes it to every template so `base.html` hides the Replay nav tab when False, and the `/replay` page route (a plain `@app.route` in `app.py`, not part of the blueprint) returns a 503 notice (`templates/replay_disabled.html`) instead of rendering an SPA whose API calls would all 404.
+`aoe2x/replay/blueprint.py` defines a Flask `Blueprint` named `replay`. It is not imported or registered by `apps/website/app.py`. A separate host may still register it explicitly, but must install the replay-specific dependencies from `apps/viewer/requirements.txt`.
 
-The dependencies live in `apps/website/requirements.txt` (what Railway installs): `requests`, Pillow, `imageio-ffmpeg`, and `mgz` pinned to the `sanduckhan/aoc-mgz` fork at a specific commit for DE save-version 67.x support. `aocref` (object/terrain name tables) arrives transitively with `mgz`; every use of it is wrapped in try/except and degrades to empty name maps.
+The dependencies live in `apps/viewer/requirements.txt`: `requests`, Pillow, `imageio-ffmpeg`, and `mgz` pinned to the `sanduckhan/aoc-mgz` fork at a specific commit for DE save-version 67.x support. `aocref` (object/terrain name tables) arrives transitively with `mgz`; every use of it is wrapped in try/except and degrades to empty name maps.
 
 | Route | Method | Handler | Purpose |
 |---|---|---|---|
-| `/replay` | GET | `app.py replay()` | Page shell; embeds the SPA in an iframe, forwards `?match=&profile=&t=` |
-| `/replay/api/upload` | POST | `upload_replay()` | Parse an uploaded `.aoe2record` file, return processed JSON |
-| `/replay/api/matches` | GET | `get_matches()` | Legacy: recent Land Nomad matches for every player in `players.csv` |
-| `/replay/api/matches/<player_name>` | GET | `get_matches_for_player()` | Legacy: name search + last 10 matches in one call |
-| `/replay/api/players` | GET | `search_players()` | AoE2 Companion profile search (`?search=`), top 15 by games played |
-| `/replay/api/player/<int:profile_id>/matches` | GET | `get_player_matches()` | A profile's recent games (`?limit=`, default 10, max 25) |
-| `/replay/api/load-match` | POST | `load_match()` | Download replay from aoe.ms (cached), parse, return processed JSON |
-| `/replay/api/clip` | GET | `make_clip()` | Generate or reuse a cached WebM highlight clip |
+| `/` | GET | `index()` | SPA shell when the blueprint is mounted by a standalone host |
+| `/api/upload` | POST | `upload_replay()` | Parse an uploaded `.aoe2record` file, return processed JSON |
+| `/api/matches` | GET | `get_matches()` | Legacy: recent Land Nomad matches for every player in `players.csv` |
+| `/api/matches/<player_name>` | GET | `get_matches_for_player()` | Legacy: name search + last 10 matches in one call |
+| `/api/players` | GET | `search_players()` | AoE2 Companion profile search (`?search=`), top 15 by games played |
+| `/api/player/<int:profile_id>/matches` | GET | `get_player_matches()` | A profile's recent games (`?limit=`, default 10, max 25) |
+| `/api/load-match` | POST | `load_match()` | Download replay from aoe.ms (cached), parse, return processed JSON |
+| `/api/clip` | GET | `make_clip()` | Generate or reuse a cached WebM highlight clip |
 
 The two `matches` endpoints marked legacy are not called by the current SPA (verified by grepping `aoe2x/replay/public/`); the frontend uses the `players` → `player/<id>/matches` → `load-match` flow.
 

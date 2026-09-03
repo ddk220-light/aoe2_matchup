@@ -1,7 +1,7 @@
 # AoE2 Unit Analyzer - Context for Gemini
 
 ## Project Overview
-This project is a web application (aoe2matchup.com) that analyzes Age of Empires II: Definitive Edition unit matchups. It uses the game's binary data file (`empires2_x2_p1.dat`) to extract unit stats, computes fully-upgraded stats for all 53 civilizations, pre-simulates ~500k unit matchups, and provides web tools for battle simulation, unit rankings, matchup advising, patch tracking, and replay analysis.
+This project is a web application (aoe2matchup.com) that analyzes Age of Empires II: Definitive Edition unit matchups. It uses the game's binary data file (`empires2_x2_p1.dat`) to extract unit stats, computes fully-upgraded stats for all 53 civilizations, pre-simulates ~500k unit matchups, and provides web tools for battle simulation, unit rankings, matchup advising, and patch tracking. Replay tooling remains in the monorepo but is not mounted by the website.
 
 **Authoritative architecture docs: `docs/architecture/README.md` (system map + single-sources-of-truth table) and `docs/architecture/runbooks.md` (when-X-changes-update-Y checklists).**
 
@@ -15,7 +15,7 @@ This project is a web application (aoe2matchup.com) that analyzes Age of Empires
 2. **Reference DB (`aoe2x/dbgen/generate_reference.py`):** Applies tech effects/civ bonuses per civ into `data/golden/aoe2_reference.db` with a full audit trail. Hardcoded combat properties layer on from `aoe2x/dbgen/config_combat.py`.
 3. **Main DB (`aoe2x/dbgen/generate_main_db.py`):** Flattens into `aoe2_units.db` (legacy — app routes read `aoe2_reference.db`).
 4. **Sim data:** Batch matchup sims (`aoe2x/sim/simulation_real.py`, position-based engine) → `derive_unit_rankings.py` / `derive_pool_scores.py` / `best_units.py` → `derived_data.db` / `pool_scores.db` / `civ_power_units/<build>.json`, all keyed by build number (`patches.db`).
-5. **Serving (`apps/website/app.py`):** 24 Flask routes + replay blueprint. Note: `compute_battle_scores.py` is retired; `battle_scores.json` was deleted (scores live in `derived_data.db`).
+5. **Serving (`apps/website/app.py`):** Flask website routes only; the replay blueprint is intentionally not mounted. Note: `compute_battle_scores.py` is retired; `battle_scores.json` was deleted (scores live in `derived_data.db`).
 
 ## Guidelines for AI Assistant (Gemini)
 1. **Data Pipeline Awareness:** Data flows strictly `extraction` → `analysis` → sim batch → derive → `webapp`. Stat/logic changes usually require rebuilding databases — follow `docs/architecture/runbooks.md`.

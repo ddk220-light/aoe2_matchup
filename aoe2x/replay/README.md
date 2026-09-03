@@ -27,9 +27,13 @@ one bundle works under any mount:
 
 ```python
 app.register_blueprint(replay_bp)                        # at / (apps/viewer)
-app.register_blueprint(replay_bp, url_prefix="/replay")  # embedded (website)
+app.register_blueprint(replay_bp, url_prefix="/replay")  # optional custom host
 app.config["REPLAY_VIEW_URL"] = "/replay"                # share-link shell (optional)
 ```
+
+The production `apps/website` host intentionally stopped mounting this
+blueprint in August 2026. The code remains for offline research and any future
+explicitly separate viewer host.
 
 Embedding elsewhere needs: this package + the pinned mgz fork + Pillow +
 imageio-ffmpeg + requests (see `apps/viewer/requirements.txt`).

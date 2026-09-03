@@ -1,8 +1,7 @@
 """Role: serving — Flask app for aoe2matchup.com.
 
 All page + API routes (battle sim home, rankings, civ pages, matchup advisor,
-patch tracker, SEO landing pages, sitemap) plus the /replay/* blueprint
-mounted from aoe2x.replay.blueprint. Serves the committed data artifacts —
+patch tracker, SEO landing pages, sitemap). Serves the committed data artifacts —
 aoe2_reference.db, derived_data.db, pool_scores.db, patches.db,
 civ_power_units/<build>.json — and only simulates at serve
 time for the live Matchup Advisor endpoints (best_units.get_matchup_sims /
@@ -50,7 +49,7 @@ from aoe2x.assets import catalog as _assets_catalog
 
 app = Flask(__name__)
 app.json.sort_keys = False
-# Cap request bodies (replay uploads are single-digit MB; 50 MB is generous).
+# Reject unexpectedly large request bodies before Flask buffers them.
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 # Public site URL — used for canonical URLs, sitemap, OG tags.
@@ -86,32 +85,6 @@ def inject_footer_config():
             "instagram": os.environ.get("SOCIAL_INSTAGRAM_URL") or None,
         },
     }
-
-
-# ---- Replay Analyzer (the shared aoe2x.replay viewer) -------------------------
-# Mounts the canonical AoE2 replay viewer (SPA + API + WebM clip exporter)
-# under /replay/* — the same blueprint the standalone viewer app serves at /.
-# It pulls heavy optional deps (mgz, Pillow, imageio-ffmpeg, requests); if any
-# are missing we skip registration so the core simulator site still boots.
-try:
-    from aoe2x.replay.blueprint import replay_bp
-    app.register_blueprint(replay_bp, url_prefix="/replay")
-    # Share links point at the website's /replay shell page (keeps site nav).
-    app.config["REPLAY_VIEW_URL"] = "/replay"
-    REPLAY_ENABLED = True
-except Exception as _replay_err:  # pragma: no cover
-    import logging
-    logging.getLogger(__name__).warning(
-        "Replay Analyzer disabled (import failed): %s", _replay_err
-    )
-    REPLAY_ENABLED = False
-
-
-@app.context_processor
-def inject_replay_enabled():
-    """Expose whether the replay blueprint mounted, so base.html can hide
-    the Replay nav tab when its optional deps failed to import."""
-    return {"replay_enabled": REPLAY_ENABLED}
 
 
 # Database paths — committed golden artifacts (see aoe2x/paths.py)
@@ -580,27 +553,6 @@ def about():
     return render_template("about.html", active_nav=None)
 
 
-@app.route("/replay")
-def replay():
-    """Replay Analyzer tab. Renders a described page (intro + feature list +
-    how-to) above the visualizer embedded in an isolated iframe, so the page has
-    crawlable text and the analyzer's CSS/theme stay isolated.
-    Forwards deep-link params (?match=&profile=&t=) into the iframe so shared
-    links auto-load a replay (and optionally jump to a timestamp).
-
-    Returns 503 with a friendly notice when the replay blueprint failed to
-    mount (optional deps missing) — otherwise the SPA would render but every
-    API call would 404."""
-    if not REPLAY_ENABLED:
-        return render_template("replay_disabled.html", active_nav="replay"), 503
-    from urllib.parse import urlencode
-    allowed = {k: request.args[k] for k in ("match", "profile", "t")
-               if request.args.get(k)}
-    replay_qs = ("?" + urlencode(allowed)) if allowed else ""
-    return render_template("replay.html", active_nav="replay",
-                           replay_qs=replay_qs)
-
-
 @app.route("/units")
 def units():
     units_by_age = get_units_by_age()
@@ -906,9 +858,6 @@ def sitemap_xml():
         ("/about", "monthly", "0.5"),
         ("/patches", "weekly", "0.7"),
     ]
-    if REPLAY_ENABLED:
-        hub.append(("/replay", "monthly", "0.5"))
-
     def _url(path, changefreq, priority):
         return (f"<url><loc>{SITE_URL}{path}</loc>"
                 f"<lastmod>{lastmod}</lastmod>"

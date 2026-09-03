@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_tarkan_vs_heavy_cav_archer",
+  "completedAt": "2026-08-20T18:29:48.507Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 1,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 108.91690009337069,
+      "medianAbsoluteMeanDelta": 108.91690009337069,
+      "maximumAbsoluteMeanDelta": 108.91690009337069
+    },
+    "rows": [
+      {
+        "id": "elite_tarkan_vs_heavy_cav_archer",
+        "subjectSlug": "elite_tarkan",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Heavy Cavalry Archer vs Elite Tarkan",
+        "side2": {
+          "count": 21,
+          "master": 474,
+          "owner": 2,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "side3": {
+          "count": 18,
+          "master": 757,
+          "owner": 3,
+          "slug": "elite_tarkan",
+          "unit": "Elite Tarkan"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 56.5359477124183,
+          "min": 56.5359477124183,
+          "max": 56.5359477124183,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -52.38095238095239,
+          "min": -52.38095238095238,
+          "max": -52.38095238095238,
+          "side3WinRate": 0,
+          "side3WinRateError": 1,
+          "bandError": 108.91690009337069,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": true
+        },
+        "samples": [
+          {
+            "rowId": "elite_tarkan_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 880,
+            "score": -52.38095238095238,
+            "ticks": 8389,
+            "finalStateHash": "a63e190c475092376fb2beb82f2a0f93733b3df2baa24cc90c871f8e47693fe8",
+            "eventLogHash": "102561e4fbef6b0356b9bb5f96914c3ebccaeb94fd377469368c156e9e3579a9"
+          },
+          {
+            "rowId": "elite_tarkan_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 880,
+            "score": -52.38095238095238,
+            "ticks": 7590,
+            "finalStateHash": "56b2744f1ff5483358c203ff9d4919aed8fd266d4b3fedd4b38360c7b7a0fe88",
+            "eventLogHash": "95ca159d70ab4175abb4b39304496757e0b83d103022136dfa55bc47df6c5883"
+          },
+          {
+            "rowId": "elite_tarkan_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 880,
+            "score": -52.38095238095238,
+            "ticks": 7590,
+            "finalStateHash": "fae720091d32b650e7098ab5e723aeed5c3e3023594a2b1105c121de853c1a91",
+            "eventLogHash": "9d623960b7ca85e87cd023c3c97e9215065b94dda8d26fc5329a20733b3baaf0"
+          },
+          {
+            "rowId": "elite_tarkan_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 880,
+            "score": -52.38095238095238,
+            "ticks": 7590,
+            "finalStateHash": "56b2744f1ff5483358c203ff9d4919aed8fd266d4b3fedd4b38360c7b7a0fe88",
+            "eventLogHash": "18fa309c7d4c367b071c81923367a1e94693c865825a352231cac40ae04311b3"
+          },
+          {
+            "rowId": "elite_tarkan_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 880,
+            "score": -52.38095238095238,
+            "ticks": 7590,
+            "finalStateHash": "feff728c7ff0bf62cafef67c389cb0c60ffa5ce47f85ab9bc7cdb8fff2216cd2",
+            "eventLogHash": "3ae2d1d669678ed2df72aaecac4e53fc3edac91995b0e1db38f7c03fbd1402b2"
+          }
+        ]
+      }
+    ]
+  }
+}

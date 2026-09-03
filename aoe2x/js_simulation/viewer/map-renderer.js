@@ -105,6 +105,35 @@ export function buildSimulationScene(snapshot, {
 }
 
 
+export function pursuitTargetPressure(units, {
+  sourceOwner = null,
+  targetOwner = null,
+} = {}) {
+  if (!Array.isArray(units)) throw new TypeError("units must be an array");
+  const liveByReference = new Map(units
+    .filter(({ alive }) => alive !== false)
+    .map((unit) => [unit.reference_id ?? unit.referenceId, unit]));
+  const pursuersByTarget = new Map();
+  for (const unit of units) {
+    if (unit.alive === false || (sourceOwner !== null && unit.owner !== sourceOwner)) continue;
+    const target = liveByReference.get(unit.pursuitTargetId);
+    if (!target || target.owner === unit.owner) continue;
+    if (targetOwner !== null && target.owner !== targetOwner) continue;
+    if (!pursuersByTarget.has(unit.pursuitTargetId)) {
+      pursuersByTarget.set(unit.pursuitTargetId, []);
+    }
+    pursuersByTarget.get(unit.pursuitTargetId).push(unit.reference_id ?? unit.referenceId);
+  }
+  return [...pursuersByTarget]
+    .sort(([left], [right]) => left - right)
+    .map(([targetReferenceId, pursuerReferenceIds]) => ({
+      targetReferenceId,
+      count: pursuerReferenceIds.length,
+      pursuerReferenceIds: pursuerReferenceIds.sort((left, right) => left - right),
+    }));
+}
+
+
 function deeplyFrozen(value, visited = new Set()) {
   if (!value || typeof value !== "object" || visited.has(value)) return true;
   if (!Object.isFrozen(value)) return false;
@@ -479,9 +508,80 @@ export function createMapRenderer(canvas, map) {
     ctx.restore();
   }
 
+  function pressureColor(count, alpha = 1) {
+    if (count >= 5) return `rgba(255, 91, 68, ${alpha})`;
+    if (count >= 3) return `rgba(255, 157, 62, ${alpha})`;
+    return `rgba(255, 215, 104, ${alpha})`;
+  }
+
+  function currentPursuitPressure() {
+    return pursuitTargetPressure(state.units, { sourceOwner: 3, targetOwner: 2 });
+  }
+
+  function drawPursuitPressureHalos(pressure, byReference) {
+    const tick = state.simulationSnapshot?.tick ?? 0;
+    const pulse = 0.5 + 0.5 * Math.sin(tick / 7);
+    for (const { targetReferenceId, count } of pressure) {
+      const target = byReference.get(targetReferenceId);
+      if (!target?.alive) continue;
+      const base = unitBase(target);
+      const size = Math.max(7, 13 * state.zoom);
+      const radius = Math.max(13, (16 + Math.min(count, 6) * 1.25) * state.zoom);
+      const centerY = base.y - size * 0.42;
+      ctx.save();
+      ctx.strokeStyle = pressureColor(count, 0.78 + pulse * 0.18);
+      ctx.lineWidth = Math.max(2.2, 2.8 * state.zoom);
+      ctx.shadowColor = pressureColor(count, 0.9);
+      ctx.shadowBlur = 8 + 5 * pulse;
+      ctx.beginPath();
+      ctx.arc(base.x, centerY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([3, 4]);
+      ctx.lineWidth = Math.max(1, 1.3 * state.zoom);
+      ctx.strokeStyle = pressureColor(count, 0.48);
+      ctx.beginPath();
+      ctx.arc(base.x, centerY, radius + Math.max(4, 5 * state.zoom), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawPursuitPressureBadges() {
+    if (!state.simulationSnapshot) return;
+    const byReference = new Map(state.units.map((unit) => [unit.reference_id, unit]));
+    for (const { targetReferenceId, count } of currentPursuitPressure()) {
+      const target = byReference.get(targetReferenceId);
+      if (!target?.alive) continue;
+      const base = unitBase(target);
+      const size = Math.max(7, 13 * state.zoom);
+      const badgeRadius = Math.max(9, 10.5 * state.zoom);
+      const x = base.x + Math.max(11, 13 * state.zoom);
+      const y = base.y - size * 1.12;
+      ctx.save();
+      ctx.fillStyle = "rgba(15, 18, 14, .94)";
+      ctx.strokeStyle = pressureColor(count, 1);
+      ctx.lineWidth = Math.max(1.5, 1.8 * state.zoom);
+      ctx.shadowColor = "rgba(0, 0, 0, .72)";
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.arc(x, y, badgeRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff4cd";
+      ctx.font = `700 ${Math.max(9, 10 * state.zoom)}px Consolas, monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`×${count}`, x, y + 0.5);
+      ctx.restore();
+    }
+  }
+
   function drawSimulationOverlays() {
     if (!state.simulationSnapshot) return;
     const byReference = new Map(state.units.map((unit) => [unit.reference_id, unit]));
+    const pressure = currentPursuitPressure();
+    const pressureByTarget = new Map(pressure.map((entry) => [entry.targetReferenceId, entry]));
     for (const unit of state.units) {
       if (!unit.alive) continue;
       const radius = unit.mechanics.collision_size_tiles.x;
@@ -493,12 +593,16 @@ export function createMapRenderer(canvas, map) {
         "rgba(241, 226, 178, .22)",
         [3, 4],
       );
+      const pursuitTarget = byReference.get(unit.pursuitTargetId);
+      const highlightedPursuit = unit.owner === 3
+        && pursuitTarget?.owner === 2
+        && pressureByTarget.has(pursuitTarget.reference_id);
       drawTargetLine(
         unit,
-        byReference.get(unit.pursuitTargetId),
-        "rgba(229, 179, 73, .44)",
-        [6, 6],
-        1,
+        pursuitTarget,
+        highlightedPursuit ? "rgba(255, 202, 83, .72)" : "rgba(229, 179, 73, .38)",
+        highlightedPursuit ? [7, 4] : [6, 6],
+        highlightedPursuit ? 1.55 : 1,
       );
       drawTargetLine(
         unit,
@@ -515,6 +619,7 @@ export function createMapRenderer(canvas, map) {
         2.2,
       );
     }
+    drawPursuitPressureHalos(pressure, byReference);
 
     const navigation = state.simulationSnapshot.navigation;
     if (!state.options.navigation || !navigation) return;
@@ -715,6 +820,7 @@ export function createMapRenderer(canvas, map) {
     }
     drawSimulationOverlays();
     for (const unit of state.units) drawUnit(unit);
+    drawPursuitPressureBadges();
     drawMarker(state.hovered, "rgba(239, 205, 112, .75)");
     drawMarker(state.selected, "#f3c55a");
   }

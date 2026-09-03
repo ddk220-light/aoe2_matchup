@@ -1,0 +1,2505 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-19T23:22:40.821Z",
+  "source": {
+    "archive": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+    "requiredSha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6",
+    "observedSha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6",
+    "tapeMembers": [
+      "phase2/raw recordings/elite_conquistador_spanish__vs__arbalester.frames.bin",
+      "phase2/raw recordings/elite_conquistador_spanish__vs__arbalester_r2.frames.bin",
+      "phase2/raw recordings/elite_conquistador_spanish__vs__arbalester_r3.frames.bin",
+      "phase2/raw recordings/elite_conquistador_spanish__vs__arbalester_r4.frames.bin"
+    ]
+  },
+  "matchup": {
+    "id": "elite_conquistador_vs_arbalester",
+    "label": "Elite Conquistador vs Arbalester",
+    "side2": {
+      "count": 12,
+      "master": 773,
+      "owner": 2,
+      "slug": "elite_conquistador",
+      "unit": "Elite Conquistador"
+    },
+    "side3": {
+      "count": 21,
+      "master": 492,
+      "owner": 3,
+      "slug": "arbalester",
+      "unit": "Arbalester"
+    }
+  },
+  "definitions": {
+    "cadenceMs": 100,
+    "overlap": "Chebyshev center separation below the sum of same-army collision radii",
+    "depth": "sum of collision radii minus Chebyshev center separation",
+    "frontRear": "live units split into thirds by projection toward the opposing live-army centroid",
+    "tapeShotRelease": "an observed attack-state episode that lasts through the sourced projectile release delay, with one raw-frame tolerance",
+    "tapeHit": "decoded golden summary hit attribution",
+    "simulationShotRelease": "a newly queued ranged or stray projectile on its fired tick",
+    "simulationHit": "a ranged-projectile or stray-projectile damage event"
+  },
+  "tape": {
+    "runs": [
+      {
+        "source": "tape",
+        "label": "repeat-1",
+        "durationSeconds": 40.9,
+        "signedScore": -33.888888888888886,
+        "overlap": {
+          "2": {
+            "pairObservations": 16853,
+            "overlappingPairObservations": 551,
+            "overlapPairShare": 0.03269447576099211,
+            "frameOverlapShare": 0.6536585365853659,
+            "overlappingUnitShare": 0.2509897070467142,
+            "separation": {
+              "count": 551,
+              "minimum": 0.07634520530700684,
+              "median": 0.45334529876708984,
+              "maximum": 0.49997949600219727
+            },
+            "depth": {
+              "count": 551,
+              "minimum": 0.000020503997802734375,
+              "median": 0.046654701232910156,
+              "maximum": 0.42365479469299316
+            },
+            "minimumSeparation": 0.07634520530700684,
+            "medianSeparation": 0.45334529876708984,
+            "medianDepth": 0.046654701232910156,
+            "maximumDepth": 0.42365479469299316,
+            "maximumSimultaneousPairs": 8,
+            "maximumLocalDegree": 3,
+            "maximumComponentSize": 7,
+            "attackingShareWhenOverlapping": 0.28180862250262884,
+            "attackingShareWhenClear": 0.2526427061310782
+          },
+          "3": {
+            "pairObservations": 36874,
+            "overlappingPairObservations": 341,
+            "overlapPairShare": 0.009247708412431523,
+            "frameOverlapShare": 0.7292682926829268,
+            "overlappingUnitShare": 0.1349095966620306,
+            "separation": {
+              "count": 341,
+              "minimum": 0.34882164001464844,
+              "median": 0.3932971954345703,
+              "maximum": 0.39999961853027344
+            },
+            "depth": {
+              "count": 341,
+              "minimum": 3.8146972658470446e-7,
+              "median": 0.00670280456542971,
+              "maximum": 0.051178359985351585
+            },
+            "minimumSeparation": 0.34882164001464844,
+            "medianSeparation": 0.3932971954345703,
+            "medianDepth": 0.00670280456542971,
+            "maximumDepth": 0.051178359985351585,
+            "maximumSimultaneousPairs": 3,
+            "maximumLocalDegree": 2,
+            "maximumComponentSize": 3,
+            "attackingShareWhenOverlapping": 0.4491899852724595,
+            "attackingShareWhenClear": 0.42191088654111164
+          }
+        },
+        "ranks": {
+          "2": {
+            "front": {
+              "observations": 1378,
+              "attackingShare": 0.32728592162554426,
+              "targetAssignedShare": 0.8599419448476052,
+              "inRangeGivenTargetShare": 0.8683544303797468
+            },
+            "middle": {
+              "observations": 1028,
+              "attackingShare": 0.2616731517509728,
+              "targetAssignedShare": 0.8249027237354085,
+              "inRangeGivenTargetShare": 0.6827830188679245
+            },
+            "rear": {
+              "observations": 1378,
+              "attackingShare": 0.19085631349782292,
+              "targetAssignedShare": 0.8388969521044993,
+              "inRangeGivenTargetShare": 0.47837370242214533
+            }
+          },
+          "3": {
+            "front": {
+              "observations": 1834,
+              "attackingShare": 0.44547437295528897,
+              "targetAssignedShare": 0.9585605234460196,
+              "inRangeGivenTargetShare": 0.9897610921501706
+            },
+            "middle": {
+              "observations": 1380,
+              "attackingShare": 0.4246376811594203,
+              "targetAssignedShare": 0.9405797101449276,
+              "inRangeGivenTargetShare": 0.9714946070878274
+            },
+            "rear": {
+              "observations": 1819,
+              "attackingShare": 0.4062671797691039,
+              "targetAssignedShare": 0.9395272127542605,
+              "inRangeGivenTargetShare": 0.92510239906378
+            }
+          }
+        },
+        "observedOrders": {
+          "2": {
+            "unitsReceivingTarget": 12,
+            "distinctFirstTargets": 1,
+            "largestFirstTargetLoad": 12,
+            "firstTargetConcentration": 1,
+            "firstActionTimeMs": {
+              "count": 12,
+              "minimum": 216,
+              "median": 3392,
+              "maximum": 3392
+            },
+            "targetChanges": 211,
+            "actionTransitions": {
+              "1": 64,
+              "3": 2,
+              "4": 97,
+              "6": 100,
+              "7": 103
+            }
+          },
+          "3": {
+            "unitsReceivingTarget": 21,
+            "distinctFirstTargets": 2,
+            "largestFirstTargetLoad": 14,
+            "firstTargetConcentration": 0.6666666666666666,
+            "firstActionTimeMs": {
+              "count": 21,
+              "minimum": 650,
+              "median": 1450,
+              "maximum": 1792
+            },
+            "targetChanges": 23,
+            "actionTransitions": {
+              "1": 36,
+              "4": 83,
+              "6": 302,
+              "7": 289
+            }
+          }
+        },
+        "shots": {
+          "2": {
+            "fired": 100,
+            "hits": 70,
+            "misses": 30,
+            "hitRate": 0.7,
+            "inference": {
+              "attackEpisodes": 120,
+              "releasedEpisodes": 100,
+              "canceledBeforeRelease": 20,
+              "durationMs": {
+                "count": 120,
+                "minimum": 32,
+                "median": 809,
+                "maximum": 3244
+              }
+            }
+          },
+          "3": {
+            "fired": 282,
+            "hits": 182,
+            "misses": 100,
+            "hitRate": 0.6453900709219859,
+            "inference": {
+              "attackEpisodes": 290,
+              "releasedEpisodes": 282,
+              "canceledBeforeRelease": 8,
+              "durationMs": {
+                "count": 290,
+                "minimum": 14,
+                "median": 762,
+                "maximum": 1826
+              }
+            }
+          }
+        },
+        "eventTypes": null
+      },
+      {
+        "source": "tape",
+        "label": "repeat-2",
+        "durationSeconds": 42.694,
+        "signedScore": -30,
+        "overlap": {
+          "2": {
+            "pairObservations": 16740,
+            "overlappingPairObservations": 735,
+            "overlapPairShare": 0.04390681003584229,
+            "frameOverlapShare": 0.7827102803738317,
+            "overlappingUnitShare": 0.337551652892562,
+            "separation": {
+              "count": 735,
+              "minimum": 0.06620264053344727,
+              "median": 0.4759640693664551,
+              "maximum": 0.4999995231628418
+            },
+            "depth": {
+              "count": 735,
+              "minimum": 4.76837158203125e-7,
+              "median": 0.024035930633544922,
+              "maximum": 0.43379735946655273
+            },
+            "minimumSeparation": 0.06620264053344727,
+            "medianSeparation": 0.4759640693664551,
+            "medianDepth": 0.024035930633544922,
+            "maximumDepth": 0.43379735946655273,
+            "maximumSimultaneousPairs": 8,
+            "maximumLocalDegree": 4,
+            "maximumComponentSize": 7,
+            "attackingShareWhenOverlapping": 0.36495791889824025,
+            "attackingShareWhenClear": 0.26198830409356727
+          },
+          "3": {
+            "pairObservations": 39039,
+            "overlappingPairObservations": 509,
+            "overlapPairShare": 0.013038243807474576,
+            "frameOverlapShare": 0.6635514018691588,
+            "overlappingUnitShare": 0.19338905775075987,
+            "separation": {
+              "count": 509,
+              "minimum": 0.32033538818359375,
+              "median": 0.39999961853027344,
+              "maximum": 0.39999961853027344
+            },
+            "depth": {
+              "count": 509,
+              "minimum": 3.8146972658470446e-7,
+              "median": 3.8146972658470446e-7,
+              "maximum": 0.07966461181640627
+            },
+            "minimumSeparation": 0.32033538818359375,
+            "medianSeparation": 0.39999961853027344,
+            "medianDepth": 3.8146972658470446e-7,
+            "maximumDepth": 0.07966461181640627,
+            "maximumSimultaneousPairs": 3,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.44106090373280943,
+            "attackingShareWhenClear": 0.4286387187941592
+          }
+        },
+        "ranks": {
+          "2": {
+            "front": {
+              "observations": 1386,
+              "attackingShare": 0.38311688311688313,
+              "targetAssignedShare": 0.8953823953823954,
+              "inRangeGivenTargetShare": 0.9403706688154714
+            },
+            "middle": {
+              "observations": 1100,
+              "attackingShare": 0.30636363636363634,
+              "targetAssignedShare": 0.8545454545454545,
+              "inRangeGivenTargetShare": 0.7808510638297872
+            },
+            "rear": {
+              "observations": 1386,
+              "attackingShare": 0.20274170274170275,
+              "targetAssignedShare": 0.8297258297258298,
+              "inRangeGivenTargetShare": 0.4965217391304348
+            }
+          },
+          "3": {
+            "front": {
+              "observations": 1882,
+              "attackingShare": 0.44580233793836344,
+              "targetAssignedShare": 0.9654622741764081,
+              "inRangeGivenTargetShare": 0.9933957072096863
+            },
+            "middle": {
+              "observations": 1523,
+              "attackingShare": 0.4359816152330926,
+              "targetAssignedShare": 0.9487852921864741,
+              "inRangeGivenTargetShare": 0.9674740484429065
+            },
+            "rear": {
+              "observations": 1859,
+              "attackingShare": 0.4120494889725659,
+              "targetAssignedShare": 0.9451317912856374,
+              "inRangeGivenTargetShare": 0.9391007398975526
+            }
+          }
+        },
+        "observedOrders": {
+          "2": {
+            "unitsReceivingTarget": 12,
+            "distinctFirstTargets": 1,
+            "largestFirstTargetLoad": 12,
+            "firstTargetConcentration": 1,
+            "firstActionTimeMs": {
+              "count": 12,
+              "minimum": 212,
+              "median": 3272,
+              "maximum": 3272
+            },
+            "targetChanges": 183,
+            "actionTransitions": {
+              "1": 78,
+              "3": 1,
+              "4": 86,
+              "6": 115,
+              "7": 112
+            }
+          },
+          "3": {
+            "unitsReceivingTarget": 21,
+            "distinctFirstTargets": 2,
+            "largestFirstTargetLoad": 11,
+            "firstTargetConcentration": 0.5238095238095238,
+            "firstActionTimeMs": {
+              "count": 21,
+              "minimum": 630,
+              "median": 1364,
+              "maximum": 1894
+            },
+            "targetChanges": 18,
+            "actionTransitions": {
+              "1": 25,
+              "4": 66,
+              "6": 314,
+              "7": 299
+            }
+          }
+        },
+        "shots": {
+          "2": {
+            "fired": 109,
+            "hits": 69,
+            "misses": 40,
+            "hitRate": 0.6330275229357798,
+            "inference": {
+              "attackEpisodes": 130,
+              "releasedEpisodes": 109,
+              "canceledBeforeRelease": 21,
+              "durationMs": {
+                "count": 130,
+                "minimum": 0,
+                "median": 1001,
+                "maximum": 1398
+              }
+            }
+          },
+          "3": {
+            "fired": 296,
+            "hits": 192,
+            "misses": 104,
+            "hitRate": 0.6486486486486487,
+            "inference": {
+              "attackEpisodes": 299,
+              "releasedEpisodes": 296,
+              "canceledBeforeRelease": 3,
+              "durationMs": {
+                "count": 299,
+                "minimum": 134,
+                "median": 762,
+                "maximum": 1522
+              }
+            }
+          }
+        },
+        "eventTypes": null
+      },
+      {
+        "source": "tape",
+        "label": "repeat-3",
+        "durationSeconds": 42.898,
+        "signedScore": -27.59259259259259,
+        "overlap": {
+          "2": {
+            "pairObservations": 16462,
+            "overlappingPairObservations": 856,
+            "overlapPairShare": 0.051998542096950554,
+            "frameOverlapShare": 0.8534883720930233,
+            "overlappingUnitShare": 0.36684996072270226,
+            "separation": {
+              "count": 856,
+              "minimum": 0.08331131935119629,
+              "median": 0.4725456237792969,
+              "maximum": 0.4999847412109375
+            },
+            "depth": {
+              "count": 856,
+              "minimum": 0.0000152587890625,
+              "median": 0.027454376220703125,
+              "maximum": 0.4166886806488037
+            },
+            "minimumSeparation": 0.08331131935119629,
+            "medianSeparation": 0.4725456237792969,
+            "medianDepth": 0.027454376220703125,
+            "maximumDepth": 0.4166886806488037,
+            "maximumSimultaneousPairs": 8,
+            "maximumLocalDegree": 3,
+            "maximumComponentSize": 6,
+            "attackingShareWhenOverlapping": 0.3426124197002141,
+            "attackingShareWhenClear": 0.24896608767576509
+          },
+          "3": {
+            "pairObservations": 39013,
+            "overlappingPairObservations": 454,
+            "overlapPairShare": 0.011637146592161586,
+            "frameOverlapShare": 0.7348837209302326,
+            "overlappingUnitShare": 0.17154732665785,
+            "separation": {
+              "count": 454,
+              "minimum": 0.35367703437805176,
+              "median": 0.39999961853027344,
+              "maximum": 0.39999961853027344
+            },
+            "depth": {
+              "count": 454,
+              "minimum": 3.8146972658470446e-7,
+              "median": 3.8146972658470446e-7,
+              "maximum": 0.046322965621948264
+            },
+            "minimumSeparation": 0.35367703437805176,
+            "medianSeparation": 0.39999961853027344,
+            "medianDepth": 3.8146972658470446e-7,
+            "maximumDepth": 0.046322965621948264,
+            "maximumSimultaneousPairs": 4,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.4460352422907489,
+            "attackingShareWhenClear": 0.425769669327252
+          }
+        },
+        "ranks": {
+          "2": {
+            "front": {
+              "observations": 1344,
+              "attackingShare": 0.38244047619047616,
+              "targetAssignedShare": 0.8757440476190477,
+              "inRangeGivenTargetShare": 0.903143585386576
+            },
+            "middle": {
+              "observations": 1131,
+              "attackingShare": 0.27851458885941643,
+              "targetAssignedShare": 0.8514588859416445,
+              "inRangeGivenTargetShare": 0.7590861889927311
+            },
+            "rear": {
+              "observations": 1344,
+              "attackingShare": 0.18824404761904762,
+              "targetAssignedShare": 0.8311011904761905,
+              "inRangeGivenTargetShare": 0.4637421665174575
+            }
+          },
+          "3": {
+            "front": {
+              "observations": 1891,
+              "attackingShare": 0.4579587519830777,
+              "targetAssignedShare": 0.9613960867265997,
+              "inRangeGivenTargetShare": 0.9961496149614961
+            },
+            "middle": {
+              "observations": 1515,
+              "attackingShare": 0.4132013201320132,
+              "targetAssignedShare": 0.9392739273927393,
+              "inRangeGivenTargetShare": 0.966268446943078
+            },
+            "rear": {
+              "observations": 1887,
+              "attackingShare": 0.4133545310015898,
+              "targetAssignedShare": 0.9411764705882353,
+              "inRangeGivenTargetShare": 0.9341216216216216
+            }
+          }
+        },
+        "observedOrders": {
+          "2": {
+            "unitsReceivingTarget": 12,
+            "distinctFirstTargets": 1,
+            "largestFirstTargetLoad": 12,
+            "firstTargetConcentration": 1,
+            "firstActionTimeMs": {
+              "count": 12,
+              "minimum": 304,
+              "median": 3394,
+              "maximum": 3394
+            },
+            "targetChanges": 235,
+            "actionTransitions": {
+              "1": 73,
+              "4": 98,
+              "6": 105,
+              "7": 112
+            }
+          },
+          "3": {
+            "unitsReceivingTarget": 21,
+            "distinctFirstTargets": 2,
+            "largestFirstTargetLoad": 12,
+            "firstTargetConcentration": 0.5714285714285714,
+            "firstActionTimeMs": {
+              "count": 21,
+              "minimum": 718,
+              "median": 1454,
+              "maximum": 1920
+            },
+            "targetChanges": 36,
+            "actionTransitions": {
+              "1": 27,
+              "4": 91,
+              "6": 323,
+              "7": 308
+            }
+          }
+        },
+        "shots": {
+          "2": {
+            "fired": 110,
+            "hits": 72,
+            "misses": 38,
+            "hitRate": 0.6545454545454545,
+            "inference": {
+              "attackEpisodes": 140,
+              "releasedEpisodes": 110,
+              "canceledBeforeRelease": 30,
+              "durationMs": {
+                "count": 140,
+                "minimum": 16,
+                "median": 686,
+                "maximum": 2572
+              }
+            }
+          },
+          "3": {
+            "fired": 298,
+            "hits": 199,
+            "misses": 99,
+            "hitRate": 0.6677852348993288,
+            "inference": {
+              "attackEpisodes": 310,
+              "releasedEpisodes": 298,
+              "canceledBeforeRelease": 12,
+              "durationMs": {
+                "count": 310,
+                "minimum": 0,
+                "median": 764,
+                "maximum": 1778
+              }
+            }
+          }
+        },
+        "eventTypes": null
+      },
+      {
+        "source": "tape",
+        "label": "repeat-4",
+        "durationSeconds": 38.002,
+        "signedScore": -36.111111111111114,
+        "overlap": {
+          "2": {
+            "pairObservations": 16454,
+            "overlappingPairObservations": 836,
+            "overlapPairShare": 0.050808314087759814,
+            "frameOverlapShare": 0.89501312335958,
+            "overlappingUnitShare": 0.41498479402820015,
+            "separation": {
+              "count": 836,
+              "minimum": 0.08315062522888184,
+              "median": 0.4163856506347656,
+              "maximum": 0.4999809265136719
+            },
+            "depth": {
+              "count": 836,
+              "minimum": 0.000019073486328125,
+              "median": 0.08361434936523438,
+              "maximum": 0.41684937477111816
+            },
+            "minimumSeparation": 0.08315062522888184,
+            "medianSeparation": 0.4163856506347656,
+            "medianDepth": 0.08361434936523438,
+            "maximumDepth": 0.41684937477111816,
+            "maximumSimultaneousPairs": 8,
+            "maximumLocalDegree": 3,
+            "maximumComponentSize": 7,
+            "attackingShareWhenOverlapping": 0.34443704197201863,
+            "attackingShareWhenClear": 0.24810964083175804
+          },
+          "3": {
+            "pairObservations": 38088,
+            "overlappingPairObservations": 454,
+            "overlapPairShare": 0.011919764755303508,
+            "frameOverlapShare": 0.7112860892388452,
+            "overlappingUnitShare": 0.17841902052428368,
+            "separation": {
+              "count": 454,
+              "minimum": 0.2797820568084717,
+              "median": 0.36483049392700195,
+              "maximum": 0.39999961853027344
+            },
+            "depth": {
+              "count": 454,
+              "minimum": 3.8146972658470446e-7,
+              "median": 0.03516950607299807,
+              "maximum": 0.12021794319152834
+            },
+            "minimumSeparation": 0.2797820568084717,
+            "medianSeparation": 0.36483049392700195,
+            "medianDepth": 0.03516950607299807,
+            "maximumDepth": 0.12021794319152834,
+            "maximumSimultaneousPairs": 5,
+            "maximumLocalDegree": 2,
+            "maximumComponentSize": 5,
+            "attackingShareWhenOverlapping": 0.4396355353075171,
+            "attackingShareWhenClear": 0.4298788028691566
+          }
+        },
+        "ranks": {
+          "2": {
+            "front": {
+              "observations": 1266,
+              "attackingShare": 0.31990521327014215,
+              "targetAssignedShare": 0.844391785150079,
+              "inRangeGivenTargetShare": 0.8493919550982226
+            },
+            "middle": {
+              "observations": 1085,
+              "attackingShare": 0.3152073732718894,
+              "targetAssignedShare": 0.8221198156682028,
+              "inRangeGivenTargetShare": 0.8172645739910314
+            },
+            "rear": {
+              "observations": 1266,
+              "attackingShare": 0.2330173775671406,
+              "targetAssignedShare": 0.8191153238546603,
+              "inRangeGivenTargetShare": 0.5332690453230472
+            }
+          },
+          "3": {
+            "front": {
+              "observations": 1753,
+              "attackingShare": 0.4392470051340559,
+              "targetAssignedShare": 0.9509412435824302,
+              "inRangeGivenTargetShare": 0.9868026394721056
+            },
+            "middle": {
+              "observations": 1420,
+              "attackingShare": 0.4387323943661972,
+              "targetAssignedShare": 0.9394366197183098,
+              "inRangeGivenTargetShare": 0.9385307346326837
+            },
+            "rear": {
+              "observations": 1748,
+              "attackingShare": 0.4181922196796339,
+              "targetAssignedShare": 0.9382151029748284,
+              "inRangeGivenTargetShare": 0.9201219512195122
+            }
+          }
+        },
+        "observedOrders": {
+          "2": {
+            "unitsReceivingTarget": 12,
+            "distinctFirstTargets": 1,
+            "largestFirstTargetLoad": 12,
+            "firstTargetConcentration": 1,
+            "firstActionTimeMs": {
+              "count": 12,
+              "minimum": 212,
+              "median": 3382,
+              "maximum": 3382
+            },
+            "targetChanges": 170,
+            "actionTransitions": {
+              "1": 87,
+              "4": 84,
+              "6": 117,
+              "7": 106
+            }
+          },
+          "3": {
+            "unitsReceivingTarget": 21,
+            "distinctFirstTargets": 2,
+            "largestFirstTargetLoad": 13,
+            "firstTargetConcentration": 0.6190476190476191,
+            "firstActionTimeMs": {
+              "count": 21,
+              "minimum": 634,
+              "median": 1502,
+              "maximum": 1900
+            },
+            "targetChanges": 30,
+            "actionTransitions": {
+              "1": 19,
+              "4": 86,
+              "6": 299,
+              "7": 282
+            }
+          }
+        },
+        "shots": {
+          "2": {
+            "fired": 103,
+            "hits": 71,
+            "misses": 32,
+            "hitRate": 0.6893203883495146,
+            "inference": {
+              "attackEpisodes": 124,
+              "releasedEpisodes": 103,
+              "canceledBeforeRelease": 21,
+              "durationMs": {
+                "count": 124,
+                "minimum": 14,
+                "median": 904,
+                "maximum": 2516
+              }
+            }
+          },
+          "3": {
+            "fired": 275,
+            "hits": 176,
+            "misses": 99,
+            "hitRate": 0.64,
+            "inference": {
+              "attackEpisodes": 284,
+              "releasedEpisodes": 275,
+              "canceledBeforeRelease": 9,
+              "durationMs": {
+                "count": 284,
+                "minimum": 120,
+                "median": 764,
+                "maximum": 1696
+              }
+            }
+          }
+        },
+        "eventTypes": null
+      }
+    ],
+    "aggregate": {
+      "overlap": {
+        "2": {
+          "overlapPairShare": {
+            "count": 4,
+            "minimum": 0.03269447576099211,
+            "median": 0.047357562061801056,
+            "maximum": 0.051998542096950554
+          },
+          "frameOverlapShare": {
+            "count": 4,
+            "minimum": 0.6536585365853659,
+            "median": 0.8180993262334275,
+            "maximum": 0.89501312335958
+          },
+          "overlappingUnitShare": {
+            "count": 4,
+            "minimum": 0.2509897070467142,
+            "median": 0.3522008068076321,
+            "maximum": 0.41498479402820015
+          },
+          "minimumSeparation": {
+            "count": 4,
+            "minimum": 0.06620264053344727,
+            "median": 0.07974791526794434,
+            "maximum": 0.08331131935119629
+          },
+          "medianSeparation": {
+            "count": 4,
+            "minimum": 0.4163856506347656,
+            "median": 0.46294546127319336,
+            "maximum": 0.4759640693664551
+          },
+          "medianDepth": {
+            "count": 4,
+            "minimum": 0.024035930633544922,
+            "median": 0.03705453872680664,
+            "maximum": 0.08361434936523438
+          },
+          "maximumDepth": {
+            "count": 4,
+            "minimum": 0.4166886806488037,
+            "median": 0.42025208473205566,
+            "maximum": 0.43379735946655273
+          },
+          "maximumSimultaneousPairs": {
+            "count": 4,
+            "minimum": 8,
+            "median": 8,
+            "maximum": 8
+          },
+          "maximumLocalDegree": {
+            "count": 4,
+            "minimum": 3,
+            "median": 3,
+            "maximum": 4
+          },
+          "maximumComponentSize": {
+            "count": 4,
+            "minimum": 6,
+            "median": 7,
+            "maximum": 7
+          },
+          "attackingShareWhenOverlapping": {
+            "count": 4,
+            "minimum": 0.28180862250262884,
+            "median": 0.34352473083611634,
+            "maximum": 0.36495791889824025
+          },
+          "attackingShareWhenClear": {
+            "count": 4,
+            "minimum": 0.24810964083175804,
+            "median": 0.25080439690342166,
+            "maximum": 0.26198830409356727
+          }
+        },
+        "3": {
+          "overlapPairShare": {
+            "count": 4,
+            "minimum": 0.009247708412431523,
+            "median": 0.011778455673732547,
+            "maximum": 0.013038243807474576
+          },
+          "frameOverlapShare": {
+            "count": 4,
+            "minimum": 0.6635514018691588,
+            "median": 0.720277190960886,
+            "maximum": 0.7348837209302326
+          },
+          "overlappingUnitShare": {
+            "count": 4,
+            "minimum": 0.1349095966620306,
+            "median": 0.17498317359106685,
+            "maximum": 0.19338905775075987
+          },
+          "minimumSeparation": {
+            "count": 4,
+            "minimum": 0.2797820568084717,
+            "median": 0.3345785140991211,
+            "maximum": 0.35367703437805176
+          },
+          "medianSeparation": {
+            "count": 4,
+            "minimum": 0.36483049392700195,
+            "median": 0.3966484069824219,
+            "maximum": 0.39999961853027344
+          },
+          "medianDepth": {
+            "count": 4,
+            "minimum": 3.8146972658470446e-7,
+            "median": 0.003351593017578147,
+            "maximum": 0.03516950607299807
+          },
+          "maximumDepth": {
+            "count": 4,
+            "minimum": 0.046322965621948264,
+            "median": 0.06542148590087893,
+            "maximum": 0.12021794319152834
+          },
+          "maximumSimultaneousPairs": {
+            "count": 4,
+            "minimum": 3,
+            "median": 3.5,
+            "maximum": 5
+          },
+          "maximumLocalDegree": {
+            "count": 4,
+            "minimum": 1,
+            "median": 1.5,
+            "maximum": 2
+          },
+          "maximumComponentSize": {
+            "count": 4,
+            "minimum": 2,
+            "median": 2.5,
+            "maximum": 5
+          },
+          "attackingShareWhenOverlapping": {
+            "count": 4,
+            "minimum": 0.4396355353075171,
+            "median": 0.4435480730117792,
+            "maximum": 0.4491899852724595
+          },
+          "attackingShareWhenClear": {
+            "count": 4,
+            "minimum": 0.42191088654111164,
+            "median": 0.42720419406070564,
+            "maximum": 0.4298788028691566
+          }
+        }
+      },
+      "ranks": {
+        "2": {
+          "front": {
+            "attackingShare": {
+              "count": 4,
+              "minimum": 0.31990521327014215,
+              "median": 0.3548631989080102,
+              "maximum": 0.38311688311688313
+            },
+            "targetAssignedShare": {
+              "count": 4,
+              "minimum": 0.844391785150079,
+              "median": 0.8678429962333265,
+              "maximum": 0.8953823953823954
+            },
+            "inRangeGivenTargetShare": {
+              "count": 4,
+              "minimum": 0.8493919550982226,
+              "median": 0.8857490078831614,
+              "maximum": 0.9403706688154714
+            }
+          },
+          "middle": {
+            "attackingShare": {
+              "count": 4,
+              "minimum": 0.2616731517509728,
+              "median": 0.2924391126115264,
+              "maximum": 0.3152073732718894
+            },
+            "targetAssignedShare": {
+              "count": 4,
+              "minimum": 0.8221198156682028,
+              "median": 0.8381808048385265,
+              "maximum": 0.8545454545454545
+            },
+            "inRangeGivenTargetShare": {
+              "count": 4,
+              "minimum": 0.6827830188679245,
+              "median": 0.7699686264112591,
+              "maximum": 0.8172645739910314
+            }
+          },
+          "rear": {
+            "attackingShare": {
+              "count": 4,
+              "minimum": 0.18824404761904762,
+              "median": 0.19679900811976284,
+              "maximum": 0.2330173775671406
+            },
+            "targetAssignedShare": {
+              "count": 4,
+              "minimum": 0.8191153238546603,
+              "median": 0.8304135101010102,
+              "maximum": 0.8388969521044993
+            },
+            "inRangeGivenTargetShare": {
+              "count": 4,
+              "minimum": 0.4637421665174575,
+              "median": 0.48744772077629006,
+              "maximum": 0.5332690453230472
+            }
+          }
+        },
+        "3": {
+          "front": {
+            "attackingShare": {
+              "count": 4,
+              "minimum": 0.4392470051340559,
+              "median": 0.4456383554468262,
+              "maximum": 0.4579587519830777
+            },
+            "targetAssignedShare": {
+              "count": 4,
+              "minimum": 0.9509412435824302,
+              "median": 0.9599783050863097,
+              "maximum": 0.9654622741764081
+            },
+            "inRangeGivenTargetShare": {
+              "count": 4,
+              "minimum": 0.9868026394721056,
+              "median": 0.9915783996799284,
+              "maximum": 0.9961496149614961
+            }
+          },
+          "middle": {
+            "attackingShare": {
+              "count": 4,
+              "minimum": 0.4132013201320132,
+              "median": 0.43030964819625644,
+              "maximum": 0.4387323943661972
+            },
+            "targetAssignedShare": {
+              "count": 4,
+              "minimum": 0.9392739273927393,
+              "median": 0.9400081649316188,
+              "maximum": 0.9487852921864741
+            },
+            "inRangeGivenTargetShare": {
+              "count": 4,
+              "minimum": 0.9385307346326837,
+              "median": 0.9668712476929923,
+              "maximum": 0.9714946070878274
+            }
+          },
+          "rear": {
+            "attackingShare": {
+              "count": 4,
+              "minimum": 0.4062671797691039,
+              "median": 0.41270200998707784,
+              "maximum": 0.4181922196796339
+            },
+            "targetAssignedShare": {
+              "count": 4,
+              "minimum": 0.9382151029748284,
+              "median": 0.940351841671248,
+              "maximum": 0.9451317912856374
+            },
+            "inRangeGivenTargetShare": {
+              "count": 4,
+              "minimum": 0.9201219512195122,
+              "median": 0.9296120103427008,
+              "maximum": 0.9391007398975526
+            }
+          }
+        }
+      },
+      "observedOrders": {
+        "2": {
+          "unitsReceivingTarget": {
+            "count": 4,
+            "minimum": 12,
+            "median": 12,
+            "maximum": 12
+          },
+          "distinctFirstTargets": {
+            "count": 4,
+            "minimum": 1,
+            "median": 1,
+            "maximum": 1
+          },
+          "largestFirstTargetLoad": {
+            "count": 4,
+            "minimum": 12,
+            "median": 12,
+            "maximum": 12
+          },
+          "firstTargetConcentration": {
+            "count": 4,
+            "minimum": 1,
+            "median": 1,
+            "maximum": 1
+          },
+          "targetChanges": {
+            "count": 4,
+            "minimum": 170,
+            "median": 197,
+            "maximum": 235
+          }
+        },
+        "3": {
+          "unitsReceivingTarget": {
+            "count": 4,
+            "minimum": 21,
+            "median": 21,
+            "maximum": 21
+          },
+          "distinctFirstTargets": {
+            "count": 4,
+            "minimum": 2,
+            "median": 2,
+            "maximum": 2
+          },
+          "largestFirstTargetLoad": {
+            "count": 4,
+            "minimum": 11,
+            "median": 12.5,
+            "maximum": 14
+          },
+          "firstTargetConcentration": {
+            "count": 4,
+            "minimum": 0.5238095238095238,
+            "median": 0.5952380952380952,
+            "maximum": 0.6666666666666666
+          },
+          "targetChanges": {
+            "count": 4,
+            "minimum": 18,
+            "median": 26.5,
+            "maximum": 36
+          }
+        }
+      },
+      "shots": {
+        "2": {
+          "fired": {
+            "count": 4,
+            "minimum": 100,
+            "median": 106,
+            "maximum": 110
+          },
+          "hits": {
+            "count": 4,
+            "minimum": 69,
+            "median": 70.5,
+            "maximum": 72
+          },
+          "misses": {
+            "count": 4,
+            "minimum": 30,
+            "median": 35,
+            "maximum": 40
+          },
+          "hitRate": {
+            "count": 4,
+            "minimum": 0.6330275229357798,
+            "median": 0.6719329214474845,
+            "maximum": 0.7
+          }
+        },
+        "3": {
+          "fired": {
+            "count": 4,
+            "minimum": 275,
+            "median": 289,
+            "maximum": 298
+          },
+          "hits": {
+            "count": 4,
+            "minimum": 176,
+            "median": 187,
+            "maximum": 199
+          },
+          "misses": {
+            "count": 4,
+            "minimum": 99,
+            "median": 99.5,
+            "maximum": 104
+          },
+          "hitRate": {
+            "count": 4,
+            "minimum": 0.64,
+            "median": 0.6470193597853173,
+            "maximum": 0.6677852348993288
+          }
+        }
+      }
+    }
+  },
+  "simulation": {
+    "runs": [
+      {
+        "source": "simulation",
+        "label": "sample-0",
+        "durationSeconds": 42.3,
+        "signedScore": null,
+        "overlap": {
+          "2": {
+            "pairObservations": 15779,
+            "overlappingPairObservations": 1218,
+            "overlapPairShare": 0.07719120349832055,
+            "frameOverlapShare": 0.9599056603773585,
+            "overlappingUnitShare": 0.663218077865505,
+            "separation": {
+              "count": 1218,
+              "minimum": 0,
+              "median": 0.3331638950796876,
+              "maximum": 0.4980697244341643
+            },
+            "depth": {
+              "count": 1218,
+              "minimum": 0.001930275565835693,
+              "median": 0.16683610492031242,
+              "maximum": 0.5
+            },
+            "minimumSeparation": 0,
+            "medianSeparation": 0.3331638950796876,
+            "medianDepth": 0.16683610492031242,
+            "maximumDepth": 0.5,
+            "maximumSimultaneousPairs": 5,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.4220032840722496,
+            "attackingShareWhenClear": 0.3177041228779305
+          },
+          "3": {
+            "pairObservations": 31237,
+            "overlappingPairObservations": 761,
+            "overlapPairShare": 0.024362134648013574,
+            "frameOverlapShare": 0.5731132075471698,
+            "overlappingUnitShare": 0.33362560280578696,
+            "separation": {
+              "count": 761,
+              "minimum": 0.25106609345449193,
+              "median": 0.32494177628504195,
+              "maximum": 0.3980092311832273
+            },
+            "depth": {
+              "count": 761,
+              "minimum": 0.0019907688167727366,
+              "median": 0.07505822371495807,
+              "maximum": 0.1489339065455081
+            },
+            "minimumSeparation": 0.25106609345449193,
+            "medianSeparation": 0.32494177628504195,
+            "medianDepth": 0.07505822371495807,
+            "maximumDepth": 0.1489339065455081,
+            "maximumSimultaneousPairs": 4,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.43823915900131405,
+            "attackingShareWhenClear": 0.4138157894736842
+          }
+        },
+        "ranks": {
+          "2": {
+            "front": {
+              "observations": 1278,
+              "attackingShare": 0.4444444444444444,
+              "targetAssignedShare": 0.9475743348982786,
+              "inRangeGivenTargetShare": 0.976878612716763
+            },
+            "middle": {
+              "observations": 1112,
+              "attackingShare": 0.36780575539568344,
+              "targetAssignedShare": 0.9262589928057554,
+              "inRangeGivenTargetShare": 0.8932038834951457
+            },
+            "rear": {
+              "observations": 1278,
+              "attackingShare": 0.3458528951486698,
+              "targetAssignedShare": 0.8716744913928013,
+              "inRangeGivenTargetShare": 0.6570915619389587
+            }
+          },
+          "3": {
+            "front": {
+              "observations": 1671,
+              "attackingShare": 0.41831238779174146,
+              "targetAssignedShare": 0.935966487133453,
+              "inRangeGivenTargetShare": 1
+            },
+            "middle": {
+              "observations": 1249,
+              "attackingShare": 0.4243394715772618,
+              "targetAssignedShare": 0.9143314651721377,
+              "inRangeGivenTargetShare": 1
+            },
+            "rear": {
+              "observations": 1642,
+              "attackingShare": 0.4238733252131547,
+              "targetAssignedShare": 0.9372716199756395,
+              "inRangeGivenTargetShare": 0.9876543209876543
+            }
+          }
+        },
+        "observedOrders": {
+          "2": {
+            "unitsReceivingTarget": 12,
+            "distinctFirstTargets": 3,
+            "largestFirstTargetLoad": 9,
+            "firstTargetConcentration": 0.75,
+            "firstActionTimeMs": {
+              "count": 12,
+              "minimum": 1000,
+              "median": 1100,
+              "maximum": 2800
+            },
+            "targetChanges": 104,
+            "actionTransitions": {
+              "idle": 19,
+              "attacking": 109,
+              "reload": 105,
+              "dead": 7
+            }
+          },
+          "3": {
+            "unitsReceivingTarget": 21,
+            "distinctFirstTargets": 8,
+            "largestFirstTargetLoad": 5,
+            "firstTargetConcentration": 0.23809523809523808,
+            "firstActionTimeMs": {
+              "count": 21,
+              "minimum": 1300,
+              "median": 1500,
+              "maximum": 1700
+            },
+            "targetChanges": 25,
+            "actionTransitions": {
+              "idle": 21,
+              "attacking": 253,
+              "reload": 249,
+              "dead": 21
+            }
+          }
+        },
+        "shots": {
+          "2": {
+            "fired": 102,
+            "hits": 72,
+            "misses": 30,
+            "hitRate": 0.7058823529411765
+          },
+          "3": {
+            "fired": 251,
+            "hits": 233,
+            "misses": 18,
+            "hitRate": 0.9282868525896414
+          }
+        },
+        "eventTypes": {
+          "pursuit-acquired": 125,
+          "engagement-started": 132,
+          "attack-start": 367,
+          "move": 4035,
+          "blocked": 3564,
+          "contact-reservation-acquired": 15,
+          "contact-reservation-persisted": 11856,
+          "engagement-ended": 104,
+          "damage": 305,
+          "contact-reservation-released": 14,
+          "ai-order": 19,
+          "death": 28,
+          "pursuit-invalidated": 87,
+          "attack-canceled": 9
+        },
+        "winnerOwner": 2,
+        "ticks": 2538,
+        "scenarioOrders": {
+          "rangedTargetPressureOwner": 3,
+          "rangedOpportunityRetargetOwner": 2,
+          "rangedWindupRetargetOwner": 3,
+          "kiteOwner": null
+        }
+      },
+      {
+        "source": "simulation",
+        "label": "sample-1",
+        "durationSeconds": 42,
+        "signedScore": null,
+        "overlap": {
+          "2": {
+            "pairObservations": 14445,
+            "overlappingPairObservations": 1243,
+            "overlapPairShare": 0.08605053651782624,
+            "frameOverlapShare": 0.9572446555819477,
+            "overlappingUnitShare": 0.7084639498432602,
+            "separation": {
+              "count": 1243,
+              "minimum": 3.552713678800501e-15,
+              "median": 0.11332644667058123,
+              "maximum": 0.4987456681225746
+            },
+            "depth": {
+              "count": 1243,
+              "minimum": 0.0012543318774254075,
+              "median": 0.3866735533294188,
+              "maximum": 0.49999999999999645
+            },
+            "minimumSeparation": 3.552713678800501e-15,
+            "medianSeparation": 0.11332644667058123,
+            "medianDepth": 0.3866735533294188,
+            "maximumDepth": 0.49999999999999645,
+            "maximumSimultaneousPairs": 5,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.43000804505229284,
+            "attackingShareWhenClear": 0.23949169110459434
+          },
+          "3": {
+            "pairObservations": 31315,
+            "overlappingPairObservations": 200,
+            "overlapPairShare": 0.006386715631486508,
+            "frameOverlapShare": 0.4750593824228028,
+            "overlappingUnitShare": 0.08798944126704795,
+            "separation": {
+              "count": 200,
+              "minimum": 0.27582988473808356,
+              "median": 0.3264114367262483,
+              "maximum": 0.3264114367262483
+            },
+            "depth": {
+              "count": 200,
+              "minimum": 0.07358856327375174,
+              "median": 0.07358856327375174,
+              "maximum": 0.12417011526191646
+            },
+            "minimumSeparation": 0.27582988473808356,
+            "medianSeparation": 0.3264114367262483,
+            "medianDepth": 0.07358856327375174,
+            "maximumDepth": 0.12417011526191646,
+            "maximumSimultaneousPairs": 1,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.44,
+            "attackingShareWhenClear": 0.4302942595272552
+          }
+        },
+        "ranks": {
+          "2": {
+            "front": {
+              "observations": 1304,
+              "attackingShare": 0.45858895705521474,
+              "targetAssignedShare": 0.9424846625766872,
+              "inRangeGivenTargetShare": 0.9764035801464606
+            },
+            "middle": {
+              "observations": 901,
+              "attackingShare": 0.390677025527192,
+              "targetAssignedShare": 0.897891231964484,
+              "inRangeGivenTargetShare": 0.8665018541409147
+            },
+            "rear": {
+              "observations": 1304,
+              "attackingShare": 0.2791411042944785,
+              "targetAssignedShare": 0.9010736196319018,
+              "inRangeGivenTargetShare": 0.5991489361702128
+            }
+          },
+          "3": {
+            "front": {
+              "observations": 1676,
+              "attackingShare": 0.43556085918854415,
+              "targetAssignedShare": 0.9415274463007159,
+              "inRangeGivenTargetShare": 1
+            },
+            "middle": {
+              "observations": 1223,
+              "attackingShare": 0.4309076042518397,
+              "targetAssignedShare": 0.9272281275551921,
+              "inRangeGivenTargetShare": 0.9973544973544973
+            },
+            "rear": {
+              "observations": 1647,
+              "attackingShare": 0.4268366727383121,
+              "targetAssignedShare": 0.9435336976320583,
+              "inRangeGivenTargetShare": 0.9864864864864865
+            }
+          }
+        },
+        "observedOrders": {
+          "2": {
+            "unitsReceivingTarget": 12,
+            "distinctFirstTargets": 3,
+            "largestFirstTargetLoad": 9,
+            "firstTargetConcentration": 0.75,
+            "firstActionTimeMs": {
+              "count": 12,
+              "minimum": 1200,
+              "median": 1500,
+              "maximum": 2800
+            },
+            "targetChanges": 105,
+            "actionTransitions": {
+              "idle": 18,
+              "attacking": 96,
+              "reload": 91,
+              "dead": 8
+            }
+          },
+          "3": {
+            "unitsReceivingTarget": 21,
+            "distinctFirstTargets": 6,
+            "largestFirstTargetLoad": 9,
+            "firstTargetConcentration": 0.42857142857142855,
+            "firstActionTimeMs": {
+              "count": 21,
+              "minimum": 1000,
+              "median": 1300,
+              "maximum": 1700
+            },
+            "targetChanges": 27,
+            "actionTransitions": {
+              "idle": 21,
+              "attacking": 259,
+              "reload": 248,
+              "dead": 21
+            }
+          }
+        },
+        "shots": {
+          "2": {
+            "fired": 95,
+            "hits": 70,
+            "misses": 25,
+            "hitRate": 0.7368421052631579
+          },
+          "3": {
+            "fired": 254,
+            "hits": 234,
+            "misses": 20,
+            "hitRate": 0.9212598425196851
+          }
+        },
+        "eventTypes": {
+          "pursuit-acquired": 121,
+          "move": 4234,
+          "engagement-started": 126,
+          "attack-start": 359,
+          "blocked": 4080,
+          "engagement-ended": 99,
+          "contact-reservation-acquired": 17,
+          "contact-reservation-persisted": 8701,
+          "damage": 304,
+          "contact-reservation-released": 15,
+          "ai-order": 30,
+          "death": 29,
+          "pursuit-invalidated": 84,
+          "attack-canceled": 4,
+          "attack-retargeted": 2
+        },
+        "winnerOwner": 2,
+        "ticks": 2523,
+        "scenarioOrders": {
+          "rangedTargetPressureOwner": 3,
+          "rangedOpportunityRetargetOwner": 2,
+          "rangedWindupRetargetOwner": 3,
+          "kiteOwner": null
+        }
+      },
+      {
+        "source": "simulation",
+        "label": "sample-2",
+        "durationSeconds": 61.7,
+        "signedScore": null,
+        "overlap": {
+          "2": {
+            "pairObservations": 14878,
+            "overlappingPairObservations": 1238,
+            "overlapPairShare": 0.0832101088856029,
+            "frameOverlapShare": 0.948220064724919,
+            "overlappingUnitShare": 0.6311496303849095,
+            "separation": {
+              "count": 1238,
+              "minimum": 2.220446049250313e-14,
+              "median": 0.11935911757089057,
+              "maximum": 0.4993490570372878
+            },
+            "depth": {
+              "count": 1238,
+              "minimum": 0.0006509429627121754,
+              "median": 0.38064088242910943,
+              "maximum": 0.4999999999999778
+            },
+            "minimumSeparation": 2.220446049250313e-14,
+            "medianSeparation": 0.11935911757089057,
+            "medianDepth": 0.38064088242910943,
+            "maximumDepth": 0.4999999999999778,
+            "maximumSimultaneousPairs": 5,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.40993537964458804,
+            "attackingShareWhenClear": 0.331720801658604
+          },
+          "3": {
+            "pairObservations": 33314,
+            "overlappingPairObservations": 956,
+            "overlapPairShare": 0.02869664405355106,
+            "frameOverlapShare": 0.872168284789644,
+            "overlappingUnitShare": 0.3561847988077496,
+            "separation": {
+              "count": 956,
+              "minimum": 0.18555378591788507,
+              "median": 0.18555378591788507,
+              "maximum": 0.3986600691481623
+            },
+            "depth": {
+              "count": 956,
+              "minimum": 0.0013399308518377007,
+              "median": 0.21444621408211495,
+              "maximum": 0.21444621408211495
+            },
+            "minimumSeparation": 0.18555378591788507,
+            "medianSeparation": 0.18555378591788507,
+            "medianDepth": 0.21444621408211495,
+            "maximumDepth": 0.21444621408211495,
+            "maximumSimultaneousPairs": 3,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.4341004184100418,
+            "attackingShareWhenClear": 0.4129050925925926
+          }
+        },
+        "ranks": {
+          "2": {
+            "front": {
+              "observations": 1523,
+              "attackingShare": 0.46421536441234407,
+              "targetAssignedShare": 0.9304005252790545,
+              "inRangeGivenTargetShare": 0.9774170783345095
+            },
+            "middle": {
+              "observations": 877,
+              "attackingShare": 0.3557582668187001,
+              "targetAssignedShare": 0.9007981755986317,
+              "inRangeGivenTargetShare": 0.7632911392405063
+            },
+            "rear": {
+              "observations": 1523,
+              "attackingShare": 0.31254103742613265,
+              "targetAssignedShare": 0.9001969796454367,
+              "inRangeGivenTargetShare": 0.6396790663749088
+            }
+          },
+          "3": {
+            "front": {
+              "observations": 2029,
+              "attackingShare": 0.42730409068506653,
+              "targetAssignedShare": 0.9517003449975358,
+              "inRangeGivenTargetShare": 1
+            },
+            "middle": {
+              "observations": 1367,
+              "attackingShare": 0.4272128749085589,
+              "targetAssignedShare": 0.9312362838332114,
+              "inRangeGivenTargetShare": 0.9984289080911233
+            },
+            "rear": {
+              "observations": 1972,
+              "attackingShare": 0.40872210953346855,
+              "targetAssignedShare": 0.9508113590263692,
+              "inRangeGivenTargetShare": 0.9888
+            }
+          }
+        },
+        "observedOrders": {
+          "2": {
+            "unitsReceivingTarget": 12,
+            "distinctFirstTargets": 3,
+            "largestFirstTargetLoad": 9,
+            "firstTargetConcentration": 0.75,
+            "firstActionTimeMs": {
+              "count": 12,
+              "minimum": 1100,
+              "median": 1500,
+              "maximum": 2800
+            },
+            "targetChanges": 101,
+            "actionTransitions": {
+              "idle": 17,
+              "attacking": 114,
+              "reload": 108,
+              "dead": 10
+            }
+          },
+          "3": {
+            "unitsReceivingTarget": 21,
+            "distinctFirstTargets": 7,
+            "largestFirstTargetLoad": 7,
+            "firstTargetConcentration": 0.3333333333333333,
+            "firstActionTimeMs": {
+              "count": 21,
+              "minimum": 1000,
+              "median": 1300,
+              "maximum": 1700
+            },
+            "targetChanges": 38,
+            "actionTransitions": {
+              "idle": 21,
+              "attacking": 308,
+              "reload": 296,
+              "dead": 21
+            }
+          }
+        },
+        "shots": {
+          "2": {
+            "fired": 106,
+            "hits": 70,
+            "misses": 36,
+            "hitRate": 0.660377358490566
+          },
+          "3": {
+            "fired": 302,
+            "hits": 268,
+            "misses": 34,
+            "hitRate": 0.8874172185430463
+          }
+        },
+        "eventTypes": {
+          "pursuit-acquired": 137,
+          "engagement-started": 142,
+          "attack-start": 422,
+          "move": 4305,
+          "blocked": 4446,
+          "contact-reservation-acquired": 21,
+          "contact-reservation-persisted": 13168,
+          "engagement-ended": 112,
+          "contact-reservation-released": 20,
+          "damage": 338,
+          "ai-order": 22,
+          "death": 31,
+          "pursuit-invalidated": 101,
+          "attack-retargeted": 1,
+          "attack-canceled": 7
+        },
+        "winnerOwner": 2,
+        "ticks": 3705,
+        "scenarioOrders": {
+          "rangedTargetPressureOwner": 3,
+          "rangedOpportunityRetargetOwner": 2,
+          "rangedWindupRetargetOwner": 3,
+          "kiteOwner": null
+        }
+      },
+      {
+        "source": "simulation",
+        "label": "sample-3",
+        "durationSeconds": 43.2,
+        "signedScore": null,
+        "overlap": {
+          "2": {
+            "pairObservations": 14813,
+            "overlappingPairObservations": 1211,
+            "overlapPairShare": 0.08175251468304867,
+            "frameOverlapShare": 0.9491916859122402,
+            "overlappingUnitShare": 0.667953667953668,
+            "separation": {
+              "count": 1211,
+              "minimum": 0.000004525723038995011,
+              "median": 0.034271182276164325,
+              "maximum": 0.4955980570340568
+            },
+            "depth": {
+              "count": 1211,
+              "minimum": 0.004401942965943206,
+              "median": 0.4657288177238357,
+              "maximum": 0.499995474276961
+            },
+            "minimumSeparation": 0.000004525723038995011,
+            "medianSeparation": 0.034271182276164325,
+            "medianDepth": 0.4657288177238357,
+            "maximumDepth": 0.499995474276961,
+            "maximumSimultaneousPairs": 5,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.45210569777043763,
+            "attackingShareWhenClear": 0.2757475083056478
+          },
+          "3": {
+            "pairObservations": 31009,
+            "overlappingPairObservations": 732,
+            "overlapPairShare": 0.023606049856493276,
+            "frameOverlapShare": 0.8406466512702079,
+            "overlappingUnitShare": 0.32332155477031804,
+            "separation": {
+              "count": 732,
+              "minimum": 0.18555378591788507,
+              "median": 0.23914576785260522,
+              "maximum": 0.3898966910308417
+            },
+            "depth": {
+              "count": 732,
+              "minimum": 0.010103308969158342,
+              "median": 0.1608542321473948,
+              "maximum": 0.21444621408211495
+            },
+            "minimumSeparation": 0.18555378591788507,
+            "medianSeparation": 0.23914576785260522,
+            "medianDepth": 0.1608542321473948,
+            "maximumDepth": 0.21444621408211495,
+            "maximumSimultaneousPairs": 3,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.45286885245901637,
+            "attackingShareWhenClear": 0.4171018276762402
+          }
+        },
+        "ranks": {
+          "2": {
+            "front": {
+              "observations": 1254,
+              "attackingShare": 0.47129186602870815,
+              "targetAssignedShare": 0.9210526315789473,
+              "inRangeGivenTargetShare": 0.9826839826839827
+            },
+            "middle": {
+              "observations": 1118,
+              "attackingShare": 0.38640429338103754,
+              "targetAssignedShare": 0.9159212880143113,
+              "inRangeGivenTargetShare": 0.8740234375
+            },
+            "rear": {
+              "observations": 1254,
+              "attackingShare": 0.32216905901116427,
+              "targetAssignedShare": 0.8620414673046252,
+              "inRangeGivenTargetShare": 0.7169287696577243
+            }
+          },
+          "3": {
+            "front": {
+              "observations": 1649,
+              "attackingShare": 0.4378411158277744,
+              "targetAssignedShare": 0.9387507580351728,
+              "inRangeGivenTargetShare": 1
+            },
+            "middle": {
+              "observations": 1275,
+              "attackingShare": 0.4266666666666667,
+              "targetAssignedShare": 0.927843137254902,
+              "inRangeGivenTargetShare": 0.9974640743871513
+            },
+            "rear": {
+              "observations": 1604,
+              "attackingShare": 0.42082294264339154,
+              "targetAssignedShare": 0.940149625935162,
+              "inRangeGivenTargetShare": 0.986737400530504
+            }
+          }
+        },
+        "observedOrders": {
+          "2": {
+            "unitsReceivingTarget": 12,
+            "distinctFirstTargets": 3,
+            "largestFirstTargetLoad": 9,
+            "firstTargetConcentration": 0.75,
+            "firstActionTimeMs": {
+              "count": 12,
+              "minimum": 1100,
+              "median": 1550,
+              "maximum": 2800
+            },
+            "targetChanges": 88,
+            "actionTransitions": {
+              "idle": 21,
+              "attacking": 110,
+              "reload": 104,
+              "dead": 7
+            }
+          },
+          "3": {
+            "unitsReceivingTarget": 21,
+            "distinctFirstTargets": 7,
+            "largestFirstTargetLoad": 6,
+            "firstTargetConcentration": 0.2857142857142857,
+            "firstActionTimeMs": {
+              "count": 21,
+              "minimum": 1000,
+              "median": 1400,
+              "maximum": 1700
+            },
+            "targetChanges": 22,
+            "actionTransitions": {
+              "idle": 21,
+              "attacking": 257,
+              "reload": 249,
+              "dead": 21
+            }
+          }
+        },
+        "shots": {
+          "2": {
+            "fired": 102,
+            "hits": 68,
+            "misses": 34,
+            "hitRate": 0.6666666666666666
+          },
+          "3": {
+            "fired": 252,
+            "hits": 222,
+            "misses": 30,
+            "hitRate": 0.8809523809523809
+          }
+        },
+        "eventTypes": {
+          "pursuit-acquired": 118,
+          "move": 3971,
+          "engagement-started": 129,
+          "attack-start": 370,
+          "blocked": 3042,
+          "engagement-ended": 105,
+          "contact-reservation-acquired": 16,
+          "contact-reservation-persisted": 11665,
+          "damage": 290,
+          "ai-order": 16,
+          "death": 28,
+          "pursuit-invalidated": 90,
+          "attack-canceled": 7,
+          "contact-reservation-released": 14,
+          "attack-retargeted": 4
+        },
+        "winnerOwner": 2,
+        "ticks": 2594,
+        "scenarioOrders": {
+          "rangedTargetPressureOwner": 3,
+          "rangedOpportunityRetargetOwner": 2,
+          "rangedWindupRetargetOwner": 3,
+          "kiteOwner": null
+        }
+      },
+      {
+        "source": "simulation",
+        "label": "sample-4",
+        "durationSeconds": 49.1,
+        "signedScore": null,
+        "overlap": {
+          "2": {
+            "pairObservations": 15906,
+            "overlappingPairObservations": 964,
+            "overlapPairShare": 0.06060606060606061,
+            "frameOverlapShare": 0.7296747967479674,
+            "overlappingUnitShare": 0.496523306721607,
+            "separation": {
+              "count": 964,
+              "minimum": 5.329070518200751e-15,
+              "median": 0.1290594728314831,
+              "maximum": 0.49783454811810657
+            },
+            "depth": {
+              "count": 964,
+              "minimum": 0.002165451881893432,
+              "median": 0.3709405271685169,
+              "maximum": 0.49999999999999467
+            },
+            "minimumSeparation": 5.329070518200751e-15,
+            "medianSeparation": 0.1290594728314831,
+            "medianDepth": 0.3709405271685169,
+            "maximumDepth": 0.49999999999999467,
+            "maximumSimultaneousPairs": 5,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.3677385892116183,
+            "attackingShareWhenClear": 0.3867007672634271
+          },
+          "3": {
+            "pairObservations": 33110,
+            "overlappingPairObservations": 904,
+            "overlapPairShare": 0.027302929628511025,
+            "frameOverlapShare": 0.8861788617886179,
+            "overlappingUnitShare": 0.3651050080775444,
+            "separation": {
+              "count": 904,
+              "minimum": 0.260315755058925,
+              "median": 0.27237599330270523,
+              "maximum": 0.3974337555254692
+            },
+            "depth": {
+              "count": 904,
+              "minimum": 0.002566244474530799,
+              "median": 0.1276240066972948,
+              "maximum": 0.139684244941075
+            },
+            "minimumSeparation": 0.260315755058925,
+            "medianSeparation": 0.27237599330270523,
+            "medianDepth": 0.1276240066972948,
+            "maximumDepth": 0.139684244941075,
+            "maximumSimultaneousPairs": 3,
+            "maximumLocalDegree": 1,
+            "maximumComponentSize": 2,
+            "attackingShareWhenOverlapping": 0.4551991150442478,
+            "attackingShareWhenClear": 0.4220737913486005
+          }
+        },
+        "ranks": {
+          "2": {
+            "front": {
+              "observations": 1387,
+              "attackingShare": 0.4383561643835616,
+              "targetAssignedShare": 0.9473684210526315,
+              "inRangeGivenTargetShare": 0.974124809741248
+            },
+            "middle": {
+              "observations": 1109,
+              "attackingShare": 0.3985572587917042,
+              "targetAssignedShare": 0.8944995491433724,
+              "inRangeGivenTargetShare": 0.8699596774193549
+            },
+            "rear": {
+              "observations": 1387,
+              "attackingShare": 0.29920692141312183,
+              "targetAssignedShare": 0.8788752703677001,
+              "inRangeGivenTargetShare": 0.5963904840032814
+            }
+          },
+          "3": {
+            "front": {
+              "observations": 1828,
+              "attackingShare": 0.4458424507658643,
+              "targetAssignedShare": 0.9447483588621444,
+              "inRangeGivenTargetShare": 1
+            },
+            "middle": {
+              "observations": 1332,
+              "attackingShare": 0.43018018018018017,
+              "targetAssignedShare": 0.9271771771771772,
+              "inRangeGivenTargetShare": 0.9983805668016195
+            },
+            "rear": {
+              "observations": 1792,
+              "attackingShare": 0.4252232142857143,
+              "targetAssignedShare": 0.9430803571428571,
+              "inRangeGivenTargetShare": 0.9881656804733728
+            }
+          }
+        },
+        "observedOrders": {
+          "2": {
+            "unitsReceivingTarget": 12,
+            "distinctFirstTargets": 3,
+            "largestFirstTargetLoad": 9,
+            "firstTargetConcentration": 0.75,
+            "firstActionTimeMs": {
+              "count": 12,
+              "minimum": 1000,
+              "median": 1350,
+              "maximum": 2800
+            },
+            "targetChanges": 112,
+            "actionTransitions": {
+              "idle": 18,
+              "attacking": 113,
+              "reload": 106,
+              "dead": 9
+            }
+          },
+          "3": {
+            "unitsReceivingTarget": 21,
+            "distinctFirstTargets": 6,
+            "largestFirstTargetLoad": 6,
+            "firstTargetConcentration": 0.2857142857142857,
+            "firstActionTimeMs": {
+              "count": 21,
+              "minimum": 1000,
+              "median": 1400,
+              "maximum": 1700
+            },
+            "targetChanges": 28,
+            "actionTransitions": {
+              "idle": 21,
+              "attacking": 280,
+              "reload": 272,
+              "dead": 21
+            }
+          }
+        },
+        "shots": {
+          "2": {
+            "fired": 104,
+            "hits": 69,
+            "misses": 35,
+            "hitRate": 0.6634615384615384
+          },
+          "3": {
+            "fired": 279,
+            "hits": 244,
+            "misses": 35,
+            "hitRate": 0.8745519713261649
+          }
+        },
+        "eventTypes": {
+          "pursuit-acquired": 132,
+          "move": 3522,
+          "blocked": 4322,
+          "engagement-started": 145,
+          "attack-start": 398,
+          "engagement-ended": 118,
+          "contact-reservation-acquired": 19,
+          "contact-reservation-persisted": 11261,
+          "damage": 313,
+          "ai-order": 23,
+          "death": 30,
+          "pursuit-invalidated": 100,
+          "contact-reservation-released": 19,
+          "attack-canceled": 7,
+          "attack-retargeted": 2
+        },
+        "winnerOwner": 2,
+        "ticks": 2951,
+        "scenarioOrders": {
+          "rangedTargetPressureOwner": 3,
+          "rangedOpportunityRetargetOwner": 2,
+          "rangedWindupRetargetOwner": 3,
+          "kiteOwner": null
+        }
+      }
+    ],
+    "aggregate": {
+      "overlap": {
+        "2": {
+          "overlapPairShare": {
+            "count": 5,
+            "minimum": 0.06060606060606061,
+            "median": 0.08175251468304867,
+            "maximum": 0.08605053651782624
+          },
+          "frameOverlapShare": {
+            "count": 5,
+            "minimum": 0.7296747967479674,
+            "median": 0.9491916859122402,
+            "maximum": 0.9599056603773585
+          },
+          "overlappingUnitShare": {
+            "count": 5,
+            "minimum": 0.496523306721607,
+            "median": 0.663218077865505,
+            "maximum": 0.7084639498432602
+          },
+          "minimumSeparation": {
+            "count": 5,
+            "minimum": 0,
+            "median": 5.329070518200751e-15,
+            "maximum": 0.000004525723038995011
+          },
+          "medianSeparation": {
+            "count": 5,
+            "minimum": 0.034271182276164325,
+            "median": 0.11935911757089057,
+            "maximum": 0.3331638950796876
+          },
+          "medianDepth": {
+            "count": 5,
+            "minimum": 0.16683610492031242,
+            "median": 0.38064088242910943,
+            "maximum": 0.4657288177238357
+          },
+          "maximumDepth": {
+            "count": 5,
+            "minimum": 0.499995474276961,
+            "median": 0.49999999999999467,
+            "maximum": 0.5
+          },
+          "maximumSimultaneousPairs": {
+            "count": 5,
+            "minimum": 5,
+            "median": 5,
+            "maximum": 5
+          },
+          "maximumLocalDegree": {
+            "count": 5,
+            "minimum": 1,
+            "median": 1,
+            "maximum": 1
+          },
+          "maximumComponentSize": {
+            "count": 5,
+            "minimum": 2,
+            "median": 2,
+            "maximum": 2
+          },
+          "attackingShareWhenOverlapping": {
+            "count": 5,
+            "minimum": 0.3677385892116183,
+            "median": 0.4220032840722496,
+            "maximum": 0.45210569777043763
+          },
+          "attackingShareWhenClear": {
+            "count": 5,
+            "minimum": 0.23949169110459434,
+            "median": 0.3177041228779305,
+            "maximum": 0.3867007672634271
+          }
+        },
+        "3": {
+          "overlapPairShare": {
+            "count": 5,
+            "minimum": 0.006386715631486508,
+            "median": 0.024362134648013574,
+            "maximum": 0.02869664405355106
+          },
+          "frameOverlapShare": {
+            "count": 5,
+            "minimum": 0.4750593824228028,
+            "median": 0.8406466512702079,
+            "maximum": 0.8861788617886179
+          },
+          "overlappingUnitShare": {
+            "count": 5,
+            "minimum": 0.08798944126704795,
+            "median": 0.33362560280578696,
+            "maximum": 0.3651050080775444
+          },
+          "minimumSeparation": {
+            "count": 5,
+            "minimum": 0.18555378591788507,
+            "median": 0.25106609345449193,
+            "maximum": 0.27582988473808356
+          },
+          "medianSeparation": {
+            "count": 5,
+            "minimum": 0.18555378591788507,
+            "median": 0.27237599330270523,
+            "maximum": 0.3264114367262483
+          },
+          "medianDepth": {
+            "count": 5,
+            "minimum": 0.07358856327375174,
+            "median": 0.1276240066972948,
+            "maximum": 0.21444621408211495
+          },
+          "maximumDepth": {
+            "count": 5,
+            "minimum": 0.12417011526191646,
+            "median": 0.1489339065455081,
+            "maximum": 0.21444621408211495
+          },
+          "maximumSimultaneousPairs": {
+            "count": 5,
+            "minimum": 1,
+            "median": 3,
+            "maximum": 4
+          },
+          "maximumLocalDegree": {
+            "count": 5,
+            "minimum": 1,
+            "median": 1,
+            "maximum": 1
+          },
+          "maximumComponentSize": {
+            "count": 5,
+            "minimum": 2,
+            "median": 2,
+            "maximum": 2
+          },
+          "attackingShareWhenOverlapping": {
+            "count": 5,
+            "minimum": 0.4341004184100418,
+            "median": 0.44,
+            "maximum": 0.4551991150442478
+          },
+          "attackingShareWhenClear": {
+            "count": 5,
+            "minimum": 0.4129050925925926,
+            "median": 0.4171018276762402,
+            "maximum": 0.4302942595272552
+          }
+        }
+      },
+      "ranks": {
+        "2": {
+          "front": {
+            "attackingShare": {
+              "count": 5,
+              "minimum": 0.4383561643835616,
+              "median": 0.45858895705521474,
+              "maximum": 0.47129186602870815
+            },
+            "targetAssignedShare": {
+              "count": 5,
+              "minimum": 0.9210526315789473,
+              "median": 0.9424846625766872,
+              "maximum": 0.9475743348982786
+            },
+            "inRangeGivenTargetShare": {
+              "count": 5,
+              "minimum": 0.974124809741248,
+              "median": 0.976878612716763,
+              "maximum": 0.9826839826839827
+            }
+          },
+          "middle": {
+            "attackingShare": {
+              "count": 5,
+              "minimum": 0.3557582668187001,
+              "median": 0.38640429338103754,
+              "maximum": 0.3985572587917042
+            },
+            "targetAssignedShare": {
+              "count": 5,
+              "minimum": 0.8944995491433724,
+              "median": 0.9007981755986317,
+              "maximum": 0.9262589928057554
+            },
+            "inRangeGivenTargetShare": {
+              "count": 5,
+              "minimum": 0.7632911392405063,
+              "median": 0.8699596774193549,
+              "maximum": 0.8932038834951457
+            }
+          },
+          "rear": {
+            "attackingShare": {
+              "count": 5,
+              "minimum": 0.2791411042944785,
+              "median": 0.31254103742613265,
+              "maximum": 0.3458528951486698
+            },
+            "targetAssignedShare": {
+              "count": 5,
+              "minimum": 0.8620414673046252,
+              "median": 0.8788752703677001,
+              "maximum": 0.9010736196319018
+            },
+            "inRangeGivenTargetShare": {
+              "count": 5,
+              "minimum": 0.5963904840032814,
+              "median": 0.6396790663749088,
+              "maximum": 0.7169287696577243
+            }
+          }
+        },
+        "3": {
+          "front": {
+            "attackingShare": {
+              "count": 5,
+              "minimum": 0.41831238779174146,
+              "median": 0.43556085918854415,
+              "maximum": 0.4458424507658643
+            },
+            "targetAssignedShare": {
+              "count": 5,
+              "minimum": 0.935966487133453,
+              "median": 0.9415274463007159,
+              "maximum": 0.9517003449975358
+            },
+            "inRangeGivenTargetShare": {
+              "count": 5,
+              "minimum": 1,
+              "median": 1,
+              "maximum": 1
+            }
+          },
+          "middle": {
+            "attackingShare": {
+              "count": 5,
+              "minimum": 0.4243394715772618,
+              "median": 0.4272128749085589,
+              "maximum": 0.4309076042518397
+            },
+            "targetAssignedShare": {
+              "count": 5,
+              "minimum": 0.9143314651721377,
+              "median": 0.9272281275551921,
+              "maximum": 0.9312362838332114
+            },
+            "inRangeGivenTargetShare": {
+              "count": 5,
+              "minimum": 0.9973544973544973,
+              "median": 0.9983805668016195,
+              "maximum": 1
+            }
+          },
+          "rear": {
+            "attackingShare": {
+              "count": 5,
+              "minimum": 0.40872210953346855,
+              "median": 0.4238733252131547,
+              "maximum": 0.4268366727383121
+            },
+            "targetAssignedShare": {
+              "count": 5,
+              "minimum": 0.9372716199756395,
+              "median": 0.9430803571428571,
+              "maximum": 0.9508113590263692
+            },
+            "inRangeGivenTargetShare": {
+              "count": 5,
+              "minimum": 0.9864864864864865,
+              "median": 0.9876543209876543,
+              "maximum": 0.9888
+            }
+          }
+        }
+      },
+      "observedOrders": {
+        "2": {
+          "unitsReceivingTarget": {
+            "count": 5,
+            "minimum": 12,
+            "median": 12,
+            "maximum": 12
+          },
+          "distinctFirstTargets": {
+            "count": 5,
+            "minimum": 3,
+            "median": 3,
+            "maximum": 3
+          },
+          "largestFirstTargetLoad": {
+            "count": 5,
+            "minimum": 9,
+            "median": 9,
+            "maximum": 9
+          },
+          "firstTargetConcentration": {
+            "count": 5,
+            "minimum": 0.75,
+            "median": 0.75,
+            "maximum": 0.75
+          },
+          "targetChanges": {
+            "count": 5,
+            "minimum": 88,
+            "median": 104,
+            "maximum": 112
+          }
+        },
+        "3": {
+          "unitsReceivingTarget": {
+            "count": 5,
+            "minimum": 21,
+            "median": 21,
+            "maximum": 21
+          },
+          "distinctFirstTargets": {
+            "count": 5,
+            "minimum": 6,
+            "median": 7,
+            "maximum": 8
+          },
+          "largestFirstTargetLoad": {
+            "count": 5,
+            "minimum": 5,
+            "median": 6,
+            "maximum": 9
+          },
+          "firstTargetConcentration": {
+            "count": 5,
+            "minimum": 0.23809523809523808,
+            "median": 0.2857142857142857,
+            "maximum": 0.42857142857142855
+          },
+          "targetChanges": {
+            "count": 5,
+            "minimum": 22,
+            "median": 27,
+            "maximum": 38
+          }
+        }
+      },
+      "shots": {
+        "2": {
+          "fired": {
+            "count": 5,
+            "minimum": 95,
+            "median": 102,
+            "maximum": 106
+          },
+          "hits": {
+            "count": 5,
+            "minimum": 68,
+            "median": 70,
+            "maximum": 72
+          },
+          "misses": {
+            "count": 5,
+            "minimum": 25,
+            "median": 34,
+            "maximum": 36
+          },
+          "hitRate": {
+            "count": 5,
+            "minimum": 0.660377358490566,
+            "median": 0.6666666666666666,
+            "maximum": 0.7368421052631579
+          }
+        },
+        "3": {
+          "fired": {
+            "count": 5,
+            "minimum": 251,
+            "median": 254,
+            "maximum": 302
+          },
+          "hits": {
+            "count": 5,
+            "minimum": 222,
+            "median": 234,
+            "maximum": 268
+          },
+          "misses": {
+            "count": 5,
+            "minimum": 18,
+            "median": 30,
+            "maximum": 35
+          },
+          "hitRate": {
+            "count": 5,
+            "minimum": 0.8745519713261649,
+            "median": 0.8874172185430463,
+            "maximum": 0.9282868525896414
+          }
+        }
+      }
+    }
+  }
+}

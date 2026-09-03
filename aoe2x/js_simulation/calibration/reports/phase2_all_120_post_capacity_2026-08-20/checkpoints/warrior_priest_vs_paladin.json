@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "warrior_priest_vs_paladin",
+  "completedAt": "2026-08-21T00:38:46.599Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 2,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 26.256613756613763,
+      "medianAbsoluteMeanDelta": 26.256613756613763,
+      "maximumAbsoluteMeanDelta": 26.256613756613763
+    },
+    "rows": [
+      {
+        "id": "warrior_priest_vs_paladin",
+        "subjectSlug": "warrior_priest",
+        "opponentSlug": "paladin",
+        "matchup": "Warrior Priest vs Paladin",
+        "side2": {
+          "count": 21,
+          "master": 1811,
+          "owner": 2,
+          "slug": "warrior_priest",
+          "unit": "Warrior Priest"
+        },
+        "side3": {
+          "count": 14,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 27.18253968253968,
+          "min": 14.682539682539682,
+          "max": 46.82539682539682,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 3,
+          "unresolvedRuns": 2,
+          "mean": 53.43915343915344,
+          "min": 32.93650793650794,
+          "max": 66.66666666666667,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 6.613756613756621,
+          "tapeBandCoverage": 0.3333333333333333,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "warrior_priest_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "warrior_priest_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 830,
+            "score": 32.93650793650794,
+            "ticks": 7546,
+            "finalStateHash": "7e09a9bfd232f837f1351921e43f50b045e51e1a9741201e045be3c32772ab9f",
+            "eventLogHash": "40ba87650f89555781ff2502137c8692c90be447e2d91b8386fb5a76be6b5fb0"
+          },
+          {
+            "rowId": "warrior_priest_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "warrior_priest_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1680,
+            "score": 66.66666666666667,
+            "ticks": 6299,
+            "finalStateHash": "2c5b6b49f19b66bc8922d8dd6376047c4c54c1c164373162828fcad4758b7669",
+            "eventLogHash": "ea161818fcbcfab2dc5ef962984fa6a9abfcd4bccca9dde6b0e2992c538f92d9"
+          },
+          {
+            "rowId": "warrior_priest_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1530,
+            "score": 60.714285714285715,
+            "ticks": 4119,
+            "finalStateHash": "766a35bde02d499cd50a61d9b567e2c336d7c0ecc9d0052577d138f1da241c29",
+            "eventLogHash": "e4307f9ece8cc2114b556417808eb5694b88300def3192f3c6b1874b695ea0c7"
+          }
+        ]
+      }
+    ]
+  }
+}

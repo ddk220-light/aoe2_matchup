@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_janissary_vs_elite_elephant",
+  "completedAt": "2026-08-20T18:31:25.363Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 11.047619047619044,
+      "medianAbsoluteMeanDelta": 11.047619047619044,
+      "maximumAbsoluteMeanDelta": 11.047619047619044
+    },
+    "rows": [
+      {
+        "id": "elite_janissary_vs_elite_elephant",
+        "subjectSlug": "elite_janissary",
+        "opponentSlug": "elite_elephant",
+        "matchup": "Elite Janissary vs Elite Battle Elephant",
+        "side2": {
+          "count": 21,
+          "master": 557,
+          "owner": 2,
+          "slug": "elite_janissary",
+          "unit": "Elite Janissary"
+        },
+        "side3": {
+          "count": 14,
+          "master": 1134,
+          "owner": 3,
+          "slug": "elite_elephant",
+          "unit": "Elite Battle Elephant"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -59.19047619047619,
+          "min": -59.19047619047619,
+          "max": -59.19047619047619,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -48.142857142857146,
+          "min": -48.142857142857146,
+          "max": -48.142857142857146,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 11.047619047619044,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_janissary_vs_elite_elephant",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 505.5,
+            "score": -48.142857142857146,
+            "ticks": 7260,
+            "finalStateHash": "53500b9701c3653bdccfda75e676ca87bc197f049efa1810c6a4b360f8303f79",
+            "eventLogHash": "92ce7efb4e8531c3da7b9a90e9120624fb378b9ddf6283abfab8868878af8c66"
+          },
+          {
+            "rowId": "elite_janissary_vs_elite_elephant",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 505.5,
+            "score": -48.142857142857146,
+            "ticks": 7260,
+            "finalStateHash": "53500b9701c3653bdccfda75e676ca87bc197f049efa1810c6a4b360f8303f79",
+            "eventLogHash": "bec8dcbdeee78197d44a56551391fdf9da3ff03551bcd295eefdabdce51e60e2"
+          },
+          {
+            "rowId": "elite_janissary_vs_elite_elephant",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 505.5,
+            "score": -48.142857142857146,
+            "ticks": 7260,
+            "finalStateHash": "53500b9701c3653bdccfda75e676ca87bc197f049efa1810c6a4b360f8303f79",
+            "eventLogHash": "b5ac9ac8625a66135249644f67c86015bbd866a62249f9ca4c8fb5df9ceacd18"
+          },
+          {
+            "rowId": "elite_janissary_vs_elite_elephant",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 505.5,
+            "score": -48.142857142857146,
+            "ticks": 7260,
+            "finalStateHash": "53500b9701c3653bdccfda75e676ca87bc197f049efa1810c6a4b360f8303f79",
+            "eventLogHash": "29b671d7446be0673d69537ff259e908af5fdcdc471fc5f353986b65388a6530"
+          },
+          {
+            "rowId": "elite_janissary_vs_elite_elephant",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 505.5,
+            "score": -48.142857142857146,
+            "ticks": 7260,
+            "finalStateHash": "53500b9701c3653bdccfda75e676ca87bc197f049efa1810c6a4b360f8303f79",
+            "eventLogHash": "d485ee8a0826afd47c069436e36ceab070a3406c1af3666c3a4699fc60030d2d"
+          }
+        ]
+      }
+    ]
+  }
+}

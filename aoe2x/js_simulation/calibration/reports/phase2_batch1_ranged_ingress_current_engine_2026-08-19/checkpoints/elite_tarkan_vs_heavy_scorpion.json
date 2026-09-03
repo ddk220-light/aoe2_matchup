@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_tarkan_vs_heavy_scorpion",
+  "completedAt": "2026-08-19T23:47:02.248Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 16.42941176470589,
+      "medianAbsoluteMeanDelta": 16.42941176470589,
+      "maximumAbsoluteMeanDelta": 16.42941176470589
+    },
+    "rows": [
+      {
+        "id": "elite_tarkan_vs_heavy_scorpion",
+        "subjectSlug": "elite_tarkan",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Heavy Scorpion vs Elite Tarkan",
+        "side2": {
+          "count": 16,
+          "master": 542,
+          "owner": 2,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "side3": {
+          "count": 20,
+          "master": 757,
+          "owner": 3,
+          "slug": "elite_tarkan",
+          "unit": "Elite Tarkan"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 73.48529411764706,
+          "min": 73.48529411764706,
+          "max": 73.48529411764706,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 57.05588235294117,
+          "min": 52.36764705882353,
+          "max": 61.01470588235294,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 16.42941176470589,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_tarkan_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2074.5,
+            "score": 61.01470588235294,
+            "ticks": 2182,
+            "finalStateHash": "e9c05bd65cda35ec6744ec740b38eabfa56c8f87b7a8ec6d48fa6b672ca8d7b9",
+            "eventLogHash": "d263b0b7515acbd8627b1fd492aaea4882fb9384d0187daaea6fba5bae428760"
+          },
+          {
+            "rowId": "elite_tarkan_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1780.5,
+            "score": 52.36764705882353,
+            "ticks": 2194,
+            "finalStateHash": "9b151d10b18d5406223aa3dea437bb112f13e26c4e52c2ecca21ab7ccca93d4c",
+            "eventLogHash": "d99d98f0bffe74cdf13df92795ede87eee98c94eeb2d4aa6174c50c386be3649"
+          },
+          {
+            "rowId": "elite_tarkan_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2055.5,
+            "score": 60.455882352941174,
+            "ticks": 2137,
+            "finalStateHash": "76a87a6ba68c7f03fb8feeda9c5bce8e117c6329c0f00ff06b55f258f4a5ad26",
+            "eventLogHash": "b6d6ba7f776fb930962c85ff119e0081c2da689cb31ec1b73f571c8b8ce3f01a"
+          },
+          {
+            "rowId": "elite_tarkan_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1912,
+            "score": 56.23529411764706,
+            "ticks": 1902,
+            "finalStateHash": "8b3f8d2e0fd77d3d0fb9b30e73ff12afa8ec4c96b78a48ce918dcb7cb0eb402e",
+            "eventLogHash": "009ff2c13e6d2cf02419ff82761295520ad2077c98a6faf4d3be17b073b84eee"
+          },
+          {
+            "rowId": "elite_tarkan_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1877,
+            "score": 55.205882352941174,
+            "ticks": 2140,
+            "finalStateHash": "e8eb0e7c729e342a66c831cfba52c1475115e2244178d7d3e118c089f3f41baa",
+            "eventLogHash": "f16edea4ea4bae462eaf5e0e68242e4c831a1459c6558af87fdfb6984f461f98"
+          }
+        ]
+      }
+    ]
+  }
+}

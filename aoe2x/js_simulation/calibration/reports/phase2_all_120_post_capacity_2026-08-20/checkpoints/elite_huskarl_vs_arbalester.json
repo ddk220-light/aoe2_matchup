@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_huskarl_vs_arbalester",
+  "completedAt": "2026-08-21T00:26:55.491Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 0.20408163265307167,
+      "medianAbsoluteMeanDelta": 0.20408163265307167,
+      "maximumAbsoluteMeanDelta": 0.20408163265307167
+    },
+    "rows": [
+      {
+        "id": "elite_huskarl_vs_arbalester",
+        "subjectSlug": "elite_huskarl",
+        "opponentSlug": "arbalester",
+        "matchup": "Arbalester vs Elite Huskarl",
+        "side2": {
+          "count": 20,
+          "master": 492,
+          "owner": 2,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "side3": {
+          "count": 21,
+          "master": 555,
+          "owner": 3,
+          "slug": "elite_huskarl",
+          "unit": "Elite Huskarl"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 85.71428571428571,
+          "min": 85.71428571428571,
+          "max": 85.71428571428571,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 85.91836734693878,
+          "min": 85.91836734693878,
+          "max": 85.91836734693878,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 0.20408163265307167,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_huskarl_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1263,
+            "score": 85.91836734693878,
+            "ticks": 1894,
+            "finalStateHash": "7b76ae47c6070f6a2b3e38d034dccfa4c0938b3fec1111b0627e570a45cb154c",
+            "eventLogHash": "d4645e44b5582ab136cfca1a14e940d07887a2c7f2e99f34ba3150c5c3e3ab44"
+          },
+          {
+            "rowId": "elite_huskarl_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1263,
+            "score": 85.91836734693878,
+            "ticks": 1894,
+            "finalStateHash": "7b76ae47c6070f6a2b3e38d034dccfa4c0938b3fec1111b0627e570a45cb154c",
+            "eventLogHash": "d4645e44b5582ab136cfca1a14e940d07887a2c7f2e99f34ba3150c5c3e3ab44"
+          },
+          {
+            "rowId": "elite_huskarl_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1263,
+            "score": 85.91836734693878,
+            "ticks": 1894,
+            "finalStateHash": "7b76ae47c6070f6a2b3e38d034dccfa4c0938b3fec1111b0627e570a45cb154c",
+            "eventLogHash": "d4645e44b5582ab136cfca1a14e940d07887a2c7f2e99f34ba3150c5c3e3ab44"
+          },
+          {
+            "rowId": "elite_huskarl_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1263,
+            "score": 85.91836734693878,
+            "ticks": 1894,
+            "finalStateHash": "7b76ae47c6070f6a2b3e38d034dccfa4c0938b3fec1111b0627e570a45cb154c",
+            "eventLogHash": "d4645e44b5582ab136cfca1a14e940d07887a2c7f2e99f34ba3150c5c3e3ab44"
+          },
+          {
+            "rowId": "elite_huskarl_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1263,
+            "score": 85.91836734693878,
+            "ticks": 1894,
+            "finalStateHash": "7b76ae47c6070f6a2b3e38d034dccfa4c0938b3fec1111b0627e570a45cb154c",
+            "eventLogHash": "d4645e44b5582ab136cfca1a14e940d07887a2c7f2e99f34ba3150c5c3e3ab44"
+          }
+        ]
+      }
+    ]
+  }
+}

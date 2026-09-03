@@ -1,0 +1,280 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_conquistador_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T23:44:38.634Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 0,
+      "volatileRows": 1,
+      "totalRuns": 15
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 15,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 1,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 1,
+      "meanAbsoluteMeanDelta": 4.023799797696858,
+      "medianAbsoluteMeanDelta": 4.023799797696858,
+      "maximumAbsoluteMeanDelta": 4.023799797696858
+    },
+    "rows": [
+      {
+        "id": "elite_conquistador_vs_heavy_cav_archer",
+        "subjectSlug": "elite_conquistador",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Heavy Cavalry Archer vs Elite Conquistador",
+        "side2": {
+          "count": 21,
+          "master": 474,
+          "owner": 2,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "side3": {
+          "count": 17,
+          "master": 773,
+          "owner": 3,
+          "slug": "elite_conquistador",
+          "unit": "Elite Conquistador"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -6.389618347338937,
+          "min": -14.523809523809524,
+          "max": 12.745098039215685,
+          "side3WinRate": 0.25,
+          "volatile": true
+        },
+        "tapeClassification": "knife-edge",
+        "comparison": {
+          "simulationRuns": 15,
+          "unresolvedRuns": 0,
+          "mean": -2.365818549642079,
+          "min": -22.113095238095237,
+          "max": 18.954248366013072,
+          "side3WinRate": 0.4666666666666667,
+          "side3WinRateError": 0.21666666666666667,
+          "bandError": 0,
+          "tapeBandCoverage": 0.6,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 144.5,
+            "score": -8.601190476190476,
+            "ticks": 4389,
+            "finalStateHash": "b17f73d06eccb6ea668b18a69af06d11ac2f5742a86a2f6a33ac69c637a45c7b",
+            "eventLogHash": "d5658a98855c87677e9a2c6168ad3775e9ff1f82c3621bef788e25f49527c180"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 235.5,
+            "score": -14.017857142857142,
+            "ticks": 4211,
+            "finalStateHash": "f387f3c04af65f0617211272c37720dd630d42acaed3c6ff54da706f33120336",
+            "eventLogHash": "cd0402b52365eabf1f2fdac09d3cfa095284f8036975a99ff0381bf2200258fe"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 140,
+            "score": 9.15032679738562,
+            "ticks": 4139,
+            "finalStateHash": "1c041794e29b9b9b3514071a63e31124d4f497ba71614478206484ef2730ea2c",
+            "eventLogHash": "3592ec25dd4d9e90ee26c69eaa3e288b2820a2b243d8fe027be72be3d01bdef4"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 371.5,
+            "score": -22.113095238095237,
+            "ticks": 3789,
+            "finalStateHash": "68ca5e03c3214251236f9d3672615bc5158dd6bb57c30cc10a15e071dd4b39cd",
+            "eventLogHash": "273e5c2bf4df32d989e9fe2f3c70438c69a00c5e691407fcada8ff88e9e871db"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 285,
+            "score": -16.964285714285715,
+            "ticks": 4160,
+            "finalStateHash": "1737d3964113929d3e404256a14efab403129d73d1e355b22c833547c724a8c6",
+            "eventLogHash": "2722d969d62faa7bc11d95110bb4855cadc954c180bc110d989ec5cde3c81af6"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 5,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 245,
+            "score": 16.013071895424837,
+            "ticks": 3824,
+            "finalStateHash": "0d64a238de761237c9694c5ef3c6a93844210dc81cae134fe1549e1d25303dc3",
+            "eventLogHash": "715572ce8dc556443aa172a891ecea49c40e330135d81672d87ff1f8871434a4"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 6,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 289.5,
+            "score": -17.232142857142858,
+            "ticks": 4109,
+            "finalStateHash": "8225d324a318204756c1e139a9413764baf7e74ff7aef4d1a21d45010000a867",
+            "eventLogHash": "ee107bda6475cb5535ff6e92f67ba78f8d8d8be995bf1584e15f1f3cd88ad702"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 7,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 130,
+            "score": 8.49673202614379,
+            "ticks": 5023,
+            "finalStateHash": "e8b18ff8a84000c4ae5c196a8f02102fe60c1aa66e52061adea953eabba66d78",
+            "eventLogHash": "97ec9ace85658acff0b5134bc69d5e67f087a36bd9433dbe209d53fe61374057"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 8,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 188,
+            "score": -11.19047619047619,
+            "ticks": 4196,
+            "finalStateHash": "1740a4eb83efd17720c38d8a73978591d97c30dddfd3530ed8f92e66280f2c45",
+            "eventLogHash": "f42d0599787b4c16cdc6001a4ca6c7f72299c57933df1c033cbd72f55caa22a9"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 9,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 290,
+            "score": 18.954248366013072,
+            "ticks": 3643,
+            "finalStateHash": "f2087e7a5ba149d5eab327a301786992214475d74553d160124dc89b120561c7",
+            "eventLogHash": "45f81fcec04c524022d3d1d4a0db32aa442b67037b6a0f55c9c701de8baa9d8a"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 10,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 259,
+            "score": -15.416666666666666,
+            "ticks": 3773,
+            "finalStateHash": "7b848252d0eead3a0a3bf08753223cb9acf87d1c32cea62c7a7f61deca9942db",
+            "eventLogHash": "171638d8d91f29f462b99fa3d77894983b916dd6ae1dabd23a6ff933ed439045"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 11,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 70,
+            "score": 4.57516339869281,
+            "ticks": 4891,
+            "finalStateHash": "bd361a9b76d348f98217e5be85d3ec7b1aa094f8f495d536b7112b101ae4b44b",
+            "eventLogHash": "030e68d24522e6fef3a21421547aec5935997d8597417f5f44ccb515733eb146"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 12,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 95,
+            "score": 6.209150326797386,
+            "ticks": 4345,
+            "finalStateHash": "1009ecc4d57adfa0cc0f1dea62b60696b79e4c03692721d238bd15d8fc9ca716",
+            "eventLogHash": "1989f8593bd611a2a597358c8017660432ed812738a0577793a4ecc614a67b10"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 13,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 47.5,
+            "score": -2.8273809523809526,
+            "ticks": 5183,
+            "finalStateHash": "494df97027232d88ccca9f50bc83b6528b6bf72d1284f9359dace19d8fab8bd3",
+            "eventLogHash": "89e694e674b208f40e9575c0b3ea9a738b7714a789c3b59db83df8929a66beb1"
+          },
+          {
+            "rowId": "elite_conquistador_vs_heavy_cav_archer",
+            "sampleIndex": 14,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 145,
+            "score": 9.477124183006536,
+            "ticks": 4465,
+            "finalStateHash": "76a169c974ce7a949f1381777ec75c3a059c6b49af52de2256f5485ed4d247b8",
+            "eventLogHash": "9f0bb33adecc4778ef8630e51389324d55512415bad78e784ca558c077a01ff7"
+          }
+        ]
+      }
+    ]
+  }
+}

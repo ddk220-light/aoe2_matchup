@@ -355,10 +355,13 @@ function buildPersistentGrid(mover, target, obstacles, cols, rows, options = {})
     const interaction = dynamic
       ? resolvePairInteraction(mover, body, pairInteractions)
       : null;
-    if (interaction && !interaction.pathObstructs) continue;
-    const reach = interaction?.collisionExtent ?? moverRadius + obstacleRadius(body);
+    const reach = interaction?.pathObstructs === false
+      ? interaction.attackSurfaceExtent
+      : interaction?.collisionExtent ?? moverRadius + obstacleRadius(body);
     if (!dynamic || body.owner !== mover.owner) {
-      addHardBody(blocked, body, reach, cols, rows);
+      if (interaction === null || interaction.pathObstructs) {
+        addHardBody(blocked, body, reach, cols, rows);
+      }
       continue;
     }
     // A planner may admit one ally only when the unified contact authority
@@ -366,8 +369,9 @@ function buildPersistentGrid(mover, target, obstacles, cols, rows, options = {})
     // owns its one allied lane (or its two total deep-contact slots), the
     // next ally is route geometry, not a second simultaneous transit. An
     // existing releasing surface is likewise hard until separation.
-    if (interaction.kind !== "hard"
-        || !alliedTransitSlotAvailable(mover, body, contactSlots)) {
+    if (interaction.pathObstructs
+        && (interaction.kind !== "hard"
+          || !alliedTransitSlotAvailable(mover, body, contactSlots))) {
       addHardBody(blocked, body, reach, cols, rows);
       continue;
     }
@@ -397,7 +401,12 @@ function buildPersistentGrid(mover, target, obstacles, cols, rows, options = {})
     }
   }
   for (let index = 0; index < alliedOccupancy.length; index += 1) {
-    if (alliedOccupancy[index] >= 2) blocked[index] = 1;
+    // One or two allied bodies remain traversable pairwise geometry. A third
+    // occupied body would make this mover the fourth member of the same deep
+    // overlap, which the movement layer rejects. Put that exact higher-order
+    // constraint into the route grid so the planner goes around instead of
+    // repeatedly proposing a step the movement layer can never accept.
+    if (alliedOccupancy[index] >= 3) blocked[index] = 1;
   }
   return { blocked, congestion, pairInteractions };
 }
@@ -416,6 +425,21 @@ function lineHasPersistentObstruction(blocked, congestion, cols, ax, ay, bx, by)
     if (blocked[index]) return true;
   }
   return false;
+}
+
+
+function clearDirectPrefix(blocked, cols, ax, ay, bx, by) {
+  const steps = Math.max(Math.abs(bx - ax), Math.abs(by - ay));
+  const path = [cellIndex(ax, ay, cols)];
+  if (steps === 0) return path;
+  for (let i = 1; i <= steps; i += 1) {
+    const cx = Math.round(ax + ((bx - ax) * i) / steps);
+    const cy = Math.round(ay + ((by - ay) * i) / steps);
+    const index = cellIndex(cx, cy, cols);
+    if (blocked[index]) break;
+    if (path.at(-1) !== index) path.push(index);
+  }
+  return path;
 }
 
 
@@ -455,7 +479,7 @@ function envelopeHeuristic(cx, cy, target, reach) {
 }
 
 
-function freezePersistentRoute(target, path, cols) {
+function freezePersistentRoute(target, path, cols, { progressive = false } = {}) {
   const waypoints = Object.freeze(path.slice(1).map((index) => Object.freeze({
     x: (index % cols + 0.5) * CELL_TILES,
     y: (Math.floor(index / cols) + 0.5) * CELL_TILES,
@@ -466,6 +490,7 @@ function freezePersistentRoute(target, path, cols) {
     targetY: target.y,
     waypoints,
     waypointIndex: 0,
+    ...(progressive ? { progressive: true } : {}),
   });
 }
 
@@ -516,6 +541,12 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
   if (!lineHasPersistentObstruction(
     blocked, congestion, cols, startX, startY, targetX, targetY,
   )) return null;
+  const directPrefix = clearDirectPrefix(
+    blocked, cols, startX, startY, targetX, targetY,
+  );
+  if (directPrefix.length > 1) {
+    return freezePersistentRoute(target, directPrefix, cols, { progressive: true });
+  }
 
   const gScore = new Map([[startIndex, 0]]);
   const cameFrom = new Map();
@@ -523,12 +554,21 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
   const startH = envelopeHeuristic(startX, startY, target, reach);
   const heap = [{ index: startIndex, g: 0, h: startH, f: startH }];
   let goalIndex = null;
+  let frontierIndex = startIndex;
+  let frontierH = startH;
+  let frontierG = 0;
   let expansions = 0;
   while (heap.length > 0 && expansions < MAX_EXPANSIONS) {
     const current = heapPop(heap);
     if (closed.has(current.index)) continue;
     closed.add(current.index);
     expansions += 1;
+    if (current.h < frontierH
+        || (current.h === frontierH && current.g < frontierG)) {
+      frontierIndex = current.index;
+      frontierH = current.h;
+      frontierG = current.g;
+    }
     const cx = current.index % cols;
     const cy = (current.index - cx) / cols;
     if (inGoalEnvelope(cx, cy, target, reach)) {
@@ -553,13 +593,20 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
       heapPush(heap, { index: nIndex, g: tentative, h, f: tentative + h });
     }
   }
-  if (goalIndex === null) return Object.freeze({ stand: true });
+  if (goalIndex === null && frontierIndex === startIndex) {
+    return Object.freeze({ stand: true });
+  }
   const path = [];
-  for (let index = goalIndex; index !== undefined; index = cameFrom.get(index)) {
+  for (let index = goalIndex ?? frontierIndex;
+    index !== undefined;
+    index = cameFrom.get(index)) {
     path.push(index);
     if (index === startIndex) break;
   }
   path.reverse();
+  if (goalIndex === null) {
+    return freezePersistentRoute(target, path, cols, { progressive: true });
+  }
   return freezePersistentRoute(
     target,
     detourPrefix(path, blocked, congestion, cols, targetX, targetY),

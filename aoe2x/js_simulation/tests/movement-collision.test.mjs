@@ -417,6 +417,41 @@ test("frozen pair constraints are invariant to snapshot and proposal order", asy
 });
 
 
+test("a prepared movement snapshot produces the ordinary result for repeated solves", async () => {
+  const collision = await loadCollision();
+  assert.equal(typeof collision.prepareMovementResolution, "function");
+  assert.equal(typeof collision.resolvePreparedMovementProposals, "function");
+  const snapshot = [
+    unit({ referenceId: 30, x: 4.82, y: 4 }),
+    unit({ referenceId: 10, x: 4, y: 4 }),
+    unit({ referenceId: 20, owner: 3, x: 4.41, y: 4 }),
+  ];
+  const firstProposals = [
+    proposal(20, 0, 0),
+    proposal(30, -0.02, 0),
+    proposal(10, 0.02, 0),
+  ];
+  const secondProposals = [
+    proposal(10, 0, 0.015),
+    proposal(20, 0, 0),
+    proposal(30, -0.015, 0),
+  ];
+
+  const prepared = collision.prepareMovementResolution(snapshot, openMap);
+  const first = collision.resolvePreparedMovementProposals(prepared, firstProposals);
+  const second = collision.resolvePreparedMovementProposals(prepared, secondProposals);
+
+  assert.deepEqual(
+    byReference(first),
+    byReference(collision.resolveMovementProposals(snapshot, firstProposals, openMap)),
+  );
+  assert.deepEqual(
+    byReference(second),
+    byReference(collision.resolveMovementProposals(snapshot, secondProposals, openMap)),
+  );
+});
+
+
 test("non-exact starting overlap is rejected as invalid snapshot geometry", async () => {
   const { resolveMovementProposals } = await loadCollision();
   const left = unit({ referenceId: 1, x: 4, y: 4 });
@@ -524,6 +559,28 @@ test("a circular static obstacle keeps collision-free tangential movement", asyn
   assert.ok(Math.abs(next[0].x - 4.3) < 1e-12);
   assert.equal(next[0].y, 5.01);
   assert.ok(Math.hypot(next[0].x - 5, next[0].y - 5) >= 0.7 - 1e-12);
+});
+
+
+test("distant static obstacles cannot change an unobstructed movement result", async () => {
+  const { resolveMovementProposals } = await loadCollision();
+  const mover = unit({ referenceId: 1, x: 1, y: 1 });
+  const wanted = [proposal(1, 0.02, 0.015)];
+  const distantMap = {
+    width: 10,
+    height: 10,
+    obstacles: Array.from({ length: 64 }, (_, index) => ({
+      referenceId: 9100 + index,
+      x: 7 + index % 8 * 0.25,
+      y: 7 + Math.floor(index / 8) * 0.25,
+      radius: 0.1,
+    })),
+  };
+
+  assert.deepEqual(
+    resolveMovementProposals([mover], wanted, distantMap),
+    resolveMovementProposals([mover], wanted, openMap),
+  );
 });
 
 

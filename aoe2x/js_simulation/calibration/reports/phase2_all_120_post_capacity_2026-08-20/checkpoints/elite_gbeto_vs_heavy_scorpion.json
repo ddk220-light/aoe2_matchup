@@ -1,0 +1,280 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_gbeto_vs_heavy_scorpion",
+  "completedAt": "2026-08-21T00:26:57.765Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 0,
+      "volatileRows": 1,
+      "totalRuns": 15
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 15,
+      "unresolvedRuns": 1,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 1,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 39.08333333333333,
+      "medianAbsoluteMeanDelta": 39.08333333333333,
+      "maximumAbsoluteMeanDelta": 39.08333333333333
+    },
+    "rows": [
+      {
+        "id": "elite_gbeto_vs_heavy_scorpion",
+        "subjectSlug": "elite_gbeto",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Elite Gbeto vs Heavy Scorpion",
+        "side2": {
+          "count": 21,
+          "master": 1015,
+          "owner": 2,
+          "slug": "elite_gbeto",
+          "unit": "Elite Gbeto"
+        },
+        "side3": {
+          "count": 12,
+          "master": 542,
+          "owner": 3,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 7.484126984126984,
+          "min": -8.952380952380953,
+          "max": 19.166666666666668,
+          "side3WinRate": 0.75,
+          "volatile": true
+        },
+        "tapeClassification": "knife-edge",
+        "comparison": {
+          "simulationRuns": 14,
+          "unresolvedRuns": 1,
+          "mean": 46.56746031746031,
+          "min": 28.055555555555557,
+          "max": 58.333333333333336,
+          "side3WinRate": 1,
+          "side3WinRateError": 0.25,
+          "bandError": 27.40079365079364,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 378,
+            "score": 52.5,
+            "ticks": 1694,
+            "finalStateHash": "c28acc6ae6918d533e608a33ac2d29269b8c95121334517b9f5e8cbb1d6dc23e",
+            "eventLogHash": "f036a2a768d80e5cb549af93bdf2613771b655c4200163878b9ea04272c2330a"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 244,
+            "score": 33.888888888888886,
+            "ticks": 2103,
+            "finalStateHash": "59da0ff90735c3c1cd0cf5913f2d6c5aadc2595646aed21106bacbf04ab9b091",
+            "eventLogHash": "697cab8afabef55ae40db114adcf353dfddc8961218ff65dd16c54dca3a6b031"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 336,
+            "score": 46.666666666666664,
+            "ticks": 1866,
+            "finalStateHash": "eebd7fff03987e7c7c67ff49b92dfd88bb4123484404e0a951c2a2ede667253f",
+            "eventLogHash": "bd28e6d1711545880983ddf64753e5799533f02196d2b213fd8f1c3d1f52ed5b"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 392,
+            "score": 54.44444444444444,
+            "ticks": 1706,
+            "finalStateHash": "5cc2152b8c10415a6b0b2f3c0e33d3bcae92bf11d34633083bbf17837f5c3de6",
+            "eventLogHash": "17d825649da01ccbdbd2b812b6907a38caf478265c6327536126b3661f4a50c8"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 332,
+            "score": 46.111111111111114,
+            "ticks": 1930,
+            "finalStateHash": "26cb896d56d3bf37482404dd4c8fe33f94858faa66c9772a480de6b59b2c0f26",
+            "eventLogHash": "207f80ab0d3d4be1564d794d9306b3dc992adf43abbca5739aed303e1d58f805"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 5,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 350,
+            "score": 48.611111111111114,
+            "ticks": 1494,
+            "finalStateHash": "af330cf928ae3db1801fb41e71ff4f37a289dd3e119c62c77549c8a7809805b1",
+            "eventLogHash": "7a92da9fe5c7d914eb5d29bcf63c87e3374fc365fdc9403869d8dc7df645d07d"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 6,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 202,
+            "score": 28.055555555555557,
+            "ticks": 2320,
+            "finalStateHash": "4cf77d024018a4f7bb2b751e34325543c659d797f2e36f9b66f00a56cf577a20",
+            "eventLogHash": "6a9ede8fadf7c192100aa22a0aaee7a7dc532d60958979164cc09dce0267f385"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 7,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 304,
+            "score": 42.22222222222222,
+            "ticks": 1902,
+            "finalStateHash": "9f2172a1fa06695c1cb0e3852d59d73724fcf43369412a03dc363642cb335128",
+            "eventLogHash": "00d4920993afd1d82eaf7d6b4c4f049a1276f981061f2129f7f976f6fb72d256"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 8,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 336,
+            "score": 46.666666666666664,
+            "ticks": 1873,
+            "finalStateHash": "040acf9c8c47d9c3af8350e3fce472a597640710d0a3639b13741e6c3abaf623",
+            "eventLogHash": "eb7f5c9d1e319b24a6320ca8512e5324e582c04672a69242d274314a06109639"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 9,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 10,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 420,
+            "score": 58.333333333333336,
+            "ticks": 1868,
+            "finalStateHash": "72d22190c61f0b2d5e48b0f1118df711afd23a8fcc59a693b6ff27ca12df0f18",
+            "eventLogHash": "3e1a3faddc8e407f139bd3fe027bc6e8f17d78acfb1d478f8cccb1c80abdd6e8"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 11,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 364,
+            "score": 50.55555555555556,
+            "ticks": 1852,
+            "finalStateHash": "eaa060f97e1559ca22e7266778528ac3b1f2f6d9ad8a1025ba88325256baa2c5",
+            "eventLogHash": "e7334ffad64a982e3285299a45711450145da4a0184b87fb0db37f6caec9d0d1"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 12,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 322,
+            "score": 44.72222222222222,
+            "ticks": 1875,
+            "finalStateHash": "ac79282c206469b66f592b8c4f1e3ba9d8e1ac80bf9b305893c35d7ebbb55c3d",
+            "eventLogHash": "d2c3d49c775f848a738a6c9032110288bcd812a4759f6e3b7f91670ce6f4f18e"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 13,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 378,
+            "score": 52.5,
+            "ticks": 1738,
+            "finalStateHash": "dce7062f82c762bce1773bc163a2b45beb17468d16a842ea312da0516d23e71d",
+            "eventLogHash": "8398b676306fb2c8cdf53bcbd6c8ff2577dcefc1716e4929fb1911d1d8c92627"
+          },
+          {
+            "rowId": "elite_gbeto_vs_heavy_scorpion",
+            "sampleIndex": 14,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 336,
+            "score": 46.666666666666664,
+            "ticks": 1882,
+            "finalStateHash": "1b9da37189d6e239146bcb7228f976646b033dc2708ca8b5454aabc6fbbde6a4",
+            "eventLogHash": "6441c31330d80923dca0ce466808191afed640ffbe2173dc0038ea08977a33bf"
+          }
+        ]
+      }
+    ]
+  }
+}

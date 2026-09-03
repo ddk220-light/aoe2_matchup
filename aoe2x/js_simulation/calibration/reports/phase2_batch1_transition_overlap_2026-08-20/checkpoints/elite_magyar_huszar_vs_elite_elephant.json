@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_magyar_huszar_vs_elite_elephant",
+  "completedAt": "2026-08-20T18:33:06.557Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 29.204687500000006,
+      "medianAbsoluteMeanDelta": 29.204687500000006,
+      "maximumAbsoluteMeanDelta": 29.204687500000006
+    },
+    "rows": [
+      {
+        "id": "elite_magyar_huszar_vs_elite_elephant",
+        "subjectSlug": "elite_magyar_huszar",
+        "opponentSlug": "elite_elephant",
+        "matchup": "Elite Magyar Huszar vs Elite Battle Elephant",
+        "side2": {
+          "count": 21,
+          "master": 871,
+          "owner": 2,
+          "slug": "elite_magyar_huszar",
+          "unit": "Elite Magyar Huszar"
+        },
+        "side3": {
+          "count": 10,
+          "master": 1134,
+          "owner": 3,
+          "slug": "elite_elephant",
+          "unit": "Elite Battle Elephant"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 44.6640625,
+          "min": 36.25,
+          "max": 57.53125,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 73.86875,
+          "min": 70.75,
+          "max": 77.21875,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 16.337500000000006,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_magyar_huszar_vs_elite_elephant",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2300,
+            "score": 71.875,
+            "ticks": 3801,
+            "finalStateHash": "571dd9aeeee95e16eb36a114ad423effbfbb4803d187f7b39919bd8916be4438",
+            "eventLogHash": "f578c7a20163abf9c529b4d5fa36554ae81790915edcff8f3658f681313c73f3"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_elite_elephant",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2264,
+            "score": 70.75,
+            "ticks": 3515,
+            "finalStateHash": "68eadc9d3989f11769cf0406092267df74524928bf0025c74e7c45fc7847cd2d",
+            "eventLogHash": "fae9df2a050786db9e5aebfc09885b85c46a1655caf0839e3e57ae4c999b559d"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_elite_elephant",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2367,
+            "score": 73.96875,
+            "ticks": 4010,
+            "finalStateHash": "a79f4961a1e8847d541e37e186075e7ee117d50cb0f8ddc7dbb0a022da66708c",
+            "eventLogHash": "fc721051c18f685ae36acfde777a65e5f1184a61be3b9e45d919a301b79f9f20"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_elite_elephant",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2417,
+            "score": 75.53125,
+            "ticks": 5301,
+            "finalStateHash": "040da70a3b35f7b29729eef22ce2d5ddc43001df409799f89457c9aecec362cd",
+            "eventLogHash": "f63be752322a92f335250f5bb1aa525ed8ae2c0aa8dd3dcc163f4260d5501f83"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_elite_elephant",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2471,
+            "score": 77.21875,
+            "ticks": 5307,
+            "finalStateHash": "587e7bbd5757fca6981b8690326d32a4e909ca950f7ab6d634009990cdf4ac4a",
+            "eventLogHash": "7164fc2299a1174a5b006c9bc9488d887e5e61a8129802a967ae570d7c4e7e80"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "condition": "Tape mean",
+    "conditionOrder": 1,
+    "outcomeScore": -58.3333,
+    "winner": "Arbalester",
+    "durationSeconds": 43.5136,
+    "championAttackActivity": 27,
+    "championAttackActivityBasis": "Median tape action entries (range 19\u201332)",
+    "championEffectiveHpRemoved": 250.0,
+    "arbalesterEffectiveHpRemoved": 1400.0,
+    "sourceKind": "Five authorized tape repeats"
+  },
+  {
+    "condition": "Current engine",
+    "conditionOrder": 2,
+    "outcomeScore": 12.5,
+    "winner": "Champion",
+    "durationSeconds": 68.4333,
+    "championAttackActivity": 52,
+    "championAttackActivityBasis": "Engine attack-start events",
+    "championEffectiveHpRemoved": 600.0,
+    "arbalesterEffectiveHpRemoved": 1225.0,
+    "sourceKind": "Exact-start deterministic simulation"
+  },
+  {
+    "condition": "Steering off control",
+    "conditionOrder": 3,
+    "outcomeScore": -59.166666666666664,
+    "winner": "Arbalester",
+    "durationSeconds": 48.36666666666667,
+    "championAttackActivity": 26,
+    "championAttackActivityBasis": "Engine attack-start events",
+    "championEffectiveHpRemoved": 245.0,
+    "arbalesterEffectiveHpRemoved": 1400.0,
+    "sourceKind": "Same simulation; preventive steering off"
+  }
+]

@@ -17,6 +17,8 @@ const GEOMETRY_SLOP = 1e-4;
 // progress. This remains a failure ceiling, not a physical tolerance: hard
 // geometry must still satisfy EPSILON before a movement step is published.
 const MAX_CONSTRAINT_SWEEPS = 4096;
+const PREPARED_MOVEMENT_RESOLUTION = Symbol("prepared movement resolution");
+const OBSTACLE_GRID_CELL_SIZE = 1;
 
 
 function requireFinite(value, name) {
@@ -112,7 +114,140 @@ function normalizeBodies(snapshot, proposals) {
       throw new Error(`movement proposal references unknown unit ${referenceId}`);
     }
   }
-  return bodies.sort(pairKey);
+  bodies.sort(pairKey);
+  for (let solverIndex = 0; solverIndex < bodies.length; solverIndex += 1) {
+    bodies[solverIndex].solverIndex = solverIndex;
+  }
+  return bodies;
+}
+
+
+function obstacleCell(value, limit) {
+  return Math.max(0, Math.min(limit - 1, Math.floor(value / OBSTACLE_GRID_CELL_SIZE)));
+}
+
+
+function createPreparedObstacleIndex(obstacles, bounds) {
+  const columns = Math.max(1, Math.ceil(bounds.width / OBSTACLE_GRID_CELL_SIZE));
+  const rows = Math.max(1, Math.ceil(bounds.height / OBSTACLE_GRID_CELL_SIZE));
+  const buckets = Array.from({ length: columns * rows }, () => []);
+  for (let obstacleIndex = 0; obstacleIndex < obstacles.length; obstacleIndex += 1) {
+    const obstacle = obstacles[obstacleIndex];
+    const minColumn = obstacleCell(obstacle.x - obstacle.radius, columns);
+    const maxColumn = obstacleCell(obstacle.x + obstacle.radius, columns);
+    const minRow = obstacleCell(obstacle.y - obstacle.radius, rows);
+    const maxRow = obstacleCell(obstacle.y + obstacle.radius, rows);
+    for (let row = minRow; row <= maxRow; row += 1) {
+      for (let column = minColumn; column <= maxColumn; column += 1) {
+        buckets[row * columns + column].push(obstacleIndex);
+      }
+    }
+  }
+  return {
+    columns,
+    rows,
+    buckets: buckets.map(Object.freeze),
+    marks: new Uint32Array(obstacles.length),
+    generation: 0,
+    candidates: [],
+  };
+}
+
+
+function queryPreparedObstacles(obstacles, index, body) {
+  if (obstacles.length === 0) return obstacles;
+  index.generation = (index.generation + 1) >>> 0;
+  if (index.generation === 0) {
+    index.marks.fill(0);
+    index.generation = 1;
+  }
+  const generation = index.generation;
+  const endX = body.x + body.dx;
+  const endY = body.y + body.dy;
+  const minColumn = obstacleCell(Math.min(body.x, endX) - body.radius, index.columns);
+  const maxColumn = obstacleCell(Math.max(body.x, endX) + body.radius, index.columns);
+  const minRow = obstacleCell(Math.min(body.y, endY) - body.radius, index.rows);
+  const maxRow = obstacleCell(Math.max(body.y, endY) + body.radius, index.rows);
+  const candidates = index.candidates;
+  candidates.length = 0;
+  for (let row = minRow; row <= maxRow; row += 1) {
+    for (let column = minColumn; column <= maxColumn; column += 1) {
+      for (const obstacleIndex of index.buckets[row * index.columns + column]) {
+        if (index.marks[obstacleIndex] === generation) continue;
+        index.marks[obstacleIndex] = generation;
+        candidates.push(obstacleIndex);
+      }
+    }
+  }
+  candidates.sort((left, right) => left - right);
+  return candidates;
+}
+
+
+function applyMovementProposals(baseBodies, proposals) {
+  if (!Array.isArray(proposals)) throw new TypeError("proposals must be an array");
+  if (proposals.length === baseBodies.length) {
+    let aligned = true;
+    const bodies = new Array(baseBodies.length);
+    for (let index = 0; index < baseBodies.length; index += 1) {
+      const proposal = proposals[index];
+      const referenceId = requireReferenceId(
+        proposal?.referenceId, "proposal reference ID",
+      );
+      if (referenceId !== baseBodies[index].referenceId) {
+        aligned = false;
+        break;
+      }
+      bodies[index] = {
+        ...baseBodies[index],
+        dx: requireFinite(proposal.dx, "proposal dx"),
+        dy: requireFinite(proposal.dy, "proposal dy"),
+      };
+    }
+    if (aligned) return bodies;
+  }
+  const byReference = new Map();
+  for (const proposal of proposals) {
+    const referenceId = requireReferenceId(proposal?.referenceId, "proposal reference ID");
+    if (byReference.has(referenceId)) {
+      throw new Error(`duplicate movement proposal for reference ${referenceId}`);
+    }
+    byReference.set(referenceId, {
+      dx: requireFinite(proposal.dx, "proposal dx"),
+      dy: requireFinite(proposal.dy, "proposal dy"),
+    });
+  }
+  const bodies = baseBodies.map((body) => {
+    const proposed = byReference.get(body.referenceId) ?? { dx: 0, dy: 0 };
+    byReference.delete(body.referenceId);
+    return { ...body, dx: proposed.dx, dy: proposed.dy };
+  });
+  const unknown = byReference.keys().next();
+  if (!unknown.done) {
+    throw new Error(`movement proposal references unknown unit ${unknown.value}`);
+  }
+  return bodies;
+}
+
+
+function createPreparedPairResolver(bodies, pairInteractions) {
+  const size = bodies.length;
+  const interactions = new Array(size * size);
+  for (let left = 0; left < size; left += 1) {
+    for (let right = left + 1; right < size; right += 1) {
+      interactions[left * size + right] = resolvePairInteraction(
+        bodies[left], bodies[right], pairInteractions,
+      );
+    }
+  }
+  return Object.freeze({ size, interactions: Object.freeze(interactions) });
+}
+
+
+function preparedPairInteraction(left, right, pairResolver) {
+  const leftIndex = Math.min(left.solverIndex, right.solverIndex);
+  const rightIndex = Math.max(left.solverIndex, right.solverIndex);
+  return pairResolver.interactions[leftIndex * pairResolver.size + rightIndex];
 }
 
 
@@ -130,7 +265,7 @@ function normalizeBounds(map, bodies) {
 }
 
 
-function validateStartingGeometry(bodies, obstacles, bounds, pairInteractions) {
+function validateStartingGeometry(bodies, obstacles, bounds, pairResolver) {
   let strictlyValid = true;
   for (const body of bodies) {
     if (
@@ -166,9 +301,7 @@ function validateStartingGeometry(bodies, obstacles, bounds, pairInteractions) {
         Math.abs(bodies[j].x - bodies[i].x),
         Math.abs(bodies[j].y - bodies[i].y),
       );
-      const interaction = resolvePairInteraction(
-        bodies[i], bodies[j], pairInteractions,
-      );
+      const interaction = preparedPairInteraction(bodies[i], bodies[j], pairResolver);
       const extent = interaction.collisionExtent;
       if (distance >= extent - GEOMETRY_SLOP) {
         if (distance < extent - EPSILON) strictlyValid = false;
@@ -226,12 +359,22 @@ function sweptDistanceFromOrigin(startX, startY, endX, endY) {
 function constrainObstacle(body, obstacle) {
   const startX = body.x - obstacle.x;
   const startY = body.y - obstacle.y;
+  const endX = startX + body.dx;
+  const endY = startY + body.dy;
+  const extent = body.radius + obstacle.radius;
+  // A segment whose endpoints remain beyond the same side of the obstacle's
+  // enclosing square cannot touch its circle. Most map obstacles are distant,
+  // so reject them with comparisons before paying for projection and hypot.
+  if ((startX >= extent && endX >= extent)
+      || (startX <= -extent && endX <= -extent)
+      || (startY >= extent && endY >= extent)
+      || (startY <= -extent && endY <= -extent)) return 0;
   if (sweptDistanceFromOrigin(
     startX,
     startY,
-    startX + body.dx,
-    startY + body.dy,
-  ) >= body.radius + obstacle.radius) return 0;
+    endX,
+    endY,
+  ) >= extent) return 0;
   const centerX = obstacle.x - body.x;
   const centerY = obstacle.y - body.y;
   const distance = Math.hypot(centerX, centerY);
@@ -279,15 +422,19 @@ function distributeEqualMassRemoval(excess, available) {
 // Chebyshev separation of exactly 0.4000 tiles (0.2 + 0.2) whichever axis they
 // meet on, which a Euclidean radius cannot produce. Resolution is the standard
 // minimum-translation push along the axis that is closest to clearing.
-function constrainPair(left, right, pairInteractions) {
-  const interaction = resolvePairInteraction(left, right, pairInteractions);
-  const extent = interaction.collisionExtent;
+function constrainPair(left, right, pairResolver) {
   const centerX = right.x - left.x;
   const centerY = right.y - left.y;
-  if (Math.max(
-    Math.abs(centerX + right.dx - left.dx),
-    Math.abs(centerY + right.dy - left.dy),
-  ) >= extent - EPSILON) return 0;
+  const nextX = centerX + right.dx - left.dx;
+  const nextY = centerY + right.dy - left.dy;
+  const nextSeparation = Math.max(Math.abs(nextX), Math.abs(nextY));
+  // Reservations may relax a pair below its sourced hard extent, but never
+  // enlarge it. Rejecting outside the radius sum therefore cannot hide a
+  // constraint and avoids dynamic pair lookup for the overwhelming majority.
+  if (nextSeparation >= left.radius + right.radius - EPSILON) return 0;
+  const interaction = preparedPairInteraction(left, right, pairResolver);
+  const extent = interaction.collisionExtent;
+  if (nextSeparation >= extent - EPSILON) return 0;
 
   const alongX = Math.abs(centerX) >= Math.abs(centerY);
   const axisCenter = alongX ? centerX : centerY;
@@ -327,17 +474,17 @@ function reportCollisionDiagnostics(callback, mode, sweeps, largestCorrection,
 }
 
 
-function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
+function resolveConstraints(bodies, obstacles, obstacleIndex, bounds, pairResolver,
   onCollisionDiagnostics, allowEarlySlop, collisionRecoveryState) {
   let lastCorrection = Infinity;
   for (let sweep = 0; sweep < MAX_CONSTRAINT_SWEEPS; sweep += 1) {
     let largestCorrection = 0;
     for (const body of bodies) {
       largestCorrection = Math.max(largestCorrection, constrainBounds(body, bounds));
-      for (const obstacle of obstacles) {
+      for (const index of queryPreparedObstacles(obstacles, obstacleIndex, body)) {
         largestCorrection = Math.max(
           largestCorrection,
-          constrainObstacle(body, obstacle),
+          constrainObstacle(body, obstacles[index]),
         );
       }
     }
@@ -345,12 +492,12 @@ function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
       for (let j = i + 1; j < bodies.length; j += 1) {
         largestCorrection = Math.max(
           largestCorrection,
-          constrainPair(bodies[i], bodies[j], pairInteractions),
+          constrainPair(bodies[i], bodies[j], pairResolver),
         );
       }
     }
     if (largestCorrection <= EPSILON && finalGeometryIsValid(
-      bodies, obstacles, bounds, EPSILON, pairInteractions,
+      bodies, obstacles, bounds, EPSILON, pairResolver,
     )) {
       reportCollisionDiagnostics(
         onCollisionDiagnostics, "converged", sweep + 1, largestCorrection,
@@ -359,7 +506,7 @@ function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
     }
     if (allowEarlySlop
         && finalGeometryIsValid(
-          bodies, obstacles, bounds, GEOMETRY_SLOP, pairInteractions,
+          bodies, obstacles, bounds, GEOMETRY_SLOP, pairResolver,
         )) {
       reportCollisionDiagnostics(
         onCollisionDiagnostics, "slop", sweep + 1, largestCorrection,
@@ -374,7 +521,7 @@ function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
   // budget is therefore not an error provided the hard invariants -- enemy
   // separation, map bounds and static obstacles -- all hold.
   if (finalGeometryIsValid(
-    bodies, obstacles, bounds, EPSILON, pairInteractions,
+    bodies, obstacles, bounds, EPSILON, pairResolver,
   )) {
     reportCollisionDiagnostics(
       onCollisionDiagnostics, "budget", MAX_CONSTRAINT_SWEEPS, lastCorrection,
@@ -382,7 +529,7 @@ function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
     return;
   }
   if (finalGeometryIsValid(
-    bodies, obstacles, bounds, GEOMETRY_SLOP, pairInteractions,
+    bodies, obstacles, bounds, GEOMETRY_SLOP, pairResolver,
   )) {
     if (collisionRecoveryState) collisionRecoveryState.active = true;
     reportCollisionDiagnostics(
@@ -392,7 +539,7 @@ function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
   }
 
   const restoredReferences = restoreInvalidMovement(
-    bodies, obstacles, bounds, pairInteractions,
+    bodies, obstacles, bounds, pairResolver,
   );
   if (collisionRecoveryState) collisionRecoveryState.active = true;
   reportCollisionDiagnostics(
@@ -402,7 +549,7 @@ function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
 }
 
 
-function invalidBodyReferences(bodies, obstacles, bounds, tolerance, pairInteractions) {
+function invalidBodyReferences(bodies, obstacles, bounds, tolerance, pairResolver) {
   const invalid = new Set();
   for (const body of bodies) {
     const x = body.x + body.dx;
@@ -414,20 +561,24 @@ function invalidBodyReferences(bodies, obstacles, bounds, tolerance, pairInterac
       || y > bounds.height - body.radius + tolerance
     ) invalid.add(body.referenceId);
     for (const obstacle of obstacles) {
-      const gap = Math.hypot(obstacle.x - x, obstacle.y - y)
-        - body.radius - obstacle.radius;
+      const obstacleX = obstacle.x - x;
+      const obstacleY = obstacle.y - y;
+      const extent = body.radius + obstacle.radius;
+      if (Math.abs(obstacleX) >= extent || Math.abs(obstacleY) >= extent) continue;
+      const gap = Math.hypot(obstacleX, obstacleY) - extent;
       if (gap < -tolerance) invalid.add(body.referenceId);
     }
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {
       if (bodies[i].owner === bodies[j].owner) continue;
-      const gap = Math.max(
+      const separation = Math.max(
         Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
         Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),
-      ) - resolvePairInteraction(
-        bodies[i], bodies[j], pairInteractions,
-      ).collisionExtent;
+      );
+      if (separation >= bodies[i].radius + bodies[j].radius - tolerance) continue;
+      const gap = separation
+        - preparedPairInteraction(bodies[i], bodies[j], pairResolver).collisionExtent;
       if (gap >= -tolerance) continue;
       invalid.add(bodies[i].referenceId);
       invalid.add(bodies[j].referenceId);
@@ -437,11 +588,11 @@ function invalidBodyReferences(bodies, obstacles, bounds, tolerance, pairInterac
 }
 
 
-function restoreInvalidMovement(bodies, obstacles, bounds, pairInteractions) {
+function restoreInvalidMovement(bodies, obstacles, bounds, pairResolver) {
   const restored = new Set();
   for (let pass = 0; pass < bodies.length; pass += 1) {
     const invalid = invalidBodyReferences(
-      bodies, obstacles, bounds, GEOMETRY_SLOP, pairInteractions,
+      bodies, obstacles, bounds, GEOMETRY_SLOP, pairResolver,
     );
     if (invalid.size === 0) return [...restored];
     let grew = false;
@@ -466,8 +617,7 @@ function restoreInvalidMovement(bodies, obstacles, bounds, pairInteractions) {
 }
 
 
-function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON,
-  pairInteractions = createPairInteractionSnapshot()) {
+function finalGeometryViolation(bodies, obstacles, bounds, tolerance, pairResolver) {
   for (const body of bodies) {
     const x = body.x + body.dx;
     const y = body.y + body.dy;
@@ -478,8 +628,11 @@ function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON,
       y > bounds.height - body.radius + tolerance
     ) return `reference ${body.referenceId} outside bounds`;
     for (const obstacle of obstacles) {
-      const gap = Math.hypot(obstacle.x - x, obstacle.y - y)
-        - body.radius - obstacle.radius;
+      const obstacleX = obstacle.x - x;
+      const obstacleY = obstacle.y - y;
+      const extent = body.radius + obstacle.radius;
+      if (Math.abs(obstacleX) >= extent || Math.abs(obstacleY) >= extent) continue;
+      const gap = Math.hypot(obstacleX, obstacleY) - extent;
       if (gap < -tolerance) {
         return `reference ${body.referenceId} overlaps obstacle ${obstacle.label} by ${-gap}`;
       }
@@ -487,12 +640,13 @@ function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON,
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {
-      const gap = Math.max(
+      const separation = Math.max(
         Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
         Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),
-      ) - resolvePairInteraction(
-        bodies[i], bodies[j], pairInteractions,
-      ).collisionExtent;
+      );
+      if (separation >= bodies[i].radius + bodies[j].radius - tolerance) continue;
+      const gap = separation
+        - preparedPairInteraction(bodies[i], bodies[j], pairResolver).collisionExtent;
       if (gap < -tolerance) {
         return `references ${bodies[i].referenceId} and ${bodies[j].referenceId} `
           + `overlap by ${-gap}`;
@@ -503,10 +657,9 @@ function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON,
 }
 
 
-function finalGeometryIsValid(bodies, obstacles, bounds, tolerance = EPSILON,
-  pairInteractions = createPairInteractionSnapshot()) {
+function finalGeometryIsValid(bodies, obstacles, bounds, tolerance, pairResolver) {
   return finalGeometryViolation(
-    bodies, obstacles, bounds, tolerance, pairInteractions,
+    bodies, obstacles, bounds, tolerance, pairResolver,
   ) === null;
 }
 
@@ -599,9 +752,10 @@ export function queryEnemyContactManifold(beforeSnapshot, afterSnapshot) {
 }
 
 
-export function resolveMovementProposals(snapshot, proposals, map, options = {}) {
-  const pairInteractions = options.pairInteractions
-    ?? createPairInteractionSnapshot();
+function validateMovementOptions(options) {
+  if (!options || typeof options !== "object" || Array.isArray(options)) {
+    throw new TypeError("movement options must be an object");
+  }
   const onCollisionDiagnostics = options.onCollisionDiagnostics;
   if (onCollisionDiagnostics !== undefined && typeof onCollisionDiagnostics !== "function") {
     throw new TypeError("collision diagnostics callback must be a function");
@@ -611,28 +765,63 @@ export function resolveMovementProposals(snapshot, proposals, map, options = {})
       && (!collisionRecoveryState || typeof collisionRecoveryState !== "object")) {
     throw new TypeError("collision recovery state must be an object");
   }
-  const bodies = normalizeBodies(snapshot, proposals);
-  const bounds = normalizeBounds(map, bodies);
+  return { onCollisionDiagnostics, collisionRecoveryState };
+}
+
+
+export function prepareMovementResolution(snapshot, map, options = {}) {
+  validateMovementOptions(options);
+  const pairInteractions = options.pairInteractions
+    ?? createPairInteractionSnapshot();
+  const baseBodies = normalizeBodies(snapshot, []);
+  const bounds = Object.freeze(normalizeBounds(map, baseBodies));
   const obstacles = normalizeObstacles(map);
+  const obstacleIndex = createPreparedObstacleIndex(obstacles, bounds);
+  const pairResolver = createPreparedPairResolver(baseBodies, pairInteractions);
   const strictlyValidStart = validateStartingGeometry(
-    bodies, obstacles, bounds, pairInteractions,
+    baseBodies, obstacles, bounds, pairResolver,
   );
+  return Object.freeze({
+    [PREPARED_MOVEMENT_RESOLUTION]: true,
+    snapshot,
+    baseBodies: Object.freeze(baseBodies.map(Object.freeze)),
+    bounds,
+    obstacles: Object.freeze(obstacles),
+    obstacleIndex,
+    pairInteractions,
+    pairResolver,
+    strictlyValidStart,
+  });
+}
+
+
+export function resolvePreparedMovementProposals(prepared, proposals, options = {}) {
+  if (!prepared || prepared[PREPARED_MOVEMENT_RESOLUTION] !== true) {
+    throw new TypeError("prepared movement resolution is required");
+  }
+  const { onCollisionDiagnostics, collisionRecoveryState } = validateMovementOptions(options);
+  if (options.pairInteractions !== undefined
+      && options.pairInteractions !== prepared.pairInteractions) {
+    throw new Error("prepared movement pair interactions cannot change");
+  }
+  const bodies = applyMovementProposals(prepared.baseBodies, proposals);
   resolveConstraints(
-    bodies, obstacles, bounds, pairInteractions,
+    bodies, prepared.obstacles, prepared.obstacleIndex,
+    prepared.bounds, prepared.pairResolver,
     onCollisionDiagnostics,
-    collisionRecoveryState?.active === true || !strictlyValidStart,
+    collisionRecoveryState?.active === true || !prepared.strictlyValidStart,
     collisionRecoveryState,
   );
   if (!finalGeometryIsValid(
-    bodies, obstacles, bounds, GEOMETRY_SLOP, pairInteractions,
+    bodies, prepared.obstacles, prepared.bounds, GEOMETRY_SLOP, prepared.pairResolver,
   )) {
     const violation = finalGeometryViolation(
-      bodies, obstacles, bounds, GEOMETRY_SLOP, pairInteractions,
+      bodies, prepared.obstacles, prepared.bounds, GEOMETRY_SLOP, prepared.pairResolver,
     );
     throw new Error(`collision constraints produced invalid final geometry: ${violation}`);
   }
 
-  const nextByIndex = new Array(snapshot.length);
+  const nextByIndex = new Array(prepared.snapshot.length);
   for (const body of bodies) {
     nextByIndex[body.inputIndex] = Object.freeze({
       ...body.unit,
@@ -641,4 +830,13 @@ export function resolveMovementProposals(snapshot, proposals, map, options = {})
     });
   }
   return Object.freeze(nextByIndex);
+}
+
+
+export function resolveMovementProposals(snapshot, proposals, map, options = {}) {
+  return resolvePreparedMovementProposals(
+    prepareMovementResolution(snapshot, map, options),
+    proposals,
+    options,
+  );
 }

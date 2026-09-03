@@ -1,0 +1,280 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_magyar_huszar_vs_paladin",
+  "completedAt": "2026-08-19T23:47:26.933Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 0,
+      "volatileRows": 1,
+      "totalRuns": 15
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 15,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 1,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 21.096079846079846,
+      "medianAbsoluteMeanDelta": 21.096079846079846,
+      "maximumAbsoluteMeanDelta": 21.096079846079846
+    },
+    "rows": [
+      {
+        "id": "elite_magyar_huszar_vs_paladin",
+        "subjectSlug": "elite_magyar_huszar",
+        "opponentSlug": "paladin",
+        "matchup": "Elite Magyar Huszar vs Paladin",
+        "side2": {
+          "count": 21,
+          "master": 871,
+          "owner": 2,
+          "slug": "elite_magyar_huszar",
+          "unit": "Elite Magyar Huszar"
+        },
+        "side3": {
+          "count": 12,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -4.638648388648388,
+          "min": -21.428571428571427,
+          "max": 15.74074074074074,
+          "side3WinRate": 0.5,
+          "volatile": true
+        },
+        "tapeClassification": "knife-edge",
+        "comparison": {
+          "simulationRuns": 15,
+          "unresolvedRuns": 0,
+          "mean": 16.457431457431458,
+          "min": -9.090909090909092,
+          "max": 33.333333333333336,
+          "side3WinRate": 0.8666666666666667,
+          "side3WinRateError": 0.3666666666666667,
+          "bandError": 0.7166907166907173,
+          "tapeBandCoverage": 0.4666666666666667,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 640,
+            "score": 29.62962962962963,
+            "ticks": 2723,
+            "finalStateHash": "71ed32dfff49984517ead173a68beb36797ab1718cc81095ed2b42e222f5eacc",
+            "eventLogHash": "0707ff05fcdc4fa46394fc60b909abc3e77273850a941e3e76c9da2579e84fca"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 510,
+            "score": 23.61111111111111,
+            "ticks": 3183,
+            "finalStateHash": "617fa32f4accded4d15e430a4e17fd7be830e7395649f11e3fafc71bf44f9a64",
+            "eventLogHash": "15eeb892261cbb75556572bf208858dbf56b932da3a75696eb88f4138f91142d"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 370,
+            "score": 17.12962962962963,
+            "ticks": 3299,
+            "finalStateHash": "d9e929abdfc513ca2e402cfb1276a0537e04a1a6b87d27a56ac76c9511b3dc94",
+            "eventLogHash": "a9fc086bbc93f7f2c0e322db53a1195a652b530edd205479c38e49e05067f22e"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 340,
+            "score": 15.74074074074074,
+            "ticks": 3591,
+            "finalStateHash": "d5a587a5e73e51f30ec6d59a654f99cdcb141fc0556732cf65d5cf458522ff26",
+            "eventLogHash": "ab44e2ecbe472223d09af20b8dc7e55b18d2cd9d9c24619aaeeaaa027e98a416"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 240,
+            "score": 11.11111111111111,
+            "ticks": 3290,
+            "finalStateHash": "83a330630ec9555fe4b94ed549c8db3fb24dde848453aeb9b1aade9735e8870d",
+            "eventLogHash": "4945f29d27f4540822bfa4366b43ace3138fe7c392120198382df6f0ae7cefdc"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 5,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 140,
+            "score": 6.481481481481482,
+            "ticks": 3977,
+            "finalStateHash": "536c8bb7967647e8756d29ca275b1f7896f7b4f4b1484096ee4c906a76bb5b5d",
+            "eventLogHash": "7785b702a616ca8c7a00a7cbe142890c23f0d709a30e0cb6807022792e87be01"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 6,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 380,
+            "score": 17.59259259259259,
+            "ticks": 3659,
+            "finalStateHash": "8fc670bc20fa66456286a05e0be9192cbc1de30eda876569a64473993aa2700e",
+            "eventLogHash": "84ef67b01b346a499c881beb2284c9533ff2e19ee386ad4565a6c1b191de690e"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 7,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 450,
+            "score": 20.833333333333332,
+            "ticks": 3323,
+            "finalStateHash": "fa72f326e51b416231f0cd21551ed2a59162409db90e33eaef69cc6a568544b1",
+            "eventLogHash": "97e7d4654b318d63733885b328241ff6902765e96982e294c5dac012a4c3e013"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 8,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 600,
+            "score": 27.77777777777778,
+            "ticks": 2972,
+            "finalStateHash": "0cc6c5c4a036c722a39b3eb4316b9d268b65fdfb1b5f6a5f94ced100b304f95c",
+            "eventLogHash": "80e72bbe4b17eb034ef450248278eb3cf91821b23b6054d0a8262eda5ccd656d"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 9,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 310,
+            "score": 14.351851851851851,
+            "ticks": 3299,
+            "finalStateHash": "a14d65794d5e86a7d1ced02f508351be9ba78eb8d617f47ca508e3f9831ec013",
+            "eventLogHash": "210d2e4be11925d0a387a7d096c0877ece977078ff16bf089e79b7bab789c03e"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 10,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 600,
+            "score": 27.77777777777778,
+            "ticks": 3034,
+            "finalStateHash": "c1ae633eceaa88f8acc99ce0dc0d34a6a750a2aee1598ac8df050559cdcbca83",
+            "eventLogHash": "1defafcec5f86d7b593cb65b8d1d354812f831e8f51bc12cbe097d67ebd22d8e"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 11,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 55,
+            "score": -2.380952380952381,
+            "ticks": 4173,
+            "finalStateHash": "1d2510780cb0c17ce2b368afe5509f4f1c91ada4c4e404ebd7bf3d856254be77",
+            "eventLogHash": "dea7b9a6e1d4e2aa50e936b1f0fe488439086dbe48d542fd936076731d12a939"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 12,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 280,
+            "score": 12.962962962962964,
+            "ticks": 3554,
+            "finalStateHash": "61b4eda51156d3918e9d08cbe34b7c8d1bb7d4f285f6dbf019abf5439e8672e1",
+            "eventLogHash": "4d9affbe9f9d8ec0caf780aeb0234fd4511f519e896ca76685538c51a12026c7"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 13,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 720,
+            "score": 33.333333333333336,
+            "ticks": 2841,
+            "finalStateHash": "fe4296eacb49049cc1a99556ebc1a8b7b094d0eb800133567998726a5c68785b",
+            "eventLogHash": "4ecbcad8b0ea91335d089db79d92eeb7d9e5940e4f77f4f7e084e6ff3aeb74ac"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_paladin",
+            "sampleIndex": 14,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 210,
+            "score": -9.090909090909092,
+            "ticks": 3219,
+            "finalStateHash": "083a8ff48b79c32e69fbedc4acf2348c2be13c645fa9826a3fdd69f9484bf761",
+            "eventLogHash": "f542fc8b238c28ca09af3d0165315f022095ccb4195039fe016db37c7816e19f"
+          }
+        ]
+      }
+    ]
+  }
+}

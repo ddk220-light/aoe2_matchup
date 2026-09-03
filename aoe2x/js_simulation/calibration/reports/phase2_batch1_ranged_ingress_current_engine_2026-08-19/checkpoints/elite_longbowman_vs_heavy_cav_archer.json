@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_longbowman_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T23:37:18.592Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 23.52380952380951,
+      "medianAbsoluteMeanDelta": 23.52380952380951,
+      "maximumAbsoluteMeanDelta": 23.52380952380951
+    },
+    "rows": [
+      {
+        "id": "elite_longbowman_vs_heavy_cav_archer",
+        "subjectSlug": "elite_longbowman",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Elite Longbowman vs Heavy Cavalry Archer",
+        "side2": {
+          "count": 21,
+          "master": 530,
+          "owner": 2,
+          "slug": "elite_longbowman",
+          "unit": "Elite Longbowman"
+        },
+        "side3": {
+          "count": 15,
+          "master": 474,
+          "owner": 3,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -50.714285714285715,
+          "min": -50.714285714285715,
+          "max": -50.714285714285715,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -74.23809523809523,
+          "min": -79.52380952380952,
+          "max": -71.9047619047619,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 23.52380952380951,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_longbowman_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 610,
+            "score": -72.61904761904762,
+            "ticks": 1864,
+            "finalStateHash": "fc9b65775b807de295beb43577df1d71fec8eee8c6089c98247ca97c9f73f839",
+            "eventLogHash": "dfe4fc454a94ce00cb8fffe96f07b500964c46d72b948e3e4ca85c652a372212"
+          },
+          {
+            "rowId": "elite_longbowman_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 604,
+            "score": -71.9047619047619,
+            "ticks": 1748,
+            "finalStateHash": "edf98fd2105fee7e3dd21a4c876ae27117e17e658ec04e9c57c93a05cc5097a1",
+            "eventLogHash": "49c9c605e144826a31e13269c2e3c981ea8842ae1ea65a65f3198a7750ca0181"
+          },
+          {
+            "rowId": "elite_longbowman_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 632,
+            "score": -75.23809523809524,
+            "ticks": 1736,
+            "finalStateHash": "e6a6714cf9a1563a360b570b7f3f6b2dc7fbc3684ef6c4c2e44836ad9bf89469",
+            "eventLogHash": "6d0b88e66111ede0718c0d91504fbcf7865f421068a44470e41a654e7a6ad5fa"
+          },
+          {
+            "rowId": "elite_longbowman_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 604,
+            "score": -71.9047619047619,
+            "ticks": 1737,
+            "finalStateHash": "dfc8e2c455ef2d901b59d520ee950050ed2acf83cbf50776eb2c40150d62ee4c",
+            "eventLogHash": "9e5bd2ecff1d8b9e48dd3108338afb0b863e55ddd078e30bf10bdfdc5bdb555f"
+          },
+          {
+            "rowId": "elite_longbowman_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 668,
+            "score": -79.52380952380952,
+            "ticks": 1638,
+            "finalStateHash": "d13de574c72efc25e036bfec93cb57650ff87e1db50bbccb00e81859a7b3e5e5",
+            "eventLogHash": "aa1c98bc7ca99683517038010af042834453fa3f6170c66a4a60bed40a1d88b4"
+          }
+        ]
+      }
+    ]
+  }
+}

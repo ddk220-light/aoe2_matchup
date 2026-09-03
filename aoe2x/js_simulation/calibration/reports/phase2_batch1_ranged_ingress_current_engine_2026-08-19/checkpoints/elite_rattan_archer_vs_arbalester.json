@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_rattan_archer_vs_arbalester",
+  "completedAt": "2026-08-19T23:41:49.220Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 15.666666666666671,
+      "medianAbsoluteMeanDelta": 15.666666666666671,
+      "maximumAbsoluteMeanDelta": 15.666666666666671
+    },
+    "rows": [
+      {
+        "id": "elite_rattan_archer_vs_arbalester",
+        "subjectSlug": "elite_rattan_archer",
+        "opponentSlug": "arbalester",
+        "matchup": "Elite Rattan Archer vs Arbalester",
+        "side2": {
+          "count": 16,
+          "master": 1131,
+          "owner": 2,
+          "slug": "elite_rattan_archer",
+          "unit": "Elite Rattan Archer"
+        },
+        "side3": {
+          "count": 21,
+          "master": 492,
+          "owner": 3,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -75.69444444444444,
+          "min": -75.69444444444444,
+          "max": -75.69444444444444,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -91.36111111111111,
+          "min": -91.94444444444444,
+          "max": -90.69444444444444,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 15.666666666666671,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_rattan_archer_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 657,
+            "score": -91.25,
+            "ticks": 1787,
+            "finalStateHash": "c8ee141bd195e4d2e69728096fe0ac11a6089f95fef8610c08656d599c7142bd",
+            "eventLogHash": "fe53f0d9d8c8cb14e93bc2db68411f3abaad7d16e7c5c7aa6469d7da7949d32c"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 661,
+            "score": -91.80555555555556,
+            "ticks": 1786,
+            "finalStateHash": "f2473e475aafe60e1bacf42d8800a6ec24564d16dbd0cbb74c64895ac4f60982",
+            "eventLogHash": "a10d240f670ce1b909d6db7f78e0db8c159c3194ae979415055d927c28d82b5c"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 662,
+            "score": -91.94444444444444,
+            "ticks": 1780,
+            "finalStateHash": "0d350a26a74ae858982b77133c1fc43e69a47943c523e45e4ce55607f72762c8",
+            "eventLogHash": "48625e3727dfabf259e7efb3c7699fbccce42615f10545fae2fa8d6957b78a96"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 653,
+            "score": -90.69444444444444,
+            "ticks": 2023,
+            "finalStateHash": "80ee72ff6bedd65b3e4c7dee84ab0b0c9fb2370956e40480fa714c4a647be12c",
+            "eventLogHash": "62bb7106d3060743703f9b46aef544d60763608780cfc9c7415af27cddaa04fd"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 656,
+            "score": -91.11111111111111,
+            "ticks": 1909,
+            "finalStateHash": "84f259f33c2e2d44f96f3edd916e206853441e7c6666833a06d8ed83cf634498",
+            "eventLogHash": "cec5fbfe81a1a860770c46ca41810a37b66e82a8b0311f308bca07bd9f3b8c62"
+          }
+        ]
+      }
+    ]
+  }
+}

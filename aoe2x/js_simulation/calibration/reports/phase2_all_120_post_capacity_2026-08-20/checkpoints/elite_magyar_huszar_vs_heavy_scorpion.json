@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_magyar_huszar_vs_heavy_scorpion",
+  "completedAt": "2026-08-21T00:47:01.801Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 1,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 17.3051948051948,
+      "medianAbsoluteMeanDelta": 17.3051948051948,
+      "maximumAbsoluteMeanDelta": 17.3051948051948
+    },
+    "rows": [
+      {
+        "id": "elite_magyar_huszar_vs_heavy_scorpion",
+        "subjectSlug": "elite_magyar_huszar",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Heavy Scorpion vs Elite Magyar Huszar",
+        "side2": {
+          "count": 11,
+          "master": 542,
+          "owner": 2,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "side3": {
+          "count": 21,
+          "master": 871,
+          "owner": 3,
+          "slug": "elite_magyar_huszar",
+          "unit": "Elite Magyar Huszar"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 84.8051948051948,
+          "min": 84.8051948051948,
+          "max": 84.8051948051948,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 4,
+          "unresolvedRuns": 1,
+          "mean": 67.5,
+          "min": 61.926406926406926,
+          "max": 71.86147186147186,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 17.3051948051948,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1660,
+            "score": 71.86147186147186,
+            "ticks": 1293,
+            "finalStateHash": "12b267bf96275408f93a216e5d5fe7026939fa64865ec577c660d33cbdcf93e4",
+            "eventLogHash": "01258bf42ea69a66e61e0033a15dd97a7f1c8df2022a8dc6c4c45c319cd0bbaf"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1430.5,
+            "score": 61.926406926406926,
+            "ticks": 1141,
+            "finalStateHash": "60cb6c1791d642309ff29f8372eff4aae243ab683b9125f4529f75e2294f56c1",
+            "eventLogHash": "a2828261868ce7e8508267adbfa7657aa27bf2179dd00f7e102f4308b1a1f0bc"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1615,
+            "score": 69.91341991341992,
+            "ticks": 985,
+            "finalStateHash": "c3e856fe038d83f6599e81cbae8a4da68da4f47e9b6c86954476ab31beeacff3",
+            "eventLogHash": "ed261c03bd378a5d687a6c4c5730b4b5d21b1e7229d7739e4c6ce2bf4f930262"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1531.5,
+            "score": 66.2987012987013,
+            "ticks": 982,
+            "finalStateHash": "f90984ac959ddc2389a58cfadacf78b9d4a890c0e376519218b3be2f21c0f2fd",
+            "eventLogHash": "875afa7d173eef4cbeec580e5dd593bf6e18c7b2f6aaf4caef375db34ca2090e"
+          }
+        ]
+      }
+    ]
+  }
+}

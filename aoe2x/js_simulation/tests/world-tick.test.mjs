@@ -16,6 +16,10 @@ const scorpionMechanics = JSON.parse(await readFile(new URL(
   "../fixtures/unit_stats/heavy_scorpion_japanese_imperial.json",
   import.meta.url,
 ), "utf8"));
+const janissaryMechanics = JSON.parse(await readFile(new URL(
+  "../fixtures/unit_stats/elite_janissary_turks_imperial.json",
+  import.meta.url,
+), "utf8"));
 
 
 function unit({
@@ -137,7 +141,7 @@ test("world publication preserves blocker-aware local route state", async () => 
 });
 
 
-test("persistent melee pursuit keeps a multi-waypoint route across ticks", async () => {
+test("persistent melee pursuit retries one direct step before keeping a detour", async () => {
   const { createWorld, stepWorld } = await loadWorld();
   const rangedTarget = unit({
     referenceId: 90,
@@ -154,9 +158,9 @@ test("persistent melee pursuit keeps a multi-waypoint route across ticks", async
     pursuitTargetId: 90,
   });
   const alliedPack = [
-    unit({ referenceId: 2, owner: 3, x: 3.0, y: 4.75 }),
-    unit({ referenceId: 3, owner: 3, x: 3.25, y: 5.0 }),
-    unit({ referenceId: 4, owner: 3, x: 3.0, y: 5.25 }),
+    unit({ referenceId: 2, owner: 3, x: 2.5, y: 4.5 }),
+    unit({ referenceId: 3, owner: 3, x: 2.5, y: 5.0 }),
+    unit({ referenceId: 4, owner: 3, x: 2.5, y: 5.5 }),
   ];
   const initial = createWorld(scenario(
     [chaser, ...alliedPack, rangedTarget],
@@ -168,17 +172,163 @@ test("persistent melee pursuit keeps a multi-waypoint route across ticks", async
   ));
 
   const first = stepWorld(initial);
-  const firstRoute = first.kiteState.chaseRoutes.get(1);
-  assert.ok(firstRoute?.waypoints.length > 1);
-  assert.equal(first.units.find(({ referenceId }) => referenceId === 1).avoidance, null);
-  assert.equal(first.contactSteeringStates.get(3).steeredUnits.has(1), false);
+  assert.equal(first.kiteState.chaseRoutes.has(1), false);
+  assert.equal(
+    first.events.some(({ type, actorId }) => (
+      type === "pursuit-route-deferred" && actorId === 1
+    )),
+    true,
+  );
 
   const second = stepWorld(first);
   const secondRoute = second.kiteState.chaseRoutes.get(1);
-  assert.ok(secondRoute, "the next tick must continue the same corridor");
-  assert.equal(secondRoute.targetReferenceId, firstRoute.targetReferenceId);
-  assert.deepEqual(secondRoute.waypoints, firstRoute.waypoints);
-  assert.ok(secondRoute.waypointIndex >= firstRoute.waypointIndex);
+  assert.ok(secondRoute?.waypoints.length > 1);
+  assert.equal(first.units.find(({ referenceId }) => referenceId === 1).avoidance, null);
+  assert.equal(first.contactSteeringStates.get(3).steeredUnits.has(1), false);
+
+  const third = stepWorld(second);
+  const thirdRoute = third.kiteState.chaseRoutes.get(1);
+  assert.ok(thirdRoute, "the next tick must continue the committed corridor");
+  assert.equal(thirdRoute.targetReferenceId, secondRoute.targetReferenceId);
+  assert.deepEqual(thirdRoute.waypoints, secondRoute.waypoints);
+  assert.ok(thirdRoute.waypointIndex >= secondRoute.waypointIndex);
+});
+
+
+test("a zero-range pursuer retargets when its current enemy has no reachable frontier", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const unreachable = unit({
+    referenceId: 90,
+    owner: 2,
+    x: 7,
+    y: 5,
+    unitMechanics: janissaryMechanics,
+  });
+  const reachable = unit({
+    referenceId: 91,
+    owner: 2,
+    x: 2,
+    y: 5,
+    unitMechanics: janissaryMechanics,
+  });
+  const chaser = unit({
+    referenceId: 1,
+    owner: 3,
+    x: 4.375,
+    y: 5,
+    pursuitTargetId: 90,
+  });
+  const wall = Array.from({ length: 20 }, (_, index) => ({
+    referenceId: 9000 + index,
+    x: 5,
+    y: 0.25 + index * 0.5,
+    radius: 0.25,
+  }));
+  const first = stepWorld(createWorld(scenario(
+    [chaser, unreachable, reachable],
+    {
+      kiteOwner: 2,
+      persistentMeleePursuitRouting: true,
+      map: { width: 10, height: 10, obstacles: wall },
+    },
+  )));
+  assert.equal(first.events.some(({ type, actorId, reason }) => (
+    type === "pursuit-route-deferred"
+    && actorId === 1
+    && reason === "no-reachable-frontier"
+  )), true);
+
+  const second = stepWorld(first);
+
+  assert.equal(second.units.find(({ referenceId }) => referenceId === 1).pursuitTargetId, 91);
+});
+
+
+test("progressive direct-prefix pursuit holds its frontier but releases when the corridor opens", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const sealedMap = {
+    width: 10,
+    height: 10,
+    obstacles: Array.from({ length: 41 }, (_, index) => ({
+      referenceId: 9000 + index,
+      x: 5,
+      y: index * 0.25,
+      radius: 0.3,
+    })),
+  };
+  const initial = createWorld(scenario([
+    unit({ referenceId: 1, owner: 3, x: 1, y: 5, pursuitTargetId: 90 }),
+    unit({
+      referenceId: 90,
+      owner: 2,
+      x: 8,
+      y: 5,
+      unitMechanics: scorpionMechanics,
+    }),
+  ], {
+    map: sealedMap,
+    kiteOwner: 2,
+    persistentMeleePursuitRouting: true,
+  }));
+
+  const first = stepWorld(initial);
+  const chaser = first.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.ok(chaser.x > 1, "the chaser must use the clear space before the distant seal");
+  assert.equal(first.kiteState.chaseRoutes.get(1)?.progressive, true);
+
+  const opened = Object.freeze({
+    ...first,
+    map: Object.freeze({ ...first.map, obstacles: Object.freeze([]) }),
+  });
+  const second = stepWorld(opened);
+
+  assert.equal(
+    second.kiteState.chaseRoutes.has(1),
+    false,
+    "the saved frontier must release as soon as the direct corridor opens",
+  );
+});
+
+
+test("an unreachable persistent chase attempts direct motion instead of silently standing", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const surroundingObstacles = [
+    [4.5, 4.5], [5, 4.5], [5.5, 4.5],
+    [4.5, 5],                 [5.5, 5],
+    [4.5, 5.5], [5, 5.5], [5.5, 5.5],
+  ].map(([x, y], index) => ({
+    referenceId: 9100 + index,
+    x,
+    y,
+    radius: 0.3,
+  }));
+  const initial = createWorld(scenario([
+    unit({ referenceId: 1, owner: 3, x: 5, y: 5, pursuitTargetId: 90 }),
+    unit({
+      referenceId: 90,
+      owner: 2,
+      x: 8,
+      y: 5,
+      unitMechanics: scorpionMechanics,
+    }),
+  ], {
+    map: { width: 10, height: 10, obstacles: surroundingObstacles },
+    kiteOwner: 2,
+    persistentMeleePursuitRouting: true,
+  }));
+
+  const next = stepWorld(initial);
+  const chaser = next.units.find(({ referenceId }) => referenceId === 1);
+
+  assert.equal(chaser.x, 5);
+  assert.equal(chaser.y, 5);
+  assert.equal(next.kiteState.chaseRoutes.has(1), false);
+  assert.equal(
+    next.events.some(({ type, actorId }) => type === "blocked" && actorId === 1),
+    true,
+    "the collision layer must see a real direct proposal, not a zero-motion stand",
+  );
 });
 
 
@@ -557,6 +707,146 @@ test("movement contact and zero-delay attacks publish in phase order", async () 
   ]);
   assert.equal(next.events.every((entry) => entry.id === entry.eventId), true);
   assert.equal(next.events.every(Object.isFrozen), true);
+});
+
+
+test("zero-range melee cannot start an attack through an allied attacker", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const target = unit({
+    referenceId: 90,
+    owner: 2,
+    x: 5,
+    y: 5,
+    unitMechanics: janissaryMechanics,
+  });
+  const planted = unit({
+    referenceId: 1,
+    owner: 3,
+    x: 4.5,
+    y: 5,
+    pursuitTargetId: 90,
+    action: "attacking",
+    attackTargetId: 90,
+    engagedTargetId: 90,
+    windup: 10,
+  });
+  const rear = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 4.5,
+    y: 5,
+    pursuitTargetId: 90,
+    engagedTargetId: 90,
+  });
+  let current = createWorld(scenario([planted, rear, target], {
+    kiteOwner: 2,
+    persistentMeleePursuitRouting: true,
+    preventiveContactSteering: true,
+  }));
+  let rearMoved = false;
+  let rearStartedThroughAlly = false;
+  for (let elapsed = 0; elapsed < 4; elapsed += 1) {
+    const before = current.units.find(({ referenceId }) => referenceId === 2);
+    current = stepWorld(current);
+    const after = current.units.find(({ referenceId }) => referenceId === 2);
+    rearMoved ||= Math.hypot(after.x - before.x, after.y - before.y) > 1e-12;
+    rearStartedThroughAlly ||= current.events.some(({ type, actorId }) => (
+      type === "attack-start" && actorId === 2
+    ));
+  }
+
+  assert.equal(rearStartedThroughAlly, false);
+  assert.notEqual(current.units.find(({ referenceId }) => referenceId === 2).action, "attacking");
+  assert.equal(
+    rearMoved,
+    true,
+    "a blocked rear attacker must continue seeking a free contact position",
+  );
+});
+
+
+test("zero-range melee starts from a free contact position beside an allied attacker", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const target = unit({
+    referenceId: 90,
+    owner: 2,
+    x: 5,
+    y: 5,
+    unitMechanics: janissaryMechanics,
+  });
+  const planted = unit({
+    referenceId: 1,
+    owner: 3,
+    x: 4.5,
+    y: 5,
+    pursuitTargetId: 90,
+    action: "attacking",
+    attackTargetId: 90,
+    engagedTargetId: 90,
+    windup: 10,
+  });
+  const freeSide = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 5,
+    y: 4.5,
+    pursuitTargetId: 90,
+    engagedTargetId: 90,
+  });
+  const next = stepWorld(createWorld(scenario([planted, freeSide, target], {
+    kiteOwner: 2,
+    persistentMeleePursuitRouting: true,
+    preventiveContactSteering: true,
+  })));
+
+  assert.equal(
+    next.events.some(({ type, actorId }) => type === "attack-start" && actorId === 2),
+    true,
+  );
+});
+
+
+test("entering an actual four-pursuer overlap advances the front pair and pauses the rear pair", async () => {
+  const { createWorld, stepWorld } = await loadWorld();
+  const target = unit({
+    referenceId: 90,
+    owner: 2,
+    x: 8,
+    y: 5,
+    unitMechanics: janissaryMechanics,
+  });
+  const pursuers = [
+    unit({ referenceId: 1, owner: 3, x: 2.00, y: 5, pursuitTargetId: 90 }),
+    unit({ referenceId: 2, owner: 3, x: 2.05, y: 5, pursuitTargetId: 90 }),
+    unit({ referenceId: 3, owner: 3, x: 2.10, y: 5, pursuitTargetId: 90 }),
+    unit({ referenceId: 4, owner: 3, x: 2.15, y: 5.3205, pursuitTargetId: 90 }),
+  ];
+  const beforeByReference = new Map(pursuers.map((entry) => [entry.referenceId, entry]));
+
+  const next = stepWorld(createWorld(scenario([...pursuers, target])));
+  const afterByReference = new Map(next.units.map((entry) => [entry.referenceId, entry]));
+
+  for (const referenceId of [1, 2]) {
+    assert.equal(afterByReference.get(referenceId).x, beforeByReference.get(referenceId).x);
+    assert.equal(afterByReference.get(referenceId).y, beforeByReference.get(referenceId).y);
+  }
+  for (const referenceId of [3, 4]) {
+    assert.ok(
+      afterByReference.get(referenceId).x > beforeByReference.get(referenceId).x,
+      `front pursuer ${referenceId} must retain targetward movement`,
+    );
+  }
+
+  const released = stepWorld(next);
+  const releasedByReference = new Map(
+    released.units.map((entry) => [entry.referenceId, entry]),
+  );
+  for (const referenceId of [1, 2]) {
+    assert.ok(
+      releasedByReference.get(referenceId).x > afterByReference.get(referenceId).x,
+      `rear pursuer ${referenceId} must retry targetward movement after one tick`,
+    );
+  }
 });
 
 

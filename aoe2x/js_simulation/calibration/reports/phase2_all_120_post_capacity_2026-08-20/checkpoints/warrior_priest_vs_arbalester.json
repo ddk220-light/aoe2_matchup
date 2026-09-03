@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "warrior_priest_vs_arbalester",
+  "completedAt": "2026-08-21T00:36:20.384Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 9.047619047619051,
+      "medianAbsoluteMeanDelta": 9.047619047619051,
+      "maximumAbsoluteMeanDelta": 9.047619047619051
+    },
+    "rows": [
+      {
+        "id": "warrior_priest_vs_arbalester",
+        "subjectSlug": "warrior_priest",
+        "opponentSlug": "arbalester",
+        "matchup": "Arbalester vs Warrior Priest",
+        "side2": {
+          "count": 21,
+          "master": 492,
+          "owner": 2,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "side3": {
+          "count": 16,
+          "master": 1811,
+          "owner": 3,
+          "slug": "warrior_priest",
+          "unit": "Warrior Priest"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -63.80952380952381,
+          "min": -63.80952380952381,
+          "max": -63.80952380952381,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -54.76190476190476,
+          "min": -54.76190476190476,
+          "max": -54.76190476190476,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 9.047619047619051,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "warrior_priest_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 460,
+            "score": -54.76190476190476,
+            "ticks": 2911,
+            "finalStateHash": "d291af84647964d9a784d6be4b79a3d8c97932d1036f6acd2ded7d935268c834",
+            "eventLogHash": "70e33144798ef9f1b72dc31435355b698e4d9dd99597c2f9981c23a7abf0f484"
+          },
+          {
+            "rowId": "warrior_priest_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 460,
+            "score": -54.76190476190476,
+            "ticks": 2911,
+            "finalStateHash": "d291af84647964d9a784d6be4b79a3d8c97932d1036f6acd2ded7d935268c834",
+            "eventLogHash": "70e33144798ef9f1b72dc31435355b698e4d9dd99597c2f9981c23a7abf0f484"
+          },
+          {
+            "rowId": "warrior_priest_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 460,
+            "score": -54.76190476190476,
+            "ticks": 2911,
+            "finalStateHash": "d291af84647964d9a784d6be4b79a3d8c97932d1036f6acd2ded7d935268c834",
+            "eventLogHash": "70e33144798ef9f1b72dc31435355b698e4d9dd99597c2f9981c23a7abf0f484"
+          },
+          {
+            "rowId": "warrior_priest_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 460,
+            "score": -54.76190476190476,
+            "ticks": 2911,
+            "finalStateHash": "d291af84647964d9a784d6be4b79a3d8c97932d1036f6acd2ded7d935268c834",
+            "eventLogHash": "70e33144798ef9f1b72dc31435355b698e4d9dd99597c2f9981c23a7abf0f484"
+          },
+          {
+            "rowId": "warrior_priest_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 460,
+            "score": -54.76190476190476,
+            "ticks": 2911,
+            "finalStateHash": "d291af84647964d9a784d6be4b79a3d8c97932d1036f6acd2ded7d935268c834",
+            "eventLogHash": "70e33144798ef9f1b72dc31435355b698e4d9dd99597c2f9981c23a7abf0f484"
+          }
+        ]
+      }
+    ]
+  }
+}

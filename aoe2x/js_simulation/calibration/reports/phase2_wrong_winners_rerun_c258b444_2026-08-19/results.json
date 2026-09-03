@@ -1,0 +1,1582 @@
+{
+  "schemaVersion": 1,
+  "lane": "phase2_batch1_exact_golden_starts",
+  "source": {
+    "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+    "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+    "archive": {
+      "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+      "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+      "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+    }
+  },
+  "config": {
+    "engine": "current checked-out JavaScript engine",
+    "samples": 5,
+    "volatileSamples": 15,
+    "seed": 20260817,
+    "placements": "exact canonical starting_units from the authorized golden tape row",
+    "goldenMap": true,
+    "navigation": "cohesive",
+    "meleeOpeningOrder": "attack-move-all",
+    "chaseCapture": true,
+    "meleeEngagementDwellTicks": 0,
+    "pairwiseAlliedTransit": false,
+    "reachMeleeWedgeTransit": "derived from melee reach",
+    "preventiveContactSteering": true,
+    "kitingClock": "mechanics-derived",
+    "maxTicks": 9000
+  },
+  "schedule": {
+    "rows": 14,
+    "stableRows": 14,
+    "volatileRows": 0,
+    "totalRuns": 70,
+    "execution": "recoverable-per-row-checkpoints"
+  },
+  "summary": {
+    "subjects": 10,
+    "rows": 14,
+    "totalRuns": 70,
+    "resolvedRuns": 60,
+    "unresolvedRuns": 10,
+    "fullyUnresolvedRows": 2,
+    "rowsOver25PointDelta": 7,
+    "knifeEdgeRows": 0,
+    "wrongStableWinnerCount": 7,
+    "rowsInsideTapeBand": 1,
+    "meanAbsoluteMeanDelta": 34.286455136558,
+    "medianAbsoluteMeanDelta": 32.01450892857143,
+    "maximumAbsoluteMeanDelta": 106.97704081632654
+  },
+  "rows": [
+    {
+      "id": "elite_boyar_vs_heavy_cav_archer",
+      "subjectSlug": "elite_boyar",
+      "opponentSlug": "heavy_cav_archer",
+      "matchup": "Heavy Cavalry Archer vs Elite Boyar",
+      "side2": {
+        "count": 21,
+        "master": 474,
+        "owner": 2,
+        "slug": "heavy_cav_archer",
+        "unit": "Heavy Cavalry Archer"
+      },
+      "side3": {
+        "count": 16,
+        "master": 878,
+        "owner": 3,
+        "slug": "elite_boyar",
+        "unit": "Elite Boyar"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 10.5,
+        "min": 10.5,
+        "max": 10.5,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -29.28571428571429,
+        "min": -36.13095238095238,
+        "max": -25.05952380952381,
+        "side3WinRate": 0,
+        "side3WinRateError": 1,
+        "bandError": 39.78571428571429,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": true
+      },
+      "samples": [
+        {
+          "rowId": "elite_boyar_vs_heavy_cav_archer",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 499,
+          "score": -29.702380952380953,
+          "ticks": 5147,
+          "finalStateHash": "48ea1fbcb212dde9ac21491eb53f6e6e17801b2b98443910d93a60007c413326",
+          "eventLogHash": "ccb280a384b333b265ae9e30aaf9c1c47b5866a3eadd63636d3e238505ed2009"
+        },
+        {
+          "rowId": "elite_boyar_vs_heavy_cav_archer",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 499,
+          "score": -29.702380952380953,
+          "ticks": 5147,
+          "finalStateHash": "48ea1fbcb212dde9ac21491eb53f6e6e17801b2b98443910d93a60007c413326",
+          "eventLogHash": "c00df51cb572e9051b8e795f3420ee152839439245a3b7d6048f74834c58391d"
+        },
+        {
+          "rowId": "elite_boyar_vs_heavy_cav_archer",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 434,
+          "score": -25.833333333333332,
+          "ticks": 5266,
+          "finalStateHash": "e8e2baba634f8afa9d0e5d91855afbbc4461a7900302f0b140be3b66375efd21",
+          "eventLogHash": "568806a3792e83a18923fcd846b7a1a29e9597c622d3e4757bb5a9434cfa83b5"
+        },
+        {
+          "rowId": "elite_boyar_vs_heavy_cav_archer",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 421,
+          "score": -25.05952380952381,
+          "ticks": 5272,
+          "finalStateHash": "39f1b922df7720f18958f59c2ac97fee57363b4acdc58430d89097e6eb2b7224",
+          "eventLogHash": "64c43d1f47d5cdb67ecad0395f4d136d90a58139fcaf921bd3023f0837337e5f"
+        },
+        {
+          "rowId": "elite_boyar_vs_heavy_cav_archer",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 607,
+          "score": -36.13095238095238,
+          "ticks": 4900,
+          "finalStateHash": "4e73776bf450371af2b412d5fdafdacb21a7f63d84ec6354c6430f9e98594eb1",
+          "eventLogHash": "79582315c1494987397b069172f676e1609ed22d68596c316588c20268146e34"
+        }
+      ]
+    },
+    {
+      "id": "elite_conquistador_vs_arbalester",
+      "subjectSlug": "elite_conquistador",
+      "opponentSlug": "arbalester",
+      "matchup": "Elite Conquistador vs Arbalester",
+      "side2": {
+        "count": 12,
+        "master": 773,
+        "owner": 2,
+        "slug": "elite_conquistador",
+        "unit": "Elite Conquistador"
+      },
+      "side3": {
+        "count": 21,
+        "master": 492,
+        "owner": 3,
+        "slug": "arbalester",
+        "unit": "Arbalester"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": -31.89814814814815,
+        "min": -36.111111111111114,
+        "max": -27.59259259259259,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 31.13095238095238,
+        "min": 9.821428571428571,
+        "max": 49.107142857142854,
+        "side3WinRate": 1,
+        "side3WinRateError": 1,
+        "bandError": 58.723544973544975,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": true
+      },
+      "samples": [
+        {
+          "rowId": "elite_conquistador_vs_arbalester",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 412.5,
+          "score": 49.107142857142854,
+          "ticks": 2031,
+          "finalStateHash": "14999013fe2a6d771ab01805c8f3538a6b0f3474cfef980aa30f79e970d4ef9a",
+          "eventLogHash": "d430413a8307cb141af14e8480a1419045be078d3ed7d81242c1b4b9058bbdbf"
+        },
+        {
+          "rowId": "elite_conquistador_vs_arbalester",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 240,
+          "score": 28.571428571428573,
+          "ticks": 2410,
+          "finalStateHash": "823dfa6efa2ade1c3557a8ee1e87c07413eea787fca224a47a8b0564def8ca3c",
+          "eventLogHash": "2180e0adc030f7b8601eaab65ff1dfd7b3c03ae4440d368197e97df97e73aca1"
+        },
+        {
+          "rowId": "elite_conquistador_vs_arbalester",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 82.5,
+          "score": 9.821428571428571,
+          "ticks": 3068,
+          "finalStateHash": "1dd386f5f7ec9f12581c38e7555b666d04f835b853fb4efca5a692cf58117f28",
+          "eventLogHash": "d3bfd139c7116116257d20aa25ed146b1d6a9103e4af52ef11b1fb93117f3c1c"
+        },
+        {
+          "rowId": "elite_conquistador_vs_arbalester",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 297.5,
+          "score": 35.416666666666664,
+          "ticks": 2404,
+          "finalStateHash": "00d3a957522e12abf12fa7b09279b1eb4048ba8b860cf2d5fd24dbbf5984be1a",
+          "eventLogHash": "9388d61f3b9f99c3bdf186fb3496a435801a4994a2e9c93af95946454faa0293"
+        },
+        {
+          "rowId": "elite_conquistador_vs_arbalester",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 275,
+          "score": 32.73809523809524,
+          "ticks": 2311,
+          "finalStateHash": "ae82e6bb4437243fc16e28cf2607ffcea73e2289c366fe6334b2c453c9644c9c",
+          "eventLogHash": "9358486c835125de9b32aa6ff0f9c5c33786be6287dcb7b38b6c1e04014e494e"
+        }
+      ]
+    },
+    {
+      "id": "elite_conquistador_vs_elite_elephant",
+      "subjectSlug": "elite_conquistador",
+      "opponentSlug": "elite_elephant",
+      "matchup": "Elite Conquistador vs Elite Battle Elephant",
+      "side2": {
+        "count": 18,
+        "master": 773,
+        "owner": 2,
+        "slug": "elite_conquistador",
+        "unit": "Elite Conquistador"
+      },
+      "side3": {
+        "count": 14,
+        "master": 1134,
+        "owner": 3,
+        "slug": "elite_elephant",
+        "unit": "Elite Battle Elephant"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": -52.64969135802469,
+        "min": -64.80246913580247,
+        "max": -43.71604938271605,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 0,
+        "unresolvedRuns": 5,
+        "mean": null,
+        "min": null,
+        "max": null,
+        "side3WinRate": null,
+        "side3WinRateError": null,
+        "bandError": null,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": true
+      },
+      "samples": [
+        {
+          "rowId": "elite_conquistador_vs_elite_elephant",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        },
+        {
+          "rowId": "elite_conquistador_vs_elite_elephant",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        },
+        {
+          "rowId": "elite_conquistador_vs_elite_elephant",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        },
+        {
+          "rowId": "elite_conquistador_vs_elite_elephant",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        },
+        {
+          "rowId": "elite_conquistador_vs_elite_elephant",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        }
+      ]
+    },
+    {
+      "id": "elite_karambit_warrior_vs_paladin",
+      "subjectSlug": "elite_karambit_warrior",
+      "opponentSlug": "paladin",
+      "matchup": "Elite Karambit Warrior vs Paladin",
+      "side2": {
+        "count": 21,
+        "master": 1125,
+        "owner": 2,
+        "slug": "elite_karambit_warrior",
+        "unit": "Elite Karambit Warrior"
+      },
+      "side3": {
+        "count": 5,
+        "master": 569,
+        "owner": 3,
+        "slug": "paladin",
+        "unit": "Paladin"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": -21.964285714285715,
+        "min": -28.333333333333332,
+        "max": -6.190476190476191,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 15.844444444444443,
+        "min": 6.777777777777778,
+        "max": 22.666666666666668,
+        "side3WinRate": 1,
+        "side3WinRateError": 1,
+        "bandError": 22.034920634920635,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": true
+      },
+      "samples": [
+        {
+          "rowId": "elite_karambit_warrior_vs_paladin",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 61,
+          "score": 6.777777777777778,
+          "ticks": 2710,
+          "finalStateHash": "2bc99697a94f5c5d7f2e51f79db22d73ea52045dac4486fadb5e0e69ca2f2653",
+          "eventLogHash": "c61b61e757c4020bf7d6bd8c1b55a405a0c1f0b97cd8cf427f98f4db48ef2705"
+        },
+        {
+          "rowId": "elite_karambit_warrior_vs_paladin",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 204,
+          "score": 22.666666666666668,
+          "ticks": 2432,
+          "finalStateHash": "8e01bb31d6fa8cd7049bfd55ecb2ea7db4f26b23d0f9ae6736be76fb3e5450e5",
+          "eventLogHash": "55b0fdab93af2ad297addc38b680a14ded870f1551247b082395f71ad0352102"
+        },
+        {
+          "rowId": "elite_karambit_warrior_vs_paladin",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 148,
+          "score": 16.444444444444443,
+          "ticks": 2119,
+          "finalStateHash": "e0769571aec49e760ba9674f76ec22d937aa1f91322849a71317bc27b4c58269",
+          "eventLogHash": "c6dd9fc093a7b563380456f9ea10b3b00300dc80a26c8e99e3834d3b2ff094c0"
+        },
+        {
+          "rowId": "elite_karambit_warrior_vs_paladin",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 101,
+          "score": 11.222222222222221,
+          "ticks": 2655,
+          "finalStateHash": "bb3e8583f889f205f57d8bf21d9fec663a1a220f87554c8906aa33cceb0dd55e",
+          "eventLogHash": "fb6c478fe1a73b645eff64d650772861944173fa658da263c05520deeb6d208e"
+        },
+        {
+          "rowId": "elite_karambit_warrior_vs_paladin",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 199,
+          "score": 22.11111111111111,
+          "ticks": 2223,
+          "finalStateHash": "173ce65c5e085e0086cede6138484864e5573e5826d4514c9f73a6beed276d8d",
+          "eventLogHash": "b648f6a45b4fbbebc38e019c7067372e6aac9cd7ec26bbddf9ec1438fca71957"
+        }
+      ]
+    },
+    {
+      "id": "elite_longbowman_vs_arbalester",
+      "subjectSlug": "elite_longbowman",
+      "opponentSlug": "arbalester",
+      "matchup": "Elite Longbowman vs Arbalester",
+      "side2": {
+        "count": 20,
+        "master": 530,
+        "owner": 2,
+        "slug": "elite_longbowman",
+        "unit": "Elite Longbowman"
+      },
+      "side3": {
+        "count": 21,
+        "master": 492,
+        "owner": 3,
+        "slug": "arbalester",
+        "unit": "Arbalester"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": -73.75,
+        "min": -73.75,
+        "max": -73.75,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -77.125,
+        "min": -84.375,
+        "max": -74.375,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 3.375,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "elite_longbowman_vs_arbalester",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 675,
+          "score": -84.375,
+          "ticks": 1167,
+          "finalStateHash": "a4fe68d47fe8f1433758c6a40ed5307d6e0a553d017439270e39d4c7d6f0dc86",
+          "eventLogHash": "9436b1b51147f3f2ff67a8473c8d2acd07d7313050bd8d21dfc2df5c3025d68d"
+        },
+        {
+          "rowId": "elite_longbowman_vs_arbalester",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 595,
+          "score": -74.375,
+          "ticks": 1067,
+          "finalStateHash": "1652dc39165fa2167a4906edbbb302be9136803699e62dc53221569e9c2d0b76",
+          "eventLogHash": "19126706ea536d3f4624aa5903cd2abafcb44abd74096eb3bed93ab80c4143b6"
+        },
+        {
+          "rowId": "elite_longbowman_vs_arbalester",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 600,
+          "score": -75,
+          "ticks": 1185,
+          "finalStateHash": "5faf7bf6334e46cfb12bfc32cdb5dbd15d1ff1b7cdd58dd30772a8d3a36fcfc2",
+          "eventLogHash": "3a1c99cebcbfa9fff781c0dbf9675e941c770dc4f3868d54adefa33efbb381a6"
+        },
+        {
+          "rowId": "elite_longbowman_vs_arbalester",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 605,
+          "score": -75.625,
+          "ticks": 1171,
+          "finalStateHash": "2a5d69819e544f5f2d4af3c914692e1055d6a88c18aa04ca1cacfa502094fa7f",
+          "eventLogHash": "00550dd46a700631d49d044b05174f45045dc8b2b24ec38ec7613112c9c22434"
+        },
+        {
+          "rowId": "elite_longbowman_vs_arbalester",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 610,
+          "score": -76.25,
+          "ticks": 1190,
+          "finalStateHash": "8e102383c19819a879ffa71a2b826f7d62678dee819aeca8df83576a874899c1",
+          "eventLogHash": "398c8859b9edd17d357b60bd3e1151ddb61772df75a890d01ec7574a2d0839af"
+        }
+      ]
+    },
+    {
+      "id": "elite_longbowman_vs_heavy_cav_archer",
+      "subjectSlug": "elite_longbowman",
+      "opponentSlug": "heavy_cav_archer",
+      "matchup": "Elite Longbowman vs Heavy Cavalry Archer",
+      "side2": {
+        "count": 21,
+        "master": 530,
+        "owner": 2,
+        "slug": "elite_longbowman",
+        "unit": "Elite Longbowman"
+      },
+      "side3": {
+        "count": 15,
+        "master": 474,
+        "owner": 3,
+        "slug": "heavy_cav_archer",
+        "unit": "Heavy Cavalry Archer"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": -50.714285714285715,
+        "min": -50.714285714285715,
+        "max": -50.714285714285715,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -75.47619047619047,
+        "min": -84.04761904761905,
+        "max": -69.28571428571429,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 24.761904761904752,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "elite_longbowman_vs_heavy_cav_archer",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 622,
+          "score": -74.04761904761905,
+          "ticks": 1743,
+          "finalStateHash": "68a35447e4898bc3ca13ead98c27e5c0f549a4e64cf0d864060180fec95490d9",
+          "eventLogHash": "85827d2efe10c8f7ec4dc231d0d1734624498bd85ffcd4b92a2ddadc24b1a418"
+        },
+        {
+          "rowId": "elite_longbowman_vs_heavy_cav_archer",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 582,
+          "score": -69.28571428571429,
+          "ticks": 1854,
+          "finalStateHash": "fccaf905d22bb16899cb577511d431e4b41cde365b0f066b4e56d574ba304f04",
+          "eventLogHash": "527a23851b99741a85737a7c8f700b0b4bd97e33a7cb32491ebebb9fc7b9b3d4"
+        },
+        {
+          "rowId": "elite_longbowman_vs_heavy_cav_archer",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 644,
+          "score": -76.66666666666667,
+          "ticks": 1732,
+          "finalStateHash": "8d7e475c2377763e49814a122a0318cde380801b3179602a92a536bf061db257",
+          "eventLogHash": "11acb77de7d7580dd2122e60b9b81bef3520fbf6a225c00a3bccae96b8630cfb"
+        },
+        {
+          "rowId": "elite_longbowman_vs_heavy_cav_archer",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 616,
+          "score": -73.33333333333333,
+          "ticks": 1738,
+          "finalStateHash": "ef41a64cb9d378d1d74cf71eb131fbaa3b2858116044e5515e4ac76f90aa4028",
+          "eventLogHash": "ef77e9008533301a991202afa35460a249d10f028f4ec79cbb7f3591371c9d11"
+        },
+        {
+          "rowId": "elite_longbowman_vs_heavy_cav_archer",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 706,
+          "score": -84.04761904761905,
+          "ticks": 1624,
+          "finalStateHash": "f57ae5ad6c4399baa8b01db7056a8878684eab10c212818dc5f9816b4559b33a",
+          "eventLogHash": "33af87fe4b8d306eceb73c7f96c7105ab2785830558fb43d98efdb0e7df98cf3"
+        }
+      ]
+    },
+    {
+      "id": "elite_longbowman_vs_heavy_scorpion",
+      "subjectSlug": "elite_longbowman",
+      "opponentSlug": "heavy_scorpion",
+      "matchup": "Elite Longbowman vs Heavy Scorpion",
+      "side2": {
+        "count": 21,
+        "master": 530,
+        "owner": 2,
+        "slug": "elite_longbowman",
+        "unit": "Elite Longbowman"
+      },
+      "side3": {
+        "count": 10,
+        "master": 542,
+        "owner": 3,
+        "slug": "heavy_scorpion",
+        "unit": "Heavy Scorpion"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": -10.565476190476192,
+        "min": -19.047619047619047,
+        "max": -3.5714285714285716,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -42.97619047619048,
+        "min": -48.80952380952381,
+        "max": -35.11904761904762,
+        "side3WinRate": 0,
+        "side3WinRateError": 0,
+        "bandError": 23.928571428571434,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "elite_longbowman_vs_heavy_scorpion",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 360,
+          "score": -42.857142857142854,
+          "ticks": 1428,
+          "finalStateHash": "5da8385ef10ca1e8de1b3503c931244f1189e48a6dc3a9113dafa0198a59edf0",
+          "eventLogHash": "2bb2d17d84e051c58ebcc9bd365e8213ddda3b518e5a308b63648fe88658b55b"
+        },
+        {
+          "rowId": "elite_longbowman_vs_heavy_scorpion",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 295,
+          "score": -35.11904761904762,
+          "ticks": 1531,
+          "finalStateHash": "d5a355be78531a62cb4d6807021ae458e47cff3c6aa443f75d627c0442a7c2d5",
+          "eventLogHash": "ecc2fe3f78f269422c7d250d251f82e65aab2d256ada8f43f08f6b01e1bda52d"
+        },
+        {
+          "rowId": "elite_longbowman_vs_heavy_scorpion",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 340,
+          "score": -40.476190476190474,
+          "ticks": 1428,
+          "finalStateHash": "64d211d2319b88f89c31516144fd80c31e5b2e0fda9851642659f4016f7cbb86",
+          "eventLogHash": "984f8609414d85bd1338fff4e5dc758e7b8a7dd35190d4aa3d7871bc1fff6c73"
+        },
+        {
+          "rowId": "elite_longbowman_vs_heavy_scorpion",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 400,
+          "score": -47.61904761904762,
+          "ticks": 1411,
+          "finalStateHash": "fcab44f325ff2fb12792515b61c2161a505209263926638a60eae9cd0ae94e66",
+          "eventLogHash": "7ef2c125394d36b37e957fe7bd360662d10ce30c9eac70b601c0f9f65ca3f580"
+        },
+        {
+          "rowId": "elite_longbowman_vs_heavy_scorpion",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 410,
+          "score": -48.80952380952381,
+          "ticks": 1415,
+          "finalStateHash": "fef9d32a9ccb09d7923705229c8a9a6427d7520f694af6c242692037f6230f0b",
+          "eventLogHash": "fefec05dde38bd819b9c988856fb252660963aa9b3765073ac6ee0dcecaee6a9"
+        }
+      ]
+    },
+    {
+      "id": "elite_magyar_huszar_vs_arbalester",
+      "subjectSlug": "elite_magyar_huszar",
+      "opponentSlug": "arbalester",
+      "matchup": "Arbalester vs Elite Magyar Huszar",
+      "side2": {
+        "count": 21,
+        "master": 492,
+        "owner": 2,
+        "slug": "arbalester",
+        "unit": "Arbalester"
+      },
+      "side3": {
+        "count": 18,
+        "master": 871,
+        "owner": 3,
+        "slug": "elite_magyar_huszar",
+        "unit": "Elite Magyar Huszar"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": 17.348484848484848,
+        "min": 9.696969696969697,
+        "max": 26.666666666666668,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 20,
+        "min": 20,
+        "max": 20,
+        "side3WinRate": 1,
+        "side3WinRateError": 0,
+        "bandError": 0,
+        "tapeBandCoverage": 1,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "elite_magyar_huszar_vs_arbalester",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 396,
+          "score": 20,
+          "ticks": 4370,
+          "finalStateHash": "d0c5edcbb49e0f5f097a00d3a29e7a15f4c6c22f9dce986f9a7c3395a5d4f4cd",
+          "eventLogHash": "052b006f31595d057c6367b9b4f73b1b4407f6f0c2c9a6371c87b04817af3509"
+        },
+        {
+          "rowId": "elite_magyar_huszar_vs_arbalester",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 396,
+          "score": 20,
+          "ticks": 4370,
+          "finalStateHash": "d0c5edcbb49e0f5f097a00d3a29e7a15f4c6c22f9dce986f9a7c3395a5d4f4cd",
+          "eventLogHash": "052b006f31595d057c6367b9b4f73b1b4407f6f0c2c9a6371c87b04817af3509"
+        },
+        {
+          "rowId": "elite_magyar_huszar_vs_arbalester",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 396,
+          "score": 20,
+          "ticks": 4370,
+          "finalStateHash": "d0c5edcbb49e0f5f097a00d3a29e7a15f4c6c22f9dce986f9a7c3395a5d4f4cd",
+          "eventLogHash": "052b006f31595d057c6367b9b4f73b1b4407f6f0c2c9a6371c87b04817af3509"
+        },
+        {
+          "rowId": "elite_magyar_huszar_vs_arbalester",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 396,
+          "score": 20,
+          "ticks": 4370,
+          "finalStateHash": "d0c5edcbb49e0f5f097a00d3a29e7a15f4c6c22f9dce986f9a7c3395a5d4f4cd",
+          "eventLogHash": "052b006f31595d057c6367b9b4f73b1b4407f6f0c2c9a6371c87b04817af3509"
+        },
+        {
+          "rowId": "elite_magyar_huszar_vs_arbalester",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 396,
+          "score": 20,
+          "ticks": 4370,
+          "finalStateHash": "d0c5edcbb49e0f5f097a00d3a29e7a15f4c6c22f9dce986f9a7c3395a5d4f4cd",
+          "eventLogHash": "052b006f31595d057c6367b9b4f73b1b4407f6f0c2c9a6371c87b04817af3509"
+        }
+      ]
+    },
+    {
+      "id": "elite_mangudai_vs_elite_elephant",
+      "subjectSlug": "elite_mangudai",
+      "opponentSlug": "elite_elephant",
+      "matchup": "Elite Mangudai vs Elite Battle Elephant",
+      "side2": {
+        "count": 19,
+        "master": 561,
+        "owner": 2,
+        "slug": "elite_mangudai",
+        "unit": "Elite Mangudai"
+      },
+      "side3": {
+        "count": 14,
+        "master": 1134,
+        "owner": 3,
+        "slug": "elite_elephant",
+        "unit": "Elite Battle Elephant"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": 47.39955357142858,
+        "min": 43.28125,
+        "max": 50.513392857142854,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 79.01785714285714,
+        "min": 79.01785714285714,
+        "max": 79.01785714285714,
+        "side3WinRate": 1,
+        "side3WinRateError": 0,
+        "bandError": 28.504464285714285,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "elite_mangudai_vs_elite_elephant",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 3540,
+          "score": 79.01785714285714,
+          "ticks": 2623,
+          "finalStateHash": "0a10beb6b6cbe8f2142710c233c3cdd970c354183406c4475e29ec9fc9174d7c",
+          "eventLogHash": "92177bb32069d481fbd8e6c007e91534612f9f6f8c59e5dffc2d26774ce54293"
+        },
+        {
+          "rowId": "elite_mangudai_vs_elite_elephant",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 3540,
+          "score": 79.01785714285714,
+          "ticks": 2623,
+          "finalStateHash": "0a10beb6b6cbe8f2142710c233c3cdd970c354183406c4475e29ec9fc9174d7c",
+          "eventLogHash": "6d8ead737a2b0ec2dcacdc7a47abd0d13aeef8feb1f7989ce87381a3f52de630"
+        },
+        {
+          "rowId": "elite_mangudai_vs_elite_elephant",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 3540,
+          "score": 79.01785714285714,
+          "ticks": 2623,
+          "finalStateHash": "0a10beb6b6cbe8f2142710c233c3cdd970c354183406c4475e29ec9fc9174d7c",
+          "eventLogHash": "3b4b228caa5144a9f0e3a01cfe6f884f02bb17de6a21201e82871214891534ac"
+        },
+        {
+          "rowId": "elite_mangudai_vs_elite_elephant",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 3540,
+          "score": 79.01785714285714,
+          "ticks": 2623,
+          "finalStateHash": "0a10beb6b6cbe8f2142710c233c3cdd970c354183406c4475e29ec9fc9174d7c",
+          "eventLogHash": "815a7d25f5f20e5b456b35f4c47e6a5713e942cee4582f25c83f639572bf0cbc"
+        },
+        {
+          "rowId": "elite_mangudai_vs_elite_elephant",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 3540,
+          "score": 79.01785714285714,
+          "ticks": 2623,
+          "finalStateHash": "0a10beb6b6cbe8f2142710c233c3cdd970c354183406c4475e29ec9fc9174d7c",
+          "eventLogHash": "e2da50ca0c5a51639f7dcd8a28c2ff0606c08bfcc1630fd8548ad7b567668975"
+        }
+      ]
+    },
+    {
+      "id": "elite_plumed_archer_vs_elite_elephant",
+      "subjectSlug": "elite_plumed_archer",
+      "opponentSlug": "elite_elephant",
+      "matchup": "Elite Plumed Archer vs Elite Battle Elephant",
+      "side2": {
+        "count": 21,
+        "master": 765,
+        "owner": 2,
+        "slug": "elite_plumed_archer",
+        "unit": "Elite Plumed Archer"
+      },
+      "side3": {
+        "count": 9,
+        "master": 1134,
+        "owner": 3,
+        "slug": "elite_elephant",
+        "unit": "Elite Battle Elephant"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 47.048611111111114,
+        "min": 47.048611111111114,
+        "max": 47.048611111111114,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 0,
+        "unresolvedRuns": 5,
+        "mean": null,
+        "min": null,
+        "max": null,
+        "side3WinRate": null,
+        "side3WinRateError": null,
+        "bandError": null,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": true
+      },
+      "samples": [
+        {
+          "rowId": "elite_plumed_archer_vs_elite_elephant",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        },
+        {
+          "rowId": "elite_plumed_archer_vs_elite_elephant",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        },
+        {
+          "rowId": "elite_plumed_archer_vs_elite_elephant",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        },
+        {
+          "rowId": "elite_plumed_archer_vs_elite_elephant",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        },
+        {
+          "rowId": "elite_plumed_archer_vs_elite_elephant",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "timeout",
+          "winnerOwner": null,
+          "winnerHp": null,
+          "score": null,
+          "ticks": 9000,
+          "finalStateHash": null,
+          "eventLogHash": null
+        }
+      ]
+    },
+    {
+      "id": "elite_plumed_archer_vs_paladin",
+      "subjectSlug": "elite_plumed_archer",
+      "opponentSlug": "paladin",
+      "matchup": "Elite Plumed Archer vs Paladin",
+      "side2": {
+        "count": 21,
+        "master": 765,
+        "owner": 2,
+        "slug": "elite_plumed_archer",
+        "unit": "Elite Plumed Archer"
+      },
+      "side3": {
+        "count": 11,
+        "master": 569,
+        "owner": 3,
+        "slug": "paladin",
+        "unit": "Paladin"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": 19.292929292929294,
+        "min": 11.717171717171718,
+        "max": 25.454545454545453,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 26.96969696969697,
+        "min": 26.96969696969697,
+        "max": 26.96969696969697,
+        "side3WinRate": 1,
+        "side3WinRateError": 0,
+        "bandError": 1.5151515151515156,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "elite_plumed_archer_vs_paladin",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 534,
+          "score": 26.96969696969697,
+          "ticks": 7623,
+          "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+          "eventLogHash": "956fe223a44894d05c0018bfda753c033c9c373d6d82b4e8ea58ec3666b89759"
+        },
+        {
+          "rowId": "elite_plumed_archer_vs_paladin",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 534,
+          "score": 26.96969696969697,
+          "ticks": 7623,
+          "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+          "eventLogHash": "603e826d6eca8e08ce309d5b41274bec87d6a1df787fc627ae49d9198dbfd6e4"
+        },
+        {
+          "rowId": "elite_plumed_archer_vs_paladin",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 534,
+          "score": 26.96969696969697,
+          "ticks": 7623,
+          "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+          "eventLogHash": "00474820e7ebc6057a7b68105e5fa1595568c67e0b0a9eec57eeb43d43e574fd"
+        },
+        {
+          "rowId": "elite_plumed_archer_vs_paladin",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 534,
+          "score": 26.96969696969697,
+          "ticks": 7623,
+          "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+          "eventLogHash": "f1fd171fbba829370ae6e68c3d933db381050a490fc3df12bb0a6d0a1e66b287"
+        },
+        {
+          "rowId": "elite_plumed_archer_vs_paladin",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 534,
+          "score": 26.96969696969697,
+          "ticks": 7623,
+          "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+          "eventLogHash": "0a249a1dc4f8b6fdb264f15bedb2a31c597f7cea604b49958d300c88bdd1c7d0"
+        }
+      ]
+    },
+    {
+      "id": "elite_tarkan_vs_heavy_cav_archer",
+      "subjectSlug": "elite_tarkan",
+      "opponentSlug": "heavy_cav_archer",
+      "matchup": "Heavy Cavalry Archer vs Elite Tarkan",
+      "side2": {
+        "count": 21,
+        "master": 474,
+        "owner": 2,
+        "slug": "heavy_cav_archer",
+        "unit": "Heavy Cavalry Archer"
+      },
+      "side3": {
+        "count": 18,
+        "master": 757,
+        "owner": 3,
+        "slug": "elite_tarkan",
+        "unit": "Elite Tarkan"
+      },
+      "tape": {
+        "scoredRuns": 1,
+        "timeoutRuns": 0,
+        "mean": 56.5359477124183,
+        "min": 56.5359477124183,
+        "max": 56.5359477124183,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 33.431372549019606,
+        "min": 28.627450980392158,
+        "max": 38.20261437908497,
+        "side3WinRate": 1,
+        "side3WinRateError": 0,
+        "bandError": 23.104575163398692,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": false
+      },
+      "samples": [
+        {
+          "rowId": "elite_tarkan_vs_heavy_cav_archer",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1169,
+          "score": 38.20261437908497,
+          "ticks": 7314,
+          "finalStateHash": "98d3eb5bc1262d0556abd9db03af07d4dfaa1780e51e2e0d0be3dd7f11752d69",
+          "eventLogHash": "ecda19fc7e6ac0713364466ef63e70776fc52ff4daace9a6188ebc20f51c5054"
+        },
+        {
+          "rowId": "elite_tarkan_vs_heavy_cav_archer",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 876,
+          "score": 28.627450980392158,
+          "ticks": 7964,
+          "finalStateHash": "5c1de658062d17c0dcccb9372e651c1bd4ee07afd2b0002739d2dfaf280f752a",
+          "eventLogHash": "7dd2f2cabed842cfe9c2c8a5e9a81eeba524b96e260749237853801b187ab007"
+        },
+        {
+          "rowId": "elite_tarkan_vs_heavy_cav_archer",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1157,
+          "score": 37.810457516339866,
+          "ticks": 7247,
+          "finalStateHash": "148e6f20e9eb94cdbce6e15ade1c7a86cc82b17e2c1af74773336eed3e776f6e",
+          "eventLogHash": "25f0d117e82988ab40666298e9b781e729944e612eb4f67d6489d624078c8566"
+        },
+        {
+          "rowId": "elite_tarkan_vs_heavy_cav_archer",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 876,
+          "score": 28.627450980392158,
+          "ticks": 7964,
+          "finalStateHash": "5c1de658062d17c0dcccb9372e651c1bd4ee07afd2b0002739d2dfaf280f752a",
+          "eventLogHash": "43e73f9acad78eb37a6b6d57f6fb5ac9c9888e27d5f4727d8f941308f8c67a90"
+        },
+        {
+          "rowId": "elite_tarkan_vs_heavy_cav_archer",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 1037,
+          "score": 33.888888888888886,
+          "ticks": 7550,
+          "finalStateHash": "1e4e72c842d9c8c4c5820970437fc76aa164fcabf1e2b3467e77b49ac584b1aa",
+          "eventLogHash": "9b60d49368abeca86cc38482f8c26d77647aecf09b6970d0046c9eefd96b1bc6"
+        }
+      ]
+    },
+    {
+      "id": "elite_throwing_axeman_vs_arbalester",
+      "subjectSlug": "elite_throwing_axeman",
+      "opponentSlug": "arbalester",
+      "matchup": "Elite Throwing Axeman vs Arbalester",
+      "side2": {
+        "count": 21,
+        "master": 531,
+        "owner": 2,
+        "slug": "elite_throwing_axeman",
+        "unit": "Elite Throwing Axeman"
+      },
+      "side3": {
+        "count": 21,
+        "master": 492,
+        "owner": 3,
+        "slug": "arbalester",
+        "unit": "Arbalester"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": -19.761904761904763,
+        "min": -24.761904761904763,
+        "max": -13.741496598639456,
+        "side3WinRate": 0,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": 18.476190476190474,
+        "min": 12.142857142857142,
+        "max": 29.047619047619047,
+        "side3WinRate": 1,
+        "side3WinRateError": 1,
+        "bandError": 32.21768707482993,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": true
+      },
+      "samples": [
+        {
+          "rowId": "elite_throwing_axeman_vs_arbalester",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 173,
+          "score": 20.595238095238095,
+          "ticks": 2557,
+          "finalStateHash": "045017b98aacf8e7fed26d384414bf744c4c9ed1e6c62935e2398b2604ab44b8",
+          "eventLogHash": "fbb377ded039c6ea5cb9576505f934fdd537bab7d0273fcbad11884956cede7a"
+        },
+        {
+          "rowId": "elite_throwing_axeman_vs_arbalester",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 124,
+          "score": 14.761904761904763,
+          "ticks": 2743,
+          "finalStateHash": "84bc5016a55a74fee148c3a96530b559b9fcde7074e5fc5841f7f561645ff628",
+          "eventLogHash": "78b632dd961fb59263101481752c27fdc718f574ec38cc137d7409ef776e9fb5"
+        },
+        {
+          "rowId": "elite_throwing_axeman_vs_arbalester",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 244,
+          "score": 29.047619047619047,
+          "ticks": 2640,
+          "finalStateHash": "922e86779d03a9d13ecd5e228ae61d97f114ff5671feb5ca0d87fcb826695f63",
+          "eventLogHash": "0c5ca9990459f53bbcc0a3c304667558b8d283c774a4cf7fe440bb1afa6d71f0"
+        },
+        {
+          "rowId": "elite_throwing_axeman_vs_arbalester",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 102,
+          "score": 12.142857142857142,
+          "ticks": 2796,
+          "finalStateHash": "e82c9627bc820fb1400902612e295b647288549093dd802a107444b6541277c0",
+          "eventLogHash": "1a370f15267acd9641d3cc0ca41b837102b37ff9f5723ecb3c98ac20a5028a94"
+        },
+        {
+          "rowId": "elite_throwing_axeman_vs_arbalester",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 133,
+          "score": 15.833333333333334,
+          "ticks": 3179,
+          "finalStateHash": "3fef2c21a691beb22d8647b36646a8e8d13b6f47bb7390a8b905b5f448af0f18",
+          "eventLogHash": "7937c7c078974dd79ff91fc0f80a151f45eef75f69991b41dcce986b1e2f0a09"
+        }
+      ]
+    },
+    {
+      "id": "elite_war_wagon_vs_champion",
+      "subjectSlug": "elite_war_wagon",
+      "opponentSlug": "champion",
+      "matchup": "Elite War Wagon vs Champion",
+      "side2": {
+        "count": 8,
+        "master": 829,
+        "owner": 2,
+        "slug": "elite_war_wagon",
+        "unit": "Elite War Wagon"
+      },
+      "side3": {
+        "count": 21,
+        "master": 567,
+        "owner": 3,
+        "slug": "champion",
+        "unit": "Champion"
+      },
+      "tape": {
+        "scoredRuns": 4,
+        "timeoutRuns": 0,
+        "mean": 20.10204081632653,
+        "min": 9.115646258503402,
+        "max": 25.4421768707483,
+        "side3WinRate": 1,
+        "volatile": false
+      },
+      "tapeClassification": "stable",
+      "comparison": {
+        "simulationRuns": 5,
+        "unresolvedRuns": 0,
+        "mean": -86.875,
+        "min": -86.875,
+        "max": -86.875,
+        "side3WinRate": 0,
+        "side3WinRateError": 1,
+        "bandError": 95.9906462585034,
+        "tapeBandCoverage": 0,
+        "wrongStableWinner": true
+      },
+      "samples": [
+        {
+          "rowId": "elite_war_wagon_vs_champion",
+          "sampleIndex": 0,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 1390,
+          "score": -86.875,
+          "ticks": 3764,
+          "finalStateHash": "bd9448472db8f98217a2e37be7b0aef8dc9eb46ca98f9d3612ee2108dbe36116",
+          "eventLogHash": "b496b3517a8ae648c5133a04dd5d19eb4517e9f062f1ee87d08d83456a5b981b"
+        },
+        {
+          "rowId": "elite_war_wagon_vs_champion",
+          "sampleIndex": 1,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 1390,
+          "score": -86.875,
+          "ticks": 3764,
+          "finalStateHash": "bd9448472db8f98217a2e37be7b0aef8dc9eb46ca98f9d3612ee2108dbe36116",
+          "eventLogHash": "b496b3517a8ae648c5133a04dd5d19eb4517e9f062f1ee87d08d83456a5b981b"
+        },
+        {
+          "rowId": "elite_war_wagon_vs_champion",
+          "sampleIndex": 2,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 1390,
+          "score": -86.875,
+          "ticks": 3764,
+          "finalStateHash": "bd9448472db8f98217a2e37be7b0aef8dc9eb46ca98f9d3612ee2108dbe36116",
+          "eventLogHash": "b496b3517a8ae648c5133a04dd5d19eb4517e9f062f1ee87d08d83456a5b981b"
+        },
+        {
+          "rowId": "elite_war_wagon_vs_champion",
+          "sampleIndex": 3,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 1390,
+          "score": -86.875,
+          "ticks": 3764,
+          "finalStateHash": "bd9448472db8f98217a2e37be7b0aef8dc9eb46ca98f9d3612ee2108dbe36116",
+          "eventLogHash": "b496b3517a8ae648c5133a04dd5d19eb4517e9f062f1ee87d08d83456a5b981b"
+        },
+        {
+          "rowId": "elite_war_wagon_vs_champion",
+          "sampleIndex": 4,
+          "seed": 20260817,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 1390,
+          "score": -86.875,
+          "ticks": 3764,
+          "finalStateHash": "bd9448472db8f98217a2e37be7b0aef8dc9eb46ca98f9d3612ee2108dbe36116",
+          "eventLogHash": "b496b3517a8ae648c5133a04dd5d19eb4517e9f062f1ee87d08d83456a5b981b"
+        }
+      ]
+    }
+  ],
+  "subjectSummaries": [
+    {
+      "subjectSlug": "elite_boyar",
+      "rows": 1,
+      "totalRuns": 5,
+      "rowsOver25PointDelta": 1,
+      "wrongStableWinnerCount": 1
+    },
+    {
+      "subjectSlug": "elite_conquistador",
+      "rows": 2,
+      "totalRuns": 10,
+      "rowsOver25PointDelta": 1,
+      "wrongStableWinnerCount": 2
+    },
+    {
+      "subjectSlug": "elite_karambit_warrior",
+      "rows": 1,
+      "totalRuns": 5,
+      "rowsOver25PointDelta": 1,
+      "wrongStableWinnerCount": 1
+    },
+    {
+      "subjectSlug": "elite_longbowman",
+      "rows": 3,
+      "totalRuns": 15,
+      "rowsOver25PointDelta": 1,
+      "wrongStableWinnerCount": 0
+    },
+    {
+      "subjectSlug": "elite_magyar_huszar",
+      "rows": 1,
+      "totalRuns": 5,
+      "rowsOver25PointDelta": 0,
+      "wrongStableWinnerCount": 0
+    },
+    {
+      "subjectSlug": "elite_mangudai",
+      "rows": 1,
+      "totalRuns": 5,
+      "rowsOver25PointDelta": 1,
+      "wrongStableWinnerCount": 0
+    },
+    {
+      "subjectSlug": "elite_plumed_archer",
+      "rows": 2,
+      "totalRuns": 10,
+      "rowsOver25PointDelta": 0,
+      "wrongStableWinnerCount": 1
+    },
+    {
+      "subjectSlug": "elite_tarkan",
+      "rows": 1,
+      "totalRuns": 5,
+      "rowsOver25PointDelta": 0,
+      "wrongStableWinnerCount": 0
+    },
+    {
+      "subjectSlug": "elite_throwing_axeman",
+      "rows": 1,
+      "totalRuns": 5,
+      "rowsOver25PointDelta": 1,
+      "wrongStableWinnerCount": 1
+    },
+    {
+      "subjectSlug": "elite_war_wagon",
+      "rows": 1,
+      "totalRuns": 5,
+      "rowsOver25PointDelta": 1,
+      "wrongStableWinnerCount": 1
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_mangudai_vs_heavy_scorpion",
+  "completedAt": "2026-08-21T00:30:43.758Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 13.024671052631582,
+      "medianAbsoluteMeanDelta": 13.024671052631582,
+      "maximumAbsoluteMeanDelta": 13.024671052631582
+    },
+    "rows": [
+      {
+        "id": "elite_mangudai_vs_heavy_scorpion",
+        "subjectSlug": "elite_mangudai",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Elite Mangudai vs Heavy Scorpion",
+        "side2": {
+          "count": 19,
+          "master": 561,
+          "owner": 2,
+          "slug": "elite_mangudai",
+          "unit": "Elite Mangudai"
+        },
+        "side3": {
+          "count": 15,
+          "master": 542,
+          "owner": 3,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -41.04440789473685,
+          "min": -45.26315789473684,
+          "max": -35.625,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -28.019736842105267,
+          "min": -32.171052631578945,
+          "max": -23.125,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 7.605263157894733,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_mangudai_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 351.5,
+            "score": -23.125,
+            "ticks": 1871,
+            "finalStateHash": "705eeb7f1d41e4f4d53b150269047945c7a3fb70c9761e4a60289a79da3a0ee6",
+            "eventLogHash": "e5b988858f73d8105508ab1fd30f19a7e6ac4987383a1aef4394eaf94919b820"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 489,
+            "score": -32.171052631578945,
+            "ticks": 2051,
+            "finalStateHash": "cfbded17119d6cc97a435d2be42767f720da9e8d16a0ec4d8c57451a8b57e2e9",
+            "eventLogHash": "363e27652c1e23a71f9dc57fd5e1e4a78b4774fa09446c1626b0f13c06f28bbe"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 398.5,
+            "score": -26.217105263157894,
+            "ticks": 1865,
+            "finalStateHash": "a969025be30f264d4447612770ed6e49e556f5cb3a6f738e8501682b10860259",
+            "eventLogHash": "2a91bdebfc2dc5ef7b10f8127df439176afb6c74d7919f87c47ad66d3b75c3ff"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 420.5,
+            "score": -27.664473684210527,
+            "ticks": 1888,
+            "finalStateHash": "f1d7a78807973ede7bcf98be322359a00ed73995f33f8fc7fc517d643ca07cde",
+            "eventLogHash": "be1938e9a08e6c7e7d49910f05d9fa237051aed58a4a9e297c38895957c5616c"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 470,
+            "score": -30.92105263157895,
+            "ticks": 1774,
+            "finalStateHash": "d521feb2118affadfd10da2c01bdf0669d02b7f53b051a1e3e68e7e57197404e",
+            "eventLogHash": "87f8c9fde3ae9201c76b0b9379493ee292182eaa5e7ae8c7f7c25fddcd25d87c"
+          }
+        ]
+      }
+    ]
+  }
+}

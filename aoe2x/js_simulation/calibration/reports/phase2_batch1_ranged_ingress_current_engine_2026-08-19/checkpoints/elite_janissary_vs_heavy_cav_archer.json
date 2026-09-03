@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_janissary_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T23:42:39.398Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 19.452380952380956,
+      "medianAbsoluteMeanDelta": 19.452380952380956,
+      "maximumAbsoluteMeanDelta": 19.452380952380956
+    },
+    "rows": [
+      {
+        "id": "elite_janissary_vs_heavy_cav_archer",
+        "subjectSlug": "elite_janissary",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Elite Janissary vs Heavy Cavalry Archer",
+        "side2": {
+          "count": 19,
+          "master": 557,
+          "owner": 2,
+          "slug": "elite_janissary",
+          "unit": "Elite Janissary"
+        },
+        "side3": {
+          "count": 21,
+          "master": 474,
+          "owner": 3,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 31.071428571428573,
+          "min": 29.047619047619047,
+          "max": 35.23809523809524,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 11.619047619047619,
+          "min": 0.9523809523809523,
+          "max": 18.095238095238095,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 17.42857142857143,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_janissary_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 16,
+            "score": 0.9523809523809523,
+            "ticks": 4812,
+            "finalStateHash": "28fb5402f726d14e74665d65ffb5b13eb34635ed25fa090dbc8e73ae631a1dd9",
+            "eventLogHash": "2260a2dbd86708c12c2d958d589d63feea0b745b595e097435fe6554deda9e3d"
+          },
+          {
+            "rowId": "elite_janissary_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 256,
+            "score": 15.238095238095237,
+            "ticks": 3443,
+            "finalStateHash": "9f2acaeb316ce63739f4a82b7f44eda8cbadf0675fed12e6849dd63ec221f064",
+            "eventLogHash": "3f4dc5e748ace0baa78801320afd2fcc14b427d443528d71ad2a40fa592474af"
+          },
+          {
+            "rowId": "elite_janissary_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 184,
+            "score": 10.952380952380953,
+            "ticks": 3797,
+            "finalStateHash": "1b0fe0f0de4574f1391742c67a800cf2aff7f8454474c8569ba2ee6e7c07e4fc",
+            "eventLogHash": "b37230c6ecddbefb8be70c0afbcf4614f4c12ff142c075abeb75b361dc15d19d"
+          },
+          {
+            "rowId": "elite_janissary_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 216,
+            "score": 12.857142857142858,
+            "ticks": 3593,
+            "finalStateHash": "03bd861e9e980537ed08806bf422807afa40eef48c08bfdcf55a5791fb7cb145",
+            "eventLogHash": "ea79bfedb8cefda83c7f3730aa8de47eb89733a33c3e67f700a43b86815ea5b7"
+          },
+          {
+            "rowId": "elite_janissary_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 304,
+            "score": 18.095238095238095,
+            "ticks": 3545,
+            "finalStateHash": "fedd3715832be9f7ba96677f4d498331273e64d43ed4e373ab0eb6e3bcba481b",
+            "eventLogHash": "b28e1469ca5b4ff1bf14a46c67be2b3fcb84c9f0433fa8ea11510c5b085cf163"
+          }
+        ]
+      }
+    ]
+  }
+}

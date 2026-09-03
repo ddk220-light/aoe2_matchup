@@ -1,0 +1,705 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "1c730f6a4dca68bc7466f393f5b5d2230a110bd6cb56fb860591c8818f89213e",
+  "matchupId": "heavy_scorpion_vs_champion",
+  "completedAt": "2026-08-14T19:05:17.362Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "dedicated_golden_exact_repeat_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/dedicated_ranged_melee_sources.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/dedicated_ranged_melee/dedicated_ranged_melee_truth.json",
+      "archives": [
+        {
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zipSha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zipSha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zipSha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zipSha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zipSha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zipSha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zipSha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zipSha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zipSha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zipSha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zipSha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zipSha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zipSha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        }
+      ]
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "placements": "exact starting_units from each individual tape repeat",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "matchups": 1,
+      "rows": 5,
+      "tapeRunsPerRow": 5,
+      "totalRuns": 25,
+      "shardIndex": 0,
+      "shardCount": 1
+    },
+    "summary": {
+      "matchups": 1,
+      "rows": 5,
+      "totalRuns": 25,
+      "rowsOver25PointDelta": 4,
+      "rowsInsideTapeBand": 0,
+      "wrongWinnerRuns": 10,
+      "unresolvedRuns": 0,
+      "meanAbsoluteMeanDelta": 67.91492063492063,
+      "medianAbsoluteMeanDelta": 41.5,
+      "maximumAbsoluteMeanDelta": 141.68571428571428
+    },
+    "matchupSummaries": [
+      {
+        "matchupId": "heavy_scorpion_vs_champion",
+        "matchup": "Heavy Scorpion vs Champion",
+        "rangedSlug": "heavy_scorpion",
+        "meleeSlug": "champion",
+        "rows": 5,
+        "tapeRuns": 25,
+        "meanAbsoluteMeanDelta": 67.91492063492063,
+        "maxAbsoluteMeanDelta": 141.68571428571428,
+        "rowsOver25PointDelta": 4,
+        "rowsInsideTapeBand": 0,
+        "wrongWinnerRuns": 10,
+        "unresolvedRuns": 0
+      }
+    ],
+    "rows": [
+      {
+        "id": "heavy_scorpion_vs_champion_5v10",
+        "matchupId": "heavy_scorpion_vs_champion",
+        "matchup": "Heavy Scorpion vs Champion",
+        "ranged": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "count": 5
+        },
+        "melee": {
+          "slug": "champion",
+          "label": "Champion",
+          "count": 10
+        },
+        "ratio": "5v10",
+        "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+        "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 58.68571428571429,
+            "min": 43.42857142857143,
+            "max": 67.71428571428571,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -83,
+            "min": -83,
+            "max": -83,
+            "owner3WinRate": 0
+          },
+          "meanDelta": -141.68571428571428,
+          "absoluteMeanDelta": 141.68571428571428,
+          "tapeBandError": 126.42857142857143,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -132.42857142857144,
+            -149,
+            -150.71428571428572,
+            -149.85714285714286,
+            -126.42857142857143
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 5
+        },
+        "samples": [
+          {
+            "rowId": "heavy_scorpion_vs_champion_5v10",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 249,
+            "score": -83,
+            "ticks": 1947,
+            "tapeScore": 49.42857142857143,
+            "delta": -132.42857142857144,
+            "finalStateHash": "2040224e188b29f3851af57eee3e82f2b75e1fd5e6096dd06b605a178ebc3110",
+            "eventLogHash": "5d17acb6652d26a602ff79af171c077739519e6d860a76d121ba05a9b150450b"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_5v10",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 249,
+            "score": -83,
+            "ticks": 1947,
+            "tapeScore": 66,
+            "delta": -149,
+            "finalStateHash": "2040224e188b29f3851af57eee3e82f2b75e1fd5e6096dd06b605a178ebc3110",
+            "eventLogHash": "5d17acb6652d26a602ff79af171c077739519e6d860a76d121ba05a9b150450b"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_5v10",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 249,
+            "score": -83,
+            "ticks": 1947,
+            "tapeScore": 67.71428571428571,
+            "delta": -150.71428571428572,
+            "finalStateHash": "2040224e188b29f3851af57eee3e82f2b75e1fd5e6096dd06b605a178ebc3110",
+            "eventLogHash": "5d17acb6652d26a602ff79af171c077739519e6d860a76d121ba05a9b150450b"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_5v10",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 249,
+            "score": -83,
+            "ticks": 1947,
+            "tapeScore": 66.85714285714286,
+            "delta": -149.85714285714286,
+            "finalStateHash": "2040224e188b29f3851af57eee3e82f2b75e1fd5e6096dd06b605a178ebc3110",
+            "eventLogHash": "5d17acb6652d26a602ff79af171c077739519e6d860a76d121ba05a9b150450b"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_5v10",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 249,
+            "score": -83,
+            "ticks": 1947,
+            "tapeScore": 43.42857142857143,
+            "delta": -126.42857142857143,
+            "finalStateHash": "2040224e188b29f3851af57eee3e82f2b75e1fd5e6096dd06b605a178ebc3110",
+            "eventLogHash": "5d17acb6652d26a602ff79af171c077739519e6d860a76d121ba05a9b150450b"
+          }
+        ]
+      },
+      {
+        "id": "heavy_scorpion_vs_champion_10v5",
+        "matchupId": "heavy_scorpion_vs_champion",
+        "matchup": "Heavy Scorpion vs Champion",
+        "ranged": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "count": 10
+        },
+        "melee": {
+          "slug": "champion",
+          "label": "Champion",
+          "count": 5
+        },
+        "ratio": "10v5",
+        "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+        "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -90.33333333333334,
+            "min": -91.5,
+            "max": -87.16666666666667,
+            "owner3WinRate": 0
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -97.16666666666667,
+            "min": -97.16666666666667,
+            "max": -97.16666666666667,
+            "owner3WinRate": 0
+          },
+          "meanDelta": -6.833333333333329,
+          "absoluteMeanDelta": 6.833333333333329,
+          "tapeBandError": 5.666666666666671,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -5.666666666666671,
+            -5.666666666666671,
+            -5.666666666666671,
+            -10,
+            -7.166666666666671
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "heavy_scorpion_vs_champion_10v5",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 583,
+            "score": -97.16666666666667,
+            "ticks": 757,
+            "tapeScore": -91.5,
+            "delta": -5.666666666666671,
+            "finalStateHash": "5fab01c5492acd6b5a1292a8ea39272930c51e0807005809c9aadd4bf908961c",
+            "eventLogHash": "0a181cf24f63860c50527b7f45cc865fcc5a1f49974f6e718188341c14fe7f75"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_10v5",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 583,
+            "score": -97.16666666666667,
+            "ticks": 757,
+            "tapeScore": -91.5,
+            "delta": -5.666666666666671,
+            "finalStateHash": "5fab01c5492acd6b5a1292a8ea39272930c51e0807005809c9aadd4bf908961c",
+            "eventLogHash": "0a181cf24f63860c50527b7f45cc865fcc5a1f49974f6e718188341c14fe7f75"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_10v5",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 583,
+            "score": -97.16666666666667,
+            "ticks": 757,
+            "tapeScore": -91.5,
+            "delta": -5.666666666666671,
+            "finalStateHash": "5fab01c5492acd6b5a1292a8ea39272930c51e0807005809c9aadd4bf908961c",
+            "eventLogHash": "0a181cf24f63860c50527b7f45cc865fcc5a1f49974f6e718188341c14fe7f75"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_10v5",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 583,
+            "score": -97.16666666666667,
+            "ticks": 757,
+            "tapeScore": -87.16666666666667,
+            "delta": -10,
+            "finalStateHash": "5fab01c5492acd6b5a1292a8ea39272930c51e0807005809c9aadd4bf908961c",
+            "eventLogHash": "0a181cf24f63860c50527b7f45cc865fcc5a1f49974f6e718188341c14fe7f75"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_10v5",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 583,
+            "score": -97.16666666666667,
+            "ticks": 757,
+            "tapeScore": -90,
+            "delta": -7.166666666666671,
+            "finalStateHash": "5fab01c5492acd6b5a1292a8ea39272930c51e0807005809c9aadd4bf908961c",
+            "eventLogHash": "0a181cf24f63860c50527b7f45cc865fcc5a1f49974f6e718188341c14fe7f75"
+          }
+        ]
+      },
+      {
+        "id": "heavy_scorpion_vs_champion_15v20",
+        "matchupId": "heavy_scorpion_vs_champion",
+        "matchup": "Heavy Scorpion vs Champion",
+        "ranged": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "count": 15
+        },
+        "melee": {
+          "slug": "champion",
+          "label": "Champion",
+          "count": 20
+        },
+        "ratio": "15v20",
+        "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+        "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 28.2,
+            "min": 23.857142857142858,
+            "max": 35.285714285714285,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -89.55555555555556,
+            "min": -89.55555555555556,
+            "max": -89.55555555555556,
+            "owner3WinRate": 0
+          },
+          "meanDelta": -117.75555555555556,
+          "absoluteMeanDelta": 117.75555555555556,
+          "tapeBandError": 113.41269841269842,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -114.98412698412699,
+            -113.41269841269842,
+            -118.98412698412699,
+            -124.84126984126985,
+            -116.55555555555556
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 5
+        },
+        "samples": [
+          {
+            "rowId": "heavy_scorpion_vs_champion_15v20",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 806,
+            "score": -89.55555555555556,
+            "ticks": 1228,
+            "tapeScore": 25.428571428571427,
+            "delta": -114.98412698412699,
+            "finalStateHash": "45d1869eca0c1d3b54c4fe8b6386dc32c95cc9c649b242d58b4ef4cd93780dd4",
+            "eventLogHash": "c0c2c245c535dd487a95d4434db69959005a639bbc89d040b9c5a3e4e370d44e"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_15v20",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 806,
+            "score": -89.55555555555556,
+            "ticks": 1228,
+            "tapeScore": 23.857142857142858,
+            "delta": -113.41269841269842,
+            "finalStateHash": "45d1869eca0c1d3b54c4fe8b6386dc32c95cc9c649b242d58b4ef4cd93780dd4",
+            "eventLogHash": "c0c2c245c535dd487a95d4434db69959005a639bbc89d040b9c5a3e4e370d44e"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_15v20",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 806,
+            "score": -89.55555555555556,
+            "ticks": 1228,
+            "tapeScore": 29.428571428571427,
+            "delta": -118.98412698412699,
+            "finalStateHash": "45d1869eca0c1d3b54c4fe8b6386dc32c95cc9c649b242d58b4ef4cd93780dd4",
+            "eventLogHash": "c0c2c245c535dd487a95d4434db69959005a639bbc89d040b9c5a3e4e370d44e"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_15v20",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 806,
+            "score": -89.55555555555556,
+            "ticks": 1228,
+            "tapeScore": 35.285714285714285,
+            "delta": -124.84126984126985,
+            "finalStateHash": "45d1869eca0c1d3b54c4fe8b6386dc32c95cc9c649b242d58b4ef4cd93780dd4",
+            "eventLogHash": "c0c2c245c535dd487a95d4434db69959005a639bbc89d040b9c5a3e4e370d44e"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_15v20",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 806,
+            "score": -89.55555555555556,
+            "ticks": 1228,
+            "tapeScore": 27,
+            "delta": -116.55555555555556,
+            "finalStateHash": "45d1869eca0c1d3b54c4fe8b6386dc32c95cc9c649b242d58b4ef4cd93780dd4",
+            "eventLogHash": "c0c2c245c535dd487a95d4434db69959005a639bbc89d040b9c5a3e4e370d44e"
+          }
+        ]
+      },
+      {
+        "id": "heavy_scorpion_vs_champion_20v15",
+        "matchupId": "heavy_scorpion_vs_champion",
+        "matchup": "Heavy Scorpion vs Champion",
+        "ranged": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "count": 20
+        },
+        "melee": {
+          "slug": "champion",
+          "label": "Champion",
+          "count": 15
+        },
+        "ratio": "20v15",
+        "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+        "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -66.78333333333333,
+            "min": -80.08333333333333,
+            "max": -40.083333333333336,
+            "owner3WinRate": 0
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -98.58333333333333,
+            "min": -98.58333333333333,
+            "max": -98.58333333333333,
+            "owner3WinRate": 0
+          },
+          "meanDelta": -31.799999999999997,
+          "absoluteMeanDelta": 31.799999999999997,
+          "tapeBandError": 18.5,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -19.25,
+            -34.25,
+            -28.5,
+            -58.49999999999999,
+            -18.5
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v15",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1183,
+            "score": -98.58333333333333,
+            "ticks": 756,
+            "tapeScore": -79.33333333333333,
+            "delta": -19.25,
+            "finalStateHash": "49f25de8a2596b90cd7a7b4d563c2ebcf7390c77ad7b394492fd17e2e43b3966",
+            "eventLogHash": "6d6eb28f64567b8b88b047f9a3cc99326110bbf4727655df722f33a7ed2e247d"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v15",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1183,
+            "score": -98.58333333333333,
+            "ticks": 756,
+            "tapeScore": -64.33333333333333,
+            "delta": -34.25,
+            "finalStateHash": "49f25de8a2596b90cd7a7b4d563c2ebcf7390c77ad7b394492fd17e2e43b3966",
+            "eventLogHash": "6d6eb28f64567b8b88b047f9a3cc99326110bbf4727655df722f33a7ed2e247d"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v15",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1183,
+            "score": -98.58333333333333,
+            "ticks": 756,
+            "tapeScore": -70.08333333333333,
+            "delta": -28.5,
+            "finalStateHash": "49f25de8a2596b90cd7a7b4d563c2ebcf7390c77ad7b394492fd17e2e43b3966",
+            "eventLogHash": "6d6eb28f64567b8b88b047f9a3cc99326110bbf4727655df722f33a7ed2e247d"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v15",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1183,
+            "score": -98.58333333333333,
+            "ticks": 756,
+            "tapeScore": -40.083333333333336,
+            "delta": -58.49999999999999,
+            "finalStateHash": "49f25de8a2596b90cd7a7b4d563c2ebcf7390c77ad7b394492fd17e2e43b3966",
+            "eventLogHash": "6d6eb28f64567b8b88b047f9a3cc99326110bbf4727655df722f33a7ed2e247d"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v15",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1183,
+            "score": -98.58333333333333,
+            "ticks": 756,
+            "tapeScore": -80.08333333333333,
+            "delta": -18.5,
+            "finalStateHash": "49f25de8a2596b90cd7a7b4d563c2ebcf7390c77ad7b394492fd17e2e43b3966",
+            "eventLogHash": "6d6eb28f64567b8b88b047f9a3cc99326110bbf4727655df722f33a7ed2e247d"
+          }
+        ]
+      },
+      {
+        "id": "heavy_scorpion_vs_champion_20v20",
+        "matchupId": "heavy_scorpion_vs_champion",
+        "matchup": "Heavy Scorpion vs Champion",
+        "ranged": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "count": 20
+        },
+        "melee": {
+          "slug": "champion",
+          "label": "Champion",
+          "count": 20
+        },
+        "ratio": "20v20",
+        "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+        "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -53.5,
+            "min": -75.08333333333333,
+            "max": -32.166666666666664,
+            "owner3WinRate": 0
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -95,
+            "min": -95,
+            "max": -95,
+            "owner3WinRate": 0
+          },
+          "meanDelta": -41.5,
+          "absoluteMeanDelta": 41.5,
+          "tapeBandError": 19.91666666666667,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -49.916666666666664,
+            -26.33333333333333,
+            -62.833333333333336,
+            -48.5,
+            -19.91666666666667
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v20",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1140,
+            "score": -95,
+            "ticks": 989,
+            "tapeScore": -45.083333333333336,
+            "delta": -49.916666666666664,
+            "finalStateHash": "19a7c31ab3709ae0921f52aa351d12cafe005b7bac2b9334fdb58cb2a270bc80",
+            "eventLogHash": "60480c4941fe781b8aad17aef0cc2436d0e048455b680fba2861357bd7394371"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v20",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1140,
+            "score": -95,
+            "ticks": 989,
+            "tapeScore": -68.66666666666667,
+            "delta": -26.33333333333333,
+            "finalStateHash": "19a7c31ab3709ae0921f52aa351d12cafe005b7bac2b9334fdb58cb2a270bc80",
+            "eventLogHash": "60480c4941fe781b8aad17aef0cc2436d0e048455b680fba2861357bd7394371"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v20",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1140,
+            "score": -95,
+            "ticks": 989,
+            "tapeScore": -32.166666666666664,
+            "delta": -62.833333333333336,
+            "finalStateHash": "19a7c31ab3709ae0921f52aa351d12cafe005b7bac2b9334fdb58cb2a270bc80",
+            "eventLogHash": "60480c4941fe781b8aad17aef0cc2436d0e048455b680fba2861357bd7394371"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v20",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1140,
+            "score": -95,
+            "ticks": 989,
+            "tapeScore": -46.5,
+            "delta": -48.5,
+            "finalStateHash": "19a7c31ab3709ae0921f52aa351d12cafe005b7bac2b9334fdb58cb2a270bc80",
+            "eventLogHash": "60480c4941fe781b8aad17aef0cc2436d0e048455b680fba2861357bd7394371"
+          },
+          {
+            "rowId": "heavy_scorpion_vs_champion_20v20",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1140,
+            "score": -95,
+            "ticks": 989,
+            "tapeScore": -75.08333333333333,
+            "delta": -19.91666666666667,
+            "finalStateHash": "19a7c31ab3709ae0921f52aa351d12cafe005b7bac2b9334fdb58cb2a270bc80",
+            "eventLogHash": "60480c4941fe781b8aad17aef0cc2436d0e048455b680fba2861357bd7394371"
+          }
+        ]
+      }
+    ]
+  }
+}

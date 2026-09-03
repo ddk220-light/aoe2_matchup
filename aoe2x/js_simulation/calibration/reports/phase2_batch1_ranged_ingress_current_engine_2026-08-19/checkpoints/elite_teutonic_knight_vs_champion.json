@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_teutonic_knight_vs_champion",
+  "completedAt": "2026-08-19T23:39:07.356Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 0.22727272727272663,
+      "medianAbsoluteMeanDelta": 0.22727272727272663,
+      "maximumAbsoluteMeanDelta": 0.22727272727272663
+    },
+    "rows": [
+      {
+        "id": "elite_teutonic_knight_vs_champion",
+        "subjectSlug": "elite_teutonic_knight",
+        "opponentSlug": "champion",
+        "matchup": "Elite Teutonic Knight vs Champion",
+        "side2": {
+          "count": 12,
+          "master": 554,
+          "owner": 2,
+          "slug": "elite_teutonic_knight",
+          "unit": "Elite Teutonic Knight"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -60.22727272727273,
+          "min": -60.22727272727273,
+          "max": -60.22727272727273,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -60.45454545454545,
+          "min": -62.5,
+          "max": -57.95454545454545,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 0.22727272727272663,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_teutonic_knight_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 820,
+            "score": -62.121212121212125,
+            "ticks": 1634,
+            "finalStateHash": "8a00ff57399ffb0832eef5527eb01ab3162e650815a8d8b43cf9310823e10bfa",
+            "eventLogHash": "51ab726f2f8ec73d4c732387226a7475d567b3268e7857ba1e7b66326bdf29d1"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 825,
+            "score": -62.5,
+            "ticks": 1654,
+            "finalStateHash": "e82b94ed0f4ce84da01fc724cdf7ee2874caf32ffbc573450146e2951dbe2945",
+            "eventLogHash": "35980abb04bf2af65dc28df13a894d0d9408b577c3b9838d4243936c106ac993"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 800,
+            "score": -60.60606060606061,
+            "ticks": 1599,
+            "finalStateHash": "b2f51e5f66cccc8cb2ea8e5409bc74dadba97cea5c963ad318d2d969a598577f",
+            "eventLogHash": "58c1b1cdbb7da64704d6ff5164964ee213a80490e4ba5a83c4b0b17455e5f496"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 765,
+            "score": -57.95454545454545,
+            "ticks": 1791,
+            "finalStateHash": "c1919c066c61b9dda4570dcffcc94e68589548e692bf6e1875fd6e63f2012f8c",
+            "eventLogHash": "5701fcff0586d4444e2575c4304d8ae0315313b7eaecea1a8ff8498c8f62e444"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 780,
+            "score": -59.09090909090909,
+            "ticks": 1801,
+            "finalStateHash": "b221405e92537a06a7cd7bf04e31d37892138064bf300479bc3f354edef88148",
+            "eventLogHash": "483dac4d9e6cf4af51d88cc67f5df97d632a54aa10d8276f1ec00214586d6047"
+          }
+        ]
+      }
+    ]
+  }
+}

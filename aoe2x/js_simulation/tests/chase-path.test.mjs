@@ -172,7 +172,7 @@ test("chase path omits only a reserved enemy-transit blocker", () => {
 test("persistent chase route ends at clear egress and returns to live target tracking", () => {
   const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
   const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
-  const blocker = dynamicBody(3, 3.5, 4, 0.35, 2, 4);
+  const blocker = dynamicBody(3, 1.5, 4, 0.35, 2, 4);
 
   const route = planPersistentChaseRoute(mover, target, [blocker], map);
 
@@ -195,6 +195,71 @@ test("persistent chase keeps the direct line through one transit-eligible ally",
   const ally = dynamicBody(3, 3.25, 4, 0.2, 3, 75);
 
   assert.equal(planPersistentChaseRoute(mover, target, [ally], map), null);
+});
+
+
+test("persistent pursuit routes around a three-ally knot before becoming its fourth body", () => {
+  const mover = dynamicBody(1, 2.625, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 6, 4, 0.2, 2, 4);
+  const knot = [
+    dynamicBody(3, 3.25, 3.9, 0.2, 3, 75),
+    dynamicBody(4, 3.25, 4.0, 0.2, 3, 75),
+    dynamicBody(5, 3.25, 4.1, 0.2, 3, 75),
+  ];
+  const pairInteractions = createPairInteractionSnapshot({
+    pursuitTransitReferenceIds: new Set([mover.referenceId]),
+  });
+
+  const route = planPersistentChaseRoute(mover, target, knot, map, {
+    pairInteractions,
+  });
+
+  assert.ok(route && route.stand !== true);
+  assert.ok(
+    route.waypoints.some(({ y }) => Math.abs(y - mover.y) > 0.125),
+    "the fourth pursuer must get a lateral route around the occupied knot",
+  );
+});
+
+
+test("persistent chase advances along a clear direct prefix when the target end is sealed", () => {
+  const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 7, 4, 0.2, 2, 4);
+  const sealedTargetEnd = Array.from({ length: 33 }, (_, index) => (
+    dynamicBody(10 + index, 5, index * 0.25, 0.3, 2, 4)
+  ));
+
+  const route = planPersistentChaseRoute(mover, target, sealedTargetEnd, map);
+
+  assert.ok(route && route.stand !== true, "a distant seal must not freeze the chaser");
+  assert.equal(route.progressive, true, "the direct prefix must end at its current frontier");
+  assert.ok(route.waypoints.length > 0);
+  assert.ok(route.waypoints.at(-1).x > mover.x);
+  assert.ok(route.waypoints.at(-1).x < 5);
+  assert.ok(route.waypoints.every(({ y }) => y === 4.125));
+});
+
+
+test("persistent chase approaches the best reachable frontier when no complete route exists", () => {
+  const mover = dynamicBody(1, 1, 4, 0.2, 3, 75);
+  const target = dynamicBody(2, 7, 4, 0.2, 2, 4);
+  const immediateBlocker = dynamicBody(3, 1.5, 4, 0.3, 2, 4);
+  const sealedTargetEnd = Array.from({ length: 33 }, (_, index) => (
+    dynamicBody(10 + index, 5, index * 0.25, 0.3, 2, 4)
+  ));
+
+  const route = planPersistentChaseRoute(
+    mover,
+    target,
+    [immediateBlocker, ...sealedTargetEnd],
+    map,
+  );
+
+  assert.ok(route && route.stand !== true, "reachable approach space must not be discarded");
+  assert.equal(route.progressive, true, "the partial approach must end at its current frontier");
+  assert.ok(route.waypoints.length > 1);
+  assert.ok(route.waypoints.at(-1).x > mover.x);
+  assert.ok(route.waypoints.at(-1).x < 5);
 });
 
 

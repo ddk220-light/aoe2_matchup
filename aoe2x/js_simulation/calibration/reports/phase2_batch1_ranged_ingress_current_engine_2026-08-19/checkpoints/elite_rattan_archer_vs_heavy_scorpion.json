@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_rattan_archer_vs_heavy_scorpion",
+  "completedAt": "2026-08-19T23:42:21.705Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 1,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 34.031746031746025,
+      "medianAbsoluteMeanDelta": 34.031746031746025,
+      "maximumAbsoluteMeanDelta": 34.031746031746025
+    },
+    "rows": [
+      {
+        "id": "elite_rattan_archer_vs_heavy_scorpion",
+        "subjectSlug": "elite_rattan_archer",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Elite Rattan Archer vs Heavy Scorpion",
+        "side2": {
+          "count": 21,
+          "master": 1131,
+          "owner": 2,
+          "slug": "elite_rattan_archer",
+          "unit": "Elite Rattan Archer"
+        },
+        "side3": {
+          "count": 13,
+          "master": 542,
+          "owner": 3,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -33.33333333333333,
+          "min": -38.095238095238095,
+          "max": -30.423280423280424,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 0.698412698412698,
+          "min": -20.634920634920636,
+          "max": 20.76923076923077,
+          "side3WinRate": 0.4,
+          "side3WinRateError": 0.4,
+          "bandError": 31.121693121693124,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": true
+        },
+        "samples": [
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 25,
+            "score": -2.6455026455026456,
+            "ticks": 4418,
+            "finalStateHash": "b53b62848ee2dc048ac84665aec17bf3bf9feedd9e00f7938176ff1fd3387d4e",
+            "eventLogHash": "180f218dab78c8517d7c911f85570299180de143c7155930d4af2ccb3025bf0e"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 162,
+            "score": 20.76923076923077,
+            "ticks": 2938,
+            "finalStateHash": "d9b5248ff9056fa1e6758a5ed4e58da6ef35c0a18a7c25979d17413745b74595",
+            "eventLogHash": "40344586253ad11a45f812dde99b81fbbabba53558c8ac3ede325416c180f695"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 195,
+            "score": -20.634920634920636,
+            "ticks": 2604,
+            "finalStateHash": "190f1fce886ba297cac986053c11ecdab56352d0e9c05a0e45be8bd35e151259",
+            "eventLogHash": "950b15290957ef27bf5f91db360a9ab268342d8393be82c56b728bf2cff699a7"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 125,
+            "score": -13.227513227513228,
+            "ticks": 2718,
+            "finalStateHash": "a9d5f043765e7bb698322449b490ab92d95fec3dd14fd62d3be3f6794c8a140b",
+            "eventLogHash": "8ebbe84be2ef717e764b5b34c6b4b9b443317bbfbb51e8ad7f1956cfddae4f5f"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 150,
+            "score": 19.23076923076923,
+            "ticks": 3415,
+            "finalStateHash": "860b93b6ded6b8d0e1cbf2c2b36894e2a18642bfb60f5f356f725435405ebf29",
+            "eventLogHash": "ed564ddc60e64403c6453d01a62091fb79a56d95997a32c16d744338a5fc50c5"
+          }
+        ]
+      }
+    ]
+  }
+}

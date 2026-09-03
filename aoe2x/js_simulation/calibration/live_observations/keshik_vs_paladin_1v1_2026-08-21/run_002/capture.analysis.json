@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "measurement_scope": "observed live 1v1; no simulation rule inferred",
+  "observed_matchup": "Elite Keshik vs Paladin",
+  "identity_note": "live gRPC exposed masters 1230/38; starting HP 165/180 confirms the Elite Keshik/Paladin units",
+  "collision": {
+    "keshik_radius_tiles": 0.25,
+    "opponent_radius_tiles": 0.25,
+    "contact_center_distance_euclidean_tiles": 0.5,
+    "radius_source": "live AoE2 game DAT: selected masters 1230 and 38"
+  },
+  "decode": {
+    "complete_sequences": 8953,
+    "decoded_delta_frames_total": 8951,
+    "decoded_delta_frames_selected": 6049,
+    "truncated_tail_bytes": 0,
+    "snapshots": [
+      {
+        "segment": 1,
+        "t_ms": 0,
+        "snapshot_bytes": 9845399
+      },
+      {
+        "segment": 2,
+        "t_ms": 0,
+        "snapshot_bytes": 8364043
+      }
+    ],
+    "selected_segment": 2,
+    "selected_entities": [
+      {
+        "key": 649,
+        "id": 649,
+        "master": 2551,
+        "owner": 1,
+        "hp": 1.0,
+        "x": 0.5,
+        "y": 0.5
+      },
+      {
+        "key": 648,
+        "id": 648,
+        "master": 1291,
+        "owner": 1,
+        "hp": 1.0,
+        "x": 0.5,
+        "y": 0.5
+      },
+      {
+        "key": 1569,
+        "id": 1569,
+        "master": 1775,
+        "owner": 1,
+        "hp": 1.0,
+        "x": 9.5,
+        "y": 6.5
+      },
+      {
+        "key": 1570,
+        "id": 1570,
+        "master": 1775,
+        "owner": 1,
+        "hp": 1.0,
+        "x": 8.5,
+        "y": 7.5
+      },
+      {
+        "key": 1777,
+        "id": 1777,
+        "master": 1230,
+        "owner": 1,
+        "hp": 165.0,
+        "x": 6.588932991027832,
+        "y": 8.669271469116211
+      },
+      {
+        "key": 1778,
+        "id": 1778,
+        "master": 38,
+        "owner": 2,
+        "hp": 180.0,
+        "x": 2.936424970626831,
+        "y": 11.134065628051758
+      }
+    ]
+  },
+  "time_span_s": [
+    0.169,
+    7.058
+  ],
+  "units": {
+    "keshik": {
+      "label": "Elite Keshik",
+      "id": 1777,
+      "master": 1230,
+      "owner": 1,
+      "initial_hp": 165.0,
+      "first_target": null,
+      "first_movement": {
+        "t_s": 2.059,
+        "position": [
+          10.498466,
+          4.500139
+        ],
+        "action_type": null,
+        "action_state": 4,
+        "state_label": "moving-to-target",
+        "target_id": -1,
+        "geometry": {
+          "dx": 7.998466,
+          "dy": 6.999861,
+          "chebyshev_center_distance": 7.998466,
+          "euclidean_center_distance": 10.6289,
+          "body_gap": 10.1289,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 7.498466,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "first_attack_animation": null,
+      "first_damage_taken": null,
+      "last_movement_before_first_attack_s": null,
+      "stationary_before_first_attack_s": null,
+      "median_moving_speed_tiles_s": 1.539816,
+      "pursuit": {
+        "sampled_steps": 4440,
+        "path_length_tiles": 7.436314,
+        "closing_step_fraction": 0.966667,
+        "median_heading_cosine_to_target": 0.704401
+      },
+      "target_transitions": [
+        {
+          "t_s": 2.058,
+          "from": null,
+          "to": -1
+        }
+      ],
+      "action_transitions": [
+        {
+          "t_s": 2.058,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        }
+      ]
+    },
+    "opponent": {
+      "label": "Paladin",
+      "id": 1778,
+      "master": 38,
+      "owner": 2,
+      "initial_hp": 180.0,
+      "first_target": {
+        "t_s": 6.673,
+        "position": [
+          2.5,
+          11.5
+        ],
+        "action_type": null,
+        "action_state": 4,
+        "state_label": "moving-to-target",
+        "target_id": 1777,
+        "geometry": {
+          "dx": 3.948671,
+          "dy": 3.398937,
+          "chebyshev_center_distance": 3.948671,
+          "euclidean_center_distance": 5.210065,
+          "body_gap": 4.710065,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 3.448671,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "first_movement": {
+        "t_s": 6.674,
+        "position": [
+          2.501485,
+          11.5
+        ],
+        "action_type": null,
+        "action_state": 4,
+        "state_label": "moving-to-target",
+        "target_id": 1777,
+        "geometry": {
+          "dx": 3.947555,
+          "dy": 3.397442,
+          "chebyshev_center_distance": 3.947555,
+          "euclidean_center_distance": 5.208244,
+          "body_gap": 4.708244,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 3.447555,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "first_attack_animation": null,
+      "first_damage_taken": null,
+      "last_movement_before_first_attack_s": null,
+      "stationary_before_first_attack_s": null,
+      "median_moving_speed_tiles_s": 1.484815,
+      "pursuit": {
+        "sampled_steps": 313,
+        "path_length_tiles": 0.570187,
+        "closing_step_fraction": 1.0,
+        "median_heading_cosine_to_target": 0.999027
+      },
+      "target_transitions": [
+        {
+          "t_s": 6.673,
+          "from": null,
+          "to": 1777
+        }
+      ],
+      "action_transitions": [
+        {
+          "t_s": 6.673,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": 1777
+        }
+      ]
+    }
+  },
+  "pair": {
+    "first_contact": null,
+    "first_overlap": null,
+    "closest_approach": {
+      "t_s": 7.058,
+      "keshik_position": [
+        6.588933,
+        8.669271
+      ],
+      "opponent_position": [
+        2.936425,
+        11.134066
+      ],
+      "geometry": {
+        "dx": 3.652508,
+        "dy": 2.464794,
+        "chebyshev_center_distance": 3.652508,
+        "euclidean_center_distance": 4.406362,
+        "body_gap": 3.906362,
+        "overlap_depth": 0.0,
+        "axis_aligned_body_gap": 3.152508,
+        "axis_aligned_overlap_depth": 0.0
+      }
+    },
+    "maximum_overlap": null,
+    "damage_events": [],
+    "kill_events": []
+  }
+}

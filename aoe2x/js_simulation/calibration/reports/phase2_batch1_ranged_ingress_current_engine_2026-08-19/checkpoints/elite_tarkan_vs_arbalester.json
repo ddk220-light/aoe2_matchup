@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_tarkan_vs_arbalester",
+  "completedAt": "2026-08-19T23:40:21.746Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 15.367647058823529,
+      "medianAbsoluteMeanDelta": 15.367647058823529,
+      "maximumAbsoluteMeanDelta": 15.367647058823529
+    },
+    "rows": [
+      {
+        "id": "elite_tarkan_vs_arbalester",
+        "subjectSlug": "elite_tarkan",
+        "opponentSlug": "arbalester",
+        "matchup": "Arbalester vs Elite Tarkan",
+        "side2": {
+          "count": 21,
+          "master": 492,
+          "owner": 2,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "side3": {
+          "count": 12,
+          "master": 757,
+          "owner": 3,
+          "slug": "elite_tarkan",
+          "unit": "Elite Tarkan"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 46.39705882352941,
+          "min": 39.509803921568626,
+          "max": 56.372549019607845,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 61.76470588235294,
+          "min": 61.76470588235294,
+          "max": 61.76470588235294,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 5.392156862745097,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_tarkan_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1260,
+            "score": 61.76470588235294,
+            "ticks": 3935,
+            "finalStateHash": "3cfc65c38adef6ac5f41274643c89f269f2c18c110ebb0ea2d73e471c3a2e4bd",
+            "eventLogHash": "0588297c7c779a1bf6c2ef070d3cc6924bdf94ff0f90ff80aa12ddeb273d90d5"
+          },
+          {
+            "rowId": "elite_tarkan_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1260,
+            "score": 61.76470588235294,
+            "ticks": 3935,
+            "finalStateHash": "3cfc65c38adef6ac5f41274643c89f269f2c18c110ebb0ea2d73e471c3a2e4bd",
+            "eventLogHash": "0b44a918ee347b630d1f0850fbe9d288d851cfc606d56a265fae48df5a1505e8"
+          },
+          {
+            "rowId": "elite_tarkan_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1260,
+            "score": 61.76470588235294,
+            "ticks": 3935,
+            "finalStateHash": "3cfc65c38adef6ac5f41274643c89f269f2c18c110ebb0ea2d73e471c3a2e4bd",
+            "eventLogHash": "aa7cf9a8d3630b248051724ddd5c853ddc7a29565e84471644f310d0a3e3ed7a"
+          },
+          {
+            "rowId": "elite_tarkan_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1260,
+            "score": 61.76470588235294,
+            "ticks": 3935,
+            "finalStateHash": "3cfc65c38adef6ac5f41274643c89f269f2c18c110ebb0ea2d73e471c3a2e4bd",
+            "eventLogHash": "c0ce9559edae230568a9210fcfe45d1a82d9ce65ce227b1d3b6171def98fd0cb"
+          },
+          {
+            "rowId": "elite_tarkan_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1260,
+            "score": 61.76470588235294,
+            "ticks": 3935,
+            "finalStateHash": "3cfc65c38adef6ac5f41274643c89f269f2c18c110ebb0ea2d73e471c3a2e4bd",
+            "eventLogHash": "51f3778db57b0551a62e75aae37b249e75081f6cf24ad2f18b8308200216cfa4"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -29,7 +29,6 @@
 
 import { ENGINE_CONFIG } from "../engine-config.js";
 import { TICKS_PER_SECOND } from "../simulation-clock.js";
-import { calculateDamage } from "./attacks.js";
 import { MIN_RANGE_SUPPRESSES_SHOOTER } from "./experiments.js";
 import { collisionRadius, isWithinReach, surfaceGap } from "./targeting.js";
 
@@ -293,17 +292,6 @@ const KITE_RING_HALF_TILES = 3.0;
 const KITE_RING_STEP_TILES = 1.5;
 const KITE_WAYPOINT_LEAD_TILES = 4.0;
 const KITE_MAP_MARGIN = 1.5;
-// Pressure-split share, measured on the skirmisher and heavy-cav-archer
-// archives: when even the whole roster cannot kill the first target this
-// beat, a LARGE roster does not stack everyone on it — main groups run
-// 14-16 of 20 and ~11 of 15 (esc/esp/hcp) with the remainder on the second
-// target. Rosters of 10 or fewer stay all-on-one in every archive (kac,
-// esc 10v5, hcp 10v5, the 5v10s). The hcc archive disambiguates the split
-// from bookkeeping: with per-shot damage 6 its mains are exactly
-// ceil(70/6)+1 = 13, not 15.
-const KITE_PRESSURE_SHARE = 0.75;
-const KITE_PRESSURE_MIN_ROSTER = 12;
-
 // Script cycle profile. Every recorded archive runs the same 0.667 s order
 // clock; the per-kiter cycle differs and is recorded in the truth fixture
 // as `kiteProfile` (a property of the recorded scenario, like kiteOwner):
@@ -517,87 +505,46 @@ function kiteAttackBeat(state, kiters, enemies, tick, events, makeEvent) {
     : kiters;
   const roster = [...shooters].sort((a, b) => a.referenceId - b.referenceId);
   if (roster.length === 0) return;
-  const own = centroid(roster);
-  // Assignment order: carried targets (previous beat's order) first, then
-  // fresh targets nearest the group centroid.
-  const remaining = new Map(enemies.map((enemy) => [enemy.referenceId, enemy]));
-  const ordered = [];
-  for (const id of state.lastTargetIds) {
-    const carried = remaining.get(id);
-    if (carried) {
-      ordered.push(carried);
-      remaining.delete(id);
-    }
-  }
-  const fresh = [...remaining.values()].sort((a, b) => {
-    const ga = Math.hypot(a.x - own.x, a.y - own.y);
-    const gb = Math.hypot(b.x - own.x, b.y - own.y);
-    return ga !== gb ? ga - gb : a.referenceId - b.referenceId;
-  });
-  ordered.push(...fresh);
-
-  // Only shooters that can actually deliver are assigned: 613/613 recorded
-  // beat-targets land ~100% of their assigned damage, so the script never
-  // spends shooters on a target beyond their reach (or inside their minimum
-  // range). Without this gate a chaser grinding a straggler behind the
-  // group soaks the whole volley out of range and survives 20-second
-  // killing sprees no tape shows.
-  const assigned = [];
   const directOpening = state.openingIssued !== true
     && state.lastBeatTick === null
     && (state.profile.openingVolley === "close_to_fire"
       || state.profile.volleyPursuit === "close_to_fire");
   const closingBeat = directOpening || state.profile.volleyPursuit === "close_to_fire";
-  let lastTarget = null;
-  let pool = roster;
-  let firstAssignment = true;
-  let pressure = false;
-  for (const target of ordered) {
-    if (pool.length === 0) break;
-    const eligible = [];
-    const rest = [];
-    for (const unit of pool) {
-      const withinSight = Math.hypot(target.x - unit.x, target.y - unit.y)
+  const assigned = [];
+  const enemyById = new Map(enemies.map((enemy) => [enemy.referenceId, enemy]));
+  // A volley command does not allocate an HP-aware damage budget. Every
+  // shooter performs ordinary closest-target selection from its own position,
+  // so several shooters can naturally choose and overkill the same body. A
+  // live reachable target remains sticky; closest-target selection runs when
+  // that target is gone or no longer eligible, rather than globally reshuffling
+  // the whole cohort on every beat.
+  for (const unit of roster) {
+    const eligible = (enemy) => {
+      const withinSight = Math.hypot(enemy.x - unit.x, enemy.y - unit.y)
         <= (unit.mechanics?.line_of_sight_tiles ?? 0) + 1e-12;
-      (isWithinReach(unit, target) || (closingBeat && withinSight)
-        ? eligible
-        : rest).push(unit);
+      return isWithinReach(unit, enemy) || (closingBeat && withinSight);
+    };
+    let target = enemyById.get(unit.pursuitTargetId) ?? null;
+    if (!target || !target.alive || !eligible(target)) {
+      target = null;
+      let bestGap = Infinity;
+      for (const enemy of enemies) {
+        if (!eligible(enemy)) continue;
+        const gap = surfaceGap(unit, enemy);
+        if (gap < bestGap
+          || (gap === bestGap && (target === null || enemy.referenceId < target.referenceId))) {
+          target = enemy;
+          bestGap = gap;
+        }
+      }
     }
-    if (eligible.length === 0) continue;
-    const perShot = Math.max(1, calculateDamage(eligible[0], target));
-    let wanted = Math.floor(target.hp / perShot) + 1;
-    if (firstAssignment) {
-      // Pressure split (see KITE_PRESSURE_SHARE): when even the full pool
-      // cannot kill the first shootable target, a large pool splits ~75/25
-      // across the first two targets instead of stacking.
-      pressure = wanted > pool.length
-        && pool.length >= KITE_PRESSURE_MIN_ROSTER
-        && ordered.length >= 2;
-      firstAssignment = false;
-      if (pressure) wanted = Math.ceil(pool.length * KITE_PRESSURE_SHARE);
-    } else if (pressure) {
-      wanted = pool.length;
-    }
-    const count = Math.min(eligible.length, wanted);
-    for (const unit of eligible.slice(0, count)) {
-      delete unit.moveOrder;
-      if (directOpening) unit.actionTimers.acquire = 0;
-      applyOrder(unit, target, tick, events, makeEvent);
-    }
+    if (target === null) continue;
+    delete unit.moveOrder;
+    if (directOpening) unit.actionTimers.acquire = 0;
+    applyOrder(unit, target, tick, events, makeEvent);
     assigned.push(target.referenceId);
-    lastTarget = target;
-    pool = eligible.slice(count).concat(rest);
   }
-  // Leftover shooters pile onto the last designated target when they can
-  // reach it; the rest keep their move order and stay with the formation.
-  if (lastTarget !== null) {
-    for (const unit of pool) {
-      if (!isWithinReach(unit, lastTarget)) continue;
-      delete unit.moveOrder;
-      applyOrder(unit, lastTarget, tick, events, makeEvent);
-    }
-  }
-  state.lastTargetIds = assigned;
+  state.lastTargetIds = [...new Set(assigned)];
 }
 
 

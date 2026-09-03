@@ -1,11 +1,16 @@
 import {
+  prepareMovementResolution,
   queryEnemyContactManifold,
-  resolveMovementProposals,
+  resolvePreparedMovementProposals,
 } from "./collision.js";
 import {
   createPairInteractionSnapshot,
   resolvePairInteraction,
 } from "./pair-interactions.js";
+import {
+  hasUnobstructedZeroRangeMeleeContact,
+  isZeroRangeMelee,
+} from "./melee-contact.js";
 import {
   createContactReservationState,
   updateContactReservations,
@@ -50,7 +55,10 @@ import {
 } from "./solo-navigation.js";
 import {
   chebyshevGap,
+  collisionRadius,
   isWithinReach,
+  meleeContactCapacity,
+  openingMeleeContactCapacity,
   selectEngagementTarget,
   selectPursuitTarget,
 } from "./targeting.js";
@@ -74,9 +82,6 @@ import {
   reloadTicks,
   trampleSpec,
 } from "./attacks.js";
-import { collisionRadius } from "./targeting.js";
-
-
 const DEFAULT_MAP = Object.freeze({
   width: 16,
   height: 16,
@@ -275,6 +280,8 @@ export function createWorld(scenario) {
     }
     kiteState.persistentMeleePursuitRouting = true;
     kiteState.chaseRoutes = new Map();
+    kiteState.chaseRouteDeferrals = new Map();
+    kiteState.unreachableChaseTargets = new Map();
   } else if (scenario.persistentMeleePursuitRouting !== undefined
       && scenario.persistentMeleePursuitRouting !== false) {
     throw new TypeError("persistent melee pursuit routing must be boolean");
@@ -396,6 +403,7 @@ function validatePursuitTargets(units, tick, events) {
       unit.engagedTargetId = null;
       unit.attackTargetId = null;
       unit.avoidance = null;
+      delete unit.meleeCapacityTargetId;
       unit.action = "dead";
       delete unit.attackKind;
       delete unit.moveOrder;
@@ -423,6 +431,7 @@ function validatePursuitTargets(units, tick, events) {
     ));
     unit.pursuitTargetId = null;
     unit.avoidance = null;
+    delete unit.meleeCapacityTargetId;
   }
 }
 
@@ -489,6 +498,47 @@ function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = 
 }
 
 
+function prepareMeleeContactLoads(snapshot) {
+  const targetLoadById = new Map();
+  const assignedReferenceIds = new Set();
+  const overflowReferenceIds = new Set();
+  const byReference = new Map(snapshot.map((unit) => [unit.referenceId, unit]));
+  const byTarget = new Map();
+  for (const unit of snapshot) {
+    if (!unit.alive || !isZeroRangeMelee(unit)) continue;
+    const target = byReference.get(unit.pursuitTargetId);
+    if (!target?.alive || target.owner === unit.owner) continue;
+    if (!byTarget.has(target.referenceId)) byTarget.set(target.referenceId, []);
+    byTarget.get(target.referenceId).push(unit);
+  }
+  for (const [targetId, attackers] of byTarget) {
+    const target = byReference.get(targetId);
+    attackers.sort((left, right) => (
+      Number(right.action === "attacking") - Number(left.action === "attacking")
+      || Number(isWithinReach(right, target)) - Number(isWithinReach(left, target))
+      || chebyshevGap(left, target) - chebyshevGap(right, target)
+      || left.referenceId - right.referenceId
+    ));
+    for (const attacker of attackers) {
+      const hasAlternative = snapshot.some((candidate) => (
+        candidate.alive
+        && candidate.owner !== attacker.owner
+        && candidate.referenceId !== targetId
+      ));
+      const load = targetLoadById.get(targetId) ?? 0;
+      const capacity = meleeContactCapacity(attacker, target, snapshot);
+      if (!hasAlternative || load < capacity) {
+        targetLoadById.set(targetId, load + 1);
+        assignedReferenceIds.add(attacker.referenceId);
+      } else {
+        overflowReferenceIds.add(attacker.referenceId);
+      }
+    }
+  }
+  return { targetLoadById, assignedReferenceIds, overflowReferenceIds };
+}
+
+
 function acquirePursuitTargets(
   units,
   tick,
@@ -498,6 +548,7 @@ function acquirePursuitTargets(
   rangedOpportunityRetargetOwner = null,
 ) {
   const snapshot = Object.freeze(units.map(freezeUnit));
+  const meleeContactLoads = prepareMeleeContactLoads(snapshot);
   const targetPressureTiles = kiteState?.attackMoveTargetPressureTiles ?? 0;
   const targetLoadById = targetPressureTiles > 0
       || Number.isSafeInteger(rangedTargetPressureOwner)
@@ -518,6 +569,16 @@ function acquirePursuitTargets(
   }
   for (const unit of units) {
     if (!unit.alive) continue;
+    if (unit.meleeCapacityTargetId !== undefined
+        && unit.meleeCapacityTargetId !== unit.pursuitTargetId) {
+      delete unit.meleeCapacityTargetId;
+    }
+    const unreachableChaseTargetId = kiteState?.unreachableChaseTargets
+      ?.get(unit.referenceId);
+    if (unreachableChaseTargetId !== undefined
+        && unreachableChaseTargetId !== unit.pursuitTargetId) {
+      kiteState.unreachableChaseTargets.delete(unit.referenceId);
+    }
     // Initial target-acquisition delay. Only the first acquisition waits; once a
     // unit has been in combat, re-acquisition is governed by its swing state.
     if (unit.actionTimers.acquire > 0) {
@@ -532,7 +593,11 @@ function acquirePursuitTargets(
     const blockedAttackMover = kiteState?.meleeOpeningOrder === "attack-move-all"
       && unit.owner !== kiteState.owner
       && kiteState.attackMoveStickyPursuit !== true
-      && unit.experimentBlocked === true;
+      && unit.experimentBlocked === true
+      // A capacity reroute is itself the response to a blocked contact queue.
+      // Do not let the generic attack-move blocked retarget undo it one tick
+      // later; it remains valid until that alternate target dies.
+      && unit.meleeCapacityTargetId !== unit.pursuitTargetId;
     const pursued = unit.pursuitTargetId === null
       ? null
       : snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId);
@@ -545,8 +610,19 @@ function acquirePursuitTargets(
         && candidate.owner !== unit.owner
         && isWithinReach(unit, candidate)
       ));
+    const meleeCapacityReevaluate = meleeContactLoads.overflowReferenceIds
+      .has(unit.referenceId)
+      && unit.experimentBlocked === true;
+    const blockedMeleeCapacityReevaluate = isZeroRangeMelee(unit)
+      && blockedAttackMover;
+    const unreachableRouteReevaluate = isZeroRangeMelee(unit)
+      && unreachableChaseTargetId === unit.pursuitTargetId;
     const reevaluate = unit.pursuitTargetId !== null
-      && (shouldReevaluatePursuit(unit) || blockedAttackMover || rangedOpportunity);
+      && (shouldReevaluatePursuit(unit)
+        || blockedAttackMover
+        || rangedOpportunity
+        || meleeCapacityReevaluate
+        || unreachableRouteReevaluate);
     if (unit.pursuitTargetId !== null && !reevaluate) continue;
     const kitePressureApplies = targetPressureTiles > 0
       && unit.owner !== kiteState.owner;
@@ -561,13 +637,70 @@ function acquirePursuitTargets(
       if (previousLoad <= 1) targetLoadById.delete(unit.pursuitTargetId);
       else targetLoadById.set(unit.pursuitTargetId, previousLoad - 1);
     }
+    const openingMeleeCapacityApplies = isZeroRangeMelee(unit)
+      && unit.pursuitTargetId === null;
+    const meleeCapacityApplies = openingMeleeCapacityApplies
+      || (isZeroRangeMelee(unit)
+        && (meleeCapacityReevaluate
+          || blockedMeleeCapacityReevaluate
+          || unreachableRouteReevaluate));
+    if (meleeCapacityApplies
+        && reevaluate
+        && meleeContactLoads.assignedReferenceIds.has(unit.referenceId)) {
+      const previousLoad = meleeContactLoads.targetLoadById.get(unit.pursuitTargetId) ?? 0;
+      if (previousLoad <= 1) meleeContactLoads.targetLoadById.delete(unit.pursuitTargetId);
+      else meleeContactLoads.targetLoadById.set(unit.pursuitTargetId, previousLoad - 1);
+    }
     const found = snapshot.find(({ referenceId }) => referenceId === unit.referenceId);
     // selectPursuitTarget short-circuits on a live locked target, so a
     // re-evaluation has to present the unit as unlocked to force a fresh scan.
     const candidate = reevaluate ? { ...found, pursuitTargetId: null } : found;
-    const target = selectPursuitTarget(candidate, snapshot, pressureApplies
-      ? { targetLoadById, targetLoadPenaltyTiles: pressureTiles }
-      : undefined);
+    const selectionOptions = {
+      ...(pressureApplies ? { targetLoadById, targetLoadPenaltyTiles: pressureTiles } : {}),
+      ...(meleeCapacityApplies ? {
+        targetCapacityLoadById: meleeContactLoads.targetLoadById,
+        targetCapacityFor: (target) => (
+          openingMeleeCapacityApplies
+            ? openingMeleeContactCapacity(candidate, target, snapshot)
+            : meleeContactCapacity(candidate, target, snapshot)
+        ),
+        ...(unreachableRouteReevaluate ? {
+          targetAvailabilityFor: (target) => (
+            target.referenceId !== unreachableChaseTargetId
+          ),
+        } : {}),
+      } : {}),
+    };
+    let target = selectPursuitTarget(
+      candidate,
+      snapshot,
+      pressureApplies || meleeCapacityApplies ? selectionOptions : undefined,
+    );
+    if (target !== null
+        && openingMeleeCapacityApplies
+        && kiteState?.meleeApproach?.has(unit.referenceId)) {
+      const selectedCapacity = openingMeleeContactCapacity(candidate, target, snapshot);
+      const selectedLoad = meleeContactLoads.targetLoadById.get(target.referenceId) ?? 0;
+      const lineOfSight = candidate.mechanics.line_of_sight_tiles;
+      const unseenLiveEnemyExists = snapshot.some((other) => (
+        other.alive
+        && other.owner !== candidate.owner
+        && other.referenceId !== target.referenceId
+        && Math.hypot(other.x - candidate.x, other.y - candidate.y) > lineOfSight
+      ));
+      // Attack-move keeps advancing and scanning when every currently visible
+      // contact is already reserved but more of the enemy force lies ahead.
+      // This avoids committing another pursuer to a known-full queue without
+      // granting it out-of-sight target knowledge.
+      if (selectedLoad >= selectedCapacity && unseenLiveEnemyExists) target = null;
+    }
+    if (target !== null && meleeCapacityApplies && reevaluate && pursued?.alive) {
+      const selectedCapacity = meleeContactCapacity(candidate, target, snapshot);
+      const selectedLoad = meleeContactLoads.targetLoadById.get(target.referenceId) ?? 0;
+      // A full result means every visible target is full. Keep the current
+      // sticky pursuit instead of making surplus units churn between queues.
+      if (selectedLoad >= selectedCapacity) target = pursued;
+    }
     if (target === null) {
       if (pressureApplies && reevaluate) {
         targetLoadById.set(
@@ -575,13 +708,34 @@ function acquirePursuitTargets(
           (targetLoadById.get(unit.pursuitTargetId) ?? 0) + 1,
         );
       }
+      if (meleeCapacityApplies
+          && reevaluate
+          && meleeContactLoads.assignedReferenceIds.has(unit.referenceId)) {
+        meleeContactLoads.targetLoadById.set(
+          unit.pursuitTargetId,
+          (meleeContactLoads.targetLoadById.get(unit.pursuitTargetId) ?? 0) + 1,
+        );
+      }
       continue;
     }
     if (pressureApplies) {
       targetLoadById.set(target.referenceId, (targetLoadById.get(target.referenceId) ?? 0) + 1);
     }
+    if (meleeCapacityApplies) {
+      meleeContactLoads.targetLoadById.set(
+        target.referenceId,
+        (meleeContactLoads.targetLoadById.get(target.referenceId) ?? 0) + 1,
+      );
+    }
     if (target.referenceId !== unit.pursuitTargetId) {
       events.push(event(tick, "pursuit-acquired", unit.referenceId, target.referenceId));
+      if (meleeCapacityReevaluate
+          || blockedMeleeCapacityReevaluate
+          || unreachableRouteReevaluate) {
+        unit.meleeCapacityTargetId = target.referenceId;
+      }
+      else delete unit.meleeCapacityTargetId;
+      kiteState?.unreachableChaseTargets?.delete(unit.referenceId);
     }
     unit.pursuitTargetId = target.referenceId;
   }
@@ -837,6 +991,469 @@ function steerProposals(planned, map, chaserScopeOwner = null, kitedEscape = fal
 }
 
 
+function fourWayPursuitCliques(units, pursuitReferenceIds, padding = 0) {
+  const byOwner = new Map();
+  for (const unit of units) {
+    if (!pursuitReferenceIds.has(unit.referenceId) || unit.alive === false) continue;
+    if (!byOwner.has(unit.owner)) byOwner.set(unit.owner, []);
+    byOwner.get(unit.owner).push(unit);
+  }
+  const overlaps = (left, right) => Math.max(
+    Math.abs(left.x - right.x),
+    Math.abs(left.y - right.y),
+  ) < collisionRadius(left) * left.mechanics.min_collision_size_multiplier
+    + collisionRadius(right) * right.mechanics.min_collision_size_multiplier
+    + padding - STEP_EPSILON;
+  const result = [];
+  for (const allies of byOwner.values()) {
+    allies.sort((left, right) => left.referenceId - right.referenceId);
+    for (let a = 0; a < allies.length; a += 1) {
+      for (let b = a + 1; b < allies.length; b += 1) {
+        if (!overlaps(allies[a], allies[b])) continue;
+        for (let c = b + 1; c < allies.length; c += 1) {
+          if (!overlaps(allies[a], allies[c]) || !overlaps(allies[b], allies[c])) continue;
+          for (let d = c + 1; d < allies.length; d += 1) {
+            if ([a, b, c].every((index) => overlaps(allies[index], allies[d]))) {
+              result.push([allies[a], allies[b], allies[c], allies[d]]
+                .map(({ referenceId }) => referenceId));
+            }
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
+
+function fourWayPursuitRisk(units, pursuitReferenceIds, padding) {
+  const cliques = fourWayPursuitCliques(units, pursuitReferenceIds, padding);
+  const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
+  let depth = 0;
+  for (const clique of cliques) {
+    let shallowestPairDepth = Infinity;
+    for (let leftIndex = 0; leftIndex < clique.length; leftIndex += 1) {
+      const left = byReference.get(clique[leftIndex]);
+      for (let rightIndex = leftIndex + 1; rightIndex < clique.length; rightIndex += 1) {
+        const right = byReference.get(clique[rightIndex]);
+        const separation = Math.max(
+          Math.abs(left.x - right.x),
+          Math.abs(left.y - right.y),
+        );
+        const surface = collisionRadius(left)
+            * left.mechanics.min_collision_size_multiplier
+          + collisionRadius(right)
+            * right.mechanics.min_collision_size_multiplier
+          + padding;
+        shallowestPairDepth = Math.min(shallowestPairDepth, surface - separation);
+      }
+    }
+    depth += Math.max(0, shallowestPairDepth);
+  }
+  return {
+    // A simultaneous pair can legitimately cross by the sum of both sourced
+    // one-tick movement budgets. Count a four-body pile only once it is deeper
+    // than that kinematic transit band; the positively padded graph below
+    // still prevents a shallow crossing from becoming a sustained collapse.
+    actualCount: fourWayPursuitCliques(
+      units, pursuitReferenceIds, -padding,
+    ).length,
+    cliques,
+    depth,
+  };
+}
+
+
+function crowdRiskImproves(candidate, current) {
+  if (candidate.actualCount !== current.actualCount) {
+    return candidate.actualCount < current.actualCount;
+  }
+  if (candidate.cliques.length !== current.cliques.length) {
+    return candidate.cliques.length < current.cliques.length;
+  }
+  return candidate.depth < current.depth - STEP_EPSILON;
+}
+
+
+function rotateMovementProposal(proposal, side, turn) {
+  const distance = Math.hypot(proposal.dx, proposal.dy);
+  const angle = Math.atan2(proposal.dy, proposal.dx)
+    + side * turn * Math.PI / 12;
+  return Object.freeze({
+    ...proposal,
+    dx: Math.cos(angle) * distance,
+    dy: Math.sin(angle) * distance,
+  });
+}
+
+
+function fourWayCliqueKey(clique) {
+  return [...clique].sort((left, right) => left - right).join(":");
+}
+
+
+function pauseRearPursuitOverlap(
+  before, moved, proposals, movementOptions, preparedMovement,
+) {
+  const pursuitReferenceIds = movementOptions.pairInteractions
+    ?.pursuitTransitReferenceIds ?? new Set();
+  if (pursuitReferenceIds.size < 4) return moved;
+  const priorCliques = new Set(
+    fourWayPursuitCliques(before, pursuitReferenceIds).map(fourWayCliqueKey),
+  );
+  const enteredCliques = fourWayPursuitCliques(moved, pursuitReferenceIds)
+    .filter((clique) => !priorCliques.has(fourWayCliqueKey(clique)));
+  if (enteredCliques.length === 0) return moved;
+
+  const byReference = new Map(moved.map((unit) => [unit.referenceId, unit]));
+  const held = new Set();
+  for (const clique of enteredCliques) {
+    const ranked = clique
+      .map((referenceId) => {
+        const unit = byReference.get(referenceId);
+        const target = byReference.get(unit?.pursuitTargetId);
+        return {
+          referenceId,
+          targetDistance: unit && target
+            ? Math.hypot(target.x - unit.x, target.y - unit.y)
+            : Infinity,
+        };
+      })
+      .sort((left, right) => (
+        left.targetDistance - right.targetDistance
+        || left.referenceId - right.referenceId
+      ));
+    for (const { referenceId } of ranked.slice(2)) held.add(referenceId);
+  }
+  if (held.size === 0) return moved;
+
+  const corrected = proposals.map((proposal) => (held.has(proposal.referenceId)
+    ? Object.freeze({ referenceId: proposal.referenceId, dx: 0, dy: 0 })
+    : proposal));
+  return resolvePreparedMovementProposals(
+    preparedMovement,
+    corrected,
+    movementOptions,
+  );
+}
+
+
+function repairFourWayPursuitCrowding(
+  snapshot, proposals, moved, map, movementOptions, preparedMovement,
+) {
+  const pursuitReferenceIds = movementOptions.pairInteractions
+    ?.pursuitTransitReferenceIds ?? new Set();
+  if (pursuitReferenceIds.size === 0) return moved;
+  const beforeByReference = new Map(snapshot.map((unit) => [unit.referenceId, unit]));
+  const baseByReference = new Map(proposals.map((row) => [row.referenceId, row]));
+  const chosen = [...proposals].sort((left, right) => (
+    left.referenceId - right.referenceId
+  ));
+  const chosenIndexByReference = new Map(chosen.map((proposal, index) => (
+    [proposal.referenceId, index]
+  )));
+  let result = moved;
+  const pursuitStepLengths = proposals
+    .filter(({ referenceId }) => pursuitReferenceIds.has(referenceId))
+    .map(({ dx, dy }) => Math.hypot(dx, dy))
+    .sort((left, right) => right - left);
+  // Maximum one-tick pair closure comes from both bodies moving, so the
+  // no-four-stack guard looks ahead by the sum of the two largest sourced
+  // movement budgets rather than by an arbitrary safety margin.
+  const lookaheadPadding = (pursuitStepLengths[0] ?? 0)
+    + (pursuitStepLengths[1] ?? 0);
+  const trialOptions = () => (movementOptions.collisionRecoveryState
+    ? { ...movementOptions, collisionRecoveryState: {
+      active: movementOptions.collisionRecoveryState.active === true,
+    } }
+    : movementOptions);
+
+  for (let pass = 0; pass < pursuitReferenceIds.size * 2; pass += 1) {
+    const currentRisk = fourWayPursuitRisk(
+      result, pursuitReferenceIds, lookaheadPadding,
+    );
+    if (currentRisk.cliques.length === 0) return result;
+    const involved = new Set(currentRisk.cliques.flat());
+    const actualCliquesNow = fourWayPursuitCliques(
+      result, pursuitReferenceIds, -lookaheadPadding,
+    );
+    const actualInvolvedNow = new Set(actualCliquesNow.flat());
+    const candidates = [...involved]
+      .map((referenceId) => {
+        const unit = beforeByReference.get(referenceId);
+        const target = beforeByReference.get(unit?.pursuitTargetId);
+        const proposal = baseByReference.get(referenceId);
+        return { unit, target, proposal };
+      })
+      .filter(({ unit, target, proposal }) => (
+        unit && target?.alive && target.owner !== unit.owner
+        && proposal && Math.hypot(proposal.dx, proposal.dy) > STEP_EPSILON
+      ))
+      .sort((left, right) => {
+        const leftDistance = Math.hypot(
+          left.target.x - left.unit.x, left.target.y - left.unit.y,
+        );
+        const rightDistance = Math.hypot(
+          right.target.x - right.unit.x, right.target.y - right.unit.y,
+        );
+        return rightDistance - leftDistance
+          || left.unit.referenceId - right.unit.referenceId;
+      });
+    const variantsFor = ({ unit, proposal }, { forwardOnly = true } = {}) => {
+      const variants = [];
+      const preferredSide = unit.referenceId % 2 === 0 ? 1 : -1;
+      for (let turn = 1; turn < (forwardOnly ? 6 : 12); turn += 1) {
+        for (const side of [preferredSide, -preferredSide]) {
+          const candidate = rotateMovementProposal(proposal, side, turn);
+          if (forwardOnly
+              && candidate.dx * proposal.dx + candidate.dy * proposal.dy <= STEP_EPSILON) {
+            continue;
+          }
+          variants.push({ unit, proposal, candidate, side, turn });
+        }
+      }
+      return variants;
+    };
+    const evaluate = (changes, { requireForward = true } = {}) => {
+      const trialProposals = chosen.slice();
+      for (const { unit, candidate } of changes) {
+        trialProposals[chosenIndexByReference.get(unit.referenceId)] = candidate;
+      }
+      let trial;
+      try {
+        trial = resolvePreparedMovementProposals(
+          preparedMovement,
+          trialProposals,
+          trialOptions(),
+        );
+      } catch {
+        return null;
+      }
+      const risk = fourWayPursuitRisk(
+        trial, pursuitReferenceIds, lookaheadPadding,
+      );
+      if (!crowdRiskImproves(risk, currentRisk)) return null;
+      const trialByUnit = new Map(trial.map((unit) => [unit.referenceId, unit]));
+      for (const { unit, proposal } of changes) {
+        const after = trialByUnit.get(unit.referenceId);
+        const actualDx = after.x - unit.x;
+        const actualDy = after.y - unit.y;
+        const wantedDistance = Math.hypot(proposal.dx, proposal.dy);
+        if (Math.hypot(actualDx, actualDy) < wantedDistance - STEP_EPSILON) return null;
+        if (requireForward
+            && actualDx * proposal.dx + actualDy * proposal.dy <= STEP_EPSILON) return null;
+      }
+      return { changes, risk, trial };
+    };
+    let best = null;
+    let firstImprovement = null;
+    const primaryCandidates = currentRisk.actualCount > 0
+      ? candidates.filter(({ unit }) => actualInvolvedNow.has(unit.referenceId))
+      : candidates;
+    candidateSearch:
+    for (const row of primaryCandidates) {
+      for (const variant of variantsFor(row)) {
+          const ranked = evaluate([variant]);
+          if (ranked === null) continue;
+          if (currentRisk.actualCount > 0
+              && ranked.risk.actualCount >= currentRisk.actualCount) {
+            if (firstImprovement === null) firstImprovement = ranked;
+            continue;
+          }
+          // Candidate enumeration is already the physical priority order:
+          // rearmost chaser, smallest positive turn, stable preferred side.
+          // The first improving result is therefore the shortest admissible
+          // correction; evaluating every wider turn only repeats expensive
+          // collision solves without changing that decision.
+          best = ranked;
+          break candidateSearch;
+      }
+    }
+    if (best === null && currentRisk.actualCount === 0) best = firstImprovement;
+    if (best === null && currentRisk.actualCount > 0) {
+      // A perfectly symmetric four-body knot can require two allies to peel in
+      // opposite directions before either individual turn improves the graph.
+      // Search that pair only after every one-body correction failed. Each
+      // member still moves at full sourced speed with a positive component on
+      // its pursuit heading; this is decongestion, never a reverse order.
+      const actualInvolved = new Set(fourWayPursuitCliques(
+        result, pursuitReferenceIds, -lookaheadPadding,
+      ).flat());
+      const pairVariants = candidates
+        .filter(({ unit }) => actualInvolved.has(unit.referenceId))
+        .flatMap(variantsFor);
+      pairSearch:
+      for (let left = 0; left < pairVariants.length; left += 1) {
+        for (let right = left + 1; right < pairVariants.length; right += 1) {
+          if (pairVariants[left].unit.referenceId
+              === pairVariants[right].unit.referenceId) continue;
+          best = evaluate([pairVariants[left], pairVariants[right]]);
+          if (best !== null) break pairSearch;
+        }
+      }
+    }
+    if (best === null && currentRisk.actualCount > 0) {
+      // If an enemy body or static corner makes every targetward separation
+      // impossible, remaining inside a four-body allied knot is worse than a
+      // one-tick outward peel. Take the smallest full-speed physical escape;
+      // the ordinary pursuit proposal is recomputed on the next tick.
+      const actualCliques = fourWayPursuitCliques(
+        result, pursuitReferenceIds, -lookaheadPadding,
+      );
+      // Resolve one concrete knot atomically. Using the union of every knot
+      // makes a candidate that fixes one look neutral when another remains,
+      // and lets unrelated corrections consume the pass budget.
+      const actualInvolved = new Set(actualCliques[0]);
+      const resultByReference = new Map(result.map((unit) => [unit.referenceId, unit]));
+      const crowdedRows = [...actualInvolved]
+        .map((referenceId) => {
+          const unit = beforeByReference.get(referenceId);
+          return {
+            unit,
+            target: beforeByReference.get(unit?.pursuitTargetId),
+            proposal: baseByReference.get(referenceId),
+          };
+        })
+        .filter(({ unit, target, proposal }) => (
+          unit && target?.alive && target.owner !== unit.owner && proposal
+        ));
+      const awayVariants = crowdedRows.map(({ unit, proposal }) => {
+          const clique = actualCliques.find((ids) => ids.includes(unit.referenceId));
+          const peers = clique
+            .filter((referenceId) => referenceId !== unit.referenceId)
+            .map((referenceId) => resultByReference.get(referenceId));
+          const current = resultByReference.get(unit.referenceId);
+          const centerX = peers.reduce((sum, peer) => sum + peer.x, 0) / peers.length;
+          const centerY = peers.reduce((sum, peer) => sum + peer.y, 0) / peers.length;
+          let awayX = current.x - centerX;
+          let awayY = current.y - centerY;
+          let length = Math.hypot(awayX, awayY);
+          if (length <= STEP_EPSILON) {
+            awayX = unit.referenceId % 2 === 0 ? -proposal.dy : proposal.dy;
+            awayY = unit.referenceId % 2 === 0 ? proposal.dx : -proposal.dx;
+            length = Math.hypot(awayX, awayY);
+          }
+          const distance = Math.max(
+            Math.hypot(proposal.dx, proposal.dy),
+            unit.mechanics.speed_tiles_per_second / TICKS_PER_SECOND,
+          );
+          return {
+            unit,
+            proposal,
+            candidate: Object.freeze({
+              ...proposal,
+              dx: awayX / length * distance,
+              dy: awayY / length * distance,
+            }),
+            side: 0,
+            turn: 0,
+          };
+        });
+      const enemySurfaceTangents = crowdedRows.flatMap(({ unit, target, proposal }) => {
+        const distance = Math.max(
+          Math.hypot(proposal.dx, proposal.dy),
+          unit.mechanics.speed_tiles_per_second / TICKS_PER_SECOND,
+        );
+        const targetDx = target.x - unit.x;
+        const targetDy = target.y - unit.y;
+        const alongXFace = Math.abs(targetDx) >= Math.abs(targetDy);
+        return [-1, 1].map((side) => ({
+          unit,
+          proposal,
+          candidate: Object.freeze({
+            ...proposal,
+            dx: alongXFace ? 0 : side * distance,
+            dy: alongXFace ? side * distance : 0,
+          }),
+          side,
+          turn: 0,
+        }));
+      });
+      const exactEscapeVariants = [...awayVariants, ...enemySurfaceTangents];
+      for (const variant of exactEscapeVariants) {
+        best = evaluate([variant], { requireForward: false });
+        if (best !== null) break;
+      }
+      if (best === null) {
+        awayPairSearch:
+        for (let left = 0; left < exactEscapeVariants.length; left += 1) {
+          for (let right = left + 1; right < exactEscapeVariants.length; right += 1) {
+            if (exactEscapeVariants[left].unit.referenceId
+                === exactEscapeVariants[right].unit.referenceId) continue;
+            best = evaluate(
+              [exactEscapeVariants[left], exactEscapeVariants[right]],
+              { requireForward: false },
+            );
+            if (best !== null) break awayPairSearch;
+          }
+        }
+      }
+      if (best === null && awayVariants.length > 2) {
+        // When multiple members are simultaneously being wrapped around the
+        // same enemy surface, peeling the whole moving fringe is the only
+        // collision-valid separation: moving either one alone merely replaces
+        // the old four-clique with its neighbor. This remains a one-tick,
+        // full-speed response sourced from the actual overlap centroid.
+        best = evaluate(awayVariants, { requireForward: false });
+      }
+      if (best === null && crowdedRows.length > 2) {
+        const variantsByMover = crowdedRows.map(({ unit }) => (
+          exactEscapeVariants.filter((variant) => (
+            variant.unit.referenceId === unit.referenceId
+          ))
+        ));
+        let combinations = [[]];
+        for (const variants of variantsByMover) {
+          combinations = combinations.flatMap((combination) => (
+            variants.map((variant) => [...combination, variant])
+          ));
+        }
+        for (const combination of combinations) {
+          best = evaluate(combination, { requireForward: false });
+          if (best !== null && best.risk.actualCount < currentRisk.actualCount) break;
+          best = null;
+        }
+      }
+      emergencySearch:
+      if (best === null) {
+        for (const row of candidates.filter(({ unit }) => (
+          actualInvolved.has(unit.referenceId)
+        ))) {
+          for (const variant of variantsFor(row, { forwardOnly: false })) {
+            best = evaluate([variant], { requireForward: false });
+            if (best !== null) break emergencySearch;
+          }
+        }
+      }
+      if (best === null) {
+        const emergencyVariants = candidates
+          .filter(({ unit }) => actualInvolved.has(unit.referenceId))
+          .flatMap((row) => variantsFor(row, { forwardOnly: false }));
+        emergencyPairSearch:
+        for (let left = 0; left < emergencyVariants.length; left += 1) {
+          for (let right = left + 1; right < emergencyVariants.length; right += 1) {
+            if (emergencyVariants[left].unit.referenceId
+                === emergencyVariants[right].unit.referenceId) continue;
+            best = evaluate(
+              [emergencyVariants[left], emergencyVariants[right]],
+              { requireForward: false },
+            );
+            if (best !== null) break emergencyPairSearch;
+          }
+        }
+      }
+    }
+    if (best === null) best = firstImprovement;
+    if (best === null) return result;
+    for (const { unit, candidate } of best.changes) {
+      chosen[chosenIndexByReference.get(unit.referenceId)] = candidate;
+    }
+    result = best.trial;
+  }
+  return result;
+}
+
+
 function resolveMovement(planned, byReference, map, kiteState = null, movementOptions = {}) {
   // "chaser" scope: steer-then-stop for the chasing side of a kited scenario
   // only. Without a kiteState (or for the kiting side) the solver is
@@ -849,8 +1466,22 @@ function resolveMovement(planned, byReference, map, kiteState = null, movementOp
     kiteState?.kitedEscape === true,
     movementOptions,
   );
-  let moved = resolveMovementProposals(planned.units, wantedProposals, map, movementOptions);
-  if (!BIMODAL_STEP && chaserScopeOwner === null) return moved;
+  const preparedMovement = prepareMovementResolution(
+    planned.units, map, movementOptions,
+  );
+  const solve = (proposals, options = movementOptions) => (
+    resolvePreparedMovementProposals(preparedMovement, proposals, options)
+  );
+  const finish = (moved, resolvedProposals) => pauseRearPursuitOverlap(
+    planned.units,
+    moved,
+    resolvedProposals,
+    movementOptions,
+    preparedMovement,
+  );
+  let moved = solve(wantedProposals);
+  let resolvedProposals = wantedProposals;
+  if (!BIMODAL_STEP && chaserScopeOwner === null) return finish(moved, resolvedProposals);
   const eligible = (referenceId) => {
     if (BIMODAL_STEP) return true;
     // Scoped modes: cancellation applies only to steps the steer touched --
@@ -878,17 +1509,13 @@ function resolveMovement(planned, byReference, map, kiteState = null, movementOp
         grew = true;
       }
     }
-    if (!grew) return moved;
-    moved = resolveMovementProposals(
-      planned.units,
-      wantedProposals.map((proposal) => (held.has(proposal.referenceId)
-        ? Object.freeze({ referenceId: proposal.referenceId, dx: 0, dy: 0 })
-        : proposal)),
-      map,
-      movementOptions,
-    );
+    if (!grew) return finish(moved, resolvedProposals);
+    resolvedProposals = wantedProposals.map((proposal) => (held.has(proposal.referenceId)
+      ? Object.freeze({ referenceId: proposal.referenceId, dx: 0, dy: 0 })
+      : proposal));
+    moved = solve(resolvedProposals);
   }
-  return moved;
+  return finish(moved, resolvedProposals);
 }
 
 
@@ -896,8 +1523,16 @@ function moveUnits(units, map, tick, events, kiteState = null,
   contactReservationState = null, contactSteeringStates = new Map()) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
+  const pursuitTransitReferenceIds = new Set(live
+    .filter((unit) => {
+      if (!hasMeleeMode(unit) || unit.action === "attacking") return false;
+      const target = byReference.get(unit.pursuitTargetId);
+      return target?.alive === true && target.owner !== unit.owner;
+    })
+    .map(({ referenceId }) => referenceId));
   let pairInteractions = createPairInteractionSnapshot({
     contactReservations: contactReservationState?.reservations ?? new Map(),
+    pursuitTransitReferenceIds,
   });
   const soloDestinations = kiteState?.soloNavigationState
     ? planSoloNavigation(
@@ -911,6 +1546,14 @@ function moveUnits(units, map, tick, events, kiteState = null,
   if (kiteState?.persistentMeleePursuitRouting === true && !kiteState.chaseRoutes) {
     kiteState.chaseRoutes = new Map();
   }
+  if (kiteState?.persistentMeleePursuitRouting === true
+      && !kiteState.chaseRouteDeferrals) {
+    kiteState.chaseRouteDeferrals = new Map();
+  }
+  if (kiteState?.persistentMeleePursuitRouting === true
+      && !kiteState.unreachableChaseTargets) {
+    kiteState.unreachableChaseTargets = new Map();
+  }
   const authoritativeRouteReferenceIds = new Set();
   if (kiteState?.chaseRoutes) {
     for (const referenceId of kiteState.chaseRoutes.keys()) {
@@ -919,6 +1562,17 @@ function moveUnits(units, map, tick, events, kiteState = null,
       if (!unit?.alive || unit.owner === kiteState.owner
           || !target?.alive || target.owner === unit.owner) {
         kiteState.chaseRoutes.delete(referenceId);
+      }
+    }
+  }
+  if (kiteState?.chaseRouteDeferrals) {
+    for (const [referenceId, targetReferenceId] of kiteState.chaseRouteDeferrals) {
+      const unit = byReference.get(referenceId);
+      const target = byReference.get(targetReferenceId);
+      if (!unit?.alive || unit.owner === kiteState.owner
+          || !target?.alive || target.owner === unit.owner
+          || unit.pursuitTargetId !== targetReferenceId) {
+        kiteState.chaseRouteDeferrals.delete(referenceId);
       }
     }
   }
@@ -949,6 +1603,15 @@ function moveUnits(units, map, tick, events, kiteState = null,
           route.targetReferenceId, { reason: "target-changed" }));
         route = null;
       }
+      if (route?.progressive === true
+          && planPersistentChaseRoute(unit, target, obstacles, map, {
+            pairInteractions,
+          }) === null) {
+        routes.delete(unit.referenceId);
+        events.push(event(tick, "pursuit-route-invalidated", unit.referenceId,
+          route.targetReferenceId, { reason: "direct-open" }));
+        route = null;
+      }
       if (route) {
         const advanced = advancePersistentChaseRoute(unit, route);
         if (advanced.waypointIndex !== route.waypointIndex) {
@@ -968,7 +1631,36 @@ function moveUnits(units, map, tick, events, kiteState = null,
           pairInteractions,
         });
         if (route?.stand === true) {
-          return Object.freeze({ x: unit.x, y: unit.y, pathWaypoint: true });
+          // A failed complete-route search is not a movement order to stand.
+          // The dynamic unit field may open on this very tick, so publish a
+          // real straight proposal and let collision resolution decide whether
+          // the unit can occupy the newly available space.
+          kiteState.unreachableChaseTargets.set(
+            unit.referenceId,
+            target.referenceId,
+          );
+          kiteState.chaseRouteDeferrals.delete(unit.referenceId);
+          events.push(event(tick, "pursuit-route-deferred", unit.referenceId,
+            target.referenceId, { reason: "no-reachable-frontier" }));
+          authoritativeRouteReferenceIds.add(unit.referenceId);
+          return Object.freeze({ x: target.x, y: target.y, pathWaypoint: true });
+        }
+        if (route && route.progressive !== true) {
+          const deferredTarget = kiteState.chaseRouteDeferrals.get(unit.referenceId);
+          if (deferredTarget !== target.referenceId) {
+            kiteState.chaseRouteDeferrals.set(unit.referenceId, target.referenceId);
+            events.push(event(tick, "pursuit-route-deferred", unit.referenceId,
+              target.referenceId, { reason: "retry-direct" }));
+            // Give the straight corridor one clean retry before committing to
+            // a tangent. Local avoidance is deliberately bypassed for this
+            // tick so a transiently opening gap cannot be replaced by another
+            // one-tick side step.
+            authoritativeRouteReferenceIds.add(unit.referenceId);
+            return Object.freeze({ x: target.x, y: target.y, pathWaypoint: true });
+          }
+          kiteState.chaseRouteDeferrals.delete(unit.referenceId);
+        } else {
+          kiteState.chaseRouteDeferrals.delete(unit.referenceId);
         }
         if (route) {
           routes.set(unit.referenceId, route);
@@ -976,10 +1668,15 @@ function moveUnits(units, map, tick, events, kiteState = null,
             target.referenceId, {
               waypointCount: route.waypoints.length,
               waypointIndex: route.waypointIndex,
+              ...(route.progressive === true ? { progressive: true } : {}),
             }));
         }
       }
       if (route) {
+        if (kiteState.unreachableChaseTargets.get(unit.referenceId)
+            === target.referenceId) {
+          kiteState.unreachableChaseTargets.delete(unit.referenceId);
+        }
         authoritativeRouteReferenceIds.add(unit.referenceId);
         const waypoint = route.waypoints[route.waypointIndex];
         return Object.freeze({
@@ -988,6 +1685,10 @@ function moveUnits(units, map, tick, events, kiteState = null,
           pathWaypoint: true,
           persistentRoute: true,
         });
+      }
+      if (kiteState.unreachableChaseTargets.get(unit.referenceId)
+          === target.referenceId) {
+        kiteState.unreachableChaseTargets.delete(unit.referenceId);
       }
       return target;
     }
@@ -1117,12 +1818,16 @@ function moveUnits(units, map, tick, events, kiteState = null,
         && unit.owner !== kiteState.owner
         && engaged?.alive && engaged.owner !== unit.owner
         && isWithinReach(unit, engaged)
-        && isWithinStopRange(unit, engaged, { pairInteractions })) {
+        && isWithinStopRange(unit, engaged, { pairInteractions })
+        && hasUnobstructedZeroRangeMeleeContact(unit, engaged, live)) {
       return Object.freeze({ referenceId: unit.referenceId, dx: 0, dy: 0 });
     }
     const target = byReference.get(unit.pursuitTargetId);
-    return target && unit.action !== "attacking" && !isWithinStopRange(
-      unit, target, { pairInteractions },
+    const needsFreeContactPosition = target
+      && !hasUnobstructedZeroRangeMeleeContact(unit, target, live);
+    return target && unit.action !== "attacking" && (
+      !isWithinStopRange(unit, target, { pairInteractions })
+        || needsFreeContactPosition
     )
       && !holdsForChargeVolley(unit, target)
       ? (() => {
@@ -1165,11 +1870,13 @@ function moveUnits(units, map, tick, events, kiteState = null,
       units: live,
       proposals,
       tick,
+      pairInteractions,
     })
     : null;
   if (contactUpdate) {
     pairInteractions = createPairInteractionSnapshot({
       contactReservations: contactUpdate.contactReservations,
+      pursuitTransitReferenceIds,
     });
     for (const diagnostic of contactUpdate.diagnostics) {
       const [leftId, rightId] = diagnostic.pairKey.split(":").map(Number);
@@ -1186,6 +1893,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
   let movementOptions = {
     pairInteractions: createPairInteractionSnapshot({
       contactReservations: contactUpdate?.contactReservations ?? new Map(),
+      pursuitTransitReferenceIds,
     }),
     ...(kiteState ? { collisionRecoveryState: kiteState.collisionRecoveryState } : {}),
     ...(authoritativeRouteReferenceIds.size > 0
@@ -1202,6 +1910,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
         owner: contactSteeringState.owner,
         strength: contactSteeringState.strength,
         authoritativeReferenceIds: authoritativeRouteReferenceIds,
+        pursuitTransitReferenceIds,
       },
     );
     contactSteeringState.steeredSteps += contactPlan.steered.length;
@@ -1243,6 +1952,27 @@ function moveUnits(units, map, tick, events, kiteState = null,
       ));
     }
     const proposal = proposalByReference.get(unit.referenceId);
+    if (before.action === "attacking"
+        && pursuitTransitReferenceIds.has(unit.referenceId)
+        && Math.hypot(proposal.dx, proposal.dy) <= ZERO_STEP_EPSILON
+        && Math.hypot(dx, dy) > ZERO_STEP_EPSILON) {
+      // A hard four-body decongestion escape may move the currently planted
+      // attacker when no incoming chaser has a collision-valid exit. Movement
+      // interrupts that swing exactly as an ordinary move order would; combat
+      // acquisition resumes from the legal separated position next tick.
+      unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
+      unit.attackTargetId = null;
+      unit.actionTimers.swing = 0;
+      unit.actionTimers.windup = 0;
+      delete unit.attackKind;
+      moveEvents.push(event(
+        tick,
+        "pursuit-decongestion",
+        unit.referenceId,
+        unit.pursuitTargetId,
+        { dx, dy },
+      ));
+    }
     const isBlocked = Math.abs(dx - proposal.dx) > 1e-12 || Math.abs(dy - proposal.dy) > 1e-12;
     if (authoritativeRouteReferenceIds.has(unit.referenceId)) {
       const route = kiteState?.chaseRoutes?.get(unit.referenceId);
@@ -1365,6 +2095,18 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
   const kiteOwner = kiteState ? kiteState.owner : null;
   if (kiteState && !kiteState.reachDwell) kiteState.reachDwell = new Map();
   const snapshot = Object.freeze(units.map(freezeUnit));
+  const zeroRangePursuitLoadByTarget = new Map();
+  for (const candidate of snapshot) {
+    if (!candidate.alive || !isZeroRangeMelee(candidate)) continue;
+    const target = snapshot.find(({ referenceId }) => (
+      referenceId === candidate.pursuitTargetId
+    ));
+    if (!target?.alive || target.owner === candidate.owner) continue;
+    zeroRangePursuitLoadByTarget.set(
+      target.referenceId,
+      (zeroRangePursuitLoadByTarget.get(target.referenceId) ?? 0) + 1,
+    );
+  }
   for (const unit of units) {
     if (!unit.alive) {
       unit.engagedTargetId = null;
@@ -1447,6 +2189,11 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
         for (const candidate of snapshot) {
           if (!candidate.alive || candidate.owner === unit.owner) continue;
           if (candidate.referenceId === unit.pursuitTargetId) continue;
+          if (isZeroRangeMelee(unit)
+              && (zeroRangePursuitLoadByTarget.get(candidate.referenceId) ?? 0)
+                >= meleeContactCapacity(unit, candidate, snapshot)) {
+            continue;
+          }
           const contactGap = Math.max(
             Math.abs(candidate.x - unit.x),
             Math.abs(candidate.y - unit.y),
@@ -1468,6 +2215,18 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
           }
         }
         if (touched) {
+          if (isZeroRangeMelee(unit)) {
+            const previousLoad = zeroRangePursuitLoadByTarget.get(unit.pursuitTargetId) ?? 0;
+            if (previousLoad <= 1) {
+              zeroRangePursuitLoadByTarget.delete(unit.pursuitTargetId);
+            } else {
+              zeroRangePursuitLoadByTarget.set(unit.pursuitTargetId, previousLoad - 1);
+            }
+            zeroRangePursuitLoadByTarget.set(
+              touched.referenceId,
+              (zeroRangePursuitLoadByTarget.get(touched.referenceId) ?? 0) + 1,
+            );
+          }
           unit.pursuitTargetId = touched.referenceId;
           unit.avoidance = null;
           events.push(event(tick, "contact-capture", unit.referenceId, touched.referenceId));
@@ -1963,6 +2722,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles, velocities,
       !target?.alive ||
       target.owner === unit.owner
     ) continue;
+    if (!hasUnobstructedZeroRangeMeleeContact(unit, target, units)) continue;
     if (!isWithinStopRange(unit, target) && movedIds.has(unit.referenceId)) continue;
 
     const delay = attackDelayTicks(unit.mechanics);

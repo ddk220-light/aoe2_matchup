@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "cpuUtilizationTarget": 0.8,
+  "availableParallelism": 24,
+  "workers": 4,
+  "rowIds": [
+    "elite_conquistador_vs_arbalester",
+    "elite_longbowman_vs_arbalester",
+    "elite_gbeto_vs_heavy_cav_archer",
+    "elite_conquistador_vs_heavy_cav_archer"
+  ],
+  "checkpointUnit": "one complete exact golden matchup row",
+  "checkpointWrite": "temporary file, flush, atomic rename",
+  "resumePolicy": "validate signature and shape, skip completed row checkpoints",
+  "stableSamples": 5,
+  "volatileSamples": 15
+}

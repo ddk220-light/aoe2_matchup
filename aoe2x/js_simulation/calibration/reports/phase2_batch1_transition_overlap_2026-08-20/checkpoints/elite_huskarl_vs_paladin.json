@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_huskarl_vs_paladin",
+  "completedAt": "2026-08-20T18:23:12.552Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 1,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 1,
+      "meanAbsoluteMeanDelta": 6.313131313131315,
+      "medianAbsoluteMeanDelta": 6.313131313131315,
+      "maximumAbsoluteMeanDelta": 6.313131313131315
+    },
+    "rows": [
+      {
+        "id": "elite_huskarl_vs_paladin",
+        "subjectSlug": "elite_huskarl",
+        "opponentSlug": "paladin",
+        "matchup": "Elite Huskarl vs Paladin",
+        "side2": {
+          "count": 21,
+          "master": 555,
+          "owner": 2,
+          "slug": "elite_huskarl",
+          "unit": "Elite Huskarl"
+        },
+        "side3": {
+          "count": 11,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 45.68181818181819,
+          "min": 27.474747474747474,
+          "max": 54.5959595959596,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 4,
+          "unresolvedRuns": 1,
+          "mean": 51.9949494949495,
+          "min": 41.61616161616162,
+          "max": 67.22222222222223,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 0,
+          "tapeBandCoverage": 0.75,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_huskarl_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_huskarl_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 824,
+            "score": 41.61616161616162,
+            "ticks": 4453,
+            "finalStateHash": "e7015baafed0e5f9d2a020990db9601f954a8950b84ba3b46ff47c39b12cb110",
+            "eventLogHash": "9e69f7f25d70f598c06fe0c5bfe18749bfe070b62267ad2a6e3a6a261db73eb3"
+          },
+          {
+            "rowId": "elite_huskarl_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 908,
+            "score": 45.85858585858586,
+            "ticks": 4142,
+            "finalStateHash": "1cf949e64cc01090353c1fb7b1ad3e1ab118713f5ba9bca512dbb9f19b3c7851",
+            "eventLogHash": "5d1138d1f63f76744b41b48cbaf182aaa0f8e56a23f8f6e13c7809eba0ef711d"
+          },
+          {
+            "rowId": "elite_huskarl_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1331,
+            "score": 67.22222222222223,
+            "ticks": 3623,
+            "finalStateHash": "7c5047b98cc63d5ab2986b4481fb3742054014192c7a2db9323f8295dc98cb29",
+            "eventLogHash": "f1dccf1a55fd1c7579330d8257cd952de3daaa99d692efc37a841bdba9333a57"
+          },
+          {
+            "rowId": "elite_huskarl_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1055,
+            "score": 53.282828282828284,
+            "ticks": 3542,
+            "finalStateHash": "d7915b9d9df3ac00fe8392c56d3b0e8829bf4022292d07c1f9cf23539678c52e",
+            "eventLogHash": "3fbe4ef50900bfa2635b9cacaedbad00509df5522c4f9191f45158f239060106"
+          }
+        ]
+      }
+    ]
+  }
+}

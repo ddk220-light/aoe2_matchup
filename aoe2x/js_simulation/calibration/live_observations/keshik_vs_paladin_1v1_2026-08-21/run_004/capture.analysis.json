@@ -1,0 +1,1806 @@
+{
+  "schema_version": 1,
+  "measurement_scope": "observed live 1v1; no simulation rule inferred",
+  "observed_matchup": "Elite Keshik vs Paladin",
+  "identity_note": "live gRPC exposed masters 1230/38; starting HP 165/180 confirms the Elite Keshik/Paladin units",
+  "collision": {
+    "keshik_radius_tiles": 0.25,
+    "opponent_radius_tiles": 0.25,
+    "contact_center_distance_euclidean_tiles": 0.5,
+    "radius_source": "live AoE2 game DAT: selected masters 1230 and 38"
+  },
+  "decode": {
+    "complete_sequences": 30346,
+    "decoded_delta_frames_total": 30345,
+    "decoded_delta_frames_selected": 30345,
+    "truncated_tail_bytes": 4,
+    "snapshots": [
+      {
+        "segment": 1,
+        "t_ms": 654,
+        "snapshot_bytes": 8364064
+      }
+    ],
+    "selected_segment": 1,
+    "selected_entities": [
+      {
+        "key": 649,
+        "id": 649,
+        "master": 2551,
+        "owner": 1,
+        "hp": 1.0,
+        "x": 0.5,
+        "y": 0.5
+      },
+      {
+        "key": 648,
+        "id": 648,
+        "master": 1291,
+        "owner": 1,
+        "hp": 1.0,
+        "x": 0.5,
+        "y": 0.5
+      },
+      {
+        "key": 1569,
+        "id": 1569,
+        "master": 1775,
+        "owner": 1,
+        "hp": 1.0,
+        "x": 9.5,
+        "y": 6.5
+      },
+      {
+        "key": 1570,
+        "id": 1570,
+        "master": 1775,
+        "owner": 1,
+        "hp": 1.0,
+        "x": 8.5,
+        "y": 7.5
+      },
+      {
+        "key": 1777,
+        "id": 1777,
+        "master": 1230,
+        "owner": 1,
+        "hp": 0.0,
+        "x": 6.8044891357421875,
+        "y": 10.670787811279297
+      },
+      {
+        "key": 1778,
+        "id": 1778,
+        "master": 38,
+        "owner": 2,
+        "hp": 90.0,
+        "x": 7.379264831542969,
+        "y": 10.934489250183105
+      },
+      {
+        "key": 1779,
+        "id": 1779,
+        "master": 1229,
+        "owner": 1,
+        "hp": null,
+        "x": 6.8044891357421875,
+        "y": 10.670787811279297
+      }
+    ]
+  },
+  "time_span_s": [
+    0.823,
+    34.69
+  ],
+  "units": {
+    "keshik": {
+      "label": "Elite Keshik",
+      "id": 1777,
+      "master": 1230,
+      "owner": 1,
+      "initial_hp": 165.0,
+      "first_target": {
+        "t_s": 10.495,
+        "position": [
+          8.814835,
+          10.731636
+        ],
+        "action_type": null,
+        "action_state": 4,
+        "state_label": "moving-to-target",
+        "target_id": 1778,
+        "geometry": {
+          "dx": 2.270128,
+          "dy": 0.282168,
+          "chebyshev_center_distance": 2.270128,
+          "euclidean_center_distance": 2.287597,
+          "body_gap": 1.787597,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 1.770128,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "first_movement": {
+        "t_s": 2.223,
+        "position": [
+          10.49538,
+          4.5
+        ],
+        "action_type": null,
+        "action_state": 4,
+        "state_label": "moving-to-target",
+        "target_id": -1,
+        "geometry": {
+          "dx": 7.99538,
+          "dy": 7.0,
+          "chebyshev_center_distance": 7.99538,
+          "euclidean_center_distance": 10.62667,
+          "body_gap": 10.12667,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 7.49538,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "first_attack_animation": {
+        "t_s": 11.06,
+        "position": [
+          7.971476,
+          10.626037
+        ],
+        "action_type": null,
+        "action_state": 7,
+        "state_label": "attack-animation",
+        "target_id": 1778,
+        "geometry": {
+          "dx": 0.5979,
+          "dy": 0.079099,
+          "chebyshev_center_distance": 0.5979,
+          "euclidean_center_distance": 0.603109,
+          "body_gap": 0.103109,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0979,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "first_damage_taken": {
+        "t_s": 11.731,
+        "position": [
+          7.971476,
+          10.626037
+        ],
+        "action_type": null,
+        "action_state": 7,
+        "state_label": "attack-animation",
+        "target_id": 1778,
+        "geometry": {
+          "dx": 0.5979,
+          "dy": 0.079099,
+          "chebyshev_center_distance": 0.5979,
+          "euclidean_center_distance": 0.603109,
+          "body_gap": 0.103109,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0979,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "last_movement_before_first_attack_s": 11.06,
+      "stationary_before_first_attack_s": 0.0,
+      "median_moving_speed_tiles_s": 1.540128,
+      "pursuit": {
+        "sampled_steps": 500,
+        "path_length_tiles": 0.849945,
+        "closing_step_fraction": 1.0,
+        "median_heading_cosine_to_target": 0.999999
+      },
+      "target_transitions": [
+        {
+          "t_s": 2.22,
+          "from": null,
+          "to": -1
+        },
+        {
+          "t_s": 10.495,
+          "from": -1,
+          "to": 1778
+        },
+        {
+          "t_s": 12.106,
+          "from": 1778,
+          "to": -1
+        },
+        {
+          "t_s": 13.0,
+          "from": -1,
+          "to": 1778
+        },
+        {
+          "t_s": 14.236,
+          "from": 1778,
+          "to": -1
+        },
+        {
+          "t_s": 14.77,
+          "from": -1,
+          "to": 1778
+        },
+        {
+          "t_s": 15.93,
+          "from": 1778,
+          "to": -1
+        },
+        {
+          "t_s": 16.405,
+          "from": -1,
+          "to": 1778
+        },
+        {
+          "t_s": 17.619,
+          "from": 1778,
+          "to": -1
+        },
+        {
+          "t_s": 18.51,
+          "from": -1,
+          "to": 1778
+        },
+        {
+          "t_s": 19.74,
+          "from": 1778,
+          "to": -1
+        },
+        {
+          "t_s": 21.332,
+          "from": -1,
+          "to": 1778
+        },
+        {
+          "t_s": 22.538,
+          "from": 1778,
+          "to": -1
+        },
+        {
+          "t_s": 23.62,
+          "from": -1,
+          "to": 1778
+        },
+        {
+          "t_s": 24.776,
+          "from": 1778,
+          "to": -1
+        },
+        {
+          "t_s": 25.916,
+          "from": -1,
+          "to": 1778
+        },
+        {
+          "t_s": 28.228,
+          "from": 1778,
+          "to": -1
+        },
+        {
+          "t_s": 29.582,
+          "from": -1,
+          "to": 1778
+        },
+        {
+          "t_s": 30.779,
+          "from": 1778,
+          "to": -1
+        },
+        {
+          "t_s": 31.803,
+          "from": -1,
+          "to": 1778
+        }
+      ],
+      "action_transitions": [
+        {
+          "t_s": 2.22,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 11.06,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 12.106,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 13.159,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 14.236,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 14.794,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1778
+        },
+        {
+          "t_s": 15.062,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 15.93,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 16.405,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1778
+        },
+        {
+          "t_s": 16.963,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 17.619,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 18.51,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 19.74,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 21.332,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 22.538,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 23.62,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 24.776,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 25.916,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 27.317,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1778
+        },
+        {
+          "t_s": 27.817,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 28.228,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 29.582,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        },
+        {
+          "t_s": 30.779,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": -1
+        },
+        {
+          "t_s": 31.803,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1778
+        }
+      ]
+    },
+    "opponent": {
+      "label": "Paladin",
+      "id": 1778,
+      "master": 38,
+      "owner": 2,
+      "initial_hp": 180.0,
+      "first_target": {
+        "t_s": 7.446,
+        "position": [
+          2.5,
+          11.5
+        ],
+        "action_type": null,
+        "action_state": 4,
+        "state_label": "moving-to-target",
+        "target_id": 1777,
+        "geometry": {
+          "dx": 2.408725,
+          "dy": 2.655559,
+          "chebyshev_center_distance": 2.655559,
+          "euclidean_center_distance": 3.58524,
+          "body_gap": 3.08524,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 2.155559,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "first_movement": {
+        "t_s": 7.449,
+        "position": [
+          2.500998,
+          11.4989
+        ],
+        "action_type": null,
+        "action_state": 4,
+        "state_label": "moving-to-target",
+        "target_id": 1777,
+        "geometry": {
+          "dx": 2.405741,
+          "dy": 2.650288,
+          "chebyshev_center_distance": 2.650288,
+          "euclidean_center_distance": 3.579332,
+          "body_gap": 3.079332,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 2.150288,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "first_attack_animation": {
+        "t_s": 11.059,
+        "position": [
+          7.373576,
+          10.546938
+        ],
+        "action_type": null,
+        "action_state": 7,
+        "state_label": "attack-animation",
+        "target_id": 1777,
+        "geometry": {
+          "dx": 0.599428,
+          "dy": 0.079292,
+          "chebyshev_center_distance": 0.599428,
+          "euclidean_center_distance": 0.604649,
+          "body_gap": 0.104649,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.099428,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "first_damage_taken": {
+        "t_s": 11.761,
+        "position": [
+          7.373576,
+          10.546938
+        ],
+        "action_type": null,
+        "action_state": 7,
+        "state_label": "attack-animation",
+        "target_id": 1777,
+        "geometry": {
+          "dx": 0.5979,
+          "dy": 0.079099,
+          "chebyshev_center_distance": 0.5979,
+          "euclidean_center_distance": 0.603109,
+          "body_gap": 0.103109,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0979,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      "last_movement_before_first_attack_s": 11.059,
+      "stationary_before_first_attack_s": 0.0,
+      "median_moving_speed_tiles_s": 1.485033,
+      "pursuit": {
+        "sampled_steps": 3188,
+        "path_length_tiles": 5.289555,
+        "closing_step_fraction": 0.693538,
+        "median_heading_cosine_to_target": 0.999902
+      },
+      "target_transitions": [
+        {
+          "t_s": 7.446,
+          "from": null,
+          "to": 1777
+        },
+        {
+          "t_s": 33.717,
+          "from": 1777,
+          "to": -1
+        },
+        {
+          "t_s": 33.718,
+          "from": -1,
+          "to": null
+        }
+      ],
+      "action_transitions": [
+        {
+          "t_s": 7.446,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": 1777
+        },
+        {
+          "t_s": 11.059,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 12.61,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 12.89,
+          "action_type": null,
+          "action_state": 4,
+          "state_label": "moving-to-target",
+          "target_id": 1777
+        },
+        {
+          "t_s": 13.156,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 14.707,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 15.057,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 16.609,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 16.958,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 18.51,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 18.859,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 20.41,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 20.76,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 22.311,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 22.661,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 24.212,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 24.562,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 26.113,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 26.463,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 28.014,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 28.364,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 29.915,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 30.265,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 31.816,
+          "action_type": null,
+          "action_state": 6,
+          "state_label": "recovering/reload",
+          "target_id": 1777
+        },
+        {
+          "t_s": 32.166,
+          "action_type": null,
+          "action_state": 7,
+          "state_label": "attack-animation",
+          "target_id": 1777
+        },
+        {
+          "t_s": 32.838,
+          "action_type": null,
+          "action_state": 2,
+          "state_label": "target-lost",
+          "target_id": 1777
+        },
+        {
+          "t_s": 33.717,
+          "action_type": null,
+          "action_state": 3,
+          "state_label": "fresh-order",
+          "target_id": -1
+        },
+        {
+          "t_s": 33.718,
+          "action_type": null,
+          "action_state": null,
+          "state_label": "unknown",
+          "target_id": null
+        }
+      ]
+    }
+  },
+  "pair": {
+    "first_contact": {
+      "t_s": 18.407,
+      "keshik_position": [
+        7.834594,
+        10.728315
+      ],
+      "opponent_position": [
+        7.379265,
+        10.934489
+      ],
+      "geometry": {
+        "dx": 0.455329,
+        "dy": 0.206174,
+        "chebyshev_center_distance": 0.455329,
+        "euclidean_center_distance": 0.499832,
+        "body_gap": 0.0,
+        "overlap_depth": 0.000168,
+        "axis_aligned_body_gap": 0.0,
+        "axis_aligned_overlap_depth": 0.044671
+      }
+    },
+    "first_overlap": {
+      "t_s": 18.407,
+      "keshik_position": [
+        7.834594,
+        10.728315
+      ],
+      "opponent_position": [
+        7.379265,
+        10.934489
+      ],
+      "geometry": {
+        "dx": 0.455329,
+        "dy": 0.206174,
+        "chebyshev_center_distance": 0.455329,
+        "euclidean_center_distance": 0.499832,
+        "body_gap": 0.0,
+        "overlap_depth": 0.000168,
+        "axis_aligned_body_gap": 0.0,
+        "axis_aligned_overlap_depth": 0.044671
+      }
+    },
+    "first_axis_aligned_contact": {
+      "t_s": 12.389,
+      "keshik_position": [
+        7.873576,
+        11.046938
+      ],
+      "opponent_position": [
+        7.373576,
+        10.546938
+      ],
+      "geometry": {
+        "dx": 0.5,
+        "dy": 0.5,
+        "chebyshev_center_distance": 0.5,
+        "euclidean_center_distance": 0.707107,
+        "body_gap": 0.207107,
+        "overlap_depth": 0.0,
+        "axis_aligned_body_gap": 0.0,
+        "axis_aligned_overlap_depth": 0.0
+      }
+    },
+    "first_axis_aligned_overlap": {
+      "t_s": 18.196,
+      "keshik_position": [
+        7.739854,
+        10.439345
+      ],
+      "opponent_position": [
+        7.379265,
+        10.934489
+      ],
+      "geometry": {
+        "dx": 0.36059,
+        "dy": 0.495144,
+        "chebyshev_center_distance": 0.495144,
+        "euclidean_center_distance": 0.612529,
+        "body_gap": 0.112529,
+        "overlap_depth": 0.0,
+        "axis_aligned_body_gap": 0.0,
+        "axis_aligned_overlap_depth": 0.004856
+      }
+    },
+    "closest_approach": {
+      "t_s": 31.277,
+      "keshik_position": [
+        7.466117,
+        10.491486
+      ],
+      "opponent_position": [
+        7.379265,
+        10.934489
+      ],
+      "geometry": {
+        "dx": 0.086853,
+        "dy": 0.443004,
+        "chebyshev_center_distance": 0.443004,
+        "euclidean_center_distance": 0.451437,
+        "body_gap": 0.0,
+        "overlap_depth": 0.048563,
+        "axis_aligned_body_gap": 0.0,
+        "axis_aligned_overlap_depth": 0.056996
+      }
+    },
+    "maximum_overlap": {
+      "t_s": 31.277,
+      "keshik_position": [
+        7.466117,
+        10.491486
+      ],
+      "opponent_position": [
+        7.379265,
+        10.934489
+      ],
+      "geometry": {
+        "dx": 0.086853,
+        "dy": 0.443004,
+        "chebyshev_center_distance": 0.443004,
+        "euclidean_center_distance": 0.451437,
+        "body_gap": 0.0,
+        "overlap_depth": 0.048563,
+        "axis_aligned_body_gap": 0.0,
+        "axis_aligned_overlap_depth": 0.056996
+      }
+    },
+    "maximum_axis_aligned_overlap": {
+      "t_s": 25.802,
+      "keshik_position": [
+        6.998848,
+        11.313945
+      ],
+      "opponent_position": [
+        7.379265,
+        10.934489
+      ],
+      "geometry": {
+        "dx": 0.380417,
+        "dy": 0.379456,
+        "chebyshev_center_distance": 0.380417,
+        "euclidean_center_distance": 0.537311,
+        "body_gap": 0.037311,
+        "overlap_depth": 0.0,
+        "axis_aligned_body_gap": 0.0,
+        "axis_aligned_overlap_depth": 0.119583
+      }
+    },
+    "manual_keshik_engagements": [
+      {
+        "sequence": 1,
+        "ground_move_order_t_s": 2.22,
+        "attack_animation_t_s": 11.06,
+        "order_to_attack_s": 8.84,
+        "approach_angle_degrees": 187.536138,
+        "attack_start": {
+          "t_s": 11.06,
+          "keshik_position": [
+            7.971476,
+            10.626037
+          ],
+          "opponent_position": [
+            7.373576,
+            10.546938
+          ],
+          "geometry": {
+            "dx": 0.5979,
+            "dy": 0.079099,
+            "chebyshev_center_distance": 0.5979,
+            "euclidean_center_distance": 0.603109,
+            "body_gap": 0.103109,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.0979,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 11.06,
+          "keshik_position": [
+            7.971476,
+            10.626037
+          ],
+          "opponent_position": [
+            7.373576,
+            10.546938
+          ],
+          "geometry": {
+            "dx": 0.5979,
+            "dy": 0.079099,
+            "chebyshev_center_distance": 0.5979,
+            "euclidean_center_distance": 0.603109,
+            "body_gap": 0.103109,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.0979,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        }
+      },
+      {
+        "sequence": 2,
+        "ground_move_order_t_s": 12.106,
+        "attack_animation_t_s": 13.159,
+        "order_to_attack_s": 1.053,
+        "approach_angle_degrees": 276.683537,
+        "attack_start": {
+          "t_s": 13.159,
+          "keshik_position": [
+            7.309593,
+            11.52905
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.069672,
+            "dy": 0.594561,
+            "chebyshev_center_distance": 0.594561,
+            "euclidean_center_distance": 0.598629,
+            "body_gap": 0.098629,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.094561,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 13.159,
+          "keshik_position": [
+            7.309593,
+            11.52905
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.069672,
+            "dy": 0.594561,
+            "chebyshev_center_distance": 0.594561,
+            "euclidean_center_distance": 0.598629,
+            "body_gap": 0.098629,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.094561,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        }
+      },
+      {
+        "sequence": 3,
+        "ground_move_order_t_s": 14.236,
+        "attack_animation_t_s": 15.062,
+        "order_to_attack_s": 0.826,
+        "approach_angle_degrees": 344.825791,
+        "attack_start": {
+          "t_s": 15.062,
+          "keshik_position": [
+            6.780591,
+            11.096856
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.598674,
+            "dy": 0.162367,
+            "chebyshev_center_distance": 0.598674,
+            "euclidean_center_distance": 0.620301,
+            "body_gap": 0.120301,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.098674,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 14.275,
+          "keshik_position": [
+            7.250937,
+            11.516148
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.128327,
+            "dy": 0.581658,
+            "chebyshev_center_distance": 0.581658,
+            "euclidean_center_distance": 0.595646,
+            "body_gap": 0.095646,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.081658,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        }
+      },
+      {
+        "sequence": 4,
+        "ground_move_order_t_s": 15.93,
+        "attack_animation_t_s": 16.963,
+        "order_to_attack_s": 1.033,
+        "approach_angle_degrees": 47.990801,
+        "attack_start": {
+          "t_s": 16.963,
+          "keshik_position": [
+            6.905152,
+            10.408104
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.474113,
+            "dy": 0.526385,
+            "chebyshev_center_distance": 0.526385,
+            "euclidean_center_distance": 0.708424,
+            "body_gap": 0.208424,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.026385,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 16.093,
+          "keshik_position": [
+            6.81735,
+            10.850121
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.561914,
+            "dy": 0.084369,
+            "chebyshev_center_distance": 0.561914,
+            "euclidean_center_distance": 0.568213,
+            "body_gap": 0.068213,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.061914,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        }
+      },
+      {
+        "sequence": 5,
+        "ground_move_order_t_s": 17.619,
+        "attack_animation_t_s": 18.51,
+        "order_to_attack_s": 0.891,
+        "approach_angle_degrees": 172.085272,
+        "attack_start": {
+          "t_s": 18.51,
+          "keshik_position": [
+            7.860995,
+            10.867517
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.48173,
+            "dy": 0.066972,
+            "chebyshev_center_distance": 0.48173,
+            "euclidean_center_distance": 0.486363,
+            "body_gap": 0.0,
+            "overlap_depth": 0.013637,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.01827
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 18.489,
+          "keshik_position": [
+            7.856395,
+            10.843316
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.47713,
+            "dy": 0.091173,
+            "chebyshev_center_distance": 0.47713,
+            "euclidean_center_distance": 0.485763,
+            "body_gap": 0.0,
+            "overlap_depth": 0.014237,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.02287
+          }
+        }
+      },
+      {
+        "sequence": 6,
+        "ground_move_order_t_s": 19.74,
+        "attack_animation_t_s": 21.332,
+        "order_to_attack_s": 1.592,
+        "approach_angle_degrees": 32.863305,
+        "attack_start": {
+          "t_s": 21.332,
+          "keshik_position": [
+            6.879265,
+            10.611479
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.5,
+            "dy": 0.32301,
+            "chebyshev_center_distance": 0.5,
+            "euclidean_center_distance": 0.595261,
+            "body_gap": 0.095261,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 19.74,
+          "keshik_position": [
+            7.860995,
+            10.867517
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.48173,
+            "dy": 0.066972,
+            "chebyshev_center_distance": 0.48173,
+            "euclidean_center_distance": 0.486363,
+            "body_gap": 0.0,
+            "overlap_depth": 0.013637,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.01827
+          }
+        }
+      },
+      {
+        "sequence": 7,
+        "ground_move_order_t_s": 22.538,
+        "attack_animation_t_s": 23.62,
+        "order_to_attack_s": 1.082,
+        "approach_angle_degrees": 171.528262,
+        "attack_start": {
+          "t_s": 23.62,
+          "keshik_position": [
+            7.879265,
+            10.860016
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.5,
+            "dy": 0.074473,
+            "chebyshev_center_distance": 0.5,
+            "euclidean_center_distance": 0.505516,
+            "body_gap": 0.005516,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 23.41,
+          "keshik_position": [
+            7.78975,
+            10.639774
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.410485,
+            "dy": 0.294715,
+            "chebyshev_center_distance": 0.410485,
+            "euclidean_center_distance": 0.505327,
+            "body_gap": 0.005327,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.089515
+          }
+        }
+      },
+      {
+        "sequence": 8,
+        "ground_move_order_t_s": 24.776,
+        "attack_animation_t_s": 25.916,
+        "order_to_attack_s": 1.14,
+        "approach_angle_degrees": 332.675631,
+        "attack_start": {
+          "t_s": 25.916,
+          "keshik_position": [
+            6.975616,
+            11.143045
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.403649,
+            "dy": 0.208556,
+            "chebyshev_center_distance": 0.403649,
+            "euclidean_center_distance": 0.454344,
+            "body_gap": 0.0,
+            "overlap_depth": 0.045656,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.096351
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 25.915,
+          "keshik_position": [
+            6.975616,
+            11.143045
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.403649,
+            "dy": 0.208556,
+            "chebyshev_center_distance": 0.403649,
+            "euclidean_center_distance": 0.454344,
+            "body_gap": 0.0,
+            "overlap_depth": 0.045656,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.096351
+          }
+        }
+      },
+      {
+        "sequence": 9,
+        "ground_move_order_t_s": 28.228,
+        "attack_animation_t_s": 29.582,
+        "order_to_attack_s": 1.354,
+        "approach_angle_degrees": 166.751004,
+        "attack_start": {
+          "t_s": 29.582,
+          "keshik_position": [
+            7.908129,
+            10.809968
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.528864,
+            "dy": 0.124521,
+            "chebyshev_center_distance": 0.528864,
+            "euclidean_center_distance": 0.543326,
+            "body_gap": 0.043326,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.028864,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 28.228,
+          "keshik_position": [
+            6.975616,
+            11.143045
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.403649,
+            "dy": 0.208556,
+            "chebyshev_center_distance": 0.403649,
+            "euclidean_center_distance": 0.454344,
+            "body_gap": 0.0,
+            "overlap_depth": 0.045656,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.096351
+          }
+        }
+      },
+      {
+        "sequence": 10,
+        "ground_move_order_t_s": 30.779,
+        "attack_animation_t_s": 31.803,
+        "order_to_attack_s": 1.024,
+        "approach_angle_degrees": 24.645192,
+        "attack_start": {
+          "t_s": 31.803,
+          "keshik_position": [
+            6.804489,
+            10.670788
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.574776,
+            "dy": 0.263701,
+            "chebyshev_center_distance": 0.574776,
+            "euclidean_center_distance": 0.632381,
+            "body_gap": 0.132381,
+            "overlap_depth": 0.0,
+            "axis_aligned_body_gap": 0.074776,
+            "axis_aligned_overlap_depth": 0.0
+          }
+        },
+        "closest_in_episode": {
+          "t_s": 31.277,
+          "keshik_position": [
+            7.466117,
+            10.491486
+          ],
+          "opponent_position": [
+            7.379265,
+            10.934489
+          ],
+          "geometry": {
+            "dx": 0.086853,
+            "dy": 0.443004,
+            "chebyshev_center_distance": 0.443004,
+            "euclidean_center_distance": 0.451437,
+            "body_gap": 0.0,
+            "overlap_depth": 0.048563,
+            "axis_aligned_body_gap": 0.0,
+            "axis_aligned_overlap_depth": 0.056996
+          }
+        }
+      }
+    ],
+    "damage_events": [
+      {
+        "t_s": 11.731,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 151.0,
+        "geometry": {
+          "dx": 0.5979,
+          "dy": 0.079099,
+          "chebyshev_center_distance": 0.5979,
+          "euclidean_center_distance": 0.603109,
+          "body_gap": 0.103109,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0979,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 13.828,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 137.0,
+        "geometry": {
+          "dx": 0.069672,
+          "dy": 0.594561,
+          "chebyshev_center_distance": 0.594561,
+          "euclidean_center_distance": 0.598629,
+          "body_gap": 0.098629,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.094561,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 15.729,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 123.0,
+        "geometry": {
+          "dx": 0.598674,
+          "dy": 0.162367,
+          "chebyshev_center_distance": 0.598674,
+          "euclidean_center_distance": 0.620301,
+          "body_gap": 0.120301,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.098674,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 17.63,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 109.0,
+        "geometry": {
+          "dx": 0.457359,
+          "dy": 0.528913,
+          "chebyshev_center_distance": 0.528913,
+          "euclidean_center_distance": 0.699233,
+          "body_gap": 0.199233,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.028913,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 19.531,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 95.0,
+        "geometry": {
+          "dx": 0.48173,
+          "dy": 0.066972,
+          "chebyshev_center_distance": 0.48173,
+          "euclidean_center_distance": 0.486363,
+          "body_gap": 0.0,
+          "overlap_depth": 0.013637,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.01827
+        }
+      },
+      {
+        "t_s": 21.432,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 81.0,
+        "geometry": {
+          "dx": 0.5,
+          "dy": 0.32301,
+          "chebyshev_center_distance": 0.5,
+          "euclidean_center_distance": 0.595261,
+          "body_gap": 0.095261,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 23.333,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 67.0,
+        "geometry": {
+          "dx": 0.397228,
+          "dy": 0.41257,
+          "chebyshev_center_distance": 0.41257,
+          "euclidean_center_distance": 0.572717,
+          "body_gap": 0.072717,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.08743
+        }
+      },
+      {
+        "t_s": 25.234,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 53.0,
+        "geometry": {
+          "dx": 0.373707,
+          "dy": 0.498625,
+          "chebyshev_center_distance": 0.498625,
+          "euclidean_center_distance": 0.623124,
+          "body_gap": 0.123124,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.001375
+        }
+      },
+      {
+        "t_s": 27.135,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 39.0,
+        "geometry": {
+          "dx": 0.403649,
+          "dy": 0.208556,
+          "chebyshev_center_distance": 0.403649,
+          "euclidean_center_distance": 0.454344,
+          "body_gap": 0.0,
+          "overlap_depth": 0.045656,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.096351
+        }
+      },
+      {
+        "t_s": 29.036,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 25.0,
+        "geometry": {
+          "dx": 0.348628,
+          "dy": 0.5,
+          "chebyshev_center_distance": 0.5,
+          "euclidean_center_distance": 0.609542,
+          "body_gap": 0.109542,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 30.937,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 14.0,
+        "hp_after": 11.0,
+        "geometry": {
+          "dx": 0.510198,
+          "dy": 0.367117,
+          "chebyshev_center_distance": 0.510198,
+          "euclidean_center_distance": 0.628551,
+          "body_gap": 0.128551,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.010198,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 32.838,
+        "attacker_id": 1778,
+        "victim": "Elite Keshik",
+        "victim_id": 1777,
+        "damage": 11.0,
+        "hp_after": 0.0,
+        "geometry": {
+          "dx": 0.574776,
+          "dy": 0.263701,
+          "chebyshev_center_distance": 0.574776,
+          "euclidean_center_distance": 0.632381,
+          "body_gap": 0.132381,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.074776,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 11.761,
+        "attacker_id": 1777,
+        "victim": "Paladin",
+        "victim_id": 1778,
+        "damage": 10.0,
+        "hp_after": 170.0,
+        "geometry": {
+          "dx": 0.5979,
+          "dy": 0.079099,
+          "chebyshev_center_distance": 0.5979,
+          "euclidean_center_distance": 0.603109,
+          "body_gap": 0.103109,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0979,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 13.86,
+        "attacker_id": 1777,
+        "victim": "Paladin",
+        "victim_id": 1778,
+        "damage": 10.0,
+        "hp_after": 160.0,
+        "geometry": {
+          "dx": 0.069672,
+          "dy": 0.594561,
+          "chebyshev_center_distance": 0.594561,
+          "euclidean_center_distance": 0.598629,
+          "body_gap": 0.098629,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.094561,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 15.763,
+        "attacker_id": 1777,
+        "victim": "Paladin",
+        "victim_id": 1778,
+        "damage": 10.0,
+        "hp_after": 150.0,
+        "geometry": {
+          "dx": 0.598674,
+          "dy": 0.162367,
+          "chebyshev_center_distance": 0.598674,
+          "euclidean_center_distance": 0.620301,
+          "body_gap": 0.120301,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.098674,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 19.211,
+        "attacker_id": 1777,
+        "victim": "Paladin",
+        "victim_id": 1778,
+        "damage": 10.0,
+        "hp_after": 140.0,
+        "geometry": {
+          "dx": 0.48173,
+          "dy": 0.066972,
+          "chebyshev_center_distance": 0.48173,
+          "euclidean_center_distance": 0.486363,
+          "body_gap": 0.0,
+          "overlap_depth": 0.013637,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.01827
+        }
+      },
+      {
+        "t_s": 22.033,
+        "attacker_id": 1777,
+        "victim": "Paladin",
+        "victim_id": 1778,
+        "damage": 10.0,
+        "hp_after": 130.0,
+        "geometry": {
+          "dx": 0.5,
+          "dy": 0.32301,
+          "chebyshev_center_distance": 0.5,
+          "euclidean_center_distance": 0.595261,
+          "body_gap": 0.095261,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 24.321,
+        "attacker_id": 1777,
+        "victim": "Paladin",
+        "victim_id": 1778,
+        "damage": 10.0,
+        "hp_after": 120.0,
+        "geometry": {
+          "dx": 0.5,
+          "dy": 0.074473,
+          "chebyshev_center_distance": 0.5,
+          "euclidean_center_distance": 0.505516,
+          "body_gap": 0.005516,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 26.617,
+        "attacker_id": 1777,
+        "victim": "Paladin",
+        "victim_id": 1778,
+        "damage": 10.0,
+        "hp_after": 110.0,
+        "geometry": {
+          "dx": 0.403649,
+          "dy": 0.208556,
+          "chebyshev_center_distance": 0.403649,
+          "euclidean_center_distance": 0.454344,
+          "body_gap": 0.0,
+          "overlap_depth": 0.045656,
+          "axis_aligned_body_gap": 0.0,
+          "axis_aligned_overlap_depth": 0.096351
+        }
+      },
+      {
+        "t_s": 30.287,
+        "attacker_id": 1777,
+        "victim": "Paladin",
+        "victim_id": 1778,
+        "damage": 10.0,
+        "hp_after": 100.0,
+        "geometry": {
+          "dx": 0.528864,
+          "dy": 0.124521,
+          "chebyshev_center_distance": 0.528864,
+          "euclidean_center_distance": 0.543326,
+          "body_gap": 0.043326,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.028864,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      },
+      {
+        "t_s": 32.504,
+        "attacker_id": 1777,
+        "victim": "Paladin",
+        "victim_id": 1778,
+        "damage": 10.0,
+        "hp_after": 90.0,
+        "geometry": {
+          "dx": 0.574776,
+          "dy": 0.263701,
+          "chebyshev_center_distance": 0.574776,
+          "euclidean_center_distance": 0.632381,
+          "body_gap": 0.132381,
+          "overlap_depth": 0.0,
+          "axis_aligned_body_gap": 0.074776,
+          "axis_aligned_overlap_depth": 0.0
+        }
+      }
+    ],
+    "kill_events": []
+  }
+}

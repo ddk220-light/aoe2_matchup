@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_rattan_archer_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T23:42:14.889Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 13.375661375661366,
+      "medianAbsoluteMeanDelta": 13.375661375661366,
+      "maximumAbsoluteMeanDelta": 13.375661375661366
+    },
+    "rows": [
+      {
+        "id": "elite_rattan_archer_vs_heavy_cav_archer",
+        "subjectSlug": "elite_rattan_archer",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Elite Rattan Archer vs Heavy Cavalry Archer",
+        "side2": {
+          "count": 21,
+          "master": 1131,
+          "owner": 2,
+          "slug": "elite_rattan_archer",
+          "unit": "Elite Rattan Archer"
+        },
+        "side3": {
+          "count": 18,
+          "master": 474,
+          "owner": 3,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -80.21164021164022,
+          "min": -80.21164021164022,
+          "max": -80.21164021164022,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -93.58730158730158,
+          "min": -94.07407407407408,
+          "max": -93.01587301587301,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 13.375661375661366,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 879,
+            "score": -93.01587301587301,
+            "ticks": 2018,
+            "finalStateHash": "9341de2a5091ab726d40f41148b83c52e4cdd33328f3fd06a499a44bd60c3806",
+            "eventLogHash": "3c02b28e7f6f3d194874c27bd8caa22ff80123e9bf12f9882147592d4b675a6c"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 881,
+            "score": -93.22751322751323,
+            "ticks": 2130,
+            "finalStateHash": "f7f7d265f820a04cd835d2036f36620f4704c5d6aa438e03e19f838b8b7efd12",
+            "eventLogHash": "c89491502a1713f53fde0c5eab1971be001e7881eb6a61e54853751da601a28b"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 885,
+            "score": -93.65079365079364,
+            "ticks": 2126,
+            "finalStateHash": "b7dc497176b3f5d9068a25f30a110f56d558ef39cac2d9cfb88ee846176c5c54",
+            "eventLogHash": "e9efb2e4cebea65d215dd58bb0464e46b8fd0af7ffa88a9697329c63b5a3170e"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 889,
+            "score": -94.07407407407408,
+            "ticks": 2021,
+            "finalStateHash": "238600a29749ea5c10da52f59d4c0ddfb350b8b466d9ee1b52b01a26d6f71afa",
+            "eventLogHash": "4c743823241a28a63e9cca5982c25b2961278c17108282763803beb2f1100aab"
+          },
+          {
+            "rowId": "elite_rattan_archer_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 888,
+            "score": -93.96825396825396,
+            "ticks": 2023,
+            "finalStateHash": "97247a8c7bcfffb92eb6429e97727665fa5a23041ff1117d7d6ef5054d130ccf",
+            "eventLogHash": "9bdb7096375e55e547465dfcf693242872214ea1d38be174d69e7e08e340ccec"
+          }
+        ]
+      }
+    ]
+  }
+}

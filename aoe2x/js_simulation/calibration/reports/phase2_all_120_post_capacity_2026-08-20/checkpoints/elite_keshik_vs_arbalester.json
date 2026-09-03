@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_keshik_vs_arbalester",
+  "completedAt": "2026-08-21T00:35:13.357Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 8.636363636363633,
+      "medianAbsoluteMeanDelta": 8.636363636363633,
+      "maximumAbsoluteMeanDelta": 8.636363636363633
+    },
+    "rows": [
+      {
+        "id": "elite_keshik_vs_arbalester",
+        "subjectSlug": "elite_keshik",
+        "opponentSlug": "arbalester",
+        "matchup": "Arbalester vs Elite Keshik",
+        "side2": {
+          "count": 21,
+          "master": 492,
+          "owner": 2,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "side3": {
+          "count": 16,
+          "master": 1230,
+          "owner": 3,
+          "slug": "elite_keshik",
+          "unit": "Elite Keshik"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 55.11363636363637,
+          "min": 55.11363636363637,
+          "max": 55.11363636363637,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 63.75,
+          "min": 63.75,
+          "max": 63.75,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 8.636363636363633,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_keshik_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1683,
+            "score": 63.75,
+            "ticks": 2852,
+            "finalStateHash": "caa2ad553c4f8d833cb1ea323a17a5fac6f4ad3dd19086ed33b4cff6b35a86b2",
+            "eventLogHash": "8721b57b53a2cb3b79f135d1ce614c86e8f2f0274f9e5897c02e73f3bbad280d"
+          },
+          {
+            "rowId": "elite_keshik_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1683,
+            "score": 63.75,
+            "ticks": 2852,
+            "finalStateHash": "caa2ad553c4f8d833cb1ea323a17a5fac6f4ad3dd19086ed33b4cff6b35a86b2",
+            "eventLogHash": "8721b57b53a2cb3b79f135d1ce614c86e8f2f0274f9e5897c02e73f3bbad280d"
+          },
+          {
+            "rowId": "elite_keshik_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1683,
+            "score": 63.75,
+            "ticks": 2852,
+            "finalStateHash": "caa2ad553c4f8d833cb1ea323a17a5fac6f4ad3dd19086ed33b4cff6b35a86b2",
+            "eventLogHash": "8721b57b53a2cb3b79f135d1ce614c86e8f2f0274f9e5897c02e73f3bbad280d"
+          },
+          {
+            "rowId": "elite_keshik_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1683,
+            "score": 63.75,
+            "ticks": 2852,
+            "finalStateHash": "caa2ad553c4f8d833cb1ea323a17a5fac6f4ad3dd19086ed33b4cff6b35a86b2",
+            "eventLogHash": "8721b57b53a2cb3b79f135d1ce614c86e8f2f0274f9e5897c02e73f3bbad280d"
+          },
+          {
+            "rowId": "elite_keshik_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1683,
+            "score": 63.75,
+            "ticks": 2852,
+            "finalStateHash": "caa2ad553c4f8d833cb1ea323a17a5fac6f4ad3dd19086ed33b4cff6b35a86b2",
+            "eventLogHash": "8721b57b53a2cb3b79f135d1ce614c86e8f2f0274f9e5897c02e73f3bbad280d"
+          }
+        ]
+      }
+    ]
+  }
+}

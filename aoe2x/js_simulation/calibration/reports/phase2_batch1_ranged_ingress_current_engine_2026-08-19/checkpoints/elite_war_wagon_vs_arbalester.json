@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_war_wagon_vs_arbalester",
+  "completedAt": "2026-08-19T23:43:05.286Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 8.739999999999995,
+      "medianAbsoluteMeanDelta": 8.739999999999995,
+      "maximumAbsoluteMeanDelta": 8.739999999999995
+    },
+    "rows": [
+      {
+        "id": "elite_war_wagon_vs_arbalester",
+        "subjectSlug": "elite_war_wagon",
+        "opponentSlug": "arbalester",
+        "matchup": "Elite War Wagon vs Arbalester",
+        "side2": {
+          "count": 10,
+          "master": 829,
+          "owner": 2,
+          "slug": "elite_war_wagon",
+          "unit": "Elite War Wagon"
+        },
+        "side3": {
+          "count": 21,
+          "master": 492,
+          "owner": 3,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -73.5,
+          "min": -73.5,
+          "max": -73.5,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -82.24,
+          "min": -82.8,
+          "max": -81.2,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 8.739999999999995,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_war_wagon_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1652,
+            "score": -82.6,
+            "ticks": 2524,
+            "finalStateHash": "62785a7505e3aaf8b3a14903de41b48b5b42332a7259179822cec1430f5a379f",
+            "eventLogHash": "c509cbd1ea4594562f0d7533dfc2e16f8de8d286d8e74788f98c42512bce768a"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1648,
+            "score": -82.4,
+            "ticks": 2530,
+            "finalStateHash": "58d89985b8f3f638b107ac6e8df889322fc12b5e801b9f182ad2912e92d7380b",
+            "eventLogHash": "02a4b7d5897b1cb06a7aa0030239ca0c13d275e17218c1e65caa6044f005836d"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1644,
+            "score": -82.2,
+            "ticks": 2533,
+            "finalStateHash": "1798c916f045518f621360be648a247e902dffca98771773cdfa39605dbd1d8b",
+            "eventLogHash": "a0709e77bc11f0dc3748664eb4bd8f088313a15196fb46e3a0860bd50f711039"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1656,
+            "score": -82.8,
+            "ticks": 2524,
+            "finalStateHash": "34506004e185b37460aeedf57de12dffe28d5efc47d67aff3d21e72292629c35",
+            "eventLogHash": "3dae2759cc6de20bd886ddad28e3e0de4ac621bc339d28eea2320d03ae594055"
+          },
+          {
+            "rowId": "elite_war_wagon_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1624,
+            "score": -81.2,
+            "ticks": 2521,
+            "finalStateHash": "fcb8ce7e42a47fda4bc8a42d938ae8272d5c02abe6ec2f8e2bad56a9e10fabf4",
+            "eventLogHash": "ccdf61baffa6fd61b18a803e9192e738591c6f5a8df775ee8ef7b0d52a9fe684"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_boyar_vs_arbalester",
+  "completedAt": "2026-08-21T00:20:27.530Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 1,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 7.363636363636363,
+      "medianAbsoluteMeanDelta": 7.363636363636363,
+      "maximumAbsoluteMeanDelta": 7.363636363636363
+    },
+    "rows": [
+      {
+        "id": "elite_boyar_vs_arbalester",
+        "subjectSlug": "elite_boyar",
+        "opponentSlug": "arbalester",
+        "matchup": "Arbalester vs Elite Boyar",
+        "side2": {
+          "count": 21,
+          "master": 492,
+          "owner": 2,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "side3": {
+          "count": 11,
+          "master": 878,
+          "owner": 3,
+          "slug": "elite_boyar",
+          "unit": "Elite Boyar"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 25.636363636363637,
+          "min": 25.636363636363637,
+          "max": 25.636363636363637,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 4,
+          "unresolvedRuns": 1,
+          "mean": 33,
+          "min": 30,
+          "max": 34.72727272727273,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 7.363636363636363,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_boyar_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 537,
+            "score": 32.54545454545455,
+            "ticks": 3700,
+            "finalStateHash": "0ba790782994132566f6766a9789580cb8f91eebdccd6292be55ee2594842af8",
+            "eventLogHash": "28781e15bdb9449691181453a0f14e65a52d055e3e3af77a5eadbd8ed9dd8d88"
+          },
+          {
+            "rowId": "elite_boyar_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 573,
+            "score": 34.72727272727273,
+            "ticks": 3910,
+            "finalStateHash": "15e13d60fb7b4e5df6d6d3dd4231084bc6620d69e23bc640ab07162fa92091d6",
+            "eventLogHash": "f0523a9539d0a4ecce8d978ecdd4253e5707fc1d1b1147064426c9b7143926c8"
+          },
+          {
+            "rowId": "elite_boyar_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 495,
+            "score": 30,
+            "ticks": 3947,
+            "finalStateHash": "26f5ab16011c6e3d025939755477caae441362090db22a18d37a34d828a3e76c",
+            "eventLogHash": "38a52904a903d3f27aa8d1a43aa29ab62375277cf023a6390a763bb1976bef36"
+          },
+          {
+            "rowId": "elite_boyar_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 573,
+            "score": 34.72727272727273,
+            "ticks": 3910,
+            "finalStateHash": "15e13d60fb7b4e5df6d6d3dd4231084bc6620d69e23bc640ab07162fa92091d6",
+            "eventLogHash": "19d7cd24c5597b8cffce340b9410061e4f85e6f484bda230f0438ca113f914c5"
+          },
+          {
+            "rowId": "elite_boyar_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          }
+        ]
+      }
+    ]
+  }
+}

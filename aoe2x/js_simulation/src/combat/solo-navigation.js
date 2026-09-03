@@ -207,7 +207,8 @@ function routeAnchor(state, units, map, tick) {
   ));
   const strictMajority = Math.floor(units.length / 2) + 1;
   const leashError = mobileErrors.length >= strictMajority
-    ? mobileErrors.reduce((maximum, current) => Math.max(maximum, current.error), 0)
+    ? [...mobileErrors]
+      .sort((left, right) => left.error - right.error)[strictMajority - 1].error
     : maximumError;
   if (state.phase === "forming-first-order") {
     if (leashError > leash || speed <= 0) return maximumError;
@@ -235,9 +236,10 @@ function routeAnchor(state, units, map, tick) {
     state.routeWaypoint = ringPoint(state.routeBounds, state.routeArc);
   }
 
-  // A unit that the physical solver could not move on the previous tick
-  // rejoins independently; it cannot freeze the mobile majority. Ordinary
-  // unblocked stragglers still hold the anchor, preserving formation pace.
+  // The strict majority owns formation progress. A minority of physically
+  // blocked or independently lagging units rejoins from its own destination;
+  // it cannot freeze the shared ranged order. If the majority falls outside
+  // the leash, the anchor still waits so the cohort does not dissolve.
   if (leashError > leash || speed <= 0) return maximumError;
   const dx = state.routeWaypoint.x - state.anchor.x;
   const dy = state.routeWaypoint.y - state.anchor.y;

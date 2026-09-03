@@ -136,7 +136,7 @@ test("the RvR AI side preserves an unreleased windup when its target dies", () =
 });
 
 
-test("ranged ingress respects the units' sourced minimum collision floor", () => {
+test("ranged ingress crosses the allied collision floor while the transit is active", () => {
   const world = createWorld({
     ratio: "2v1-ranged-ingress-test",
     mapHash: "ranged-ingress-test-map",
@@ -165,6 +165,5 @@ test("ranged ingress respects the units' sourced minimum collision floor", () =>
       events: next.events,
     }),
   );
-  assert.ok(Math.abs(front.y - rear.y) <= 0.4 + 1e-9);
-  assert.ok(Math.abs(front.y - rear.y) >= 0.4 - 1e-9);
+  assert.ok(Math.abs(front.y - rear.y) < 0.4 - 1e-9);
 });

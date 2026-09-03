@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_boyar_vs_champion",
+  "completedAt": "2026-08-21T00:27:59.452Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 13.866666666666667,
+      "medianAbsoluteMeanDelta": 13.866666666666667,
+      "maximumAbsoluteMeanDelta": 13.866666666666667
+    },
+    "rows": [
+      {
+        "id": "elite_boyar_vs_champion",
+        "subjectSlug": "elite_boyar",
+        "opponentSlug": "champion",
+        "matchup": "Elite Boyar vs Champion",
+        "side2": {
+          "count": 10,
+          "master": 878,
+          "owner": 2,
+          "slug": "elite_boyar",
+          "unit": "Elite Boyar"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -51.06666666666667,
+          "min": -51.06666666666667,
+          "max": -51.06666666666667,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -64.93333333333334,
+          "min": -75.26666666666667,
+          "max": -53.2,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 13.866666666666667,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_boyar_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 798,
+            "score": -53.2,
+            "ticks": 5341,
+            "finalStateHash": "1ecf148b858c7030036860979fe35a1badb8956ba89a4f1b737d30ab05396979",
+            "eventLogHash": "b1e147fba24f80299544e9cc0beadfb08be41423161369ef8f63d14723108fea"
+          },
+          {
+            "rowId": "elite_boyar_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 947,
+            "score": -63.13333333333333,
+            "ticks": 2940,
+            "finalStateHash": "bb05a9d229530101b4ba58c033941f93ec554c5852f0726d67b8f8a9f98760cc",
+            "eventLogHash": "98713c61cb5e367311493acfe75acfcb956cbe5d000471d21c37406a032cee60"
+          },
+          {
+            "rowId": "elite_boyar_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1129,
+            "score": -75.26666666666667,
+            "ticks": 4067,
+            "finalStateHash": "436adf2d876b84c372bf74aa8651a7b0a3254c6a42e126d752011136fee5011b",
+            "eventLogHash": "284329803a59844f4645f9544c1f1c5969bc76c92616bbc37bc8191acb98008f"
+          },
+          {
+            "rowId": "elite_boyar_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 909,
+            "score": -60.6,
+            "ticks": 2680,
+            "finalStateHash": "7c7b28cc2de477a3b1a807bc7aaba20eefe415a98aa5273894f34b24db0d8968",
+            "eventLogHash": "b189b25f1a78b3c9afc84cced9ae3b36d4317676d9c314d36561eac3472d51a2"
+          },
+          {
+            "rowId": "elite_boyar_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1087,
+            "score": -72.46666666666667,
+            "ticks": 4630,
+            "finalStateHash": "74d0f543f0d01c185b11b83a526b63ebe3cb1e8a1be670a4a3b2a80226c43b0e",
+            "eventLogHash": "710f4f0f75f24fd7ee7ed74cf9cfba3e872520540542990b1ef0267dcc6b320f"
+          }
+        ]
+      }
+    ]
+  }
+}

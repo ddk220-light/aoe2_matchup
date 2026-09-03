@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_mangudai_vs_heavy_cav_archer",
+  "completedAt": "2026-08-21T00:30:39.362Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 38.911764705882355,
+      "medianAbsoluteMeanDelta": 38.911764705882355,
+      "maximumAbsoluteMeanDelta": 38.911764705882355
+    },
+    "rows": [
+      {
+        "id": "elite_mangudai_vs_heavy_cav_archer",
+        "subjectSlug": "elite_mangudai",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Elite Mangudai vs Heavy Cavalry Archer",
+        "side2": {
+          "count": 17,
+          "master": 561,
+          "owner": 2,
+          "slug": "elite_mangudai",
+          "unit": "Elite Mangudai"
+        },
+        "side3": {
+          "count": 21,
+          "master": 474,
+          "owner": 3,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 43.75,
+          "min": 36.42857142857143,
+          "max": 52.857142857142854,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 4.838235294117647,
+          "min": -14.044117647058824,
+          "max": 17.738095238095237,
+          "side3WinRate": 0.6,
+          "side3WinRateError": 0.4,
+          "bandError": 31.590336134453786,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 191,
+            "score": -14.044117647058824,
+            "ticks": 5252,
+            "finalStateHash": "ea3d1b40d8b95dd3756a5a24dee9a7280373dd93ccdc8045b91ae31d003eb361",
+            "eventLogHash": "3c97a3bdb219bdcca23603f98c0a958703b8f7476e3947db66bb22192965b2d2"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 248,
+            "score": 14.761904761904763,
+            "ticks": 4664,
+            "finalStateHash": "7fb667542792be52eeebdd3195073ec0d939402b57e36c04e8c9d8aeaf9ca6f4",
+            "eventLogHash": "2bee9c18769eb2c04f5222fea789ea812331efb3787a29686958adf969798c35"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 24,
+            "score": -1.7647058823529411,
+            "ticks": 6075,
+            "finalStateHash": "2f26eb98ed821a4f637addf12318aaaf608bb7207c71c92d71a4fbe04ffe8234",
+            "eventLogHash": "3de434d5f1f327c003ec9db57d098523239af0c258ed9a8f027f605981c64dde"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 126,
+            "score": 7.5,
+            "ticks": 5087,
+            "finalStateHash": "bce6076f76a8e3fed818374f198b30749f0565b55f6526a6aeede1a87fae6fe6",
+            "eventLogHash": "1f907c9383c2c16c179bdc24948e41edfc501a4d254fc54811d17ef4bcc1c68a"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 298,
+            "score": 17.738095238095237,
+            "ticks": 3866,
+            "finalStateHash": "ddc5211731bc3ff33e27aa78824ae49d22934175de788aa50f6148caa6c10e41",
+            "eventLogHash": "50f42e0e32cde873c968262e8b1543cd3e632d55639b1af7d976218793eecb96"
+          }
+        ]
+      }
+    ]
+  }
+}

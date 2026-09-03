@@ -1,0 +1,162 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_mangudai_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T23:41:37.730Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 2,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 1,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 55.13305322128851,
+      "medianAbsoluteMeanDelta": 55.13305322128851,
+      "maximumAbsoluteMeanDelta": 55.13305322128851
+    },
+    "rows": [
+      {
+        "id": "elite_mangudai_vs_heavy_cav_archer",
+        "subjectSlug": "elite_mangudai",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Elite Mangudai vs Heavy Cavalry Archer",
+        "side2": {
+          "count": 17,
+          "master": 561,
+          "owner": 2,
+          "slug": "elite_mangudai",
+          "unit": "Elite Mangudai"
+        },
+        "side3": {
+          "count": 21,
+          "master": 474,
+          "owner": 3,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 43.75,
+          "min": 36.42857142857143,
+          "max": 52.857142857142854,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 3,
+          "unresolvedRuns": 2,
+          "mean": -11.383053221288515,
+          "min": -24.779411764705884,
+          "max": 11.071428571428571,
+          "side3WinRate": 0.3333333333333333,
+          "side3WinRateError": 0.6666666666666667,
+          "bandError": 47.811624649859944,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": true
+        },
+        "samples": [
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 337,
+            "score": -24.779411764705884,
+            "ticks": 3928,
+            "finalStateHash": "f4b2581c17e59c9236d3005c19a1688b1af77f3e0b74b2e056190fd5586b66ac",
+            "eventLogHash": "bb631ebbe99ec35f7122101dc8a6e6fbb06a2f08b4f3187abfeb9541236f7654"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "error",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": null,
+            "finalStateHash": null,
+            "eventLogHash": null,
+            "failure": "RangeError: starting overlap between references 1628 and 1644 (hard/hard-allied-contact; separation=0.44551355757526556; extent=0.5)\n    at validateStartingGeometry (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/collision.js:178:13)\n    at resolveMovementProposals (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/collision.js:617:30)\n    at resolveMovement (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/world.js:852:15)\n    at moveUnits (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/world.js:1213:17)\n    at stepWorld (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/world.js:2314:7)\n    at runWorld (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/world.js:2446:15)\n    at runPhase2Batch1Sample (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/phase2-batch1-comparison.js:167:14)\n    at runPhase2Batch1Suite (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/tools/run_phase2_batch1_suite.mjs:63:22)\n    at async main (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/tools/run_phase2_batch1_worker.mjs:12:18)\n    at async file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/tools/run_phase2_batch1_worker.mjs:26:3"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 278,
+            "score": -20.441176470588236,
+            "ticks": 3917,
+            "finalStateHash": "18d6d4f8fc455bf7d69e06e8cde15e04828e483021ab12c930866b21257fe1cd",
+            "eventLogHash": "28815ccf4540734b790f8bfdf87bba3d737a37837c1fa8a38366d32f8c1390e0"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 186,
+            "score": 11.071428571428571,
+            "ticks": 4384,
+            "finalStateHash": "245812ad357be5276849ef830384d2f2a7871199c135f5271b65f1401b1cd24c",
+            "eventLogHash": "28aed9d50c6d392f698ec07baa9ef1679002e38f45a09727b230d59766c184dc"
+          },
+          {
+            "rowId": "elite_mangudai_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "error",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": null,
+            "finalStateHash": null,
+            "eventLogHash": null,
+            "failure": "RangeError: starting overlap between references 1628 and 1644 (hard/hard-allied-contact; separation=0.44551355757526556; extent=0.5)\n    at validateStartingGeometry (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/collision.js:178:13)\n    at resolveMovementProposals (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/collision.js:617:30)\n    at resolveMovement (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/world.js:852:15)\n    at moveUnits (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/world.js:1213:17)\n    at stepWorld (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/world.js:2314:7)\n    at runWorld (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/combat/world.js:2446:15)\n    at runPhase2Batch1Sample (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/src/phase2-batch1-comparison.js:167:14)\n    at runPhase2Batch1Suite (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/tools/run_phase2_batch1_suite.mjs:63:22)\n    at async main (file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/tools/run_phase2_batch1_worker.mjs:12:18)\n    at async file:///D:/AI/aoe2_matchup/aoe2x/js_simulation/tools/run_phase2_batch1_worker.mjs:26:3"
+          }
+        ]
+      }
+    ]
+  }
+}

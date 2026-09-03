@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_mangudai_vs_arbalester",
+  "completedAt": "2026-08-19T23:41:19.796Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 11.380952380952387,
+      "medianAbsoluteMeanDelta": 11.380952380952387,
+      "maximumAbsoluteMeanDelta": 11.380952380952387
+    },
+    "rows": [
+      {
+        "id": "elite_mangudai_vs_arbalester",
+        "subjectSlug": "elite_mangudai",
+        "opponentSlug": "arbalester",
+        "matchup": "Elite Mangudai vs Arbalester",
+        "side2": {
+          "count": 12,
+          "master": 561,
+          "owner": 2,
+          "slug": "elite_mangudai",
+          "unit": "Elite Mangudai"
+        },
+        "side3": {
+          "count": 21,
+          "master": 492,
+          "owner": 3,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 27.857142857142854,
+          "min": 17.142857142857142,
+          "max": 38.095238095238095,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 39.23809523809524,
+          "min": 31.428571428571427,
+          "max": 45.714285714285715,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 1.142857142857146,
+          "tapeBandCoverage": 0.4,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_mangudai_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 336,
+            "score": 40,
+            "ticks": 1499,
+            "finalStateHash": "7604cef8520a1e3787ea62c833c7a3454081fefe79cde08b4db4af93dd304c37",
+            "eventLogHash": "fee80ae63e1df9e7370392b2162c1df13c84265ff2a351687a47e8aeffeb9e2e"
+          },
+          {
+            "rowId": "elite_mangudai_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 264,
+            "score": 31.428571428571427,
+            "ticks": 1710,
+            "finalStateHash": "41d70ece5800a50d0c3c33a7bcf74857e571dbc4cfd40279f9afb2a9c146f8e8",
+            "eventLogHash": "7515f87fa173810be3241dc60e91c18991652f6b7e1ff04d73d3825fd12d6cf4"
+          },
+          {
+            "rowId": "elite_mangudai_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 344,
+            "score": 40.95238095238095,
+            "ticks": 1368,
+            "finalStateHash": "c1d05e228fa64fb68fee015fe4bd88e55968428e9e95d99517c7956f9b85feee",
+            "eventLogHash": "321379ae8bb3df6cae54a1befd02725af02cb11b648fa9e2178908cbcf7ada73"
+          },
+          {
+            "rowId": "elite_mangudai_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 384,
+            "score": 45.714285714285715,
+            "ticks": 1575,
+            "finalStateHash": "f44bab01cc48fada437d019052c12603e768a1ae521b878637fe65d56c57f156",
+            "eventLogHash": "cd455797101d800c87f23586dacaa1079b23074083e523ef6bb9c2cf333cb4e2"
+          },
+          {
+            "rowId": "elite_mangudai_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 320,
+            "score": 38.095238095238095,
+            "ticks": 1375,
+            "finalStateHash": "82490a55cada3f40e68ef49e8818c0f4d913c3b7c38aa13c2d836817babf9106",
+            "eventLogHash": "715625cbb1389f5cd4b4ca6370489b3d572ad6b174dce0292e0fab32f9ee4307"
+          }
+        ]
+      }
+    ]
+  }
+}

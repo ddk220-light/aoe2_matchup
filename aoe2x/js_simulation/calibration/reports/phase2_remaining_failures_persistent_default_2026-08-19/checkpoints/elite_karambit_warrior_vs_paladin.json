@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "98c73d80abc05dea6fe990efe7d165e334d5d429d0814707a49bff479f2a8a39",
+  "matchupId": "elite_karambit_warrior_vs_paladin",
+  "completedAt": "2026-08-19T22:45:31.958Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 1,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 37.80873015873016,
+      "medianAbsoluteMeanDelta": 37.80873015873016,
+      "maximumAbsoluteMeanDelta": 37.80873015873016
+    },
+    "rows": [
+      {
+        "id": "elite_karambit_warrior_vs_paladin",
+        "subjectSlug": "elite_karambit_warrior",
+        "opponentSlug": "paladin",
+        "matchup": "Elite Karambit Warrior vs Paladin",
+        "side2": {
+          "count": 21,
+          "master": 1125,
+          "owner": 2,
+          "slug": "elite_karambit_warrior",
+          "unit": "Elite Karambit Warrior"
+        },
+        "side3": {
+          "count": 5,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -21.964285714285715,
+          "min": -28.333333333333332,
+          "max": -6.190476190476191,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 15.844444444444443,
+          "min": 6.777777777777778,
+          "max": 22.666666666666668,
+          "side3WinRate": 1,
+          "side3WinRateError": 1,
+          "bandError": 22.034920634920635,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": true
+        },
+        "samples": [
+          {
+            "rowId": "elite_karambit_warrior_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 61,
+            "score": 6.777777777777778,
+            "ticks": 2710,
+            "finalStateHash": "2bc99697a94f5c5d7f2e51f79db22d73ea52045dac4486fadb5e0e69ca2f2653",
+            "eventLogHash": "c61b61e757c4020bf7d6bd8c1b55a405a0c1f0b97cd8cf427f98f4db48ef2705"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 204,
+            "score": 22.666666666666668,
+            "ticks": 2432,
+            "finalStateHash": "8e01bb31d6fa8cd7049bfd55ecb2ea7db4f26b23d0f9ae6736be76fb3e5450e5",
+            "eventLogHash": "55b0fdab93af2ad297addc38b680a14ded870f1551247b082395f71ad0352102"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 148,
+            "score": 16.444444444444443,
+            "ticks": 2119,
+            "finalStateHash": "e0769571aec49e760ba9674f76ec22d937aa1f91322849a71317bc27b4c58269",
+            "eventLogHash": "c6dd9fc093a7b563380456f9ea10b3b00300dc80a26c8e99e3834d3b2ff094c0"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 101,
+            "score": 11.222222222222221,
+            "ticks": 2655,
+            "finalStateHash": "bb3e8583f889f205f57d8bf21d9fec663a1a220f87554c8906aa33cceb0dd55e",
+            "eventLogHash": "fb6c478fe1a73b645eff64d650772861944173fa658da263c05520deeb6d208e"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 199,
+            "score": 22.11111111111111,
+            "ticks": 2223,
+            "finalStateHash": "173ce65c5e085e0086cede6138484864e5573e5826d4514c9f73a6beed276d8d",
+            "eventLogHash": "b648f6a45b4fbbebc38e019c7067372e6aac9cd7ec26bbddf9ec1438fca71957"
+          }
+        ]
+      }
+    ]
+  }
+}

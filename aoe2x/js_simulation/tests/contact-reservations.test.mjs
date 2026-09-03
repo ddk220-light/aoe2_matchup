@@ -331,11 +331,86 @@ test("direct melee target contact has an attack surface distinct from collision 
   const contact = result.contactReservations.get("1:2");
 
   assert.equal(contact.kind, "engagement-contact");
-  assert.equal(contact.collisionExtent, 0.25);
+  assert.equal(contact.collisionExtent, 0.4);
   assert.equal(contact.attackSurfaceExtent, 1.5);
   assert.equal(contact.pathObstructs, true);
+  assert.equal(contact.mayDeepen, false);
   assert.equal(contact.initiatorId, 1);
   assert.equal(contact.targetId, 2);
+});
+
+
+test("a rejected allied lane still publishes every pre-existing overlap as release geometry", () => {
+  const units = [
+    unit(1, 2, 4, { pursuitTargetId: 4 }),
+    unit(2, 2, 4.3, { action: "attacking", attackTargetId: 4 }),
+    unit(3, 2, 4.3, { action: "attacking", attackTargetId: 4 }),
+    unit(4, 3, 6, { action: "idle" }),
+  ];
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 10,
+    units,
+    proposals: [
+      proposal(1, 0.1),
+      proposal(2, 0),
+      proposal(3, 0),
+      proposal(4, 0),
+    ],
+  });
+
+  assert.deepEqual(
+    ["1:2", "1:3", "2:3"].filter((key) => !result.contactReservations.has(key)),
+    [],
+    "no existing allied overlap may fall back to hard full-extent geometry",
+  );
+  assert.equal(
+    [...result.contactReservations.values()].filter(({ kind }) => kind === "allied-transit").length,
+    1,
+  );
+  assert.equal(
+    [...result.contactReservations.values()].filter(({ kind }) => kind === "releasing").length,
+    2,
+  );
+});
+
+test("authoritative pursuit transit clears stale contact state", () => {
+  const pursuer = unit(1, 3, 4, { pursuitTargetId: 3 });
+  const body = unit(2, 3, 4.2);
+  const stale = Object.freeze({
+    reservations: new Map(),
+    inheritedExtents: new Map([["1:2", 0.4]]),
+  });
+  const result = updateContactReservations({
+    state: stale,
+    tick: 11,
+    units: [pursuer, body],
+    proposals: [proposal(1, 0.02), proposal(2, 0)],
+    pairInteractions: createPairInteractionSnapshot({
+      pursuitTransitReferenceIds: new Set([pursuer.referenceId]),
+    }),
+  });
+
+  assert.equal(result.contactReservations.size, 0);
+  assert.equal(result.state.inheritedExtents.size, 0);
+  assert.equal(result.state.reservations.size, 0);
+});
+
+test("direct engagement admits only the current tick's physical closure", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 30,
+    units: [
+      unit(1, 2, 4, { pursuitTargetId: 2 }),
+      unit(2, 3, 4.5),
+    ],
+    proposals: [proposal(1, 0.03), proposal(2, -0.02)],
+  });
+  const contact = result.contactReservations.get("1:2");
+
+  assert.equal(contact.kind, "engagement-contact");
+  assert.equal(contact.collisionExtent, 0.45);
+  assert.equal(contact.mayDeepen, false);
 });
 
 test("an already-deep direct contact preserves its current extent without deepening", () => {
@@ -439,7 +514,7 @@ test("allied transit past an attacker persists until the moving unit clears it",
   assert.equal(persisted.contactReservations.get("1:2").pathObstructs, false);
 });
 
-test("ranged ingress admits one out-of-range rear shooter through a front ally", () => {
+test("ranged ingress gives one out-of-range rear shooter a zero-obstruction lane", () => {
   const result = updateContactReservations({
     state: createContactReservationState(),
     tick: 42,
@@ -463,7 +538,104 @@ test("ranged ingress admits one out-of-range rear shooter through a front ally",
 
   assert.equal(ingress.kind, "ranged-ingress");
   assert.equal(ingress.pathObstructs, false);
-  assert.equal(ingress.collisionExtent, 0.32);
+  assert.equal(ingress.collisionExtent, 0);
+});
+
+test("ranged ingress becomes a monotonic release once the rear shooter passes the front", () => {
+  const first = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 42,
+    units: [
+      unit(1, 2, 4, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 3,
+      }),
+      unit(2, 2, 4.4, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 3,
+      }),
+      unit(3, 3, 10, {
+        mechanics: rangedMechanics(),
+        action: "idle",
+      }),
+    ],
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0)],
+  });
+  const passed = updateContactReservations({
+    state: first.state,
+    tick: 43,
+    units: [
+      unit(1, 2, 4.45, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 3,
+      }),
+      unit(2, 2, 4.4, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 3,
+      }),
+      unit(3, 3, 10, {
+        mechanics: rangedMechanics(),
+        action: "idle",
+      }),
+    ],
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0)],
+  });
+
+  assert.equal(passed.state.reservations.has("1:2"), false);
+  assert.equal(passed.contactReservations.get("1:2").kind, "releasing");
+  assert.equal(passed.contactReservations.get("1:2").collisionExtent, 0.05);
+});
+
+test("ranged shooters on different target lanes do not receive allied ingress", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 42,
+    units: [
+      unit(1, 2, 4, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 3,
+      }),
+      unit(2, 2, 4.4, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 4,
+      }),
+      unit(3, 3, 10, {
+        mechanics: rangedMechanics(),
+        action: "idle",
+      }),
+      unit(4, 3, 10.4, {
+        mechanics: rangedMechanics(),
+        action: "idle",
+      }),
+    ],
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0), proposal(4, 0)],
+  });
+
+  assert.equal(result.contactReservations.has("1:2"), false);
+});
+
+test("two advancing ranged shooters retain ordinary allied collision", () => {
+  const result = updateContactReservations({
+    state: createContactReservationState(),
+    tick: 42,
+    units: [
+      unit(1, 2, 4, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 3,
+      }),
+      unit(2, 2, 4.4, {
+        mechanics: rangedMechanics(),
+        pursuitTargetId: 3,
+      }),
+      unit(3, 3, 10, {
+        mechanics: rangedMechanics(),
+        action: "idle",
+      }),
+    ],
+    proposals: [proposal(1, 0.1), proposal(2, 0.02), proposal(3, 0)],
+  });
+
+  assert.equal(result.contactReservations.has("1:2"), false);
 });
 
 test("an untracked overlap is published as monotonic release geometry", () => {

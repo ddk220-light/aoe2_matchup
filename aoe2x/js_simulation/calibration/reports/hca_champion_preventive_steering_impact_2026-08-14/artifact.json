@@ -1,0 +1,467 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Would the Arbalester steering change hurt HCA versus Champion?",
+    "description": "Controlled five-ratio impact check for disabling preventive contact steering.",
+    "generatedAt": "2026-08-14T21:36:10.437Z",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "layout": "full",
+        "body": "# Would the Arbalester steering change hurt HCA versus Champion?"
+      },
+      {
+        "id": "technical-summary",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "hca-steering-probe-query",
+        "body": "## Yes—disabling steering globally would make HCA–Champion materially worse\n\nAll five winners remain correct, but mean absolute tape error rises from **7.84 to 15.42 points**. Three ratios worsen, one is unchanged, and one improves. The safe conclusion is to keep preventive steering for HCA–Champion and scope the Arbalester correction rather than turn steering off globally."
+      },
+      {
+        "id": "key-findings",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "hca-steering-probe-query",
+        "body": "## The damage is concentrated in 5v10, 15v20, and 20v20\n\nThe largest regression is **5 HCA versus 10 Champions**: error grows from 2.29 to 29.71 points, because the Champion win becomes far too narrow. The 15v20 and 20v20 HCA wins also become too strong. Only 20v15 improves, and 10v5 is effectively unchanged."
+      },
+      {
+        "id": "delta-chart-block",
+        "type": "chart",
+        "layout": "full",
+        "chartId": "delta-chart"
+      },
+      {
+        "id": "ratio-table-block",
+        "type": "table",
+        "layout": "full",
+        "tableId": "ratio-table"
+      },
+      {
+        "id": "scope-definitions",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "hca-steering-probe-query",
+        "body": "## Scope, data, and metric definitions\n\nThis check covers all five recorded HCA–Champion ratios and all 25 authorized tape results. Each ratio uses one deterministic simulation because its five tape repeats share an identical starting scenario. Absolute tape delta is the distance between the simulation's signed outcome score and the five-tape mean; lower is better."
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "hca-steering-probe-query",
+        "body": "## The control changes one engine behavior only\n\nThe project-local archive SHA-256 was verified before use. Each ratio was run once with the current scenario and once with the identical scenario except `preventiveContactSteering: false`. Unit stats, starting positions, navigation mode, targeting, engagement dwell, map, and maximum ticks were unchanged."
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "hca-steering-probe-query",
+        "body": "## This establishes regression risk, not the final steering gate\n\nThe test is deterministic, so it measures the current exact-start engine rather than a distribution of randomized engine starts. It shows that a global disable is unsafe; it does not yet identify the best general physics-derived condition for enabling or disabling steering across every ranged unit."
+      },
+      {
+        "id": "next-steps",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## Recommended next step\n\nKeep preventive contact steering enabled for HCA–Champion. Apply the Arbalester correction through a scoped, physics-based gate—most plausibly relative kiter/chaser speed and observed congestion—then rerun both the Arbalester and HCA Champion corpora before accepting it."
+      },
+      {
+        "id": "further-questions",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## Further questions\n\n- Can the steering gate be derived from the relative movement-speed envelope instead of a unit-name exception?\n- Does the same gate preserve HCA outcomes against Paladin, Steppe Lancer, Elephant, and Fire Lancer?\n- Can 15v20 HCA–Champion be improved without sacrificing the four already-close ratios?"
+      }
+    ],
+    "charts": [
+      {
+        "id": "delta-chart",
+        "title": "Absolute tape delta by HCA–Champion ratio",
+        "description": "Lower is better; five authorized tape repeats per ratio.",
+        "type": "bar",
+        "intent": "comparison",
+        "question": "Does disabling preventive contact steering improve or worsen HCA–Champion accuracy?",
+        "rationale": "Grouped bars compare the current and counterfactual error directly for each discrete ratio.",
+        "dataset": "steering_comparison_long",
+        "encodings": {
+          "x": {
+            "field": "ratio"
+          },
+          "y": {
+            "field": "absoluteTapeDelta"
+          },
+          "color": {
+            "field": "condition"
+          }
+        },
+        "labels": {
+          "values": "all"
+        },
+        "sourceId": "hca-steering-probe-query"
+      }
+    ],
+    "tables": [
+      {
+        "id": "ratio-table",
+        "title": "Ratio-level steering impact",
+        "description": "Signed scores, absolute tape error, and the change caused by disabling steering.",
+        "dataset": "steering_comparison_wide",
+        "columns": [
+          {
+            "field": "ratio",
+            "label": "HCA vs Champion"
+          },
+          {
+            "field": "tapeMeanScore",
+            "label": "Tape mean",
+            "format": "number"
+          },
+          {
+            "field": "baselineScore",
+            "label": "Current score",
+            "format": "number"
+          },
+          {
+            "field": "steeringOffScore",
+            "label": "Steering-off score",
+            "format": "number"
+          },
+          {
+            "field": "baselineAbsoluteDelta",
+            "label": "Current abs. delta",
+            "format": "number"
+          },
+          {
+            "field": "steeringOffAbsoluteDelta",
+            "label": "Off abs. delta",
+            "format": "number"
+          },
+          {
+            "field": "errorChange",
+            "label": "Error change",
+            "format": "number",
+            "semantic": "movement"
+          }
+        ],
+        "defaultSort": {
+          "field": "errorChange",
+          "direction": "desc"
+        },
+        "sourceId": "hca-steering-probe-query"
+      }
+    ],
+    "sources": [
+      {
+        "id": "hca-steering-probe-query",
+        "label": "HCA versus Champion preventive-steering counterfactual",
+        "path": "aoe2x/js_simulation/calibration/analysis/hca_champion_preventive_steering_summary.sql",
+        "query": {
+          "language": "sql",
+          "description": "Compares the current deterministic HCA-Champion engine with a same-scenario control that changes only preventiveContactSteering from true to false.",
+          "tables_used": [
+            "hca_champion_preventive_steering_probe"
+          ],
+          "filters": [
+            "Matchup: Heavy Cavalry Archer versus Champion",
+            "Ratios: 5v10, 10v5, 15v20, 20v15, and 20v20",
+            "One deterministic simulation per ratio; all five tape repeats share the same starting scenario",
+            "Counterfactual changes only preventiveContactSteering from true to false"
+          ],
+          "metric_definitions": {
+            "signed_outcome_score": "Winner remaining HP divided by that side's starting HP, multiplied by 100; negative means owner 2 (HCA) wins and positive means owner 3 (Champion) wins.",
+            "absolute_tape_delta": "Absolute difference between the simulation signed outcome score and the mean score of the five authorized golden-tape repeats for the same ratio.",
+            "error_change": "Steering-off absolute tape delta minus current-engine absolute tape delta; positive values mean the counterfactual is worse."
+          }
+        }
+      },
+      {
+        "id": "authorized-archive",
+        "label": "Authorized HCA versus Champion golden archive",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+        "sha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "status": "ready",
+    "generatedAt": "2026-08-14T21:36:10.437Z",
+    "datasets": {
+      "steering_comparison_long": [
+        {
+          "ratio": "5v10",
+          "ratioOrder": 1,
+          "tapeMeanScore": 44.57142857142857,
+          "baselineScore": 42.285714285714285,
+          "steeringOffScore": 14.857142857142858,
+          "baselineAbsoluteDelta": 2.2857142857142847,
+          "steeringOffAbsoluteDelta": 29.71428571428571,
+          "errorChange": 27.428571428571427,
+          "baselineWinner": "Champion",
+          "steeringOffWinner": "Champion",
+          "tapeWinner": "Champion",
+          "baselineSeconds": 40.233333333333334,
+          "steeringOffSeconds": 64.03333333333333,
+          "condition": "Current steering on",
+          "absoluteTapeDelta": 2.2857142857142847
+        },
+        {
+          "ratio": "5v10",
+          "ratioOrder": 1,
+          "tapeMeanScore": 44.57142857142857,
+          "baselineScore": 42.285714285714285,
+          "steeringOffScore": 14.857142857142858,
+          "baselineAbsoluteDelta": 2.2857142857142847,
+          "steeringOffAbsoluteDelta": 29.71428571428571,
+          "errorChange": 27.428571428571427,
+          "baselineWinner": "Champion",
+          "steeringOffWinner": "Champion",
+          "tapeWinner": "Champion",
+          "baselineSeconds": 40.233333333333334,
+          "steeringOffSeconds": 64.03333333333333,
+          "condition": "Steering off",
+          "absoluteTapeDelta": 29.71428571428571
+        },
+        {
+          "ratio": "10v5",
+          "ratioOrder": 2,
+          "tapeMeanScore": -99.025,
+          "baselineScore": -91.875,
+          "steeringOffScore": -91.875,
+          "baselineAbsoluteDelta": 7.150000000000006,
+          "steeringOffAbsoluteDelta": 7.150000000000006,
+          "errorChange": 0,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 15.683333333333334,
+          "steeringOffSeconds": 15.7,
+          "condition": "Current steering on",
+          "absoluteTapeDelta": 7.150000000000006
+        },
+        {
+          "ratio": "10v5",
+          "ratioOrder": 2,
+          "tapeMeanScore": -99.025,
+          "baselineScore": -91.875,
+          "steeringOffScore": -91.875,
+          "baselineAbsoluteDelta": 7.150000000000006,
+          "steeringOffAbsoluteDelta": 7.150000000000006,
+          "errorChange": 0,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 15.683333333333334,
+          "steeringOffSeconds": 15.7,
+          "condition": "Steering off",
+          "absoluteTapeDelta": 7.150000000000006
+        },
+        {
+          "ratio": "15v20",
+          "ratioOrder": 3,
+          "tapeMeanScore": -56.98333333333333,
+          "baselineScore": -78.16666666666667,
+          "steeringOffScore": -87,
+          "baselineAbsoluteDelta": 21.183333333333344,
+          "steeringOffAbsoluteDelta": 30.016666666666673,
+          "errorChange": 8.833333333333329,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 35.65,
+          "steeringOffSeconds": 33.93333333333333,
+          "condition": "Current steering on",
+          "absoluteTapeDelta": 21.183333333333344
+        },
+        {
+          "ratio": "15v20",
+          "ratioOrder": 3,
+          "tapeMeanScore": -56.98333333333333,
+          "baselineScore": -78.16666666666667,
+          "steeringOffScore": -87,
+          "baselineAbsoluteDelta": 21.183333333333344,
+          "steeringOffAbsoluteDelta": 30.016666666666673,
+          "errorChange": 8.833333333333329,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 35.65,
+          "steeringOffSeconds": 33.93333333333333,
+          "condition": "Steering off",
+          "absoluteTapeDelta": 30.016666666666673
+        },
+        {
+          "ratio": "20v15",
+          "ratioOrder": 4,
+          "tapeMeanScore": -96.075,
+          "baselineScore": -87.6875,
+          "steeringOffScore": -92.5625,
+          "baselineAbsoluteDelta": 8.387500000000003,
+          "steeringOffAbsoluteDelta": 3.512500000000003,
+          "errorChange": -4.875,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 21.816666666666666,
+          "steeringOffSeconds": 21.866666666666667,
+          "condition": "Current steering on",
+          "absoluteTapeDelta": 8.387500000000003
+        },
+        {
+          "ratio": "20v15",
+          "ratioOrder": 4,
+          "tapeMeanScore": -96.075,
+          "baselineScore": -87.6875,
+          "steeringOffScore": -92.5625,
+          "baselineAbsoluteDelta": 8.387500000000003,
+          "steeringOffAbsoluteDelta": 3.512500000000003,
+          "errorChange": -4.875,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 21.816666666666666,
+          "steeringOffSeconds": 21.866666666666667,
+          "condition": "Steering off",
+          "absoluteTapeDelta": 3.512500000000003
+        },
+        {
+          "ratio": "20v20",
+          "ratioOrder": 5,
+          "tapeMeanScore": -83.4125,
+          "baselineScore": -83.625,
+          "steeringOffScore": -90.125,
+          "baselineAbsoluteDelta": 0.21250000000000568,
+          "steeringOffAbsoluteDelta": 6.712500000000006,
+          "errorChange": 6.5,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 27.883333333333333,
+          "steeringOffSeconds": 27.783333333333335,
+          "condition": "Current steering on",
+          "absoluteTapeDelta": 0.21250000000000568
+        },
+        {
+          "ratio": "20v20",
+          "ratioOrder": 5,
+          "tapeMeanScore": -83.4125,
+          "baselineScore": -83.625,
+          "steeringOffScore": -90.125,
+          "baselineAbsoluteDelta": 0.21250000000000568,
+          "steeringOffAbsoluteDelta": 6.712500000000006,
+          "errorChange": 6.5,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 27.883333333333333,
+          "steeringOffSeconds": 27.783333333333335,
+          "condition": "Steering off",
+          "absoluteTapeDelta": 6.712500000000006
+        }
+      ],
+      "steering_comparison_wide": [
+        {
+          "ratio": "5v10",
+          "ratioOrder": 1,
+          "tapeMeanScore": 44.57142857142857,
+          "baselineScore": 42.285714285714285,
+          "steeringOffScore": 14.857142857142858,
+          "baselineAbsoluteDelta": 2.2857142857142847,
+          "steeringOffAbsoluteDelta": 29.71428571428571,
+          "errorChange": 27.428571428571427,
+          "baselineWinner": "Champion",
+          "steeringOffWinner": "Champion",
+          "tapeWinner": "Champion",
+          "baselineSeconds": 40.233333333333334,
+          "steeringOffSeconds": 64.03333333333333
+        },
+        {
+          "ratio": "10v5",
+          "ratioOrder": 2,
+          "tapeMeanScore": -99.025,
+          "baselineScore": -91.875,
+          "steeringOffScore": -91.875,
+          "baselineAbsoluteDelta": 7.150000000000006,
+          "steeringOffAbsoluteDelta": 7.150000000000006,
+          "errorChange": 0,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 15.683333333333334,
+          "steeringOffSeconds": 15.7
+        },
+        {
+          "ratio": "15v20",
+          "ratioOrder": 3,
+          "tapeMeanScore": -56.98333333333333,
+          "baselineScore": -78.16666666666667,
+          "steeringOffScore": -87,
+          "baselineAbsoluteDelta": 21.183333333333344,
+          "steeringOffAbsoluteDelta": 30.016666666666673,
+          "errorChange": 8.833333333333329,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 35.65,
+          "steeringOffSeconds": 33.93333333333333
+        },
+        {
+          "ratio": "20v15",
+          "ratioOrder": 4,
+          "tapeMeanScore": -96.075,
+          "baselineScore": -87.6875,
+          "steeringOffScore": -92.5625,
+          "baselineAbsoluteDelta": 8.387500000000003,
+          "steeringOffAbsoluteDelta": 3.512500000000003,
+          "errorChange": -4.875,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 21.816666666666666,
+          "steeringOffSeconds": 21.866666666666667
+        },
+        {
+          "ratio": "20v20",
+          "ratioOrder": 5,
+          "tapeMeanScore": -83.4125,
+          "baselineScore": -83.625,
+          "steeringOffScore": -90.125,
+          "baselineAbsoluteDelta": 0.21250000000000568,
+          "steeringOffAbsoluteDelta": 6.712500000000006,
+          "errorChange": 6.5,
+          "baselineWinner": "HCA",
+          "steeringOffWinner": "HCA",
+          "tapeWinner": "HCA",
+          "baselineSeconds": 27.883333333333333,
+          "steeringOffSeconds": 27.783333333333335
+        }
+      ]
+    },
+    "accessIssues": []
+  },
+  "sources": [
+    {
+      "id": "hca-steering-probe-query",
+      "label": "HCA versus Champion preventive-steering counterfactual",
+      "path": "aoe2x/js_simulation/calibration/analysis/hca_champion_preventive_steering_summary.sql",
+      "query": {
+        "language": "sql",
+        "description": "Compares the current deterministic HCA-Champion engine with a same-scenario control that changes only preventiveContactSteering from true to false.",
+        "tables_used": [
+          "hca_champion_preventive_steering_probe"
+        ],
+        "filters": [
+          "Matchup: Heavy Cavalry Archer versus Champion",
+          "Ratios: 5v10, 10v5, 15v20, 20v15, and 20v20",
+          "One deterministic simulation per ratio; all five tape repeats share the same starting scenario",
+          "Counterfactual changes only preventiveContactSteering from true to false"
+        ],
+        "metric_definitions": {
+          "signed_outcome_score": "Winner remaining HP divided by that side's starting HP, multiplied by 100; negative means owner 2 (HCA) wins and positive means owner 3 (Champion) wins.",
+          "absolute_tape_delta": "Absolute difference between the simulation signed outcome score and the mean score of the five authorized golden-tape repeats for the same ratio.",
+          "error_change": "Steering-off absolute tape delta minus current-engine absolute tape delta; positive values mean the counterfactual is worse."
+        }
+      }
+    }
+  ]
+}

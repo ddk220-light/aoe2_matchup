@@ -133,6 +133,164 @@ export function outlineChebyshevGap(a, b) {
 }
 
 
+function unionLength(intervals, minimum, maximum) {
+  const clipped = intervals
+    .map(([start, end]) => [
+      Math.max(minimum, start),
+      Math.min(maximum, end),
+    ])
+    .filter(([start, end]) => end > start)
+    .sort((left, right) => left[0] - right[0] || left[1] - right[1]);
+  let total = 0;
+  let start = null;
+  let end = null;
+  for (const [nextStart, nextEnd] of clipped) {
+    if (start === null) {
+      start = nextStart;
+      end = nextEnd;
+      continue;
+    }
+    if (nextStart <= end + 1e-12) {
+      end = Math.max(end, nextEnd);
+      continue;
+    }
+    total += end - start;
+    start = nextStart;
+    end = nextEnd;
+  }
+  return start === null ? 0 : total + end - start;
+}
+
+
+// Target assignment is bounded by physical room around the target, not a
+// unit-name table. The target's sourced outline perimeter supplies the contact
+// surface while the attacker's sourced collision diameter supplies the space
+// consumed by one body. Nearby defenders occlude portions of that perimeter.
+// This naturally gives a small infantry target fewer pursuers than a large
+// elephant and reduces capacity further when the target is embedded in a line.
+export function meleeContactCapacity(attacker, target, snapshot) {
+  if (!Array.isArray(snapshot)) throw new TypeError("snapshot must be an array");
+  const targetRadius = outlineRadius(target);
+  const attackerRadius = collisionRadius(attacker);
+  const attackerDiameter = 2 * attackerRadius;
+  const blockers = snapshot.filter((candidate) => (
+    candidate.referenceId !== target.referenceId
+    && candidate.owner === target.owner
+    && isLive(candidate)
+  ));
+  const sides = [
+    {
+      constant: target.x - targetRadius - attackerRadius,
+      constantFor: (unit) => unit.x,
+      variableFor: (unit) => unit.y,
+      minimum: target.y - targetRadius,
+      maximum: target.y + targetRadius,
+    },
+    {
+      constant: target.x + targetRadius + attackerRadius,
+      constantFor: (unit) => unit.x,
+      variableFor: (unit) => unit.y,
+      minimum: target.y - targetRadius,
+      maximum: target.y + targetRadius,
+    },
+    {
+      constant: target.y - targetRadius - attackerRadius,
+      constantFor: (unit) => unit.y,
+      variableFor: (unit) => unit.x,
+      minimum: target.x - targetRadius,
+      maximum: target.x + targetRadius,
+    },
+    {
+      constant: target.y + targetRadius + attackerRadius,
+      constantFor: (unit) => unit.y,
+      variableFor: (unit) => unit.x,
+      minimum: target.x - targetRadius,
+      maximum: target.x + targetRadius,
+    },
+  ];
+  let blockedLength = 0;
+  for (const side of sides) {
+    const intervals = [];
+    for (const blocker of blockers) {
+      const clearance = attackerRadius + collisionRadius(blocker);
+      if (Math.abs(side.constant - side.constantFor(blocker)) >= clearance - 1e-12) {
+        continue;
+      }
+      const center = side.variableFor(blocker);
+      intervals.push([center - clearance, center + clearance]);
+    }
+    blockedLength += unionLength(intervals, side.minimum, side.maximum);
+  }
+  const exposedLength = Math.max(0, 8 * targetRadius - blockedLength);
+  // A reservation represents a complete attacker body. A fractional remainder
+  // cannot hold another unit, so count only whole collision diameters along
+  // the exposed contact surface.
+  return Math.max(1, Math.floor((exposedLength + 1e-12) / attackerDiameter));
+}
+
+
+// An opening pursuit approaches from one side of the target rather than
+// occupying its full perimeter instantly. Reserve at most the facing half of
+// that perimeter during first acquisition; once units arrive, the ordinary
+// full contact capacity still governs the physical surround.
+export function openingMeleeContactCapacity(attacker, target, snapshot) {
+  const fullCapacity = meleeContactCapacity(attacker, target, snapshot);
+  const approachFacingLength = 4 * outlineRadius(target);
+  const attackerDiameter = 2 * collisionRadius(attacker);
+  const approachCapacity = Math.max(
+    1,
+    Math.ceil((approachFacingLength - 1e-12) / attackerDiameter),
+  );
+  return Math.min(fullCapacity, approachCapacity);
+}
+
+
+function segmentEntersExpandedSquare(start, end, square, radius) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  let entry = 0;
+  let exit = 1;
+  for (const [origin, delta, minimum, maximum] of [
+    [start.x, dx, square.x - radius, square.x + radius],
+    [start.y, dy, square.y - radius, square.y + radius],
+  ]) {
+    if (Math.abs(delta) <= 1e-12) {
+      if (origin < minimum - 1e-12 || origin > maximum + 1e-12) return false;
+      continue;
+    }
+    const first = (minimum - origin) / delta;
+    const second = (maximum - origin) / delta;
+    entry = Math.max(entry, Math.min(first, second));
+    exit = Math.min(exit, Math.max(first, second));
+    if (entry > exit + 1e-12) return false;
+  }
+  return exit > 1e-12 && entry < 1 - 1e-12;
+}
+
+
+// A capacity reroute is useful only when the alternate target has a direct
+// contact corridor. Expanding each defender body by the attacker's radius is
+// the square-body Minkowski test for whether the attacker's center can travel
+// straight to that target. Screened interior targets remain the pathfinder's
+// concern instead of becoming an unrealistically intelligent target spread.
+export function hasDirectMeleeApproach(attacker, target, snapshot) {
+  if (!Array.isArray(snapshot)) throw new TypeError("snapshot must be an array");
+  const attackerRadius = collisionRadius(attacker);
+  return !snapshot.some((blocker) => (
+    blocker.referenceId !== attacker.referenceId
+    && blocker.referenceId !== target.referenceId
+    && blocker.owner === target.owner
+    && isLive(blocker)
+    && segmentEntersExpandedSquare(
+      attacker,
+      target,
+      blocker,
+      attackerRadius + collisionRadius(blocker),
+    )
+  ));
+}
+
+
 function isLive(unit) {
   return unit?.alive !== false;
 }
@@ -146,6 +304,9 @@ function isEnemy(unit, candidate) {
 export function selectPursuitTarget(unit, snapshot, {
   targetLoadById = null,
   targetLoadPenaltyTiles = 0,
+  targetCapacityLoadById = null,
+  targetCapacityFor = null,
+  targetAvailabilityFor = null,
 } = {}) {
   if (!Array.isArray(snapshot)) throw new TypeError("snapshot must be an array");
   if (!isLive(unit)) return null;
@@ -154,6 +315,15 @@ export function selectPursuitTarget(unit, snapshot, {
   }
   if (!Number.isFinite(targetLoadPenaltyTiles) || targetLoadPenaltyTiles < 0) {
     throw new RangeError("target load penalty must be nonnegative and finite");
+  }
+  if (targetCapacityLoadById !== null && !(targetCapacityLoadById instanceof Map)) {
+    throw new TypeError("target capacity load must be a Map");
+  }
+  if (targetCapacityFor !== null && typeof targetCapacityFor !== "function") {
+    throw new TypeError("target capacity must be a function");
+  }
+  if (targetAvailabilityFor !== null && typeof targetAvailabilityFor !== "function") {
+    throw new TypeError("target availability must be a function");
   }
 
   if (unit.pursuitTargetId !== null && unit.pursuitTargetId !== undefined) {
@@ -174,8 +344,26 @@ export function selectPursuitTarget(unit, snapshot, {
   );
   if (lineOfSight < 0) throw new RangeError("line of sight must be nonnegative");
 
-  let best = null;
-  let bestScore = Infinity;
+  const capacityLoadById = targetCapacityLoadById ?? targetLoadById;
+  let bestAvailable = null;
+  let bestAvailableScore = Infinity;
+  let bestFallback = null;
+  let bestFallbackScore = Infinity;
+  const betterCandidate = (candidate, score, best, bestScore) => (
+    best === null
+    || score < bestScore
+    // Ties are effectively unreachable and this branch is near-dead code:
+    // units acquire on a stagger, so by the time any unit picks a target the
+    // others have been moving for a while and exact ties have dissolved.
+    // Measured in champion_vs_paladin 6v3: spawn positions put champions 1628
+    // and 1633 at an EXACT tie from paladin 1701 (2.2361 Euclidean, 2.0000
+    // Chebyshev), but at 1701's actual acquisition moment the tape separates
+    // them 2.236 vs 2.019 and the sim 1.560 vs 1.957. Flipping this to
+    // highest-ID changed nothing anywhere, in either direction.
+    //
+    // What decides the target is ACQUISITION ORDER, not this tie-break.
+    || (score === bestScore && candidate.referenceId < best.referenceId)
+  );
   for (const candidate of snapshot) {
     if (!isLive(candidate) || !isEnemy(unit, candidate)) continue;
     if (centerDistance(unit, candidate) > lineOfSight) continue;
@@ -183,26 +371,29 @@ export function selectPursuitTarget(unit, snapshot, {
     const gap = surfaceGap(unit, candidate);
     const targetLoad = targetLoadById?.get(candidate.referenceId) ?? 0;
     const score = gap + targetLoad * targetLoadPenaltyTiles;
-    if (
-      best === null ||
-      score < bestScore ||
-      // Ties are effectively unreachable and this branch is near-dead code:
-      // units acquire on a stagger, so by the time any unit picks a target the
-      // others have been moving for a while and exact ties have dissolved.
-      // Measured in champion_vs_paladin 6v3: spawn positions put champions 1628
-      // and 1633 at an EXACT tie from paladin 1701 (2.2361 Euclidean, 2.0000
-      // Chebyshev), but at 1701's actual acquisition moment the tape separates
-      // them 2.236 vs 2.019 and the sim 1.560 vs 1.957. Flipping this to
-      // highest-ID changed nothing anywhere, in either direction.
-      //
-      // What decides the target is ACQUISITION ORDER, not this tie-break.
-      (score === bestScore && candidate.referenceId < best.referenceId)
-    ) {
-      best = candidate;
-      bestScore = score;
+    if (betterCandidate(candidate, score, bestFallback, bestFallbackScore)) {
+      bestFallback = candidate;
+      bestFallbackScore = score;
+    }
+    let hasCapacity = true;
+    if (targetCapacityFor !== null) {
+      const capacity = targetCapacityFor(candidate);
+      if (!Number.isSafeInteger(capacity) || capacity < 1) {
+        throw new RangeError("target capacity must be a positive safe integer");
+      }
+      const capacityLoad = capacityLoadById?.get(candidate.referenceId) ?? 0;
+      hasCapacity = capacityLoad < capacity;
+    }
+    if (hasCapacity && targetAvailabilityFor !== null) {
+      hasCapacity = targetAvailabilityFor(candidate) === true;
+    }
+    if (hasCapacity
+        && betterCandidate(candidate, score, bestAvailable, bestAvailableScore)) {
+      bestAvailable = candidate;
+      bestAvailableScore = score;
     }
   }
-  return best;
+  return bestAvailable ?? bestFallback;
 }
 
 

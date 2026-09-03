@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_conquistador_vs_arbalester",
+  "completedAt": "2026-08-21T00:32:14.831Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 21.26851851851852,
+      "medianAbsoluteMeanDelta": 21.26851851851852,
+      "maximumAbsoluteMeanDelta": 21.26851851851852
+    },
+    "rows": [
+      {
+        "id": "elite_conquistador_vs_arbalester",
+        "subjectSlug": "elite_conquistador",
+        "opponentSlug": "arbalester",
+        "matchup": "Elite Conquistador vs Arbalester",
+        "side2": {
+          "count": 12,
+          "master": 773,
+          "owner": 2,
+          "slug": "elite_conquistador",
+          "unit": "Elite Conquistador"
+        },
+        "side3": {
+          "count": 21,
+          "master": 492,
+          "owner": 3,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -31.89814814814815,
+          "min": -36.111111111111114,
+          "max": -27.59259259259259,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -10.62962962962963,
+          "min": -17.40740740740741,
+          "max": -4.074074074074074,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 16.962962962962962,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_conquistador_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 80,
+            "score": -7.407407407407407,
+            "ticks": 3174,
+            "finalStateHash": "2ffb3af6cedbf5eb0edcd45e0f06d50902469717d6f257aa7c42c17f31d4105f",
+            "eventLogHash": "10d0c6d1a090a6ab05f6e530a71a3223cf9f33d1f9e2f8e4ce7bcd6af291dc39"
+          },
+          {
+            "rowId": "elite_conquistador_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 112,
+            "score": -10.37037037037037,
+            "ticks": 3287,
+            "finalStateHash": "cd97fdb6582aa457ee322ad81fd11a91b34962a9bbb6edeae2c9c5b81ae6639d",
+            "eventLogHash": "84b731e735e3803c1f278c04713cfc58824b78557d7b2e870385dbaec35847d9"
+          },
+          {
+            "rowId": "elite_conquistador_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 44,
+            "score": -4.074074074074074,
+            "ticks": 3617,
+            "finalStateHash": "74bc5dfa45f19919bafaa57c7ffb0fc59f49545c5e1d8e1b318dbe40ed30b3cd",
+            "eventLogHash": "397fa06ab5334c658b3d8eecc83c0dbf9b628271995aa756b6fae494543dfba3"
+          },
+          {
+            "rowId": "elite_conquistador_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 188,
+            "score": -17.40740740740741,
+            "ticks": 2721,
+            "finalStateHash": "32cf0ec31dd65cd4515c67ae4720579a660403fe0e875a8580a30baa1b885ac0",
+            "eventLogHash": "7c5119c66aacd2ce78772f80f9a44092e291d56d479585450f07212aa1318b2a"
+          },
+          {
+            "rowId": "elite_conquistador_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 150,
+            "score": -13.88888888888889,
+            "ticks": 2811,
+            "finalStateHash": "0003eff05ca08805ff4988805a6edef13cccbab5718a1f1865a505e679df5d7d",
+            "eventLogHash": "175eca88f2cafe88f5aa22cdfa16f74e9b01a5dc64292e97ac8d8d9e4e2dd8b1"
+          }
+        ]
+      }
+    ]
+  }
+}

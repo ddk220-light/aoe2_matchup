@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_keshik_vs_champion",
+  "completedAt": "2026-08-20T18:35:12.627Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 2,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 17.420634920634924,
+      "medianAbsoluteMeanDelta": 17.420634920634924,
+      "maximumAbsoluteMeanDelta": 17.420634920634924
+    },
+    "rows": [
+      {
+        "id": "elite_keshik_vs_champion",
+        "subjectSlug": "elite_keshik",
+        "opponentSlug": "champion",
+        "matchup": "Elite Keshik vs Champion",
+        "side2": {
+          "count": 14,
+          "master": 1230,
+          "owner": 2,
+          "slug": "elite_keshik",
+          "unit": "Elite Keshik"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -27.153679653679653,
+          "min": -43.54978354978355,
+          "max": -15.714285714285714,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 3,
+          "unresolvedRuns": 2,
+          "mean": -44.57431457431458,
+          "min": -70.56277056277057,
+          "max": -10.519480519480519,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 1.0245310245310293,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_keshik_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1216,
+            "score": -52.64069264069264,
+            "ticks": 5530,
+            "finalStateHash": "81e069a52524e9f5051440b5c4349ed92909d910e51763712d0a1daf1f34aba0",
+            "eventLogHash": "f7c72d83176816aa36424f31b60350807c637a2e2030bc2efe8c5c7185ff0847"
+          },
+          {
+            "rowId": "elite_keshik_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 243,
+            "score": -10.519480519480519,
+            "ticks": 6444,
+            "finalStateHash": "ca30f39f6bd615e3e16cdd6e178535ab74e2877dc1dda175b75a4b7b17c0596a",
+            "eventLogHash": "52c185ea9282a5a9ae17a26eeab8bac126c15ff05295bb23f12a3928d04495e3"
+          },
+          {
+            "rowId": "elite_keshik_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1630,
+            "score": -70.56277056277057,
+            "ticks": 4073,
+            "finalStateHash": "145315ae722896844683f644ff1b31d757444c1e36fe7eebd20ea0828794f099",
+            "eventLogHash": "9b428c13f02dc670cf2362dc44a8eb236e55d52e260f0cf1995cf3e4172b9c4c"
+          },
+          {
+            "rowId": "elite_keshik_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_keshik_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          }
+        ]
+      }
+    ]
+  }
+}

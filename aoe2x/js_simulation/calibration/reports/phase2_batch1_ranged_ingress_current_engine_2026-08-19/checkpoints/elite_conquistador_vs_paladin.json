@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_conquistador_vs_paladin",
+  "completedAt": "2026-08-19T23:43:49.290Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 40.49382716049383,
+      "medianAbsoluteMeanDelta": 40.49382716049383,
+      "maximumAbsoluteMeanDelta": 40.49382716049383
+    },
+    "rows": [
+      {
+        "id": "elite_conquistador_vs_paladin",
+        "subjectSlug": "elite_conquistador",
+        "opponentSlug": "paladin",
+        "matchup": "Elite Conquistador vs Paladin",
+        "side2": {
+          "count": 18,
+          "master": 773,
+          "owner": 2,
+          "slug": "elite_conquistador",
+          "unit": "Elite Conquistador"
+        },
+        "side3": {
+          "count": 16,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -75.12345679012346,
+          "min": -75.12345679012346,
+          "max": -75.12345679012346,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -34.629629629629626,
+          "min": -34.629629629629626,
+          "max": -34.629629629629626,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 40.49382716049383,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_conquistador_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 561,
+            "score": -34.629629629629626,
+            "ticks": 4426,
+            "finalStateHash": "deebf723fb874f2200b5c0b0703e18aeaa2336f257a517cecf209dcb139340b2",
+            "eventLogHash": "6131f62ebfad6e97b48ca9c07e4fda9a79e43d37614b92eb9e9fb11a4288618c"
+          },
+          {
+            "rowId": "elite_conquistador_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 561,
+            "score": -34.629629629629626,
+            "ticks": 4426,
+            "finalStateHash": "deebf723fb874f2200b5c0b0703e18aeaa2336f257a517cecf209dcb139340b2",
+            "eventLogHash": "d6110a704e2f4fbff09bc75f401865c49ec8355363bdf92c6fefaa4297b7fc0d"
+          },
+          {
+            "rowId": "elite_conquistador_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 561,
+            "score": -34.629629629629626,
+            "ticks": 4426,
+            "finalStateHash": "deebf723fb874f2200b5c0b0703e18aeaa2336f257a517cecf209dcb139340b2",
+            "eventLogHash": "2e5954fc08c0a1cf0d38c7e5c907392617af9413ff7a722c8d437e0555e51e21"
+          },
+          {
+            "rowId": "elite_conquistador_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 561,
+            "score": -34.629629629629626,
+            "ticks": 4426,
+            "finalStateHash": "deebf723fb874f2200b5c0b0703e18aeaa2336f257a517cecf209dcb139340b2",
+            "eventLogHash": "8e3973f5ac106ecb7ee303fa5f516f279a474e213702df2b7a49f279209e3d4e"
+          },
+          {
+            "rowId": "elite_conquistador_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 561,
+            "score": -34.629629629629626,
+            "ticks": 4426,
+            "finalStateHash": "deebf723fb874f2200b5c0b0703e18aeaa2336f257a517cecf209dcb139340b2",
+            "eventLogHash": "ba641d46d180d59b6e529e68c3e8d1a90cc281deb1ad4f6cc6c89207c83f1f9c"
+          }
+        ]
+      }
+    ]
+  }
+}

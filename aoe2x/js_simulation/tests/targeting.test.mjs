@@ -11,6 +11,18 @@ const mechanicsUrl = new URL(
   import.meta.url,
 );
 const mechanics = JSON.parse(await readFile(mechanicsUrl, "utf8"));
+const boyarMechanics = JSON.parse(await readFile(new URL(
+  "../fixtures/unit_stats/elite_boyar_slavs_imperial.json",
+  import.meta.url,
+), "utf8"));
+const arbalesterMechanics = JSON.parse(await readFile(new URL(
+  "../fixtures/unit_stats/arbalester_chinese_imperial.json",
+  import.meta.url,
+), "utf8"));
+const elephantMechanics = JSON.parse(await readFile(new URL(
+  "../fixtures/unit_stats/elite_battle_elephant_burmese_imperial.json",
+  import.meta.url,
+), "utf8"));
 
 
 function unit({
@@ -113,4 +125,171 @@ test("a dead lock is released for normal acquisition", async () => {
     selectPursuitTarget(attacker, [attacker, deadLock, replacement]),
     replacement,
   );
+});
+
+
+test("melee contact capacity grows from target outline perimeter and attacker footprint", async () => {
+  const { meleeContactCapacity } = await loadTargeting();
+  const boyar = unit({
+    referenceId: 1,
+    unitMechanics: boyarMechanics,
+  });
+  const arbalester = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 4,
+    unitMechanics: arbalesterMechanics,
+  });
+  const elephant = unit({
+    referenceId: 3,
+    owner: 3,
+    x: 4,
+    unitMechanics: elephantMechanics,
+  });
+
+  assert.equal(meleeContactCapacity(boyar, arbalester, [boyar, arbalester]), 4);
+  assert.equal(meleeContactCapacity(boyar, elephant, [boyar, elephant]), 8);
+});
+
+
+test("nearby defenders reduce a target's exposed melee contact capacity", async () => {
+  const { meleeContactCapacity } = await loadTargeting();
+  const boyar = unit({
+    referenceId: 1,
+    x: 1,
+    y: 5,
+    unitMechanics: boyarMechanics,
+  });
+  const arbalester = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 5,
+    y: 5,
+    unitMechanics: arbalesterMechanics,
+  });
+  const defenders = [
+    unit({
+      referenceId: 3,
+      owner: 3,
+      x: 5.4,
+      y: 5,
+      unitMechanics: arbalesterMechanics,
+    }),
+    unit({
+      referenceId: 4,
+      owner: 3,
+      x: 5,
+      y: 5.4,
+      unitMechanics: arbalesterMechanics,
+    }),
+  ];
+  const isolated = meleeContactCapacity(boyar, arbalester, [boyar, arbalester]);
+  const embedded = meleeContactCapacity(
+    boyar,
+    arbalester,
+    [boyar, arbalester, ...defenders],
+  );
+
+  assert.ok(embedded >= 1);
+  assert.ok(embedded < isolated);
+});
+
+
+test("a physically full melee target yields to a visible target with free contact capacity", async () => {
+  const { selectPursuitTarget } = await loadTargeting();
+  const attacker = unit({
+    referenceId: 1,
+    x: 0,
+    unitMechanics: boyarMechanics,
+  });
+  const near = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 2,
+    unitMechanics: arbalesterMechanics,
+  });
+  const farther = unit({
+    referenceId: 3,
+    owner: 3,
+    x: 3,
+    unitMechanics: arbalesterMechanics,
+  });
+  const snapshot = [attacker, near, farther];
+
+  assert.equal(selectPursuitTarget(attacker, snapshot, {
+    targetLoadById: new Map([[near.referenceId, 3]]),
+    targetCapacityFor: () => 3,
+  }), farther);
+});
+
+
+test("melee capacity never strands surplus attackers when every target is full", async () => {
+  const { selectPursuitTarget } = await loadTargeting();
+  const attacker = unit({
+    referenceId: 1,
+    x: 0,
+    unitMechanics: boyarMechanics,
+  });
+  const near = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 2,
+    unitMechanics: arbalesterMechanics,
+  });
+  const farther = unit({
+    referenceId: 3,
+    owner: 3,
+    x: 3,
+    unitMechanics: arbalesterMechanics,
+  });
+  const snapshot = [attacker, near, farther];
+
+  assert.equal(selectPursuitTarget(attacker, snapshot, {
+    targetLoadById: new Map([
+      [near.referenceId, 3],
+      [farther.referenceId, 3],
+    ]),
+    targetCapacityFor: () => 3,
+  }), near);
+});
+
+
+test("capacity rerouting ignores a target whose straight contact corridor is screened", async () => {
+  const { hasDirectMeleeApproach, selectPursuitTarget } = await loadTargeting();
+  const attacker = unit({
+    referenceId: 1,
+    x: 0,
+    y: 5,
+    unitMechanics: boyarMechanics,
+  });
+  const exposed = unit({
+    referenceId: 2,
+    owner: 3,
+    x: 4,
+    y: 4,
+    unitMechanics: arbalesterMechanics,
+  });
+  const screen = unit({
+    referenceId: 3,
+    owner: 3,
+    x: 3,
+    y: 5,
+    unitMechanics: arbalesterMechanics,
+  });
+  const screened = unit({
+    referenceId: 4,
+    owner: 3,
+    x: 4,
+    y: 5,
+    unitMechanics: arbalesterMechanics,
+  });
+  const snapshot = [attacker, exposed, screen, screened];
+
+  assert.equal(hasDirectMeleeApproach(attacker, exposed, snapshot), true);
+  assert.equal(hasDirectMeleeApproach(attacker, screened, snapshot), false);
+  assert.equal(selectPursuitTarget(attacker, snapshot, {
+    targetCapacityLoadById: new Map([[screen.referenceId, 1]]),
+    targetCapacityFor: () => 1,
+    targetAvailabilityFor: (target) => hasDirectMeleeApproach(attacker, target, snapshot),
+  }), exposed);
 });

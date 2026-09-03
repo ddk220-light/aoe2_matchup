@@ -1,4 +1,5 @@
 import { collisionRadius } from "./targeting.js";
+import { occupiesZeroRangeMeleeContact } from "./melee-contact.js";
 
 
 const EPSILON = 1e-12;
@@ -10,7 +11,10 @@ const VALID_CONTACT_RESERVATION_KINDS = new Set([
   "shallow-contact",
   "releasing",
 ]);
-const VALID_SNAPSHOT_OPTIONS = new Set(["contactReservations"]);
+const VALID_SNAPSHOT_OPTIONS = new Set([
+  "contactReservations",
+  "pursuitTransitReferenceIds",
+]);
 
 
 function requireReferenceId(value, name = "reference ID") {
@@ -100,6 +104,16 @@ function normalizeContactReservations(value) {
 }
 
 
+function normalizeReferenceIds(value, name) {
+  if (!(value instanceof Set)) throw new TypeError(`${name} must be a Set`);
+  const result = new Set();
+  for (const referenceId of value) {
+    result.add(requireReferenceId(referenceId, `${name} reference ID`));
+  }
+  return result;
+}
+
+
 function interaction(kind, collisionExtent, pathObstructs,
   attackSurfaceExtent, mayDeepen, reason) {
   return Object.freeze({
@@ -144,7 +158,18 @@ export function createPairInteractionSnapshot(options = {}) {
     contactReservations: normalizeContactReservations(
       options.contactReservations ?? new Map(),
     ),
+    pursuitTransitReferenceIds: normalizeReferenceIds(
+      options.pursuitTransitReferenceIds ?? new Set(),
+      "pursuit transit references",
+    ),
   });
+}
+
+
+function transitsDuringPursuit(unit, other, snapshot) {
+  if (!snapshot.pursuitTransitReferenceIds?.has(unit.referenceId)) return false;
+  if (unit.action === "attacking") return false;
+  return unit.owner === other.owner && !occupiesZeroRangeMeleeContact(other);
 }
 
 
@@ -156,6 +181,20 @@ export function resolvePairInteraction(left, right,
   const leftUnit = sourceUnit(left);
   const rightUnit = sourceUnit(right);
   const extent = bodyRadius(left) + bodyRadius(right);
+  // A live melee chase is an authoritative movement state. Allied bodies may
+  // influence formation shape, but must never clip, shorten, or reject its
+  // targetward step. Enemy bodies and static map geometry remain solid.
+  if (transitsDuringPursuit(leftUnit, rightUnit, snapshot)
+      || transitsDuringPursuit(rightUnit, leftUnit, snapshot)) {
+    return interaction(
+      "pursuit-transit",
+      0,
+      false,
+      extent,
+      true,
+      "active-melee-pursuit-transit",
+    );
+  }
   // A formation order assigns every member of the cohort its own destination.
   // The authorized tapes show those ordered allies reforming through one
   // another (including center crossings) instead of treating arrived members

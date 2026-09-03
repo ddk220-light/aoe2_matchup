@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "6bc165a60a7d609e0eb729920ef5fbe53a159d943e29619915abc829d3cd7986",
+  "matchupId": "elite_longbowman_vs_heavy_scorpion",
+  "completedAt": "2026-08-19T22:32:07.066Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 32.41071428571429,
+      "medianAbsoluteMeanDelta": 32.41071428571429,
+      "maximumAbsoluteMeanDelta": 32.41071428571429
+    },
+    "rows": [
+      {
+        "id": "elite_longbowman_vs_heavy_scorpion",
+        "subjectSlug": "elite_longbowman",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Elite Longbowman vs Heavy Scorpion",
+        "side2": {
+          "count": 21,
+          "master": 530,
+          "owner": 2,
+          "slug": "elite_longbowman",
+          "unit": "Elite Longbowman"
+        },
+        "side3": {
+          "count": 10,
+          "master": 542,
+          "owner": 3,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -10.565476190476192,
+          "min": -19.047619047619047,
+          "max": -3.5714285714285716,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -42.97619047619048,
+          "min": -48.80952380952381,
+          "max": -35.11904761904762,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 23.928571428571434,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_longbowman_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 360,
+            "score": -42.857142857142854,
+            "ticks": 1428,
+            "finalStateHash": "5da8385ef10ca1e8de1b3503c931244f1189e48a6dc3a9113dafa0198a59edf0",
+            "eventLogHash": "2bb2d17d84e051c58ebcc9bd365e8213ddda3b518e5a308b63648fe88658b55b"
+          },
+          {
+            "rowId": "elite_longbowman_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 295,
+            "score": -35.11904761904762,
+            "ticks": 1531,
+            "finalStateHash": "d5a355be78531a62cb4d6807021ae458e47cff3c6aa443f75d627c0442a7c2d5",
+            "eventLogHash": "ecc2fe3f78f269422c7d250d251f82e65aab2d256ada8f43f08f6b01e1bda52d"
+          },
+          {
+            "rowId": "elite_longbowman_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 340,
+            "score": -40.476190476190474,
+            "ticks": 1428,
+            "finalStateHash": "64d211d2319b88f89c31516144fd80c31e5b2e0fda9851642659f4016f7cbb86",
+            "eventLogHash": "984f8609414d85bd1338fff4e5dc758e7b8a7dd35190d4aa3d7871bc1fff6c73"
+          },
+          {
+            "rowId": "elite_longbowman_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 400,
+            "score": -47.61904761904762,
+            "ticks": 1411,
+            "finalStateHash": "fcab44f325ff2fb12792515b61c2161a505209263926638a60eae9cd0ae94e66",
+            "eventLogHash": "7ef2c125394d36b37e957fe7bd360662d10ce30c9eac70b601c0f9f65ca3f580"
+          },
+          {
+            "rowId": "elite_longbowman_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 410,
+            "score": -48.80952380952381,
+            "ticks": 1415,
+            "finalStateHash": "fef9d32a9ccb09d7923705229c8a9a6427d7520f694af6c242692037f6230f0b",
+            "eventLogHash": "fefec05dde38bd819b9c988856fb252660963aa9b3765073ac6ee0dcecaee6a9"
+          }
+        ]
+      }
+    ]
+  }
+}

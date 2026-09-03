@@ -128,6 +128,119 @@ test("separate opening independently attacks each unit's nearest reachable targe
 });
 
 
+test("recurring volley lets every shooter independently pick its closest target", () => {
+  const state = createKiteState(2, HC_PROFILE);
+  const makeUnit = (referenceId, owner, x, y, hp = 50) => ({
+    referenceId,
+    owner,
+    alive: true,
+    x,
+    y,
+    hp,
+    action: "idle",
+    actionTimers: { acquire: 0, windup: 0, reload: 0, swing: 0 },
+    pursuitTargetId: null,
+    engagedTargetId: null,
+    attackTargetId: null,
+    avoidance: null,
+    mechanics: owner === 2 ? {
+      line_of_sight_tiles: 10,
+      attack_range_tiles: 5,
+      collision_size_tiles: { x: 0.2, y: 0.2 },
+      outline_size_tiles: { x: 0.2, y: 0.2 },
+      attack_classes: { "3": 10 },
+      armor_classes: { "3": 0 },
+      ranged: { min_range_tiles: 0 },
+    } : {
+      line_of_sight_tiles: 5,
+      attack_range_tiles: 0,
+      collision_size_tiles: { x: 0.2, y: 0.2 },
+      outline_size_tiles: { x: 0.2, y: 0.2 },
+      attack_classes: { "4": 1 },
+      armor_classes: { "3": 0, "4": 0 },
+    },
+  });
+  const kiters = [
+    makeUnit(1, 2, 4, 4),
+    makeUnit(2, 2, 4.2, 4),
+    makeUnit(3, 2, 4.4, 4),
+  ];
+  const enemies = [
+    makeUnit(10, 3, 4.2, 8, 1),
+    makeUnit(11, 3, 6.5, 8, 50),
+  ];
+  const events = [];
+
+  issueKiteOrders(
+    state,
+    [...kiters, ...enemies],
+    { width: 16, height: 16 },
+    240,
+    events,
+    (tick, type, actorId, targetId, extra = {}) => ({
+      tick, type, actorId, targetId, ...extra,
+    }),
+  );
+
+  assert.deepEqual(kiters.map(({ pursuitTargetId }) => pursuitTargetId), [10, 10, 10]);
+  assert.deepEqual(events.filter(({ type }) => type === "ai-order")
+    .map(({ actorId, targetId }) => ({ actorId, targetId })), [
+    { actorId: 1, targetId: 10 },
+    { actorId: 2, targetId: 10 },
+    { actorId: 3, targetId: 10 },
+  ]);
+});
+
+
+test("recurring volley keeps each shooter's live reachable target", () => {
+  const state = createKiteState(2, HC_PROFILE);
+  const ranged = {
+    line_of_sight_tiles: 10,
+    attack_range_tiles: 5,
+    collision_size_tiles: { x: 0.2, y: 0.2 },
+    outline_size_tiles: { x: 0.2, y: 0.2 },
+    ranged: { min_range_tiles: 0 },
+  };
+  const melee = {
+    line_of_sight_tiles: 5,
+    attack_range_tiles: 0,
+    collision_size_tiles: { x: 0.2, y: 0.2 },
+    outline_size_tiles: { x: 0.2, y: 0.2 },
+  };
+  const shooter = {
+    referenceId: 1,
+    owner: 2,
+    alive: true,
+    x: 4,
+    y: 4,
+    action: "idle",
+    actionTimers: { acquire: 0, windup: 0, reload: 0, swing: 0 },
+    pursuitTargetId: 11,
+    engagedTargetId: null,
+    attackTargetId: null,
+    avoidance: null,
+    mechanics: ranged,
+  };
+  const enemies = [
+    { referenceId: 10, owner: 3, alive: true, x: 4, y: 7, mechanics: melee },
+    { referenceId: 11, owner: 3, alive: true, x: 4, y: 8, mechanics: melee },
+  ];
+
+  issueKiteOrders(
+    state,
+    [shooter, ...enemies],
+    { width: 16, height: 16 },
+    240,
+    [],
+    (tick, type, actorId, targetId, extra = {}) => ({
+      tick, type, actorId, targetId, ...extra,
+    }),
+  );
+
+  assert.equal(shooter.pursuitTargetId, 11);
+});
+
+
 test("half-roster melee wave orders only the high half of the chaser roster", () => {
   const state = createKiteState(2, {
     ...HC_PROFILE,

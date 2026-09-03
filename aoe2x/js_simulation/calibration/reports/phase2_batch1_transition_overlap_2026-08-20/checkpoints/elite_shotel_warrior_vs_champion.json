@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_shotel_warrior_vs_champion",
+  "completedAt": "2026-08-20T18:21:43.110Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 3,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 1,
+      "meanAbsoluteMeanDelta": 0.03401360544217624,
+      "medianAbsoluteMeanDelta": 0.03401360544217624,
+      "maximumAbsoluteMeanDelta": 0.03401360544217624
+    },
+    "rows": [
+      {
+        "id": "elite_shotel_warrior_vs_champion",
+        "subjectSlug": "elite_shotel_warrior",
+        "opponentSlug": "champion",
+        "matchup": "Elite Shotel Warrior vs Champion",
+        "side2": {
+          "count": 17,
+          "master": 1018,
+          "owner": 2,
+          "slug": "elite_shotel_warrior",
+          "unit": "Elite Shotel Warrior"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 24.1156462585034,
+          "min": 11.700680272108844,
+          "max": 41.08843537414966,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 2,
+          "unresolvedRuns": 3,
+          "mean": 24.081632653061224,
+          "min": 23.537414965986393,
+          "max": 24.625850340136054,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 0,
+          "tapeBandCoverage": 1,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_shotel_warrior_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 346,
+            "score": 23.537414965986393,
+            "ticks": 5228,
+            "finalStateHash": "89a895d883f915608c1493b808c134ec40bbb7bb9a5a5c04b1d10c45640ee3c6",
+            "eventLogHash": "47422c416f99a7965ff546931b8b18063a64938a4f230e1f07e296a98cfaf5c0"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 362,
+            "score": 24.625850340136054,
+            "ticks": 3581,
+            "finalStateHash": "279ebc037dd6e941551d488de713003c20601144fcb84cc3e7e3ee2401fe8873",
+            "eventLogHash": "31e9015ffd580d2add22b57d1953828dd9272611d0a0e13479e5ea5c2f65b3fa"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          }
+        ]
+      }
+    ]
+  }
+}

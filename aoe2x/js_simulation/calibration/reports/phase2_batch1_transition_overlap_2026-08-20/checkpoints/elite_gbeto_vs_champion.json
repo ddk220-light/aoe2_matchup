@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_gbeto_vs_champion",
+  "completedAt": "2026-08-20T18:22:39.031Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 1.3333333333333286,
+      "medianAbsoluteMeanDelta": 1.3333333333333286,
+      "maximumAbsoluteMeanDelta": 1.3333333333333286
+    },
+    "rows": [
+      {
+        "id": "elite_gbeto_vs_champion",
+        "subjectSlug": "elite_gbeto",
+        "opponentSlug": "champion",
+        "matchup": "Elite Gbeto vs Champion",
+        "side2": {
+          "count": 15,
+          "master": 1015,
+          "owner": 2,
+          "slug": "elite_gbeto",
+          "unit": "Elite Gbeto"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -91.33333333333333,
+          "min": -91.33333333333333,
+          "max": -91.33333333333333,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -90,
+          "min": -90,
+          "max": -90,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 1.3333333333333286,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_gbeto_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 675,
+            "score": -90,
+            "ticks": 2110,
+            "finalStateHash": "c2f8c01a5a1d2ef19478f6b04c779a7311febbbe8f98d0adfebc5fd408368e0c",
+            "eventLogHash": "97c9b92020da5001e52e5c8ccc4df32d892dddfc61a601e2a598dae372b4e638"
+          },
+          {
+            "rowId": "elite_gbeto_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 675,
+            "score": -90,
+            "ticks": 2110,
+            "finalStateHash": "c2f8c01a5a1d2ef19478f6b04c779a7311febbbe8f98d0adfebc5fd408368e0c",
+            "eventLogHash": "066540ba36d48c16b8b44905ddf328ce452b431240ea7bb5b18bba1823ea6fdc"
+          },
+          {
+            "rowId": "elite_gbeto_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 675,
+            "score": -90,
+            "ticks": 2229,
+            "finalStateHash": "889d17363181f0194f54176a954204d6f879502ff6dba66af96f6dcd6656971e",
+            "eventLogHash": "5db9dcaeab5aab5000eecaed368ec971c0b3d051173aa85b9bddf7e28432a85f"
+          },
+          {
+            "rowId": "elite_gbeto_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 675,
+            "score": -90,
+            "ticks": 2229,
+            "finalStateHash": "889d17363181f0194f54176a954204d6f879502ff6dba66af96f6dcd6656971e",
+            "eventLogHash": "37f5efa173556a496fdcf7fe70122ef7297c4f1c7df5a9ccbd4f94a21d3da3c6"
+          },
+          {
+            "rowId": "elite_gbeto_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 675,
+            "score": -90,
+            "ticks": 2110,
+            "finalStateHash": "63aa454538461d89398cfb317a337dc7982ba0638a6b8beaccee8c63a4d255bb",
+            "eventLogHash": "6ebc42fcbb1ab1a68f88c37af99646dc32571746accade6ad39bef76d736990a"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_shotel_warrior_vs_heavy_cav_archer",
+  "completedAt": "2026-08-20T18:25:03.695Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 1,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 135.74285714285713,
+      "medianAbsoluteMeanDelta": 135.74285714285713,
+      "maximumAbsoluteMeanDelta": 135.74285714285713
+    },
+    "rows": [
+      {
+        "id": "elite_shotel_warrior_vs_heavy_cav_archer",
+        "subjectSlug": "elite_shotel_warrior",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Heavy Cavalry Archer vs Elite Shotel Warrior",
+        "side2": {
+          "count": 15,
+          "master": 474,
+          "owner": 2,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "side3": {
+          "count": 21,
+          "master": 1018,
+          "owner": 3,
+          "slug": "elite_shotel_warrior",
+          "unit": "Elite Shotel Warrior"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 65.14285714285714,
+          "min": 65.14285714285714,
+          "max": 65.14285714285714,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -70.60000000000001,
+          "min": -78.16666666666667,
+          "max": -60.166666666666664,
+          "side3WinRate": 0,
+          "side3WinRateError": 1,
+          "bandError": 135.74285714285713,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": true
+        },
+        "samples": [
+          {
+            "rowId": "elite_shotel_warrior_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 938,
+            "score": -78.16666666666667,
+            "ticks": 3950,
+            "finalStateHash": "358b27364643714bdb2c5b1495bc9463b0414f938b310fba945c93907facba80",
+            "eventLogHash": "f4444dec9736795a4eef85fa563db8a910a5a6f883903f377d45d934e34c4c44"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 722,
+            "score": -60.166666666666664,
+            "ticks": 4066,
+            "finalStateHash": "0ab7eab6228d40e2f6e0137109a53dc6aae922801304d737f3500e8b6e444708",
+            "eventLogHash": "58db58becf465818725426ba306baf789b748ae24d1c447e40317d86961ce921"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 819,
+            "score": -68.25,
+            "ticks": 4331,
+            "finalStateHash": "6659b3acf54fb2e1f241f0489dbae131575c49ed4ce483c1512fc414d8dd5a95",
+            "eventLogHash": "d8808ee896883e576f4ffe60799633986eaf6524c10e57751a224b54b322d1c4"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 819,
+            "score": -68.25,
+            "ticks": 4331,
+            "finalStateHash": "6659b3acf54fb2e1f241f0489dbae131575c49ed4ce483c1512fc414d8dd5a95",
+            "eventLogHash": "b47784647715cacc67676cd96b8685b4246abd15673df17779d49fd28f523472"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 938,
+            "score": -78.16666666666667,
+            "ticks": 3950,
+            "finalStateHash": "358b27364643714bdb2c5b1495bc9463b0414f938b310fba945c93907facba80",
+            "eventLogHash": "0963d3321613c012ff263935bc94c9cea5b457137a8923f85030a8e1abc9dab4"
+          }
+        ]
+      }
+    ]
+  }
+}

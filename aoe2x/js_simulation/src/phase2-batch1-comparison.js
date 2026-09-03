@@ -150,6 +150,7 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
             kiteMeleeOpeningOrder: "attack-move-all",
             chaseCapture: true,
             kiteChaseDwellTicks: 0,
+            persistentMeleePursuitRouting: true,
             ...(warWagonKiter ? warWagonChasePolicy(kiter.slug, chaserMechanics) : {}),
           }
           : { kiteOpponentMode: "ordinary-ranged" }),

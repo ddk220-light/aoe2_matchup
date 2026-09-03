@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_huskarl_vs_elite_elephant",
+  "completedAt": "2026-08-19T23:38:39.403Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 6.31944444444445,
+      "medianAbsoluteMeanDelta": 6.31944444444445,
+      "maximumAbsoluteMeanDelta": 6.31944444444445
+    },
+    "rows": [
+      {
+        "id": "elite_huskarl_vs_elite_elephant",
+        "subjectSlug": "elite_huskarl",
+        "opponentSlug": "elite_elephant",
+        "matchup": "Elite Huskarl vs Elite Battle Elephant",
+        "side2": {
+          "count": 21,
+          "master": 555,
+          "owner": 2,
+          "slug": "elite_huskarl",
+          "unit": "Elite Huskarl"
+        },
+        "side3": {
+          "count": 9,
+          "master": 1134,
+          "owner": 3,
+          "slug": "elite_elephant",
+          "unit": "Elite Battle Elephant"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 60.416666666666664,
+          "min": 60.416666666666664,
+          "max": 60.416666666666664,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 66.73611111111111,
+          "min": 63.888888888888886,
+          "max": 70.13888888888889,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 6.31944444444445,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_huskarl_vs_elite_elephant",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2020,
+            "score": 70.13888888888889,
+            "ticks": 1705,
+            "finalStateHash": "9cc3485d425388a4d5e1102d92e9b083d6ae0f84e04b2f3a09c2b0a3a4c6d1e7",
+            "eventLogHash": "0e092b104becf631571c61cc2fe04b52daecbf283f569b0c64578d919ba893e2"
+          },
+          {
+            "rowId": "elite_huskarl_vs_elite_elephant",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1950,
+            "score": 67.70833333333333,
+            "ticks": 1747,
+            "finalStateHash": "08db2a7dd72f40db97c25a439bf0cb5dbc7ae744686dcb0e1452d25c22a959a1",
+            "eventLogHash": "5c87eb2b66a97326db37fe3291cf1bf2c6258883bab2627affdc4f1e67b2a6ad"
+          },
+          {
+            "rowId": "elite_huskarl_vs_elite_elephant",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1920,
+            "score": 66.66666666666667,
+            "ticks": 1844,
+            "finalStateHash": "9718f500e60dff5036f83c9f01d1112994dcb24b7da5ff23511ca17d31a3efd5",
+            "eventLogHash": "53879a68bed9675a5b017549ac39e6ca1302d65f6ac7f85834ed8d872775a7c9"
+          },
+          {
+            "rowId": "elite_huskarl_vs_elite_elephant",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1840,
+            "score": 63.888888888888886,
+            "ticks": 2078,
+            "finalStateHash": "774f37f689227b10566e24bbcef4680f7fbd61a07f900c2ee8155bc1a7fd006a",
+            "eventLogHash": "ecf81a9d6a74d029d4a36928e803c96655d9a46f0ab1df28ab8f0892c482501d"
+          },
+          {
+            "rowId": "elite_huskarl_vs_elite_elephant",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1880,
+            "score": 65.27777777777777,
+            "ticks": 1912,
+            "finalStateHash": "01b81110f6688d81f19d14901ee01095f98724ad1a2937c605f3f9d472c71003",
+            "eventLogHash": "1680166739e808ef81b3224421a95b66d0a7228f60c86129560032f2e8d77bf7"
+          }
+        ]
+      }
+    ]
+  }
+}

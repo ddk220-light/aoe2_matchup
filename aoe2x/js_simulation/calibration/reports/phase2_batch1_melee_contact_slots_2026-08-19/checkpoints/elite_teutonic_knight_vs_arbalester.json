@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "b946e815728da6a548fc2a26b00d30ae668e858f5bd6a8b877714c5f5f47526b",
+  "matchupId": "elite_teutonic_knight_vs_arbalester",
+  "completedAt": "2026-08-20T08:19:14.245Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 8.57142857142857,
+      "medianAbsoluteMeanDelta": 8.57142857142857,
+      "maximumAbsoluteMeanDelta": 8.57142857142857
+    },
+    "rows": [
+      {
+        "id": "elite_teutonic_knight_vs_arbalester",
+        "subjectSlug": "elite_teutonic_knight",
+        "opponentSlug": "arbalester",
+        "matchup": "Arbalester vs Elite Teutonic Knight",
+        "side2": {
+          "count": 21,
+          "master": 492,
+          "owner": 2,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "side3": {
+          "count": 14,
+          "master": 554,
+          "owner": 3,
+          "slug": "elite_teutonic_knight",
+          "unit": "Elite Teutonic Knight"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -73.33333333333333,
+          "min": -73.33333333333333,
+          "max": -73.33333333333333,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -81.9047619047619,
+          "min": -81.9047619047619,
+          "max": -81.9047619047619,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 8.57142857142857,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_teutonic_knight_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 688,
+            "score": -81.9047619047619,
+            "ticks": 2938,
+            "finalStateHash": "1cf899d6368fd0d7271e2cdc4268cf913fb6a0e560805c4d8be26350dda6bd88",
+            "eventLogHash": "44b5a130d05a08884a3dceee9566ceb76bea9ff2ce24466107e03b49fda38c52"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 688,
+            "score": -81.9047619047619,
+            "ticks": 2938,
+            "finalStateHash": "1cf899d6368fd0d7271e2cdc4268cf913fb6a0e560805c4d8be26350dda6bd88",
+            "eventLogHash": "7a6d647dda1e659a0a98e332783443e2210a561cbbf7584f31b7229a446cf348"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 688,
+            "score": -81.9047619047619,
+            "ticks": 2938,
+            "finalStateHash": "1cf899d6368fd0d7271e2cdc4268cf913fb6a0e560805c4d8be26350dda6bd88",
+            "eventLogHash": "2d6432c888dd5488d41d6285cd6d81a8f9773ba19184fea2451e98e6a7f0ddb9"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 688,
+            "score": -81.9047619047619,
+            "ticks": 2938,
+            "finalStateHash": "1cf899d6368fd0d7271e2cdc4268cf913fb6a0e560805c4d8be26350dda6bd88",
+            "eventLogHash": "3df5cc9320d2419343746e41e6d51b7e7171fd0c7bb777489ae61510f0942ce5"
+          },
+          {
+            "rowId": "elite_teutonic_knight_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 688,
+            "score": -81.9047619047619,
+            "ticks": 2938,
+            "finalStateHash": "1cf899d6368fd0d7271e2cdc4268cf913fb6a0e560805c4d8be26350dda6bd88",
+            "eventLogHash": "c7493abdd3c5daa475b5dd1177353320e5ef99a8a26faa7fd5441230f95894ea"
+          }
+        ]
+      }
+    ]
+  }
+}

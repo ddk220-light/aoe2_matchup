@@ -1,4 +1,5 @@
 import { isWithinReach } from "./targeting.js";
+import { resolvePairInteraction } from "./pair-interactions.js";
 
 
 const EPSILON = 1e-12;
@@ -12,7 +13,9 @@ export function createContactReservationState() {
   });
 }
 
-export function updateContactReservations({ state, units, proposals, tick }) {
+export function updateContactReservations({
+  state, units, proposals, tick, pairInteractions = null,
+}) {
   requireInputs(state, units, proposals, tick);
   const live = units
     .filter((unit) => unit?.alive !== false)
@@ -33,6 +36,7 @@ export function updateContactReservations({ state, units, proposals, tick }) {
     contactReservations,
     diagnostics,
     tick,
+    pairInteractions,
   });
 
   for (const [key, prior] of sortedEntries(state.reservations)) {
@@ -40,6 +44,12 @@ export function updateContactReservations({ state, units, proposals, tick }) {
     const right = byReference.get(prior.rightId);
     if (!left || !right) {
       diagnostics.push(diagnostic("reservation-released", key, { reason: "unit-missing" }));
+      continue;
+    }
+    if (pairUsesPursuitTransit(left, right, pairInteractions)) {
+      diagnostics.push(diagnostic("reservation-released", key, {
+        reason: "pursuit-transit",
+      }));
       continue;
     }
     if (sharedFormationOrder(left, right)) {
@@ -81,7 +91,9 @@ export function updateContactReservations({ state, units, proposals, tick }) {
     });
   }
 
-  const candidates = generateCandidates(live, byReference, proposalByReference, tick);
+  const candidates = generateCandidates(
+    live, byReference, proposalByReference, tick, pairInteractions,
+  );
   const admissibleShallowPairs = new Set(candidates
     .filter(({ reservation }) => reservation.kind !== "releasing")
     .map(({ key }) => key));
@@ -97,7 +109,30 @@ export function updateContactReservations({ state, units, proposals, tick }) {
     }
     const left = byReference.get(candidate.reservation.leftId);
     const right = byReference.get(candidate.reservation.rightId);
-    if (!contactSlotsAvailable(candidate.reservation, left, right, contactSlots)) continue;
+    if (!contactSlotsAvailable(candidate.reservation, left, right, contactSlots)) {
+      // Contact-slot capacity may reject a new deep lane, but an overlap that
+      // already exists must still be represented in the same authoritative
+      // pair geometry. Publishing its exact current extent prevents any
+      // further deepening without snapping the units apart or falling back to
+      // an impossible hard full-body start.
+      const currentExtent = pairSeparation(left, right);
+      if (currentExtent < pairFullExtent(left, right) - EPSILON) {
+        const publishedExtent = cleanNumber(currentExtent);
+        const release = releasingReservation({
+          left,
+          right,
+          collisionExtent: publishedExtent,
+          tick,
+        });
+        inheritedExtents.set(candidate.key, publishedExtent);
+        contactReservations.set(candidate.key, release);
+        diagnostics.push(diagnostic("release-published", candidate.key, {
+          reason: "contact-slot-unavailable",
+          collisionExtent: publishedExtent,
+        }));
+      }
+      continue;
+    }
     reservations.set(candidate.key, candidate.reservation);
     contactReservations.set(candidate.key, candidate.reservation);
     occupyContactSlots(candidate.reservation, left, right, contactSlots);
@@ -317,6 +352,7 @@ function publishInheritedReleases({
   contactReservations,
   diagnostics,
   tick,
+  pairInteractions,
 }) {
   for (const [key, priorExtent] of sortedEntries(inherited)) {
     if (!Number.isFinite(priorExtent) || priorExtent < 0) {
@@ -326,6 +362,12 @@ function publishInheritedReleases({
     const left = byReference.get(leftId);
     const right = byReference.get(rightId);
     if (!left || !right) continue;
+    if (pairUsesPursuitTransit(left, right, pairInteractions)) {
+      diagnostics.push(diagnostic("release-cleared", key, {
+        reason: "pursuit-transit",
+      }));
+      continue;
+    }
     if (sharedFormationOrder(left, right)) {
       diagnostics.push(diagnostic("release-cleared", key, {
         reason: "shared-formation-order",
@@ -379,12 +421,19 @@ function inheritReleasedPair({
   }));
 }
 
-function generateCandidates(units, byReference, proposals, tick) {
+function pairUsesPursuitTransit(left, right, pairInteractions) {
+  return pairInteractions !== null
+    && resolvePairInteraction(left, right, pairInteractions).kind === "pursuit-transit";
+}
+
+
+function generateCandidates(units, byReference, proposals, tick, pairInteractions) {
   const candidates = [];
   for (let leftIndex = 0; leftIndex < units.length; leftIndex += 1) {
     const left = units[leftIndex];
     for (let rightIndex = leftIndex + 1; rightIndex < units.length; rightIndex += 1) {
       const right = units[rightIndex];
+      if (pairUsesPursuitTransit(left, right, pairInteractions)) continue;
       if (left.owner === right.owner) {
         // Formation cohorts own zero-obstruction pair geometry in the shared
         // interaction resolver. Do not leave a deeper reservation behind:
@@ -467,12 +516,15 @@ function rangedIngressQualifies(mover, front, byReference, proposals) {
   if (!isMoving(moverProposal)) return false;
   const target = directPursuitTarget(mover, byReference);
   if (!target || isWithinReach(mover, target)) return false;
+  const frontTarget = directPursuitTarget(front, byReference);
+  if (!frontTarget || frontTarget.referenceId !== target.referenceId) return false;
+  const frontProposal = proposalFor(front, proposals);
+  if (isMoving(frontProposal)) return false;
   const currentTargetDistance = euclideanDistance(mover, target);
   if (euclideanDistance(mover, target, moverProposal) >= currentTargetDistance - EPSILON) {
     return false;
   }
   if (euclideanDistance(front, target) >= currentTargetDistance - EPSILON) return false;
-  const frontProposal = proposalFor(front, proposals);
   const current = pairSeparation(mover, front);
   const projected = pairSeparation(mover, front, moverProposal, frontProposal);
   return projected < pairFullExtent(mover, front) - EPSILON
@@ -617,7 +669,28 @@ function makeCandidate({
   const fullExtent = pairFullExtent(left, right);
   const currentExtent = pairSeparation(left, right);
   const configuredFloor = movingFloor(left, right);
-  const collisionExtent = cleanNumber(Math.min(configuredFloor, currentExtent));
+  const relativeClosure = Math.max(0, currentExtent - projected);
+  // Enemy contact may consume the physical closure already proposed for this
+  // tick, but it does not open a continuing lane toward the sourced deep-
+  // contact floor. This makes the contacted body part of the formation surface
+  // while preserving the brief pair compression visible in tape.
+  const enemyContactFloor = Math.max(
+    configuredFloor,
+    fullExtent - relativeClosure,
+  );
+  const holdsEnemySurface = kind === "engagement-contact";
+  // A ranged-ingress reservation is a temporary pass-through lane, not a
+  // shrunken allied body. The rear shooter must be able to cross the front
+  // shooter's centerline before the monotonically releasing surface takes
+  // over; otherwise units whose DAT minimum multiplier is 1 (notably the
+  // Conquistador) acquire ingress but remain pinned at their full extent.
+  // Ordinary allied transit still uses the sourced moving floor.
+  const collisionExtent = kind === "ranged-ingress"
+    ? 0
+    : cleanNumber(Math.min(
+      holdsEnemySurface ? enemyContactFloor : configuredFloor,
+      currentExtent,
+    ));
   const attackSurfaceExtent = kind === "engagement-contact"
     ? fullExtent + attackRange(initiator)
     : fullExtent;
@@ -633,7 +706,9 @@ function makeCandidate({
       collisionExtent,
       attackSurfaceExtent: cleanNumber(attackSurfaceExtent),
       pathObstructs,
-      mayDeepen: currentExtent >= configuredFloor - EPSILON,
+      mayDeepen: holdsEnemySurface
+        ? false
+        : currentExtent >= configuredFloor - EPSILON,
       initiatorId: initiator.referenceId,
       targetId: target?.referenceId ?? null,
       acquiredTick: tick,
@@ -664,8 +739,11 @@ function reservationRemainsActive(prior, left, right, byReference, proposals) {
     if (left.owner !== right.owner) return false;
   } else if (prior.kind === "ranged-ingress") {
     if (left.owner !== right.owner || !isRanged(left) || !isRanged(right)) return false;
-    return pairSeparation(left, right) < pairFullExtent(left, right) - EPSILON
-      || rangedIngressQualifies(left, right, byReference, proposals)
+    // The lane exists only while one shooter is physically behind the other
+    // and still advancing toward its target. Once it reaches/passes the front
+    // shooter, publish the current shape as a monotonic release instead of
+    // letting the pair remain a zero-obstruction knot for the whole overlap.
+    return rangedIngressQualifies(left, right, byReference, proposals)
       || rangedIngressQualifies(right, left, byReference, proposals);
   } else if (left.owner === right.owner) {
     return false;

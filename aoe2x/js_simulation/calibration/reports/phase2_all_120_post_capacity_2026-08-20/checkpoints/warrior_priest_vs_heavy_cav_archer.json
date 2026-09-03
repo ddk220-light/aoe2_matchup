@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "warrior_priest_vs_heavy_cav_archer",
+  "completedAt": "2026-08-21T00:37:42.401Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 1,
+      "meanAbsoluteMeanDelta": 11.111111111111107,
+      "medianAbsoluteMeanDelta": 11.111111111111107,
+      "maximumAbsoluteMeanDelta": 11.111111111111107
+    },
+    "rows": [
+      {
+        "id": "warrior_priest_vs_heavy_cav_archer",
+        "subjectSlug": "warrior_priest",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Heavy Cavalry Archer vs Warrior Priest",
+        "side2": {
+          "count": 18,
+          "master": 474,
+          "owner": 2,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "side3": {
+          "count": 21,
+          "master": 1811,
+          "owner": 3,
+          "slug": "warrior_priest",
+          "unit": "Warrior Priest"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -34.72222222222222,
+          "min": -52.083333333333336,
+          "max": -23.61111111111111,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -45.83333333333333,
+          "min": -56.94444444444444,
+          "max": -35.416666666666664,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 0,
+          "tapeBandCoverage": 0.6,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "warrior_priest_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 820,
+            "score": -56.94444444444444,
+            "ticks": 3948,
+            "finalStateHash": "a0ee5e6f07ddcda63c7cd9894237cbba509be4f307c62b0b3677a5260ab81b4d",
+            "eventLogHash": "b417c8d9aa5cc56b5c3308644d5428842b9abc9a5ebfce17e63b2d5e53d52aaf"
+          },
+          {
+            "rowId": "warrior_priest_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 670,
+            "score": -46.52777777777778,
+            "ticks": 4189,
+            "finalStateHash": "36b3cab8ba378774c3aac61075cef13448cd60f2a461cb968e2f1bb5e0317694",
+            "eventLogHash": "e56e254d3ad18547174def1ab56837e256f0e40822244b014d1a84e589ecf72c"
+          },
+          {
+            "rowId": "warrior_priest_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 510,
+            "score": -35.416666666666664,
+            "ticks": 4312,
+            "finalStateHash": "15d12a9d7fd9f958aab29e59d3a2055441ea827bdd9f1b307e6d6bd0b0730932",
+            "eventLogHash": "55250730779812c21418a0ef5bcf8e3c311aa5a08c24606bc0d678c744ed3b04"
+          },
+          {
+            "rowId": "warrior_priest_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 510,
+            "score": -35.416666666666664,
+            "ticks": 4312,
+            "finalStateHash": "15d12a9d7fd9f958aab29e59d3a2055441ea827bdd9f1b307e6d6bd0b0730932",
+            "eventLogHash": "571e290c22515987642f174daf5b73a09c299e49d9d0adf4815380f2045a97ef"
+          },
+          {
+            "rowId": "warrior_priest_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 790,
+            "score": -54.861111111111114,
+            "ticks": 4188,
+            "finalStateHash": "b2af8dba85f897e8b46c3edf5acda7493a34bffe49b0e67bca422cce87b47b0b",
+            "eventLogHash": "ff64b3f89424dfd62a662f4feef954d80b2f68353846cc528b998166fe4af457"
+          }
+        ]
+      }
+    ]
+  }
+}

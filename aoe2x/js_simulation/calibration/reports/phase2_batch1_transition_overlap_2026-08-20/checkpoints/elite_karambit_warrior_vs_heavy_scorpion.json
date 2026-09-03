@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_karambit_warrior_vs_heavy_scorpion",
+  "completedAt": "2026-08-20T18:42:41.582Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 3,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 7.5,
+      "medianAbsoluteMeanDelta": 7.5,
+      "maximumAbsoluteMeanDelta": 7.5
+    },
+    "rows": [
+      {
+        "id": "elite_karambit_warrior_vs_heavy_scorpion",
+        "subjectSlug": "elite_karambit_warrior",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Heavy Scorpion vs Elite Karambit Warrior",
+        "side2": {
+          "count": 5,
+          "master": 542,
+          "owner": 2,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "side3": {
+          "count": 21,
+          "master": 1125,
+          "owner": 3,
+          "slug": "elite_karambit_warrior",
+          "unit": "Elite Karambit Warrior"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 52.38095238095238,
+          "min": 52.38095238095238,
+          "max": 52.38095238095238,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 2,
+          "unresolvedRuns": 3,
+          "mean": 59.88095238095238,
+          "min": 55.23809523809524,
+          "max": 64.52380952380952,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 7.5,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_karambit_warrior_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 542,
+            "score": 64.52380952380952,
+            "ticks": 1598,
+            "finalStateHash": "f3d2a22c7813aa427532aedf96c80d8edaea6c4be1feb738ecb82966211189c7",
+            "eventLogHash": "44069118bd5d6a5459cbf352a72b6ff9c8cafb956ab72e7ae59497d2dbbe2205"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 464,
+            "score": 55.23809523809524,
+            "ticks": 1526,
+            "finalStateHash": "1116c90e4bd1db2e04dd77993846eddb015ebb1297a54a0a2ab80ff4ecaf6c8e",
+            "eventLogHash": "017f377d0fcbcc9004c9f0f67d29fc901396b17f379d621fe1481fbbc1820691"
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_karambit_warrior_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -14,11 +14,18 @@ import { UNIT_REGISTRY } from "./unit-registry.js";
 
 
 export const PHASE2_WRONG_WINNER_REPORT =
-  "phase2_reachable_opening_body_formation_full_2026-08-19";
+  "phase2_all_120_post_capacity_2026-08-20";
+export const PHASE2_FLIPPED_REVIEW_ROW_IDS = Object.freeze([
+  "elite_conquistador_vs_elite_elephant",
+  "elite_janissary_vs_elite_elephant",
+  "elite_janissary_vs_paladin",
+  "elite_karambit_warrior_vs_heavy_cav_archer",
+  "elite_karambit_warrior_vs_paladin",
+  "elite_throwing_axeman_vs_arbalester",
+  "elite_war_wagon_vs_champion",
+  "elite_woad_raider_vs_heavy_cav_archer",
+]);
 const REPORT_URL = `calibration/reports/${PHASE2_WRONG_WINNER_REPORT}/results.json`;
-const PERSISTENT_PURSUIT_REPORT = "persistent_melee_pursuit_2026-08-19";
-const PERSISTENT_PURSUIT_REPORT_URL =
-  `calibration/reports/${PERSISTENT_PURSUIT_REPORT}/results.json`;
 const registryByMaster = new Map(UNIT_REGISTRY.map((unit) => [unit.master, unit]));
 const dataByRoot = new Map();
 
@@ -28,8 +35,13 @@ function rootKey(root) {
 }
 
 
-function reviewRow(row, currentComparison = null) {
-  const simulationScore = currentComparison?.candidate?.mean ?? row.comparison.mean;
+function reviewRow(row) {
+  const simulationScore = row.comparison.mean;
+  const simulationSign = Math.sign(simulationScore);
+  const selectedSample = row.samples.find(({ score }) => (
+    Number.isFinite(score) && Math.sign(score) === simulationSign
+  ));
+  if (!selectedSample) throw new Error(`wrong-winner row ${row.id} has no matching playback`);
   return Object.freeze({
     id: row.id,
     matchup: row.matchup,
@@ -46,6 +58,7 @@ function reviewRow(row, currentComparison = null) {
     tapeScore: row.tape.mean,
     simulationScore,
     delta: simulationScore - row.tape.mean,
+    sampleIndex: selectedSample.sampleIndex,
   });
 }
 
@@ -55,17 +68,19 @@ async function loadData(root) {
   if (!dataByRoot.has(key)) {
     dataByRoot.set(key, Promise.all([
       readFile(new URL(REPORT_URL, root), "utf8").then(JSON.parse),
-      readFile(new URL(PERSISTENT_PURSUIT_REPORT_URL, root), "utf8").then(JSON.parse),
       loadPhase2Batch1Truth(root),
-    ]).then(async ([report, pursuitReport, truth]) => {
+    ]).then(async ([report, truth]) => {
       const context = await loadPhase2Batch1Context(root, truth);
-      const currentComparisons = new Map(
-        pursuitReport.rows.map((row) => [row.id, row]),
-      );
-      const rows = Object.freeze(report.rows
-        .filter((row) => row.comparison.wrongStableWinner === true
-          && Number.isFinite(row.comparison.mean))
-        .map((row) => reviewRow(row, currentComparisons.get(row.id))));
+      const reportRows = new Map(report.rows.map((row) => [row.id, row]));
+      const rows = Object.freeze(PHASE2_FLIPPED_REVIEW_ROW_IDS.map((rowId) => {
+        const row = reportRows.get(rowId);
+        if (!row || row.comparison.wrongStableWinner !== true
+            || !Number.isFinite(row.comparison.mean)
+            || !row.samples?.some(({ score }) => Number.isFinite(score))) {
+          throw new Error(`latest Phase 2 report cannot play flipped row ${rowId}`);
+        }
+        return reviewRow(row);
+      }));
       return Object.freeze({
         report,
         truth,
@@ -123,11 +138,10 @@ function unitMetadata(units) {
 
 export async function runPhase2WrongWinnerPlayback(root, rowId) {
   const { context, preset, report, row } = await selectedReview(root, rowId);
-  const sampleIndex = 0;
+  const sampleIndex = preset.sampleIndex;
   const seed = report.config.seed;
   const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context });
-  const persistentPursuit = scenario.kiteOwner !== null
-    && scenario.kiteOwner !== undefined;
+  const persistentPursuit = scenario.persistentMeleePursuitRouting === true;
   const playbackScenario = persistentPursuit
     ? Object.freeze({ ...scenario, persistentMeleePursuitRouting: true })
     : scenario;

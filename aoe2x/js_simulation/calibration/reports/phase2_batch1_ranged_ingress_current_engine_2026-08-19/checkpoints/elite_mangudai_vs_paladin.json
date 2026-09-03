@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_mangudai_vs_paladin",
+  "completedAt": "2026-08-19T23:42:53.899Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 9.835526315789473,
+      "medianAbsoluteMeanDelta": 9.835526315789473,
+      "maximumAbsoluteMeanDelta": 9.835526315789473
+    },
+    "rows": [
+      {
+        "id": "elite_mangudai_vs_paladin",
+        "subjectSlug": "elite_mangudai",
+        "opponentSlug": "paladin",
+        "matchup": "Elite Mangudai vs Paladin",
+        "side2": {
+          "count": 19,
+          "master": 561,
+          "owner": 2,
+          "slug": "elite_mangudai",
+          "unit": "Elite Mangudai"
+        },
+        "side3": {
+          "count": 16,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": -41.08552631578947,
+          "min": -46.71052631578947,
+          "max": -31.973684210526315,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -50.921052631578945,
+          "min": -50.921052631578945,
+          "max": -50.921052631578945,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 4.210526315789473,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_mangudai_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 774,
+            "score": -50.921052631578945,
+            "ticks": 4620,
+            "finalStateHash": "22c95d351b5f5bb6d18ed4af59cc61e599ea02be417172498e7b3bf40f86ea8d",
+            "eventLogHash": "94c22c9c2b04003aac923269b031db1d64aea04733efca11ffe0e12c4d32446d"
+          },
+          {
+            "rowId": "elite_mangudai_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 774,
+            "score": -50.921052631578945,
+            "ticks": 4620,
+            "finalStateHash": "22c95d351b5f5bb6d18ed4af59cc61e599ea02be417172498e7b3bf40f86ea8d",
+            "eventLogHash": "fd3f2a7b30ba81037a7180aace6c9a550062dc93815f9d8aae68391ea0e33ad2"
+          },
+          {
+            "rowId": "elite_mangudai_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 774,
+            "score": -50.921052631578945,
+            "ticks": 4620,
+            "finalStateHash": "22c95d351b5f5bb6d18ed4af59cc61e599ea02be417172498e7b3bf40f86ea8d",
+            "eventLogHash": "e8b26563b15f9087150d12223aa596e02f89e61e301746de7482c2c2167f77fa"
+          },
+          {
+            "rowId": "elite_mangudai_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 774,
+            "score": -50.921052631578945,
+            "ticks": 4620,
+            "finalStateHash": "22c95d351b5f5bb6d18ed4af59cc61e599ea02be417172498e7b3bf40f86ea8d",
+            "eventLogHash": "baac2b007ce7265c71b6322c8faa28238f1fb2f0bfce858315e519dfc6444e34"
+          },
+          {
+            "rowId": "elite_mangudai_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 774,
+            "score": -50.921052631578945,
+            "ticks": 4620,
+            "finalStateHash": "22c95d351b5f5bb6d18ed4af59cc61e599ea02be417172498e7b3bf40f86ea8d",
+            "eventLogHash": "7c3263eca7e43c8e16a00d44dffaedf25dab2ea49f06ec3a1d741eec1e5a1b36"
+          }
+        ]
+      }
+    ]
+  }
+}

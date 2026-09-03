@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "b338acbbf3b4d4dd10d8004f4b0bf51b297f439fcf1c66e03f3c6c45db4ac52b",
+  "matchupId": "elite_gbeto_vs_arbalester",
+  "completedAt": "2026-08-20T15:47:13.549Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 19.452380952380963,
+      "medianAbsoluteMeanDelta": 19.452380952380963,
+      "maximumAbsoluteMeanDelta": 19.452380952380963
+    },
+    "rows": [
+      {
+        "id": "elite_gbeto_vs_arbalester",
+        "subjectSlug": "elite_gbeto",
+        "opponentSlug": "arbalester",
+        "matchup": "Elite Gbeto vs Arbalester",
+        "side2": {
+          "count": 17,
+          "master": 1015,
+          "owner": 2,
+          "slug": "elite_gbeto",
+          "unit": "Elite Gbeto"
+        },
+        "side3": {
+          "count": 21,
+          "master": 492,
+          "owner": 3,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 39.404761904761905,
+          "min": 34.76190476190476,
+          "max": 46.666666666666664,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 58.85714285714287,
+          "min": 48.095238095238095,
+          "max": 64.28571428571429,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 12.190476190476204,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_gbeto_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 404,
+            "score": 48.095238095238095,
+            "ticks": 1193,
+            "finalStateHash": "2b8a44d9003bd7d77b67ad0e8ab8e359fc4dfba7f915120fdaaa87d6bad71f8e",
+            "eventLogHash": "d3fb5a2fd73150e4e56612236a40d1cbc8eabd6f7be26d9b6dd19df01240e3f5"
+          },
+          {
+            "rowId": "elite_gbeto_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 540,
+            "score": 64.28571428571429,
+            "ticks": 1304,
+            "finalStateHash": "8cdaf382a6997301389835dd8079f54423487ac1ea978ddbc5f4047c4a80b97f",
+            "eventLogHash": "c18826db667eaf927bac2e9f9f96d2042620a99b6943cc20105656fc8ba579e0"
+          },
+          {
+            "rowId": "elite_gbeto_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 508,
+            "score": 60.476190476190474,
+            "ticks": 1202,
+            "finalStateHash": "6cd8e7f71e8f4366a04189c3c48a2cc64ba77e52b518ff51a333e6cebc92a4ed",
+            "eventLogHash": "b0bf0740c11ab8b03c824520a6f006eafa9c0e224867bc0f696fdc8007202059"
+          },
+          {
+            "rowId": "elite_gbeto_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 496,
+            "score": 59.04761904761905,
+            "ticks": 1310,
+            "finalStateHash": "f67b6217382fe07ffe51fe3d9efa6f460bfbe6327ebdd2fce14259fda5ed8bf5",
+            "eventLogHash": "828d55875bea7e3e7788b54e63902f7ac4a9a0726997ba55d135ef67df259999"
+          },
+          {
+            "rowId": "elite_gbeto_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 524,
+            "score": 62.38095238095238,
+            "ticks": 1378,
+            "finalStateHash": "35324197a0e140362b8ce44fb846d5ed062c01b6ca450064c00087aabf097670",
+            "eventLogHash": "b22cd30a7b05c016c6310ac9a770c45eeba53319b6c2e1da58b20468abc286b2"
+          }
+        ]
+      }
+    ]
+  }
+}

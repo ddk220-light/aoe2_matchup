@@ -1,0 +1,2147 @@
+{
+  "schemaVersion": 1,
+  "rowId": "elite_boyar_vs_arbalester",
+  "sampleIndex": 0,
+  "seed": 20260817,
+  "ticks": 9000,
+  "durationSeconds": 150,
+  "definitions": {
+    "hardStall": "alive, exact zero displacement, not attacking, no damage, live target outside attack reach",
+    "lowProgressStall": "same, but displacement below 10% of sourced per-tick movement speed",
+    "untargetedStall": "alive, exact zero displacement, not attacking, no damage, no live captured target while an enemy remains",
+    "sustainedMinimumSeconds": 0.5
+  },
+  "summary": {
+    "boyars": 11,
+    "boyarsDealingDamage": 11,
+    "boyarsNeverDealingDamage": [],
+    "boyarsWithSustainedHardStall": [
+      1609
+    ],
+    "boyarsWithSustainedLowProgressStall": [
+      1605,
+      1606,
+      1608,
+      1609,
+      1610,
+      1612,
+      1614
+    ],
+    "boyarsWithSustainedUntargetedStall": [
+      1605,
+      1606,
+      1607,
+      1608,
+      1609,
+      1610,
+      1611,
+      1612,
+      1613,
+      1614,
+      1615
+    ],
+    "sustainedHardStallWindows": 1,
+    "sustainedLowProgressWindows": 27,
+    "sustainedUntargetedWindows": 11
+  },
+  "longestHardStalls": [
+    {
+      "id": 1609,
+      "startTick": 1404,
+      "endTick": 1481,
+      "ticks": 78,
+      "startSeconds": 23.4,
+      "endSeconds": 24.683333333,
+      "durationSeconds": 1.3,
+      "startPosition": {
+        "x": 10.069553777,
+        "y": 8.987963621
+      },
+      "endPosition": {
+        "x": 10.069553777,
+        "y": 8.987963621
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1549,
+      "targetIdAtEnd": 1549,
+      "targetDistanceAtStart": 1.061312315,
+      "targetDistanceAtEnd": 1.525242634,
+      "nearestEnemyDistanceAtStart": 0.817304135,
+      "nearestEnemyDistanceAtEnd": 1.140020751,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    }
+  ],
+  "longestLowProgressStalls": [
+    {
+      "id": 1605,
+      "startTick": 3109,
+      "endTick": 3200,
+      "ticks": 92,
+      "startSeconds": 51.816666667,
+      "endSeconds": 53.333333333,
+      "durationSeconds": 1.533333333,
+      "startPosition": {
+        "x": 11.616942091,
+        "y": 6.125544105
+      },
+      "endPosition": {
+        "x": 11.624999134,
+        "y": 6.125544105
+      },
+      "actionAtStart": "reload",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1556,
+      "targetIdAtEnd": 1556,
+      "targetDistanceAtStart": 1.366093506,
+      "targetDistanceAtEnd": 2.17847533,
+      "nearestEnemyDistanceAtStart": 0.890642152,
+      "nearestEnemyDistanceAtEnd": 1.699831661,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1606,
+      "startTick": 3265,
+      "endTick": 3353,
+      "ticks": 89,
+      "startSeconds": 54.416666667,
+      "endSeconds": 55.883333333,
+      "durationSeconds": 1.483333333,
+      "startPosition": {
+        "x": 12.119484844,
+        "y": 7.400663816
+      },
+      "endPosition": {
+        "x": 12.124999719,
+        "y": 7.400663816
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1265,
+      "targetIdAtEnd": 1265,
+      "targetDistanceAtStart": 1.057446624,
+      "targetDistanceAtEnd": 2.107483079,
+      "nearestEnemyDistanceAtStart": 1.057446624,
+      "nearestEnemyDistanceAtEnd": 2.107483079,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1609,
+      "startTick": 1402,
+      "endTick": 1481,
+      "ticks": 80,
+      "startSeconds": 23.366666667,
+      "endSeconds": 24.683333333,
+      "durationSeconds": 1.333333333,
+      "startPosition": {
+        "x": 10.06955378,
+        "y": 8.987963621
+      },
+      "endPosition": {
+        "x": 10.069553777,
+        "y": 8.987963621
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1549,
+      "targetIdAtEnd": 1549,
+      "targetDistanceAtStart": 1.039946144,
+      "targetDistanceAtEnd": 1.525242634,
+      "nearestEnemyDistanceAtStart": 0.808585307,
+      "nearestEnemyDistanceAtEnd": 1.140020751,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1608,
+      "startTick": 1266,
+      "endTick": 1344,
+      "ticks": 79,
+      "startSeconds": 21.1,
+      "endSeconds": 22.4,
+      "durationSeconds": 1.316666667,
+      "startPosition": {
+        "x": 11.45631975,
+        "y": 9.138245631
+      },
+      "endPosition": {
+        "x": 11.45631975,
+        "y": 9.12503921
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1549,
+      "targetIdAtEnd": 1549,
+      "targetDistanceAtStart": 1.252404307,
+      "targetDistanceAtEnd": 1.527141219,
+      "nearestEnemyDistanceAtStart": 0.871480453,
+      "nearestEnemyDistanceAtEnd": 1.110705716,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1608,
+      "startTick": 900,
+      "endTick": 977,
+      "ticks": 78,
+      "startSeconds": 15,
+      "endSeconds": 16.283333333,
+      "durationSeconds": 1.3,
+      "startPosition": {
+        "x": 11.626966145,
+        "y": 5.727360565
+      },
+      "endPosition": {
+        "x": 11.625016854,
+        "y": 5.727360565
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1558,
+      "targetIdAtEnd": 1558,
+      "targetDistanceAtStart": 1.612472518,
+      "targetDistanceAtEnd": 2.554234181,
+      "nearestEnemyDistanceAtStart": 1.253926824,
+      "nearestEnemyDistanceAtEnd": 2.176200543,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1610,
+      "startTick": 3416,
+      "endTick": 3493,
+      "ticks": 78,
+      "startSeconds": 56.933333333,
+      "endSeconds": 58.216666667,
+      "durationSeconds": 1.3,
+      "startPosition": {
+        "x": 12.159034506,
+        "y": 8.504218983
+      },
+      "endPosition": {
+        "x": 12.125204743,
+        "y": 8.504218983
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1263,
+      "targetIdAtEnd": 1263,
+      "targetDistanceAtStart": 1.714323406,
+      "targetDistanceAtEnd": 2.361549066,
+      "nearestEnemyDistanceAtStart": 1.297279033,
+      "nearestEnemyDistanceAtEnd": 2.05002874,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1606,
+      "startTick": 3127,
+      "endTick": 3200,
+      "ticks": 74,
+      "startSeconds": 52.116666667,
+      "endSeconds": 53.333333333,
+      "durationSeconds": 1.233333333,
+      "startPosition": {
+        "x": 12.132083893,
+        "y": 5.875544105
+      },
+      "endPosition": {
+        "x": 12.125004643,
+        "y": 5.875544105
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1265,
+      "targetIdAtEnd": 1265,
+      "targetDistanceAtStart": 1.299754329,
+      "targetDistanceAtEnd": 1.954474627,
+      "nearestEnemyDistanceAtStart": 1.299754329,
+      "nearestEnemyDistanceAtEnd": 1.954474627,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1605,
+      "startTick": 3667,
+      "endTick": 3739,
+      "ticks": 73,
+      "startSeconds": 61.116666667,
+      "endSeconds": 62.316666667,
+      "durationSeconds": 1.216666667,
+      "startPosition": {
+        "x": 8.994187832,
+        "y": 10.873709438
+      },
+      "endPosition": {
+        "x": 8.994187832,
+        "y": 10.87498943
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1556,
+      "targetIdAtEnd": 1556,
+      "targetDistanceAtStart": 0.94477338,
+      "targetDistanceAtEnd": 1.663505989,
+      "nearestEnemyDistanceAtStart": 0.662483717,
+      "nearestEnemyDistanceAtEnd": 1.226500181,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1610,
+      "startTick": 906,
+      "endTick": 977,
+      "ticks": 72,
+      "startSeconds": 15.1,
+      "endSeconds": 16.283333333,
+      "durationSeconds": 1.2,
+      "startPosition": {
+        "x": 11.577197631,
+        "y": 6.150836111
+      },
+      "endPosition": {
+        "x": 11.577197631,
+        "y": 6.125069352
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1555,
+      "targetIdAtEnd": 1555,
+      "targetDistanceAtStart": 1.261489241,
+      "targetDistanceAtEnd": 2.132613378,
+      "nearestEnemyDistanceAtStart": 0.92164629,
+      "nearestEnemyDistanceAtEnd": 1.785175067,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1605,
+      "startTick": 3284,
+      "endTick": 3353,
+      "ticks": 70,
+      "startSeconds": 54.733333333,
+      "endSeconds": 55.883333333,
+      "durationSeconds": 1.166666667,
+      "startPosition": {
+        "x": 12.000195516,
+        "y": 7.8409633
+      },
+      "endPosition": {
+        "x": 12.000195516,
+        "y": 7.874633451
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1556,
+      "targetIdAtEnd": 1556,
+      "targetDistanceAtStart": 1.18486002,
+      "targetDistanceAtEnd": 2.185886676,
+      "nearestEnemyDistanceAtStart": 0.72008935,
+      "nearestEnemyDistanceAtEnd": 1.621757706,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1608,
+      "startTick": 2021,
+      "endTick": 2090,
+      "ticks": 70,
+      "startSeconds": 33.683333333,
+      "endSeconds": 34.833333333,
+      "durationSeconds": 1.166666667,
+      "startPosition": {
+        "x": 6.123219379,
+        "y": 8.008482808
+      },
+      "endPosition": {
+        "x": 6.124981369,
+        "y": 8.008482808
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1549,
+      "targetIdAtEnd": 1270,
+      "targetDistanceAtStart": 1.081500397,
+      "targetDistanceAtEnd": 1.543611762,
+      "nearestEnemyDistanceAtStart": 1.081500397,
+      "nearestEnemyDistanceAtEnd": 1.543611762,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1610,
+      "startTick": 3285,
+      "endTick": 3353,
+      "ticks": 69,
+      "startSeconds": 54.75,
+      "endSeconds": 55.883333333,
+      "durationSeconds": 1.15,
+      "startPosition": {
+        "x": 12.393962106,
+        "y": 7.400663816
+      },
+      "endPosition": {
+        "x": 12.375009159,
+        "y": 7.400663816
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1263,
+      "targetIdAtEnd": 1263,
+      "targetDistanceAtStart": 1.613298742,
+      "targetDistanceAtEnd": 2.609555903,
+      "nearestEnemyDistanceAtStart": 1.154407573,
+      "nearestEnemyDistanceAtEnd": 2.156610781,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1605,
+      "startTick": 910,
+      "endTick": 977,
+      "ticks": 68,
+      "startSeconds": 15.166666667,
+      "endSeconds": 16.283333333,
+      "durationSeconds": 1.133333333,
+      "startPosition": {
+        "x": 11.57542192,
+        "y": 6.140793398
+      },
+      "endPosition": {
+        "x": 11.57542192,
+        "y": 6.125061183
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1556,
+      "targetIdAtEnd": 1556,
+      "targetDistanceAtStart": 1.477026023,
+      "targetDistanceAtEnd": 2.27618865,
+      "nearestEnemyDistanceAtStart": 0.993874674,
+      "nearestEnemyDistanceAtEnd": 1.785400596,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1612,
+      "startTick": 1427,
+      "endTick": 1490,
+      "ticks": 64,
+      "startSeconds": 23.783333333,
+      "endSeconds": 24.833333333,
+      "durationSeconds": 1.066666667,
+      "startPosition": {
+        "x": 10.475420092,
+        "y": 11.343009795
+      },
+      "endPosition": {
+        "x": 10.475420092,
+        "y": 11.374620839
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1272,
+      "targetIdAtEnd": 1272,
+      "targetDistanceAtStart": 1.553480824,
+      "targetDistanceAtEnd": 1.907632355,
+      "nearestEnemyDistanceAtStart": 1.182640332,
+      "nearestEnemyDistanceAtEnd": 1.522557414,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1610,
+      "startTick": 1612,
+      "endTick": 1670,
+      "ticks": 59,
+      "startSeconds": 26.866666667,
+      "endSeconds": 27.833333333,
+      "durationSeconds": 0.983333333,
+      "startPosition": {
+        "x": 8.724552499,
+        "y": 10.905756923
+      },
+      "endPosition": {
+        "x": 8.724552499,
+        "y": 10.875512941
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1273,
+      "targetIdAtEnd": 1273,
+      "targetDistanceAtStart": 0.957988305,
+      "targetDistanceAtEnd": 1.819763249,
+      "nearestEnemyDistanceAtStart": 0.957988305,
+      "nearestEnemyDistanceAtEnd": 1.819763249,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1605,
+      "startTick": 2860,
+      "endTick": 2911,
+      "ticks": 52,
+      "startSeconds": 47.666666667,
+      "endSeconds": 48.516666667,
+      "durationSeconds": 0.866666667,
+      "startPosition": {
+        "x": 10.421668988,
+        "y": 4.125879823
+      },
+      "endPosition": {
+        "x": 10.421668988,
+        "y": 4.125001524
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1556,
+      "targetIdAtEnd": 1556,
+      "targetDistanceAtStart": 1.39811076,
+      "targetDistanceAtEnd": 1.599858361,
+      "nearestEnemyDistanceAtStart": 0.774095895,
+      "nearestEnemyDistanceAtEnd": 0.847470244,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1614,
+      "startTick": 1268,
+      "endTick": 1319,
+      "ticks": 52,
+      "startSeconds": 21.133333333,
+      "endSeconds": 21.983333333,
+      "durationSeconds": 0.866666667,
+      "startPosition": {
+        "x": 11.857588385,
+        "y": 9.664696429
+      },
+      "endPosition": {
+        "x": 11.874962188,
+        "y": 9.664696429
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1552,
+      "targetIdAtEnd": 1552,
+      "targetDistanceAtStart": 1.041145188,
+      "targetDistanceAtEnd": 1.327090572,
+      "nearestEnemyDistanceAtStart": 1.035626647,
+      "nearestEnemyDistanceAtEnd": 1.327090572,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1608,
+      "startTick": 1528,
+      "endTick": 1576,
+      "ticks": 49,
+      "startSeconds": 25.466666667,
+      "endSeconds": 26.266666667,
+      "durationSeconds": 0.816666667,
+      "startPosition": {
+        "x": 9.955379188,
+        "y": 9.5947417
+      },
+      "endPosition": {
+        "x": 9.955379188,
+        "y": 9.624166255
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1270,
+      "targetIdAtEnd": 1270,
+      "targetDistanceAtStart": 2.054612054,
+      "targetDistanceAtEnd": 2.522200556,
+      "nearestEnemyDistanceAtStart": 1.606984915,
+      "nearestEnemyDistanceAtEnd": 2.060656563,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1612,
+      "startTick": 1625,
+      "endTick": 1670,
+      "ticks": 46,
+      "startSeconds": 27.083333333,
+      "endSeconds": 27.833333333,
+      "durationSeconds": 0.766666667,
+      "startPosition": {
+        "x": 8.474552499,
+        "y": 11.343929566
+      },
+      "endPosition": {
+        "x": 8.474552499,
+        "y": 11.373702259
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1272,
+      "targetIdAtEnd": 1272,
+      "targetDistanceAtStart": 1.460968367,
+      "targetDistanceAtEnd": 2.169056626,
+      "nearestEnemyDistanceAtStart": 1.103169184,
+      "nearestEnemyDistanceAtEnd": 1.809745553,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1605,
+      "startTick": 2789,
+      "endTick": 2832,
+      "ticks": 44,
+      "startSeconds": 46.483333333,
+      "endSeconds": 47.2,
+      "durationSeconds": 0.733333333,
+      "startPosition": {
+        "x": 9.873508799,
+        "y": 3.874167888
+      },
+      "endPosition": {
+        "x": 9.873508799,
+        "y": 3.874988496
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": 1553,
+      "targetIdAtEnd": 1553,
+      "targetDistanceAtStart": 0.889021565,
+      "targetDistanceAtEnd": 1.231645003,
+      "nearestEnemyDistanceAtStart": 0.889021565,
+      "nearestEnemyDistanceAtEnd": 1.176936079,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    }
+  ],
+  "longestUntargetedStalls": [
+    {
+      "id": 1605,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 4.5,
+        "y": 12.5
+      },
+      "endPosition": {
+        "x": 4.5,
+        "y": 12.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 6,
+      "nearestEnemyDistanceAtEnd": 6,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1606,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 5.5,
+        "y": 11.5
+      },
+      "endPosition": {
+        "x": 5.5,
+        "y": 11.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 5,
+      "nearestEnemyDistanceAtEnd": 5,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1607,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 4.5,
+        "y": 10.5
+      },
+      "endPosition": {
+        "x": 4.5,
+        "y": 10.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 4,
+      "nearestEnemyDistanceAtEnd": 4,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1608,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 2.5,
+        "y": 12.5
+      },
+      "endPosition": {
+        "x": 2.5,
+        "y": 12.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 6.08276253,
+      "nearestEnemyDistanceAtEnd": 6.08276253,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1609,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 3.5,
+        "y": 12.5
+      },
+      "endPosition": {
+        "x": 3.5,
+        "y": 12.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 6,
+      "nearestEnemyDistanceAtEnd": 6,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1610,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 5.5,
+        "y": 12.5
+      },
+      "endPosition": {
+        "x": 5.5,
+        "y": 12.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 6,
+      "nearestEnemyDistanceAtEnd": 6,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1611,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 6.5,
+        "y": 11.5
+      },
+      "endPosition": {
+        "x": 6.5,
+        "y": 11.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 5.099019514,
+      "nearestEnemyDistanceAtEnd": 5.099019514,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1612,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 3.5,
+        "y": 11.5
+      },
+      "endPosition": {
+        "x": 3.5,
+        "y": 11.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 5,
+      "nearestEnemyDistanceAtEnd": 5,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1613,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 2.5,
+        "y": 11.5
+      },
+      "endPosition": {
+        "x": 2.5,
+        "y": 11.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 5.099019514,
+      "nearestEnemyDistanceAtEnd": 5.099019514,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1614,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 3.5,
+        "y": 13.5
+      },
+      "endPosition": {
+        "x": 3.5,
+        "y": 13.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 7,
+      "nearestEnemyDistanceAtEnd": 7,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    },
+    {
+      "id": 1615,
+      "startTick": 1,
+      "endTick": 35,
+      "ticks": 35,
+      "startSeconds": 0.016666667,
+      "endSeconds": 0.583333333,
+      "durationSeconds": 0.583333333,
+      "startPosition": {
+        "x": 6.5,
+        "y": 13.5
+      },
+      "endPosition": {
+        "x": 6.5,
+        "y": 13.5
+      },
+      "actionAtStart": "idle",
+      "actionAtEnd": "idle",
+      "targetIdAtStart": null,
+      "targetIdAtEnd": null,
+      "targetDistanceAtStart": null,
+      "targetDistanceAtEnd": null,
+      "nearestEnemyDistanceAtStart": 7.071067812,
+      "nearestEnemyDistanceAtEnd": 7.071067812,
+      "moveOrderAtStart": null,
+      "pursuitRouteAtStart": null
+    }
+  ],
+  "earlyDamage": {
+    "throughSeconds": 12,
+    "totalDamageEvents": 4,
+    "uniqueTargetsDamaged": 3,
+    "targets": [
+      {
+        "targetId": 1554,
+        "damageEvents": 2,
+        "damage": 30,
+        "uniqueBoyars": 2,
+        "boyarIds": [
+          1606,
+          1612
+        ],
+        "firstDamageSeconds": 6.4,
+        "lastDamageSeconds": 10.966666667
+      },
+      {
+        "targetId": 1269,
+        "damageEvents": 1,
+        "damage": 15,
+        "uniqueBoyars": 1,
+        "boyarIds": [
+          1607
+        ],
+        "firstDamageSeconds": 4.7,
+        "lastDamageSeconds": 4.7
+      },
+      {
+        "targetId": 1271,
+        "damageEvents": 1,
+        "damage": 15,
+        "uniqueBoyars": 1,
+        "boyarIds": [
+          1611
+        ],
+        "firstDamageSeconds": 5.35,
+        "lastDamageSeconds": 5.35
+      }
+    ]
+  },
+  "units": [
+    {
+      "id": 1605,
+      "aliveTicks": 9000,
+      "attackStarts": 8,
+      "attackCancels": 1,
+      "damageEvents": 7,
+      "damage": 105,
+      "firstDamageSeconds": 24.033333333333335,
+      "lastDamageSeconds": 64.75,
+      "longestDamageGapSeconds": 85.25,
+      "hardStalls": [],
+      "lowProgressStalls": [
+        {
+          "startTick": 910,
+          "endTick": 977,
+          "ticks": 68,
+          "startSeconds": 15.166666667,
+          "endSeconds": 16.283333333,
+          "durationSeconds": 1.133333333,
+          "startPosition": {
+            "x": 11.57542192,
+            "y": 6.140793398
+          },
+          "endPosition": {
+            "x": 11.57542192,
+            "y": 6.125061183
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1556,
+          "targetIdAtEnd": 1556,
+          "targetDistanceAtStart": 1.477026023,
+          "targetDistanceAtEnd": 2.27618865,
+          "nearestEnemyDistanceAtStart": 0.993874674,
+          "nearestEnemyDistanceAtEnd": 1.785400596,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 2789,
+          "endTick": 2832,
+          "ticks": 44,
+          "startSeconds": 46.483333333,
+          "endSeconds": 47.2,
+          "durationSeconds": 0.733333333,
+          "startPosition": {
+            "x": 9.873508799,
+            "y": 3.874167888
+          },
+          "endPosition": {
+            "x": 9.873508799,
+            "y": 3.874988496
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1553,
+          "targetIdAtEnd": 1553,
+          "targetDistanceAtStart": 0.889021565,
+          "targetDistanceAtEnd": 1.231645003,
+          "nearestEnemyDistanceAtStart": 0.889021565,
+          "nearestEnemyDistanceAtEnd": 1.176936079,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 2860,
+          "endTick": 2911,
+          "ticks": 52,
+          "startSeconds": 47.666666667,
+          "endSeconds": 48.516666667,
+          "durationSeconds": 0.866666667,
+          "startPosition": {
+            "x": 10.421668988,
+            "y": 4.125879823
+          },
+          "endPosition": {
+            "x": 10.421668988,
+            "y": 4.125001524
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1556,
+          "targetIdAtEnd": 1556,
+          "targetDistanceAtStart": 1.39811076,
+          "targetDistanceAtEnd": 1.599858361,
+          "nearestEnemyDistanceAtStart": 0.774095895,
+          "nearestEnemyDistanceAtEnd": 0.847470244,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 3109,
+          "endTick": 3200,
+          "ticks": 92,
+          "startSeconds": 51.816666667,
+          "endSeconds": 53.333333333,
+          "durationSeconds": 1.533333333,
+          "startPosition": {
+            "x": 11.616942091,
+            "y": 6.125544105
+          },
+          "endPosition": {
+            "x": 11.624999134,
+            "y": 6.125544105
+          },
+          "actionAtStart": "reload",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1556,
+          "targetIdAtEnd": 1556,
+          "targetDistanceAtStart": 1.366093506,
+          "targetDistanceAtEnd": 2.17847533,
+          "nearestEnemyDistanceAtStart": 0.890642152,
+          "nearestEnemyDistanceAtEnd": 1.699831661,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 3284,
+          "endTick": 3353,
+          "ticks": 70,
+          "startSeconds": 54.733333333,
+          "endSeconds": 55.883333333,
+          "durationSeconds": 1.166666667,
+          "startPosition": {
+            "x": 12.000195516,
+            "y": 7.8409633
+          },
+          "endPosition": {
+            "x": 12.000195516,
+            "y": 7.874633451
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1556,
+          "targetIdAtEnd": 1556,
+          "targetDistanceAtStart": 1.18486002,
+          "targetDistanceAtEnd": 2.185886676,
+          "nearestEnemyDistanceAtStart": 0.72008935,
+          "nearestEnemyDistanceAtEnd": 1.621757706,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 3667,
+          "endTick": 3739,
+          "ticks": 73,
+          "startSeconds": 61.116666667,
+          "endSeconds": 62.316666667,
+          "durationSeconds": 1.216666667,
+          "startPosition": {
+            "x": 8.994187832,
+            "y": 10.873709438
+          },
+          "endPosition": {
+            "x": 8.994187832,
+            "y": 10.87498943
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1556,
+          "targetIdAtEnd": 1556,
+          "targetDistanceAtStart": 0.94477338,
+          "targetDistanceAtEnd": 1.663505989,
+          "nearestEnemyDistanceAtStart": 0.662483717,
+          "nearestEnemyDistanceAtEnd": 1.226500181,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 4.5,
+            "y": 12.5
+          },
+          "endPosition": {
+            "x": 4.5,
+            "y": 12.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 6,
+          "nearestEnemyDistanceAtEnd": 6,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1606,
+      "aliveTicks": 9000,
+      "attackStarts": 11,
+      "attackCancels": 0,
+      "damageEvents": 11,
+      "damage": 165,
+      "firstDamageSeconds": 10.966666666666667,
+      "lastDamageSeconds": 64.98333333333333,
+      "longestDamageGapSeconds": 85.01666666666667,
+      "hardStalls": [],
+      "lowProgressStalls": [
+        {
+          "startTick": 3127,
+          "endTick": 3200,
+          "ticks": 74,
+          "startSeconds": 52.116666667,
+          "endSeconds": 53.333333333,
+          "durationSeconds": 1.233333333,
+          "startPosition": {
+            "x": 12.132083893,
+            "y": 5.875544105
+          },
+          "endPosition": {
+            "x": 12.125004643,
+            "y": 5.875544105
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1265,
+          "targetIdAtEnd": 1265,
+          "targetDistanceAtStart": 1.299754329,
+          "targetDistanceAtEnd": 1.954474627,
+          "nearestEnemyDistanceAtStart": 1.299754329,
+          "nearestEnemyDistanceAtEnd": 1.954474627,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 3265,
+          "endTick": 3353,
+          "ticks": 89,
+          "startSeconds": 54.416666667,
+          "endSeconds": 55.883333333,
+          "durationSeconds": 1.483333333,
+          "startPosition": {
+            "x": 12.119484844,
+            "y": 7.400663816
+          },
+          "endPosition": {
+            "x": 12.124999719,
+            "y": 7.400663816
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1265,
+          "targetIdAtEnd": 1265,
+          "targetDistanceAtStart": 1.057446624,
+          "targetDistanceAtEnd": 2.107483079,
+          "nearestEnemyDistanceAtStart": 1.057446624,
+          "nearestEnemyDistanceAtEnd": 2.107483079,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 5.5,
+            "y": 11.5
+          },
+          "endPosition": {
+            "x": 5.5,
+            "y": 11.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 5,
+          "nearestEnemyDistanceAtEnd": 5,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1607,
+      "aliveTicks": 408,
+      "attackStarts": 1,
+      "attackCancels": 0,
+      "damageEvents": 1,
+      "damage": 15,
+      "firstDamageSeconds": 4.7,
+      "lastDamageSeconds": 4.7,
+      "longestDamageGapSeconds": 4.7,
+      "hardStalls": [],
+      "lowProgressStalls": [],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 4.5,
+            "y": 10.5
+          },
+          "endPosition": {
+            "x": 4.5,
+            "y": 10.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 4,
+          "nearestEnemyDistanceAtEnd": 4,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1608,
+      "aliveTicks": 6980,
+      "attackStarts": 11,
+      "attackCancels": 0,
+      "damageEvents": 11,
+      "damage": 165,
+      "firstDamageSeconds": 24.15,
+      "lastDamageSeconds": 60.35,
+      "longestDamageGapSeconds": 55.983333333333334,
+      "hardStalls": [],
+      "lowProgressStalls": [
+        {
+          "startTick": 625,
+          "endTick": 658,
+          "ticks": 34,
+          "startSeconds": 10.416666667,
+          "endSeconds": 10.966666667,
+          "durationSeconds": 0.566666667,
+          "startPosition": {
+            "x": 8.433742508,
+            "y": 4.127574274
+          },
+          "endPosition": {
+            "x": 8.433742508,
+            "y": 4.125031862
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1272,
+          "targetIdAtEnd": 1272,
+          "targetDistanceAtStart": 2.675309443,
+          "targetDistanceAtEnd": 2.961507704,
+          "nearestEnemyDistanceAtStart": 0.718449112,
+          "nearestEnemyDistanceAtEnd": 0.958189285,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 900,
+          "endTick": 977,
+          "ticks": 78,
+          "startSeconds": 15,
+          "endSeconds": 16.283333333,
+          "durationSeconds": 1.3,
+          "startPosition": {
+            "x": 11.626966145,
+            "y": 5.727360565
+          },
+          "endPosition": {
+            "x": 11.625016854,
+            "y": 5.727360565
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1558,
+          "targetIdAtEnd": 1558,
+          "targetDistanceAtStart": 1.612472518,
+          "targetDistanceAtEnd": 2.554234181,
+          "nearestEnemyDistanceAtStart": 1.253926824,
+          "nearestEnemyDistanceAtEnd": 2.176200543,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 1266,
+          "endTick": 1344,
+          "ticks": 79,
+          "startSeconds": 21.1,
+          "endSeconds": 22.4,
+          "durationSeconds": 1.316666667,
+          "startPosition": {
+            "x": 11.45631975,
+            "y": 9.138245631
+          },
+          "endPosition": {
+            "x": 11.45631975,
+            "y": 9.12503921
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1549,
+          "targetIdAtEnd": 1549,
+          "targetDistanceAtStart": 1.252404307,
+          "targetDistanceAtEnd": 1.527141219,
+          "nearestEnemyDistanceAtStart": 0.871480453,
+          "nearestEnemyDistanceAtEnd": 1.110705716,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 1528,
+          "endTick": 1576,
+          "ticks": 49,
+          "startSeconds": 25.466666667,
+          "endSeconds": 26.266666667,
+          "durationSeconds": 0.816666667,
+          "startPosition": {
+            "x": 9.955379188,
+            "y": 9.5947417
+          },
+          "endPosition": {
+            "x": 9.955379188,
+            "y": 9.624166255
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1270,
+          "targetIdAtEnd": 1270,
+          "targetDistanceAtStart": 2.054612054,
+          "targetDistanceAtEnd": 2.522200556,
+          "nearestEnemyDistanceAtStart": 1.606984915,
+          "nearestEnemyDistanceAtEnd": 2.060656563,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 2021,
+          "endTick": 2090,
+          "ticks": 70,
+          "startSeconds": 33.683333333,
+          "endSeconds": 34.833333333,
+          "durationSeconds": 1.166666667,
+          "startPosition": {
+            "x": 6.123219379,
+            "y": 8.008482808
+          },
+          "endPosition": {
+            "x": 6.124981369,
+            "y": 8.008482808
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1549,
+          "targetIdAtEnd": 1270,
+          "targetDistanceAtStart": 1.081500397,
+          "targetDistanceAtEnd": 1.543611762,
+          "nearestEnemyDistanceAtStart": 1.081500397,
+          "nearestEnemyDistanceAtEnd": 1.543611762,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 2.5,
+            "y": 12.5
+          },
+          "endPosition": {
+            "x": 2.5,
+            "y": 12.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 6.08276253,
+          "nearestEnemyDistanceAtEnd": 6.08276253,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1609,
+      "aliveTicks": 1956,
+      "attackStarts": 4,
+      "attackCancels": 0,
+      "damageEvents": 4,
+      "damage": 60,
+      "firstDamageSeconds": 19.5,
+      "lastDamageSeconds": 32.55,
+      "longestDamageGapSeconds": 19.5,
+      "hardStalls": [
+        {
+          "startTick": 1404,
+          "endTick": 1481,
+          "ticks": 78,
+          "startSeconds": 23.4,
+          "endSeconds": 24.683333333,
+          "durationSeconds": 1.3,
+          "startPosition": {
+            "x": 10.069553777,
+            "y": 8.987963621
+          },
+          "endPosition": {
+            "x": 10.069553777,
+            "y": 8.987963621
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1549,
+          "targetIdAtEnd": 1549,
+          "targetDistanceAtStart": 1.061312315,
+          "targetDistanceAtEnd": 1.525242634,
+          "nearestEnemyDistanceAtStart": 0.817304135,
+          "nearestEnemyDistanceAtEnd": 1.140020751,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ],
+      "lowProgressStalls": [
+        {
+          "startTick": 935,
+          "endTick": 977,
+          "ticks": 43,
+          "startSeconds": 15.583333333,
+          "endSeconds": 16.283333333,
+          "durationSeconds": 0.716666667,
+          "startPosition": {
+            "x": 11.890623396,
+            "y": 5.928451696
+          },
+          "endPosition": {
+            "x": 11.875068668,
+            "y": 5.928451696
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1268,
+          "targetIdAtEnd": 1268,
+          "targetDistanceAtStart": 1.997617252,
+          "targetDistanceAtEnd": 2.378758462,
+          "nearestEnemyDistanceAtStart": 1.602744617,
+          "nearestEnemyDistanceAtEnd": 1.970099702,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 1402,
+          "endTick": 1481,
+          "ticks": 80,
+          "startSeconds": 23.366666667,
+          "endSeconds": 24.683333333,
+          "durationSeconds": 1.333333333,
+          "startPosition": {
+            "x": 10.06955378,
+            "y": 8.987963621
+          },
+          "endPosition": {
+            "x": 10.069553777,
+            "y": 8.987963621
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1549,
+          "targetIdAtEnd": 1549,
+          "targetDistanceAtStart": 1.039946144,
+          "targetDistanceAtEnd": 1.525242634,
+          "nearestEnemyDistanceAtStart": 0.808585307,
+          "nearestEnemyDistanceAtEnd": 1.140020751,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 1621,
+          "endTick": 1660,
+          "ticks": 40,
+          "startSeconds": 27.016666667,
+          "endSeconds": 27.666666667,
+          "durationSeconds": 0.666666667,
+          "startPosition": {
+            "x": 9.041530308,
+            "y": 10.15915106
+          },
+          "endPosition": {
+            "x": 9.041530308,
+            "y": 10.128437314
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1549,
+          "targetIdAtEnd": 1549,
+          "targetDistanceAtStart": 1.924774853,
+          "targetDistanceAtEnd": 2.516322505,
+          "nearestEnemyDistanceAtStart": 1.504975385,
+          "nearestEnemyDistanceAtEnd": 1.990966513,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 3.5,
+            "y": 12.5
+          },
+          "endPosition": {
+            "x": 3.5,
+            "y": 12.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 6,
+          "nearestEnemyDistanceAtEnd": 6,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1610,
+      "aliveTicks": 9000,
+      "attackStarts": 5,
+      "attackCancels": 0,
+      "damageEvents": 5,
+      "damage": 75,
+      "firstDamageSeconds": 23.2,
+      "lastDamageSeconds": 61.61666666666667,
+      "longestDamageGapSeconds": 88.38333333333334,
+      "hardStalls": [],
+      "lowProgressStalls": [
+        {
+          "startTick": 627,
+          "endTick": 663,
+          "ticks": 37,
+          "startSeconds": 10.45,
+          "endSeconds": 11.05,
+          "durationSeconds": 0.616666667,
+          "startPosition": {
+            "x": 8.683742508,
+            "y": 4.136248591
+          },
+          "endPosition": {
+            "x": 8.683742508,
+            "y": 4.125093485
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1555,
+          "targetIdAtEnd": 1555,
+          "targetDistanceAtStart": 1.659198424,
+          "targetDistanceAtEnd": 2.048214991,
+          "nearestEnemyDistanceAtStart": 0.608407714,
+          "nearestEnemyDistanceAtEnd": 0.854160152,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 667,
+          "endTick": 702,
+          "ticks": 36,
+          "startSeconds": 11.116666667,
+          "endSeconds": 11.7,
+          "durationSeconds": 0.6,
+          "startPosition": {
+            "x": 8.683742508,
+            "y": 4.109581035
+          },
+          "endPosition": {
+            "x": 8.683742508,
+            "y": 4.124853478
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1555,
+          "targetIdAtEnd": 1555,
+          "targetDistanceAtStart": 2.120387931,
+          "targetDistanceAtEnd": 2.666414383,
+          "nearestEnemyDistanceAtStart": 0.915158331,
+          "nearestEnemyDistanceAtEnd": 1.335707408,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 906,
+          "endTick": 977,
+          "ticks": 72,
+          "startSeconds": 15.1,
+          "endSeconds": 16.283333333,
+          "durationSeconds": 1.2,
+          "startPosition": {
+            "x": 11.577197631,
+            "y": 6.150836111
+          },
+          "endPosition": {
+            "x": 11.577197631,
+            "y": 6.125069352
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1555,
+          "targetIdAtEnd": 1555,
+          "targetDistanceAtStart": 1.261489241,
+          "targetDistanceAtEnd": 2.132613378,
+          "nearestEnemyDistanceAtStart": 0.92164629,
+          "nearestEnemyDistanceAtEnd": 1.785175067,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 1612,
+          "endTick": 1670,
+          "ticks": 59,
+          "startSeconds": 26.866666667,
+          "endSeconds": 27.833333333,
+          "durationSeconds": 0.983333333,
+          "startPosition": {
+            "x": 8.724552499,
+            "y": 10.905756923
+          },
+          "endPosition": {
+            "x": 8.724552499,
+            "y": 10.875512941
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1273,
+          "targetIdAtEnd": 1273,
+          "targetDistanceAtStart": 0.957988305,
+          "targetDistanceAtEnd": 1.819763249,
+          "nearestEnemyDistanceAtStart": 0.957988305,
+          "nearestEnemyDistanceAtEnd": 1.819763249,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 3285,
+          "endTick": 3353,
+          "ticks": 69,
+          "startSeconds": 54.75,
+          "endSeconds": 55.883333333,
+          "durationSeconds": 1.15,
+          "startPosition": {
+            "x": 12.393962106,
+            "y": 7.400663816
+          },
+          "endPosition": {
+            "x": 12.375009159,
+            "y": 7.400663816
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1263,
+          "targetIdAtEnd": 1263,
+          "targetDistanceAtStart": 1.613298742,
+          "targetDistanceAtEnd": 2.609555903,
+          "nearestEnemyDistanceAtStart": 1.154407573,
+          "nearestEnemyDistanceAtEnd": 2.156610781,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 3416,
+          "endTick": 3493,
+          "ticks": 78,
+          "startSeconds": 56.933333333,
+          "endSeconds": 58.216666667,
+          "durationSeconds": 1.3,
+          "startPosition": {
+            "x": 12.159034506,
+            "y": 8.504218983
+          },
+          "endPosition": {
+            "x": 12.125204743,
+            "y": 8.504218983
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1263,
+          "targetIdAtEnd": 1263,
+          "targetDistanceAtStart": 1.714323406,
+          "targetDistanceAtEnd": 2.361549066,
+          "nearestEnemyDistanceAtStart": 1.297279033,
+          "nearestEnemyDistanceAtEnd": 2.05002874,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 5.5,
+            "y": 12.5
+          },
+          "endPosition": {
+            "x": 5.5,
+            "y": 12.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 6,
+          "nearestEnemyDistanceAtEnd": 6,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1611,
+      "aliveTicks": 770,
+      "attackStarts": 1,
+      "attackCancels": 0,
+      "damageEvents": 1,
+      "damage": 15,
+      "firstDamageSeconds": 5.35,
+      "lastDamageSeconds": 5.35,
+      "longestDamageGapSeconds": 7.483333333333333,
+      "hardStalls": [],
+      "lowProgressStalls": [],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 6.5,
+            "y": 11.5
+          },
+          "endPosition": {
+            "x": 6.5,
+            "y": 11.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 5.099019514,
+          "nearestEnemyDistanceAtEnd": 5.099019514,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1612,
+      "aliveTicks": 9000,
+      "attackStarts": 10,
+      "attackCancels": 0,
+      "damageEvents": 10,
+      "damage": 150,
+      "firstDamageSeconds": 6.4,
+      "lastDamageSeconds": 57.5,
+      "longestDamageGapSeconds": 92.5,
+      "hardStalls": [],
+      "lowProgressStalls": [
+        {
+          "startTick": 914,
+          "endTick": 956,
+          "ticks": 43,
+          "startSeconds": 15.233333333,
+          "endSeconds": 15.933333333,
+          "durationSeconds": 0.716666667,
+          "startPosition": {
+            "x": 11.610099895,
+            "y": 5.795615981
+          },
+          "endPosition": {
+            "x": 11.624364042,
+            "y": 5.795615981
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1557,
+          "targetIdAtEnd": 1557,
+          "targetDistanceAtStart": 1.84808773,
+          "targetDistanceAtEnd": 2.517521608,
+          "nearestEnemyDistanceAtStart": 1.400148237,
+          "nearestEnemyDistanceAtEnd": 2.060540947,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 1427,
+          "endTick": 1490,
+          "ticks": 64,
+          "startSeconds": 23.783333333,
+          "endSeconds": 24.833333333,
+          "durationSeconds": 1.066666667,
+          "startPosition": {
+            "x": 10.475420092,
+            "y": 11.343009795
+          },
+          "endPosition": {
+            "x": 10.475420092,
+            "y": 11.374620839
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1272,
+          "targetIdAtEnd": 1272,
+          "targetDistanceAtStart": 1.553480824,
+          "targetDistanceAtEnd": 1.907632355,
+          "nearestEnemyDistanceAtStart": 1.182640332,
+          "nearestEnemyDistanceAtEnd": 1.522557414,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 1625,
+          "endTick": 1670,
+          "ticks": 46,
+          "startSeconds": 27.083333333,
+          "endSeconds": 27.833333333,
+          "durationSeconds": 0.766666667,
+          "startPosition": {
+            "x": 8.474552499,
+            "y": 11.343929566
+          },
+          "endPosition": {
+            "x": 8.474552499,
+            "y": 11.373702259
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1272,
+          "targetIdAtEnd": 1272,
+          "targetDistanceAtStart": 1.460968367,
+          "targetDistanceAtEnd": 2.169056626,
+          "nearestEnemyDistanceAtStart": 1.103169184,
+          "nearestEnemyDistanceAtEnd": 1.809745553,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        },
+        {
+          "startTick": 3590,
+          "endTick": 3620,
+          "ticks": 31,
+          "startSeconds": 59.833333333,
+          "endSeconds": 60.333333333,
+          "durationSeconds": 0.516666667,
+          "startPosition": {
+            "x": 10.418672657,
+            "y": 9.849029332
+          },
+          "endPosition": {
+            "x": 10.418672657,
+            "y": 9.872945572
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1265,
+          "targetIdAtEnd": 1265,
+          "targetDistanceAtStart": 1.069003517,
+          "targetDistanceAtEnd": 1.214259888,
+          "nearestEnemyDistanceAtStart": 1.069003517,
+          "nearestEnemyDistanceAtEnd": 1.214259888,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 3.5,
+            "y": 11.5
+          },
+          "endPosition": {
+            "x": 3.5,
+            "y": 11.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 5,
+          "nearestEnemyDistanceAtEnd": 5,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1613,
+      "aliveTicks": 2910,
+      "attackStarts": 9,
+      "attackCancels": 0,
+      "damageEvents": 9,
+      "damage": 135,
+      "firstDamageSeconds": 18.433333333333334,
+      "lastDamageSeconds": 48.38333333333333,
+      "longestDamageGapSeconds": 18.433333333333334,
+      "hardStalls": [],
+      "lowProgressStalls": [],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 2.5,
+            "y": 11.5
+          },
+          "endPosition": {
+            "x": 2.5,
+            "y": 11.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 5.099019514,
+          "nearestEnemyDistanceAtEnd": 5.099019514,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1614,
+      "aliveTicks": 1717,
+      "attackStarts": 2,
+      "attackCancels": 0,
+      "damageEvents": 2,
+      "damage": 30,
+      "firstDamageSeconds": 15.6,
+      "lastDamageSeconds": 19.233333333333334,
+      "longestDamageGapSeconds": 15.6,
+      "hardStalls": [],
+      "lowProgressStalls": [
+        {
+          "startTick": 1268,
+          "endTick": 1319,
+          "ticks": 52,
+          "startSeconds": 21.133333333,
+          "endSeconds": 21.983333333,
+          "durationSeconds": 0.866666667,
+          "startPosition": {
+            "x": 11.857588385,
+            "y": 9.664696429
+          },
+          "endPosition": {
+            "x": 11.874962188,
+            "y": 9.664696429
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": 1552,
+          "targetIdAtEnd": 1552,
+          "targetDistanceAtStart": 1.041145188,
+          "targetDistanceAtEnd": 1.327090572,
+          "nearestEnemyDistanceAtStart": 1.035626647,
+          "nearestEnemyDistanceAtEnd": 1.327090572,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 3.5,
+            "y": 13.5
+          },
+          "endPosition": {
+            "x": 3.5,
+            "y": 13.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 7,
+          "nearestEnemyDistanceAtEnd": 7,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    },
+    {
+      "id": 1615,
+      "aliveTicks": 1106,
+      "attackStarts": 3,
+      "attackCancels": 1,
+      "damageEvents": 1,
+      "damage": 15,
+      "firstDamageSeconds": 15.483333333333333,
+      "lastDamageSeconds": 15.483333333333333,
+      "longestDamageGapSeconds": 15.483333333333333,
+      "hardStalls": [],
+      "lowProgressStalls": [],
+      "untargetedStalls": [
+        {
+          "startTick": 1,
+          "endTick": 35,
+          "ticks": 35,
+          "startSeconds": 0.016666667,
+          "endSeconds": 0.583333333,
+          "durationSeconds": 0.583333333,
+          "startPosition": {
+            "x": 6.5,
+            "y": 13.5
+          },
+          "endPosition": {
+            "x": 6.5,
+            "y": 13.5
+          },
+          "actionAtStart": "idle",
+          "actionAtEnd": "idle",
+          "targetIdAtStart": null,
+          "targetIdAtEnd": null,
+          "targetDistanceAtStart": null,
+          "targetDistanceAtEnd": null,
+          "nearestEnemyDistanceAtStart": 7.071067812,
+          "nearestEnemyDistanceAtEnd": 7.071067812,
+          "moveOrderAtStart": null,
+          "pursuitRouteAtStart": null
+        }
+      ]
+    }
+  ]
+}

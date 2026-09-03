@@ -1,0 +1,490 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Why 15 Arbalesters lose to 20 Champions in the current engine",
+    "description": "Technical diagnosis of the one flipped Arbalester-versus-Champion golden row.",
+    "generatedAt": "2026-08-14T20:54:28.848Z",
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "layout": "full",
+        "body": "# Why 15 Arbalesters lose to 20 Champions in the current engine"
+      },
+      {
+        "id": "technical-summary",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "report-data-query",
+        "body": "## Preventive contact steering is the decisive regression\n\nThe current engine gives the Champions too much uninterrupted chase efficiency. It produces a **Champion win at +12.5**, while the five authorized tapes all produce Arbalester wins with a **−58.33 mean**. Disabling only preventive contact steering changes the same exact-start simulation to **−59.17**, within 0.84 points of the tape mean. No engine file was changed for this control."
+      },
+      {
+        "id": "key-findings",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "report-data-query",
+        "body": "## One policy switch restores the winner and outcome magnitude\n\nThe chart uses the signed outcome score: negative values are Arbalester wins; positive values are Champion wins. The steering-off control almost overlays the tape mean, while the current policy crosses zero and picks the wrong winner."
+      },
+      {
+        "id": "outcome-chart-block",
+        "type": "chart",
+        "layout": "full",
+        "chartId": "outcome-score-chart"
+      },
+      {
+        "id": "attack-evidence",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "combined-analysis",
+        "body": "## The failure is excessive sustained Champion contact, not first acquisition\n\nFirst Champion attack timing already matches: **5.08s in simulation versus 5.09s on average in tape**. The divergence is what happens afterward. The current engine records **52 Champion attack starts and 45 landed damage events**; the tapes show **19–32 attack-action entries**. With preventive steering off, Champion starts fall to **26**, effective Arbalester HP removed falls from **600 to 245** versus **250 on tape**, and Arbalesters land all **280** required hits instead of 245."
+      },
+      {
+        "id": "comparison-table-block",
+        "type": "table",
+        "layout": "full",
+        "tableId": "condition-table"
+      },
+      {
+        "id": "scope-definitions",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "combined-analysis",
+        "body": "## Scope, data, and metric definitions\n\nThis diagnosis covers only **15 Arbalesters versus 20 Champions**. Tape evidence is five decoded `frames.bin` repeats from the authorized project-local archive. Simulation evidence uses the exact starting units from repeat 1, the cohesive navigation viewer policy, deterministic engine state, and the golden map. Outcome score is remaining winner HP as a percentage of that winner side's starting HP; negative is an owner-2 Arbalester win."
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "combined-analysis",
+        "body": "## The causal control changed one behavior flag\n\nThe archive SHA-256 was verified before decoding. Tape frames were measured for opening attack state, target spread, HP loss, disappearance-based death timing, and fight duration. The current engine was then run with full snapshots. The causal control reused the same scenario and changed only `preventiveContactSteering: true` to `false`; attack, damage, death, duration, and winner events were compared."
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "layout": "full",
+        "sourceId": "combined-analysis",
+        "body": "## The score is repaired, but two opening mismatches remain\n\nThe steering-off control lasts **48.37s**, about 4.85s longer than the 43.51s tape mean. Tape Arbalesters attack at **0.23s** and split the opening across exactly **four targets** (largest share 53.3%); the engine attacks at **2.0s** and sends the first 15-shot volley to one target. Moving the existing global volley earlier made the result worse, so opening timing cannot be changed safely without also implementing local opening target selection. Tape action-state entries are a close behavioral proxy, not byte-identical to engine `attack-start` events."
+      },
+      {
+        "id": "next-steps",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## Recommended next step\n\n1. Scope preventive contact steering by matchup physics instead of enabling it globally: retain it where fast kiters need anti-congestion pursuit, and disable it for slow Arbalester-versus-Champion pursuit.\n2. Re-run all five 15v20 repeats and the other four Arbalester-versus-Champion ratios to check that the narrow policy change preserves existing good rows.\n3. Separately model the recorded opening as an immediate, local multi-target volley; do not combine that change with the steering correction until it passes its own control."
+      },
+      {
+        "id": "further-questions",
+        "type": "markdown",
+        "layout": "full",
+        "body": "## Further questions\n\n- Is the correct steering gate based on kiter-versus-chaser relative speed, unit spacing, or a measured congestion condition?\n- Does the four-target opening pattern repeat in every Arbalester matchup, or is it specific to the Champion spawn geometry?\n- After the steering fix, which remaining behavior accounts for the roughly five-second duration gap?"
+      }
+    ],
+    "charts": [
+      {
+        "id": "outcome-score-chart",
+        "title": "Signed outcome score by condition",
+        "description": "Negative is an Arbalester win; positive is a Champion win.",
+        "type": "bar",
+        "intent": "comparison",
+        "question": "Which condition reproduces the tape winner and outcome magnitude?",
+        "rationale": "A zero-centered bar comparison makes the wrong-winner sign flip and the steering control's closeness to tape immediately visible.",
+        "dataset": "condition_summary",
+        "encodings": {
+          "x": {
+            "field": "condition"
+          },
+          "y": {
+            "field": "outcomeScore"
+          }
+        },
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 0,
+            "label": "Winner boundary",
+            "color": "neutral"
+          }
+        ],
+        "labels": {
+          "values": "all"
+        },
+        "sourceId": "report-data-query"
+      }
+    ],
+    "tables": [
+      {
+        "id": "condition-table",
+        "title": "Tape, current engine, and steering control",
+        "description": "Exact outcome and engagement measures for the diagnosed row.",
+        "dataset": "condition_summary",
+        "columns": [
+          {
+            "field": "condition",
+            "label": "Condition"
+          },
+          {
+            "field": "outcomeScore",
+            "label": "Outcome score",
+            "format": "number"
+          },
+          {
+            "field": "winner",
+            "label": "Winner"
+          },
+          {
+            "field": "durationSeconds",
+            "label": "Duration (s)",
+            "format": "number"
+          },
+          {
+            "field": "championAttackActivity",
+            "label": "Champion attack activity",
+            "format": "number"
+          },
+          {
+            "field": "championEffectiveHpRemoved",
+            "label": "Arbalester HP removed",
+            "format": "number"
+          },
+          {
+            "field": "arbalesterEffectiveHpRemoved",
+            "label": "Champion HP removed",
+            "format": "number"
+          }
+        ],
+        "defaultSort": {
+          "field": "condition",
+          "direction": "asc"
+        },
+        "sourceId": "report-data-query"
+      }
+    ],
+    "sources": [
+      {
+        "id": "combined-analysis",
+        "label": "Exact-repeat tape/simulation diagnosis and steering control",
+        "path": "aoe2x/js_simulation/calibration/analysis/build_arbalester_champion_15v20_report.mjs",
+        "query": {
+          "language": "javascript",
+          "description": "Verified five decoded tape repeats, one exact-start current-engine run, and one same-run preventive-steering-off control.",
+          "tables_used": [
+            "aoe2x/js_simulation/calibration/reports/arbalester_champion_15v20_diagnosis_2026-08-14.json",
+            "aoe2x/js_simulation/calibration/reports/arbalester_champion_15v20_contact_steering_probe_2026-08-14.json"
+          ],
+          "filters": [
+            "Matchup: 15 Arbalesters versus 20 Champions",
+            "Placement: exact starting_units from tape repeat 1 for simulations",
+            "Control changes only preventiveContactSteering from true to false"
+          ],
+          "metric_definitions": {
+            "outcome_score": "Winner remaining HP divided by that side's starting HP, multiplied by 100; negative means owner 2 (Arbalester) wins and positive means owner 3 (Champion) wins.",
+            "effective_hp_removed": "Starting side HP minus surviving side HP; capped naturally by unit death and therefore excludes overkill beyond zero HP.",
+            "tape_attack_activity": "Entries into decoded frames.bin action_state 7; a tape proxy for attack starts rather than an engine event count."
+          }
+        }
+      },
+      {
+        "id": "report-data-query",
+        "label": "Condition comparison query",
+        "path": "aoe2x/js_simulation/calibration/analysis/arbalester_champion_15v20_condition_summary.sql",
+        "query": {
+          "language": "sql",
+          "description": "Selects the three reviewed tape/current/control condition rows used by the report chart and table.",
+          "tables_used": [
+            "condition_summary"
+          ],
+          "filters": [
+            "15 Arbalesters versus 20 Champions"
+          ],
+          "metric_definitions": {
+            "outcome_score": "Winner remaining HP divided by that side's starting HP, multiplied by 100; negative means owner 2 (Arbalester) wins and positive means owner 3 (Champion) wins.",
+            "effective_hp_removed": "Starting side HP minus surviving side HP; capped naturally by unit death and therefore excludes overkill beyond zero HP.",
+            "tape_attack_activity": "Entries into decoded frames.bin action_state 7; a tape proxy for attack starts rather than an engine event count."
+          }
+        }
+      },
+      {
+        "id": "authorized-archive",
+        "label": "Authorized Arbalester versus Champion golden archive",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+        "sha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "status": "ready",
+    "generatedAt": "2026-08-14T20:54:28.848Z",
+    "datasets": {
+      "condition_summary": [
+        {
+          "condition": "Tape mean",
+          "conditionOrder": 1,
+          "outcomeScore": -58.3333,
+          "winner": "Arbalester",
+          "durationSeconds": 43.5136,
+          "championAttackActivity": 27,
+          "championAttackActivityBasis": "Median tape action entries (range 19–32)",
+          "championEffectiveHpRemoved": 250,
+          "arbalesterEffectiveHpRemoved": 1400,
+          "sourceKind": "Five authorized tape repeats"
+        },
+        {
+          "condition": "Current engine",
+          "conditionOrder": 2,
+          "outcomeScore": 12.5,
+          "winner": "Champion",
+          "durationSeconds": 68.4333,
+          "championAttackActivity": 52,
+          "championAttackActivityBasis": "Engine attack-start events",
+          "championEffectiveHpRemoved": 600,
+          "arbalesterEffectiveHpRemoved": 1225,
+          "sourceKind": "Exact-start deterministic simulation"
+        },
+        {
+          "condition": "Steering off control",
+          "conditionOrder": 3,
+          "outcomeScore": -59.166666666666664,
+          "winner": "Arbalester",
+          "durationSeconds": 48.36666666666667,
+          "championAttackActivity": 26,
+          "championAttackActivityBasis": "Engine attack-start events",
+          "championEffectiveHpRemoved": 245,
+          "arbalesterEffectiveHpRemoved": 1400,
+          "sourceKind": "Same simulation; preventive steering off"
+        }
+      ],
+      "opening_comparison": [
+        {
+          "condition": "Tape mean",
+          "firstArbalesterAttackSeconds": 0.2308,
+          "openingTargets": 4,
+          "maximumOpeningTargetShare": 0.5333
+        },
+        {
+          "condition": "Current engine",
+          "firstArbalesterAttackSeconds": 2,
+          "openingTargets": 1,
+          "maximumOpeningTargetShare": 1
+        }
+      ],
+      "tape_timeline_mean": [
+        {
+          "seconds": 0,
+          "owner2AliveMean": 15,
+          "owner3AliveMean": 20,
+          "owner2HpMean": 600,
+          "owner3HpMean": 1400
+        },
+        {
+          "seconds": 2,
+          "owner2AliveMean": 15,
+          "owner3AliveMean": 20,
+          "owner2HpMean": 600,
+          "owner3HpMean": 1368
+        },
+        {
+          "seconds": 4,
+          "owner2AliveMean": 15,
+          "owner3AliveMean": 20,
+          "owner2HpMean": 600,
+          "owner3HpMean": 1307
+        },
+        {
+          "seconds": 6,
+          "owner2AliveMean": 15,
+          "owner3AliveMean": 19.2,
+          "owner2HpMean": 597,
+          "owner3HpMean": 1241
+        },
+        {
+          "seconds": 8,
+          "owner2AliveMean": 15,
+          "owner3AliveMean": 17.6,
+          "owner2HpMean": 568,
+          "owner3HpMean": 1171
+        },
+        {
+          "seconds": 10,
+          "owner2AliveMean": 14.8,
+          "owner3AliveMean": 16.4,
+          "owner2HpMean": 557,
+          "owner3HpMean": 1101
+        },
+        {
+          "seconds": 12,
+          "owner2AliveMean": 14.6,
+          "owner3AliveMean": 15.4,
+          "owner2HpMean": 525,
+          "owner3HpMean": 1031
+        },
+        {
+          "seconds": 14,
+          "owner2AliveMean": 14.2,
+          "owner3AliveMean": 14.4,
+          "owner2HpMean": 514,
+          "owner3HpMean": 961
+        },
+        {
+          "seconds": 16,
+          "owner2AliveMean": 14.2,
+          "owner3AliveMean": 13.4,
+          "owner2HpMean": 514,
+          "owner3HpMean": 891
+        },
+        {
+          "seconds": 18,
+          "owner2AliveMean": 14.2,
+          "owner3AliveMean": 12.4,
+          "owner2HpMean": 508,
+          "owner3HpMean": 821
+        },
+        {
+          "seconds": 20,
+          "owner2AliveMean": 14.2,
+          "owner3AliveMean": 11.4,
+          "owner2HpMean": 491,
+          "owner3HpMean": 753
+        },
+        {
+          "seconds": 22,
+          "owner2AliveMean": 14,
+          "owner3AliveMean": 10.4,
+          "owner2HpMean": 485,
+          "owner3HpMean": 685
+        },
+        {
+          "seconds": 24,
+          "owner2AliveMean": 14,
+          "owner3AliveMean": 9.4,
+          "owner2HpMean": 479,
+          "owner3HpMean": 615
+        },
+        {
+          "seconds": 26,
+          "owner2AliveMean": 14,
+          "owner3AliveMean": 8.4,
+          "owner2HpMean": 458,
+          "owner3HpMean": 550
+        },
+        {
+          "seconds": 28,
+          "owner2AliveMean": 14,
+          "owner3AliveMean": 7.4,
+          "owner2HpMean": 458,
+          "owner3HpMean": 480
+        },
+        {
+          "seconds": 30,
+          "owner2AliveMean": 14,
+          "owner3AliveMean": 6.4,
+          "owner2HpMean": 455,
+          "owner3HpMean": 411
+        },
+        {
+          "seconds": 32,
+          "owner2AliveMean": 14,
+          "owner3AliveMean": 5.4,
+          "owner2HpMean": 444,
+          "owner3HpMean": 344
+        },
+        {
+          "seconds": 34,
+          "owner2AliveMean": 13.8,
+          "owner3AliveMean": 4.4,
+          "owner2HpMean": 415,
+          "owner3HpMean": 279
+        },
+        {
+          "seconds": 36,
+          "owner2AliveMean": 13.2,
+          "owner3AliveMean": 4,
+          "owner2HpMean": 393,
+          "owner3HpMean": 213
+        },
+        {
+          "seconds": 38,
+          "owner2AliveMean": 13.2,
+          "owner3AliveMean": 3,
+          "owner2HpMean": 382,
+          "owner3HpMean": 149
+        },
+        {
+          "seconds": 40,
+          "owner2AliveMean": 12.8,
+          "owner3AliveMean": 2.4,
+          "owner2HpMean": 365,
+          "owner3HpMean": 89
+        },
+        {
+          "seconds": 42,
+          "owner2AliveMean": 12.8,
+          "owner3AliveMean": 2,
+          "owner2HpMean": 350,
+          "owner3HpMean": 26
+        },
+        {
+          "seconds": 44,
+          "owner2AliveMean": 11.3333,
+          "owner3AliveMean": 1.6667,
+          "owner2HpMean": 303.3333,
+          "owner3HpMean": 1.6667
+        },
+        {
+          "seconds": 46,
+          "owner2AliveMean": 11.5,
+          "owner3AliveMean": 0,
+          "owner2HpMean": 295,
+          "owner3HpMean": 0
+        }
+      ]
+    },
+    "accessIssues": []
+  },
+  "sources": [
+    {
+      "id": "combined-analysis",
+      "label": "Exact-repeat tape/simulation diagnosis and steering control",
+      "path": "aoe2x/js_simulation/calibration/analysis/build_arbalester_champion_15v20_report.mjs",
+      "query": {
+        "language": "javascript",
+        "description": "Verified five decoded tape repeats, one exact-start current-engine run, and one same-run preventive-steering-off control.",
+        "tables_used": [
+          "aoe2x/js_simulation/calibration/reports/arbalester_champion_15v20_diagnosis_2026-08-14.json",
+          "aoe2x/js_simulation/calibration/reports/arbalester_champion_15v20_contact_steering_probe_2026-08-14.json"
+        ],
+        "filters": [
+          "Matchup: 15 Arbalesters versus 20 Champions",
+          "Placement: exact starting_units from tape repeat 1 for simulations",
+          "Control changes only preventiveContactSteering from true to false"
+        ],
+        "metric_definitions": {
+          "outcome_score": "Winner remaining HP divided by that side's starting HP, multiplied by 100; negative means owner 2 (Arbalester) wins and positive means owner 3 (Champion) wins.",
+          "effective_hp_removed": "Starting side HP minus surviving side HP; capped naturally by unit death and therefore excludes overkill beyond zero HP.",
+          "tape_attack_activity": "Entries into decoded frames.bin action_state 7; a tape proxy for attack starts rather than an engine event count."
+        }
+      }
+    },
+    {
+      "id": "report-data-query",
+      "label": "Condition comparison query",
+      "path": "aoe2x/js_simulation/calibration/analysis/arbalester_champion_15v20_condition_summary.sql",
+      "query": {
+        "language": "sql",
+        "description": "Selects the three reviewed tape/current/control condition rows used by the report chart and table.",
+        "tables_used": [
+          "condition_summary"
+        ],
+        "filters": [
+          "15 Arbalesters versus 20 Champions"
+        ],
+        "metric_definitions": {
+          "outcome_score": "Winner remaining HP divided by that side's starting HP, multiplied by 100; negative means owner 2 (Arbalester) wins and positive means owner 3 (Champion) wins.",
+          "effective_hp_removed": "Starting side HP minus surviving side HP; capped naturally by unit death and therefore excludes overkill beyond zero HP.",
+          "tape_attack_activity": "Entries into decoded frames.bin action_state 7; a tape proxy for attack starts rather than an engine event count."
+        }
+      }
+    }
+  ]
+}

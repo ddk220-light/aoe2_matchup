@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-14T21:35:27.498Z",
+  "source": {
+    "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+    "zipSha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5",
+    "tapeRepeatsPerRatio": 5
+  },
+  "control": {
+    "changedParameter": "preventiveContactSteering",
+    "baseline": true,
+    "counterfactual": false,
+    "simulationRunsPerRatio": 1,
+    "rationale": "The engine is deterministic and all five dedicated repeats for each ratio share the same starting scenario."
+  },
+  "rows": [
+    {
+      "rowId": "heavy_cav_archer_vs_champion_5v10",
+      "ratio": "5v10",
+      "tape": {
+        "meanScore": 44.57142857142857,
+        "minimumScore": 36.57142857142857,
+        "maximumScore": 49.142857142857146
+      },
+      "baseline": {
+        "winnerOwner": 3,
+        "winnerHp": 296,
+        "score": 42.285714285714285,
+        "seconds": 40.233333333333334,
+        "absoluteTapeDelta": 2.2857142857142847,
+        "winnerMatchesTape": true
+      },
+      "preventiveSteeringOff": {
+        "winnerOwner": 3,
+        "winnerHp": 104,
+        "score": 14.857142857142858,
+        "seconds": 64.03333333333333,
+        "absoluteTapeDelta": 29.71428571428571,
+        "winnerMatchesTape": true
+      }
+    },
+    {
+      "rowId": "heavy_cav_archer_vs_champion_10v5",
+      "ratio": "10v5",
+      "tape": {
+        "meanScore": -99.025,
+        "minimumScore": -100,
+        "maximumScore": -98.375
+      },
+      "baseline": {
+        "winnerOwner": 2,
+        "winnerHp": 735,
+        "score": -91.875,
+        "seconds": 15.683333333333334,
+        "absoluteTapeDelta": 7.150000000000006,
+        "winnerMatchesTape": true
+      },
+      "preventiveSteeringOff": {
+        "winnerOwner": 2,
+        "winnerHp": 735,
+        "score": -91.875,
+        "seconds": 15.7,
+        "absoluteTapeDelta": 7.150000000000006,
+        "winnerMatchesTape": true
+      }
+    },
+    {
+      "rowId": "heavy_cav_archer_vs_champion_15v20",
+      "ratio": "15v20",
+      "tape": {
+        "meanScore": -56.98333333333333,
+        "minimumScore": -69.5,
+        "maximumScore": -49.833333333333336
+      },
+      "baseline": {
+        "winnerOwner": 2,
+        "winnerHp": 938,
+        "score": -78.16666666666667,
+        "seconds": 35.65,
+        "absoluteTapeDelta": 21.183333333333344,
+        "winnerMatchesTape": true
+      },
+      "preventiveSteeringOff": {
+        "winnerOwner": 2,
+        "winnerHp": 1044,
+        "score": -87,
+        "seconds": 33.93333333333333,
+        "absoluteTapeDelta": 30.016666666666673,
+        "winnerMatchesTape": true
+      }
+    },
+    {
+      "rowId": "heavy_cav_archer_vs_champion_20v15",
+      "ratio": "20v15",
+      "tape": {
+        "meanScore": -96.075,
+        "minimumScore": -99.1875,
+        "maximumScore": -92.5625
+      },
+      "baseline": {
+        "winnerOwner": 2,
+        "winnerHp": 1403,
+        "score": -87.6875,
+        "seconds": 21.816666666666666,
+        "absoluteTapeDelta": 8.387500000000003,
+        "winnerMatchesTape": true
+      },
+      "preventiveSteeringOff": {
+        "winnerOwner": 2,
+        "winnerHp": 1481,
+        "score": -92.5625,
+        "seconds": 21.866666666666667,
+        "absoluteTapeDelta": 3.512500000000003,
+        "winnerMatchesTape": true
+      }
+    },
+    {
+      "rowId": "heavy_cav_archer_vs_champion_20v20",
+      "ratio": "20v20",
+      "tape": {
+        "meanScore": -83.4125,
+        "minimumScore": -88.625,
+        "maximumScore": -73.5
+      },
+      "baseline": {
+        "winnerOwner": 2,
+        "winnerHp": 1338,
+        "score": -83.625,
+        "seconds": 27.883333333333333,
+        "absoluteTapeDelta": 0.21250000000000568,
+        "winnerMatchesTape": true
+      },
+      "preventiveSteeringOff": {
+        "winnerOwner": 2,
+        "winnerHp": 1442,
+        "score": -90.125,
+        "seconds": 27.783333333333335,
+        "absoluteTapeDelta": 6.712500000000006,
+        "winnerMatchesTape": true
+      }
+    }
+  ],
+  "summary": {
+    "ratios": 5,
+    "baselineCorrectWinners": 5,
+    "steeringOffCorrectWinners": 5,
+    "baselineMeanAbsoluteTapeDelta": 7.8438095238095285,
+    "steeringOffMeanAbsoluteTapeDelta": 15.421190476190478,
+    "meanAbsoluteDeltaRegression": 7.57738095238095,
+    "ratiosMadeWorse": 3
+  }
+}

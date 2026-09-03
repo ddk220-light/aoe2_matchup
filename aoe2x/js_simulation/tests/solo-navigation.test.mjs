@@ -79,7 +79,7 @@ test("cohesive navigation advances past one physically blocked straggler", () =>
 });
 
 
-test("cohesive navigation still leashes an unblocked straggler", () => {
+test("cohesive navigation lets the mobile majority advance past one independent straggler", () => {
   const units = [
     unit(1, 4, 4),
     unit(2, 4.5, 4),
@@ -101,5 +101,8 @@ test("cohesive navigation still leashes an unblocked straggler", () => {
 
   planSoloNavigation(state, units, map, 1);
 
-  assert.deepEqual(state.anchor, before);
+  assert.ok(
+    state.anchor.x > before.x,
+    "one independently stopped unit must not freeze the shared ranged order",
+  );
 });

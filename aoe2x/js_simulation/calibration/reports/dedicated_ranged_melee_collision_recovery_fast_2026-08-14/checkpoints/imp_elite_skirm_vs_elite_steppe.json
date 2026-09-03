@@ -1,0 +1,705 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "1c730f6a4dca68bc7466f393f5b5d2230a110bd6cb56fb860591c8818f89213e",
+  "matchupId": "imp_elite_skirm_vs_elite_steppe",
+  "completedAt": "2026-08-14T19:11:28.614Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "dedicated_golden_exact_repeat_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/dedicated_ranged_melee_sources.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/dedicated_ranged_melee/dedicated_ranged_melee_truth.json",
+      "archives": [
+        {
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zipSha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zipSha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zipSha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zipSha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zipSha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zipSha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zipSha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zipSha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zipSha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zipSha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zipSha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zipSha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zipSha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        }
+      ]
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "placements": "exact starting_units from each individual tape repeat",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "matchups": 1,
+      "rows": 5,
+      "tapeRunsPerRow": 5,
+      "totalRuns": 25,
+      "shardIndex": 0,
+      "shardCount": 1
+    },
+    "summary": {
+      "matchups": 1,
+      "rows": 5,
+      "totalRuns": 25,
+      "rowsOver25PointDelta": 0,
+      "rowsInsideTapeBand": 0,
+      "wrongWinnerRuns": 0,
+      "unresolvedRuns": 0,
+      "meanAbsoluteMeanDelta": 1.4979999999999989,
+      "medianAbsoluteMeanDelta": 1.6799999999999926,
+      "maximumAbsoluteMeanDelta": 2.4399999999999977
+    },
+    "matchupSummaries": [
+      {
+        "matchupId": "imp_elite_skirm_vs_elite_steppe",
+        "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+        "rangedSlug": "imp_elite_skirm",
+        "meleeSlug": "elite_steppe",
+        "rows": 5,
+        "tapeRuns": 25,
+        "meanAbsoluteMeanDelta": 1.4979999999999989,
+        "maxAbsoluteMeanDelta": 2.4399999999999977,
+        "rowsOver25PointDelta": 0,
+        "rowsInsideTapeBand": 0,
+        "wrongWinnerRuns": 0,
+        "unresolvedRuns": 0
+      }
+    ],
+    "rows": [
+      {
+        "id": "imp_elite_skirm_vs_elite_steppe_5v10",
+        "matchupId": "imp_elite_skirm_vs_elite_steppe",
+        "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+        "ranged": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "count": 5
+        },
+        "melee": {
+          "slug": "elite_steppe",
+          "label": "Elite Steppe Lancer",
+          "count": 10
+        },
+        "ratio": "5v10",
+        "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+        "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 98.16,
+            "min": 98.1,
+            "max": 98.3,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": 98.4,
+            "min": 98.4,
+            "max": 98.4,
+            "owner3WinRate": 1
+          },
+          "meanDelta": 0.2400000000000091,
+          "absoluteMeanDelta": 0.2400000000000091,
+          "tapeBandError": 0.10000000000000853,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            0.30000000000001137,
+            0.10000000000000853,
+            0.30000000000001137,
+            0.20000000000000284,
+            0.30000000000001137
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_5v10",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 984,
+            "score": 98.4,
+            "ticks": 1102,
+            "tapeScore": 98.1,
+            "delta": 0.30000000000001137,
+            "finalStateHash": "4e6821c5ff34e6b35bbaf88b3e1ce9a678d1d5a541152ea699aca62ff2d459e3",
+            "eventLogHash": "e5f79d95544075bc88f145cbcd70db26fa314233f3131f48d4fd308566961082"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_5v10",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 984,
+            "score": 98.4,
+            "ticks": 1102,
+            "tapeScore": 98.3,
+            "delta": 0.10000000000000853,
+            "finalStateHash": "4e6821c5ff34e6b35bbaf88b3e1ce9a678d1d5a541152ea699aca62ff2d459e3",
+            "eventLogHash": "e5f79d95544075bc88f145cbcd70db26fa314233f3131f48d4fd308566961082"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_5v10",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 984,
+            "score": 98.4,
+            "ticks": 1102,
+            "tapeScore": 98.1,
+            "delta": 0.30000000000001137,
+            "finalStateHash": "4e6821c5ff34e6b35bbaf88b3e1ce9a678d1d5a541152ea699aca62ff2d459e3",
+            "eventLogHash": "e5f79d95544075bc88f145cbcd70db26fa314233f3131f48d4fd308566961082"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_5v10",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 984,
+            "score": 98.4,
+            "ticks": 1102,
+            "tapeScore": 98.2,
+            "delta": 0.20000000000000284,
+            "finalStateHash": "4e6821c5ff34e6b35bbaf88b3e1ce9a678d1d5a541152ea699aca62ff2d459e3",
+            "eventLogHash": "e5f79d95544075bc88f145cbcd70db26fa314233f3131f48d4fd308566961082"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_5v10",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 984,
+            "score": 98.4,
+            "ticks": 1102,
+            "tapeScore": 98.1,
+            "delta": 0.30000000000001137,
+            "finalStateHash": "4e6821c5ff34e6b35bbaf88b3e1ce9a678d1d5a541152ea699aca62ff2d459e3",
+            "eventLogHash": "e5f79d95544075bc88f145cbcd70db26fa314233f3131f48d4fd308566961082"
+          }
+        ]
+      },
+      {
+        "id": "imp_elite_skirm_vs_elite_steppe_10v5",
+        "matchupId": "imp_elite_skirm_vs_elite_steppe",
+        "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+        "ranged": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "count": 10
+        },
+        "melee": {
+          "slug": "elite_steppe",
+          "label": "Elite Steppe Lancer",
+          "count": 5
+        },
+        "ratio": "10v5",
+        "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+        "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 89.88,
+            "min": 89.6,
+            "max": 90.4,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": 88.2,
+            "min": 88.2,
+            "max": 88.2,
+            "owner3WinRate": 1
+          },
+          "meanDelta": -1.6799999999999926,
+          "absoluteMeanDelta": 1.6799999999999926,
+          "tapeBandError": 1.3999999999999915,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -2.200000000000003,
+            -1.3999999999999915,
+            -1.5999999999999943,
+            -1.7999999999999972,
+            -1.3999999999999915
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_10v5",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 441,
+            "score": 88.2,
+            "ticks": 2224,
+            "tapeScore": 90.4,
+            "delta": -2.200000000000003,
+            "finalStateHash": "ecf4e7a61439643103e531a24fdc4616a2cf6758cb437fa80f7747145e587c1e",
+            "eventLogHash": "c65628fbc91af83fd108154d527762c873b54ef42f0a8da1246b0960355915cd"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_10v5",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 441,
+            "score": 88.2,
+            "ticks": 2224,
+            "tapeScore": 89.6,
+            "delta": -1.3999999999999915,
+            "finalStateHash": "ecf4e7a61439643103e531a24fdc4616a2cf6758cb437fa80f7747145e587c1e",
+            "eventLogHash": "c65628fbc91af83fd108154d527762c873b54ef42f0a8da1246b0960355915cd"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_10v5",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 441,
+            "score": 88.2,
+            "ticks": 2224,
+            "tapeScore": 89.8,
+            "delta": -1.5999999999999943,
+            "finalStateHash": "ecf4e7a61439643103e531a24fdc4616a2cf6758cb437fa80f7747145e587c1e",
+            "eventLogHash": "c65628fbc91af83fd108154d527762c873b54ef42f0a8da1246b0960355915cd"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_10v5",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 441,
+            "score": 88.2,
+            "ticks": 2224,
+            "tapeScore": 90,
+            "delta": -1.7999999999999972,
+            "finalStateHash": "ecf4e7a61439643103e531a24fdc4616a2cf6758cb437fa80f7747145e587c1e",
+            "eventLogHash": "c65628fbc91af83fd108154d527762c873b54ef42f0a8da1246b0960355915cd"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_10v5",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 441,
+            "score": 88.2,
+            "ticks": 2224,
+            "tapeScore": 89.6,
+            "delta": -1.3999999999999915,
+            "finalStateHash": "ecf4e7a61439643103e531a24fdc4616a2cf6758cb437fa80f7747145e587c1e",
+            "eventLogHash": "c65628fbc91af83fd108154d527762c873b54ef42f0a8da1246b0960355915cd"
+          }
+        ]
+      },
+      {
+        "id": "imp_elite_skirm_vs_elite_steppe_15v20",
+        "matchupId": "imp_elite_skirm_vs_elite_steppe",
+        "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+        "ranged": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "count": 15
+        },
+        "melee": {
+          "slug": "elite_steppe",
+          "label": "Elite Steppe Lancer",
+          "count": 20
+        },
+        "ratio": "15v20",
+        "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+        "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 97.91,
+            "min": 97.45,
+            "max": 98.3,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": 96.85,
+            "min": 96.85,
+            "max": 96.85,
+            "owner3WinRate": 1
+          },
+          "meanDelta": -1.0600000000000023,
+          "absoluteMeanDelta": 1.0600000000000023,
+          "tapeBandError": 0.6000000000000085,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -1.4500000000000028,
+            -0.6500000000000057,
+            -1.25,
+            -0.6000000000000085,
+            -1.3500000000000085
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_15v20",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1937,
+            "score": 96.85,
+            "ticks": 1417,
+            "tapeScore": 98.3,
+            "delta": -1.4500000000000028,
+            "finalStateHash": "705a074aac4c8170e7a98572191ef08beb3fe5685150644f1a8e8ea56c6e2f85",
+            "eventLogHash": "fdbef96ca0adfb4e1f3aedbfa388e3f1059e2fc42cc82b755025963aefd29f95"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_15v20",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1937,
+            "score": 96.85,
+            "ticks": 1417,
+            "tapeScore": 97.5,
+            "delta": -0.6500000000000057,
+            "finalStateHash": "705a074aac4c8170e7a98572191ef08beb3fe5685150644f1a8e8ea56c6e2f85",
+            "eventLogHash": "fdbef96ca0adfb4e1f3aedbfa388e3f1059e2fc42cc82b755025963aefd29f95"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_15v20",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1937,
+            "score": 96.85,
+            "ticks": 1417,
+            "tapeScore": 98.1,
+            "delta": -1.25,
+            "finalStateHash": "705a074aac4c8170e7a98572191ef08beb3fe5685150644f1a8e8ea56c6e2f85",
+            "eventLogHash": "fdbef96ca0adfb4e1f3aedbfa388e3f1059e2fc42cc82b755025963aefd29f95"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_15v20",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1937,
+            "score": 96.85,
+            "ticks": 1417,
+            "tapeScore": 97.45,
+            "delta": -0.6000000000000085,
+            "finalStateHash": "705a074aac4c8170e7a98572191ef08beb3fe5685150644f1a8e8ea56c6e2f85",
+            "eventLogHash": "fdbef96ca0adfb4e1f3aedbfa388e3f1059e2fc42cc82b755025963aefd29f95"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_15v20",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1937,
+            "score": 96.85,
+            "ticks": 1417,
+            "tapeScore": 98.2,
+            "delta": -1.3500000000000085,
+            "finalStateHash": "705a074aac4c8170e7a98572191ef08beb3fe5685150644f1a8e8ea56c6e2f85",
+            "eventLogHash": "fdbef96ca0adfb4e1f3aedbfa388e3f1059e2fc42cc82b755025963aefd29f95"
+          }
+        ]
+      },
+      {
+        "id": "imp_elite_skirm_vs_elite_steppe_20v15",
+        "matchupId": "imp_elite_skirm_vs_elite_steppe",
+        "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+        "ranged": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "count": 20
+        },
+        "melee": {
+          "slug": "elite_steppe",
+          "label": "Elite Steppe Lancer",
+          "count": 15
+        },
+        "ratio": "20v15",
+        "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+        "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 93.37333333333333,
+            "min": 91.86666666666666,
+            "max": 94.4,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": 90.93333333333334,
+            "min": 90.93333333333334,
+            "max": 90.93333333333334,
+            "owner3WinRate": 1
+          },
+          "meanDelta": -2.4399999999999977,
+          "absoluteMeanDelta": 2.4399999999999977,
+          "tapeBandError": 0.9333333333333229,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -3.1333333333333258,
+            -3.3333333333333286,
+            -3.4666666666666686,
+            -1.3333333333333286,
+            -0.9333333333333229
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v15",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1364,
+            "score": 90.93333333333334,
+            "ticks": 3020,
+            "tapeScore": 94.06666666666666,
+            "delta": -3.1333333333333258,
+            "finalStateHash": "133b69f7c1a7faf2ce8ee16fb5377eff0e3c28c50739af1c7120d27c4b69120c",
+            "eventLogHash": "bde33e025b66e6375356800f84ef8712d2bde769168bfef53863cd7f77a66a8b"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v15",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1364,
+            "score": 90.93333333333334,
+            "ticks": 3020,
+            "tapeScore": 94.26666666666667,
+            "delta": -3.3333333333333286,
+            "finalStateHash": "133b69f7c1a7faf2ce8ee16fb5377eff0e3c28c50739af1c7120d27c4b69120c",
+            "eventLogHash": "bde33e025b66e6375356800f84ef8712d2bde769168bfef53863cd7f77a66a8b"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v15",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1364,
+            "score": 90.93333333333334,
+            "ticks": 3020,
+            "tapeScore": 94.4,
+            "delta": -3.4666666666666686,
+            "finalStateHash": "133b69f7c1a7faf2ce8ee16fb5377eff0e3c28c50739af1c7120d27c4b69120c",
+            "eventLogHash": "bde33e025b66e6375356800f84ef8712d2bde769168bfef53863cd7f77a66a8b"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v15",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1364,
+            "score": 90.93333333333334,
+            "ticks": 3020,
+            "tapeScore": 92.26666666666667,
+            "delta": -1.3333333333333286,
+            "finalStateHash": "133b69f7c1a7faf2ce8ee16fb5377eff0e3c28c50739af1c7120d27c4b69120c",
+            "eventLogHash": "bde33e025b66e6375356800f84ef8712d2bde769168bfef53863cd7f77a66a8b"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v15",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1364,
+            "score": 90.93333333333334,
+            "ticks": 3020,
+            "tapeScore": 91.86666666666666,
+            "delta": -0.9333333333333229,
+            "finalStateHash": "133b69f7c1a7faf2ce8ee16fb5377eff0e3c28c50739af1c7120d27c4b69120c",
+            "eventLogHash": "bde33e025b66e6375356800f84ef8712d2bde769168bfef53863cd7f77a66a8b"
+          }
+        ]
+      },
+      {
+        "id": "imp_elite_skirm_vs_elite_steppe_20v20",
+        "matchupId": "imp_elite_skirm_vs_elite_steppe",
+        "matchup": "Elite Skirmisher vs Elite Steppe Lancer",
+        "ranged": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "count": 20
+        },
+        "melee": {
+          "slug": "elite_steppe",
+          "label": "Elite Steppe Lancer",
+          "count": 20
+        },
+        "ratio": "20v20",
+        "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+        "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 96.97,
+            "min": 96.45,
+            "max": 97.65,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": 94.9,
+            "min": 94.9,
+            "max": 94.9,
+            "owner3WinRate": 1
+          },
+          "meanDelta": -2.069999999999993,
+          "absoluteMeanDelta": 2.069999999999993,
+          "tapeBandError": 1.5499999999999972,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -1.8999999999999915,
+            -1.5499999999999972,
+            -2.75,
+            -2.049999999999997,
+            -2.0999999999999943
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v20",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1898,
+            "score": 94.9,
+            "ticks": 1997,
+            "tapeScore": 96.8,
+            "delta": -1.8999999999999915,
+            "finalStateHash": "f8a05166836b3590b79932ad5ad0b21eec68109c103f3ca418d90d66bfa4681c",
+            "eventLogHash": "7a15166c9c3bef1e23fffafa0f1dabd68f91e9080087cc4b361aecd8c3bdce55"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v20",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1898,
+            "score": 94.9,
+            "ticks": 1997,
+            "tapeScore": 96.45,
+            "delta": -1.5499999999999972,
+            "finalStateHash": "f8a05166836b3590b79932ad5ad0b21eec68109c103f3ca418d90d66bfa4681c",
+            "eventLogHash": "7a15166c9c3bef1e23fffafa0f1dabd68f91e9080087cc4b361aecd8c3bdce55"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v20",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1898,
+            "score": 94.9,
+            "ticks": 1997,
+            "tapeScore": 97.65,
+            "delta": -2.75,
+            "finalStateHash": "f8a05166836b3590b79932ad5ad0b21eec68109c103f3ca418d90d66bfa4681c",
+            "eventLogHash": "7a15166c9c3bef1e23fffafa0f1dabd68f91e9080087cc4b361aecd8c3bdce55"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v20",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1898,
+            "score": 94.9,
+            "ticks": 1997,
+            "tapeScore": 96.95,
+            "delta": -2.049999999999997,
+            "finalStateHash": "f8a05166836b3590b79932ad5ad0b21eec68109c103f3ca418d90d66bfa4681c",
+            "eventLogHash": "7a15166c9c3bef1e23fffafa0f1dabd68f91e9080087cc4b361aecd8c3bdce55"
+          },
+          {
+            "rowId": "imp_elite_skirm_vs_elite_steppe_20v20",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1898,
+            "score": 94.9,
+            "ticks": 1997,
+            "tapeScore": 97,
+            "delta": -2.0999999999999943,
+            "finalStateHash": "f8a05166836b3590b79932ad5ad0b21eec68109c103f3ca418d90d66bfa4681c",
+            "eventLogHash": "7a15166c9c3bef1e23fffafa0f1dabd68f91e9080087cc4b361aecd8c3bdce55"
+          }
+        ]
+      }
+    ]
+  }
+}

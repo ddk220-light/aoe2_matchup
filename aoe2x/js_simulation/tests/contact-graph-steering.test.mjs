@@ -158,11 +158,31 @@ test("a direct four-unit compact admission is diverted without slowing the mover
 
   assert.notDeepEqual(movement, direct);
   assert.ok(Math.abs(Math.hypot(movement.dx, movement.dy) - STEP) < 1e-12);
+  assert.ok(movement.dx > 0, "allied crowd steering must retain targetward progress");
   assert.equal(result.steered[0].reason, "compact-contact");
 });
 
 
-test("an authoritative persistent route bypasses compact-contact rotation", () => {
+test("active melee pursuit keeps its direct step through an ordinary allied cluster", () => {
+  const target = unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null });
+  const mover = unit({ referenceId: 1, x: 2, y: 2 });
+  const upper = unit({ referenceId: 2, x: 2.7, y: 1.85, pursuitTargetId: null });
+  const lower = unit({ referenceId: 3, x: 2.7, y: 2.15, pursuitTargetId: null });
+  const direct = proposal(1, STEP, 0);
+
+  const result = planPreventiveContactSteering(
+    [mover, upper, lower, target],
+    [direct, proposal(2), proposal(3), proposal(90)],
+    MAP,
+    { owner: 3, pursuitTransitReferenceIds: new Set([1]) },
+  );
+
+  assert.deepEqual(byReference(result).get(1), direct);
+  assert.deepEqual(result.steered, []);
+});
+
+
+test("an authoritative persistent route still diverts from four-way allied overlap", () => {
   const target = unit({ referenceId: 90, owner: 2, x: 8, y: 2, pursuitTargetId: null });
   const mover = unit({ referenceId: 1, x: 2, y: 2 });
   const upper = unit({ referenceId: 2, x: 2.7, y: 1.85, pursuitTargetId: null });
@@ -176,8 +196,10 @@ test("an authoritative persistent route bypasses compact-contact rotation", () =
     { owner: 3, authoritativeReferenceIds: new Set([1]) },
   );
 
-  assert.deepEqual(byReference(result).get(1), routed);
-  assert.deepEqual(result.steered, []);
+  const movement = byReference(result).get(1);
+  assert.notDeepEqual(movement, routed);
+  assert.ok(Math.abs(Math.hypot(movement.dx, movement.dy) - STEP) < 1e-12);
+  assert.equal(result.steered[0].reason, "compact-contact");
 });
 
 

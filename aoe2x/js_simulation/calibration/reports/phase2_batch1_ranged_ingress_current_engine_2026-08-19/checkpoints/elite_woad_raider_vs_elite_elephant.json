@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_woad_raider_vs_elite_elephant",
+  "completedAt": "2026-08-19T23:37:56.807Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 5.0909090909090935,
+      "medianAbsoluteMeanDelta": 5.0909090909090935,
+      "maximumAbsoluteMeanDelta": 5.0909090909090935
+    },
+    "rows": [
+      {
+        "id": "elite_woad_raider_vs_elite_elephant",
+        "subjectSlug": "elite_woad_raider",
+        "opponentSlug": "elite_elephant",
+        "matchup": "Elite Woad Raider vs Elite Battle Elephant",
+        "side2": {
+          "count": 21,
+          "master": 534,
+          "owner": 2,
+          "slug": "elite_woad_raider",
+          "unit": "Elite Woad Raider"
+        },
+        "side3": {
+          "count": 11,
+          "master": 1134,
+          "owner": 3,
+          "slug": "elite_elephant",
+          "unit": "Elite Battle Elephant"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 52.86931818181818,
+          "min": 52.86931818181818,
+          "max": 52.86931818181818,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 57.96022727272727,
+          "min": 53.89204545454545,
+          "max": 64.91477272727273,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 5.0909090909090935,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_woad_raider_vs_elite_elephant",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2285,
+            "score": 64.91477272727273,
+            "ticks": 2011,
+            "finalStateHash": "fa226803adf9706f36b2119c0e3a4b79a17f8eb156042bec82a2ba1c80d012c2",
+            "eventLogHash": "fd88db5a2efaaa67423e71c93a2873295dbe9a47c97084b93086f9fdc88e9712"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_elite_elephant",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1975,
+            "score": 56.10795454545455,
+            "ticks": 2469,
+            "finalStateHash": "7394aed358a53bfd8ac51a6871da6eb605b25b7dddc36db0f4f1ec45cbf9f6bc",
+            "eventLogHash": "f658c5cce81942699b5b195de9f15779fcd796e85356c7abd7bd38e0c2b5beac"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_elite_elephant",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1988,
+            "score": 56.47727272727273,
+            "ticks": 2135,
+            "finalStateHash": "ce509599fd753d94a41e1d2d60a21a80b55fd3be2d92a9843dd524165b691a83",
+            "eventLogHash": "85ea139e67482be03aaf27d4b9fd5ad3eb551cba72081d2434d956606082236c"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_elite_elephant",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2056,
+            "score": 58.40909090909091,
+            "ticks": 2011,
+            "finalStateHash": "4215da4f6f8654f5b37dd947085b136a0d280a6f046295e24f6373e9aed23b85",
+            "eventLogHash": "082efb6f2485727b1ba24359a7986eff10891d651cbfdb579e6b85f032b69258"
+          },
+          {
+            "rowId": "elite_woad_raider_vs_elite_elephant",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1897,
+            "score": 53.89204545454545,
+            "ticks": 2265,
+            "finalStateHash": "34605d54ade9f7ceeb64f57d6c2c5d742f1210c0ab47309a15ff34a9098ae129",
+            "eventLogHash": "15beaaefa4637cc61fbb45466c8dafae36ba0c974a1753f434187a69e68cefe9"
+          }
+        ]
+      }
+    ]
+  }
+}

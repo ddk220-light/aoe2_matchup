@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "6bc165a60a7d609e0eb729920ef5fbe53a159d943e29619915abc829d3cd7986",
+  "matchupId": "elite_plumed_archer_vs_paladin",
+  "completedAt": "2026-08-19T22:32:57.489Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 7.676767676767675,
+      "medianAbsoluteMeanDelta": 7.676767676767675,
+      "maximumAbsoluteMeanDelta": 7.676767676767675
+    },
+    "rows": [
+      {
+        "id": "elite_plumed_archer_vs_paladin",
+        "subjectSlug": "elite_plumed_archer",
+        "opponentSlug": "paladin",
+        "matchup": "Elite Plumed Archer vs Paladin",
+        "side2": {
+          "count": 21,
+          "master": 765,
+          "owner": 2,
+          "slug": "elite_plumed_archer",
+          "unit": "Elite Plumed Archer"
+        },
+        "side3": {
+          "count": 11,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 19.292929292929294,
+          "min": 11.717171717171718,
+          "max": 25.454545454545453,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 26.96969696969697,
+          "min": 26.96969696969697,
+          "max": 26.96969696969697,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 1.5151515151515156,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_plumed_archer_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 534,
+            "score": 26.96969696969697,
+            "ticks": 7623,
+            "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+            "eventLogHash": "956fe223a44894d05c0018bfda753c033c9c373d6d82b4e8ea58ec3666b89759"
+          },
+          {
+            "rowId": "elite_plumed_archer_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 534,
+            "score": 26.96969696969697,
+            "ticks": 7623,
+            "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+            "eventLogHash": "603e826d6eca8e08ce309d5b41274bec87d6a1df787fc627ae49d9198dbfd6e4"
+          },
+          {
+            "rowId": "elite_plumed_archer_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 534,
+            "score": 26.96969696969697,
+            "ticks": 7623,
+            "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+            "eventLogHash": "00474820e7ebc6057a7b68105e5fa1595568c67e0b0a9eec57eeb43d43e574fd"
+          },
+          {
+            "rowId": "elite_plumed_archer_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 534,
+            "score": 26.96969696969697,
+            "ticks": 7623,
+            "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+            "eventLogHash": "f1fd171fbba829370ae6e68c3d933db381050a490fc3df12bb0a6d0a1e66b287"
+          },
+          {
+            "rowId": "elite_plumed_archer_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 534,
+            "score": 26.96969696969697,
+            "ticks": 7623,
+            "finalStateHash": "07ee440be3becb68ea83233823fd0a9a5b1bcd3e713331098439b6b39cf3f432",
+            "eventLogHash": "0a249a1dc4f8b6fdb264f15bedb2a31c597f7cea604b49958d300c88bdd1c7d0"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,280 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_magyar_huszar_vs_champion",
+  "completedAt": "2026-08-20T18:41:27.348Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 0,
+      "volatileRows": 1,
+      "totalRuns": 15
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 15,
+      "unresolvedRuns": 10,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 1,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 1,
+      "meanAbsoluteMeanDelta": 24.80310760667903,
+      "medianAbsoluteMeanDelta": 24.80310760667903,
+      "maximumAbsoluteMeanDelta": 24.80310760667903
+    },
+    "rows": [
+      {
+        "id": "elite_magyar_huszar_vs_champion",
+        "subjectSlug": "elite_magyar_huszar",
+        "opponentSlug": "champion",
+        "matchup": "Elite Magyar Huszar vs Champion",
+        "side2": {
+          "count": 16,
+          "master": 871,
+          "owner": 2,
+          "slug": "elite_magyar_huszar",
+          "unit": "Elite Magyar Huszar"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 20.196351267779836,
+          "min": -13.636363636363637,
+          "max": 33.40136054421769,
+          "side3WinRate": 0.75,
+          "volatile": true
+        },
+        "tapeClassification": "knife-edge",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 10,
+          "mean": -4.606756338899197,
+          "min": -36.64772727272727,
+          "max": 16.3265306122449,
+          "side3WinRate": 0.6,
+          "side3WinRateError": 0.15000000000000002,
+          "bandError": 0,
+          "tapeBandCoverage": 0.8,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 37,
+            "score": 2.5170068027210886,
+            "ticks": 8206,
+            "finalStateHash": "80e06aa26bcce286305a9b8b60a89aea1a1a96872320f741a83d8896c70fd2e6",
+            "eventLogHash": "1f2ec10a244575aab6c12905a5909f236e138a6ddb8bddb25940d490e0b2b5f8"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 110,
+            "score": -6.25,
+            "ticks": 5678,
+            "finalStateHash": "0580caa2d1d1b32eb69f4cf0bcbff0633af3b5d76a82fa18160a77d6ccf93980",
+            "eventLogHash": "2e8e073839949c55958735705d2b27f752a4cd08d340fc1d20e5f4071b0802db"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 15,
+            "score": 1.0204081632653061,
+            "ticks": 5055,
+            "finalStateHash": "c52abb9be7329729c604e3225e38bd2e5778cef30d1e8916176035b8b3a2b378",
+            "eventLogHash": "67454bfadb2e774d5d627c7eb5ce395ffeb9f20f5e67a217ebdc723106fbffd4"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 5,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 6,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 645,
+            "score": -36.64772727272727,
+            "ticks": 5734,
+            "finalStateHash": "57613ff550dd54a23f347560af419e051d35c27e59be76d54bd01d401adcefff",
+            "eventLogHash": "472deed6206e25f67d919c587dc811fa3c559ae6e0fda70b1865b07ddac130fc"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 7,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 8,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 9,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 10,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 11,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 12,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 240,
+            "score": 16.3265306122449,
+            "ticks": 8733,
+            "finalStateHash": "dca9ebbba53072de749106133419d771ff9fb45c6538ec339abd9f862810a7ba",
+            "eventLogHash": "524650ea8c41d689a671afda31c5db7ba71600673d9feb57acf4c89fa062f530"
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 13,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          },
+          {
+            "rowId": "elite_magyar_huszar_vs_champion",
+            "sampleIndex": 14,
+            "seed": 20260817,
+            "outcome": "timeout",
+            "winnerOwner": null,
+            "winnerHp": null,
+            "score": null,
+            "ticks": 9000,
+            "finalStateHash": null,
+            "eventLogHash": null
+          }
+        ]
+      }
+    ]
+  }
+}

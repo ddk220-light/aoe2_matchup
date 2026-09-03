@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "5523cb04e829ed948c414db8c84e08a04b4f6b52c77660a6616d4e80dc49a275",
+  "matchupId": "elite_genoese_crossbowman_vs_heavy_scorpion",
+  "completedAt": "2026-08-21T00:29:37.871Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 5.939393939393938,
+      "medianAbsoluteMeanDelta": 5.939393939393938,
+      "maximumAbsoluteMeanDelta": 5.939393939393938
+    },
+    "rows": [
+      {
+        "id": "elite_genoese_crossbowman_vs_heavy_scorpion",
+        "subjectSlug": "elite_genoese_crossbowman",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Elite Genoese Crossbowman vs Heavy Scorpion",
+        "side2": {
+          "count": 21,
+          "master": 868,
+          "owner": 2,
+          "slug": "elite_genoese_crossbowman",
+          "unit": "Elite Genoese Crossbowman"
+        },
+        "side3": {
+          "count": 11,
+          "master": 542,
+          "owner": 3,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 45.45454545454545,
+          "min": 45.45454545454545,
+          "max": 45.45454545454545,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 39.515151515151516,
+          "min": 28.484848484848484,
+          "max": 45.45454545454545,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 5.939393939393938,
+          "tapeBandCoverage": 0.2,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_genoese_crossbowman_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 188,
+            "score": 28.484848484848484,
+            "ticks": 3280,
+            "finalStateHash": "0972cf55aad26570afd68c6e83ae1b660fb899e8f09eaf08948ae788275fdd4f",
+            "eventLogHash": "fdc06739323f65d2b5ce4d96e4612ddad31536a4409175f1cfdba90838baf34e"
+          },
+          {
+            "rowId": "elite_genoese_crossbowman_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 260,
+            "score": 39.39393939393939,
+            "ticks": 3369,
+            "finalStateHash": "df8c739f5da9f696704a10fe6b87dd1febfee4aa2611d9315df39f83e92af79c",
+            "eventLogHash": "5ff7273ef37c17864c963f19585210d0088d62a2441756215e1e53a5aed67506"
+          },
+          {
+            "rowId": "elite_genoese_crossbowman_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 300,
+            "score": 45.45454545454545,
+            "ticks": 2498,
+            "finalStateHash": "6a94e6a8977899efd219b7451972c899aa73890649661b12db6e16fbfdded6d1",
+            "eventLogHash": "b7ad55879af294cfb8e0da6006bfe93899ea8e4d4671d016be82cf7e5df9ac8a"
+          },
+          {
+            "rowId": "elite_genoese_crossbowman_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 294,
+            "score": 44.54545454545455,
+            "ticks": 2959,
+            "finalStateHash": "37966b2e8e04d6a24d756b831e10aaa3c59d05ae83116a4adc1c1f28ef8cb6fa",
+            "eventLogHash": "2c40d18449aaa9a1aefede8f08af8e5f45e8ce4ec07aff8380de9b64573e9058"
+          },
+          {
+            "rowId": "elite_genoese_crossbowman_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 262,
+            "score": 39.696969696969695,
+            "ticks": 2510,
+            "finalStateHash": "9047b8fdf881e007e714a83ae01e9b71f7d2cba98c97a6edf78aeb7451921f4e",
+            "eventLogHash": "5f966e467004ec0a96dd6b33d96a9f82cf3fe39c2e2595b2b30e7728d64c6e81"
+          }
+        ]
+      }
+    ]
+  }
+}

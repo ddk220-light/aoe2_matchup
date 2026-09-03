@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "warrior_priest_vs_elite_elephant",
+  "completedAt": "2026-08-19T23:46:26.358Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 13.86363636363636,
+      "medianAbsoluteMeanDelta": 13.86363636363636,
+      "maximumAbsoluteMeanDelta": 13.86363636363636
+    },
+    "rows": [
+      {
+        "id": "warrior_priest_vs_elite_elephant",
+        "subjectSlug": "warrior_priest",
+        "opponentSlug": "elite_elephant",
+        "matchup": "Warrior Priest vs Elite Battle Elephant",
+        "side2": {
+          "count": 21,
+          "master": 1811,
+          "owner": 2,
+          "slug": "warrior_priest",
+          "unit": "Warrior Priest"
+        },
+        "side3": {
+          "count": 11,
+          "master": 1134,
+          "owner": 3,
+          "slug": "elite_elephant",
+          "unit": "Elite Battle Elephant"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 45.73863636363637,
+          "min": 45.73863636363637,
+          "max": 45.73863636363637,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 59.60227272727273,
+          "min": 55.48295454545455,
+          "max": 64.9715909090909,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 13.86363636363636,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "warrior_priest_vs_elite_elephant",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2038,
+            "score": 57.89772727272727,
+            "ticks": 3267,
+            "finalStateHash": "0bba365e23a94d270d9b923747cb5d137e0fcb6fb45a18abf6aaaeb73772adf8",
+            "eventLogHash": "14da24fdc38e40093c8f6af8f44f4049ce1449060926317a6678d96ffa4b5e57"
+          },
+          {
+            "rowId": "warrior_priest_vs_elite_elephant",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2079,
+            "score": 59.0625,
+            "ticks": 3019,
+            "finalStateHash": "4437b1eceadd3956b9af2c16d18b0b59eea60d61e27b032859940f1411239d01",
+            "eventLogHash": "727ddffce71e3415c7ef23df276e394def78d5a6a495ea096e516b80bdb4059e"
+          },
+          {
+            "rowId": "warrior_priest_vs_elite_elephant",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2133,
+            "score": 60.59659090909091,
+            "ticks": 3071,
+            "finalStateHash": "ab90800976d23147640dea6372557389137772d9c254bee85dc70fa35964c120",
+            "eventLogHash": "86fdeb5f1ade8ccfd11436ea18853367b701aca91993a5f2821a87a1926e4329"
+          },
+          {
+            "rowId": "warrior_priest_vs_elite_elephant",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2287,
+            "score": 64.9715909090909,
+            "ticks": 3056,
+            "finalStateHash": "d363068f51e94c3ce11513380ec2354a0be0efe6e0b5117f77da32391c881af6",
+            "eventLogHash": "0a14f94c4c90dab9492d952f45d8d08c7476fe0321053f3b842c8c9841315dec"
+          },
+          {
+            "rowId": "warrior_priest_vs_elite_elephant",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 1953,
+            "score": 55.48295454545455,
+            "ticks": 3227,
+            "finalStateHash": "b9e1595d6fd9b71ab3a944c4d7bf81257e97d79207bbd1beef8387f91d0c1a9c",
+            "eventLogHash": "50d6b7ba010bbffdb9c4fee552592a2a7c918aecca968510d91c0a61b477188e"
+          }
+        ]
+      }
+    ]
+  }
+}

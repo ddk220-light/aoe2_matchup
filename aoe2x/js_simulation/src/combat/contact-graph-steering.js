@@ -104,6 +104,43 @@ function graphFor(units, points) {
 }
 
 
+function fourCliques(units, points) {
+  const graph = graphFor(units, points);
+  const result = [];
+  for (let a = 0; a < units.length; a += 1) {
+    const aId = units[a].referenceId;
+    for (let b = a + 1; b < units.length; b += 1) {
+      const bId = units[b].referenceId;
+      if (!graph.get(aId).has(bId)) continue;
+      for (let c = b + 1; c < units.length; c += 1) {
+        const cId = units[c].referenceId;
+        if (!graph.get(aId).has(cId) || !graph.get(bId).has(cId)) continue;
+        for (let d = c + 1; d < units.length; d += 1) {
+          const dId = units[d].referenceId;
+          if (graph.get(aId).has(dId)
+              && graph.get(bId).has(dId)
+              && graph.get(cId).has(dId)) {
+            result.push([aId, bId, cId, dId]);
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
+
+function oneStepPoints(units, proposals) {
+  return new Map(units.map((unit) => {
+    const movement = proposals.get(unit.referenceId);
+    return [unit.referenceId, {
+      x: unit.x + (movement?.dx ?? 0),
+      y: unit.y + (movement?.dy ?? 0),
+    }];
+  }));
+}
+
+
 function componentIds(graph, start) {
   const seen = new Set([start]);
   const queue = [start];
@@ -295,7 +332,7 @@ function moverPriority(left, right, byReference) {
 export function planPreventiveContactSteering(snapshot, proposals, map, {
   owner,
   strength = PREVENTIVE_CONTACT_STEERING_STRENGTH,
-  authoritativeReferenceIds = new Set(),
+  pursuitTransitReferenceIds = new Set(),
 } = {}) {
   const normalizedStrength = normalizeStrength(strength);
   const {
@@ -310,13 +347,17 @@ export function planPreventiveContactSteering(snapshot, proposals, map, {
   const steered = [];
   const movers = alliedUnits
     .filter((unit) => {
-      if (authoritativeReferenceIds.has(unit.referenceId)) return false;
       const row = chosen.get(unit.referenceId);
       return Math.hypot(row.dx, row.dy) > EPSILON;
     })
     .sort((left, right) => moverPriority(left, right, byReference));
 
   for (const mover of movers) {
+    // Active melee pursuit uses authoritative pairwise allied transit. It is
+    // allowed to form ordinary two/three-body traffic and is shaped only by
+    // the explicit four-body guard below; the older compact-contact heuristic
+    // would otherwise manufacture tangents before a prohibited pile exists.
+    if (pursuitTransitReferenceIds.has(mover.referenceId)) continue;
     const direct = chosen.get(mover.referenceId);
     const projectedFor = (candidate) => new Map(alliedUnits.map((unit) => {
       const row = unit.referenceId === mover.referenceId
@@ -333,6 +374,11 @@ export function planPreventiveContactSteering(snapshot, proposals, map, {
     for (let turn = 1; turn <= MAX_TURNS; turn += 1) {
       for (const side of [preferredSide, -preferredSide]) {
         const proposal = rotatedProposal(direct, side, turn);
+        // Friendly crowd shaping may bend a valid pursuit step, but it must
+        // never reverse it. Enemy bodies and static geometry are the only
+        // reasons a chaser may need a route whose instantaneous projection is
+        // not targetward; allied density alone is not such a reason.
+        if (proposal.dx * direct.dx + proposal.dy * direct.dy <= EPSILON) continue;
         if (!staticGeometryClears(mover, proposal, map)) continue;
         candidates.push({
           proposal,
@@ -362,6 +408,72 @@ export function planPreventiveContactSteering(snapshot, proposals, map, {
       reason: "compact-contact",
       side: selected.side,
       turnRadians: selected.turn * TURN_INCREMENT * normalizedStrength,
+    }));
+  }
+
+  // Pairwise allied transit keeps a chase moving through its own formation,
+  // but it must not collapse four bodies into one physical stack. Enforce the
+  // actual next-tick geometry after the softer look-ahead pass above. The
+  // rearmost involved mover takes the smallest full-speed rotation that
+  // reduces the number of four-cliques while preserving a positive component
+  // along its already planned route. This is geometry-derived: no unit name,
+  // roster size, or matchup calibration participates.
+  for (let pass = 0; pass < alliedUnits.length * 2; pass += 1) {
+    const currentCliques = fourCliques(alliedUnits, oneStepPoints(alliedUnits, chosen));
+    if (currentCliques.length === 0) break;
+    const involved = new Set(currentCliques.flat());
+    let best = null;
+    const rearFirst = [...movers].reverse();
+    for (let moverRank = 0; moverRank < rearFirst.length; moverRank += 1) {
+      const mover = rearFirst[moverRank];
+      if (!involved.has(mover.referenceId)) continue;
+      const direct = proposalByReference.get(mover.referenceId);
+      const distance = Math.hypot(direct.dx, direct.dy);
+      if (distance <= EPSILON) continue;
+      const preferredSide = mover.avoidance?.side === -1 || mover.avoidance?.side === 1
+        ? mover.avoidance.side : (mover.referenceId % 2 === 0 ? 1 : -1);
+      for (let turn = 1; turn < MAX_TURNS; turn += 1) {
+        for (const side of [preferredSide, -preferredSide]) {
+          const candidate = rotatedProposal(direct, side, turn);
+          const forward = candidate.dx * direct.dx + candidate.dy * direct.dy;
+          if (forward <= EPSILON || !staticGeometryClears(mover, candidate, map)) continue;
+          const candidateProposals = new Map(chosen);
+          candidateProposals.set(mover.referenceId, candidate);
+          const cliqueCount = fourCliques(
+            alliedUnits,
+            oneStepPoints(alliedUnits, candidateProposals),
+          ).length;
+          if (cliqueCount >= currentCliques.length) continue;
+          const ranked = {
+            proposal: candidate,
+            referenceId: mover.referenceId,
+            cliqueCount,
+            moverRank,
+            side,
+            turn,
+            preferred: side === preferredSide ? 0 : 1,
+          };
+          if (!best
+              || ranked.cliqueCount < best.cliqueCount
+              || (ranked.cliqueCount === best.cliqueCount && ranked.turn < best.turn)
+              || (ranked.cliqueCount === best.cliqueCount && ranked.turn === best.turn
+                && ranked.moverRank < best.moverRank)
+              || (ranked.cliqueCount === best.cliqueCount && ranked.turn === best.turn
+                && ranked.moverRank === best.moverRank && ranked.preferred < best.preferred)) {
+            best = ranked;
+          }
+        }
+      }
+    }
+    if (best === null) break;
+    chosen.set(best.referenceId, best.proposal);
+    const priorIndex = steered.findIndex(({ referenceId }) => referenceId === best.referenceId);
+    if (priorIndex !== -1) steered.splice(priorIndex, 1);
+    steered.push(Object.freeze({
+      referenceId: best.referenceId,
+      reason: "four-way-contact-limit",
+      side: best.side,
+      turnRadians: best.turn * TURN_INCREMENT,
     }));
   }
 

@@ -1,0 +1,250 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "ceb8e96eb59afba47376f8f0a6f0c5f1d0bc83fa31d06d1c5353d3fb6f9be567",
+  "matchupId": "heavy_cav_archer_vs_champion_15v20",
+  "completedAt": "2026-08-15T00:52:01.199Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "dedicated_golden_exact_repeat_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/dedicated_ranged_melee_sources.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/dedicated_ranged_melee/dedicated_ranged_melee_truth.json",
+      "archives": [
+        {
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zipSha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zipSha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zipSha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zipSha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zipSha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zipSha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zipSha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zipSha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zipSha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zipSha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zipSha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zipSha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zipSha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        }
+      ]
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "placements": "exact starting_units from each individual tape repeat",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "preventiveContactSteering": true,
+      "kitePressureRelease": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "matchups": 1,
+      "rows": 1,
+      "tapeRunsPerRow": 5,
+      "totalRuns": 5,
+      "shardIndex": 0,
+      "shardCount": 1
+    },
+    "summary": {
+      "matchups": 1,
+      "rows": 1,
+      "totalRuns": 5,
+      "rowsOver25PointDelta": 0,
+      "rowsInsideTapeBand": 0,
+      "wrongWinnerRuns": 0,
+      "unresolvedRuns": 0,
+      "meanAbsoluteMeanDelta": 24.433333333333344,
+      "medianAbsoluteMeanDelta": 24.433333333333344,
+      "maximumAbsoluteMeanDelta": 24.433333333333344
+    },
+    "matchupSummaries": [
+      {
+        "matchupId": "heavy_cav_archer_vs_champion",
+        "matchup": "Heavy Cav Archer vs Champion",
+        "rangedSlug": "heavy_cav_archer",
+        "meleeSlug": "champion",
+        "rows": 1,
+        "tapeRuns": 5,
+        "meanAbsoluteMeanDelta": 24.433333333333344,
+        "maxAbsoluteMeanDelta": 24.433333333333344,
+        "rowsOver25PointDelta": 0,
+        "rowsInsideTapeBand": 0,
+        "wrongWinnerRuns": 0,
+        "unresolvedRuns": 0
+      }
+    ],
+    "rows": [
+      {
+        "id": "heavy_cav_archer_vs_champion_15v20",
+        "matchupId": "heavy_cav_archer_vs_champion",
+        "matchup": "Heavy Cav Archer vs Champion",
+        "ranged": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cav Archer",
+          "count": 15
+        },
+        "melee": {
+          "slug": "champion",
+          "label": "Champion",
+          "count": 20
+        },
+        "ratio": "15v20",
+        "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+        "zipSha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -56.98333333333333,
+            "min": -69.5,
+            "max": -49.833333333333336,
+            "owner3WinRate": 0
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -81.41666666666667,
+            "min": -81.41666666666667,
+            "max": -81.41666666666667,
+            "owner3WinRate": 0
+          },
+          "meanDelta": -24.433333333333344,
+          "absoluteMeanDelta": 24.433333333333344,
+          "tapeBandError": 11.916666666666671,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -30.66666666666667,
+            -31.583333333333336,
+            -25.250000000000007,
+            -22.750000000000007,
+            -11.916666666666671
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "heavy_cav_archer_vs_champion_15v20",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 977,
+            "score": -81.41666666666667,
+            "ticks": 2184,
+            "tapeScore": -50.75,
+            "delta": -30.66666666666667,
+            "finalStateHash": "9cf52c05605bbc83144a288f196ef63ce5d7e0c0d7b61b6fa2788d5fca9d633a",
+            "eventLogHash": "367e5c0b69b144ad1aafef3620288c77a480b87ef4f35eefe8632db70b7fc8c4"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_champion_15v20",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 977,
+            "score": -81.41666666666667,
+            "ticks": 2184,
+            "tapeScore": -49.833333333333336,
+            "delta": -31.583333333333336,
+            "finalStateHash": "9cf52c05605bbc83144a288f196ef63ce5d7e0c0d7b61b6fa2788d5fca9d633a",
+            "eventLogHash": "367e5c0b69b144ad1aafef3620288c77a480b87ef4f35eefe8632db70b7fc8c4"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_champion_15v20",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 977,
+            "score": -81.41666666666667,
+            "ticks": 2184,
+            "tapeScore": -56.166666666666664,
+            "delta": -25.250000000000007,
+            "finalStateHash": "9cf52c05605bbc83144a288f196ef63ce5d7e0c0d7b61b6fa2788d5fca9d633a",
+            "eventLogHash": "367e5c0b69b144ad1aafef3620288c77a480b87ef4f35eefe8632db70b7fc8c4"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_champion_15v20",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 977,
+            "score": -81.41666666666667,
+            "ticks": 2184,
+            "tapeScore": -58.666666666666664,
+            "delta": -22.750000000000007,
+            "finalStateHash": "9cf52c05605bbc83144a288f196ef63ce5d7e0c0d7b61b6fa2788d5fca9d633a",
+            "eventLogHash": "367e5c0b69b144ad1aafef3620288c77a480b87ef4f35eefe8632db70b7fc8c4"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_champion_15v20",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 977,
+            "score": -81.41666666666667,
+            "ticks": 2184,
+            "tapeScore": -69.5,
+            "delta": -11.916666666666671,
+            "finalStateHash": "9cf52c05605bbc83144a288f196ef63ce5d7e0c0d7b61b6fa2788d5fca9d633a",
+            "eventLogHash": "367e5c0b69b144ad1aafef3620288c77a480b87ef4f35eefe8632db70b7fc8c4"
+          }
+        ]
+      }
+    ]
+  }
+}

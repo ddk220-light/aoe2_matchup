@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_janissary_vs_heavy_scorpion",
+  "completedAt": "2026-08-19T23:42:28.249Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 34.13333333333334,
+      "medianAbsoluteMeanDelta": 34.13333333333334,
+      "maximumAbsoluteMeanDelta": 34.13333333333334
+    },
+    "rows": [
+      {
+        "id": "elite_janissary_vs_heavy_scorpion",
+        "subjectSlug": "elite_janissary",
+        "opponentSlug": "heavy_scorpion",
+        "matchup": "Elite Janissary vs Heavy Scorpion",
+        "side2": {
+          "count": 21,
+          "master": 557,
+          "owner": 2,
+          "slug": "elite_janissary",
+          "unit": "Elite Janissary"
+        },
+        "side3": {
+          "count": 15,
+          "master": 542,
+          "owner": 3,
+          "slug": "heavy_scorpion",
+          "unit": "Heavy Scorpion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 21.444444444444446,
+          "min": 4.333333333333333,
+          "max": 49.111111111111114,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 55.57777777777778,
+          "min": 51.44444444444444,
+          "max": 59.666666666666664,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 6.466666666666669,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_janissary_vs_heavy_scorpion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 537,
+            "score": 59.666666666666664,
+            "ticks": 1216,
+            "finalStateHash": "559c7c6c663fbb90364673f52419b4b0338f0dcbd8e9c1be80504e4d0007315f",
+            "eventLogHash": "16b016289d97a924465bd53477f5971fda79c1e219b0d2471079595fbeaf5fe4"
+          },
+          {
+            "rowId": "elite_janissary_vs_heavy_scorpion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 463,
+            "score": 51.44444444444444,
+            "ticks": 1344,
+            "finalStateHash": "48f08a2553e5c38e9b2f161a1aa42e2bdb3172fb013abe0798da47d9bd78e069",
+            "eventLogHash": "2162b0cf0ddde182c77098c1dd3631a478876cd92c0adb231bd7407a5c6fc4e4"
+          },
+          {
+            "rowId": "elite_janissary_vs_heavy_scorpion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 480,
+            "score": 53.333333333333336,
+            "ticks": 1361,
+            "finalStateHash": "c269f1dbe915ad2a728a37df0112931a3f94e2c1012dbef11ce96b1f8e6fc359",
+            "eventLogHash": "6802b797d0f7f8874c14321c9257c4bd783e0ee0c25d02b3aaab0bf85ca5e4fd"
+          },
+          {
+            "rowId": "elite_janissary_vs_heavy_scorpion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 537,
+            "score": 59.666666666666664,
+            "ticks": 1195,
+            "finalStateHash": "1f23eb88432ffcd6af8df609b1d692aa5cf6e25621ed2bc6bebe5fb58884046a",
+            "eventLogHash": "94a16bf95c6da3666bc5f3542d9fc7b805de3e1d4238ed442323eee14601b6fd"
+          },
+          {
+            "rowId": "elite_janissary_vs_heavy_scorpion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 484,
+            "score": 53.77777777777778,
+            "ticks": 1360,
+            "finalStateHash": "e8e5d5d62bbbb42908d7449a3e8f1a0bc6580fd1f2d4f825b2b215f0a47e5e53",
+            "eventLogHash": "06512c7d9d6316358eeb4036ff83addbc7e85e207fea7b26435ab52de64fc3e9"
+          }
+        ]
+      }
+    ]
+  }
+}

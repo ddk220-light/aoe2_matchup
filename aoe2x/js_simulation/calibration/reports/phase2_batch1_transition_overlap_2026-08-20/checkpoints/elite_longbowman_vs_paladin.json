@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_longbowman_vs_paladin",
+  "completedAt": "2026-08-20T18:21:04.379Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 1,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 1,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 80.46176046176046,
+      "medianAbsoluteMeanDelta": 80.46176046176046,
+      "maximumAbsoluteMeanDelta": 80.46176046176046
+    },
+    "rows": [
+      {
+        "id": "elite_longbowman_vs_paladin",
+        "subjectSlug": "elite_longbowman",
+        "opponentSlug": "paladin",
+        "matchup": "Elite Longbowman vs Paladin",
+        "side2": {
+          "count": 21,
+          "master": 530,
+          "owner": 2,
+          "slug": "elite_longbowman",
+          "unit": "Elite Longbowman"
+        },
+        "side3": {
+          "count": 11,
+          "master": 569,
+          "owner": 3,
+          "slug": "paladin",
+          "unit": "Paladin"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 28.080808080808083,
+          "min": 23.838383838383837,
+          "max": 35.656565656565654,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -52.38095238095239,
+          "min": -52.38095238095238,
+          "max": -52.38095238095238,
+          "side3WinRate": 0,
+          "side3WinRateError": 1,
+          "bandError": 76.21933621933623,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": true
+        },
+        "samples": [
+          {
+            "rowId": "elite_longbowman_vs_paladin",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 440,
+            "score": -52.38095238095238,
+            "ticks": 4139,
+            "finalStateHash": "5cc47e41d4baf2dca842b1e8e44e80cd66cc5918842ceea43ef0cba462166a5e",
+            "eventLogHash": "5b2e6d85b0c01b2c54cf532427505a3da6b6260f96e1c5b0acc2b3abe2ce6e3a"
+          },
+          {
+            "rowId": "elite_longbowman_vs_paladin",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 440,
+            "score": -52.38095238095238,
+            "ticks": 4139,
+            "finalStateHash": "5cc47e41d4baf2dca842b1e8e44e80cd66cc5918842ceea43ef0cba462166a5e",
+            "eventLogHash": "5b2e6d85b0c01b2c54cf532427505a3da6b6260f96e1c5b0acc2b3abe2ce6e3a"
+          },
+          {
+            "rowId": "elite_longbowman_vs_paladin",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 440,
+            "score": -52.38095238095238,
+            "ticks": 4139,
+            "finalStateHash": "5cc47e41d4baf2dca842b1e8e44e80cd66cc5918842ceea43ef0cba462166a5e",
+            "eventLogHash": "5b2e6d85b0c01b2c54cf532427505a3da6b6260f96e1c5b0acc2b3abe2ce6e3a"
+          },
+          {
+            "rowId": "elite_longbowman_vs_paladin",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 440,
+            "score": -52.38095238095238,
+            "ticks": 4139,
+            "finalStateHash": "5cc47e41d4baf2dca842b1e8e44e80cd66cc5918842ceea43ef0cba462166a5e",
+            "eventLogHash": "5b2e6d85b0c01b2c54cf532427505a3da6b6260f96e1c5b0acc2b3abe2ce6e3a"
+          },
+          {
+            "rowId": "elite_longbowman_vs_paladin",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 440,
+            "score": -52.38095238095238,
+            "ticks": 4139,
+            "finalStateHash": "5cc47e41d4baf2dca842b1e8e44e80cd66cc5918842ceea43ef0cba462166a5e",
+            "eventLogHash": "5b2e6d85b0c01b2c54cf532427505a3da6b6260f96e1c5b0acc2b3abe2ce6e3a"
+          }
+        ]
+      }
+    ]
+  }
+}

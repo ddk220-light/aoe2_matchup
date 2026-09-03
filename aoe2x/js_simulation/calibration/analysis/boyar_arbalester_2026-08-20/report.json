@@ -1,0 +1,3755 @@
+{
+  "schemaVersion": 1,
+  "rowId": "elite_boyar_vs_arbalester",
+  "matchup": "Arbalester vs Elite Boyar",
+  "source": {
+    "archive": "aoe2_golden_phase2_WITH_TAPES.zip",
+    "expectedZipSha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6",
+    "observedZipSha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6",
+    "tapeTrace": "/D:/AI/aoe2_matchup/aoe2x/js_simulation/calibration/analysis/boyar_arbalester_2026-08-20/tape/elite_boyar_slavs__vs__arbalester.tape_trace.jsonl"
+  },
+  "sampling": {
+    "cadenceMs": 100,
+    "simulationSamples": 5,
+    "seed": 20260817
+  },
+  "obstacle": {
+    "center": {
+      "x": 9,
+      "y": 7,
+      "radius": 1.5
+    },
+    "routeSide": "cardinal sector around (9, 7), selected by the dominant center offset",
+    "aroundThreshold": "individual angular span around center >= 90 degrees",
+    "coreClearance": "Euclidean center distance minus (1.5-tile solid core + unit radius)"
+  },
+  "roster": {
+    "side2": {
+      "count": 21,
+      "master": 492,
+      "owner": 2,
+      "slug": "arbalester",
+      "unit": "Arbalester"
+    },
+    "side3": {
+      "count": 11,
+      "master": 878,
+      "owner": 3,
+      "slug": "elite_boyar",
+      "unit": "Elite Boyar"
+    }
+  },
+  "tape": {
+    "repeat": 1,
+    "frames": 691,
+    "durationSeconds": 69.008,
+    "outcome": {
+      "winnerOwner": 3,
+      "winnerHp": 423,
+      "signedScore": 25.636363636363637
+    },
+    "route": {
+      "center": {
+        "x": 9,
+        "y": 7,
+        "radius": 1.5
+      },
+      "centroid": {
+        "id": "centroid",
+        "observations": 690,
+        "start": {
+          "x": 7.452380952381,
+          "y": 4.309523809524
+        },
+        "end": {
+          "x": 5.832655906677,
+          "y": 6.417261600494
+        },
+        "angularSpanDegrees": 677.883222985139,
+        "netAngularDegrees": 670.333310006152,
+        "sidesVisited": [
+          "below",
+          "right",
+          "above",
+          "left"
+        ],
+        "minimumCoreClearance": 0.94648770769
+      },
+      "centroidSideSequence": [
+        {
+          "side": "below",
+          "startMs": 200,
+          "endMs": 9808
+        },
+        {
+          "side": "right",
+          "startMs": 9904,
+          "endMs": 18892
+        },
+        {
+          "side": "above",
+          "startMs": 19008,
+          "endMs": 28996
+        },
+        {
+          "side": "left",
+          "startMs": 29100,
+          "endMs": 37904
+        },
+        {
+          "side": "below",
+          "startMs": 38006,
+          "endMs": 45508
+        },
+        {
+          "side": "right",
+          "startMs": 45608,
+          "endMs": 53694
+        },
+        {
+          "side": "above",
+          "startMs": 53796,
+          "endMs": 63394
+        },
+        {
+          "side": "left",
+          "startMs": 63506,
+          "endMs": 69106
+        }
+      ],
+      "centroidSideFrameShare": {
+        "below": 0.250724637681,
+        "right": 0.250724637681,
+        "above": 0.286956521739,
+        "left": 0.211594202899
+      },
+      "framesSplitAcrossSides": 257,
+      "splitAcrossSidesShare": 0.372463768116,
+      "trackedArbalesters": 21,
+      "arbalestersWithAtLeastQuarterTurn": 20,
+      "arbalesterQuarterTurnShare": 0.952380952381,
+      "individualAngularSpanDegrees": {
+        "count": 21,
+        "minimum": 26.069259494498,
+        "median": 330.707959648316,
+        "maximum": 687.173555456129
+      },
+      "minimumCoreClearance": 0.29378287773,
+      "unitsEnteringSolidCore": 0,
+      "unitRoutes": [
+        {
+          "id": 1273,
+          "observations": 526,
+          "start": {
+            "x": 6.5,
+            "y": 5.5
+          },
+          "end": {
+            "x": 11.993178367615,
+            "y": 8.377125740051
+          },
+          "angularSpanDegrees": 535.480454296447,
+          "netAngularDegrees": 533.742839620878,
+          "sidesVisited": [
+            "left",
+            "below",
+            "right",
+            "above"
+          ],
+          "minimumCoreClearance": 0.423533513024
+        },
+        {
+          "id": 1263,
+          "observations": 679,
+          "start": {
+            "x": 6.5,
+            "y": 4.5
+          },
+          "end": {
+            "x": 5.27744436264,
+            "y": 6.889034748077
+          },
+          "angularSpanDegrees": 687.173555456129,
+          "netAngularDegrees": 676.707417994954,
+          "sidesVisited": [
+            "below",
+            "left",
+            "right",
+            "above"
+          ],
+          "minimumCoreClearance": 0.498753744409
+        },
+        {
+          "id": 1264,
+          "observations": 662,
+          "start": {
+            "x": 10.5,
+            "y": 2.5
+          },
+          "end": {
+            "x": 6.286229610443,
+            "y": 8.391003608704
+          },
+          "angularSpanDegrees": 594.738703704694,
+          "netAngularDegrees": 584.426629569388,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.334645200182
+        },
+        {
+          "id": 1265,
+          "observations": 352,
+          "start": {
+            "x": 7.5,
+            "y": 3.5
+          },
+          "end": {
+            "x": 6.174008369446,
+            "y": 6.801779747009
+          },
+          "angularSpanDegrees": 308.437626617033,
+          "netAngularDegrees": 297.210850584472,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.785646442831
+        },
+        {
+          "id": 1266,
+          "observations": 306,
+          "start": {
+            "x": 9.5,
+            "y": 4.5
+          },
+          "end": {
+            "x": 6.711595535278,
+            "y": 9.158922195435
+          },
+          "angularSpanDegrees": 227.098520100276,
+          "netAngularDegrees": 215.357741833913,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.536194062457
+        },
+        {
+          "id": 1267,
+          "observations": 281,
+          "start": {
+            "x": 10.5,
+            "y": 4.5
+          },
+          "end": {
+            "x": 6.851119995117,
+            "y": 9.858536720276
+          },
+          "angularSpanDegrees": 195.290028504352,
+          "netAngularDegrees": 185.969938664159,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above"
+          ],
+          "minimumCoreClearance": 0.29378287773
+        },
+        {
+          "id": 1268,
+          "observations": 572,
+          "start": {
+            "x": 8.5,
+            "y": 2.5
+          },
+          "end": {
+            "x": 9.567908287048,
+            "y": 9.413070678711
+          },
+          "angularSpanDegrees": 542.206651148981,
+          "netAngularDegrees": 533.096815679367,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.611941292828
+        },
+        {
+          "id": 1269,
+          "observations": 112,
+          "start": {
+            "x": 4.5,
+            "y": 6.5
+          },
+          "end": {
+            "x": 9.286732673645,
+            "y": 4.864318370819
+          },
+          "angularSpanDegrees": 91.306508077515,
+          "netAngularDegrees": 91.306508077515,
+          "sidesVisited": [
+            "left",
+            "below"
+          ],
+          "minimumCoreClearance": 0.446469893165
+        },
+        {
+          "id": 1270,
+          "observations": 633,
+          "start": {
+            "x": 7.5,
+            "y": 4.5
+          },
+          "end": {
+            "x": 6.770363330841,
+            "y": 9.360939979553
+          },
+          "angularSpanDegrees": 628.361094077896,
+          "netAngularDegrees": 614.325383948863,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.916970105157
+        },
+        {
+          "id": 1271,
+          "observations": 532,
+          "start": {
+            "x": 5.5,
+            "y": 6.5
+          },
+          "end": {
+            "x": 11.017321586609,
+            "y": 8.17728805542
+          },
+          "angularSpanDegrees": 562.137292117398,
+          "netAngularDegrees": 562.137292117398,
+          "sidesVisited": [
+            "left",
+            "below",
+            "right",
+            "above"
+          ],
+          "minimumCoreClearance": 0.553982844837
+        },
+        {
+          "id": 1272,
+          "observations": 219,
+          "start": {
+            "x": 5.5,
+            "y": 5.5
+          },
+          "end": {
+            "x": 9.779985427856,
+            "y": 9.184970855713
+          },
+          "angularSpanDegrees": 227.155988519794,
+          "netAngularDegrees": 227.155988519794,
+          "sidesVisited": [
+            "left",
+            "below",
+            "right",
+            "above"
+          ],
+          "minimumCoreClearance": 0.620016143906
+        },
+        {
+          "id": 1549,
+          "observations": 633,
+          "start": {
+            "x": 8.5,
+            "y": 3.5
+          },
+          "end": {
+            "x": 6.677891731262,
+            "y": 9.850998878479
+          },
+          "angularSpanDegrees": 599.251678982364,
+          "netAngularDegrees": 587.292551982183,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.421939037663
+        },
+        {
+          "id": 1550,
+          "observations": 454,
+          "start": {
+            "x": 8.5,
+            "y": 4.5
+          },
+          "end": {
+            "x": 10.096473693848,
+            "y": 4.916898727417
+          },
+          "angularSpanDegrees": 415.894030441127,
+          "netAngularDegrees": 399.070726036406,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.412113980416
+        },
+        {
+          "id": 1551,
+          "observations": 438,
+          "start": {
+            "x": 9.5,
+            "y": 2.5
+          },
+          "end": {
+            "x": 9.33846950531,
+            "y": 4.508308410645
+          },
+          "angularSpanDegrees": 368.193353010391,
+          "netAngularDegrees": 361.395475312097,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.586765440431
+        },
+        {
+          "id": 1552,
+          "observations": 274,
+          "start": {
+            "x": 9.5,
+            "y": 3.5
+          },
+          "end": {
+            "x": 7.348605155945,
+            "y": 9.512258529663
+          },
+          "angularSpanDegrees": 216.381250516992,
+          "netAngularDegrees": 205.188206681938,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above"
+          ],
+          "minimumCoreClearance": 0.573388554069
+        },
+        {
+          "id": 1553,
+          "observations": 263,
+          "start": {
+            "x": 10.5,
+            "y": 3.5
+          },
+          "end": {
+            "x": 7.52318239212,
+            "y": 10.846952438354
+          },
+          "angularSpanDegrees": 193.098350109077,
+          "netAngularDegrees": 177.802849358666,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above"
+          ],
+          "minimumCoreClearance": 0.311062491964
+        },
+        {
+          "id": 1554,
+          "observations": 67,
+          "start": {
+            "x": 3.5,
+            "y": 6.5
+          },
+          "end": {
+            "x": 6.496856689453,
+            "y": 5.480237007141
+          },
+          "angularSpanDegrees": 26.069259494498,
+          "netAngularDegrees": 26.069259494498,
+          "sidesVisited": [
+            "left"
+          ],
+          "minimumCoreClearance": 1.228379413191
+        },
+        {
+          "id": 1555,
+          "observations": 132,
+          "start": {
+            "x": 4.5,
+            "y": 5.5
+          },
+          "end": {
+            "x": 10.606056213379,
+            "y": 5.318281173706
+          },
+          "angularSpanDegrees": 123.086021176907,
+          "netAngularDegrees": 115.246717878402,
+          "sidesVisited": [
+            "left",
+            "below"
+          ],
+          "minimumCoreClearance": 0.447859787706
+        },
+        {
+          "id": 1556,
+          "observations": 330,
+          "start": {
+            "x": 5.5,
+            "y": 4.5
+          },
+          "end": {
+            "x": 6.462813854218,
+            "y": 7.758282184601
+          },
+          "angularSpanDegrees": 309.745732420693,
+          "netAngularDegrees": 307.82263243555,
+          "sidesVisited": [
+            "left",
+            "below",
+            "right",
+            "above"
+          ],
+          "minimumCoreClearance": 0.577002111314
+        },
+        {
+          "id": 1557,
+          "observations": 690,
+          "start": {
+            "x": 6.5,
+            "y": 3.5
+          },
+          "end": {
+            "x": 5.832655906677,
+            "y": 6.417261600494
+          },
+          "angularSpanDegrees": 685.307865934737,
+          "netAngularDegrees": 675.96256047672,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.466065950262
+        },
+        {
+          "id": 1558,
+          "observations": 383,
+          "start": {
+            "x": 7.5,
+            "y": 2.5
+          },
+          "end": {
+            "x": 7.19721698761,
+            "y": 5.742512702942
+          },
+          "angularSpanDegrees": 330.707959648316,
+          "netAngularDegrees": 323.331708810697,
+          "sidesVisited": [
+            "below",
+            "right",
+            "above",
+            "left"
+          ],
+          "minimumCoreClearance": 0.468371918043
+        }
+      ]
+    },
+    "overlap": {
+      "arbalesterAllies": {
+        "pairObservations": 61201,
+        "overlappingPairObservations": 8134,
+        "overlapPairShare": 0.13290632506,
+        "frameCount": 679,
+        "framesWithOverlap": 662,
+        "frameOverlapShare": 0.974963181149,
+        "medianDepth": 0.097724819183,
+        "p95Depth": 0.31296980381,
+        "maximumDepth": 0.4,
+        "medianContactWindowMs": 1313,
+        "maximumContactWindowMs": 14008,
+        "maximumLocalDegree": 8,
+        "maximumComponentSize": 18,
+        "maximumTriangles": 47,
+        "maximumFourCliques": 36
+      },
+      "boyarAllies": {
+        "pairObservations": 25046,
+        "overlappingPairObservations": 1622,
+        "overlapPairShare": 0.064760840054,
+        "frameCount": 691,
+        "framesWithOverlap": 637,
+        "frameOverlapShare": 0.921852387844,
+        "medianDepth": 0.058707714081,
+        "p95Depth": 0.191961956024,
+        "maximumDepth": 0.466763496399,
+        "medianContactWindowMs": 298,
+        "maximumContactWindowMs": 3388,
+        "maximumLocalDegree": 4,
+        "maximumComponentSize": 8,
+        "maximumTriangles": 1,
+        "maximumFourCliques": 0
+      },
+      "enemies": {
+        "pairObservations": 81115,
+        "overlappingPairObservations": 185,
+        "overlapPairShare": 0.002280712569,
+        "frameCount": 690,
+        "framesWithOverlap": 109,
+        "frameOverlapShare": 0.157971014493,
+        "medianDepth": 0.023605537415,
+        "p95Depth": 0.109122276306,
+        "maximumDepth": 0.148154449463,
+        "medianContactWindowMs": 408,
+        "maximumContactWindowMs": 1796,
+        "maximumLocalDegree": 6,
+        "maximumComponentSize": 7,
+        "maximumTriangles": 0,
+        "maximumFourCliques": 0
+      }
+    }
+  },
+  "simulation": {
+    "runs": [
+      {
+        "sampleIndex": 0,
+        "outcome": "win",
+        "ticks": 4110,
+        "durationSeconds": 68.5,
+        "route": {
+          "center": {
+            "x": 9,
+            "y": 7,
+            "radius": 1.5
+          },
+          "centroid": {
+            "id": "centroid",
+            "observations": 686,
+            "start": {
+              "x": 7.452380952381,
+              "y": 4.309523809524
+            },
+            "end": {
+              "x": 5.540568491568,
+              "y": 8.374615165087
+            },
+            "angularSpanDegrees": 638.79205792608,
+            "netAngularDegrees": 638.237884716382,
+            "sidesVisited": [
+              "below",
+              "right",
+              "above",
+              "left"
+            ],
+            "minimumCoreClearance": 1.421067140241
+          },
+          "centroidSideSequence": [
+            {
+              "side": "below",
+              "startMs": 0,
+              "endMs": 9400
+            },
+            {
+              "side": "right",
+              "startMs": 9500,
+              "endMs": 17800
+            },
+            {
+              "side": "above",
+              "startMs": 17900,
+              "endMs": 27700
+            },
+            {
+              "side": "left",
+              "startMs": 27800,
+              "endMs": 37400
+            },
+            {
+              "side": "below",
+              "startMs": 37500,
+              "endMs": 47200
+            },
+            {
+              "side": "right",
+              "startMs": 47300,
+              "endMs": 55800
+            },
+            {
+              "side": "above",
+              "startMs": 55900,
+              "endMs": 65400
+            },
+            {
+              "side": "left",
+              "startMs": 65500,
+              "endMs": 68500
+            }
+          ],
+          "centroidSideFrameShare": {
+            "below": 0.281341107872,
+            "right": 0.247813411079,
+            "above": 0.284256559767,
+            "left": 0.186588921283
+          },
+          "framesSplitAcrossSides": 373,
+          "splitAcrossSidesShare": 0.543731778426,
+          "trackedArbalesters": 21,
+          "arbalestersWithAtLeastQuarterTurn": 19,
+          "arbalesterQuarterTurnShare": 0.904761904762,
+          "individualAngularSpanDegrees": {
+            "count": 21,
+            "minimum": 48.564081366914,
+            "median": 617.67726579471,
+            "maximum": 669.960933800161
+          },
+          "minimumCoreClearance": 0.50489673377,
+          "unitsEnteringSolidCore": 0,
+          "unitRoutes": [
+            {
+              "id": 1263,
+              "observations": 686,
+              "start": {
+                "x": 6.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 5.777533102383,
+                "y": 8.502794093562
+              },
+              "angularSpanDegrees": 649.998056161376,
+              "netAngularDegrees": 649.998056161376,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.295440015854
+            },
+            {
+              "id": 1264,
+              "observations": 686,
+              "start": {
+                "x": 10.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 4.817533102383,
+                "y": 8.022794093562
+              },
+              "angularSpanDegrees": 619.48075523988,
+              "netAngularDegrees": 597.823440462657,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.588360528531
+            },
+            {
+              "id": 1265,
+              "observations": 686,
+              "start": {
+                "x": 7.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 5.777533102383,
+                "y": 8.022794093562
+              },
+              "angularSpanDegrees": 635.589425234921,
+              "netAngularDegrees": 635.589425234921,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.070201866519
+            },
+            {
+              "id": 1266,
+              "observations": 686,
+              "start": {
+                "x": 9.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 4.817533102383,
+                "y": 8.982794093562
+              },
+              "angularSpanDegrees": 608.97106913257,
+              "netAngularDegrees": 593.32570657271,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.582225364731
+            },
+            {
+              "id": 1267,
+              "observations": 686,
+              "start": {
+                "x": 10.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 5.297533102383,
+                "y": 8.982794093562
+              },
+              "angularSpanDegrees": 596.262270159799,
+              "netAngularDegrees": 570.865713980371,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.062209839855
+            },
+            {
+              "id": 1268,
+              "observations": 686,
+              "start": {
+                "x": 8.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 5.777533102383,
+                "y": 7.542794093562
+              },
+              "angularSpanDegrees": 626.779009017651,
+              "netAngularDegrees": 626.779009017651,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590244175032
+            },
+            {
+              "id": 1269,
+              "observations": 126,
+              "start": {
+                "x": 4.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.411909414166,
+                "y": 4.665481732213
+              },
+              "angularSpanDegrees": 49.433733005772,
+              "netAngularDegrees": 49.433733005772,
+              "sidesVisited": [
+                "left",
+                "below"
+              ],
+              "minimumCoreClearance": 0.920210914414
+            },
+            {
+              "id": 1270,
+              "observations": 686,
+              "start": {
+                "x": 7.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.257533102383,
+                "y": 8.502794093562
+              },
+              "angularSpanDegrees": 632.242264738124,
+              "netAngularDegrees": 632.242264738124,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.08446468606
+            },
+            {
+              "id": 1271,
+              "observations": 388,
+              "start": {
+                "x": 5.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.120275260687,
+                "y": 4.814385275296
+              },
+              "angularSpanDegrees": 401.172918816895,
+              "netAngularDegrees": 401.172918816895,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.50489673377
+            },
+            {
+              "id": 1272,
+              "observations": 686,
+              "start": {
+                "x": 5.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.257533102383,
+                "y": 8.982794093562
+              },
+              "angularSpanDegrees": 660.934610227158,
+              "netAngularDegrees": 660.934610227158,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.77632475033
+            },
+            {
+              "id": 1273,
+              "observations": 353,
+              "start": {
+                "x": 6.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.539006238172,
+                "y": 8.130015334742
+              },
+              "angularSpanDegrees": 304.373059826929,
+              "netAngularDegrees": 304.373059826929,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.702074395185
+            },
+            {
+              "id": 1549,
+              "observations": 686,
+              "start": {
+                "x": 8.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.257533102383,
+                "y": 8.022794093562
+              },
+              "angularSpanDegrees": 617.67726579471,
+              "netAngularDegrees": 617.67726579471,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.064434975148
+            },
+            {
+              "id": 1550,
+              "observations": 427,
+              "start": {
+                "x": 8.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 7.661088535414,
+                "y": 5.010096108968
+              },
+              "angularSpanDegrees": 337.375202597504,
+              "netAngularDegrees": 337.375202597504,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.576760659743
+            },
+            {
+              "id": 1551,
+              "observations": 634,
+              "start": {
+                "x": 9.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 8.154428361842,
+                "y": 9.29
+              },
+              "angularSpanDegrees": 553.926236211622,
+              "netAngularDegrees": 553.926236211622,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590244175032
+            },
+            {
+              "id": 1552,
+              "observations": 305,
+              "start": {
+                "x": 9.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.754458466234,
+                "y": 9.203647449806
+              },
+              "angularSpanDegrees": 217.753261667252,
+              "netAngularDegrees": 217.409385464653,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.070168546977
+            },
+            {
+              "id": 1553,
+              "observations": 686,
+              "start": {
+                "x": 10.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 4.817533102383,
+                "y": 8.502794093562
+              },
+              "angularSpanDegrees": 613.933277071842,
+              "netAngularDegrees": 587.03763725462,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.586384757941
+            },
+            {
+              "id": 1554,
+              "observations": 90,
+              "start": {
+                "x": 3.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.386684601287,
+                "y": 4.799029939606
+              },
+              "angularSpanDegrees": 48.564081366914,
+              "netAngularDegrees": 48.564081366914,
+              "sidesVisited": [
+                "left",
+                "below"
+              ],
+              "minimumCoreClearance": 0.998508478118
+            },
+            {
+              "id": 1555,
+              "observations": 686,
+              "start": {
+                "x": 4.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 5.777533102383,
+                "y": 8.982794093562
+              },
+              "angularSpanDegrees": 669.960933800161,
+              "netAngularDegrees": 669.960933800161,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.55297519151
+            },
+            {
+              "id": 1556,
+              "observations": 686,
+              "start": {
+                "x": 5.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 5.297533102383,
+                "y": 8.502794093562
+              },
+              "angularSpanDegrees": 662.370583224038,
+              "netAngularDegrees": 662.370583224038,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.919925746906
+            },
+            {
+              "id": 1557,
+              "observations": 686,
+              "start": {
+                "x": 6.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 5.297533102383,
+                "y": 8.022794093562
+              },
+              "angularSpanDegrees": 650.095041654367,
+              "netAngularDegrees": 650.095041654367,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.058849221573
+            },
+            {
+              "id": 1558,
+              "observations": 686,
+              "start": {
+                "x": 7.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 5.340028550972,
+                "y": 7.668289094909
+              },
+              "angularSpanDegrees": 638.828303416206,
+              "netAngularDegrees": 638.087075502408,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590053395823
+            }
+          ]
+        },
+        "overlap": {
+          "arbalesterAllies": {
+            "pairObservations": 99600,
+            "overlappingPairObservations": 3602,
+            "overlapPairShare": 0.036164658635,
+            "frameCount": 686,
+            "framesWithOverlap": 422,
+            "frameOverlapShare": 0.615160349854,
+            "medianDepth": 0.13140253101,
+            "p95Depth": 0.352322499261,
+            "maximumDepth": 0.399329692915,
+            "medianContactWindowMs": 2500,
+            "maximumContactWindowMs": 15800,
+            "maximumLocalDegree": 7,
+            "maximumComponentSize": 15,
+            "maximumTriangles": 26,
+            "maximumFourCliques": 8
+          },
+          "boyarAllies": {
+            "pairObservations": 13811,
+            "overlappingPairObservations": 5557,
+            "overlapPairShare": 0.402360437333,
+            "frameCount": 625,
+            "framesWithOverlap": 600,
+            "frameOverlapShare": 0.96,
+            "medianDepth": 0.246491616663,
+            "p95Depth": 0.499280739394,
+            "maximumDepth": 0.499999947302,
+            "medianContactWindowMs": 700,
+            "maximumContactWindowMs": 33600,
+            "maximumLocalDegree": 8,
+            "maximumComponentSize": 10,
+            "maximumTriangles": 45,
+            "maximumFourCliques": 45
+          },
+          "enemies": {
+            "pairObservations": 77044,
+            "overlappingPairObservations": 977,
+            "overlapPairShare": 0.012681065365,
+            "frameCount": 685,
+            "framesWithOverlap": 376,
+            "frameOverlapShare": 0.548905109489,
+            "medianDepth": 0.011710966637,
+            "p95Depth": 0.023833184039,
+            "maximumDepth": 0.032484084723,
+            "medianContactWindowMs": 700,
+            "maximumContactWindowMs": 6600,
+            "maximumLocalDegree": 6,
+            "maximumComponentSize": 7,
+            "maximumTriangles": 0,
+            "maximumFourCliques": 0
+          }
+        }
+      },
+      {
+        "sampleIndex": 1,
+        "outcome": "win",
+        "ticks": 4715,
+        "durationSeconds": 78.58333333333333,
+        "route": {
+          "center": {
+            "x": 9,
+            "y": 7,
+            "radius": 1.5
+          },
+          "centroid": {
+            "id": "centroid",
+            "observations": 786,
+            "start": {
+              "x": 7.452380952381,
+              "y": 4.309523809524
+            },
+            "end": {
+              "x": 6.299735684871,
+              "y": 3.64207186395
+            },
+            "angularSpanDegrees": 711.658240107133,
+            "netAngularDegrees": 711.104066897435,
+            "sidesVisited": [
+              "below",
+              "right",
+              "above",
+              "left"
+            ],
+            "minimumCoreClearance": 1.405001956329
+          },
+          "centroidSideSequence": [
+            {
+              "side": "below",
+              "startMs": 0,
+              "endMs": 9300
+            },
+            {
+              "side": "right",
+              "startMs": 9400,
+              "endMs": 17800
+            },
+            {
+              "side": "above",
+              "startMs": 17900,
+              "endMs": 27600
+            },
+            {
+              "side": "left",
+              "startMs": 27700,
+              "endMs": 39200
+            },
+            {
+              "side": "below",
+              "startMs": 39300,
+              "endMs": 49300
+            },
+            {
+              "side": "right",
+              "startMs": 49400,
+              "endMs": 57500
+            },
+            {
+              "side": "above",
+              "startMs": 57600,
+              "endMs": 67100
+            },
+            {
+              "side": "left",
+              "startMs": 67200,
+              "endMs": 77400
+            },
+            {
+              "side": "below",
+              "startMs": 77500,
+              "endMs": 78500
+            }
+          ],
+          "centroidSideFrameShare": {
+            "below": 0.262086513995,
+            "right": 0.212468193384,
+            "above": 0.246819338422,
+            "left": 0.278625954198
+          },
+          "framesSplitAcrossSides": 425,
+          "splitAcrossSidesShare": 0.540712468193,
+          "trackedArbalesters": 21,
+          "arbalestersWithAtLeastQuarterTurn": 19,
+          "arbalesterQuarterTurnShare": 0.904761904762,
+          "individualAngularSpanDegrees": {
+            "count": 21,
+            "minimum": 38.21941173242,
+            "median": 598.553529186442,
+            "maximum": 751.913899049205
+          },
+          "minimumCoreClearance": 0.50489673377,
+          "unitsEnteringSolidCore": 0,
+          "unitRoutes": [
+            {
+              "id": 1263,
+              "observations": 610,
+              "start": {
+                "x": 6.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 10.439460071164,
+                "y": 10.073725834303
+              },
+              "angularSpanDegrees": 559.905783392803,
+              "netAngularDegrees": 559.905783392803,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.236782367702
+            },
+            {
+              "id": 1264,
+              "observations": 786,
+              "start": {
+                "x": 10.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 5.820111536311,
+                "y": 3.353751711139
+              },
+              "angularSpanDegrees": 682.130724868946,
+              "netAngularDegrees": 660.473410091722,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.588427785244
+            },
+            {
+              "id": 1265,
+              "observations": 786,
+              "start": {
+                "x": 7.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.780111536311,
+                "y": 3.353751711139
+              },
+              "angularSpanDegrees": 711.864933523076,
+              "netAngularDegrees": 711.864933523076,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.07004789491
+            },
+            {
+              "id": 1266,
+              "observations": 786,
+              "start": {
+                "x": 9.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 5.820111536311,
+                "y": 4.313751711139
+              },
+              "angularSpanDegrees": 674.525276458969,
+              "netAngularDegrees": 658.879913899109,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.589291912172
+            },
+            {
+              "id": 1267,
+              "observations": 786,
+              "start": {
+                "x": 10.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.300111536311,
+                "y": 4.313751711139
+              },
+              "angularSpanDegrees": 669.287700698955,
+              "netAngularDegrees": 643.891144519527,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.044726103803
+            },
+            {
+              "id": 1268,
+              "observations": 786,
+              "start": {
+                "x": 8.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 6.780111536311,
+                "y": 2.873751711139
+              },
+              "angularSpanDegrees": 698.060296869846,
+              "netAngularDegrees": 698.060296869846,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590057933786
+            },
+            {
+              "id": 1269,
+              "observations": 111,
+              "start": {
+                "x": 4.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.411909414166,
+                "y": 4.697070389546
+              },
+              "angularSpanDegrees": 49.069824973063,
+              "netAngularDegrees": 49.069824973063,
+              "sidesVisited": [
+                "left",
+                "below"
+              ],
+              "minimumCoreClearance": 0.920210914414
+            },
+            {
+              "id": 1270,
+              "observations": 402,
+              "start": {
+                "x": 7.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.152405719085,
+                "y": 8.779373262544
+              },
+              "angularSpanDegrees": 268.998860327254,
+              "netAngularDegrees": 268.963772887742,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.108048011659
+            },
+            {
+              "id": 1271,
+              "observations": 430,
+              "start": {
+                "x": 5.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 6.159668858918,
+                "y": 8.779684032648
+              },
+              "angularSpanDegrees": 320.384241527738,
+              "netAngularDegrees": 319.799616676525,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.50489673377
+            },
+            {
+              "id": 1272,
+              "observations": 459,
+              "start": {
+                "x": 5.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.156229439375,
+                "y": 8.779689127674
+              },
+              "angularSpanDegrees": 304.775639090333,
+              "netAngularDegrees": 304.762244332601,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.77632475033
+            },
+            {
+              "id": 1273,
+              "observations": 345,
+              "start": {
+                "x": 6.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.162704105861,
+                "y": 8.796005854299
+              },
+              "angularSpanDegrees": 296.702468330432,
+              "netAngularDegrees": 296.702468330432,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.702074395185
+            },
+            {
+              "id": 1549,
+              "observations": 631,
+              "start": {
+                "x": 8.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 9.592289263241,
+                "y": 9.77
+              },
+              "angularSpanDegrees": 536.060704168452,
+              "netAngularDegrees": 536.060704168452,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.070201866519
+            },
+            {
+              "id": 1550,
+              "observations": 373,
+              "start": {
+                "x": 8.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.155734586382,
+                "y": 8.791372218501
+              },
+              "angularSpanDegrees": 249.10643191764,
+              "netAngularDegrees": 249.10643191764,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.849509756796
+            },
+            {
+              "id": 1551,
+              "observations": 692,
+              "start": {
+                "x": 9.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 6.303235371482,
+                "y": 8.263617269717
+              },
+              "angularSpanDegrees": 598.553529186442,
+              "netAngularDegrees": 598.553529186442,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590057933786
+            },
+            {
+              "id": 1552,
+              "observations": 237,
+              "start": {
+                "x": 9.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 9.638557792128,
+                "y": 9.77
+              },
+              "angularSpanDegrees": 159.232374058789,
+              "netAngularDegrees": 158.88849785619,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 1.142649477844
+            },
+            {
+              "id": 1553,
+              "observations": 786,
+              "start": {
+                "x": 10.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 5.820111536311,
+                "y": 3.833751711139
+              },
+              "angularSpanDegrees": 678.57389985432,
+              "netAngularDegrees": 651.678260037098,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.585221498916
+            },
+            {
+              "id": 1554,
+              "observations": 73,
+              "start": {
+                "x": 3.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 6.810961665665,
+                "y": 4.928927448777
+              },
+              "angularSpanDegrees": 38.21941173242,
+              "netAngularDegrees": 38.21941173242,
+              "sidesVisited": [
+                "left"
+              ],
+              "minimumCoreClearance": 1.313507979352
+            },
+            {
+              "id": 1555,
+              "observations": 786,
+              "start": {
+                "x": 4.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.776353021904,
+                "y": 4.316953239243
+              },
+              "angularSpanDegrees": 751.913899049205,
+              "netAngularDegrees": 751.913899049205,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.55297519151
+            },
+            {
+              "id": 1556,
+              "observations": 786,
+              "start": {
+                "x": 5.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.300111536311,
+                "y": 3.833751711139
+              },
+              "angularSpanDegrees": 734.007795588515,
+              "netAngularDegrees": 734.007795588515,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.919925746873
+            },
+            {
+              "id": 1557,
+              "observations": 786,
+              "start": {
+                "x": 6.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.300111536311,
+                "y": 3.353751711139
+              },
+              "angularSpanDegrees": 719.019337451896,
+              "netAngularDegrees": 719.019337451896,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.058849221516
+            },
+            {
+              "id": 1558,
+              "observations": 786,
+              "start": {
+                "x": 7.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 6.300111536311,
+                "y": 2.873751711139
+              },
+              "angularSpanDegrees": 705.978634201649,
+              "netAngularDegrees": 705.237406287852,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590202413388
+            }
+          ]
+        },
+        "overlap": {
+          "arbalesterAllies": {
+            "pairObservations": 94236,
+            "overlappingPairObservations": 5946,
+            "overlapPairShare": 0.063096905641,
+            "frameCount": 786,
+            "framesWithOverlap": 539,
+            "frameOverlapShare": 0.685750636132,
+            "medianDepth": 0.164770088724,
+            "p95Depth": 0.384147752951,
+            "maximumDepth": 0.4,
+            "medianContactWindowMs": 2900,
+            "maximumContactWindowMs": 19200,
+            "maximumLocalDegree": 7,
+            "maximumComponentSize": 15,
+            "maximumTriangles": 26,
+            "maximumFourCliques": 8
+          },
+          "boyarAllies": {
+            "pairObservations": 15834,
+            "overlappingPairObservations": 6243,
+            "overlapPairShare": 0.394278135657,
+            "frameCount": 684,
+            "framesWithOverlap": 607,
+            "frameOverlapShare": 0.887426900585,
+            "medianDepth": 0.247326324308,
+            "p95Depth": 0.49974798314,
+            "maximumDepth": 0.499999969089,
+            "medianContactWindowMs": 1000,
+            "maximumContactWindowMs": 39100,
+            "maximumLocalDegree": 9,
+            "maximumComponentSize": 10,
+            "maximumTriangles": 94,
+            "maximumFourCliques": 136
+          },
+          "enemies": {
+            "pairObservations": 81476,
+            "overlappingPairObservations": 1465,
+            "overlapPairShare": 0.017980755069,
+            "frameCount": 786,
+            "framesWithOverlap": 382,
+            "frameOverlapShare": 0.486005089059,
+            "medianDepth": 0.007053810581,
+            "p95Depth": 0.032484084723,
+            "maximumDepth": 0.103086887383,
+            "medianContactWindowMs": 750,
+            "maximumContactWindowMs": 7800,
+            "maximumLocalDegree": 5,
+            "maximumComponentSize": 6,
+            "maximumTriangles": 0,
+            "maximumFourCliques": 0
+          }
+        }
+      },
+      {
+        "sampleIndex": 2,
+        "outcome": "win",
+        "ticks": 4110,
+        "durationSeconds": 68.5,
+        "route": {
+          "center": {
+            "x": 9,
+            "y": 7,
+            "radius": 1.5
+          },
+          "centroid": {
+            "id": "centroid",
+            "observations": 686,
+            "start": {
+              "x": 7.452380952381,
+              "y": 4.309523809524
+            },
+            "end": {
+              "x": 5.540568491568,
+              "y": 8.374615165087
+            },
+            "angularSpanDegrees": 638.79205792608,
+            "netAngularDegrees": 638.237884716382,
+            "sidesVisited": [
+              "below",
+              "right",
+              "above",
+              "left"
+            ],
+            "minimumCoreClearance": 1.421067140241
+          },
+          "centroidSideSequence": [
+            {
+              "side": "below",
+              "startMs": 0,
+              "endMs": 9400
+            },
+            {
+              "side": "right",
+              "startMs": 9500,
+              "endMs": 17800
+            },
+            {
+              "side": "above",
+              "startMs": 17900,
+              "endMs": 27700
+            },
+            {
+              "side": "left",
+              "startMs": 27800,
+              "endMs": 37400
+            },
+            {
+              "side": "below",
+              "startMs": 37500,
+              "endMs": 47200
+            },
+            {
+              "side": "right",
+              "startMs": 47300,
+              "endMs": 55800
+            },
+            {
+              "side": "above",
+              "startMs": 55900,
+              "endMs": 65400
+            },
+            {
+              "side": "left",
+              "startMs": 65500,
+              "endMs": 68500
+            }
+          ],
+          "centroidSideFrameShare": {
+            "below": 0.281341107872,
+            "right": 0.247813411079,
+            "above": 0.284256559767,
+            "left": 0.186588921283
+          },
+          "framesSplitAcrossSides": 373,
+          "splitAcrossSidesShare": 0.543731778426,
+          "trackedArbalesters": 21,
+          "arbalestersWithAtLeastQuarterTurn": 19,
+          "arbalesterQuarterTurnShare": 0.904761904762,
+          "individualAngularSpanDegrees": {
+            "count": 21,
+            "minimum": 48.564081366914,
+            "median": 617.67726579471,
+            "maximum": 669.960933800161
+          },
+          "minimumCoreClearance": 0.50489673377,
+          "unitsEnteringSolidCore": 0,
+          "unitRoutes": [
+            {
+              "id": 1263,
+              "observations": 686,
+              "start": {
+                "x": 6.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 5.777533102383,
+                "y": 8.502794093562
+              },
+              "angularSpanDegrees": 649.998056161376,
+              "netAngularDegrees": 649.998056161376,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.295440015854
+            },
+            {
+              "id": 1264,
+              "observations": 686,
+              "start": {
+                "x": 10.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 4.817533102383,
+                "y": 8.022794093562
+              },
+              "angularSpanDegrees": 619.48075523988,
+              "netAngularDegrees": 597.823440462657,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.588360528531
+            },
+            {
+              "id": 1265,
+              "observations": 686,
+              "start": {
+                "x": 7.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 5.777533102383,
+                "y": 8.022794093562
+              },
+              "angularSpanDegrees": 635.589425234921,
+              "netAngularDegrees": 635.589425234921,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.070201866519
+            },
+            {
+              "id": 1266,
+              "observations": 686,
+              "start": {
+                "x": 9.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 4.817533102383,
+                "y": 8.982794093562
+              },
+              "angularSpanDegrees": 608.97106913257,
+              "netAngularDegrees": 593.32570657271,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.582225364731
+            },
+            {
+              "id": 1267,
+              "observations": 686,
+              "start": {
+                "x": 10.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 5.297533102383,
+                "y": 8.982794093562
+              },
+              "angularSpanDegrees": 596.262270159799,
+              "netAngularDegrees": 570.865713980371,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.062209839855
+            },
+            {
+              "id": 1268,
+              "observations": 686,
+              "start": {
+                "x": 8.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 5.777533102383,
+                "y": 7.542794093562
+              },
+              "angularSpanDegrees": 626.779009017651,
+              "netAngularDegrees": 626.779009017651,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590244175032
+            },
+            {
+              "id": 1269,
+              "observations": 126,
+              "start": {
+                "x": 4.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.411909414166,
+                "y": 4.665481732213
+              },
+              "angularSpanDegrees": 49.433733005772,
+              "netAngularDegrees": 49.433733005772,
+              "sidesVisited": [
+                "left",
+                "below"
+              ],
+              "minimumCoreClearance": 0.920210914414
+            },
+            {
+              "id": 1270,
+              "observations": 686,
+              "start": {
+                "x": 7.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.257533102383,
+                "y": 8.502794093562
+              },
+              "angularSpanDegrees": 632.242264738124,
+              "netAngularDegrees": 632.242264738124,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.08446468606
+            },
+            {
+              "id": 1271,
+              "observations": 388,
+              "start": {
+                "x": 5.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.120275260687,
+                "y": 4.814385275296
+              },
+              "angularSpanDegrees": 401.172918816895,
+              "netAngularDegrees": 401.172918816895,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.50489673377
+            },
+            {
+              "id": 1272,
+              "observations": 686,
+              "start": {
+                "x": 5.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.257533102383,
+                "y": 8.982794093562
+              },
+              "angularSpanDegrees": 660.934610227158,
+              "netAngularDegrees": 660.934610227158,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.77632475033
+            },
+            {
+              "id": 1273,
+              "observations": 353,
+              "start": {
+                "x": 6.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.539006238172,
+                "y": 8.130015334742
+              },
+              "angularSpanDegrees": 304.373059826929,
+              "netAngularDegrees": 304.373059826929,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.702074395185
+            },
+            {
+              "id": 1549,
+              "observations": 686,
+              "start": {
+                "x": 8.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.257533102383,
+                "y": 8.022794093562
+              },
+              "angularSpanDegrees": 617.67726579471,
+              "netAngularDegrees": 617.67726579471,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.064434975148
+            },
+            {
+              "id": 1550,
+              "observations": 427,
+              "start": {
+                "x": 8.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 7.661088535414,
+                "y": 5.010096108968
+              },
+              "angularSpanDegrees": 337.375202597504,
+              "netAngularDegrees": 337.375202597504,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.576760659743
+            },
+            {
+              "id": 1551,
+              "observations": 634,
+              "start": {
+                "x": 9.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 8.154428361842,
+                "y": 9.29
+              },
+              "angularSpanDegrees": 553.926236211622,
+              "netAngularDegrees": 553.926236211622,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590244175032
+            },
+            {
+              "id": 1552,
+              "observations": 305,
+              "start": {
+                "x": 9.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.754458466234,
+                "y": 9.203647449806
+              },
+              "angularSpanDegrees": 217.753261667252,
+              "netAngularDegrees": 217.409385464653,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.070168546977
+            },
+            {
+              "id": 1553,
+              "observations": 686,
+              "start": {
+                "x": 10.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 4.817533102383,
+                "y": 8.502794093562
+              },
+              "angularSpanDegrees": 613.933277071842,
+              "netAngularDegrees": 587.03763725462,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.586384757941
+            },
+            {
+              "id": 1554,
+              "observations": 90,
+              "start": {
+                "x": 3.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.386684601287,
+                "y": 4.799029939606
+              },
+              "angularSpanDegrees": 48.564081366914,
+              "netAngularDegrees": 48.564081366914,
+              "sidesVisited": [
+                "left",
+                "below"
+              ],
+              "minimumCoreClearance": 0.998508478118
+            },
+            {
+              "id": 1555,
+              "observations": 686,
+              "start": {
+                "x": 4.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 5.777533102383,
+                "y": 8.982794093562
+              },
+              "angularSpanDegrees": 669.960933800161,
+              "netAngularDegrees": 669.960933800161,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.55297519151
+            },
+            {
+              "id": 1556,
+              "observations": 686,
+              "start": {
+                "x": 5.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 5.297533102383,
+                "y": 8.502794093562
+              },
+              "angularSpanDegrees": 662.370583224038,
+              "netAngularDegrees": 662.370583224038,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.919925746906
+            },
+            {
+              "id": 1557,
+              "observations": 686,
+              "start": {
+                "x": 6.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 5.297533102383,
+                "y": 8.022794093562
+              },
+              "angularSpanDegrees": 650.095041654367,
+              "netAngularDegrees": 650.095041654367,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.058849221573
+            },
+            {
+              "id": 1558,
+              "observations": 686,
+              "start": {
+                "x": 7.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 5.340028550972,
+                "y": 7.668289094909
+              },
+              "angularSpanDegrees": 638.828303416206,
+              "netAngularDegrees": 638.087075502408,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590053395823
+            }
+          ]
+        },
+        "overlap": {
+          "arbalesterAllies": {
+            "pairObservations": 99600,
+            "overlappingPairObservations": 3602,
+            "overlapPairShare": 0.036164658635,
+            "frameCount": 686,
+            "framesWithOverlap": 422,
+            "frameOverlapShare": 0.615160349854,
+            "medianDepth": 0.13140253101,
+            "p95Depth": 0.352322499261,
+            "maximumDepth": 0.399329692915,
+            "medianContactWindowMs": 2500,
+            "maximumContactWindowMs": 15800,
+            "maximumLocalDegree": 7,
+            "maximumComponentSize": 15,
+            "maximumTriangles": 26,
+            "maximumFourCliques": 8
+          },
+          "boyarAllies": {
+            "pairObservations": 13811,
+            "overlappingPairObservations": 5557,
+            "overlapPairShare": 0.402360437333,
+            "frameCount": 625,
+            "framesWithOverlap": 600,
+            "frameOverlapShare": 0.96,
+            "medianDepth": 0.246491616663,
+            "p95Depth": 0.499280739394,
+            "maximumDepth": 0.499999947302,
+            "medianContactWindowMs": 700,
+            "maximumContactWindowMs": 33600,
+            "maximumLocalDegree": 8,
+            "maximumComponentSize": 10,
+            "maximumTriangles": 45,
+            "maximumFourCliques": 45
+          },
+          "enemies": {
+            "pairObservations": 77044,
+            "overlappingPairObservations": 977,
+            "overlapPairShare": 0.012681065365,
+            "frameCount": 685,
+            "framesWithOverlap": 376,
+            "frameOverlapShare": 0.548905109489,
+            "medianDepth": 0.011710966637,
+            "p95Depth": 0.023833184039,
+            "maximumDepth": 0.032484084723,
+            "medianContactWindowMs": 700,
+            "maximumContactWindowMs": 6600,
+            "maximumLocalDegree": 6,
+            "maximumComponentSize": 7,
+            "maximumTriangles": 0,
+            "maximumFourCliques": 0
+          }
+        }
+      },
+      {
+        "sampleIndex": 3,
+        "outcome": "win",
+        "ticks": 4715,
+        "durationSeconds": 78.58333333333333,
+        "route": {
+          "center": {
+            "x": 9,
+            "y": 7,
+            "radius": 1.5
+          },
+          "centroid": {
+            "id": "centroid",
+            "observations": 786,
+            "start": {
+              "x": 7.452380952381,
+              "y": 4.309523809524
+            },
+            "end": {
+              "x": 6.299735684871,
+              "y": 3.64207186395
+            },
+            "angularSpanDegrees": 711.658240107133,
+            "netAngularDegrees": 711.104066897435,
+            "sidesVisited": [
+              "below",
+              "right",
+              "above",
+              "left"
+            ],
+            "minimumCoreClearance": 1.405001956329
+          },
+          "centroidSideSequence": [
+            {
+              "side": "below",
+              "startMs": 0,
+              "endMs": 9300
+            },
+            {
+              "side": "right",
+              "startMs": 9400,
+              "endMs": 17800
+            },
+            {
+              "side": "above",
+              "startMs": 17900,
+              "endMs": 27600
+            },
+            {
+              "side": "left",
+              "startMs": 27700,
+              "endMs": 39200
+            },
+            {
+              "side": "below",
+              "startMs": 39300,
+              "endMs": 49300
+            },
+            {
+              "side": "right",
+              "startMs": 49400,
+              "endMs": 57500
+            },
+            {
+              "side": "above",
+              "startMs": 57600,
+              "endMs": 67100
+            },
+            {
+              "side": "left",
+              "startMs": 67200,
+              "endMs": 77400
+            },
+            {
+              "side": "below",
+              "startMs": 77500,
+              "endMs": 78500
+            }
+          ],
+          "centroidSideFrameShare": {
+            "below": 0.262086513995,
+            "right": 0.212468193384,
+            "above": 0.246819338422,
+            "left": 0.278625954198
+          },
+          "framesSplitAcrossSides": 425,
+          "splitAcrossSidesShare": 0.540712468193,
+          "trackedArbalesters": 21,
+          "arbalestersWithAtLeastQuarterTurn": 19,
+          "arbalesterQuarterTurnShare": 0.904761904762,
+          "individualAngularSpanDegrees": {
+            "count": 21,
+            "minimum": 38.21941173242,
+            "median": 598.553529186442,
+            "maximum": 751.913899049205
+          },
+          "minimumCoreClearance": 0.50489673377,
+          "unitsEnteringSolidCore": 0,
+          "unitRoutes": [
+            {
+              "id": 1263,
+              "observations": 610,
+              "start": {
+                "x": 6.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 10.439460071164,
+                "y": 10.073725834303
+              },
+              "angularSpanDegrees": 559.905783392803,
+              "netAngularDegrees": 559.905783392803,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.236782367702
+            },
+            {
+              "id": 1264,
+              "observations": 786,
+              "start": {
+                "x": 10.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 5.820111536311,
+                "y": 3.353751711139
+              },
+              "angularSpanDegrees": 682.130724868946,
+              "netAngularDegrees": 660.473410091722,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.588427785244
+            },
+            {
+              "id": 1265,
+              "observations": 786,
+              "start": {
+                "x": 7.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.780111536311,
+                "y": 3.353751711139
+              },
+              "angularSpanDegrees": 711.864933523076,
+              "netAngularDegrees": 711.864933523076,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.07004789491
+            },
+            {
+              "id": 1266,
+              "observations": 786,
+              "start": {
+                "x": 9.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 5.820111536311,
+                "y": 4.313751711139
+              },
+              "angularSpanDegrees": 674.525276458969,
+              "netAngularDegrees": 658.879913899109,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.589291912172
+            },
+            {
+              "id": 1267,
+              "observations": 786,
+              "start": {
+                "x": 10.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.300111536311,
+                "y": 4.313751711139
+              },
+              "angularSpanDegrees": 669.287700698955,
+              "netAngularDegrees": 643.891144519527,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.044726103803
+            },
+            {
+              "id": 1268,
+              "observations": 786,
+              "start": {
+                "x": 8.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 6.780111536311,
+                "y": 2.873751711139
+              },
+              "angularSpanDegrees": 698.060296869846,
+              "netAngularDegrees": 698.060296869846,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590057933786
+            },
+            {
+              "id": 1269,
+              "observations": 111,
+              "start": {
+                "x": 4.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.411909414166,
+                "y": 4.697070389546
+              },
+              "angularSpanDegrees": 49.069824973063,
+              "netAngularDegrees": 49.069824973063,
+              "sidesVisited": [
+                "left",
+                "below"
+              ],
+              "minimumCoreClearance": 0.920210914414
+            },
+            {
+              "id": 1270,
+              "observations": 402,
+              "start": {
+                "x": 7.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.152405719085,
+                "y": 8.779373262544
+              },
+              "angularSpanDegrees": 268.998860327254,
+              "netAngularDegrees": 268.963772887742,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.108048011659
+            },
+            {
+              "id": 1271,
+              "observations": 430,
+              "start": {
+                "x": 5.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 6.159668858918,
+                "y": 8.779684032648
+              },
+              "angularSpanDegrees": 320.384241527738,
+              "netAngularDegrees": 319.799616676525,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.50489673377
+            },
+            {
+              "id": 1272,
+              "observations": 459,
+              "start": {
+                "x": 5.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.156229439375,
+                "y": 8.779689127674
+              },
+              "angularSpanDegrees": 304.775639090333,
+              "netAngularDegrees": 304.762244332601,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.77632475033
+            },
+            {
+              "id": 1273,
+              "observations": 345,
+              "start": {
+                "x": 6.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.162704105861,
+                "y": 8.796005854299
+              },
+              "angularSpanDegrees": 296.702468330432,
+              "netAngularDegrees": 296.702468330432,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.702074395185
+            },
+            {
+              "id": 1549,
+              "observations": 631,
+              "start": {
+                "x": 8.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 9.592289263241,
+                "y": 9.77
+              },
+              "angularSpanDegrees": 536.060704168452,
+              "netAngularDegrees": 536.060704168452,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.070201866519
+            },
+            {
+              "id": 1550,
+              "observations": 373,
+              "start": {
+                "x": 8.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.155734586382,
+                "y": 8.791372218501
+              },
+              "angularSpanDegrees": 249.10643191764,
+              "netAngularDegrees": 249.10643191764,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.849509756796
+            },
+            {
+              "id": 1551,
+              "observations": 692,
+              "start": {
+                "x": 9.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 6.303235371482,
+                "y": 8.263617269717
+              },
+              "angularSpanDegrees": 598.553529186442,
+              "netAngularDegrees": 598.553529186442,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590057933786
+            },
+            {
+              "id": 1552,
+              "observations": 237,
+              "start": {
+                "x": 9.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 9.638557792128,
+                "y": 9.77
+              },
+              "angularSpanDegrees": 159.232374058789,
+              "netAngularDegrees": 158.88849785619,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 1.142649477844
+            },
+            {
+              "id": 1553,
+              "observations": 786,
+              "start": {
+                "x": 10.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 5.820111536311,
+                "y": 3.833751711139
+              },
+              "angularSpanDegrees": 678.57389985432,
+              "netAngularDegrees": 651.678260037098,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.585221498916
+            },
+            {
+              "id": 1554,
+              "observations": 73,
+              "start": {
+                "x": 3.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 6.810961665665,
+                "y": 4.928927448777
+              },
+              "angularSpanDegrees": 38.21941173242,
+              "netAngularDegrees": 38.21941173242,
+              "sidesVisited": [
+                "left"
+              ],
+              "minimumCoreClearance": 1.313507979352
+            },
+            {
+              "id": 1555,
+              "observations": 786,
+              "start": {
+                "x": 4.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.776353021904,
+                "y": 4.316953239243
+              },
+              "angularSpanDegrees": 751.913899049205,
+              "netAngularDegrees": 751.913899049205,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.55297519151
+            },
+            {
+              "id": 1556,
+              "observations": 786,
+              "start": {
+                "x": 5.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.300111536311,
+                "y": 3.833751711139
+              },
+              "angularSpanDegrees": 734.007795588515,
+              "netAngularDegrees": 734.007795588515,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.919925746873
+            },
+            {
+              "id": 1557,
+              "observations": 786,
+              "start": {
+                "x": 6.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.300111536311,
+                "y": 3.353751711139
+              },
+              "angularSpanDegrees": 719.019337451896,
+              "netAngularDegrees": 719.019337451896,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.058849221516
+            },
+            {
+              "id": 1558,
+              "observations": 786,
+              "start": {
+                "x": 7.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 6.300111536311,
+                "y": 2.873751711139
+              },
+              "angularSpanDegrees": 705.978634201649,
+              "netAngularDegrees": 705.237406287852,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590202413388
+            }
+          ]
+        },
+        "overlap": {
+          "arbalesterAllies": {
+            "pairObservations": 94236,
+            "overlappingPairObservations": 5946,
+            "overlapPairShare": 0.063096905641,
+            "frameCount": 786,
+            "framesWithOverlap": 539,
+            "frameOverlapShare": 0.685750636132,
+            "medianDepth": 0.164770088724,
+            "p95Depth": 0.384147752951,
+            "maximumDepth": 0.4,
+            "medianContactWindowMs": 2900,
+            "maximumContactWindowMs": 19200,
+            "maximumLocalDegree": 7,
+            "maximumComponentSize": 15,
+            "maximumTriangles": 26,
+            "maximumFourCliques": 8
+          },
+          "boyarAllies": {
+            "pairObservations": 15834,
+            "overlappingPairObservations": 6243,
+            "overlapPairShare": 0.394278135657,
+            "frameCount": 684,
+            "framesWithOverlap": 607,
+            "frameOverlapShare": 0.887426900585,
+            "medianDepth": 0.247326324308,
+            "p95Depth": 0.49974798314,
+            "maximumDepth": 0.499999969089,
+            "medianContactWindowMs": 1000,
+            "maximumContactWindowMs": 39100,
+            "maximumLocalDegree": 9,
+            "maximumComponentSize": 10,
+            "maximumTriangles": 94,
+            "maximumFourCliques": 136
+          },
+          "enemies": {
+            "pairObservations": 81476,
+            "overlappingPairObservations": 1465,
+            "overlapPairShare": 0.017980755069,
+            "frameCount": 786,
+            "framesWithOverlap": 382,
+            "frameOverlapShare": 0.486005089059,
+            "medianDepth": 0.007053810581,
+            "p95Depth": 0.032484084723,
+            "maximumDepth": 0.103086887383,
+            "medianContactWindowMs": 750,
+            "maximumContactWindowMs": 7800,
+            "maximumLocalDegree": 5,
+            "maximumComponentSize": 6,
+            "maximumTriangles": 0,
+            "maximumFourCliques": 0
+          }
+        }
+      },
+      {
+        "sampleIndex": 4,
+        "outcome": "win",
+        "ticks": 4702,
+        "durationSeconds": 78.36666666666666,
+        "route": {
+          "center": {
+            "x": 9,
+            "y": 7,
+            "radius": 1.5
+          },
+          "centroid": {
+            "id": "centroid",
+            "observations": 784,
+            "start": {
+              "x": 7.452380952381,
+              "y": 4.309523809524
+            },
+            "end": {
+              "x": 7.485061010063,
+              "y": 5.031497947
+            },
+            "angularSpanDegrees": 712.88108902429,
+            "netAngularDegrees": 712.326915814592,
+            "sidesVisited": [
+              "below",
+              "right",
+              "above",
+              "left"
+            ],
+            "minimumCoreClearance": 0.983956617152
+          },
+          "centroidSideSequence": [
+            {
+              "side": "below",
+              "startMs": 0,
+              "endMs": 9400
+            },
+            {
+              "side": "right",
+              "startMs": 9500,
+              "endMs": 17800
+            },
+            {
+              "side": "above",
+              "startMs": 17900,
+              "endMs": 27700
+            },
+            {
+              "side": "left",
+              "startMs": 27800,
+              "endMs": 37400
+            },
+            {
+              "side": "below",
+              "startMs": 37500,
+              "endMs": 47200
+            },
+            {
+              "side": "right",
+              "startMs": 47300,
+              "endMs": 55800
+            },
+            {
+              "side": "above",
+              "startMs": 55900,
+              "endMs": 65300
+            },
+            {
+              "side": "left",
+              "startMs": 65400,
+              "endMs": 77300
+            },
+            {
+              "side": "below",
+              "startMs": 77400,
+              "endMs": 78300
+            }
+          ],
+          "centroidSideFrameShare": {
+            "below": 0.258928571429,
+            "right": 0.216836734694,
+            "above": 0.247448979592,
+            "left": 0.276785714286
+          },
+          "framesSplitAcrossSides": 456,
+          "splitAcrossSidesShare": 0.581632653061,
+          "trackedArbalesters": 21,
+          "arbalestersWithAtLeastQuarterTurn": 19,
+          "arbalesterQuarterTurnShare": 0.904761904762,
+          "individualAngularSpanDegrees": {
+            "count": 21,
+            "minimum": 48.564081366914,
+            "median": 620.343194752306,
+            "maximum": 774.03598743642
+          },
+          "minimumCoreClearance": 0.50489673377,
+          "unitsEnteringSolidCore": 0,
+          "unitRoutes": [
+            {
+              "id": 1263,
+              "observations": 784,
+              "start": {
+                "x": 6.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 8.128559399906,
+                "y": 3.761024254126
+              },
+              "angularSpanDegrees": 749.941265655895,
+              "netAngularDegrees": 749.941265655895,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.295440015854
+            },
+            {
+              "id": 1264,
+              "observations": 784,
+              "start": {
+                "x": 10.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 7.168559399906,
+                "y": 3.281024254126
+              },
+              "angularSpanDegrees": 697.004041019539,
+              "netAngularDegrees": 675.346726242316,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.589949228462
+            },
+            {
+              "id": 1265,
+              "observations": 784,
+              "start": {
+                "x": 7.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 8.128559399906,
+                "y": 3.281024254126
+              },
+              "angularSpanDegrees": 730.010818001338,
+              "netAngularDegrees": 730.010818001338,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.070173846386
+            },
+            {
+              "id": 1266,
+              "observations": 434,
+              "start": {
+                "x": 9.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 5.722895445205,
+                "y": 4.112444615168
+              },
+              "angularSpanDegrees": 315.719677266102,
+              "netAngularDegrees": 300.074314706241,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.589291912172
+            },
+            {
+              "id": 1267,
+              "observations": 784,
+              "start": {
+                "x": 10.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 7.648559399906,
+                "y": 4.241024254126
+              },
+              "angularSpanDegrees": 688.335607815595,
+              "netAngularDegrees": 662.939051636166,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.061793950963
+            },
+            {
+              "id": 1268,
+              "observations": 784,
+              "start": {
+                "x": 8.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 8.128559399906,
+                "y": 2.801024254126
+              },
+              "angularSpanDegrees": 714.615667518756,
+              "netAngularDegrees": 714.615667518756,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590210282748
+            },
+            {
+              "id": 1269,
+              "observations": 119,
+              "start": {
+                "x": 4.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.411909414166,
+                "y": 4.669294100642
+              },
+              "angularSpanDegrees": 49.390170773971,
+              "netAngularDegrees": 49.390170773971,
+              "sidesVisited": [
+                "left",
+                "below"
+              ],
+              "minimumCoreClearance": 0.920210914414
+            },
+            {
+              "id": 1270,
+              "observations": 784,
+              "start": {
+                "x": 7.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.51031588399,
+                "y": 9.651892074857
+              },
+              "angularSpanDegrees": 620.343194752306,
+              "netAngularDegrees": 614.156771752918,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.06773553789
+            },
+            {
+              "id": 1271,
+              "observations": 373,
+              "start": {
+                "x": 5.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 6.424910628613,
+                "y": 5.189586199123
+              },
+              "angularSpanDegrees": 386.978991755656,
+              "netAngularDegrees": 386.978991755656,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.50489673377
+            },
+            {
+              "id": 1272,
+              "observations": 784,
+              "start": {
+                "x": 5.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.531651099222,
+                "y": 9.651892074857
+              },
+              "angularSpanDegrees": 656.488654575996,
+              "netAngularDegrees": 649.748430267204,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.77632475033
+            },
+            {
+              "id": 1273,
+              "observations": 289,
+              "start": {
+                "x": 6.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 6.870665119252,
+                "y": 10.092394043525
+              },
+              "angularSpanDegrees": 273.58643980986,
+              "netAngularDegrees": 273.58643980986,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.702074395185
+            },
+            {
+              "id": 1549,
+              "observations": 784,
+              "start": {
+                "x": 8.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.501730538389,
+                "y": 9.624972927158
+              },
+              "angularSpanDegrees": 597.319169655617,
+              "netAngularDegrees": 591.713402974075,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.064434975148
+            },
+            {
+              "id": 1550,
+              "observations": 336,
+              "start": {
+                "x": 8.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 6.570957236433,
+                "y": 9.523493764265
+              },
+              "angularSpanDegrees": 235.217363498496,
+              "netAngularDegrees": 235.217363498496,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.849509756796
+            },
+            {
+              "id": 1551,
+              "observations": 285,
+              "start": {
+                "x": 9.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 6.429697373175,
+                "y": 8.790986935977
+              },
+              "angularSpanDegrees": 228.791023488047,
+              "netAngularDegrees": 228.791023488047,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590244175032
+            },
+            {
+              "id": 1552,
+              "observations": 301,
+              "start": {
+                "x": 9.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 6.741490117834,
+                "y": 9.52254146471
+              },
+              "angularSpanDegrees": 214.052848869793,
+              "netAngularDegrees": 213.708972667194,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 1.070168546977
+            },
+            {
+              "id": 1553,
+              "observations": 497,
+              "start": {
+                "x": 10.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 11.227352568745,
+                "y": 4.786913395604
+              },
+              "angularSpanDegrees": 408.881124955501,
+              "netAngularDegrees": 381.985485138279,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.589791037252
+            },
+            {
+              "id": 1554,
+              "observations": 90,
+              "start": {
+                "x": 3.5,
+                "y": 6.5
+              },
+              "end": {
+                "x": 7.386684601287,
+                "y": 4.799029939606
+              },
+              "angularSpanDegrees": 48.564081366914,
+              "netAngularDegrees": 48.564081366914,
+              "sidesVisited": [
+                "left",
+                "below"
+              ],
+              "minimumCoreClearance": 0.998508478118
+            },
+            {
+              "id": 1555,
+              "observations": 784,
+              "start": {
+                "x": 4.5,
+                "y": 5.5
+              },
+              "end": {
+                "x": 8.128559399906,
+                "y": 4.241024254126
+              },
+              "angularSpanDegrees": 774.03598743642,
+              "netAngularDegrees": 774.03598743642,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.55297519151
+            },
+            {
+              "id": 1556,
+              "observations": 784,
+              "start": {
+                "x": 5.5,
+                "y": 4.5
+              },
+              "end": {
+                "x": 7.648559399906,
+                "y": 3.761024254126
+              },
+              "angularSpanDegrees": 751.814316696008,
+              "netAngularDegrees": 751.814316696008,
+              "sidesVisited": [
+                "left",
+                "below",
+                "right",
+                "above"
+              ],
+              "minimumCoreClearance": 0.919925746906
+            },
+            {
+              "id": 1557,
+              "observations": 784,
+              "start": {
+                "x": 6.5,
+                "y": 3.5
+              },
+              "end": {
+                "x": 7.648559399906,
+                "y": 3.281024254126
+              },
+              "angularSpanDegrees": 735.567012046029,
+              "netAngularDegrees": 735.567012046029,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 1.058849221573
+            },
+            {
+              "id": 1558,
+              "observations": 784,
+              "start": {
+                "x": 7.5,
+                "y": 2.5
+              },
+              "end": {
+                "x": 7.648559399906,
+                "y": 2.801024254126
+              },
+              "angularSpanDegrees": 721.335402340417,
+              "netAngularDegrees": 720.59417442662,
+              "sidesVisited": [
+                "below",
+                "right",
+                "above",
+                "left"
+              ],
+              "minimumCoreClearance": 0.590244175032
+            }
+          ]
+        },
+        "overlap": {
+          "arbalesterAllies": {
+            "pairObservations": 92532,
+            "overlappingPairObservations": 3645,
+            "overlapPairShare": 0.03939177798,
+            "frameCount": 784,
+            "framesWithOverlap": 410,
+            "frameOverlapShare": 0.522959183673,
+            "medianDepth": 0.151046566277,
+            "p95Depth": 0.361252320285,
+            "maximumDepth": 0.393147437217,
+            "medianContactWindowMs": 2900,
+            "maximumContactWindowMs": 15800,
+            "maximumLocalDegree": 7,
+            "maximumComponentSize": 15,
+            "maximumTriangles": 26,
+            "maximumFourCliques": 8
+          },
+          "boyarAllies": {
+            "pairObservations": 13782,
+            "overlappingPairObservations": 4955,
+            "overlapPairShare": 0.35952691917,
+            "frameCount": 750,
+            "framesWithOverlap": 725,
+            "frameOverlapShare": 0.966666666667,
+            "medianDepth": 0.25,
+            "p95Depth": 0.499908585709,
+            "maximumDepth": 0.499999999971,
+            "medianContactWindowMs": 900,
+            "maximumContactWindowMs": 37200,
+            "maximumLocalDegree": 8,
+            "maximumComponentSize": 9,
+            "maximumTriangles": 45,
+            "maximumFourCliques": 45
+          },
+          "enemies": {
+            "pairObservations": 76070,
+            "overlappingPairObservations": 1135,
+            "overlapPairShare": 0.01492046799,
+            "frameCount": 784,
+            "framesWithOverlap": 473,
+            "frameOverlapShare": 0.603316326531,
+            "medianDepth": 0.013449472668,
+            "p95Depth": 0.029634336707,
+            "maximumDepth": 0.037407437617,
+            "medianContactWindowMs": 700,
+            "maximumContactWindowMs": 13300,
+            "maximumLocalDegree": 5,
+            "maximumComponentSize": 6,
+            "maximumTriangles": 0,
+            "maximumFourCliques": 0
+          }
+        }
+      }
+    ],
+    "aggregate": {
+      "overlap": {
+        "arbalesterAllies": {
+          "overlapPairShare": {
+            "count": 5,
+            "minimum": 0.036164658635,
+            "median": 0.03939177798,
+            "maximum": 0.063096905641
+          },
+          "frameOverlapShare": {
+            "count": 5,
+            "minimum": 0.522959183673,
+            "median": 0.615160349854,
+            "maximum": 0.685750636132
+          },
+          "medianDepth": {
+            "count": 5,
+            "minimum": 0.13140253101,
+            "median": 0.151046566277,
+            "maximum": 0.164770088724
+          },
+          "p95Depth": {
+            "count": 5,
+            "minimum": 0.352322499261,
+            "median": 0.361252320285,
+            "maximum": 0.384147752951
+          },
+          "maximumDepth": {
+            "count": 5,
+            "minimum": 0.393147437217,
+            "median": 0.399329692915,
+            "maximum": 0.4
+          },
+          "medianContactWindowMs": {
+            "count": 5,
+            "minimum": 2500,
+            "median": 2900,
+            "maximum": 2900
+          },
+          "maximumLocalDegree": {
+            "count": 5,
+            "minimum": 7,
+            "median": 7,
+            "maximum": 7
+          },
+          "maximumComponentSize": {
+            "count": 5,
+            "minimum": 15,
+            "median": 15,
+            "maximum": 15
+          }
+        },
+        "boyarAllies": {
+          "overlapPairShare": {
+            "count": 5,
+            "minimum": 0.35952691917,
+            "median": 0.394278135657,
+            "maximum": 0.402360437333
+          },
+          "frameOverlapShare": {
+            "count": 5,
+            "minimum": 0.887426900585,
+            "median": 0.96,
+            "maximum": 0.966666666667
+          },
+          "medianDepth": {
+            "count": 5,
+            "minimum": 0.246491616663,
+            "median": 0.247326324308,
+            "maximum": 0.25
+          },
+          "p95Depth": {
+            "count": 5,
+            "minimum": 0.499280739394,
+            "median": 0.49974798314,
+            "maximum": 0.499908585709
+          },
+          "maximumDepth": {
+            "count": 5,
+            "minimum": 0.499999947302,
+            "median": 0.499999969089,
+            "maximum": 0.499999999971
+          },
+          "medianContactWindowMs": {
+            "count": 5,
+            "minimum": 700,
+            "median": 900,
+            "maximum": 1000
+          },
+          "maximumLocalDegree": {
+            "count": 5,
+            "minimum": 8,
+            "median": 8,
+            "maximum": 9
+          },
+          "maximumComponentSize": {
+            "count": 5,
+            "minimum": 9,
+            "median": 10,
+            "maximum": 10
+          }
+        },
+        "enemies": {
+          "overlapPairShare": {
+            "count": 5,
+            "minimum": 0.012681065365,
+            "median": 0.01492046799,
+            "maximum": 0.017980755069
+          },
+          "frameOverlapShare": {
+            "count": 5,
+            "minimum": 0.486005089059,
+            "median": 0.548905109489,
+            "maximum": 0.603316326531
+          },
+          "medianDepth": {
+            "count": 5,
+            "minimum": 0.007053810581,
+            "median": 0.011710966637,
+            "maximum": 0.013449472668
+          },
+          "p95Depth": {
+            "count": 5,
+            "minimum": 0.023833184039,
+            "median": 0.029634336707,
+            "maximum": 0.032484084723
+          },
+          "maximumDepth": {
+            "count": 5,
+            "minimum": 0.032484084723,
+            "median": 0.037407437617,
+            "maximum": 0.103086887383
+          },
+          "medianContactWindowMs": {
+            "count": 5,
+            "minimum": 700,
+            "median": 700,
+            "maximum": 750
+          },
+          "maximumLocalDegree": {
+            "count": 5,
+            "minimum": 5,
+            "median": 5,
+            "maximum": 6
+          },
+          "maximumComponentSize": {
+            "count": 5,
+            "minimum": 6,
+            "median": 6,
+            "maximum": 7
+          }
+        }
+      },
+      "route": {
+        "centroidAngularSpanDegrees": {
+          "count": 5,
+          "minimum": 638.79205792608,
+          "median": 711.658240107133,
+          "maximum": 712.88108902429
+        },
+        "arbalesterQuarterTurnShare": {
+          "count": 5,
+          "minimum": 0.904761904762,
+          "median": 0.904761904762,
+          "maximum": 0.904761904762
+        },
+        "splitAcrossSidesShare": {
+          "count": 5,
+          "minimum": 0.540712468193,
+          "median": 0.543731778426,
+          "maximum": 0.581632653061
+        },
+        "minimumCoreClearance": {
+          "count": 5,
+          "minimum": 0.50489673377,
+          "median": 0.50489673377,
+          "maximum": 0.50489673377
+        }
+      }
+    }
+  }
+}

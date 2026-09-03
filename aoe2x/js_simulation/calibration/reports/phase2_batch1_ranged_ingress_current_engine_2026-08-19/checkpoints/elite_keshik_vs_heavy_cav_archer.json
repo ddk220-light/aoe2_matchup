@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_keshik_vs_heavy_cav_archer",
+  "completedAt": "2026-08-19T23:46:55.888Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 4.023088023088029,
+      "medianAbsoluteMeanDelta": 4.023088023088029,
+      "maximumAbsoluteMeanDelta": 4.023088023088029
+    },
+    "rows": [
+      {
+        "id": "elite_keshik_vs_heavy_cav_archer",
+        "subjectSlug": "elite_keshik",
+        "opponentSlug": "heavy_cav_archer",
+        "matchup": "Heavy Cavalry Archer vs Elite Keshik",
+        "side2": {
+          "count": 19,
+          "master": 474,
+          "owner": 2,
+          "slug": "heavy_cav_archer",
+          "unit": "Heavy Cavalry Archer"
+        },
+        "side3": {
+          "count": 21,
+          "master": 1230,
+          "owner": 3,
+          "slug": "elite_keshik",
+          "unit": "Elite Keshik"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": 65.54112554112554,
+          "min": 65.54112554112554,
+          "max": 65.54112554112554,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 61.51803751803751,
+          "min": 60.865800865800864,
+          "max": 62.97258297258297,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 4.023088023088029,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_keshik_vs_heavy_cav_archer",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2141,
+            "score": 61.78932178932179,
+            "ticks": 4675,
+            "finalStateHash": "fc13809d97f2b8a8e2d9cc5959d2f76c81e82948dba5b6aecf59c8fd8986e533",
+            "eventLogHash": "710cfb8878a1f5ab3a56c278ff28c96971198c3554b2550682d397af585da798"
+          },
+          {
+            "rowId": "elite_keshik_vs_heavy_cav_archer",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2109,
+            "score": 60.865800865800864,
+            "ticks": 4187,
+            "finalStateHash": "f89c12cf804bcb7fc4acf8fc227cb5beb41cb2164a1c7ed40bb4621ff313b400",
+            "eventLogHash": "89d024b3ec0e535d490ad88dd86a526cea8ffc0028b8ed104c21c8550b560348"
+          },
+          {
+            "rowId": "elite_keshik_vs_heavy_cav_archer",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2113,
+            "score": 60.98124098124098,
+            "ticks": 4187,
+            "finalStateHash": "69d7d748b52c09311218254d3631a3213f818dddbea0a5a5553625913da9a7a8",
+            "eventLogHash": "b857dbf07f6fb12b3a0eab63d1cf5537bc798e6491b30bf7e5019b90c0aa1b5e"
+          },
+          {
+            "rowId": "elite_keshik_vs_heavy_cav_archer",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2113,
+            "score": 60.98124098124098,
+            "ticks": 4187,
+            "finalStateHash": "69d7d748b52c09311218254d3631a3213f818dddbea0a5a5553625913da9a7a8",
+            "eventLogHash": "2a5c0fcecf795c37a140901f4107f33b4e3f39dec73c3523770598a623532ad3"
+          },
+          {
+            "rowId": "elite_keshik_vs_heavy_cav_archer",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 2182,
+            "score": 62.97258297258297,
+            "ticks": 4082,
+            "finalStateHash": "6aacd2ca1e101881b387180d0b5459748906f2858349c16edb3cdb93c31d639e",
+            "eventLogHash": "21d9c7a48ee359ba3aead59baa0c55c62cf8aa055f0be1918407effa58a20624"
+          }
+        ]
+      }
+    ]
+  }
+}

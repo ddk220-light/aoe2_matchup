@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "6bc165a60a7d609e0eb729920ef5fbe53a159d943e29619915abc829d3cd7986",
+  "matchupId": "elite_longbowman_vs_arbalester",
+  "completedAt": "2026-08-19T22:32:08.264Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 3.375,
+      "medianAbsoluteMeanDelta": 3.375,
+      "maximumAbsoluteMeanDelta": 3.375
+    },
+    "rows": [
+      {
+        "id": "elite_longbowman_vs_arbalester",
+        "subjectSlug": "elite_longbowman",
+        "opponentSlug": "arbalester",
+        "matchup": "Elite Longbowman vs Arbalester",
+        "side2": {
+          "count": 20,
+          "master": 530,
+          "owner": 2,
+          "slug": "elite_longbowman",
+          "unit": "Elite Longbowman"
+        },
+        "side3": {
+          "count": 21,
+          "master": 492,
+          "owner": 3,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -73.75,
+          "min": -73.75,
+          "max": -73.75,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -77.125,
+          "min": -84.375,
+          "max": -74.375,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 3.375,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_longbowman_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 675,
+            "score": -84.375,
+            "ticks": 1167,
+            "finalStateHash": "a4fe68d47fe8f1433758c6a40ed5307d6e0a553d017439270e39d4c7d6f0dc86",
+            "eventLogHash": "9436b1b51147f3f2ff67a8473c8d2acd07d7313050bd8d21dfc2df5c3025d68d"
+          },
+          {
+            "rowId": "elite_longbowman_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 595,
+            "score": -74.375,
+            "ticks": 1067,
+            "finalStateHash": "1652dc39165fa2167a4906edbbb302be9136803699e62dc53221569e9c2d0b76",
+            "eventLogHash": "19126706ea536d3f4624aa5903cd2abafcb44abd74096eb3bed93ab80c4143b6"
+          },
+          {
+            "rowId": "elite_longbowman_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 600,
+            "score": -75,
+            "ticks": 1185,
+            "finalStateHash": "5faf7bf6334e46cfb12bfc32cdb5dbd15d1ff1b7cdd58dd30772a8d3a36fcfc2",
+            "eventLogHash": "3a1c99cebcbfa9fff781c0dbf9675e941c770dc4f3868d54adefa33efbb381a6"
+          },
+          {
+            "rowId": "elite_longbowman_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 605,
+            "score": -75.625,
+            "ticks": 1171,
+            "finalStateHash": "2a5d69819e544f5f2d4af3c914692e1055d6a88c18aa04ca1cacfa502094fa7f",
+            "eventLogHash": "00550dd46a700631d49d044b05174f45045dc8b2b24ec38ec7613112c9c22434"
+          },
+          {
+            "rowId": "elite_longbowman_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 610,
+            "score": -76.25,
+            "ticks": 1190,
+            "finalStateHash": "8e102383c19819a879ffa71a2b826f7d62678dee819aeca8df83576a874899c1",
+            "eventLogHash": "398c8859b9edd17d357b60bd3e1151ddb61772df75a890d01ec7574a2d0839af"
+          }
+        ]
+      }
+    ]
+  }
+}

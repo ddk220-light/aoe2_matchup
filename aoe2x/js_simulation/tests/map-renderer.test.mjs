@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { validateMapFixture } from "../src/map-model.js";
+import * as mapRenderer from "../viewer/map-renderer.js";
 import {
   buildFormationScene,
   buildRenderScene,
@@ -111,6 +112,29 @@ test("formation picking returns the nearest source unit", () => {
 
   assert.equal(pickFormationUnit(units, 4.25, 4.05, 0.3).reference_id, 2);
   assert.equal(pickFormationUnit(units, 8, 8, 0.3), null);
+});
+
+
+test("pursuit pressure identifies each live HCA and its live Boyar pursuers", () => {
+  const units = [
+    { reference_id: 1, owner: 3, alive: true, pursuitTargetId: 10 },
+    { reference_id: 2, owner: 3, alive: true, pursuitTargetId: 10 },
+    { reference_id: 3, owner: 3, alive: false, pursuitTargetId: 10 },
+    { reference_id: 4, owner: 3, alive: true, pursuitTargetId: 11 },
+    { reference_id: 5, owner: 2, alive: true, pursuitTargetId: 1 },
+    { reference_id: 6, owner: 3, alive: true, pursuitTargetId: 12 },
+    { reference_id: 10, owner: 2, alive: true, pursuitTargetId: null },
+    { reference_id: 11, owner: 2, alive: true, pursuitTargetId: null },
+    { reference_id: 12, owner: 2, alive: false, pursuitTargetId: null },
+  ];
+  const pressure = typeof mapRenderer.pursuitTargetPressure === "function"
+    ? mapRenderer.pursuitTargetPressure(units, { sourceOwner: 3, targetOwner: 2 })
+    : [];
+
+  assert.deepEqual(pressure, [
+    { targetReferenceId: 10, count: 2, pursuerReferenceIds: [1, 2] },
+    { targetReferenceId: 11, count: 1, pursuerReferenceIds: [4] },
+  ]);
 });
 
 

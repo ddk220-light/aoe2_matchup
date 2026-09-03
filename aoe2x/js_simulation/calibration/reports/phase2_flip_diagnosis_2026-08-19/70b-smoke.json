@@ -1,0 +1,724 @@
+{
+  "schemaVersion": 1,
+  "label": "70b-smoke",
+  "engineRoot": "D:\\AI\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\analysis\\.engine_snapshots\\70b75a6e",
+  "samples": 1,
+  "seed": 20260817,
+  "samplingCadenceMs": 100,
+  "rows": [
+    {
+      "id": "elite_conquistador_vs_champion",
+      "matchup": "Elite Conquistador vs Champion",
+      "side2": {
+        "count": 10,
+        "master": 773,
+        "owner": 2,
+        "slug": "elite_conquistador",
+        "unit": "Elite Conquistador"
+      },
+      "side3": {
+        "count": 21,
+        "master": 567,
+        "owner": 3,
+        "slug": "champion",
+        "unit": "Champion"
+      },
+      "runs": [
+        {
+          "sampleIndex": 0,
+          "outcome": "win",
+          "winnerOwner": 2,
+          "winnerHp": 603,
+          "score": -67,
+          "ticks": 3635,
+          "durationSeconds": 60.583333333333336,
+          "counts": {
+            "2": {
+              "attackStarts": 153,
+              "attackCanceled": 0,
+              "shotsFired": 152,
+              "hits": 119,
+              "projectileHits": 119
+            },
+            "3": {
+              "attackStarts": 27,
+              "attackCanceled": 0,
+              "shotsFired": 0,
+              "hits": 23,
+              "projectileHits": 0
+            }
+          },
+          "overlap": {
+            "side2": {
+              "overlapPairShare": 0.02105316817,
+              "frameOverlapShare": 0.5090609555189456,
+              "medianDepth": 0.00024766433,
+              "p95Depth": 0.000992448596,
+              "maximumDepth": 0.00099732357,
+              "maximumLocalDegree": 3,
+              "maximumComponentSize": 5,
+              "maximumTriangles": 1
+            },
+            "side3": {
+              "overlapPairShare": 0.024184579298,
+              "frameOverlapShare": 0.759075907590759,
+              "medianDepth": 0.079999995232,
+              "p95Depth": 0.079999995232,
+              "maximumDepth": 0.079999995308,
+              "maximumLocalDegree": 2,
+              "maximumComponentSize": 3,
+              "maximumTriangles": 0
+            },
+            "enemies": {
+              "overlapPairShare": 0,
+              "frameOverlapShare": 0,
+              "medianDepth": null,
+              "p95Depth": null,
+              "maximumDepth": null,
+              "maximumLocalDegree": 0,
+              "maximumComponentSize": 0,
+              "maximumTriangles": 0
+            }
+          },
+          "scenario": {
+            "kiteOwner": 2,
+            "kiteOpponentMode": null,
+            "persistentMeleePursuitRouting": false,
+            "rangedTargetPressureOwner": null,
+            "rangedOpportunityRetargetOwner": null,
+            "rangedWindupRetargetOwner": null
+          }
+        }
+      ],
+      "aggregate": {
+        "durationSeconds": {
+          "count": 1,
+          "minimum": 60.583333333333336,
+          "mean": 60.583333333333336,
+          "median": 60.583333333333336,
+          "maximum": 60.583333333333336
+        },
+        "score": {
+          "count": 1,
+          "minimum": -67,
+          "mean": -67,
+          "median": -67,
+          "maximum": -67
+        },
+        "resolvedRuns": 1,
+        "winnerOwners": {
+          "2": 1
+        },
+        "counts": {
+          "2": {
+            "attackStarts": {
+              "count": 1,
+              "minimum": 153,
+              "mean": 153,
+              "median": 153,
+              "maximum": 153
+            },
+            "attackCanceled": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            },
+            "shotsFired": {
+              "count": 1,
+              "minimum": 152,
+              "mean": 152,
+              "median": 152,
+              "maximum": 152
+            },
+            "hits": {
+              "count": 1,
+              "minimum": 119,
+              "mean": 119,
+              "median": 119,
+              "maximum": 119
+            },
+            "projectileHits": {
+              "count": 1,
+              "minimum": 119,
+              "mean": 119,
+              "median": 119,
+              "maximum": 119
+            }
+          },
+          "3": {
+            "attackStarts": {
+              "count": 1,
+              "minimum": 27,
+              "mean": 27,
+              "median": 27,
+              "maximum": 27
+            },
+            "attackCanceled": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            },
+            "shotsFired": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            },
+            "hits": {
+              "count": 1,
+              "minimum": 23,
+              "mean": 23,
+              "median": 23,
+              "maximum": 23
+            },
+            "projectileHits": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            }
+          }
+        },
+        "overlap": {
+          "side2": {
+            "overlapPairShare": {
+              "count": 1,
+              "minimum": 0.02105316817,
+              "mean": 0.02105316817,
+              "median": 0.02105316817,
+              "maximum": 0.02105316817
+            },
+            "frameOverlapShare": {
+              "count": 1,
+              "minimum": 0.5090609555189456,
+              "mean": 0.5090609555189456,
+              "median": 0.5090609555189456,
+              "maximum": 0.5090609555189456
+            },
+            "medianDepth": {
+              "count": 1,
+              "minimum": 0.00024766433,
+              "mean": 0.00024766433,
+              "median": 0.00024766433,
+              "maximum": 0.00024766433
+            },
+            "p95Depth": {
+              "count": 1,
+              "minimum": 0.000992448596,
+              "mean": 0.000992448596,
+              "median": 0.000992448596,
+              "maximum": 0.000992448596
+            },
+            "maximumDepth": {
+              "count": 1,
+              "minimum": 0.00099732357,
+              "mean": 0.00099732357,
+              "median": 0.00099732357,
+              "maximum": 0.00099732357
+            },
+            "maximumLocalDegree": {
+              "count": 1,
+              "minimum": 3,
+              "mean": 3,
+              "median": 3,
+              "maximum": 3
+            },
+            "maximumComponentSize": {
+              "count": 1,
+              "minimum": 5,
+              "mean": 5,
+              "median": 5,
+              "maximum": 5
+            },
+            "maximumTriangles": {
+              "count": 1,
+              "minimum": 1,
+              "mean": 1,
+              "median": 1,
+              "maximum": 1
+            }
+          },
+          "side3": {
+            "overlapPairShare": {
+              "count": 1,
+              "minimum": 0.024184579298,
+              "mean": 0.024184579298,
+              "median": 0.024184579298,
+              "maximum": 0.024184579298
+            },
+            "frameOverlapShare": {
+              "count": 1,
+              "minimum": 0.759075907590759,
+              "mean": 0.759075907590759,
+              "median": 0.759075907590759,
+              "maximum": 0.759075907590759
+            },
+            "medianDepth": {
+              "count": 1,
+              "minimum": 0.079999995232,
+              "mean": 0.079999995232,
+              "median": 0.079999995232,
+              "maximum": 0.079999995232
+            },
+            "p95Depth": {
+              "count": 1,
+              "minimum": 0.079999995232,
+              "mean": 0.079999995232,
+              "median": 0.079999995232,
+              "maximum": 0.079999995232
+            },
+            "maximumDepth": {
+              "count": 1,
+              "minimum": 0.079999995308,
+              "mean": 0.079999995308,
+              "median": 0.079999995308,
+              "maximum": 0.079999995308
+            },
+            "maximumLocalDegree": {
+              "count": 1,
+              "minimum": 2,
+              "mean": 2,
+              "median": 2,
+              "maximum": 2
+            },
+            "maximumComponentSize": {
+              "count": 1,
+              "minimum": 3,
+              "mean": 3,
+              "median": 3,
+              "maximum": 3
+            },
+            "maximumTriangles": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            }
+          },
+          "enemies": {
+            "overlapPairShare": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            },
+            "frameOverlapShare": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            },
+            "medianDepth": {
+              "count": 0,
+              "minimum": null,
+              "mean": null,
+              "median": null,
+              "maximum": null
+            },
+            "p95Depth": {
+              "count": 0,
+              "minimum": null,
+              "mean": null,
+              "median": null,
+              "maximum": null
+            },
+            "maximumDepth": {
+              "count": 0,
+              "minimum": null,
+              "mean": null,
+              "median": null,
+              "maximum": null
+            },
+            "maximumLocalDegree": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            },
+            "maximumComponentSize": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            },
+            "maximumTriangles": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "elite_keshik_vs_champion",
+      "matchup": "Elite Keshik vs Champion",
+      "side2": {
+        "count": 14,
+        "master": 1230,
+        "owner": 2,
+        "slug": "elite_keshik",
+        "unit": "Elite Keshik"
+      },
+      "side3": {
+        "count": 21,
+        "master": 567,
+        "owner": 3,
+        "slug": "champion",
+        "unit": "Champion"
+      },
+      "runs": [
+        {
+          "sampleIndex": 0,
+          "outcome": "win",
+          "winnerOwner": 3,
+          "winnerHp": 89,
+          "score": 6.054421768707483,
+          "ticks": 3025,
+          "durationSeconds": 50.416666666666664,
+          "counts": {
+            "2": {
+              "attackStarts": 152,
+              "attackCanceled": 6,
+              "shotsFired": 0,
+              "hits": 137,
+              "projectileHits": 0
+            },
+            "3": {
+              "attackStarts": 183,
+              "attackCanceled": 4,
+              "shotsFired": 0,
+              "hits": 168,
+              "projectileHits": 0
+            }
+          },
+          "overlap": {
+            "side2": {
+              "overlapPairShare": 0.057098929064,
+              "frameOverlapShare": 0.9440715883668904,
+              "medianDepth": 0.244940999502,
+              "p95Depth": 0.250000000001,
+              "maximumDepth": 0.250000000001,
+              "maximumLocalDegree": 1,
+              "maximumComponentSize": 2,
+              "maximumTriangles": 0
+            },
+            "side3": {
+              "overlapPairShare": 0.034935586646,
+              "frameOverlapShare": 0.9545454545454546,
+              "medianDepth": 0.079999995232,
+              "p95Depth": 0.079999995232,
+              "maximumDepth": 0.079999995232,
+              "maximumLocalDegree": 1,
+              "maximumComponentSize": 2,
+              "maximumTriangles": 0
+            },
+            "enemies": {
+              "overlapPairShare": 0.005094704702,
+              "frameOverlapShare": 0.4415841584158416,
+              "medianDepth": 0.164999997616,
+              "p95Depth": 0.164999997616,
+              "maximumDepth": 0.164999997616,
+              "maximumLocalDegree": 1,
+              "maximumComponentSize": 2,
+              "maximumTriangles": 0
+            }
+          },
+          "scenario": {
+            "kiteOwner": null,
+            "kiteOpponentMode": null,
+            "persistentMeleePursuitRouting": false,
+            "rangedTargetPressureOwner": null,
+            "rangedOpportunityRetargetOwner": null,
+            "rangedWindupRetargetOwner": null
+          }
+        }
+      ],
+      "aggregate": {
+        "durationSeconds": {
+          "count": 1,
+          "minimum": 50.416666666666664,
+          "mean": 50.416666666666664,
+          "median": 50.416666666666664,
+          "maximum": 50.416666666666664
+        },
+        "score": {
+          "count": 1,
+          "minimum": 6.054421768707483,
+          "mean": 6.054421768707483,
+          "median": 6.054421768707483,
+          "maximum": 6.054421768707483
+        },
+        "resolvedRuns": 1,
+        "winnerOwners": {
+          "3": 1
+        },
+        "counts": {
+          "2": {
+            "attackStarts": {
+              "count": 1,
+              "minimum": 152,
+              "mean": 152,
+              "median": 152,
+              "maximum": 152
+            },
+            "attackCanceled": {
+              "count": 1,
+              "minimum": 6,
+              "mean": 6,
+              "median": 6,
+              "maximum": 6
+            },
+            "shotsFired": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            },
+            "hits": {
+              "count": 1,
+              "minimum": 137,
+              "mean": 137,
+              "median": 137,
+              "maximum": 137
+            },
+            "projectileHits": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            }
+          },
+          "3": {
+            "attackStarts": {
+              "count": 1,
+              "minimum": 183,
+              "mean": 183,
+              "median": 183,
+              "maximum": 183
+            },
+            "attackCanceled": {
+              "count": 1,
+              "minimum": 4,
+              "mean": 4,
+              "median": 4,
+              "maximum": 4
+            },
+            "shotsFired": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            },
+            "hits": {
+              "count": 1,
+              "minimum": 168,
+              "mean": 168,
+              "median": 168,
+              "maximum": 168
+            },
+            "projectileHits": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            }
+          }
+        },
+        "overlap": {
+          "side2": {
+            "overlapPairShare": {
+              "count": 1,
+              "minimum": 0.057098929064,
+              "mean": 0.057098929064,
+              "median": 0.057098929064,
+              "maximum": 0.057098929064
+            },
+            "frameOverlapShare": {
+              "count": 1,
+              "minimum": 0.9440715883668904,
+              "mean": 0.9440715883668904,
+              "median": 0.9440715883668904,
+              "maximum": 0.9440715883668904
+            },
+            "medianDepth": {
+              "count": 1,
+              "minimum": 0.244940999502,
+              "mean": 0.244940999502,
+              "median": 0.244940999502,
+              "maximum": 0.244940999502
+            },
+            "p95Depth": {
+              "count": 1,
+              "minimum": 0.250000000001,
+              "mean": 0.250000000001,
+              "median": 0.250000000001,
+              "maximum": 0.250000000001
+            },
+            "maximumDepth": {
+              "count": 1,
+              "minimum": 0.250000000001,
+              "mean": 0.250000000001,
+              "median": 0.250000000001,
+              "maximum": 0.250000000001
+            },
+            "maximumLocalDegree": {
+              "count": 1,
+              "minimum": 1,
+              "mean": 1,
+              "median": 1,
+              "maximum": 1
+            },
+            "maximumComponentSize": {
+              "count": 1,
+              "minimum": 2,
+              "mean": 2,
+              "median": 2,
+              "maximum": 2
+            },
+            "maximumTriangles": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            }
+          },
+          "side3": {
+            "overlapPairShare": {
+              "count": 1,
+              "minimum": 0.034935586646,
+              "mean": 0.034935586646,
+              "median": 0.034935586646,
+              "maximum": 0.034935586646
+            },
+            "frameOverlapShare": {
+              "count": 1,
+              "minimum": 0.9545454545454546,
+              "mean": 0.9545454545454546,
+              "median": 0.9545454545454546,
+              "maximum": 0.9545454545454546
+            },
+            "medianDepth": {
+              "count": 1,
+              "minimum": 0.079999995232,
+              "mean": 0.079999995232,
+              "median": 0.079999995232,
+              "maximum": 0.079999995232
+            },
+            "p95Depth": {
+              "count": 1,
+              "minimum": 0.079999995232,
+              "mean": 0.079999995232,
+              "median": 0.079999995232,
+              "maximum": 0.079999995232
+            },
+            "maximumDepth": {
+              "count": 1,
+              "minimum": 0.079999995232,
+              "mean": 0.079999995232,
+              "median": 0.079999995232,
+              "maximum": 0.079999995232
+            },
+            "maximumLocalDegree": {
+              "count": 1,
+              "minimum": 1,
+              "mean": 1,
+              "median": 1,
+              "maximum": 1
+            },
+            "maximumComponentSize": {
+              "count": 1,
+              "minimum": 2,
+              "mean": 2,
+              "median": 2,
+              "maximum": 2
+            },
+            "maximumTriangles": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            }
+          },
+          "enemies": {
+            "overlapPairShare": {
+              "count": 1,
+              "minimum": 0.005094704702,
+              "mean": 0.005094704702,
+              "median": 0.005094704702,
+              "maximum": 0.005094704702
+            },
+            "frameOverlapShare": {
+              "count": 1,
+              "minimum": 0.4415841584158416,
+              "mean": 0.4415841584158416,
+              "median": 0.4415841584158416,
+              "maximum": 0.4415841584158416
+            },
+            "medianDepth": {
+              "count": 1,
+              "minimum": 0.164999997616,
+              "mean": 0.164999997616,
+              "median": 0.164999997616,
+              "maximum": 0.164999997616
+            },
+            "p95Depth": {
+              "count": 1,
+              "minimum": 0.164999997616,
+              "mean": 0.164999997616,
+              "median": 0.164999997616,
+              "maximum": 0.164999997616
+            },
+            "maximumDepth": {
+              "count": 1,
+              "minimum": 0.164999997616,
+              "mean": 0.164999997616,
+              "median": 0.164999997616,
+              "maximum": 0.164999997616
+            },
+            "maximumLocalDegree": {
+              "count": 1,
+              "minimum": 1,
+              "mean": 1,
+              "median": 1,
+              "maximum": 1
+            },
+            "maximumComponentSize": {
+              "count": 1,
+              "minimum": 2,
+              "mean": 2,
+              "median": 2,
+              "maximum": 2
+            },
+            "maximumTriangles": {
+              "count": 1,
+              "minimum": 0,
+              "mean": 0,
+              "median": 0,
+              "maximum": 0
+            }
+          }
+        }
+      }
+    }
+  ]
+}

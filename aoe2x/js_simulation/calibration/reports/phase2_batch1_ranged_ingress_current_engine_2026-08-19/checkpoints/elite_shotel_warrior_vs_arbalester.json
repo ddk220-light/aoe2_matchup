@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_shotel_warrior_vs_arbalester",
+  "completedAt": "2026-08-19T23:37:54.819Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 2.2619047619047734,
+      "medianAbsoluteMeanDelta": 2.2619047619047734,
+      "maximumAbsoluteMeanDelta": 2.2619047619047734
+    },
+    "rows": [
+      {
+        "id": "elite_shotel_warrior_vs_arbalester",
+        "subjectSlug": "elite_shotel_warrior",
+        "opponentSlug": "arbalester",
+        "matchup": "Arbalester vs Elite Shotel Warrior",
+        "side2": {
+          "count": 21,
+          "master": 492,
+          "owner": 2,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "side3": {
+          "count": 20,
+          "master": 1018,
+          "owner": 3,
+          "slug": "elite_shotel_warrior",
+          "unit": "Elite Shotel Warrior"
+        },
+        "tape": {
+          "scoredRuns": 1,
+          "timeoutRuns": 0,
+          "mean": -90.71428571428571,
+          "min": -90.71428571428571,
+          "max": -90.71428571428571,
+          "side3WinRate": 0,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": -92.97619047619048,
+          "min": -92.97619047619048,
+          "max": -92.97619047619048,
+          "side3WinRate": 0,
+          "side3WinRateError": 0,
+          "bandError": 2.2619047619047734,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_shotel_warrior_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 781,
+            "score": -92.97619047619048,
+            "ticks": 1386,
+            "finalStateHash": "03eef5c6e00cb7a39e67250e9d70e4644f7c54bbe2dd389b96a2634513d2a339",
+            "eventLogHash": "638e29b77d89ab751f32b61e019a6fe2c3e15f56f032122277d2b79899004378"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 781,
+            "score": -92.97619047619048,
+            "ticks": 1386,
+            "finalStateHash": "03eef5c6e00cb7a39e67250e9d70e4644f7c54bbe2dd389b96a2634513d2a339",
+            "eventLogHash": "638e29b77d89ab751f32b61e019a6fe2c3e15f56f032122277d2b79899004378"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 781,
+            "score": -92.97619047619048,
+            "ticks": 1386,
+            "finalStateHash": "03eef5c6e00cb7a39e67250e9d70e4644f7c54bbe2dd389b96a2634513d2a339",
+            "eventLogHash": "638e29b77d89ab751f32b61e019a6fe2c3e15f56f032122277d2b79899004378"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 781,
+            "score": -92.97619047619048,
+            "ticks": 1386,
+            "finalStateHash": "03eef5c6e00cb7a39e67250e9d70e4644f7c54bbe2dd389b96a2634513d2a339",
+            "eventLogHash": "638e29b77d89ab751f32b61e019a6fe2c3e15f56f032122277d2b79899004378"
+          },
+          {
+            "rowId": "elite_shotel_warrior_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 781,
+            "score": -92.97619047619048,
+            "ticks": 1386,
+            "finalStateHash": "03eef5c6e00cb7a39e67250e9d70e4644f7c54bbe2dd389b96a2634513d2a339",
+            "eventLogHash": "638e29b77d89ab751f32b61e019a6fe2c3e15f56f032122277d2b79899004378"
+          }
+        ]
+      }
+    ]
+  }
+}

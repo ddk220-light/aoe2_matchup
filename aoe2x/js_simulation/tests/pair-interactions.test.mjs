@@ -84,6 +84,103 @@ test("allied formation orders share a zero-obstruction transit surface", () => {
     reason: "shared-allied-formation-order",
   });
 });
+const zeroRangeMechanics = Object.freeze({
+  ...mechanics,
+  attack_range_tiles: 0,
+});
+
+
+test("an active melee pursuer transits through allies but enemy bodies stay solid", () => {
+  const pursuer = unit(1, 3, 4, { pursuitTargetId: 4 });
+  const ally = unit(2, 3, 4.4);
+  const otherEnemy = unit(3, 2, 4.8);
+  const target = unit(4, 2, 5.2);
+  const snapshot = createPairInteractionSnapshot({
+    pursuitTransitReferenceIds: new Set([pursuer.referenceId]),
+  });
+
+  assert.deepEqual(resolvePairInteraction(pursuer, ally, snapshot), {
+    kind: "pursuit-transit",
+    collisionExtent: 0,
+    pathObstructs: false,
+    attackSurfaceExtent: 0.5,
+    mayDeepen: true,
+    reason: "active-melee-pursuit-transit",
+  });
+  assert.equal(resolvePairInteraction(pursuer, otherEnemy, snapshot).kind, "hard");
+  assert.equal(resolvePairInteraction(pursuer, target, snapshot).kind, "hard");
+});
+
+
+test("pursuit transit is symmetric and overrides stale dynamic reservations", () => {
+  const pursuer = unit(1, 3, 4, { pursuitTargetId: 4 });
+  const body = unit(2, 3, 4.3);
+  const snapshot = createPairInteractionSnapshot({
+    contactReservations: new Map([["1:2", reservation({
+      kind: "releasing",
+      collisionExtent: 0.3,
+      attackSurfaceExtent: 0.5,
+      pathObstructs: true,
+      mayDeepen: false,
+      initiatorId: null,
+      targetId: null,
+    })]]),
+    pursuitTransitReferenceIds: new Set([pursuer.referenceId]),
+  });
+
+  assert.equal(resolvePairInteraction(pursuer, body, snapshot).kind, "pursuit-transit");
+  assert.equal(resolvePairInteraction(body, pursuer, snapshot).kind, "pursuit-transit");
+});
+
+
+test("a zero-range attacker occupies a blocking allied contact position", () => {
+  const pursuer = unit(1, 3, 4, {
+    mechanics: zeroRangeMechanics,
+    pursuitTargetId: 3,
+  });
+  const plantedAttacker = unit(2, 3, 4.4, {
+    mechanics: zeroRangeMechanics,
+    action: "attacking",
+    pursuitTargetId: 3,
+    attackTargetId: 3,
+  });
+  const snapshot = createPairInteractionSnapshot({
+    pursuitTransitReferenceIds: new Set([
+      pursuer.referenceId,
+      plantedAttacker.referenceId,
+    ]),
+  });
+
+  const interaction = resolvePairInteraction(pursuer, plantedAttacker, snapshot);
+
+  assert.equal(interaction.kind, "hard");
+  assert.equal(interaction.collisionExtent, 0.5);
+  assert.equal(interaction.pathObstructs, true);
+  assert.equal(interaction.mayDeepen, false);
+});
+
+
+
+
+test("a range-one attacker does not occupy a zero-range contact slot", () => {
+  const pursuer = unit(1, 3, 4, { pursuitTargetId: 3 });
+  const reachAttacker = unit(2, 3, 4.4, {
+    action: "attacking",
+    pursuitTargetId: 3,
+    attackTargetId: 3,
+  });
+  const snapshot = createPairInteractionSnapshot({
+    pursuitTransitReferenceIds: new Set([
+      pursuer.referenceId,
+      reachAttacker.referenceId,
+    ]),
+  });
+
+  assert.equal(
+    resolvePairInteraction(pursuer, reachAttacker, snapshot).kind,
+    "pursuit-transit",
+  );
+});
 
 
 test("formation transit overrides a stale release until the shared order ends", () => {

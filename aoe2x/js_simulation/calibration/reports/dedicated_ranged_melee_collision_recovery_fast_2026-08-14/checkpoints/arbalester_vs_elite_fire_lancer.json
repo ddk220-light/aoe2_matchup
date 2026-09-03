@@ -1,0 +1,705 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "1c730f6a4dca68bc7466f393f5b5d2230a110bd6cb56fb860591c8818f89213e",
+  "matchupId": "arbalester_vs_elite_fire_lancer",
+  "completedAt": "2026-08-14T19:10:58.335Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "dedicated_golden_exact_repeat_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/dedicated_ranged_melee_sources.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/dedicated_ranged_melee/dedicated_ranged_melee_truth.json",
+      "archives": [
+        {
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zipSha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zipSha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zipSha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zipSha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zipSha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zipSha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zipSha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zipSha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zipSha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zipSha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zipSha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zipSha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zipSha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        }
+      ]
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "placements": "exact starting_units from each individual tape repeat",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "matchups": 1,
+      "rows": 5,
+      "tapeRunsPerRow": 5,
+      "totalRuns": 25,
+      "shardIndex": 0,
+      "shardCount": 1
+    },
+    "summary": {
+      "matchups": 1,
+      "rows": 5,
+      "totalRuns": 25,
+      "rowsOver25PointDelta": 0,
+      "rowsInsideTapeBand": 1,
+      "wrongWinnerRuns": 0,
+      "unresolvedRuns": 0,
+      "meanAbsoluteMeanDelta": 9.478529411764706,
+      "medianAbsoluteMeanDelta": 10.049999999999997,
+      "maximumAbsoluteMeanDelta": 14.525000000000006
+    },
+    "matchupSummaries": [
+      {
+        "matchupId": "arbalester_vs_elite_fire_lancer",
+        "matchup": "Arbalester vs Elite Fire Lancer",
+        "rangedSlug": "arbalester",
+        "meleeSlug": "elite_fire_lancer",
+        "rows": 5,
+        "tapeRuns": 25,
+        "meanAbsoluteMeanDelta": 9.478529411764706,
+        "maxAbsoluteMeanDelta": 14.525000000000006,
+        "rowsOver25PointDelta": 0,
+        "rowsInsideTapeBand": 1,
+        "wrongWinnerRuns": 0,
+        "unresolvedRuns": 0
+      }
+    ],
+    "rows": [
+      {
+        "id": "arbalester_vs_elite_fire_lancer_5v10",
+        "matchupId": "arbalester_vs_elite_fire_lancer",
+        "matchup": "Arbalester vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "count": 5
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 10
+        },
+        "ratio": "5v10",
+        "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+        "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 68.94117647058823,
+            "min": 65.29411764705883,
+            "max": 72.94117647058823,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": 72.94117647058823,
+            "min": 72.94117647058823,
+            "max": 72.94117647058823,
+            "owner3WinRate": 1
+          },
+          "meanDelta": 4,
+          "absoluteMeanDelta": 4,
+          "tapeBandError": 0,
+          "tapeBandCoverage": 1,
+          "repeatDeltas": [
+            6.470588235294116,
+            7.647058823529406,
+            0,
+            4.705882352941174,
+            1.17647058823529
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_5v10",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 620,
+            "score": 72.94117647058823,
+            "ticks": 1703,
+            "tapeScore": 66.47058823529412,
+            "delta": 6.470588235294116,
+            "finalStateHash": "b6610420f04cddcd3d69a0118b89a4141650a25f1744f0df12ba55070ce62cd4",
+            "eventLogHash": "f63a61f477fc4563d7a0d5d704549669f870d439b0678231672fd0a61d0b1386"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_5v10",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 620,
+            "score": 72.94117647058823,
+            "ticks": 1703,
+            "tapeScore": 65.29411764705883,
+            "delta": 7.647058823529406,
+            "finalStateHash": "b6610420f04cddcd3d69a0118b89a4141650a25f1744f0df12ba55070ce62cd4",
+            "eventLogHash": "f63a61f477fc4563d7a0d5d704549669f870d439b0678231672fd0a61d0b1386"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_5v10",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 620,
+            "score": 72.94117647058823,
+            "ticks": 1703,
+            "tapeScore": 72.94117647058823,
+            "delta": 0,
+            "finalStateHash": "b6610420f04cddcd3d69a0118b89a4141650a25f1744f0df12ba55070ce62cd4",
+            "eventLogHash": "f63a61f477fc4563d7a0d5d704549669f870d439b0678231672fd0a61d0b1386"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_5v10",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 620,
+            "score": 72.94117647058823,
+            "ticks": 1703,
+            "tapeScore": 68.23529411764706,
+            "delta": 4.705882352941174,
+            "finalStateHash": "b6610420f04cddcd3d69a0118b89a4141650a25f1744f0df12ba55070ce62cd4",
+            "eventLogHash": "f63a61f477fc4563d7a0d5d704549669f870d439b0678231672fd0a61d0b1386"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_5v10",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 620,
+            "score": 72.94117647058823,
+            "ticks": 1703,
+            "tapeScore": 71.76470588235294,
+            "delta": 1.17647058823529,
+            "finalStateHash": "b6610420f04cddcd3d69a0118b89a4141650a25f1744f0df12ba55070ce62cd4",
+            "eventLogHash": "f63a61f477fc4563d7a0d5d704549669f870d439b0678231672fd0a61d0b1386"
+          }
+        ]
+      },
+      {
+        "id": "arbalester_vs_elite_fire_lancer_10v5",
+        "matchupId": "arbalester_vs_elite_fire_lancer",
+        "matchup": "Arbalester vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "count": 10
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 5
+        },
+        "ratio": "10v5",
+        "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+        "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -87.2,
+            "min": -87.75,
+            "max": -85,
+            "owner3WinRate": 0
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -80.5,
+            "min": -80.5,
+            "max": -80.5,
+            "owner3WinRate": 0
+          },
+          "meanDelta": 6.700000000000003,
+          "absoluteMeanDelta": 6.700000000000003,
+          "tapeBandError": 4.5,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            7.25,
+            7.25,
+            7.25,
+            7.25,
+            4.5
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_10v5",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 322,
+            "score": -80.5,
+            "ticks": 1228,
+            "tapeScore": -87.75,
+            "delta": 7.25,
+            "finalStateHash": "ac32aceeed4fe994ee72240d574fb826aa35f235478a6a3682dddb8b9a16c26e",
+            "eventLogHash": "fa4a28a6ed1ab05d58f93b859f579600ad353214afb6a3d850c849bee2b39c4f"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_10v5",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 322,
+            "score": -80.5,
+            "ticks": 1228,
+            "tapeScore": -87.75,
+            "delta": 7.25,
+            "finalStateHash": "ac32aceeed4fe994ee72240d574fb826aa35f235478a6a3682dddb8b9a16c26e",
+            "eventLogHash": "fa4a28a6ed1ab05d58f93b859f579600ad353214afb6a3d850c849bee2b39c4f"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_10v5",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 322,
+            "score": -80.5,
+            "ticks": 1228,
+            "tapeScore": -87.75,
+            "delta": 7.25,
+            "finalStateHash": "ac32aceeed4fe994ee72240d574fb826aa35f235478a6a3682dddb8b9a16c26e",
+            "eventLogHash": "fa4a28a6ed1ab05d58f93b859f579600ad353214afb6a3d850c849bee2b39c4f"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_10v5",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 322,
+            "score": -80.5,
+            "ticks": 1228,
+            "tapeScore": -87.75,
+            "delta": 7.25,
+            "finalStateHash": "ac32aceeed4fe994ee72240d574fb826aa35f235478a6a3682dddb8b9a16c26e",
+            "eventLogHash": "fa4a28a6ed1ab05d58f93b859f579600ad353214afb6a3d850c849bee2b39c4f"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_10v5",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 322,
+            "score": -80.5,
+            "ticks": 1228,
+            "tapeScore": -85,
+            "delta": 4.5,
+            "finalStateHash": "ac32aceeed4fe994ee72240d574fb826aa35f235478a6a3682dddb8b9a16c26e",
+            "eventLogHash": "fa4a28a6ed1ab05d58f93b859f579600ad353214afb6a3d850c849bee2b39c4f"
+          }
+        ]
+      },
+      {
+        "id": "arbalester_vs_elite_fire_lancer_15v20",
+        "matchupId": "arbalester_vs_elite_fire_lancer",
+        "matchup": "Arbalester vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "count": 15
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 20
+        },
+        "ratio": "15v20",
+        "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+        "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 31.705882352941178,
+            "min": 24.41176470588235,
+            "max": 40,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": 43.8235294117647,
+            "min": 43.8235294117647,
+            "max": 43.8235294117647,
+            "owner3WinRate": 1
+          },
+          "meanDelta": 12.117647058823525,
+          "absoluteMeanDelta": 12.117647058823525,
+          "tapeBandError": 3.823529411764703,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            14.705882352941174,
+            3.823529411764703,
+            12.64705882352941,
+            19.41176470588235,
+            10
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_15v20",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 745,
+            "score": 43.8235294117647,
+            "ticks": 2694,
+            "tapeScore": 29.11764705882353,
+            "delta": 14.705882352941174,
+            "finalStateHash": "8234c96f2240dcd0e33ca823074cd58b2a8ca069b5d8cb3b859d5243f9a7b177",
+            "eventLogHash": "93950b8ac482d27a3c0d844d9657815e977f8807004d38344566e5f1a4006bc5"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_15v20",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 745,
+            "score": 43.8235294117647,
+            "ticks": 2694,
+            "tapeScore": 40,
+            "delta": 3.823529411764703,
+            "finalStateHash": "8234c96f2240dcd0e33ca823074cd58b2a8ca069b5d8cb3b859d5243f9a7b177",
+            "eventLogHash": "93950b8ac482d27a3c0d844d9657815e977f8807004d38344566e5f1a4006bc5"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_15v20",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 745,
+            "score": 43.8235294117647,
+            "ticks": 2694,
+            "tapeScore": 31.176470588235293,
+            "delta": 12.64705882352941,
+            "finalStateHash": "8234c96f2240dcd0e33ca823074cd58b2a8ca069b5d8cb3b859d5243f9a7b177",
+            "eventLogHash": "93950b8ac482d27a3c0d844d9657815e977f8807004d38344566e5f1a4006bc5"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_15v20",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 745,
+            "score": 43.8235294117647,
+            "ticks": 2694,
+            "tapeScore": 24.41176470588235,
+            "delta": 19.41176470588235,
+            "finalStateHash": "8234c96f2240dcd0e33ca823074cd58b2a8ca069b5d8cb3b859d5243f9a7b177",
+            "eventLogHash": "93950b8ac482d27a3c0d844d9657815e977f8807004d38344566e5f1a4006bc5"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_15v20",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 745,
+            "score": 43.8235294117647,
+            "ticks": 2694,
+            "tapeScore": 33.8235294117647,
+            "delta": 10,
+            "finalStateHash": "8234c96f2240dcd0e33ca823074cd58b2a8ca069b5d8cb3b859d5243f9a7b177",
+            "eventLogHash": "93950b8ac482d27a3c0d844d9657815e977f8807004d38344566e5f1a4006bc5"
+          }
+        ]
+      },
+      {
+        "id": "arbalester_vs_elite_fire_lancer_20v15",
+        "matchupId": "arbalester_vs_elite_fire_lancer",
+        "matchup": "Arbalester vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "count": 20
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 15
+        },
+        "ratio": "20v15",
+        "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+        "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -77.025,
+            "min": -81.125,
+            "max": -71.625,
+            "owner3WinRate": 0
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -62.5,
+            "min": -62.5,
+            "max": -62.5,
+            "owner3WinRate": 0
+          },
+          "meanDelta": 14.525000000000006,
+          "absoluteMeanDelta": 14.525000000000006,
+          "tapeBandError": 9.125,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            16.625,
+            14,
+            18.625,
+            14.25,
+            9.125
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v15",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 500,
+            "score": -62.5,
+            "ticks": 2070,
+            "tapeScore": -79.125,
+            "delta": 16.625,
+            "finalStateHash": "96972bdd02384aa5f2fb03b52e24a7dc305fd681a7d9de9fad3fc5aa51eadedb",
+            "eventLogHash": "c84787e254aba981743c16622f5eb1d08ccb98455582b47a39adaf7f84c39811"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v15",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 500,
+            "score": -62.5,
+            "ticks": 2070,
+            "tapeScore": -76.5,
+            "delta": 14,
+            "finalStateHash": "96972bdd02384aa5f2fb03b52e24a7dc305fd681a7d9de9fad3fc5aa51eadedb",
+            "eventLogHash": "c84787e254aba981743c16622f5eb1d08ccb98455582b47a39adaf7f84c39811"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v15",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 500,
+            "score": -62.5,
+            "ticks": 2070,
+            "tapeScore": -81.125,
+            "delta": 18.625,
+            "finalStateHash": "96972bdd02384aa5f2fb03b52e24a7dc305fd681a7d9de9fad3fc5aa51eadedb",
+            "eventLogHash": "c84787e254aba981743c16622f5eb1d08ccb98455582b47a39adaf7f84c39811"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v15",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 500,
+            "score": -62.5,
+            "ticks": 2070,
+            "tapeScore": -76.75,
+            "delta": 14.25,
+            "finalStateHash": "96972bdd02384aa5f2fb03b52e24a7dc305fd681a7d9de9fad3fc5aa51eadedb",
+            "eventLogHash": "c84787e254aba981743c16622f5eb1d08ccb98455582b47a39adaf7f84c39811"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v15",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 500,
+            "score": -62.5,
+            "ticks": 2070,
+            "tapeScore": -71.625,
+            "delta": 9.125,
+            "finalStateHash": "96972bdd02384aa5f2fb03b52e24a7dc305fd681a7d9de9fad3fc5aa51eadedb",
+            "eventLogHash": "c84787e254aba981743c16622f5eb1d08ccb98455582b47a39adaf7f84c39811"
+          }
+        ]
+      },
+      {
+        "id": "arbalester_vs_elite_fire_lancer_20v20",
+        "matchupId": "arbalester_vs_elite_fire_lancer",
+        "matchup": "Arbalester vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "count": 20
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 20
+        },
+        "ratio": "20v20",
+        "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+        "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -50.175,
+            "min": -58.5,
+            "max": -41.875,
+            "owner3WinRate": 0
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -40.125,
+            "min": -40.125,
+            "max": -40.125,
+            "owner3WinRate": 0
+          },
+          "meanDelta": 10.049999999999997,
+          "absoluteMeanDelta": 10.049999999999997,
+          "tapeBandError": 1.75,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            1.75,
+            6.875,
+            18.375,
+            17.25,
+            6
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v20",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 321,
+            "score": -40.125,
+            "ticks": 3023,
+            "tapeScore": -41.875,
+            "delta": 1.75,
+            "finalStateHash": "f547e8f1b7da48b3002ab81b64aa2d95f1db10c4b1bd4a40b4081e60f14b55db",
+            "eventLogHash": "15991b22705a7451f4c41d9f5536119081135df4f7df320ee31a0bb2840f6a36"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v20",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 321,
+            "score": -40.125,
+            "ticks": 3023,
+            "tapeScore": -47,
+            "delta": 6.875,
+            "finalStateHash": "f547e8f1b7da48b3002ab81b64aa2d95f1db10c4b1bd4a40b4081e60f14b55db",
+            "eventLogHash": "15991b22705a7451f4c41d9f5536119081135df4f7df320ee31a0bb2840f6a36"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v20",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 321,
+            "score": -40.125,
+            "ticks": 3023,
+            "tapeScore": -58.5,
+            "delta": 18.375,
+            "finalStateHash": "f547e8f1b7da48b3002ab81b64aa2d95f1db10c4b1bd4a40b4081e60f14b55db",
+            "eventLogHash": "15991b22705a7451f4c41d9f5536119081135df4f7df320ee31a0bb2840f6a36"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v20",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 321,
+            "score": -40.125,
+            "ticks": 3023,
+            "tapeScore": -57.375,
+            "delta": 17.25,
+            "finalStateHash": "f547e8f1b7da48b3002ab81b64aa2d95f1db10c4b1bd4a40b4081e60f14b55db",
+            "eventLogHash": "15991b22705a7451f4c41d9f5536119081135df4f7df320ee31a0bb2840f6a36"
+          },
+          {
+            "rowId": "arbalester_vs_elite_fire_lancer_20v20",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 321,
+            "score": -40.125,
+            "ticks": 3023,
+            "tapeScore": -46.125,
+            "delta": 6,
+            "finalStateHash": "f547e8f1b7da48b3002ab81b64aa2d95f1db10c4b1bd4a40b4081e60f14b55db",
+            "eventLogHash": "15991b22705a7451f4c41d9f5536119081135df4f7df320ee31a0bb2840f6a36"
+          }
+        ]
+      }
+    ]
+  }
+}

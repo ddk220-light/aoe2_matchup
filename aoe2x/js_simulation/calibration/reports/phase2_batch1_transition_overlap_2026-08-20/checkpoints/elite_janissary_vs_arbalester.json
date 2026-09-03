@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "113b6d8a5bf56d27ac7f3d7b742a66446da840e5ad2f96133af7641997069f6f",
+  "matchupId": "elite_janissary_vs_arbalester",
+  "completedAt": "2026-08-20T18:28:38.217Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 0,
+      "meanAbsoluteMeanDelta": 15.184523809523817,
+      "medianAbsoluteMeanDelta": 15.184523809523817,
+      "maximumAbsoluteMeanDelta": 15.184523809523817
+    },
+    "rows": [
+      {
+        "id": "elite_janissary_vs_arbalester",
+        "subjectSlug": "elite_janissary",
+        "opponentSlug": "arbalester",
+        "matchup": "Elite Janissary vs Arbalester",
+        "side2": {
+          "count": 13,
+          "master": 557,
+          "owner": 2,
+          "slug": "elite_janissary",
+          "unit": "Elite Janissary"
+        },
+        "side3": {
+          "count": 21,
+          "master": 492,
+          "owner": 3,
+          "slug": "arbalester",
+          "unit": "Arbalester"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 39.19642857142857,
+          "min": 30.595238095238095,
+          "max": 49.166666666666664,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 54.38095238095239,
+          "min": 53.333333333333336,
+          "max": 55.95238095238095,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 5.214285714285722,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_janissary_vs_arbalester",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 470,
+            "score": 55.95238095238095,
+            "ticks": 1553,
+            "finalStateHash": "12b9bb15888205c6206e1c3640cf5e789667021204e2091217800369be396f77",
+            "eventLogHash": "1a43999104ccd688afdedd7d359949b9d4ca85052020843f5c08175ec864ee3f"
+          },
+          {
+            "rowId": "elite_janissary_vs_arbalester",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 457,
+            "score": 54.404761904761905,
+            "ticks": 1694,
+            "finalStateHash": "e49d350e8693f40c9ab791d58bd17c93833cca5c18338dc4fce24e6041ee7b7e",
+            "eventLogHash": "6d0ebb32baf3d862a7357faf9f1664c9c6291ad8d88a791509c451f3b12c0e0a"
+          },
+          {
+            "rowId": "elite_janissary_vs_arbalester",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 452,
+            "score": 53.80952380952381,
+            "ticks": 1536,
+            "finalStateHash": "2172ac0ee28494ed0e33dee65f37aca88a90feafb9e0926a809612102dd41499",
+            "eventLogHash": "78338ce67185942e52f0dadb4a4f8858ac3f04f35cfcc9f357f08637361ea2db"
+          },
+          {
+            "rowId": "elite_janissary_vs_arbalester",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 457,
+            "score": 54.404761904761905,
+            "ticks": 1642,
+            "finalStateHash": "6d4307bdb9acd1b1abd8b59be65c51e5d22875fb3f8521ee60b11e9f754aa9ac",
+            "eventLogHash": "aca8c32d8e664e4a0fbd45eda3aa045f2d43a10cfef08b1b6e4d3ea932a04dc5"
+          },
+          {
+            "rowId": "elite_janissary_vs_arbalester",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 448,
+            "score": 53.333333333333336,
+            "ticks": 1644,
+            "finalStateHash": "c8a6724a973ce94b41d24a00700508ef90452529be190d0ddc1a6b2f3b0fa309",
+            "eventLogHash": "a96f1457f57abcfb1269ab007b5b9a1fa2a56ce913dd5161ec690c8fa22e0ed9"
+          }
+        ]
+      }
+    ]
+  }
+}

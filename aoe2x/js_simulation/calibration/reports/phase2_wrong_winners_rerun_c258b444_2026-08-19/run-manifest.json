@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "runSignature": "6bc165a60a7d609e0eb729920ef5fbe53a159d943e29619915abc829d3cd7986",
+  "cpuUtilizationTarget": 0.8,
+  "availableParallelism": 24,
+  "workers": 14,
+  "rowIds": [
+    "elite_boyar_vs_heavy_cav_archer",
+    "elite_conquistador_vs_arbalester",
+    "elite_conquistador_vs_elite_elephant",
+    "elite_karambit_warrior_vs_paladin",
+    "elite_longbowman_vs_arbalester",
+    "elite_longbowman_vs_heavy_cav_archer",
+    "elite_longbowman_vs_heavy_scorpion",
+    "elite_magyar_huszar_vs_arbalester",
+    "elite_mangudai_vs_elite_elephant",
+    "elite_plumed_archer_vs_elite_elephant",
+    "elite_plumed_archer_vs_paladin",
+    "elite_tarkan_vs_heavy_cav_archer",
+    "elite_throwing_axeman_vs_arbalester",
+    "elite_war_wagon_vs_champion"
+  ],
+  "checkpointUnit": "one complete exact golden matchup row",
+  "checkpointWrite": "temporary file, flush, atomic rename",
+  "resumePolicy": "validate signature and shape, skip completed row checkpoints",
+  "stableSamples": 5,
+  "volatileSamples": 15
+}

@@ -1,0 +1,160 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "63399ecb93f62daa814ab1d9361915e792d8f468841f717c4ba59b040e3cea6e",
+  "matchupId": "elite_tarkan_vs_champion",
+  "completedAt": "2026-08-19T23:40:13.078Z",
+  "report": {
+    "schemaVersion": 1,
+    "lane": "phase2_batch1_exact_golden_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/phase2_source.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/phase2/batch1_truth.json",
+      "archive": {
+        "name": "aoe2_golden_phase2_WITH_TAPES.zip",
+        "path": "aoe2x/js_simulation/calibration/source/aoe2_golden_phase2_WITH_TAPES.zip",
+        "zip_sha256": "B16971F01C2B88397F9278DDE3752C2949D470F966F99CDBE1E72E9FF3CE3AC6"
+      }
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "samples": 5,
+      "volatileSamples": 15,
+      "seed": 20260817,
+      "placements": "exact canonical starting_units from the authorized golden tape row",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "reachMeleeWedgeTransit": "derived from melee reach",
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "rows": 1,
+      "stableRows": 1,
+      "volatileRows": 0,
+      "totalRuns": 5
+    },
+    "summary": {
+      "rows": 1,
+      "totalRuns": 5,
+      "unresolvedRuns": 0,
+      "rowsOver25PointDelta": 0,
+      "knifeEdgeRows": 0,
+      "wrongStableWinnerCount": 0,
+      "rowsInsideTapeBand": 1,
+      "meanAbsoluteMeanDelta": 2.867346938775512,
+      "medianAbsoluteMeanDelta": 2.867346938775512,
+      "maximumAbsoluteMeanDelta": 2.867346938775512
+    },
+    "rows": [
+      {
+        "id": "elite_tarkan_vs_champion",
+        "subjectSlug": "elite_tarkan",
+        "opponentSlug": "champion",
+        "matchup": "Elite Tarkan vs Champion",
+        "side2": {
+          "count": 11,
+          "master": 757,
+          "owner": 2,
+          "slug": "elite_tarkan",
+          "unit": "Elite Tarkan"
+        },
+        "side3": {
+          "count": 21,
+          "master": 567,
+          "owner": 3,
+          "slug": "champion",
+          "unit": "Champion"
+        },
+        "tape": {
+          "scoredRuns": 4,
+          "timeoutRuns": 0,
+          "mean": 31.173469387755098,
+          "min": 27.891156462585034,
+          "max": 34.42176870748299,
+          "side3WinRate": 1,
+          "volatile": false
+        },
+        "tapeClassification": "stable",
+        "comparison": {
+          "simulationRuns": 5,
+          "unresolvedRuns": 0,
+          "mean": 34.04081632653061,
+          "min": 15.850340136054422,
+          "max": 39.65986394557823,
+          "side3WinRate": 1,
+          "side3WinRateError": 0,
+          "bandError": 0,
+          "tapeBandCoverage": 0,
+          "wrongStableWinner": false
+        },
+        "samples": [
+          {
+            "rowId": "elite_tarkan_vs_champion",
+            "sampleIndex": 0,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 233,
+            "score": 15.850340136054422,
+            "ticks": 2591,
+            "finalStateHash": "2c4d469e5905db251bf7277e22a34454114508824e9ea0ee4e06b1ed99c166cd",
+            "eventLogHash": "76838435dbd07615118bc5f63ddfadaf1663f58aac3205ad738700a6beb004fc"
+          },
+          {
+            "rowId": "elite_tarkan_vs_champion",
+            "sampleIndex": 1,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 561,
+            "score": 38.16326530612245,
+            "ticks": 1919,
+            "finalStateHash": "9668e6a18cf2de638ea2834fb3f50523299b4b05a2a0afe54ff895b42638cc94",
+            "eventLogHash": "550b2d052a6cb3981e75e2ace08a3541aa28cbe75798d2c6c96fd382396fd26e"
+          },
+          {
+            "rowId": "elite_tarkan_vs_champion",
+            "sampleIndex": 2,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 583,
+            "score": 39.65986394557823,
+            "ticks": 1892,
+            "finalStateHash": "8b8e5e826d3f527f536cd7074db7c9d7f5bde16293dc2c670a6e5da3c3d1a5d6",
+            "eventLogHash": "99670819f8ceb8c2457305976418d01289b76760e4b6bf9f7b821950f9c91646"
+          },
+          {
+            "rowId": "elite_tarkan_vs_champion",
+            "sampleIndex": 3,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 546,
+            "score": 37.142857142857146,
+            "ticks": 2102,
+            "finalStateHash": "5e3deaf877bb3584f8f45f685a2d949d2db475db1c60a57d06d392d1441bcacc",
+            "eventLogHash": "85db9a8e9d11cbcc52e7f6c3d492fbd89e0d4c29b5f6bf5142a73e2211408dc4"
+          },
+          {
+            "rowId": "elite_tarkan_vs_champion",
+            "sampleIndex": 4,
+            "seed": 20260817,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 579,
+            "score": 39.38775510204081,
+            "ticks": 2086,
+            "finalStateHash": "60d5ff48bf62332b60690634aba4cfd5e249406591548b5f4edfd27f1eb91dbd",
+            "eventLogHash": "32118ee0b78b6a8f11abc82495d5cd835f58ebd6df43306e885cd6de29787d13"
+          }
+        ]
+      }
+    ]
+  }
+}

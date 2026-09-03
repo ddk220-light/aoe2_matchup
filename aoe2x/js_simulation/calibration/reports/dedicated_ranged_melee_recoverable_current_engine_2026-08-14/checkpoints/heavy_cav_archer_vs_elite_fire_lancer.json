@@ -1,0 +1,704 @@
+{
+  "checkpointVersion": 1,
+  "runSignature": "94fe3ac11592b71e7de3ef33cbe82ccb71c034ce0685a3710cb8660aa2eb1a81",
+  "matchupId": "heavy_cav_archer_vs_elite_fire_lancer",
+  "completedAt": "2026-08-14T16:19:00.850Z",
+  "seededFromCompletedReport": true,
+  "report": {
+    "schemaVersion": 1,
+    "lane": "dedicated_golden_exact_repeat_starts",
+    "source": {
+      "manifest": "aoe2x/js_simulation/calibration/source/dedicated_ranged_melee_sources.json",
+      "truth": "aoe2x/js_simulation/calibration/fixtures/dedicated_ranged_melee/dedicated_ranged_melee_truth.json",
+      "archives": [
+        {
+          "archive": "aoe2_golden_kiting_arbalestervschampion_2026-08-06.zip",
+          "zipSha256": "7A661923102517825DC1D7BC49DF69FD5A365F69F1CC6E54805B798E3A68B0A3"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervselephant_2026-08-06.zip",
+          "zipSha256": "25B5C474F5731711017F90C26A174B87A84B3E8403C4B0886452D2DD25FFB74A"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervsfirelancer_2026-08-06.zip",
+          "zipSha256": "2993135C74E069273CFE689C398C0316DD02F29D01E95D20FB3F1D86C3B42D38"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervspaladin_2026-08-06.zip",
+          "zipSha256": "2049164F01A4E237AEABACBAA120837AE60A0E133AC0319C645210DA16717068"
+        },
+        {
+          "archive": "aoe2_golden_kiting_arbalestervssteppe_2026-08-06.zip",
+          "zipSha256": "3F4D8F0B69AE82A874E28FD1A9B801C9B0DFB4F46A17B4692F4457ADB2CB9C34"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvschampion_2026-08-06.zip",
+          "zipSha256": "974A951AD0E9AE211A0BF40913EF6028187732404C6F8514E637C64B79D54716"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvselephant_2026-08-06.zip",
+          "zipSha256": "12984A63F05BDCFB3242C46CD45144D2E6B8D304C7AF15C951CBB41652095EB6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvsfirelancer_2026-08-06.zip",
+          "zipSha256": "93ABC691DEE14824AEA6D4154EC69231477E6A246E60D2D6E117FC6FCFE975D1"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvspaladin_2026-08-06.zip",
+          "zipSha256": "631C21349C4ECE89A9DB997C2AD8873CA98B04EC4DB89EACF9BAC65EEE589E1F"
+        },
+        {
+          "archive": "aoe2_golden_kiting_eliteskirmvssteppe_2026-08-06.zip",
+          "zipSha256": "9500E4703ACB48273C83D71CE4313820BA92391EE80CAF2882F92AF12B46414B"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervschampion_2026-08-06.zip",
+          "zipSha256": "EB47F418B2D88BFB99D0083CF05DE153B329D531B0E179494DAE1A5CA3D921C5"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervselephant_2026-08-06.zip",
+          "zipSha256": "CB7D0D448D35C09013C028FBC5A38E6267D8BBA09B3DB02125E9BD3E746A3F90"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+          "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervspaladin_2026-08-06.zip",
+          "zipSha256": "8902DE64B120E6302860F8F9B35B572523B29B4C0F305C65A7DA6D0C286F7968"
+        },
+        {
+          "archive": "aoe2_golden_kiting_hcavarchervssteppe_2026-08-06.zip",
+          "zipSha256": "74D83F2EBE0D7EE89AD76C50D68147D4D0B085FA0223B1CECB59FF83198C9373"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvschampion_2026-08-05.zip",
+          "zipSha256": "30235D984F503172123DFD2D4D24AB9AB513EE57A29C6825AF2252B7879B6EDB"
+        },
+        {
+          "archive": "aoe2_golden_ranged_scorpionvspaladin_2026-08-05.zip",
+          "zipSha256": "32135C127DE9CB2A07C78E5323C3D13F9671803480F379B6627AAE638750708E"
+        }
+      ]
+    },
+    "config": {
+      "engine": "current checked-out JavaScript engine",
+      "placements": "exact starting_units from each individual tape repeat",
+      "goldenMap": true,
+      "navigation": "cohesive",
+      "meleeOpeningOrder": "attack-move-all",
+      "chaseCapture": true,
+      "meleeEngagementDwellTicks": 0,
+      "pairwiseAlliedTransit": false,
+      "preventiveContactSteering": true,
+      "kitingClock": "mechanics-derived",
+      "maxTicks": 9000
+    },
+    "schedule": {
+      "matchups": 1,
+      "rows": 5,
+      "tapeRunsPerRow": 5,
+      "totalRuns": 25
+    },
+    "summary": {
+      "matchups": 1,
+      "rows": 5,
+      "totalRuns": 25,
+      "rowsOver25PointDelta": 0,
+      "rowsInsideTapeBand": 2,
+      "wrongWinnerRuns": 1,
+      "unresolvedRuns": 0,
+      "meanAbsoluteMeanDelta": 11.89382352941177,
+      "medianAbsoluteMeanDelta": 7.811764705882368,
+      "maximumAbsoluteMeanDelta": 22.5375
+    },
+    "matchupSummaries": [
+      {
+        "matchupId": "heavy_cav_archer_vs_elite_fire_lancer",
+        "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+        "rangedSlug": "heavy_cav_archer",
+        "meleeSlug": "elite_fire_lancer",
+        "rows": 5,
+        "tapeRuns": 25,
+        "meanAbsoluteMeanDelta": 11.89382352941177,
+        "maxAbsoluteMeanDelta": 22.5375,
+        "rowsOver25PointDelta": 0,
+        "rowsInsideTapeBand": 2,
+        "wrongWinnerRuns": 1,
+        "unresolvedRuns": 0
+      }
+    ],
+    "rows": [
+      {
+        "id": "heavy_cav_archer_vs_elite_fire_lancer_10v5",
+        "matchupId": "heavy_cav_archer_vs_elite_fire_lancer",
+        "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cav Archer",
+          "count": 10
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 5
+        },
+        "ratio": "10v5",
+        "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+        "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -92.575,
+            "min": -95.875,
+            "max": -86.5,
+            "owner3WinRate": 0
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -76.875,
+            "min": -76.875,
+            "max": -76.875,
+            "owner3WinRate": 0
+          },
+          "meanDelta": 15.700000000000003,
+          "absoluteMeanDelta": 15.700000000000003,
+          "tapeBandError": 9.625,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            18.625,
+            9.625,
+            15.25,
+            16,
+            19
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_10v5",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 615,
+            "score": -76.875,
+            "ticks": 1189,
+            "tapeScore": -95.5,
+            "delta": 18.625,
+            "finalStateHash": "d9869eaf1f514a9512c38f5c4fba8f7c32749386c3f9a28d975545265adfcef8",
+            "eventLogHash": "4d0465bf79e3bb5bc923dbb8641983fc047eb6632c52a103d32654cc3914310c"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_10v5",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 615,
+            "score": -76.875,
+            "ticks": 1189,
+            "tapeScore": -86.5,
+            "delta": 9.625,
+            "finalStateHash": "d9869eaf1f514a9512c38f5c4fba8f7c32749386c3f9a28d975545265adfcef8",
+            "eventLogHash": "4d0465bf79e3bb5bc923dbb8641983fc047eb6632c52a103d32654cc3914310c"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_10v5",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 615,
+            "score": -76.875,
+            "ticks": 1189,
+            "tapeScore": -92.125,
+            "delta": 15.25,
+            "finalStateHash": "d9869eaf1f514a9512c38f5c4fba8f7c32749386c3f9a28d975545265adfcef8",
+            "eventLogHash": "4d0465bf79e3bb5bc923dbb8641983fc047eb6632c52a103d32654cc3914310c"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_10v5",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 615,
+            "score": -76.875,
+            "ticks": 1189,
+            "tapeScore": -92.875,
+            "delta": 16,
+            "finalStateHash": "d9869eaf1f514a9512c38f5c4fba8f7c32749386c3f9a28d975545265adfcef8",
+            "eventLogHash": "4d0465bf79e3bb5bc923dbb8641983fc047eb6632c52a103d32654cc3914310c"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_10v5",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 615,
+            "score": -76.875,
+            "ticks": 1189,
+            "tapeScore": -95.875,
+            "delta": 19,
+            "finalStateHash": "d9869eaf1f514a9512c38f5c4fba8f7c32749386c3f9a28d975545265adfcef8",
+            "eventLogHash": "4d0465bf79e3bb5bc923dbb8641983fc047eb6632c52a103d32654cc3914310c"
+          }
+        ]
+      },
+      {
+        "id": "heavy_cav_archer_vs_elite_fire_lancer_15v20",
+        "matchupId": "heavy_cav_archer_vs_elite_fire_lancer",
+        "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cav Archer",
+          "count": 15
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 20
+        },
+        "ratio": "15v20",
+        "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+        "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 37.30588235294117,
+            "min": 25.176470588235293,
+            "max": 49.11764705882353,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": 43.588235294117645,
+            "min": 43.588235294117645,
+            "max": 43.588235294117645,
+            "owner3WinRate": 1
+          },
+          "meanDelta": 6.282352941176477,
+          "absoluteMeanDelta": 6.282352941176477,
+          "tapeBandError": 0,
+          "tapeBandCoverage": 1,
+          "repeatDeltas": [
+            -5.529411764705884,
+            8.294117647058819,
+            18.41176470588235,
+            7.470588235294116,
+            2.764705882352942
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_15v20",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 741,
+            "score": 43.588235294117645,
+            "ticks": 2628,
+            "tapeScore": 49.11764705882353,
+            "delta": -5.529411764705884,
+            "finalStateHash": "6d1836a478f199a4763ca817d0752400c841af5a02beea616372be9d085c263e",
+            "eventLogHash": "95eb8d15a40b88180c75452084d9419e2cdaa8b59577400165e507d8c2f6332c"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_15v20",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 741,
+            "score": 43.588235294117645,
+            "ticks": 2628,
+            "tapeScore": 35.294117647058826,
+            "delta": 8.294117647058819,
+            "finalStateHash": "6d1836a478f199a4763ca817d0752400c841af5a02beea616372be9d085c263e",
+            "eventLogHash": "95eb8d15a40b88180c75452084d9419e2cdaa8b59577400165e507d8c2f6332c"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_15v20",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 741,
+            "score": 43.588235294117645,
+            "ticks": 2628,
+            "tapeScore": 25.176470588235293,
+            "delta": 18.41176470588235,
+            "finalStateHash": "6d1836a478f199a4763ca817d0752400c841af5a02beea616372be9d085c263e",
+            "eventLogHash": "95eb8d15a40b88180c75452084d9419e2cdaa8b59577400165e507d8c2f6332c"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_15v20",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 741,
+            "score": 43.588235294117645,
+            "ticks": 2628,
+            "tapeScore": 36.11764705882353,
+            "delta": 7.470588235294116,
+            "finalStateHash": "6d1836a478f199a4763ca817d0752400c841af5a02beea616372be9d085c263e",
+            "eventLogHash": "95eb8d15a40b88180c75452084d9419e2cdaa8b59577400165e507d8c2f6332c"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_15v20",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 741,
+            "score": 43.588235294117645,
+            "ticks": 2628,
+            "tapeScore": 40.8235294117647,
+            "delta": 2.764705882352942,
+            "finalStateHash": "6d1836a478f199a4763ca817d0752400c841af5a02beea616372be9d085c263e",
+            "eventLogHash": "95eb8d15a40b88180c75452084d9419e2cdaa8b59577400165e507d8c2f6332c"
+          }
+        ]
+      },
+      {
+        "id": "heavy_cav_archer_vs_elite_fire_lancer_20v15",
+        "matchupId": "heavy_cav_archer_vs_elite_fire_lancer",
+        "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cav Archer",
+          "count": 20
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 15
+        },
+        "ratio": "20v15",
+        "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+        "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -57.925,
+            "min": -63.3125,
+            "max": -49.0625,
+            "owner3WinRate": 0
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -65.0625,
+            "min": -65.0625,
+            "max": -65.0625,
+            "owner3WinRate": 0
+          },
+          "meanDelta": -7.137500000000003,
+          "absoluteMeanDelta": 7.137500000000003,
+          "tapeBandError": 1.75,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            -4.875,
+            -8.0625,
+            -16,
+            -5,
+            -1.75
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v15",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1041,
+            "score": -65.0625,
+            "ticks": 1783,
+            "tapeScore": -60.1875,
+            "delta": -4.875,
+            "finalStateHash": "ac0e5ae48f2269adcb505c62cbeefe37d6380ade79c5be583183437b804a89c8",
+            "eventLogHash": "21f96a9b4d5e85dc8c5a0f14d829fa38d38d2cb99c7073e0a60009e389bf4e82"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v15",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1041,
+            "score": -65.0625,
+            "ticks": 1783,
+            "tapeScore": -57,
+            "delta": -8.0625,
+            "finalStateHash": "ac0e5ae48f2269adcb505c62cbeefe37d6380ade79c5be583183437b804a89c8",
+            "eventLogHash": "21f96a9b4d5e85dc8c5a0f14d829fa38d38d2cb99c7073e0a60009e389bf4e82"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v15",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1041,
+            "score": -65.0625,
+            "ticks": 1783,
+            "tapeScore": -49.0625,
+            "delta": -16,
+            "finalStateHash": "ac0e5ae48f2269adcb505c62cbeefe37d6380ade79c5be583183437b804a89c8",
+            "eventLogHash": "21f96a9b4d5e85dc8c5a0f14d829fa38d38d2cb99c7073e0a60009e389bf4e82"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v15",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1041,
+            "score": -65.0625,
+            "ticks": 1783,
+            "tapeScore": -60.0625,
+            "delta": -5,
+            "finalStateHash": "ac0e5ae48f2269adcb505c62cbeefe37d6380ade79c5be583183437b804a89c8",
+            "eventLogHash": "21f96a9b4d5e85dc8c5a0f14d829fa38d38d2cb99c7073e0a60009e389bf4e82"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v15",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 1041,
+            "score": -65.0625,
+            "ticks": 1783,
+            "tapeScore": -63.3125,
+            "delta": -1.75,
+            "finalStateHash": "ac0e5ae48f2269adcb505c62cbeefe37d6380ade79c5be583183437b804a89c8",
+            "eventLogHash": "21f96a9b4d5e85dc8c5a0f14d829fa38d38d2cb99c7073e0a60009e389bf4e82"
+          }
+        ]
+      },
+      {
+        "id": "heavy_cav_archer_vs_elite_fire_lancer_20v20",
+        "matchupId": "heavy_cav_archer_vs_elite_fire_lancer",
+        "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cav Archer",
+          "count": 20
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 20
+        },
+        "ratio": "20v20",
+        "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+        "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": -32.475,
+            "min": -55.625,
+            "max": 17,
+            "owner3WinRate": 0.2
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": -9.9375,
+            "min": -9.9375,
+            "max": -9.9375,
+            "owner3WinRate": 0
+          },
+          "meanDelta": 22.5375,
+          "absoluteMeanDelta": 22.5375,
+          "tapeBandError": 0,
+          "tapeBandCoverage": 1,
+          "repeatDeltas": [
+            24.0625,
+            33.5625,
+            45.6875,
+            -26.9375,
+            36.3125
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 1
+        },
+        "samples": [
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v20",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 159,
+            "score": -9.9375,
+            "ticks": 3706,
+            "tapeScore": -34,
+            "delta": 24.0625,
+            "finalStateHash": "f939b2b264dd2532f34fdf2d58c628baa19a6cb330d527ba2e9e6697bb8bdc7d",
+            "eventLogHash": "c03aaa9b82d5220b24be4c085b19d780ff88edad0ce10b0840d113e1c43eb42f"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v20",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 159,
+            "score": -9.9375,
+            "ticks": 3706,
+            "tapeScore": -43.5,
+            "delta": 33.5625,
+            "finalStateHash": "f939b2b264dd2532f34fdf2d58c628baa19a6cb330d527ba2e9e6697bb8bdc7d",
+            "eventLogHash": "c03aaa9b82d5220b24be4c085b19d780ff88edad0ce10b0840d113e1c43eb42f"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v20",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 159,
+            "score": -9.9375,
+            "ticks": 3706,
+            "tapeScore": -55.625,
+            "delta": 45.6875,
+            "finalStateHash": "f939b2b264dd2532f34fdf2d58c628baa19a6cb330d527ba2e9e6697bb8bdc7d",
+            "eventLogHash": "c03aaa9b82d5220b24be4c085b19d780ff88edad0ce10b0840d113e1c43eb42f"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v20",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 159,
+            "score": -9.9375,
+            "ticks": 3706,
+            "tapeScore": 17,
+            "delta": -26.9375,
+            "finalStateHash": "f939b2b264dd2532f34fdf2d58c628baa19a6cb330d527ba2e9e6697bb8bdc7d",
+            "eventLogHash": "c03aaa9b82d5220b24be4c085b19d780ff88edad0ce10b0840d113e1c43eb42f"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_20v20",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 2,
+            "winnerHp": 159,
+            "score": -9.9375,
+            "ticks": 3706,
+            "tapeScore": -46.25,
+            "delta": 36.3125,
+            "finalStateHash": "f939b2b264dd2532f34fdf2d58c628baa19a6cb330d527ba2e9e6697bb8bdc7d",
+            "eventLogHash": "c03aaa9b82d5220b24be4c085b19d780ff88edad0ce10b0840d113e1c43eb42f"
+          }
+        ]
+      },
+      {
+        "id": "heavy_cav_archer_vs_elite_fire_lancer_5v10",
+        "matchupId": "heavy_cav_archer_vs_elite_fire_lancer",
+        "matchup": "Heavy Cav Archer vs Elite Fire Lancer",
+        "ranged": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cav Archer",
+          "count": 5
+        },
+        "melee": {
+          "slug": "elite_fire_lancer",
+          "label": "Elite Fire Lancer",
+          "count": 10
+        },
+        "ratio": "5v10",
+        "archive": "aoe2_golden_kiting_hcavarchervsfirelancer_2026-08-06.zip",
+        "zipSha256": "DB044077EC928ECED80DFD69B517D535B691035C859F964DF2B6911CE54F74B6",
+        "comparison": {
+          "tape": {
+            "runs": 5,
+            "mean": 71.48235294117646,
+            "min": 63.05882352941177,
+            "max": 78,
+            "owner3WinRate": 1
+          },
+          "simulation": {
+            "runs": 5,
+            "mean": 79.29411764705883,
+            "min": 79.29411764705883,
+            "max": 79.29411764705883,
+            "owner3WinRate": 1
+          },
+          "meanDelta": 7.811764705882368,
+          "absoluteMeanDelta": 7.811764705882368,
+          "tapeBandError": 1.294117647058826,
+          "tapeBandCoverage": 0,
+          "repeatDeltas": [
+            1.294117647058826,
+            12.588235294117652,
+            3.411764705882362,
+            16.235294117647058,
+            5.529411764705884
+          ],
+          "unresolvedRuns": 0,
+          "wrongWinnerRuns": 0
+        },
+        "samples": [
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_5v10",
+            "repeat": 1,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 674,
+            "score": 79.29411764705883,
+            "ticks": 1319,
+            "tapeScore": 78,
+            "delta": 1.294117647058826,
+            "finalStateHash": "25cd44d6fe4664cfb15b4b8b8a979dd418baaecb7eae03e24a7f871bb2be4893",
+            "eventLogHash": "5a3d1b9d505a5a019141890f538b3fb685b65f1c5cf4192100718775581119cd"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_5v10",
+            "repeat": 2,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 674,
+            "score": 79.29411764705883,
+            "ticks": 1319,
+            "tapeScore": 66.70588235294117,
+            "delta": 12.588235294117652,
+            "finalStateHash": "25cd44d6fe4664cfb15b4b8b8a979dd418baaecb7eae03e24a7f871bb2be4893",
+            "eventLogHash": "5a3d1b9d505a5a019141890f538b3fb685b65f1c5cf4192100718775581119cd"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_5v10",
+            "repeat": 3,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 674,
+            "score": 79.29411764705883,
+            "ticks": 1319,
+            "tapeScore": 75.88235294117646,
+            "delta": 3.411764705882362,
+            "finalStateHash": "25cd44d6fe4664cfb15b4b8b8a979dd418baaecb7eae03e24a7f871bb2be4893",
+            "eventLogHash": "5a3d1b9d505a5a019141890f538b3fb685b65f1c5cf4192100718775581119cd"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_5v10",
+            "repeat": 4,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 674,
+            "score": 79.29411764705883,
+            "ticks": 1319,
+            "tapeScore": 63.05882352941177,
+            "delta": 16.235294117647058,
+            "finalStateHash": "25cd44d6fe4664cfb15b4b8b8a979dd418baaecb7eae03e24a7f871bb2be4893",
+            "eventLogHash": "5a3d1b9d505a5a019141890f538b3fb685b65f1c5cf4192100718775581119cd"
+          },
+          {
+            "rowId": "heavy_cav_archer_vs_elite_fire_lancer_5v10",
+            "repeat": 5,
+            "outcome": "win",
+            "winnerOwner": 3,
+            "winnerHp": 674,
+            "score": 79.29411764705883,
+            "ticks": 1319,
+            "tapeScore": 73.76470588235294,
+            "delta": 5.529411764705884,
+            "finalStateHash": "25cd44d6fe4664cfb15b4b8b8a979dd418baaecb7eae03e24a7f871bb2be4893",
+            "eventLogHash": "5a3d1b9d505a5a019141890f538b3fb685b65f1c5cf4192100718775581119cd"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -101,6 +101,10 @@ UNIQUE_COMBAT_PROPERTIES = {
     # 2026-06-10 re-sim window.
     "jian_swordsman": {
         "hp_transform_threshold": 45.0 / 70.0,
+        # The shield form is restored when regeneration carries the unit back
+        # to 45 HP. This is a reversible HP-gated form swap, not a one-shot
+        # low-health transformation.
+        "hp_transform_reversible": True,
         "transform_unit_id": 1976,
     },
     # Karambit Warrior takes 0.5 pop space (Malay unique tech Forced Levy is separate)
@@ -338,16 +342,15 @@ CIV_COMBAT_PROPERTIES = {
     ("Chinese", "siege_onager"): {"ignores_pierce_armor": 1, "ignores_melee_armor": 1},
     ("Koreans", "siege_onager"): {"ignores_pierce_armor": 1, "ignores_melee_armor": 1},
     ("Khitans", "siege_onager"): {"ignores_pierce_armor": 1, "ignores_melee_armor": 1},
-    # Jurchens Thunderclap Bombs (Imp UT) — one additional projectile for Rocket
-    # Carts and Grenadiers. CIV_COMBAT_PROPERTIES overrides (not adds to) the
-    # extracted extra_projectiles, so the Heavy Rocket Cart entry is 9 (volley)
-    # + 1 (UT) = 10. The "mangonel" (castle Rocket Cart, 8-rocket volley) entry
-    # is inert under the Imperial-only data model; kept correct at 7 + 1 = 8.
-    ("Jurchens", "mangonel"): {"extra_projectiles": 8,
+    # Rocket Cart projectile counts are their actual simultaneous volley only.
+    # Thunderclap Bombs is NOT another immediate projectile: it schedules a
+    # delayed ground explosion and an on-death explosion.  Those runtime
+    # payloads are exported for Grenadier, both Rocket Cart ages, and Lou Chuan
+    # by js_simulation/tools/export_unit_mechanics.py.
+    ("Jurchens", "mangonel"): {"extra_projectiles": 7,
                                "ignores_pierce_armor": 1, "ignores_melee_armor": 1},
-    ("Jurchens", "siege_onager"): {"extra_projectiles": 10,
+    ("Jurchens", "siege_onager"): {"extra_projectiles": 9,
                                    "ignores_pierce_armor": 1, "ignores_melee_armor": 1},
-    ("Jurchens", "grenadier"): {"extra_projectiles": 1},
     # Mapuche Malon (Castle UT) — Bolas Riders, Slingers, Skirmishers deal 30% pass-through damage
     ("Mapuche", "bolas_rider"): {"pass_through_percent": 0.30, "pass_through_count": 1, "gold_per_kill": 3},
     ("Mapuche", "elite_bolas_rider"): {"pass_through_percent": 0.30, "pass_through_count": 1, "gold_per_kill": 3},
@@ -361,8 +364,8 @@ CIV_COMBAT_PROPERTIES = {
     # Tupi Curare (Imp UT) — arrow projectiles apply poison.
     # Per Fandom Curare wiki: standard Archer line takes 5 dmg over 15s (-20 HP/min);
     # Blackwood Archer takes 2 dmg over 15s (-8 HP/min). Imperial-age only.
-    # bleed_dps = total / duration. Note: real game stacks per-shot, our sim
-    # refreshes one bleed slot per target — so multi-shooter stacking is undermodeled.
-    ("Tupi", "arbalester"): {"bleed_dps": 0.333, "bleed_duration": 15.0},
-    ("Tupi", "elite_blackwood_archer"): {"bleed_dps": 0.133, "bleed_duration": 15.0},
+    # bleed_dps = total / duration. Every successful projectile creates an
+    # independent stack; engine lifetime/stack ownership lives in world.js.
+    ("Tupi", "arbalester"): {"bleed_dps": 5.0 / 15.0, "bleed_duration": 15.0},
+    ("Tupi", "elite_blackwood_archer"): {"bleed_dps": 2.0 / 15.0, "bleed_duration": 15.0},
 }

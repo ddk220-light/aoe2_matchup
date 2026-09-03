@@ -4,28 +4,29 @@
     "15": 0,
     "19": 0,
     "28": 0,
-    "3": 6,
+    "3": 5,
     "31": 0,
-    "4": 4,
+    "4": 2,
     "8": 0
   },
   "attack_animation": {
-    "frame_duration_seconds": 0.023333333432674408,
-    "frames": 60,
-    "graphic": 1933,
-    "seconds": 1.4000000059604645
+    "frame_duration_seconds": 0.03999999910593033,
+    "frames": 30,
+    "graphic": 1581,
+    "seconds": 1.1999999731779099
   },
   "attack_classes": {
-    "15": 0,
+    "1": 0,
+    "11": 0,
+    "17": 2,
     "21": 0,
-    "27": 3,
-    "3": 8,
-    "38": 0,
+    "27": 2,
+    "3": 15,
     "39": -3
   },
-  "attack_delay_seconds": 0.49000000208616257,
-  "attack_graphic": 1933,
-  "attack_range_tiles": 6.0,
+  "attack_delay_seconds": 0.5999999865889549,
+  "attack_graphic": 1581,
+  "attack_range_tiles": 5.0,
   "blast": {
     "attack_level": 0,
     "damage_fraction": 1.0,
@@ -34,7 +35,7 @@
     "width_tiles": 0.0
   },
   "charge": null,
-  "civilization": "Cumans",
+  "civilization": "Burmese",
   "clearance_size_tiles": {
     "x": 0.25,
     "y": 0.25
@@ -46,26 +47,23 @@
   },
   "damage_reduction_by_attacker_category": null,
   "derived": {
-    "damage_vs_self": 2
+    "damage_vs_self": 10
   },
   "effects": {
-    "base_accuracy": 90.0,
-    "extra_projectile_attacks": {
-      "3": 3
-    },
-    "extra_projectiles": 3,
+    "base_accuracy": 30.0,
+    "miss_damage_percent": 1.0,
     "pass_through_count": 1,
     "splash_on_hit_fraction": 1.0
   },
-  "frame_delay": 21,
-  "hp": 65,
+  "frame_delay": 15,
+  "hp": 85,
   "idle_animation": {
-    "frame_duration_seconds": 0.05000000447034836,
-    "frames": 60,
-    "graphic": 1935,
-    "seconds": 3.0000002682209015
+    "frame_duration_seconds": 0.06666667014360428,
+    "frames": 45,
+    "graphic": 1583,
+    "seconds": 3.0000001564621925
   },
-  "line_of_sight_tiles": 8.0,
+  "line_of_sight_tiles": 7.0,
   "min_collision_size_multiplier": 1.0,
   "movement_blocks": {
     "fly_mode": 0,
@@ -79,11 +77,11 @@
   "outline_size_tiles": {
     "x": 0.4,
     "y": 0.4,
-    "z": 2.0
+    "z": 2.5
   },
   "population_space": 1.0,
   "provenance": {
-    "dat_selector": "dat.civs[name='Cumans'].units[1233]",
+    "dat_selector": "dat.civs[name='Burmese'].units[1128]",
     "dat_sha256": "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF",
     "fields": {
       "age": "ref_units.age",
@@ -132,38 +130,36 @@
       "ranged.impact_splash_friendly_fire_fraction": "unit.type_50.friendly_fire_damage",
       "ranged.impact_splash_radius_tiles": "ref_units.splash_on_hit_radius",
       "ranged.min_range_tiles": "ref_units.min_range",
-      "ranged.pass_through": "dat.civs[0].units[477].projectile.vanish_mode",
+      "ranged.pass_through": "dat.civs[0].units[1169].projectile.vanish_mode",
       "ranged.pass_through_count": "ref_units.pass_through_count",
       "ranged.pass_through_damage_fraction": "ref_units.pass_through_percent; dat pass-through defaults to 0.5",
-      "ranged.projectile_arc": "dat.civs[0].units[477].projectile.projectile_arc",
-      "ranged.projectile_half_width_tiles": "dat.civs[0].units[477].collision_size_x",
-      "ranged.projectile_hit_mode": "dat.civs[0].units[477].projectile.hit_mode",
+      "ranged.projectile_arc": "dat.civs[0].units[1169].projectile.projectile_arc",
+      "ranged.projectile_half_width_tiles": "dat.civs[0].units[1169].collision_size_x",
+      "ranged.projectile_hit_mode": "dat.civs[0].units[1169].projectile.hit_mode",
       "ranged.projectile_spawning_area": "unit.creatable.projectile_spawning_area[0:2]",
-      "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[477].speed",
+      "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[1169].speed",
       "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
       "ranged.secondary_projectile_count": "unit.creatable.total_projectiles - 1",
       "ranged.secondary_projectile_half_width_tiles": "dat.civs[0].units[unit.creatable.secondary_projectile_unit].collision_size_x",
       "ranged.secondary_projectile_hit_mode": "dat.civs[0].units[unit.creatable.secondary_projectile_unit].projectile.hit_mode",
       "ranged.secondary_projectile_unit": "unit.creatable.secondary_projectile_unit",
-      "ranged.smart_mode": "dat.civs[0].units[477].projectile.smart_mode | 1 when dat tech 93 (Ballistics) sets attribute 19 on projectile 477 (Imperial fully-teched model)",
+      "ranged.smart_mode": "dat.civs[0].units[1169].projectile.smart_mode | 1 when dat tech 93 (Ballistics) sets attribute 19 on projectile 1169 (Imperial fully-teched model)",
       "reload_seconds": "ref_units.final_reload_time * matching civilization tech-tree effect type 5 on reload attribute 10",
       "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
       "unit_master": "unit.id",
       "walk_animation": "graphics[unit.dead_fish.walking_graphic]"
     },
     "reference_db_sha256": "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087",
-    "reference_selector": "ref_units WHERE unit_slug='elite_kipchak_cumans' AND civ_name='Cumans' AND age='Imperial'",
-    "reload_base_seconds": 1.87,
+    "reference_selector": "ref_units WHERE unit_slug='elite_arambai_burmese' AND civ_name='Burmese' AND age='Imperial'",
+    "reload_base_seconds": 2.0,
     "reload_multiplier": 1.0
   },
   "ranged": {
-    "accuracy_dispersion_tiles": 0.33000001311302185,
-    "accuracy_percent": 100.0,
-    "base_accuracy_percent": 90.0,
-    "extra_projectile_attacks": {
-      "3": 3
-    },
-    "extra_projectile_count": 3,
+    "accuracy_dispersion_tiles": 0.5,
+    "accuracy_percent": 30.0,
+    "base_accuracy_percent": 30.0,
+    "extra_projectile_attacks": null,
+    "extra_projectile_count": 0,
     "first_attack_extra_projectiles": 0,
     "impact_splash_damage_fraction": 1.0,
     "impact_splash_friendly_fire_fraction": 1.0,
@@ -172,7 +168,7 @@
     "pass_through": false,
     "pass_through_count": 0,
     "pass_through_damage_fraction": 0.0,
-    "projectile_arc": -0.05999999865889549,
+    "projectile_arc": -0.07999999821186066,
     "projectile_half_width_tiles": 0.1,
     "projectile_hit_mode": 0,
     "projectile_spawning_area": [
@@ -180,20 +176,20 @@
       1.0
     ],
     "projectile_speed_tiles_per_second": 7.0,
-    "projectile_unit": 477,
+    "projectile_unit": 1169,
     "secondary_projectile_count": 0,
-    "secondary_projectile_half_width_tiles": 0.1,
+    "secondary_projectile_half_width_tiles": 0.0,
     "secondary_projectile_hit_mode": 0,
-    "secondary_projectile_unit": 510,
-    "smart_mode": 1
+    "secondary_projectile_unit": -1,
+    "smart_mode": 3
   },
-  "reload_seconds": 1.87,
-  "speed_tiles_per_second": 1.6206747792005638,
-  "unit_master": 1233,
+  "reload_seconds": 2.0,
+  "speed_tiles_per_second": 1.4300000309944154,
+  "unit_master": 1128,
   "walk_animation": {
-    "frame_duration_seconds": 0.038999997079372406,
+    "frame_duration_seconds": 0.03666666895151138,
     "frames": 30,
-    "graphic": 1937,
-    "seconds": 1.1699999123811722
+    "graphic": 1585,
+    "seconds": 1.1000000685453415
   }
 }

@@ -48,8 +48,13 @@
     "damage_vs_self": 7
   },
   "effects": {
-    "extra_projectiles": 1,
-    "pass_through_count": 1,
+    "delayed_impact_delay_seconds": 1.5,
+    "delayed_impact_melee_attack": 4.0,
+    "delayed_impact_radius_tiles": 0.65,
+    "delayed_impact_repeat_count": 3,
+    "delayed_impact_repeat_interval_seconds": 1.5,
+    "death_explosion_melee_attack": 15.0,
+    "death_explosion_radius_tiles": 0.75,
     "splash_on_hit_fraction": 1.0,
     "splash_on_hit_radius": 0.65
   },
@@ -155,7 +160,7 @@
     "accuracy_percent": 0.0,
     "base_accuracy_percent": 0.0,
     "extra_projectile_attacks": null,
-    "extra_projectile_count": 1,
+    "extra_projectile_count": 0,
     "first_attack_extra_projectiles": 0,
     "impact_splash_damage_fraction": 1.0,
     "impact_splash_friendly_fire_fraction": 0.5,

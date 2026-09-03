@@ -16,6 +16,11 @@ from pathlib import Path
 import sys
 from typing import Any
 
+from aoe2x.dbgen.v3_runtime_config import (
+    RUNTIME_EFFECTS_BY_CIV_SLUG,
+    RUNTIME_EFFECTS_BY_SLUG,
+)
+
 
 IMPERIAL_AGE = "Imperial"
 
@@ -64,6 +69,8 @@ REFERENCE_EFFECT_COLUMNS = (
     "hp_per_kill",
     "hp_per_kill_max",
     "armor_strip_per_hit",
+    "ignores_melee_armor",
+    "ignores_pierce_armor",
     "charge_attack_melee",
     "charge_recharge_time",
     "damage_reflect_percent",
@@ -99,36 +106,25 @@ JSON_EFFECT_COLUMNS = frozenset({
 })
 
 
-# Some mechanics are command/mode semantics rather than scalar Genie unit
-# attributes.  They are still unit mechanics (never matchup calibration), and
-# are documented by the shipped game description / current reference corpus.
-CURATED_RUNTIME_EFFECTS = {
-    "elite_white_feather_guard_shu": {
-        "on_hit_slow_percent": 0.15,
-        "on_hit_slow_duration_seconds": 10.0,
-        "on_hit_slow_excludes_siege": True,
-        "hp_nearby_radius_tiles": 15.0,
-    },
-    "mounted_trebuchet_khitans": {
-        "impact_hazard_radius_tiles": 0.7,
-        "impact_hazard_duration_seconds": 10.0,
-        "impact_hazard_damage_per_second": 2.0,
-        "impact_hazard_stacks": False,
-    },
-    "elite_samurai_japanese": {
-        "charged_speed_multiplier": 1.25,
-        "charged_speed_min_target_distance_tiles": 2.0,
-        "charged_speed_max_target_distance_tiles": 7.0,
-    },
-}
+# Backwards-compatible aliases for existing importers.  The declarations live
+# in dbgen now so fixture export and the production mechanics database cannot
+# drift apart.
+CURATED_RUNTIME_EFFECTS = RUNTIME_EFFECTS_BY_SLUG
+CURATED_CIV_RUNTIME_EFFECTS = RUNTIME_EFFECTS_BY_CIV_SLUG
 
 
-def _sha256(path: Path) -> str:
+@lru_cache(maxsize=8)
+def _sha256_cached(path_text: str) -> str:
     digest = hashlib.sha256()
+    path = Path(path_text)
     with path.open("rb") as source:
         for block in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest().upper()
+
+
+def _sha256(path: Path) -> str:
+    return _sha256_cached(str(Path(path).resolve()))
 
 
 def _read_reference_row(reference_db: Path, unit_slug: str, civ: str) -> dict[str, Any]:
@@ -211,7 +207,10 @@ def _runtime_effects(reference: dict[str, Any], unit_slug: str) -> dict[str, Any
                 effects[output_name] = parsed
         else:
             effects[output_name] = value
-    effects.update(CURATED_RUNTIME_EFFECTS.get(unit_slug, {}))
+    effects.update(RUNTIME_EFFECTS_BY_SLUG.get(unit_slug, {}))
+    effects.update(RUNTIME_EFFECTS_BY_CIV_SLUG.get(
+        (reference["civ_name"], unit_slug), {}
+    ))
     return effects or None
 
 
@@ -314,10 +313,17 @@ def _damage_against_self(
     return max(1, damage)
 
 
-def _raw_unit(dat_path: Path, civ: str, master: int):
+@lru_cache(maxsize=2)
+def _parsed_dat(dat_path_text: str):
     from genieutils.datfile import DatFile
 
-    data = DatFile.parse(dat_path)
+    return DatFile.parse(Path(dat_path_text))
+
+
+def _raw_unit(dat_path: Path, civ: str, master: int):
+    dat_path = Path(dat_path).resolve()
+
+    data = _parsed_dat(str(dat_path))
     dat_civ = REFERENCE_TO_DAT_CIV.get(civ, civ)
     matches = [
         civilization for civilization in data.civs
@@ -378,16 +384,41 @@ def _civilization_reload_multiplier(data, civ: str, unit) -> float:
 
 
 def _animation_seconds(data, graphic_id: int, label: str) -> dict[str, Any]:
-    """Duration of a Genie animation = frame_count x frame_duration."""
+    """Return DAT animation timing, including composite parent graphics.
+
+    Some valid Genie graphics are one-frame containers with a zero duration;
+    their animated hull/weapon layers live in ``graphic.deltas``.  In that
+    case the longest usable direct child is the visual cycle.  This keeps the
+    value DAT-derived while avoiding a synthetic per-unit fallback.
+    """
     if graphic_id is None or graphic_id < 0:
         raise ValueError(f"{label} graphic is absent")
     graphic = data.graphics[graphic_id]
     frames = int(graphic.frame_count)
     duration = float(graphic.frame_duration)
+    timing_graphic_id = graphic_id
     if frames <= 0 or not math.isfinite(duration) or duration <= 0:
-        raise ValueError(f"{label} graphic {graphic_id} has no usable frame timing")
+        candidates = []
+        for delta in graphic.deltas:
+            child_id = int(delta.graphic_id)
+            if child_id < 0 or child_id >= len(data.graphics):
+                continue
+            child = data.graphics[child_id]
+            child_frames = int(child.frame_count)
+            child_duration = float(child.frame_duration)
+            if child_frames > 0 and math.isfinite(child_duration) and child_duration > 0:
+                candidates.append(
+                    (child_frames * child_duration, child_id, child_frames, child_duration)
+                )
+        if not candidates:
+            raise ValueError(f"{label} graphic {graphic_id} has no usable frame timing")
+        _, timing_graphic_id, frames, duration = max(candidates)
     return {
         "graphic": graphic_id,
+        **(
+            {"timing_graphic": timing_graphic_id}
+            if timing_graphic_id != graphic_id else {}
+        ),
         "frames": frames,
         "frame_duration_seconds": duration,
         "seconds": frames * duration,
@@ -455,6 +486,11 @@ def export_unit_mechanics(
             data, int(unit.dead_fish.walking_graphic), "walk")
     except ValueError:
         walk_animation = None
+    try:
+        death_animation = _animation_seconds(
+            data, int(unit.dying_graphic), "death")
+    except ValueError:
+        death_animation = None
 
     # Genie hit timing. The hit lands on animation frame `frame_delay`, so
     #   attack_delay = animation_seconds * frame_delay / frame_count
@@ -520,11 +556,16 @@ def export_unit_mechanics(
         "attack_animation.graphic": "unit.type_50.attack_graphic",
         "attack_animation.frames": "graphics[attack_graphic].frame_count",
         "attack_animation.frame_duration_seconds": (
-            "graphics[attack_graphic].frame_duration"
+            "graphics[attack_graphic].frame_duration, or longest usable direct "
+            "delta graphic for a zero-duration composite"
         ),
-        "attack_animation.seconds": "frames * frame_duration",
+        "attack_animation.seconds": (
+            "frames * frame_duration from the graphic or its longest usable "
+            "direct delta"
+        ),
         "idle_animation": "graphics[unit.standing_graphic[0]]",
         "walk_animation": "graphics[unit.dead_fish.walking_graphic]",
+        "death_animation": "graphics[unit.dying_graphic]",
         "line_of_sight_tiles": "ref_units.final_los",
         "attack_classes": "ref_units.final_attacks_json",
         "armor_classes": "ref_units.final_armors_json",
@@ -597,8 +638,21 @@ def export_unit_mechanics(
     #     models all three projectiles on the target and documents the
     #     ~1 damage/volley overshoot as an accepted residual.
     charge = None
+    melee_charge = None
     charge_type = int(getattr(unit.creatable, "charge_type", 0) or 0)
-    if charge_type in (6, 7):
+    reference_charge_count = int(reference.get("charge_projectile_count") or 0)
+    dat_charge_count = (
+        int(unit.creatable.max_total_projectiles)
+        if charge_type == 6 else
+        max(0, int(unit.creatable.max_total_projectiles)
+            - int(unit.creatable.total_projectiles))
+        if charge_type == 7 else 0
+    )
+    projectile_count = reference_charge_count or dat_charge_count
+    # A few units retain a charge_type flag while declaring no charge
+    # projectiles at all.  Treat that combination as an inactive DAT feature,
+    # matching the database extractor's generic max/total-projectile rule.
+    if charge_type in (6, 7) and projectile_count > 0:
         proj_id = int(unit.creatable.charge_projectile_unit)
         proj = data.civs[0].units[proj_id] if proj_id >= 0 else None
         if proj is None:
@@ -617,15 +671,6 @@ def export_unit_mechanics(
                 if a.amount > 0
             }
         )
-        reference_count = int(reference.get("charge_projectile_count") or 0)
-        projectile_count = reference_count or (
-            int(unit.creatable.max_total_projectiles)
-            if charge_type == 6 else
-            max(0, int(unit.creatable.max_total_projectiles)
-                - int(unit.creatable.total_projectiles))
-        )
-        if projectile_count <= 0:
-            raise ValueError(f"charge_type {charge_type} without charge projectiles")
         reference_speed = float(reference.get("charge_projectile_speed") or 0)
         recharge_seconds = float(reference.get("charge_recharge_time") or 0)
         charge = {
@@ -735,6 +780,18 @@ def export_unit_mechanics(
         # Ballistics.
         smart_mode = int(getattr(proj.projectile, "smart_mode", 0)) \
             if proj.projectile is not None else 0
+        projectile_hit_mode = int(getattr(proj.projectile, "hit_mode", 0)) \
+            if proj.projectile is not None else 0
+        secondary_projectile_id = int(
+            unit.creatable.secondary_projectile_unit)
+        secondary_projectile = (
+            data.civs[0].units[secondary_projectile_id]
+            if secondary_projectile_id >= 0 else None
+        )
+        secondary_projectile_hit_mode = int(getattr(
+            getattr(secondary_projectile, "projectile", None), "hit_mode",
+            projectile_hit_mode,
+        ))
         ballistics = data.effects[int(data.techs[93].effect_id)]
         ballistics_ids = {
             int(command.a)
@@ -767,6 +824,8 @@ def export_unit_mechanics(
             ),
             "projectile_half_width_tiles": round(float(proj.collision_size_x), 6),
             "smart_mode": smart_mode,
+            "projectile_hit_mode": projectile_hit_mode,
+            "secondary_projectile_hit_mode": secondary_projectile_hit_mode,
             # Miss scatter half-radius (dat accuracy_dispersion); only
             # consulted when accuracy_percent < 100.
             "accuracy_dispersion_tiles": float(unit.type_50.accuracy_dispersion),
@@ -848,6 +907,13 @@ def export_unit_mechanics(
                 " | 1 when dat tech 93 (Ballistics) sets attribute 19 on"
                 f" projectile {projectile_id} (Imperial fully-teched model)"
             ),
+            "ranged.projectile_hit_mode": (
+                f"dat.civs[0].units[{projectile_id}].projectile.hit_mode"
+            ),
+            "ranged.secondary_projectile_hit_mode": (
+                "dat.civs[0].units[unit.creatable.secondary_projectile_unit]"
+                ".projectile.hit_mode"
+            ),
             "ranged.accuracy_dispersion_tiles": "unit.type_50.accuracy_dispersion",
             "ranged.secondary_projectile_count": "unit.creatable.total_projectiles - 1",
             "ranged.secondary_projectile_unit": "unit.creatable.secondary_projectile_unit",
@@ -869,6 +935,62 @@ def export_unit_mechanics(
             ),
             "ranged.impact_splash_friendly_fire_fraction": (
                 "unit.type_50.friendly_fire_damage"
+            ),
+        })
+    elif charge_type == 3:
+        # Urumi-style area charge. This is a direct melee strike (the DAT has
+        # no projectile unit and range 0), but its charged hit reaches nearby
+        # bodies through the unit's level-2 blast circle. The charge payload is
+        # added to the ordinary hit before the blast fraction is calculated;
+        # non-charged swings do not emit the blast.
+        special_graphic = int(unit.creatable.special_graphic)
+        charge_animation = (
+            _animation_seconds(data, special_graphic, "melee charge")
+            if special_graphic >= 0 else attack_animation
+        )
+        attack_bonus = float(reference.get("charge_attack_melee") or 0)
+        recharge_seconds = float(reference.get("charge_recharge_time") or 0)
+        blast_radius = float(unit.type_50.blast_width)
+        blast_fraction = float(unit.type_50.blast_damage)
+        if attack_bonus <= 0 or recharge_seconds <= 0:
+            raise ValueError("charge_type 3 needs a positive attack and recharge")
+        if (int(unit.type_50.blast_attack_level) != 2
+                or blast_radius <= 0
+                or not 0 < blast_fraction < 1):
+            raise ValueError("charge_type 3 needs a fractional level-2 blast")
+        melee_charge = {
+            "max_charge": float(unit.creatable.max_charge),
+            "recharge_rate": float(unit.creatable.recharge_rate),
+            "recharge_seconds": recharge_seconds,
+            "charge_type": charge_type,
+            "charge_event": int(unit.creatable.charge_event),
+            "attack_bonus": attack_bonus,
+            # Charge type 3 is an area-reach strike: the charged sword can
+            # select any unit whose collision body intersects this radius.
+            # The ordinary weapon keeps ref_units.final_range (zero).
+            "attack_range_tiles": blast_radius,
+            "splash_radius_tiles": blast_radius,
+            "splash_damage_fraction": blast_fraction,
+            "charge_animation": charge_animation,
+            "windup_seconds": attack_delay_seconds,
+        }
+        fields.update({
+            "melee_charge.max_charge": "unit.creatable.max_charge",
+            "melee_charge.recharge_rate": "unit.creatable.recharge_rate",
+            "melee_charge.recharge_seconds": "ref_units.charge_recharge_time",
+            "melee_charge.charge_type": "unit.creatable.charge_type",
+            "melee_charge.charge_event": "unit.creatable.charge_event",
+            "melee_charge.attack_bonus": "ref_units.charge_attack_melee",
+            "melee_charge.attack_range_tiles": (
+                "unit.type_50.blast_width (charge-type-3 area reach only)"
+            ),
+            "melee_charge.splash_radius_tiles": "unit.type_50.blast_width",
+            "melee_charge.splash_damage_fraction": "unit.type_50.blast_damage",
+            "melee_charge.charge_animation": (
+                "graphics[unit.creatable.special_graphic]"
+            ),
+            "melee_charge.windup_seconds": (
+                "ordinary DAT attack-delay release frame"
             ),
         })
         if extra_projectile_count is not None:
@@ -957,6 +1079,7 @@ def export_unit_mechanics(
         "age": reference["age"],
         "blast": blast,
         "charge": charge,
+        "melee_charge": melee_charge,
         "ranged": ranged,
         "effects": runtime_effects,
         "hp": int(form_stats.hp if form_stats else reference["final_hp"]),
@@ -969,6 +1092,7 @@ def export_unit_mechanics(
         "attack_animation": attack_animation,
         "idle_animation": idle_animation,
         "walk_animation": walk_animation,
+        "death_animation": death_animation,
         "line_of_sight_tiles": float(
             form_stats.los if form_stats else reference["final_los"]),
         "attack_classes": attack_classes,

@@ -123,7 +123,8 @@ test("a Hand Cannoneer failed roll lands for exact half post-armor damage", () =
     event.type === "damage" && event.actorId === 1 && event.kind === "stray-projectile"
   ));
   assert.ok(hits.length >= 10, `expected repeated reduced hits, got ${hits.length}`);
-  assert.ok(hits.every(({ amount }) => amount === 0.5));
+  assert.ok(hits.every(({ amount }) => amount === 1),
+    "a half-damage miss still obeys AoE2's universal one-damage minimum");
   assert.equal(world.eventLog.some((event) => (
     event.type === "damage" && event.actorId === 1 && event.kind === "ranged-projectile"
   )), false, "accuracy-zero shots must never become full hits");

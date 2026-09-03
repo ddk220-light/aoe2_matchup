@@ -199,6 +199,11 @@ export function calculateDamage(actor, target, options = {}) {
   }
   const strippedArmor = (classId, armorValue) => {
     if (armorValue === undefined || options.ignoreArmor === true) return 0;
+    // Armor-bypass technologies such as Wootz Steel ignore the matching BASE
+    // armor only. Bonus attack classes still resolve against their own armor
+    // classes below, exactly like an ordinary attack.
+    if (classId === "4" && actorEffects.ignores_melee_armor) return 0;
+    if (classId === "3" && actorEffects.ignores_pierce_armor) return 0;
     if (classId !== "3" && classId !== "4") return armorValue;
     return Math.max(0, armorValue - (target?.specialState?.armorStripped ?? 0));
   };
@@ -232,6 +237,50 @@ export function calculateDamage(actor, target, options = {}) {
 }
 
 
+// Direct area charge (DAT charge_type 3). Unlike Fire Lancer-style charge
+// volleys this has no projectile: it adds charge attack to the ordinary melee
+// hit, then applies the authored fractional level-2 blast to nearby enemies.
+export function meleeChargeSpec(mechanics) {
+  const charge = mechanics?.melee_charge;
+  if (!charge) return null;
+  const chargeType = requireFinite(charge.charge_type, "melee charge type");
+  if (chargeType !== 3) throw new RangeError("direct area charge must use charge type 3");
+  const maxCharge = requireFinite(charge.max_charge, "melee max charge");
+  const rechargeRate = requireFinite(charge.recharge_rate, "melee charge recharge rate");
+  const rechargeSeconds = requireFinite(
+    charge.recharge_seconds, "melee charge recharge seconds");
+  const attackBonus = requireFinite(charge.attack_bonus, "melee charge attack bonus");
+  const attackRangeTiles = requireFinite(
+    charge.attack_range_tiles, "melee charge attack range");
+  const splashRadiusTiles = requireFinite(
+    charge.splash_radius_tiles, "melee charge splash radius");
+  const splashDamageFraction = requireFinite(
+    charge.splash_damage_fraction, "melee charge splash damage fraction");
+  const windupSeconds = requireFinite(
+    charge.windup_seconds, "melee charge windup seconds");
+  const animationSeconds = requireFinite(
+    charge.charge_animation?.seconds, "melee charge animation seconds");
+  if (maxCharge <= 0 || rechargeRate <= 0 || rechargeSeconds <= 0
+      || attackBonus <= 0 || attackRangeTiles < 0 || splashRadiusTiles <= 0
+      || splashDamageFraction <= 0 || splashDamageFraction >= 1
+      || windupSeconds < 0 || animationSeconds <= 0) {
+    throw new RangeError("direct area charge parameters are out of range");
+  }
+  return Object.freeze({
+    chargeType,
+    maxCharge,
+    rechargeRate,
+    rechargeSeconds,
+    attackBonus,
+    attackRangeTiles,
+    splashRadiusTiles,
+    splashDamageFraction,
+    windupTicks: secondsToTicksNearest(windupSeconds),
+    animationTicks: secondsToTicksNearest(animationSeconds),
+  });
+}
+
+
 // Melee blast ("trample"), sourced from the Genie dat and measured on the
 // authorized elephant tapes (54 fights): the blast is a circle of radius
 // blast.width_tiles centred on the ATTACKER at the instant its hit lands, and
@@ -244,6 +293,15 @@ export function calculateDamage(actor, target, options = {}) {
 // Gate mirrors the Python ability registry: blast_attack_level == 2 with a
 // true fraction (the Champion carries width 0 / damage -5.0 sentinels).
 export function trampleSpec(mechanics) {
+  const areaCharge = meleeChargeSpec(mechanics);
+  if (areaCharge) {
+    return {
+      shape: "radial",
+      widthTiles: areaCharge.splashRadiusTiles,
+      damageFraction: areaCharge.splashDamageFraction,
+      chargedOnly: true,
+    };
+  }
   // Directional melee blast.  The high bit (128) changes the ordinary radial
   // blast into a forward shape; mode 162 (= 128 + 32 + 2) is the Ibirapema
   // 100%-damage cone.  Keep the authored one-tile width: unlike elephant
@@ -314,6 +372,21 @@ export function rangedSpec(mechanics) {
   // list), bit 2 = full damage on unintended targets. Absent on fixtures
   // exported before the attribute was sourced; those fly unled.
   const smartMode = requireFinite(ranged.smart_mode ?? 0, "ranged smart mode");
+  // Projectile hit mode is DAT-authored collision behavior, independent of
+  // accuracy: mode 0 collides only with the assigned target; non-zero modes
+  // may be intercepted by another body on the flight path.  Ordinary arrows
+  // (including projectile 510 used by Chu Ko Nu/Kipchak secondaries) are 0.
+  const projectileHitMode = requireFinite(
+    ranged.projectile_hit_mode ?? 0, "projectile hit mode");
+  const secondaryProjectileHitMode = requireFinite(
+    ranged.secondary_projectile_hit_mode ?? projectileHitMode,
+    "secondary projectile hit mode",
+  );
+  if (!Number.isSafeInteger(projectileHitMode)
+      || !Number.isSafeInteger(secondaryProjectileHitMode)
+      || projectileHitMode < 0 || secondaryProjectileHitMode < 0) {
+    throw new RangeError("projectile hit modes must be nonnegative integers");
+  }
   const projectileArc = requireFinite(
     ranged.projectile_arc ?? 0, "ranged projectile arc");
   // Accuracy (dat accuracy_percent < 100 gates the whole mechanic; every
@@ -331,7 +404,12 @@ export function rangedSpec(mechanics) {
   // at the primary projectile's impact point. Secondaries are visual-only
   // dat units with EMPTY attack lists — each lands scattered over the
   // spawning area for the floor 1 damage (the tapes' ubiquitous 1.0 hits).
-  const blastRadius = ranged.pass_through
+  // Blast level 1 is the Mangonel-family ground-impact shell with tapered
+  // siege damage. Blast level 11 is a different mechanic: full on-impact AoE
+  // around a struck/landing target (Grenadier), exported below as
+  // impactSplashRadius. Treating every positive blast width as a siege shell
+  // made level-11 weapons lose damage to the shell falloff branch.
+  const blastRadius = ranged.pass_through || mechanics?.blast?.attack_level !== 1
     ? 0
     : requireFinite(mechanics?.blast?.width_tiles ?? 0, "blast width");
   const secondaryCount = requireFinite(
@@ -388,6 +466,8 @@ export function rangedSpec(mechanics) {
     passThrough,
     projectileHalfWidth: halfWidth,
     smartMode,
+    projectileHitMode,
+    secondaryProjectileHitMode,
     fullDamageOnUnintended: (smartMode & 2) === 2,
     projectileArc,
     accuracyPercent: accuracy,

@@ -17,6 +17,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from export_unit_mechanics import export_unit_mechanics
+from aoe2x.dbgen.v3_runtime_config import (
+    ADDITIONAL_MODES_BY_CIV_SLUG,
+    EXPORT_OPTIONS_BY_CIV_SLUG,
+)
 
 
 UNITS = (
@@ -47,49 +51,18 @@ CAPTURE_ROOT = (
     / "requested_roster_vs_arb_paladin_1x_2026-08-31"
 )
 UNIT_OPTIONS = {
-    "war_chariot_shu": {
-        "concrete_form": True,
-        "extra_projectile_count": 6,
-        "volley_release_interval_seconds": 1 / 3,
-        "volley_release_size": 1,
-        "volley_release_source": (
-            "war_chariot_shu_vs_arbalester run_001 frames.bin: complete "
-            "seven-bolt Focus Fire volleys release at 0.334 s median intervals"
-        ),
-        "weapon_mode": "focus_fire",
-    },
-    "elite_chu_ko_nu_chinese": {
-        "volley_release_interval_seconds": 0.27,
-        "volley_release_size": 1,
-        "volley_double_release_percent": 34.0,
-        "volley_release_source": (
-            "elite_chu_ko_nu_chinese_vs_arbalester run_001 frames.bin: "
-            "source-attributed arrows release in groups of one or two at "
-            "roughly 0.28 s intervals; 91 of 269 complete-volley release "
-            "groups contain two arrows"
-        ),
-        "weapon_mode": "repeating_volley",
-    },
+    slug: EXPORT_OPTIONS_BY_CIV_SLUG[(civ, slug)]
+    for slug, civ, _master in UNITS
+    if (civ, slug) in EXPORT_OPTIONS_BY_CIV_SLUG
 }
 
+BARRAGE_SPEC = ADDITIONAL_MODES_BY_CIV_SLUG[("Shu", "war_chariot_shu")][0]
 BARRAGE = {
     "output_slug": "war_chariot_shu_barrage",
     "reference_slug": "war_chariot_shu",
     "civ": "Shu",
-    "master": 1980,
-    "options": {
-        "concrete_form": True,
-        # DAT barrage has 9 projectiles; fully researched Bolt Magazine adds
-        # the same two projectiles observed on the 5 -> 7 Focus Fire form.
-        "extra_projectile_count": 10,
-        "volley_release_interval_seconds": 1 / 3,
-        "volley_release_size": 1,
-        "volley_release_source": (
-            "mechanics hypothesis inherited from sibling Focus Fire form "
-            "sharing attack graphic 12976; no live Barrage tape is preserved"
-        ),
-        "weapon_mode": "barrage",
-    },
+    "master": BARRAGE_SPEC["master"],
+    "options": BARRAGE_SPEC["options"],
 }
 
 

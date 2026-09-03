@@ -56,9 +56,18 @@ export function createUnitState({
   if (!mechanics || typeof mechanics !== "object") {
     throw new TypeError("unit mechanics are required");
   }
-  for (const field of REQUIRED_PROVENANCE) {
-    if (mechanics.provenance?.[field] === undefined) {
-      throw new TypeError(`unit mechanics must carry provenance.${field}`);
+  const versionedRuntimeProfile = mechanics.mechanics_schema_version !== undefined;
+  if (versionedRuntimeProfile) {
+    if (mechanics.mechanics_schema_version !== 1) {
+      throw new RangeError(
+        `unsupported unit mechanics schema ${mechanics.mechanics_schema_version}`,
+      );
+    }
+  } else {
+    for (const field of REQUIRED_PROVENANCE) {
+      if (mechanics.provenance?.[field] === undefined) {
+        throw new TypeError(`unit mechanics must carry provenance.${field}`);
+      }
     }
   }
 
@@ -85,9 +94,11 @@ export function createUnitState({
   // Gated on the mechanics block so non-charge fixtures keep their exact
   // canonical unit shape (and therefore their golden state hashes).
   const charge = chargeSpec(mechanics);
-  const hasSpecialEffects = mechanics.effects
-    && typeof mechanics.effects === "object"
-    && Object.keys(mechanics.effects).length > 0;
+  const hasSpecialEffects = (
+    mechanics.effects
+      && typeof mechanics.effects === "object"
+      && Object.keys(mechanics.effects).length > 0
+  ) || mechanics.dismount_form !== undefined || mechanics.melee_charge != null;
   return Object.freeze({
     referenceId,
     owner,
@@ -106,6 +117,7 @@ export function createUnitState({
         baseMaxHp: hp,
         baseSpeed: mechanics.speed_tiles_per_second,
         transformed: false,
+        dismounted: false,
         firstAttackUsed: false,
         killAttackBonus: 0,
         hpGainedFromKills: 0,

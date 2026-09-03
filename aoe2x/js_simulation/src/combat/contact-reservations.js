@@ -29,10 +29,14 @@ export function updateContactReservations({
   proposals,
   tick,
   externalReservations = new Map(),
+  inheritedOverlapReferenceIds = new Set(),
 }) {
   requireInputs(state, units, proposals, tick);
   if (!(externalReservations instanceof Map)) {
     throw new TypeError("external contact reservations must be a Map");
+  }
+  if (!(inheritedOverlapReferenceIds instanceof Set)) {
+    throw new TypeError("inherited overlap references must be a Set");
   }
   const live = units
     .filter((unit) => unit?.alive !== false)
@@ -43,6 +47,22 @@ export function updateContactReservations({
   const contactReservations = new Map(externalReservations);
   const reservations = new Map();
   const inheritedExtents = new Map();
+  const seededInheritedExtents = new Map(state.inheritedExtents);
+  for (let leftIndex = 0; leftIndex < live.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < live.length; rightIndex += 1) {
+      const left = live[leftIndex];
+      const right = live[rightIndex];
+      if (!inheritedOverlapReferenceIds.has(left.referenceId)
+          && !inheritedOverlapReferenceIds.has(right.referenceId)) continue;
+      const current = pairSeparation(left, right);
+      if (current >= pairFullExtent(left, right) - EPSILON) continue;
+      const key = pairKey(left.referenceId, right.referenceId);
+      seededInheritedExtents.set(
+        key,
+        cleanNumber(Math.max(seededInheritedExtents.get(key) ?? 0, current)),
+      );
+    }
+  }
   const contactSlots = createContactSlots();
   const diagnostics = [];
 
@@ -74,7 +94,7 @@ export function updateContactReservations({
   }
 
   publishInheritedReleases({
-    inherited: state.inheritedExtents,
+    inherited: seededInheritedExtents,
     byReference,
     inheritedExtents,
     contactReservations,

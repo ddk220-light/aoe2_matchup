@@ -25,7 +25,7 @@ function cells(family, owner) {
 }
 
 
-async function runMixed({ familyName, side2Slug, n2, side3Slug, n3 }) {
+async function runMixed({ familyName, side2Slug, n2, side3Slug, n3, openingSeed = 0 }) {
   const family = formations.families[familyName];
   const rangedOwner = familyName === "ranged_vs_melee" ? 2 : 3;
   return runFight(root, {
@@ -46,6 +46,7 @@ async function runMixed({ familyName, side2Slug, n2, side3Slug, n3 }) {
     preserveOwnerOrientation: true,
     disableAiOrders: true,
     disableKiting: true,
+    openingSeed,
   });
 }
 
@@ -107,9 +108,10 @@ test("ranged-vs-melee runs real Player 4 combat before directional hostility", a
     firstAuxiliaryTargetByActor.set(current.actorId, current.targetId);
   }
   assert.equal(firstAuxiliaryTargetByActor.size, 14);
-  assert.ok(
-    new Set(firstAuxiliaryTargetByActor.values()).size >= 2,
-    "the melee opening must fan across independently visible Player-4 bodies",
+  assert.equal(
+    new Set(firstAuxiliaryTargetByActor.values()).size,
+    1,
+    "a compact melee cohort commits its first lock to one central Player-4 breach",
   );
 });
 
@@ -127,6 +129,45 @@ test("melee-vs-ranged mirrors the golden roles without relabelling owners", asyn
   assert.equal(fight.winnerOwner, 2);
   assert.ok(fight.winnerHp > 0);
   assertTransition(fight, { meleeOwner: 2, rangedOwner: 3 });
+});
+
+
+test("Ratha melee versus Arbalester preserves ranged fallback and post-gate lanes", async () => {
+  const fight = await runMixed({
+    familyName: "melee_vs_ranged",
+    side2Slug: "elite_ratha_(melee)_bengalis",
+    n2: 15,
+    side3Slug: "arbalester",
+    n3: 27,
+    openingSeed: 3,
+  });
+  assert.equal(fight.winnerOwner, 2);
+  const ownerOf = (referenceId) => fight.unitIndex[referenceId]?.owner;
+  const firstTargetByActor = new Map();
+  for (const current of fight.snapshots.flatMap(({ events }) => events)) {
+    if (current.type !== "pursuit-acquired"
+        || firstTargetByActor.has(current.actorId)) continue;
+    firstTargetByActor.set(current.actorId, current.targetId);
+  }
+  const rangedOpeningTargets = new Set([...firstTargetByActor]
+    .filter(([actorId, targetId]) => ownerOf(actorId) === 3 && ownerOf(targetId) === 2)
+    .map(([, targetId]) => targetId));
+  assert.equal(rangedOpeningTargets.size, 2,
+    "the ranged cohort keeps a small adjacent first-lock fallback");
+
+  const events = fight.snapshots.flatMap(({ events }) => events);
+  const diplomacyTick = events.find(({ type, sourceOwner, targetOwner }) => (
+    type === "diplomacy-changed" && sourceOwner === 2 && targetOwner === 3
+  )).tick;
+  const meleePostGateFirstTargets = new Map();
+  for (const current of events) {
+    if (current.tick <= diplomacyTick || current.type !== "pursuit-acquired"
+        || ownerOf(current.actorId) !== 2 || ownerOf(current.targetId) !== 3
+        || meleePostGateFirstTargets.has(current.actorId)) continue;
+    meleePostGateFirstTargets.set(current.actorId, current.targetId);
+  }
+  assert.ok(new Set(meleePostGateFirstTargets.values()).size >= 3,
+    "an experienced melee cohort retains multiple ranged-front contact lanes");
 });
 
 

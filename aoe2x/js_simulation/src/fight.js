@@ -1,8 +1,6 @@
 // One fight, composed from the registry and derived placement. Product fights
-// use the generated family table; the viewer may pass an explicit clean-room
-// tape placement without changing any combat mechanics.
-import { readFile } from "node:fs/promises";
-
+// use the generated family table; callers may pass an explicit golden-scenario
+// placement without changing any combat mechanics.
 import { hashCanonicalJson } from "./canonical-json.js";
 import { createUnitState } from "./combat/unit-state.js";
 import { createWorld, runWorld, stepWorld } from "./combat/world.js";
@@ -17,9 +15,10 @@ import {
 } from "./combat/kite-timing.js";
 import { kitingObservationPlacement } from "./kiting-observation-placement.js";
 import { placeArmy, resolveFamily, sideCapacity } from "./placement.js";
-import { deriveCounts, PURCHASE_BUDGET } from "./purchase.js";
+import { deriveCounts, deriveCountsFromCosts, PURCHASE_BUDGET, weightedCost } from "./purchase.js";
 import { kitingObservationMatchup } from "./kiting-observation-matchups.js";
 import { SOLO_MOVEMENT_UNIT_SLUGS, unitBySlug } from "./unit-registry.js";
+import { unitDescriptorFromMechanics, validateMechanicsProfile } from "./mechanics-schema.js";
 
 
 // The current melee golden scenario exposes 27 cells per side. Other families
@@ -59,6 +58,7 @@ async function loadMechanics(root, unit) {
   // championDataByRoot in server.mjs.
   const key = `${root}|${unit.fixture}`;
   if (!mechanicsCache.has(key)) {
+    const { readFile } = await import("node:fs/promises");
     mechanicsCache.set(key, JSON.parse(await readFile(
       new URL(`fixtures/unit_stats/${unit.fixture}`, root), "utf8")));
   }
@@ -223,6 +223,8 @@ export async function runFight(root, {
   triggers,
   victoryTeams,
   retainSnapshots = true,
+  mechanicsBySide,
+  unitDescriptorBySide,
 }) {
   if (kiteNavigation !== undefined) requireSoloNavigationVariant(kiteNavigation);
   if (kiteOwnerOverride !== undefined && kiteOwnerOverride !== 2 && kiteOwnerOverride !== 3) {
@@ -260,8 +262,21 @@ export async function runFight(root, {
   const derivedCounts = !n2Given;
   const purchaseBudget = budgetGiven ? budget : PURCHASE_BUDGET;
 
-  const side2 = requireUnit(side2Slug);
-  const side3 = requireUnit(side3Slug);
+  const suppliedMechanics2 = mechanicsBySide?.[2];
+  const suppliedMechanics3 = mechanicsBySide?.[3];
+  if ((suppliedMechanics2 === undefined) !== (suppliedMechanics3 === undefined)) {
+    throw new TypeError("mechanicsBySide must provide both owners 2 and 3");
+  }
+  const side2 = unitDescriptorBySide?.[2]
+    ?? (suppliedMechanics2 ? unitDescriptorFromMechanics(suppliedMechanics2) : requireUnit(side2Slug));
+  const side3 = unitDescriptorBySide?.[3]
+    ?? (suppliedMechanics3 ? unitDescriptorFromMechanics(suppliedMechanics3) : requireUnit(side3Slug));
+  if (side2Slug !== undefined && side2.slug !== side2Slug) {
+    throw new RangeError(`side 2 descriptor slug ${side2.slug} != requested ${side2Slug}`);
+  }
+  if (side3Slug !== undefined && side3.slug !== side3Slug) {
+    throw new RangeError(`side 3 descriptor slug ${side3.slug} != requested ${side3Slug}`);
+  }
 
   // Family (and therefore each side's placement capacity) depends only on
   // the two units' combat classes, never on the counts -- so it is resolved
@@ -287,10 +302,15 @@ export async function runFight(root, {
   // internal orientation, so the same pairing at the same counts derives the
   // same armies and passes (or fails) the same capacity check whichever
   // dropdown each unit was picked in.
+  const suppliedDescriptors = unitDescriptorBySide !== undefined || suppliedMechanics2 !== undefined;
   const derived = derivedCounts
-    ? deriveCounts(inner2.slug, inner3.slug, {
-      budget: purchaseBudget, capacityA: capacity2, capacityB: capacity3,
-    })
+    ? (suppliedDescriptors
+      ? deriveCountsFromCosts(weightedCost(inner2.baseCost), weightedCost(inner3.baseCost), {
+        budget: purchaseBudget, capacityA: capacity2, capacityB: capacity3,
+      })
+      : deriveCounts(inner2.slug, inner3.slug, {
+        budget: purchaseBudget, capacityA: capacity2, capacityB: capacity3,
+      }))
     : null;
   const innerCount2 = derived ? derived.countA : (orientationNormalised ? n3 : n2);
   const innerCount3 = derived ? derived.countB : (orientationNormalised ? n2 : n3);
@@ -311,16 +331,31 @@ export async function runFight(root, {
           || !Array.isArray(specification.cells) || specification.cells.length === 0) {
         throw new TypeError(`auxiliary army ${owner} must provide nonempty cells`);
       }
+      const supplied = specification.mechanics;
+      if (supplied !== undefined) validateMechanicsProfile(supplied);
+      const unit = supplied
+        ? unitDescriptorFromMechanics(supplied)
+        : requireAuxiliaryUnit(specification.slug);
+      if (specification.slug !== undefined && unit.slug !== specification.slug) {
+        throw new RangeError(
+          `auxiliary descriptor slug ${unit.slug} != requested ${specification.slug}`,
+        );
+      }
       return Object.freeze({
         owner,
-        unit: requireAuxiliaryUnit(specification.slug),
+        unit,
+        mechanics: supplied,
         cells: specification.cells,
       });
     });
+  const orientedSupplied2 = orientationNormalised ? suppliedMechanics3 : suppliedMechanics2;
+  const orientedSupplied3 = orientationNormalised ? suppliedMechanics2 : suppliedMechanics3;
+  if (orientedSupplied2) validateMechanicsProfile(orientedSupplied2);
+  if (orientedSupplied3) validateMechanicsProfile(orientedSupplied3);
   const [mechanics2, mechanics3, ...auxiliaryMechanics] = await Promise.all([
-    loadMechanics(root, inner2),
-    loadMechanics(root, inner3),
-    ...auxiliarySpecs.map(({ unit }) => loadMechanics(root, unit)),
+    orientedSupplied2 ?? loadMechanics(root, inner2),
+    orientedSupplied3 ?? loadMechanics(root, inner3),
+    ...auxiliarySpecs.map(({ unit, mechanics }) => mechanics ?? loadMechanics(root, unit)),
   ]);
 
   const cells2 = placementPool2?.slice(0, innerCount2)

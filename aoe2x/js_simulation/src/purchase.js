@@ -40,6 +40,21 @@ export function deriveCounts(slugA, slugB, {
 } = {}) {
   const costA = costFor(slugA);
   const costB = costFor(slugB);
+  return deriveCountsFromCosts(costA, costB, {
+    budget, cap, capacityA, capacityB,
+  });
+}
+
+
+export function deriveCountsFromCosts(costA, costB, {
+  budget = PURCHASE_BUDGET,
+  cap = PURCHASE_CAP,
+  capacityA = Infinity,
+  capacityB = Infinity,
+} = {}) {
+  if (!(costA > 0) || !(costB > 0)) {
+    throw new RangeError(`unit costs must be positive, got ${costA} and ${costB}`);
+  }
   const cheaperIsA = costA <= costB;
   const cheapCost = cheaperIsA ? costA : costB;
   const dearCost = cheaperIsA ? costB : costA;

@@ -5,7 +5,9 @@ Usage:
     python3 -m analysis.generate_reference
 """
 
+import argparse
 import json
+import os
 import sqlite3
 from pathlib import Path
 
@@ -443,9 +445,9 @@ _ABILITY_UPDATE_SQL, _ability_update_values = _ability_writer()
 _SPECIAL_AUDIT_PROPS = _audit_props()
 
 
-def generate_reference_database(analyzer):
+def generate_reference_database(analyzer, ref_db_path=REF_DB_PATH):
     """Generate the reference/audit database with detailed stat breakdowns."""
-    ref_db_path = REF_DB_PATH
+    ref_db_path = Path(ref_db_path)
     if ref_db_path.exists():
         ref_db_path.unlink()
 
@@ -467,6 +469,7 @@ def generate_reference_database(analyzer):
             civ_name TEXT NOT NULL,
             unit_name TEXT NOT NULL,
             unit_slug TEXT NOT NULL,
+            unit_master INTEGER NOT NULL,
             unit_type TEXT NOT NULL,
             age TEXT NOT NULL,
             unit_class INTEGER,
@@ -675,7 +678,7 @@ def generate_reference_database(analyzer):
         # Insert ref_units row (will fill final stats later)
         cursor.execute(
             """INSERT INTO ref_units
-               (civ_name, unit_name, unit_slug, unit_type, age,
+               (civ_name, unit_name, unit_slug, unit_master, unit_type, age,
                 unit_class, unit_class_name, is_ranged,
                 base_hp, base_attack, base_melee_armor, base_pierce_armor,
                 base_speed, base_range, base_reload_time, base_attack_delay,
@@ -685,11 +688,12 @@ def generate_reference_database(analyzer):
                 base_train_time,
                 total_projectiles, projectile_speed, min_range,
                 outline_size_x)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 civ_name,
                 unit_name,
                 unit_slug,
+                unit_id,
                 unit_type,
                 age_label,
                 db_class,
@@ -1826,7 +1830,33 @@ def _format_cost(food, wood, gold):
     return " ".join(parts) if parts else "Free"
 
 
+def _parser():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--reference-db",
+        type=Path,
+        default=REF_DB_PATH,
+        help="output SQLite database (defaults to the checked-in golden database)",
+    )
+    parser.add_argument(
+        "--v3-dat",
+        type=Path,
+        default=os.environ.get("AOE2_DAT_PATH"),
+        help=(
+            "optional AoE2 DAT used to populate ref_unit_mechanics; may also "
+            "be supplied through AOE2_DAT_PATH"
+        ),
+    )
+    parser.add_argument(
+        "--require-v3",
+        action="store_true",
+        help="fail if neither --v3-dat nor AOE2_DAT_PATH is configured",
+    )
+    return parser
+
+
 def main():
+    args = _parser().parse_args()
     print("AoE2 Reference Database Generator")
     print("=" * 60)
     print("Reading data directly from JSON files...")
@@ -1836,7 +1866,14 @@ def main():
     print(f"  Loaded {len(analyzer.civs)} civilizations")
     print(f"  Loaded {len(analyzer.techs)} technologies")
 
-    generate_reference_database(analyzer)
+    generate_reference_database(analyzer, args.reference_db)
+    if args.require_v3 and args.v3_dat is None:
+        raise SystemExit("--require-v3 needs --v3-dat or AOE2_DAT_PATH")
+    if args.v3_dat is not None:
+        from .generate_v3_mechanics import populate_v3_mechanics
+
+        result = populate_v3_mechanics(args.reference_db, args.v3_dat)
+        print("V3 mechanics:", json.dumps(result, sort_keys=True))
 
 
 if __name__ == "__main__":

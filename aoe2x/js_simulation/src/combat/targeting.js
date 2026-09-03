@@ -255,12 +255,17 @@ export function isWithinReach(unit, target) {
 // contact for a pair it is preserved for ordering and reporting.
 export function selectEngagementTarget(unit, snapshot, contacts, {
   targetAvailable = null,
+  targetInReach = null,
 } = {}) {
   if (!Array.isArray(snapshot)) throw new TypeError("snapshot must be an array");
   if (!Array.isArray(contacts)) throw new TypeError("contacts must be an array");
   if (targetAvailable !== null && typeof targetAvailable !== "function") {
     throw new TypeError("target availability must be a function");
   }
+  if (targetInReach !== null && typeof targetInReach !== "function") {
+    throw new TypeError("target reach test must be a function");
+  }
+  const canReach = targetInReach ?? ((candidate) => isWithinReach(unit, candidate));
   if (!isLive(unit)) return Object.freeze({ target: null, contact: null });
   const byReference = new Map(snapshot.map((candidate) => [candidate.referenceId, candidate]));
   const contactFor = (targetId) => contacts.find(({ leftId, rightId }) => (
@@ -270,14 +275,14 @@ export function selectEngagementTarget(unit, snapshot, contacts, {
 
   if (unit.engagedTargetId !== null && unit.engagedTargetId !== undefined) {
     const engaged = byReference.get(unit.engagedTargetId);
-    if (engaged && isLive(engaged) && isEnemy(unit, engaged) && isWithinReach(unit, engaged)) {
+    if (engaged && isLive(engaged) && isEnemy(unit, engaged) && canReach(engaged)) {
       return Object.freeze({ target: engaged, contact: contactFor(engaged.referenceId) });
     }
   }
 
   const candidates = snapshot
     .filter((candidate) => (
-      isLive(candidate) && isEnemy(unit, candidate) && isWithinReach(unit, candidate)
+      isLive(candidate) && isEnemy(unit, candidate) && canReach(candidate)
         && (targetAvailable === null || targetAvailable(candidate))
     ))
     .map((target) => ({

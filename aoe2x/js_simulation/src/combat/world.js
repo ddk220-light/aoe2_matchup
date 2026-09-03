@@ -72,6 +72,7 @@ import {
   createDamageEvent,
   createDeathEvent,
   isWithinStopRange,
+  meleeChargeSpec,
   orderReadyAttacks,
   rangedSpec,
   trampleSpec,
@@ -135,13 +136,14 @@ const PATROL_OPENING_FRONT_BAND_TILES = 1.5;
 // This classifies current geometry only; it does not alter movement or damage.
 const PATROL_MELEE_CONTACT_FRONT_DEPTH_TILES = 1.0;
 const PATROL_CONTACT_LANE_LIMIT = 3;
+const EXPERIENCED_MELEE_RANGED_FRONT_LANE_LIMIT = 5;
 const PATROL_FORMATION_RANK_GAP_TILES = 0.32;
 const PATROL_FORMATION_DETACHED_LEAD_GAP_TILES = 0.50;
 // Group PATROL names a principal lane; lateral lanes are fallbacks for cohort
 // members sufficiently far from that axis. This measured opening-choice bias
 // is spatial and ends at first acquisition.
 const PATROL_OPENING_NEAR_FLANK_PENALTY_TILES = 0.25;
-const PATROL_OPENING_FAR_FLANK_PENALTY_TILES = 2.0;
+const PATROL_OPENING_FAR_FLANK_PENALTY_TILES = 0.25;
 // The opening PATROL lock is intentionally allowed to concentrate. After a
 // locked target dies, however, live 18- and 27-body ranged cohorts across
 // Paladin, Steppe Lancer, Champion, and Heavy-Camel fronts retain a compact
@@ -170,6 +172,38 @@ function hasMeleeMode(unit) {
 
 function unitEffects(unit) {
   return unit?.mechanics?.effects ?? {};
+}
+
+
+function delayedImpactExplosionSpec(unit, weaponMode = null) {
+  const effects = unitEffects(unit);
+  const requiredWeaponMode = effects.delayed_impact_weapon_mode ?? null;
+  if (requiredWeaponMode !== null && requiredWeaponMode !== weaponMode) return null;
+  const meleeAttack = effects.delayed_impact_melee_attack ?? 0;
+  const radiusTiles = effects.delayed_impact_radius_tiles ?? 0;
+  const delaySeconds = effects.delayed_impact_delay_seconds ?? 0;
+  const repeatCount = effects.delayed_impact_repeat_count ?? 0;
+  const repeatIntervalSeconds = effects.delayed_impact_repeat_interval_seconds
+    ?? delaySeconds;
+  if (!(meleeAttack > 0) || !(radiusTiles > 0)
+      || !(delaySeconds > 0) || !(repeatCount > 0)) return null;
+  if (!Number.isFinite(meleeAttack) || !Number.isFinite(radiusTiles)
+      || !Number.isFinite(delaySeconds) || !Number.isFinite(repeatIntervalSeconds)) {
+    throw new TypeError("delayed impact explosion parameters must be finite");
+  }
+  if (!Number.isSafeInteger(repeatCount) || repeatCount < 1) {
+    throw new RangeError("delayed impact repeat count must be a positive safe integer");
+  }
+  if (repeatIntervalSeconds <= 0) {
+    throw new RangeError("delayed impact repeat interval must be positive");
+  }
+  return {
+    meleeAttack,
+    radiusTiles,
+    delayTicks: secondsToTicksCeil(delaySeconds),
+    repeatCount,
+    repeatIntervalTicks: secondsToTicksCeil(repeatIntervalSeconds),
+  };
 }
 
 
@@ -220,15 +254,46 @@ function reloadTicksForUnit(unit, tick) {
 }
 
 
-function meleeAttackAmount(actor, target, tick) {
+function readyMeleeAreaCharge(unit, tick) {
+  const charge = meleeChargeSpec(unit?.mechanics);
+  return charge && (unit?.specialState?.meleeChargeReadyTick ?? 0) <= tick
+    ? charge
+    : null;
+}
+
+
+function isWithinActiveAttackReach(unit, target, tick) {
+  if (isWithinReach(unit, target)) return true;
+  const charge = readyMeleeAreaCharge(unit, tick);
+  if (!charge) return false;
+  // A charge-type-3 swing is the ranged use of the flexible sword: its
+  // circular area reaches a target as soon as that target's physical body
+  // intersects the authored blast radius. The ordinary attack remains a
+  // range-zero melee weapon after the charge is spent.
+  const dx = target.x - unit.x;
+  const dy = target.y - unit.y;
+  const victimRadius = collisionRadius(target);
+  const physicalGap = Math.hypot(
+    Math.max(0, Math.abs(dx) - victimRadius),
+    Math.max(0, Math.abs(dy) - victimRadius),
+  );
+  return physicalGap <= charge.attackRangeTiles + 1e-12;
+}
+
+
+function meleeAttackAmount(actor, target, tick, options = {}) {
   let amount = calculateDamage(actor, target);
-  const chargeDamage = unitEffects(actor).charge_attack_melee ?? 0;
-  const charged = chargeDamage > 0
-    && (actor?.specialState?.meleeChargeReadyTick ?? 0) <= tick;
+  const areaCharge = meleeChargeSpec(actor.mechanics);
+  const chargeDamage = areaCharge?.attackBonus
+    ?? unitEffects(actor).charge_attack_melee ?? 0;
+  const charged = options.charged ?? (
+    chargeDamage > 0
+      && (actor?.specialState?.meleeChargeReadyTick ?? 0) <= tick
+  );
   // Charge is bonus attack on the ordinary melee strike. Armor has already
   // been subtracted once by calculateDamage; do not subtract it a second time.
   if (charged) amount += chargeDamage;
-  return { amount, charged };
+  return { amount, charged, chargeDamage: charged ? chargeDamage : 0 };
 }
 
 
@@ -304,6 +369,11 @@ function freezeUnit(unit) {
       specialState: Object.freeze({
         ...unit.specialState,
         rampHitTicks: Object.freeze([...(unit.specialState.rampHitTicks ?? [])]),
+        ...(unit.specialState.bleedStacks ? {
+          bleedStacks: Object.freeze(unit.specialState.bleedStacks.map((stack) => (
+            Object.freeze({ ...stack })
+          ))),
+        } : {}),
       }),
     } : {}),
     ...(unit.relationByOwner
@@ -380,6 +450,9 @@ function mutableUnit(unit) {
       specialState: {
         ...unit.specialState,
         rampHitTicks: [...(unit.specialState.rampHitTicks ?? [])],
+        ...(unit.specialState.bleedStacks ? {
+          bleedStacks: unit.specialState.bleedStacks.map((stack) => ({ ...stack })),
+        } : {}),
       },
     } : {}),
     ...(unit.relationByOwner
@@ -407,6 +480,7 @@ function ensureSpecialState(unit) {
     rampHitTicks: [],
     bleedDamagePerSecond: 0,
     bleedUntilTick: 0,
+    bleedStacks: [],
     slowUntilTick: 0,
     allyHealRemaining: 0,
     allyHealPerTick: 0,
@@ -472,6 +546,96 @@ function initializeSpecialEffects(units) {
 }
 
 
+function applyPendingDismounts(units, tick, events) {
+  for (const unit of units) {
+    const form = unit.mechanics?.dismount_form;
+    if (unit.alive || !form || unit.specialState?.dismounted === true) continue;
+    if (!Number.isFinite(form.hp) || form.hp <= 0) {
+      throw new RangeError(`unit ${unit.referenceId} has an invalid dismount HP`);
+    }
+
+    const state = ensureSpecialState(unit);
+    const spawnDelaySeconds = form.spawn_delay_seconds;
+    if (!Number.isFinite(spawnDelaySeconds) || spawnDelaySeconds < 0) {
+      throw new RangeError(
+        `unit ${unit.referenceId} has an invalid dismount spawn delay`,
+      );
+    }
+    if (!Number.isSafeInteger(state.dismountReadyTick)) {
+      // A death-spawn replacement remains part of the command group that
+      // owned its parent. Capture the authored order before the next tick's
+      // dead-unit cleanup removes transient combat state. The replacement
+      // must not inherit a dead target or an in-progress swing, but it does
+      // inherit the player's durable move/patrol command so it can walk back
+      // into vision instead of idling forever outside its private LOS.
+      if (state.dismountInheritedMoveOrder === undefined
+          && unit.moveOrder !== undefined && unit.moveOrder !== null) {
+        state.dismountInheritedMoveOrder = unit.moveOrder;
+      }
+      state.dismountReadyTick = tick + secondsToTicksCeil(spawnDelaySeconds);
+      events.push(event(tick, "unit-dismount-pending", unit.referenceId, null, {
+        unitMaster: form.unit_master,
+        readyTick: state.dismountReadyTick,
+      }));
+    }
+    if (tick < state.dismountReadyTick) continue;
+
+    // The mounted body completes its authored death/dismount animation before
+    // the foot unit exists. During that interval it is dead and cannot be
+    // targeted. Materializing only after the mounted form's complete DAT death
+    // animation preserves the mounted death/on-kill event and prevents attacks
+    // from focusing a unit that does not yet exist in the game.
+    unit.mechanics = form;
+    unit.unitMaster = form.unit_master;
+    unit.hp = form.hp;
+    unit.maxHp = form.hp;
+    unit.alive = true;
+    state.baseMaxHp = form.hp;
+    state.baseSpeed = form.speed_tiles_per_second;
+    state.transformed = false;
+    state.dismounted = true;
+    state.bleedDamagePerSecond = 0;
+    state.bleedUntilTick = 0;
+    state.bleedStacks = [];
+    state.dismountCollisionRecovery = true;
+    delete state.dismountReadyTick;
+    unit.pursuitTargetId = null;
+    unit.engagedTargetId = null;
+    unit.attackTargetId = null;
+    unit.avoidance = null;
+    // The dismount animation is the recovery. Once the concrete foot unit has
+    // spawned it starts idle and may acquire a target on the following tick;
+    // no additional, invented weapon reload is appended to the three seconds.
+    unit.action = "idle";
+    unit.actionTimers = {
+      windup: 0,
+      reload: 0,
+      swing: 0,
+      acquire: 0,
+    };
+    delete unit.attackKind;
+    delete unit.pendingVolley;
+    delete unit.charge;
+    if (state.dismountInheritedMoveOrder !== undefined) {
+      unit.moveOrder = state.dismountInheritedMoveOrder;
+      // Combat pursuit suspended the PATROL before the mounted body died.
+      // With no inherited target, the replacement resumes transit toward the
+      // same authored point and performs ordinary acquisition along the way.
+      unit.patrolFormationTransit = unit.moveOrder.kind === "scenario-patrol";
+      delete state.dismountInheritedMoveOrder;
+    } else {
+      delete unit.moveOrder;
+      delete unit.patrolFormationTransit;
+    }
+    delete unit.patrolOpeningAttackStarted;
+    events.push(event(tick, "unit-dismounted", unit.referenceId, null, {
+      unitMaster: form.unit_master,
+      hp: form.hp,
+    }));
+  }
+}
+
+
 function advanceSpecialEffects(units, tick, events) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   for (const unit of units) {
@@ -494,23 +658,49 @@ function advanceSpecialEffects(units, tick, events) {
       unit.hp = Math.min(maxHp, unit.hp + heal);
       unit.specialState.allyHealRemaining -= heal;
     }
-    if (unit.specialState.bleedUntilTick > tick
-        && unit.specialState.bleedDamagePerSecond > 0) {
-      applyCommittedDamage(
-        units,
-        unit.specialState.bleedActorId ?? unit.referenceId,
-        unit,
-        unit.specialState.bleedDamagePerSecond / TICKS_PER_SECOND,
-        tick,
-        tick,
-        events,
-        { kind: "bleed" },
-      );
+    if (Array.isArray(unit.specialState.bleedStacks)) {
+      unit.specialState.bleedStacks = unit.specialState.bleedStacks
+        .filter((stack) => stack.untilTick > tick);
+      // Curare and other damage-over-time projectiles create one independent
+      // stack per successful projectile. Group the active stacks by attacker
+      // for this tick: it preserves source ownership and expiration while
+      // avoiding one event allocation per historical projectile per tick.
+      const damagePerSecondByActor = new Map();
+      for (const stack of unit.specialState.bleedStacks) {
+        damagePerSecondByActor.set(
+          stack.actorId,
+          (damagePerSecondByActor.get(stack.actorId) ?? 0) + stack.damagePerSecond,
+        );
+      }
+      for (const [actorId, damagePerSecond] of damagePerSecondByActor) {
+        applyCommittedDamage(
+          units,
+          actorId ?? unit.referenceId,
+          unit,
+          damagePerSecond / TICKS_PER_SECOND,
+          tick,
+          tick,
+          events,
+          { kind: "bleed" },
+        );
+        if (!unit.alive) break;
+      }
       if (!unit.alive) continue;
     }
     const threshold = effects.hp_transform_threshold ?? 0;
+    const reversibleTransform = effects.hp_transform_reversible === true;
+    const untransformedMaxHp = unit.specialState.untransformedMaxHp
+      ?? unit.specialState.baseMaxHp;
+    const thresholdHp = untransformedMaxHp * threshold;
+    // Jian's authored boundary is asymmetric: below 45 HP removes the
+    // shield, while healing back to 45 HP restores it. Keeping the two
+    // inequalities distinct prevents a one-tick form oscillation at exactly
+    // the threshold.
     if (!unit.specialState.transformed && threshold > 0
-        && unit.hp <= unit.specialState.baseMaxHp * threshold + 1e-12) {
+        && unit.hp < thresholdHp - 1e-12) {
+      if (reversibleTransform) {
+        unit.specialState.untransformedMaxHp = unit.specialState.baseMaxHp;
+      }
       unit.specialState.transformed = true;
       if ((effects.transform_hp ?? 0) > 0) {
         unit.specialState.baseMaxHp = effects.transform_hp;
@@ -518,6 +708,14 @@ function advanceSpecialEffects(units, tick, events) {
         unit.hp = Math.min(unit.hp, unit.maxHp);
       }
       events.push(event(tick, "unit-transformed", unit.referenceId, null));
+    } else if (unit.specialState.transformed && reversibleTransform
+        && threshold > 0 && unit.hp >= thresholdHp - 1e-12) {
+      unit.specialState.transformed = false;
+      unit.specialState.baseMaxHp = untransformedMaxHp;
+      unit.maxHp = untransformedMaxHp + unit.specialState.auraHpBonus;
+      unit.hp = Math.min(unit.hp, unit.maxHp);
+      delete unit.specialState.untransformedMaxHp;
+      events.push(event(tick, "unit-form-restored", unit.referenceId, null));
     }
     const target = byReference.get(unit.pursuitTargetId)
       ?? byReference.get(unit.engagedTargetId);
@@ -876,7 +1074,33 @@ function selectPatrolFormationContactLanes(unit, snapshot, order, roster) {
     || left.longitudinal - right.longitudinal
     || left.candidate.referenceId - right.candidate.referenceId);
   const main = lateral[Math.floor((lateral.length - 1) / 2)];
-  if (detachedFront || lateral.length < 3) return [main.candidate];
+  if (detachedFront) {
+    if (unit.mechanics?.ranged && next?.length > 0) {
+      // A detached melee leader is the ranged formation's principal first
+      // target, but the adjacent rank remains a small fallback lane. In the
+      // fresh tape 24 of 27 Arbalesters take the leader and three take that
+      // adjacent body. Melee pursuers still collapse onto the detached body;
+      // their physical contact-capture mechanic performs any redistribution.
+      const adjacent = next.slice().sort((left, right) => (
+        Math.abs(left.lateral - main.lateral)
+          - Math.abs(right.lateral - main.lateral)
+        || left.candidate.referenceId - right.candidate.referenceId
+      ))[0];
+      return [main.candidate, adjacent.candidate];
+    }
+    return [main.candidate];
+  }
+  if (lateral.length < 3) {
+    if (unit.mechanics?.ranged && next?.length > 0) {
+      const adjacent = next.slice().sort((left, right) => (
+        Math.abs(left.lateral - main.lateral)
+          - Math.abs(right.lateral - main.lateral)
+        || left.candidate.referenceId - right.candidate.referenceId
+      ))[0];
+      return [main.candidate, adjacent.candidate];
+    }
+    return [main.candidate];
+  }
   return [main, lateral[0], lateral.at(-1)]
     .filter((entry, index, entries) => entries.indexOf(entry) === index)
     .slice(0, PATROL_CONTACT_LANE_LIMIT)
@@ -936,7 +1160,10 @@ function selectGeometricPatrolLaneIndex(unit, snapshot, order, referenceIds) {
     ))[0];
     return lateralChoice.index;
   }
-  if (unit.moveOrder?.kind === "opening-patrol" && targets.length === 2) {
+  const rangedScenarioPatrol = unit.moveOrder?.kind === "scenario-patrol"
+    && unit.mechanics?.ranged === true;
+  if ((unit.moveOrder?.kind === "opening-patrol" || rangedScenarioPatrol)
+      && targets.length >= 2) {
     // Direct melee PATROLs overwhelmingly share the principal central body:
     // across the five 18v27 captures, only 0-2 Elephants and 1-6 Camels use
     // the second visible lane. Preserve that small fraction, but select its
@@ -1014,7 +1241,14 @@ function selectPatrolCohortOpeningTargets(unit, snapshot, order) {
     // Select those lanes from current geometry after shared vision confirms
     // contact. This generalizes to any placement, type, and army size without
     // encoding the golden scouts' IDs or an observed outcome.
-    return selectCentralPatrolContactLanes(unit, snapshot, order, roster);
+    const lanes = selectCentralPatrolContactLanes(unit, snapshot, order, roster);
+    // A cohort no more than twice the width of the auxiliary screen commits
+    // its first lock to one central breach. Only a much larger cohort exposes
+    // both central lanes. The fresh 15-v-9 Ratha capture assigns all fifteen
+    // first locks to the same scout before physical contact redistributes
+    // them; the existing 27-v-9 captures expose both lanes. This depends only
+    // on current army sizes and still ends at first acquisition.
+    return cohortSize <= 2 * roster.length ? lanes?.slice(0, 1) ?? null : lanes;
   }
   if (order.kind === "opening-patrol") {
     // The direct golden melee PATROL presents the two bodies immediately to
@@ -1068,6 +1302,36 @@ function selectPatrolCohortOpeningTargets(unit, snapshot, order) {
       || left.longitudinal - right.longitudinal
       || left.candidate.referenceId - right.candidate.referenceId
   ))[0];
+  if (order.kind === "scenario-patrol" && order.sharedVisionPrimed === true) {
+    // A trigger-issued follow-up PATROL does not collapse an experienced
+    // melee cohort onto the ranged front's single leading body. At the
+    // diplomacy gate the player already has shared vision, and the game's
+    // formation lanes stay distributed across the exposed firing rank. The
+    // 2026-09-02 Ratha/Arbalester tape has twelve surviving melee units take
+    // five distinct first post-gate locks (maximum load five); the ordinary
+    // three-anchor opening policy often collapsed the simulator onto one.
+    //
+    // Sample at most five evenly spaced lateral lanes from the same geometric
+    // front band used by every PATROL. This avoids the opposite error of
+    // treating all deep ranged bodies as approach goals. No target ID, unit
+    // type, elapsed time, or outcome is encoded here.
+    const laneCount = Math.min(
+      EXPERIENCED_MELEE_RANGED_FRONT_LANE_LIMIT,
+      frontBand.length,
+    );
+    const lanes = [];
+    for (let index = 0; index < laneCount; index += 1) {
+      const position = laneCount === 1
+        ? 0
+        : Math.round(index * (frontBand.length - 1) / (laneCount - 1));
+      lanes.push(frontBand[position]);
+    }
+    const middle = Math.floor((lanes.length - 1) / 2);
+    lanes[middle] = principal;
+    return lanes
+      .filter((entry, index, entries) => entries.indexOf(entry) === index)
+      .map(({ candidate }) => candidate);
+  }
   const below = frontBand.filter(({ lateral, candidate }) => (
     candidate.referenceId !== principal.candidate.referenceId
       && lateral < principal.lateral
@@ -1432,7 +1696,9 @@ function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = 
     // own (later) frame; an abandoned unreleased charge keeps its charge.
     const releaseTicks = unit.attackKind === "charge"
       ? chargeSpec(unit.mechanics).windupTicks
-      : attackDelayTicksForUnit(unit);
+      : unit.attackKind === "melee-charge"
+        ? meleeChargeSpec(unit.mechanics).windupTicks
+        : attackDelayTicksForUnit(unit);
     if (unit.actionTimers.swing >= releaseTicks) continue;
     if (unit.owner === rangedWindupRetargetOwner
         && rangedSpec(unit.mechanics) !== null
@@ -1692,9 +1958,8 @@ function acquirePursuitTargets(
       // recovery behavior.
       const nextRetargetScanTick = pursuitRecoveryState.nextRetargetScanTick
         .get(unit.referenceId) ?? 0;
-      const initialScenarioPatrol = unit.moveOrder?.kind === "scenario-patrol"
-        && unit.moveOrder.sharedVisionPrimed !== true;
-      const recoveryScanDue = !initialScenarioPatrol
+      const scenarioPatrol = unit.moveOrder?.kind === "scenario-patrol";
+      const recoveryScanDue = !scenarioPatrol
         || tick >= nextRetargetScanTick;
       const opportunity = recoveryScanDue && (routeActive || retargetReady)
           && current?.alive && !isWithinReach(unit, current)
@@ -1712,7 +1977,7 @@ function acquirePursuitTargets(
           : null
       );
       if (recoveryScanDue && (routeActive || retargetReady)
-          && initialScenarioPatrol) {
+          && scenarioPatrol) {
         pursuitRecoveryState.nextRetargetScanTick.set(
           unit.referenceId,
           tick + Math.round(PATROL_RESCAN_SECONDS * TICKS_PER_SECOND),
@@ -2743,6 +3008,9 @@ function moveUnits(units, map, tick, events, kiteState = null,
   contactReservationState = null, contactSteeringStates = new Map(),
   pursuitRecoveryState = null) {
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
+  const allowedStartingOverlapReferenceIds = new Set(live.filter((unit) => (
+    unit.specialState?.dismountCollisionRecovery === true
+  )).map(({ referenceId }) => referenceId));
   const byReference = new Map(live.map((unit) => [unit.referenceId, unit]));
   let pairInteractions = createPairInteractionSnapshot({
     contactReservations: contactReservationState?.reservations ?? new Map(),
@@ -3203,6 +3471,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
       proposals,
       tick,
       externalReservations: rangedCrowdPlan.contactReservations,
+      inheritedOverlapReferenceIds: allowedStartingOverlapReferenceIds,
     })
     : null;
   if (contactUpdate) {
@@ -3278,6 +3547,9 @@ function moveUnits(units, map, tick, events, kiteState = null,
     unit.x = result.x;
     unit.y = result.y;
     unit.avoidance = result.avoidance;
+    if (unit.specialState?.dismountCollisionRecovery === true) {
+      delete unit.specialState.dismountCollisionRecovery;
+    }
     if (dx !== 0 || dy !== 0) {
       movedIds.add(unit.referenceId);
       unit.facing = Math.atan2(dy, dx);
@@ -3835,7 +4107,7 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
         const distance = Math.hypot(engaged.x - unit.x, engaged.y - unit.y);
         if (distance <= unit.mechanics.line_of_sight_tiles
             && (unit.action === "attacking"
-              || isWithinReach(unit, engaged)
+              || isWithinActiveAttackReach(unit, engaged, tick)
               || isWithinBlockedMeleeTailReach(unit, engaged))) {
           continue;
         }
@@ -3862,7 +4134,10 @@ function updateEngagements(units, contacts, tick, events, blockedIds, kiteState 
       || (incomingMeleeEngagements.get(candidate.referenceId) ?? 0)
         < incomingEngagementCapacity(candidate)
     );
-    const selection = selectEngagementTarget(self, snapshot, contacts, { targetAvailable });
+    const selection = selectEngagementTarget(self, snapshot, contacts, {
+      targetAvailable,
+      targetInReach: (candidate) => isWithinActiveAttackReach(self, candidate, tick),
+    });
     // Experiment harness: engagement follows pursuit. Off by default.
     //
     // Priority, not exclusivity: a unit whose pursuit target is in reach
@@ -4124,6 +4399,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       : { x: target.x, y: target.y };
   let originX = unit.x;
   let originY = unit.y;
+  const delayedImpactExplosion = delayedImpactExplosionSpec(unit, spec.weaponMode);
   const spawnArea = options.spawnArea;
   if (Array.isArray(spawnArea)
       && ((spawnArea[0] ?? 0) > 0 || (spawnArea[1] ?? 0) > 0)) {
@@ -4169,6 +4445,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       kind: "shell",
       actorId: unit.referenceId,
       actorOwner: unit.owner,
+      actorRelationByOwner: unit.relationByOwner,
       actorMechanics: unit.mechanics,
       targetId: target.referenceId,
       aimX: aim.x,
@@ -4177,6 +4454,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       firedTick: tick,
       arrivalTick: tick + flight,
       index: 0,
+      delayedImpactExplosion,
     });
     const debris = siegeDebrisLandingPoints({
       impactX: aim.x,
@@ -4236,6 +4514,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       arrivalTick: tick + Math.max(1,
         secondsToTicksCeil(distance / spec.projectileSpeed)),
       index: projectileIndex,
+      delayedImpactExplosion,
     });
     return;
   }
@@ -4272,6 +4551,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       firedTick: tick,
       arrivalTick: tick + Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed)),
       index: projectileIndex,
+      delayedImpactExplosion,
     });
     return;
   }
@@ -4330,6 +4610,10 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
     arrivalTick: tick + Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed)),
     index: projectileIndex,
     halfWidth: spec.projectileHalfWidth,
+    // Accurate projectiles obey the projectile unit's DAT hit mode. Mode 0
+    // ignores every non-target body; missed-accuracy shots use the separate
+    // `stray` path above and can still hit an unintended body for half damage.
+    hitMode: options.projectileHitMode ?? spec.projectileHitMode,
     amount: calculateDamage(unit, target, {
       attackClasses: options.attackClasses ?? undefined,
     }),
@@ -4342,6 +4626,7 @@ function releaseRangedShot(unit, target, spec, tick, events, projectiles, veloci
       damagePerSecond: unitEffects(unit).impact_hazard_damage_per_second,
       stacks: unitEffects(unit).impact_hazard_stacks === true,
     } : null,
+    delayedImpactExplosion,
   });
 }
 
@@ -4365,6 +4650,7 @@ function releaseRangedExtraProjectile(unit, target, spec, tick, events,
       // independent base-accuracy scatter roll here.
       accuracyPercent: spec.accuracyPercent,
       spawnArea: spec.spawnArea,
+      projectileHitMode: spec.secondaryProjectileHitMode,
     });
 }
 
@@ -4531,17 +4817,21 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
       // A charge cycle runs on the dat special_graphic animation with its own
       // (later) release frame; a melee cycle keeps the attack graphic timing.
       const charge = unit.attackKind === "charge" ? chargeSpec(unit.mechanics) : null;
-      const delay = charge ? charge.windupTicks : attackDelayTicksForUnit(unit);
+      const areaCharge = unit.attackKind === "melee-charge"
+        ? meleeChargeSpec(unit.mechanics) : null;
+      const delay = charge
+        ? charge.windupTicks
+        : areaCharge?.windupTicks ?? attackDelayTicksForUnit(unit);
       const rawAnimation = charge
         ? charge.animationTicks
-        : attackAnimationTicks(unit.mechanics);
+        : areaCharge?.animationTicks ?? attackAnimationTicks(unit.mechanics);
       // Ordinary attack graphics are playback-synchronised to the weapon
       // cycle. A long source graphic must not impose a second, slower reload
       // cap (most visibly, Elite Samurai's 1.60 s graphic versus its Japanese
       // 1.425 s reload). Preserve the release frame, but finish recovery when
       // the shorter weapon cycle has elapsed. Special charge animations keep
       // their authored duration.
-      const animation = charge
+      const animation = charge || areaCharge
         ? rawAnimation
         : Math.max(delay, Math.min(rawAnimation, reloadTicksForUnit(unit, tick)));
       unit.actionTimers.swing += 1;
@@ -4556,8 +4846,13 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
           releaseRangedVolley(unit, target, ranged, tick, events, projectiles,
             velocities, shotRng);
         } else {
-          const strike = target ? meleeAttackAmount(unit, target, tick) : {
-            amount: 0, charged: false,
+          const strike = target ? meleeAttackAmount(
+            unit,
+            target,
+            tick,
+            areaCharge ? { charged: true } : {},
+          ) : {
+            amount: 0, charged: false, chargeDamage: 0,
           };
           ready.push({
             type: "attack-ready",
@@ -4566,6 +4861,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
             targetId: unit.attackTargetId,
             amount: strike.amount,
             charged: strike.charged,
+            chargeDamage: strike.chargeDamage,
           });
         }
       }
@@ -4644,7 +4940,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
     // outline attack envelope. Without this gate, a stationary crowd member
     // could repeatedly attack anything inside line of sight merely because
     // collision prevented it from moving.
-    if (!isWithinReach(unit, target)) continue;
+    if (!isWithinActiveAttackReach(unit, target, tick)) continue;
     // A range-zero weapon begins a new cycle only on its physical stop
     // surface. Across the fresh Paladin/Champion mixed tapes, Euclidean start
     // maxima (0.732-0.806) are exactly the diagonal image of collision extents
@@ -4652,20 +4948,25 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
     // Reach fighters retain outline reach so a Steppe Lancer can attack over
     // its front rank; an already-released swing above may still finish after
     // separation.
-    if (hasMeleeMode(unit)
+    const areaCharge = readyMeleeAreaCharge(unit, tick);
+    if (!areaCharge && hasMeleeMode(unit)
         && (unit.mechanics.attack_range_tiles ?? 0) === 0
         && !isWithinStopRange(unit, target)) continue;
-    if (!isWithinStopRange(unit, target) && movedIds.has(unit.referenceId)) continue;
+    if (!areaCharge
+        && !isWithinStopRange(unit, target)
+        && movedIds.has(unit.referenceId)) continue;
 
-    const delay = attackDelayTicksForUnit(unit);
+    const delay = areaCharge?.windupTicks ?? attackDelayTicksForUnit(unit);
     const readyTick = tick + delay;
     events.push(createAttackStartEvent({
       tick,
       actorId: unit.referenceId,
       targetId: target.referenceId,
       readyTick,
+      ...(areaCharge ? { kind: "melee-charge" } : {}),
     }));
     unit.action = "attacking";
+    if (areaCharge) unit.attackKind = "melee-charge";
     if (unit.moveOrder?.kind === "scenario-patrol") {
       unit.patrolOpeningAttackStarted = true;
     }
@@ -4687,7 +4988,12 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
         releaseRangedVolley(unit, target, ranged, tick, events, projectiles,
           velocities, shotRng);
       } else {
-        const strike = meleeAttackAmount(unit, target, tick);
+        const strike = meleeAttackAmount(
+          unit,
+          target,
+          tick,
+          areaCharge ? { charged: true } : {},
+        );
         ready.push({
           type: "attack-ready",
           readyTick,
@@ -4695,6 +5001,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
           targetId: target.referenceId,
           amount: strike.amount,
           charged: strike.charged,
+          chargeDamage: strike.chargeDamage,
         });
       }
     }
@@ -4744,7 +5051,8 @@ function commitReadyAttacks(units, ready, tick, events) {
         charged: attack.charged === true,
       });
     if (attack.charged && actor.specialState) {
-      const rechargeSeconds = unitEffects(actor).charge_recharge_time ?? 0;
+      const rechargeSeconds = meleeChargeSpec(actor.mechanics)?.rechargeSeconds
+        ?? unitEffects(actor).charge_recharge_time ?? 0;
       actor.specialState.meleeChargeReadyTick = tick
         + secondsToTicksCeil(rechargeSeconds);
       actor.specialState.chargedSpeedActive = false;
@@ -4756,7 +5064,7 @@ function commitReadyAttacks(units, ready, tick, events) {
     // rule). Victims are struck in unit order at this same instant, each for
     // its own post-armor fraction; a killing trample clamps at 0 like any hit.
     const blast = trampleSpec(actor.mechanics);
-    if (blast) {
+    if (blast && (!blast.chargedOnly || attack.charged)) {
       const attackDx = target.x - actor.x;
       const attackDy = target.y - actor.y;
       const attackLength = Math.hypot(attackDx, attackDy) || 1;
@@ -4787,8 +5095,10 @@ function commitReadyAttacks(units, ready, tick, events) {
           );
           if (reach > blast.widthTiles + 1e-12) continue;
         }
+        const splashBaseDamage = calculateDamage(actor, victim)
+          + (attack.charged ? (attack.chargeDamage ?? 0) : 0);
         applyCommittedDamage(units, attack.actorId, victim,
-          blast.damageFraction * calculateDamage(actor, victim),
+          blast.damageFraction * splashBaseDamage,
           attack.readyTick, tick, events, { kind: "trample" });
       }
     }
@@ -4827,6 +5137,28 @@ function addImpactHazard(projectile, x, y, tick, hazards, events) {
 }
 
 
+function queueDelayedImpactExplosions(projectile, x, y, tick, remaining) {
+  const spec = projectile.delayedImpactExplosion;
+  if (!spec) return;
+  for (let index = 0; index < spec.repeatCount; index += 1) {
+    remaining.push({
+      kind: "delayed-impact-explosion",
+      actorId: projectile.actorId,
+      actorOwner: projectile.actorOwner,
+      actorRelationByOwner: projectile.actorRelationByOwner,
+      actorMechanics: projectile.actorMechanics,
+      aimX: x,
+      aimY: y,
+      meleeAttack: spec.meleeAttack,
+      blastRadius: spec.radiusTiles,
+      firedTick: projectile.firedTick,
+      arrivalTick: tick + spec.delayTicks + index * spec.repeatIntervalTicks,
+      index,
+    });
+  }
+}
+
+
 function processChargeProjectiles(units, projectiles, tick, events, hazards = null) {
   const remaining = [];
   const resolved = [];
@@ -4838,6 +5170,35 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
     || left.index - right.index
   ));
   for (const projectile of ordered) {
+    if (projectile.kind === "delayed-impact-explosion") {
+      if (projectile.arrivalTick > tick) {
+        remaining.push(projectile);
+        continue;
+      }
+      const actor = {
+        referenceId: projectile.actorId,
+        owner: projectile.actorOwner,
+        relationByOwner: projectile.actorRelationByOwner,
+        mechanics: projectile.actorMechanics,
+      };
+      for (const victim of units) {
+        if (!victim.alive || !isHostile(actor, victim)) continue;
+        const reach = Math.hypot(
+          victim.x - projectile.aimX,
+          victim.y - projectile.aimY,
+        ) - collisionRadius(victim);
+        if (reach > projectile.blastRadius + 1e-12) continue;
+        const amount = calculateDamage(actor, victim, {
+          attackClasses: { 4: projectile.meleeAttack },
+        });
+        applyCommittedDamage(units, projectile.actorId, victim, amount,
+          tick, tick, events, {
+            kind: "delayed-impact-explosion",
+            projectileIndex: projectile.index,
+          });
+      }
+      continue;
+    }
     if (projectile.kind === "bolt") {
       // Pass-through flight: advance one step, damage every enemy whose
       // collision box (expanded by the bolt's half width) contains the
@@ -4884,9 +5245,10 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
       continue;
     }
     if (projectile.kind === "ranged") {
-      // Physical point flight: hit the first hostile collision box. Assigned
-      // targets take full damage; unintended interceptions take half damage,
-      // floored to the universal one-damage minimum.
+      // Physical point flight. DAT hit mode 0 checks only the assigned target,
+      // so an accurate arrow passes through every other unit. Other hit modes
+      // may be intercepted; those unintended hits take half damage (minimum
+      // one). This is separate from accuracy misses, handled by `stray` below.
       projectile.x += projectile.stepX;
       projectile.y += projectile.stepY;
       projectile.traveled += projectile.stepLength;
@@ -4897,6 +5259,8 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
       };
       const victim = units.filter((candidate) => {
         if (!candidate.alive || !isHostile(actor, candidate)) return false;
+        if ((projectile.hitMode ?? 0) === 0
+            && candidate.referenceId !== projectile.originalTargetId) return false;
         const dx = Math.abs(candidate.x - projectile.x);
         const dy = Math.abs(candidate.y - projectile.y);
         return Math.max(dx, dy)
@@ -4927,6 +5291,8 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
       } else {
         addImpactHazard(projectile, projectile.aimX, projectile.aimY,
           tick, hazards, events);
+        queueDelayedImpactExplosions(
+          projectile, projectile.aimX, projectile.aimY, tick, remaining);
       }
       continue;
     }
@@ -4961,6 +5327,8 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
           Math.max(1, (projectile.damageFraction ?? MISS_DAMAGE_FRACTION) * full),
           tick, tick, events,
           { kind: "stray-projectile", projectileIndex: projectile.index });
+        queueDelayedImpactExplosions(
+          projectile, projectile.x, projectile.y, tick, remaining);
         continue;
       }
       if (projectile.traveled < projectile.totalDistance - 1e-9
@@ -4983,6 +5351,8 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
           tick, tick, events,
           { kind: "stray-projectile", projectileIndex: projectile.index });
       }
+      queueDelayedImpactExplosions(
+        projectile, projectile.aimX, projectile.aimY, tick, remaining);
       continue;
     }
     if (projectile.kind === "grenade") {
@@ -5017,6 +5387,8 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
             triggersOnHit: victim.referenceId === projectile.targetId,
           });
       }
+      queueDelayedImpactExplosions(
+        projectile, projectile.aimX, projectile.aimY, tick, remaining);
       continue;
     }
     if (projectile.kind === "shell") {
@@ -5039,6 +5411,8 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
           Math.max(1, fraction * full), tick, tick, events,
           { kind: "shell-projectile", projectileIndex: 0 });
       }
+      queueDelayedImpactExplosions(
+        projectile, projectile.aimX, projectile.aimY, tick, remaining);
       continue;
     }
     if (projectile.kind === "pebble") {
@@ -5084,6 +5458,13 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
       });
     addImpactHazard(projectile, projectile.x ?? target.x,
       projectile.y ?? target.y, tick, hazards, events);
+    queueDelayedImpactExplosions(
+      projectile,
+      projectile.x ?? target.x,
+      projectile.y ?? target.y,
+      tick,
+      remaining,
+    );
     if (projectile.kind !== "ranged" || !(projectile.impactSplashRadius > 0)) continue;
     const actor = byReference.get(projectile.actorId)
       ?? { mechanics: projectile.actorMechanics };
@@ -5183,13 +5564,15 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
     const bleedDps = effects.bleed_dps ?? 0;
     if (bleedDps > 0 && hpAfter > 0) {
       const targetState = ensureSpecialState(target);
-      targetState.bleedDamagePerSecond = Math.max(
-        targetState.bleedDamagePerSecond,
-        bleedDps,
-      );
-      targetState.bleedUntilTick = tick
-        + secondsToTicksCeil(effects.bleed_duration ?? 0);
-      targetState.bleedActorId = actorId;
+      const durationTicks = secondsToTicksCeil(effects.bleed_duration ?? 0);
+      if (durationTicks > 0) {
+        targetState.bleedStacks ??= [];
+        targetState.bleedStacks.push({
+          actorId,
+          damagePerSecond: bleedDps,
+          untilTick: tick + durationTicks,
+        });
+      }
     }
     const slowPercent = extra?.charge
       ? (effects.charge_slow_percent ?? 0)
@@ -5210,6 +5593,17 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
     }
   }
   if (hpAfter > 0) return;
+
+  // Capture a durable command at the death boundary itself. Most deaths are
+  // followed by applyPendingDismounts later in this tick, but damage-over-time
+  // can kill during the start-of-tick special-effects pass, before dead-unit
+  // validation clears transient state. Taking the command here makes every
+  // damage source obey the same replacement-order inheritance rule.
+  if (target.mechanics?.dismount_form
+      && target.specialState?.dismounted !== true
+      && target.moveOrder !== undefined && target.moveOrder !== null) {
+    ensureSpecialState(target).dismountInheritedMoveOrder = target.moveOrder;
+  }
 
   if (actor?.alive && actor.specialState) {
     const effects = unitEffects(actor);
@@ -5246,6 +5640,36 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
     targetId: target.referenceId,
     readyTick,
   }));
+  const deathEffects = unitEffects(target);
+  const deathExplosionAttack = deathEffects.death_explosion_melee_attack ?? 0;
+  const deathExplosionRadius = deathEffects.death_explosion_radius_tiles ?? 0;
+  if (deathExplosionAttack > 0 && deathExplosionRadius > 0) {
+    const deathActor = {
+      referenceId: target.referenceId,
+      owner: target.owner,
+      relationByOwner: target.relationByOwner,
+      mechanics: target.mechanics,
+    };
+    for (const victim of units) {
+      if (!victim.alive || !isHostile(deathActor, victim)) continue;
+      const reach = Math.hypot(victim.x - target.x, victim.y - target.y)
+        - collisionRadius(victim);
+      if (reach > deathExplosionRadius + 1e-12) continue;
+      const explosionDamage = calculateDamage(deathActor, victim, {
+        attackClasses: { 4: deathExplosionAttack },
+      });
+      applyCommittedDamage(
+        units,
+        target.referenceId,
+        victim,
+        explosionDamage,
+        tick,
+        tick,
+        events,
+        { kind: "death-explosion" },
+      );
+    }
+  }
   for (const ally of units) {
     if (!ally.alive || ally.owner !== target.owner || !ally.specialState) continue;
     const effects = unitEffects(ally);
@@ -5370,6 +5794,7 @@ export function stepWorld(world) {
   const remainingHazards = hazards
     ? processImpactHazards(units, hazards, tick, events)
     : null;
+  applyPendingDismounts(units, tick, events);
   const scenarioUpdate = advanceScenarioTriggers(world, units, tick, events);
   for (const owner of scenarioUpdate.patrolOwners) {
     patrolOpeningTargetByOwner?.delete(owner);

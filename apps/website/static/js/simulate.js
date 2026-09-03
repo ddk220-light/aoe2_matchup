@@ -1,13 +1,9 @@
 /*
  * Role: page — the Battle Sim page shell served at /.
  *
- * The battle itself no longer lives here. The simulation is the shared,
- * host-agnostic engine under static/js/engine/ (Engine 3 of 3, mirroring the
- * position-based backend engine aoe2x/sim/simulation_real.py), and every pixel
- * is drawn by static/js/sim_renderer.js. What stays in this file is the PAGE:
- * civ/unit pickers, rail search, army-size modes, deep links, the live stat and
- * damage-breakdown panels, and the thin PageSim wrapper that drives the engine
- * off requestAnimationFrame.
+ * The battle runs in a module worker using the shared simulationv3 engine.
+ * The page owns selection, playback and the live readout; Golden Arena and its
+ * units are drawn by the shared production map renderer.
  *
  * This file is an ES module (templates/simulate.html loads it with
  * type="module"), so it can read the classic scripts' globals — constants.js,
@@ -16,17 +12,10 @@
  * addEventListener, never through inline on*= attributes.
  */
 
-import {
-    createSimulation,
-    setArmorClassNames,
-    CANVAS_WIDTH,
-    CANVAS_HEIGHT,
-    RELIC_MAX,
-    RELIC_BONUS_UNITS,
-    KILL_BONUS_MAX,
-    KILL_BONUS_UNITS,
-} from "./engine/index.js";
-import { SimRenderer } from "./sim_renderer.js";
+import { createMapRenderer } from "/v3-runtime/viewer/map-renderer.js";
+
+const RELIC_MAX = 0;
+const KILL_BONUS_MAX = 0;
 
 // ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING, ICON_BASE,
 // CIV_EMBLEM_BASE are loaded from constants.js (via base.html)
@@ -40,13 +29,10 @@ function unitIconUrl(name) {
 }
 
 function hasRelicOption(state) {
-    return (
-        state.civ === "Lithuanians" &&
-        RELIC_BONUS_UNITS.has(state.unitSlug)
-    );
+    return false;
 }
 function hasKillOption(state) {
-    return KILL_BONUS_UNITS.has(state.unitSlug);
+    return false;
 }
 
 // ===== SELECTION STATE =====
@@ -112,8 +98,8 @@ function updateOptionsCurrent() {
     } else if (mode === "resources_upgrades") {
         el.textContent = `${res || "5000"} incl. Upgrades`;
     } else {
-        const c1 = (document.getElementById("team1Count") || {}).value || "30";
-        const c2 = (document.getElementById("team2Count") || {}).value || "30";
+        const c1 = (document.getElementById("team1Count") || {}).value || "15";
+        const c2 = (document.getElementById("team2Count") || {}).value || "15";
         el.textContent = `${c1} vs ${c2}`;
     }
 }
@@ -515,51 +501,181 @@ function setSimPhase(battle) {
     }
 }
 
-// ===== PAGE-SIDE SIM DRIVER =====
-// The engine has no clock and no canvas: it exposes step(dt) and a pile of
-// state. PageSim is the page's half of the old BattleSimulation — the rAF loop,
-// the play/pause/reset controls and the speed multiplier — wrapping an engine
-// Simulation (this.sim) and a SimRenderer (this.renderer).
+// ===== PAGE-SIDE V3 PLAYBACK DRIVER =====
+function deepFreeze(value, visited = new Set()) {
+    if (!value || typeof value !== "object" || visited.has(value)) return value;
+    visited.add(value);
+    for (const child of Object.values(value)) deepFreeze(child, visited);
+    return Object.freeze(value);
+}
+
 class PageSim {
     constructor(canvas) {
-        this.renderer = new SimRenderer(canvas);
-        this.sim = null;
+        this.canvas = canvas;
+        this.renderer = null;
+        this.worker = null;
+        this.config = null;
+        this.unitIndex = new Map();
+        this.snapshots = [];
+        this.cursor = 0;
+        this.latestSnapshot = null;
+        this.result = null;
+        this.complete = false;
+        this.playheadTick = 0;
+        this.runId = 0;
+        this.animationFrame = null;
         this.speedMultiplier = 3.0;
         this.running = false;
         this.paused = false;
         this.lastTimestamp = 0;
+        this.resizeObserver = new ResizeObserver(() => this.renderer?.resize());
+        this.resizeObserver.observe(canvas);
     }
 
     get winner() {
-        return this.sim ? this.sim.winner : null;
+        return this.result?.winnerOwner ?? null;
     }
 
-    // Build a fresh battle. `teams` is the engine's team-spec pair
-    // ({ combatDict, slug, civ, count, relics, startKills }) — every battle gets
-    // a brand-new Simulation, so nothing needs clearing between runs.
-    setup({ teams, seed }) {
-        this.sim = createSimulation({
-            mapW: CANVAS_WIDTH,
-            mapH: CANVAS_HEIGHT,
-            teams,
-            seed,
+    setStatus(message, isError = false) {
+        const element = document.getElementById("v3MapStatus");
+        if (!element) return;
+        element.textContent = message;
+        element.classList.toggle("error", isError);
+    }
+
+    buildUnitIndex(config) {
+        const index = new Map();
+        const addArmy = (owner, team, count) => {
+            const base = owner === 2 ? 9000 : owner === 3 ? 9500 : 10000;
+            for (let offset = 0; offset < count; offset += 1) {
+                index.set(base + offset, {
+                    owner,
+                    slug: team.mechanics.unit_slug,
+                    label: team.unit_name,
+                    master: team.mechanics.unit_master,
+                    mechanics: team.mechanics,
+                });
+            }
+        };
+        addArmy(2, config.teams[0], config.teams[0].count);
+        addArmy(3, config.teams[1], config.teams[1].count);
+        const auxiliary = config.scenario.auxiliaryArmiesByOwner || {};
+        for (const [ownerText, army] of Object.entries(auxiliary)) {
+            const owner = Number(ownerText);
+            addArmy(owner, {
+                unit_name: army.unit_name || "Scout Cavalry",
+                mechanics: army.mechanics,
+            }, army.cells.length);
+        }
+        return index;
+    }
+
+    rendererSnapshot(snapshot) {
+        const units = snapshot.units.map((row) => {
+            const [referenceId, x, y, facing, hp, alive, action,
+                pursuitTargetId, engagedTargetId, attackTargetId] = row;
+            const meta = this.unitIndex.get(referenceId);
+            if (!meta) throw new Error(`Missing unit metadata for ${referenceId}`);
+            return {
+                referenceId,
+                x,
+                y,
+                facing,
+                hp,
+                alive: alive === 1,
+                action,
+                pursuitTargetId,
+                engagedTargetId,
+                attackTargetId,
+                owner: meta.owner,
+                slug: meta.slug,
+                label: meta.label,
+                unitMaster: meta.master,
+                mechanics: meta.mechanics,
+            };
+        });
+        return deepFreeze({
+            tick: snapshot.tick,
+            units,
+            events: snapshot.events,
+            ...(snapshot.navigation ? { navigation: snapshot.navigation } : {}),
         });
     }
 
+    setup({ config, assets }) {
+        this.stop();
+        this.config = deepFreeze(config);
+        this.unitIndex = this.buildUnitIndex(this.config);
+        this.snapshots = [];
+        this.cursor = 0;
+        this.latestSnapshot = null;
+        this.result = null;
+        this.complete = false;
+        this.playheadTick = 0;
+        this.paused = false;
+        if (!this.renderer) {
+            this.renderer = createMapRenderer(
+                this.canvas,
+                this.config.scenario.mapFixture.map,
+                { presentation: "production" },
+            );
+        } else {
+            this.renderer.showFormation();
+        }
+        this.renderer.setUnitAssets(2, assets[2]);
+        this.renderer.setUnitAssets(3, assets[3]);
+        if (assets[4]) this.renderer.setUnitAssets(4, assets[4]);
+        this.renderer.resize();
+
+        const runId = ++this.runId;
+        this.worker = new Worker("/static/js/v3_sim_worker.js", { type: "module" });
+        this.worker.onmessage = ({ data }) => {
+            if (data?.runId !== runId) return;
+            if (data.type === "started") {
+                this.setStatus(`simulationv3 · seed ${this.config.seed}`);
+            } else if (data.type === "snapshots") {
+                this.snapshots.push(...data.snapshots);
+            } else if (data.type === "complete") {
+                this.result = data.result;
+                this.complete = true;
+                this.worker?.terminate();
+                this.worker = null;
+            } else if (data.type === "error") {
+                console.error("simulationv3 worker failed", data.error, data.stack);
+                this.complete = true;
+                this.running = false;
+                this.setStatus(`Simulation error: ${data.error}`, true);
+                this.worker?.terminate();
+                this.worker = null;
+            }
+        };
+        this.worker.onerror = (event) => {
+            console.error(
+                `simulationv3 worker error: ${event.message || "unknown error"} `
+                + `at ${event.filename || "worker"}:${event.lineno || 0}:${event.colno || 0}`,
+            );
+            this.complete = true;
+            this.running = false;
+            this.setStatus("Simulation worker failed to load", true);
+        };
+        this.worker.postMessage({ runId, config: this.config });
+        this.setStatus("Starting simulationv3…");
+    }
+
     start() {
-        if (!this.sim) {
+        if (!this.config) {
             alert("Please configure both teams");
             return;
         }
         this.running = true;
         this.paused = false;
         this.lastTimestamp = performance.now();
-        updateStats(this.sim);
-        updateDebugPanel(this.sim);
+        updateStats(null, this.unitIndex);
         this.loop();
     }
 
     pause() {
+        if (!this.running) return;
         this.paused = !this.paused;
         if (!this.paused) {
             this.lastTimestamp = performance.now();
@@ -567,118 +683,111 @@ class PageSim {
         }
     }
 
-    reset() {
-        this.sim = null;
+    stop() {
+        if (this.animationFrame !== null) cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
+        this.worker?.terminate();
+        this.worker = null;
         this.running = false;
         this.paused = false;
+    }
+
+    reset() {
+        this.stop();
+        this.config = null;
+        this.snapshots = [];
+        this.cursor = 0;
+        this.latestSnapshot = null;
+        this.result = null;
+        this.complete = false;
+        this.playheadTick = 0;
         updateStats(null);
-        this.render();
-        document.getElementById("debugContent").innerHTML =
-            '<p style="color:var(--text-muted)">Start a battle to see combat stats</p>';
+        this.renderer?.showFormation();
+        this.setStatus("Golden Arena ready");
     }
 
     loop() {
         if (!this.running || this.paused) return;
         const now = performance.now();
-        // Total sim-time to advance this frame. Clamp to avoid a huge catch-up
-        // after a tab stall, then step it in small fixed increments so fast
-        // speeds (5x/10x) stay accurate without large per-step movement that
-        // would let units tunnel past each other or skip attack ticks.
-        let remaining = Math.min(
-            ((now - this.lastTimestamp) / 1000) * this.speedMultiplier,
-            0.25,
-        );
+        const elapsed = Math.min((now - this.lastTimestamp) / 1000, 0.25);
         this.lastTimestamp = now;
-        const STEP = 1 / 60; // ~one 60fps tick per sub-step
-        while (remaining > 1e-6 && this.sim.winner === null) {
-            const dt = Math.min(remaining, STEP);
-            this.sim.step(dt);
-            remaining -= dt;
+        if (this.cursor < this.snapshots.length || this.complete) {
+            this.playheadTick += elapsed * this.speedMultiplier * 60;
         }
-        // The live readout used to be refreshed inside every sub-step; once per
-        // rendered frame is the same thing on screen and a lot less DOM churn.
-        updateStats(this.sim);
-        this.render();
-        if (this.sim.winner !== null) {
+        while (
+            this.cursor < this.snapshots.length
+            && this.snapshots[this.cursor].tick <= this.playheadTick
+        ) {
+            this.latestSnapshot = this.snapshots[this.cursor];
+            this.cursor += 1;
+        }
+        if (this.latestSnapshot) {
+            const snapshot = this.rendererSnapshot(this.latestSnapshot);
+            this.renderer.setSimulationSnapshot(snapshot);
+            updateStats(snapshot, this.unitIndex);
+        }
+        if (this.complete && this.cursor >= this.snapshots.length && this.result) {
             this.running = false;
-            updateBattleWinner(this.sim.winner);
+            updateBattleWinner(this.result.winnerOwner);
+            const winningTeam = this.result.winnerOwner === 2 ? 1 : 2;
+            const winner = this.config.teams[winningTeam - 1];
+            const remaining = Math.round(this.result.winnerHp);
+            this.setStatus(`${winner.civ} ${winner.unit_name} wins · ${remaining} HP remaining`);
         } else {
-            requestAnimationFrame(() => this.loop());
+            this.animationFrame = requestAnimationFrame(() => this.loop());
         }
     }
 
     render() {
-        if (this.sim) this.renderer.render(this.sim);
-        else this.renderer.renderEmpty();
+        this.renderer?.resize();
     }
 }
 
 // ===== LIVE STAT READOUT =====
-// Free function over an engine sim (null before/after a battle) — the DOM half
-// of the old BattleSimulation.updateStats. Army costs come from `currentBattle`
-// (page selection data the engine knows nothing about).
-function updateStats(sim) {
-    const team1 = sim ? sim.team1 : [];
-    const team2 = sim ? sim.team2 : [];
-    const team1Stats = sim ? sim.team1Stats : null;
-    const team2Stats = sim ? sim.team2Stats : null;
-    const battleTime = sim ? sim.battleTime : 0;
-    const t1Alive = team1.filter(
-        (u) => u.state !== "dead",
-    );
-    const t2Alive = team2.filter(
-        (u) => u.state !== "dead",
-    );
-    const t1Hp = t1Alive.reduce((s, u) => s + u.currentHp, 0);
-    const t2Hp = t2Alive.reduce((s, u) => s + u.currentHp, 0);
+function updateStats(snapshot, unitIndex = new Map()) {
+    const rows = { 2: [], 3: [] };
+    for (const unit of snapshot?.units || []) {
+        if (unit.owner === 2 || unit.owner === 3) rows[unit.owner].push(unit);
+    }
+    const t1Alive = rows[2].filter((unit) => unit.alive);
+    const t2Alive = rows[3].filter((unit) => unit.alive);
+    const t1Hp = snapshot
+        ? t1Alive.reduce((sum, unit) => sum + unit.hp, 0)
+        : (currentBattle?.team1_start_hp || 0);
+    const t2Hp = snapshot
+        ? t2Alive.reduce((sum, unit) => sum + unit.hp, 0)
+        : (currentBattle?.team2_start_hp || 0);
+    const t1AliveCount = snapshot ? t1Alive.length : (currentBattle?.team1_count || 0);
+    const t2AliveCount = snapshot ? t2Alive.length : (currentBattle?.team2_count || 0);
+    const battleTime = (snapshot?.tick ?? 0) / 60;
 
     document.getElementById("battleTimer").textContent =
         `${battleTime.toFixed(1)}s`;
 
-    // Team 1 progress
     document.getElementById("prog1Units").textContent =
-        `${t1Alive.length} / ${team1.length}`;
+        `${t1AliveCount} / ${rows[2].length || currentBattle?.team1_count || 0}`;
     document.getElementById("prog1Hp").textContent =
-        `${Math.round(t1Hp)} / ${Math.round(team1.length * (team1Stats?.hp || 0))}`;
+        `${Math.round(t1Hp)} / ${Math.round(currentBattle?.team1_start_hp || 0)}`;
     if (currentBattle) {
         document.getElementById("prog1Res").textContent =
             currentBattle.team1_total_cost;
-        const t1Dead = team1.length - t1Alive.length;
-        const t1MaxHp =
-            t1Alive.length * currentBattle.team1_max_hp;
-        const t1HpLostPct =
-            t1MaxHp > 0 ? (t1MaxHp - t1Hp) / t1MaxHp : 0;
-        const t1Lost =
-            t1Dead * currentBattle.team1_unit_cost +
-            Math.round(
-                t1Alive.length *
-                    currentBattle.team1_unit_cost *
-                    t1HpLostPct,
-            );
+        const lostFraction = currentBattle.team1_start_hp > 0
+            ? 1 - t1Hp / currentBattle.team1_start_hp : 0;
+        const t1Lost = Math.round(currentBattle.team1_total_cost * lostFraction);
         document.getElementById("prog1Lost").textContent =
             t1Lost;
     }
 
-    // Team 2 progress
     document.getElementById("prog2Units").textContent =
-        `${t2Alive.length} / ${team2.length}`;
+        `${t2AliveCount} / ${rows[3].length || currentBattle?.team2_count || 0}`;
     document.getElementById("prog2Hp").textContent =
-        `${Math.round(t2Hp)} / ${Math.round(team2.length * (team2Stats?.hp || 0))}`;
+        `${Math.round(t2Hp)} / ${Math.round(currentBattle?.team2_start_hp || 0)}`;
     if (currentBattle) {
         document.getElementById("prog2Res").textContent =
             currentBattle.team2_total_cost;
-        const t2Dead = team2.length - t2Alive.length;
-        const t2MaxHp =
-            t2Alive.length * currentBattle.team2_max_hp;
-        const t2HpLostPct =
-            t2MaxHp > 0 ? (t2MaxHp - t2Hp) / t2MaxHp : 0;
-        const t2Lost =
-            t2Dead * currentBattle.team2_unit_cost +
-            Math.round(
-                t2Alive.length *
-                    currentBattle.team2_unit_cost *
-                    t2HpLostPct,
-            );
+        const lostFraction = currentBattle.team2_start_hp > 0
+            ? 1 - t2Hp / currentBattle.team2_start_hp : 0;
+        const t2Lost = Math.round(currentBattle.team2_total_cost * lostFraction);
         document.getElementById("prog2Lost").textContent =
             t2Lost;
     }
@@ -946,15 +1055,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     // driver for console debugging and any future inline straggler.
     window.simulation = pageSim;
 
-    // Load armor class names — injected into the engine, which uses them to
-    // label bonus-damage rows.
-    try {
-        const resp = await fetch("/api/armor-classes");
-        setArmorClassNames(await resp.json());
-    } catch (e) {
-        console.error("Failed to load armor classes:", e);
-    }
-
     // Render initial selection UI
     initSelectionDelegation();
     initRailSearch();
@@ -1026,16 +1126,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                     document.getElementById(
                         "totalResources",
                     ).value = "3000";
-                } else if (mode === "resources_upgrades") {
-                    document.getElementById(
-                        "countInputs",
-                    ).style.display = "none";
-                    document.getElementById(
-                        "resourceInput",
-                    ).style.display = "flex";
-                    document.getElementById(
-                        "totalResources",
-                    ).value = "5000";
                 }
                 updateOptionsCurrent();
             });
@@ -1133,169 +1223,107 @@ async function startBattle() {
         const armyMode = document.querySelector(
             'input[name="armyMode"]:checked',
         ).value;
-        let team1Count, team2Count;
-
-        // Imperial-only: resource cost = Wood + Food + Gold (no age weighting).
-        function calcUnitCost(s) {
-            return (s.cost_wood || 0) + (s.cost_food || 0) + (s.cost_gold || 0);
-        }
-        function calcUpgradeCost(s) {
-            return (
-                (s.upgrade_cost_wood || 0) +
-                (s.upgrade_cost_food || 0) +
-                (s.upgrade_cost_gold || 0)
-            );
-        }
-
-        // ONE fetch per team regardless of army mode: the army size is derived
-        // from these dicts and the very same objects are handed to the engine,
-        // which deep-copies before applying the relic delta — so the counts and
-        // the spawned units can never disagree.
-        const [stats1, stats2] = await Promise.all([
-            fetch(
-                `/api/ref/combat-unit/${encodeURIComponent(s1.civ)}/${s1.unitSlug}?age=${encodeURIComponent(s1.age)}`,
-            ).then((r) => r.json()),
-            fetch(
-                `/api/ref/combat-unit/${encodeURIComponent(s2.civ)}/${s2.unitSlug}?age=${encodeURIComponent(s2.age)}`,
-            ).then((r) => r.json()),
-        ]);
-        if (stats1.error) throw new Error(stats1.error);
-        if (stats2.error) throw new Error(stats2.error);
-
-        if (
-            armyMode === "resources" ||
-            armyMode === "resources_upgrades"
-        ) {
-            const totalResources =
-                parseInt(
-                    document.getElementById("totalResources").value,
-                ) || 3000;
-
-            const unitCost1 = calcUnitCost(stats1) || stats1.total_cost;
-            const unitCost2 = calcUnitCost(stats2) || stats2.total_cost;
-
-            let budget1 = totalResources,
-                budget2 = totalResources;
-            if (armyMode === "resources_upgrades") {
-                budget1 -= calcUpgradeCost(stats1);
-                budget2 -= calcUpgradeCost(stats2);
-                budget1 = Math.max(budget1, unitCost1); // at least 1 unit
-                budget2 = Math.max(budget2, unitCost2);
-            }
-
-            team1Count = Math.max(
-                1,
-                Math.floor(budget1 / unitCost1),
-            );
-            team2Count = Math.max(
-                1,
-                Math.floor(budget2 / unitCost2),
-            );
-        } else {
-            // "30 vs 30" mode: the entered number is a POPULATION budget, not a
-            // raw unit count. Half-pop units (Karambit Warrior 0.5, Blackwood
-            // Archer 0.5) therefore field 2x as many units for the same pop
-            // (30 pop -> 60 units). Mirrors simulation_real._calc_count
-            // (count = int(fixed_count / pop_space)) which drives the matchup
-            // table, so the on-page sim and the table agree. No-op for the 1847
-            // units that take 1.0 pop.
-            const pop1 =
-                parseInt(
-                    document.getElementById("team1Count").value,
-                ) || 30;
-            const pop2 =
-                parseInt(
-                    document.getElementById("team2Count").value,
-                ) || 30;
-            const popSpace1 = stats1.pop_space || 1.0;
-            const popSpace2 = stats2.pop_space || 1.0;
-            team1Count = Math.max(1, Math.floor(pop1 / popSpace1));
-            team2Count = Math.max(1, Math.floor(pop2 / popSpace2));
-        }
-
-        pageSim.reset();
-
-        // Hand the preloaded artwork to the renderer. Legacy stamped these onto
-        // every unit in setupTeam; sprites are a rendering concern now, so the
-        // renderer holds them per team instead.
-        pageSim.renderer.setTeamAssets(1, {
-            img: unitImages[1],
-            isSprite: unitIsSprite[1],
-            sheet: unitSheets[1],
-        });
-        pageSim.renderer.setTeamAssets(2, {
-            img: unitImages[2],
-            isSprite: unitIsSprite[2],
-            sheet: unitSheets[2],
-        });
-
-        // Fresh seed per battle. Math.random is fine HERE — the ban on unseeded
-        // randomness is an engine rule; the page picks the seed and logs it so a
-        // surprising fight can be replayed exactly.
         const seed = (Math.random() * 2 ** 32) >>> 0;
-        console.log("battle seed:", seed);
-        pageSim.setup({
-            teams: [
-                {
-                    combatDict: stats1,
-                    slug: s1.unitSlug,
-                    civ: s1.civ,
-                    count: team1Count,
-                    relics: s1.relics,
-                    startKills: s1.startKills,
-                },
-                {
-                    combatDict: stats2,
-                    slug: s2.unitSlug,
-                    civ: s2.civ,
-                    count: team2Count,
-                    relics: s2.relics,
-                    startKills: s2.startKills,
-                },
-            ],
-            seed,
+        const teams = [
+            { civ: s1.civ, unit_slug: s1.unitSlug, age: s1.age },
+            { civ: s2.civ, unit_slug: s2.unitSlug, age: s2.age },
+        ];
+        let army;
+        if (armyMode === "resources") {
+            army = {
+                mode: "equal_resources",
+                budget: parseInt(document.getElementById("totalResources").value, 10) || 3000,
+                weights: { food: 1, wood: 1, gold: 1 },
+                cap: 27,
+            };
+        } else {
+            teams[0].count = Math.min(27, Math.max(1,
+                parseInt(document.getElementById("team1Count").value, 10) || 15));
+            teams[1].count = Math.min(27, Math.max(1,
+                parseInt(document.getElementById("team2Count").value, 10) || 15));
+            army = { mode: "explicit", cap: 27 };
+        }
+
+        const response = await fetch("/api/v3/battle-config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                teams,
+                army,
+                engagement_mode: document.getElementById("rangedBuffer")?.checked
+                    ? "ranged_buffer"
+                    : "direct",
+                seed,
+            }),
+        });
+        const config = await response.json();
+        if (!response.ok || config.error) {
+            throw new Error(config.detail || config.error || `HTTP ${response.status}`);
+        }
+        console.log("simulationv3 battle", {
+            seed: config.seed,
+            family: config.scenario.family,
+            teams: config.teams.map(({ civ, unit_name: unit, count }) => ({ civ, unit, count })),
         });
 
-        // The ONE piece of artwork the engine still needs: BattleUnit.
-        // triggerAttackAnim() sizes its post-swing animation latch from the
-        // attack sheet's frame count/duration (falling back to 0.4s without
-        // one), so the sheet has to be on the unit as well as in the renderer.
-        for (const u of pageSim.sim.team1) u.attackSheet = unitSheets[1];
-        for (const u of pageSim.sim.team2) u.attackSheet = unitSheets[2];
-
-        const team1Stats = pageSim.sim.team1Stats;
-        const team2Stats = pageSim.sim.team2Stats;
+        const unitCost = (mechanics) => {
+            const cost = mechanics.cost;
+            return cost.food + cost.wood + cost.gold;
+        };
+        const [team1, team2] = config.teams;
+        const team1Cost = unitCost(team1.mechanics);
+        const team2Cost = unitCost(team2.mechanics);
         currentBattle = {
-            team1_civ: s1.civ,
-            team1_unit: s1.unitSlug,
-            team1_unit_name: team1Stats?.name || s1.unitName,
-            team1_count: team1Count,
-            team1_total_cost: team1Stats.total_cost * team1Count,
-            team1_unit_cost: team1Stats.total_cost,
-            team1_max_hp: team1Stats.hp,
-            team2_civ: s2.civ,
-            team2_unit: s2.unitSlug,
-            team2_unit_name: team2Stats?.name || s2.unitName,
-            team2_count: team2Count,
-            team2_total_cost: team2Stats.total_cost * team2Count,
-            team2_unit_cost: team2Stats.total_cost,
-            team2_max_hp: team2Stats.hp,
+            team1_civ: team1.civ,
+            team1_unit: team1.unit_slug,
+            team1_unit_name: team1.unit_name,
+            team1_count: team1.count,
+            team1_total_cost: team1Cost * team1.count,
+            team1_unit_cost: team1Cost,
+            team1_max_hp: team1.mechanics.hp,
+            team1_start_hp: team1.mechanics.hp * team1.count,
+            team2_civ: team2.civ,
+            team2_unit: team2.unit_slug,
+            team2_unit_name: team2.unit_name,
+            team2_count: team2.count,
+            team2_total_cost: team2Cost * team2.count,
+            team2_unit_cost: team2Cost,
+            team2_max_hp: team2.mechanics.hp,
+            team2_start_hp: team2.mechanics.hp * team2.count,
             winner: null,
         };
 
-        // Winner banner text: page-selection strings the engine cannot supply.
-        pageSim.renderer.setLabels({
-            team1Civ: s1.civ,
-            team1Unit: currentBattle.team1_unit_name,
-            team2Civ: s2.civ,
-            team2Unit: currentBattle.team2_unit_name,
+        const assets = {
+            2: { img: unitImages[1], sheet: unitSheets[1] },
+            3: { img: unitImages[2], sheet: unitSheets[2] },
+        };
+        if (config.scenario.hasRangedBuffer) {
+            const img = new Image();
+            img.src = spriteFor("Scout Cavalry", 4);
+            const sheetMeta = typeof sheetFor === "function" ? sheetFor("Scout Cavalry") : null;
+            let sheet = null;
+            if (sheetMeta?.url) {
+                const sheetImage = new Image();
+                sheetImage.src = sheetMeta.url;
+                sheet = { img: sheetImage, meta: sheetMeta };
+            }
+            assets[4] = { img, sheet };
+        }
+
+        pageSim.reset();
+        pageSim.setup({
+            config,
+            assets,
         });
 
-        // Populate progress headers
+        document.getElementById("team1Count").value = team1.count;
+        document.getElementById("team2Count").value = team2.count;
+        updateOptionsCurrent();
+
         document.getElementById("prog1Name").textContent =
-            `${s1.civ} ${currentBattle.team1_unit_name}`;
+            `${team1.civ} ${team1.unit_name}`;
         document.getElementById("prog2Name").textContent =
-            `${s2.civ} ${currentBattle.team2_unit_name}`;
+            `${team2.civ} ${team2.unit_name}`;
         const icon1 = document.getElementById("prog1Icon");
         const icon2 = document.getElementById("prog2Icon");
         if (unitImages[1]?.src) {
@@ -1309,20 +1337,19 @@ async function startBattle() {
             icon2.style.display = "";
         }
 
-        document.getElementById("startBtn").textContent =
-            "Start Battle";
+        document.getElementById("startBtn").textContent = "Start Battle";
         document.getElementById("pauseBtn").disabled = false;
         document.getElementById("resetBtn").disabled = false;
+        setSimPhase(true);
         pageSim.start();
 
-        // Expand the arena, shrink the rails to the picked unit + live stats.
-        setSimPhase(true);
-        // On a phone (3-row stack) the arena is the middle row — bring it up.
         const stageEl = document.getElementById("simStage");
         if (stageEl && typeof stageEl.scrollIntoView === "function") {
             stageEl.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     } catch (error) {
+        console.error(error);
+        pageSim?.setStatus(`Could not start: ${error.message}`, true);
         alert(`Error: ${error.message}`);
         document.getElementById("startBtn").disabled = false;
         document.getElementById("startBtn").textContent =

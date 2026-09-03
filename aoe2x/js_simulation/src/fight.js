@@ -13,7 +13,6 @@ import {
   kitePolicyFor,
   warWagonChasePolicy,
 } from "./combat/kite-timing.js";
-import { kitingObservationPlacement } from "./kiting-observation-placement.js";
 import { placeArmy, resolveFamily, sideCapacity } from "./placement.js";
 import { deriveCounts, deriveCountsFromCosts, PURCHASE_BUDGET, weightedCost } from "./purchase.js";
 import { kitingObservationMatchup } from "./kiting-observation-matchups.js";
@@ -223,6 +222,7 @@ export async function runFight(root, {
   triggers,
   victoryTeams,
   retainSnapshots = true,
+  onSnapshot,
   mechanicsBySide,
   unitDescriptorBySide,
 }) {
@@ -241,6 +241,9 @@ export async function runFight(root, {
   }
   if (typeof retainSnapshots !== "boolean") {
     throw new TypeError("retain snapshots must be boolean");
+  }
+  if (onSnapshot !== undefined && typeof onSnapshot !== "function") {
+    throw new TypeError("onSnapshot must be a function");
   }
   // Counts are optional: omit BOTH and they come from the purchase rule, so
   // the formula lives in purchase.js and nowhere else. One given without the
@@ -451,7 +454,11 @@ export async function runFight(root, {
         .reduce((total, unit) => total + unit.hp, 0),
     ]),
   ));
-  const result = runWorld(initialWorld, { maxTicks: MAX_TICKS, retainSnapshots });
+  const result = runWorld(initialWorld, {
+    maxTicks: MAX_TICKS,
+    retainSnapshots,
+    ...(onSnapshot ? { onSnapshot: (snapshot) => onSnapshot(slimSnapshot(snapshot)) } : {}),
+  });
 
   // Owner relabelling. Reference ids stay exactly as the engine allocated
   // them -- the payload never promises an id block belongs to a side, and the
@@ -658,6 +665,7 @@ export async function runKitingObservation(root, {
   n2,
   n3,
 } = {}) {
+  const { kitingObservationPlacement } = await import("./kiting-observation-placement.js");
   requireSoloNavigationVariant(navigation);
   const matchup = kitingObservationMatchup(rangedSlug, meleeSlug);
   if (!matchup) {

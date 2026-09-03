@@ -36,7 +36,8 @@ import { collisionRadius, isWithinReach, surfaceGap } from "./targeting.js";
 export const ORDERS_ENABLED = ENGINE_CONFIG.orders;
 // AOE2X_EXP_NO_RESCUE=1 disables the mid-fight idle rescue (probe flag: the
 // tape issues ~1 late order per fight where the rescue loop issues dozens).
-const RESCUE_DISABLED = process.env.AOE2X_EXP_NO_RESCUE === "1";
+const RESCUE_DISABLED = typeof process !== "undefined"
+  && process.env?.AOE2X_EXP_NO_RESCUE === "1";
 
 const SWEEP_START_TICK = Math.round(2.72 * TICKS_PER_SECOND);
 const SWEEP_ORDER_INTERVAL = Math.round(0.2 * TICKS_PER_SECOND);

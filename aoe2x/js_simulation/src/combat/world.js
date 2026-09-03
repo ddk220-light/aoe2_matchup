@@ -5867,7 +5867,7 @@ function outcome(world) {
 
 export function runWorld(
   world,
-  { maxTicks = DEFAULT_WORLD_TICKS, retainSnapshots = true } = {},
+  { maxTicks = DEFAULT_WORLD_TICKS, retainSnapshots = true, onSnapshot } = {},
 ) {
   if (!Number.isSafeInteger(maxTicks) || maxTicks < 0) {
     throw new RangeError("max ticks must be a nonnegative safe integer");
@@ -5878,13 +5878,24 @@ export function runWorld(
   if (typeof retainSnapshots !== "boolean") {
     throw new TypeError("retainSnapshots must be a boolean");
   }
+  if (onSnapshot !== undefined && typeof onSnapshot !== "function") {
+    throw new TypeError("onSnapshot must be a function");
+  }
+
+  const publish = (current) => {
+    if (!onSnapshot) return;
+    const snapshot = current.snapshots.at(-1);
+    if (snapshot) onSnapshot(snapshot);
+  };
 
   if (retainSnapshots) {
     let current = world;
+    publish(current);
     const initialOutcome = outcome(current);
     if (initialOutcome !== null) return initialOutcome;
     for (let elapsed = 0; elapsed < maxTicks; elapsed += 1) {
       current = stepWorld(current);
+      publish(current);
       const result = outcome(current);
       if (result !== null) return result;
     }
@@ -5913,11 +5924,13 @@ export function runWorld(
   };
 
   let current = world;
+  publish(current);
   const initialOutcome = outcome(current);
   if (initialOutcome !== null) return compactResult(initialOutcome, current);
   current = compactWorld(current);
   for (let elapsed = 0; elapsed < maxTicks; elapsed += 1) {
     current = stepWorld(current);
+    publish(current);
     collectedEvents.push(...current.events);
     const result = outcome(current);
     if (result !== null) return compactResult(result, current);

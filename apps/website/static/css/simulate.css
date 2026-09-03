@@ -549,13 +549,44 @@
    on load and on stack/unstack. height:auto lets the ratio drive the height. */
 #battleCanvas {
     display: block;
-    border: 2px solid var(--gold-dark);
-    border-radius: 8px;
-    background: var(--canvas-bg);
+    border: 1px solid color-mix(in srgb, var(--gold-dark) 70%, var(--border));
+    border-radius: 10px;
+    background: #111a15;
     width: 100%;
     height: auto;
     aspect-ratio: 3 / 2;
+    box-shadow: var(--shadow-card);
 }
+
+.buffer-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    cursor: pointer;
+}
+
+.v3-map-status {
+    position: absolute;
+    z-index: 3;
+    top: 10px;
+    left: 10px;
+    max-width: calc(100% - 20px);
+    padding: 7px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    background: rgba(12, 18, 15, 0.82);
+    color: #e7e1d0;
+    font-size: 0.72rem;
+    pointer-events: none;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.24);
+    backdrop-filter: blur(8px);
+}
+
+.v3-map-status.is-error { color: #ffb5a8; }
 
 /* ---------- Live battle progress (left sidebar) ---------- */
 .battle-progress {
@@ -1039,6 +1070,7 @@
 .arena {
     flex: 1 1 auto;
     min-width: 0;
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: flex-start;

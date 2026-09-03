@@ -31,7 +31,16 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__f
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from flask import Flask, Response, abort, jsonify, redirect, render_template, request
+from flask import (
+    Flask,
+    Response,
+    abort,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+)
 from aoe2x.advisor.best_units import (
     load_civ_power_units,
     get_matchup_recommendations,
@@ -59,6 +68,25 @@ app = Flask(__name__)
 app.json.sort_keys = False
 # Cap request bodies (replay uploads are single-digit MB; 50 MB is generous).
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+
+_V3_RUNTIME_ROOT = os.path.join(_REPO_ROOT, "aoe2x", "js_simulation")
+
+
+@app.get("/v3-runtime/<path:filename>")
+def v3_runtime_module(filename):
+    """Serve the checked-in shared V3 engine directly to browser workers.
+
+    Only JavaScript under the host-agnostic engine tree and the shared Golden
+    Arena renderer are public. Fixtures, calibration captures, reports, tests,
+    and Node-only runners stay outside the HTTP surface.
+    """
+    normalized = filename.replace("\\", "/")
+    allowed = normalized.startswith("src/") or normalized == "viewer/map-renderer.js"
+    if not allowed or not normalized.endswith(".js"):
+        abort(404)
+    response = send_from_directory(_V3_RUNTIME_ROOT, normalized, conditional=True)
+    response.cache_control.no_cache = True
+    return response
 
 # Public site URL — used for canonical URLs, sitemap, OG tags.
 # Override with SITE_URL env var if you ever change domains.

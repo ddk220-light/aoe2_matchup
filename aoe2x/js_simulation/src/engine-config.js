@@ -41,13 +41,13 @@ const DEFAULTS = Object.freeze({
 
 
 function envString(name, fallback) {
-  const value = process.env?.[name];
+  const value = typeof process === "undefined" ? undefined : process.env?.[name];
   return value === undefined ? fallback : value;
 }
 
 
 function envBoolean(name, fallback) {
-  const value = process.env?.[name];
+  const value = typeof process === "undefined" ? undefined : process.env?.[name];
   return value === undefined ? fallback : value === "1";
 }
 

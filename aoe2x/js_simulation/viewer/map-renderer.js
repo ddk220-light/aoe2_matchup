@@ -304,7 +304,10 @@ function drawRock(ctx, x, y, scale) {
 }
 
 
-export function createMapRenderer(canvas, map) {
+export function createMapRenderer(canvas, map, { presentation = "diagnostic" } = {}) {
+  if (!["diagnostic", "production"].includes(presentation)) {
+    throw new RangeError(`unknown map presentation ${presentation}`);
+  }
   const ctx = canvas.getContext("2d");
   const scene = buildRenderScene(map, { orientation: VIEW_ORIENTATION });
   function buildProjection(mode) {
@@ -344,6 +347,9 @@ export function createMapRenderer(canvas, map) {
     formationUnits: Object.freeze([]),
     units: Object.freeze([]),
     simulationSnapshot: null,
+    presentation,
+    unitAssets: new Map(),
+    visualProjectiles: [],
     mode: "formation",
     options: {
       grid: false,
@@ -496,7 +502,7 @@ export function createMapRenderer(canvas, map) {
   }
 
   function drawSimulationOverlays() {
-    if (!state.simulationSnapshot) return;
+    if (!state.simulationSnapshot || state.presentation === "production") return;
     const byReference = new Map(state.units.map((unit) => [unit.reference_id, unit]));
     for (const unit of state.units) {
       if (!unit.alive) continue;
@@ -590,7 +596,225 @@ export function createMapRenderer(canvas, map) {
     ctx.restore();
   }
 
+  function projectileStyle(unit) {
+    const slug = String(unit.slug ?? "").toLowerCase();
+    const ranged = unit.mechanics?.ranged;
+    if ((ranged?.projectile_arc ?? 0) >= 0.25 || slug.includes("onager")) {
+      return { kind: "stone", color: "#6d665b", width: 5 };
+    }
+    if (slug.includes("scorpion") || slug.includes("ballista")) {
+      return { kind: "bolt", color: "#c9944a", width: 3.2 };
+    }
+    if (slug.includes("cannon") || slug.includes("grenadier") || slug.includes("arambai")) {
+      return { kind: "shot", color: "#242321", width: 4 };
+    }
+    return { kind: "arrow", color: "#dfc17a", width: 2.2 };
+  }
+
+  function updateProductionEffects(snapshot) {
+    if (state.presentation !== "production") return;
+    const previousTick = state.simulationSnapshot?.tick ?? -1;
+    if (snapshot.tick < previousTick) state.visualProjectiles = [];
+    const previousByReference = new Map(
+      (state.simulationSnapshot?.units ?? []).map((unit) => [unit.referenceId, unit]),
+    );
+    const byReference = new Map(snapshot.units.map((unit) => [unit.referenceId, unit]));
+
+    const addProjectile = (actor, target, {
+      id,
+      launchTick,
+      index = 0,
+      count = 1,
+    }) => {
+      if (!actor || !target) return;
+      const ranged = actor.mechanics?.ranged;
+      const charge = actor.mechanics?.charge;
+      const speed = Math.max(
+        0.1,
+        ranged?.projectile_speed_tiles_per_second
+          ?? charge?.projectile_speed_tiles_per_second
+          ?? 7,
+      );
+      const distance = Math.hypot(target.x - actor.x, target.y - actor.y);
+      const dx = target.x - actor.x;
+      const dy = target.y - actor.y;
+      const length = Math.max(0.001, Math.hypot(dx, dy));
+      const spread = count > 1 ? (index - (count - 1) / 2) * 0.08 : 0;
+      const offsetX = -dy / length * spread;
+      const offsetY = dx / length * spread;
+      state.visualProjectiles.push({
+        id,
+        launchTick,
+        endTick: launchTick + Math.max(2, Math.ceil(distance / speed * 60)),
+        start: { x: actor.x + offsetX, y: actor.y + offsetY },
+        end: { x: target.x + offsetX, y: target.y + offsetY },
+        style: projectileStyle(actor),
+      });
+    };
+
+    // A regular one-projectile shot has no dedicated event in the combat log.
+    // Its attack-state edge and DAT-derived release delay are sufficient to
+    // animate it without feeding any visual concern back into combat logic.
+    for (const actor of snapshot.units) {
+      const previous = previousByReference.get(actor.referenceId);
+      if (!actor.alive || !actor.mechanics?.ranged || actor.action !== "attacking"
+          || previous?.action === "attacking") continue;
+      const target = byReference.get(actor.attackTargetId ?? actor.engagedTargetId);
+      const launchTick = snapshot.tick
+        + Math.max(0, Math.round((actor.mechanics.attack_delay_seconds ?? 0) * 60));
+      addProjectile(actor, target, {
+        id: `${snapshot.tick}:visual-shot:${actor.referenceId}`,
+        launchTick,
+      });
+    }
+
+    for (const event of snapshot.events) {
+      const actor = byReference.get(event.actorId);
+      const target = byReference.get(event.targetId);
+      if (event.type === "ranged-volley") {
+        const count = Math.min(8, Math.max(1, event.projectiles ?? 1));
+        // The primary is already supplied by the attack-state edge above.
+        for (let index = 1; index < count; index += 1) {
+          addProjectile(actor, target, {
+            id: `${event.eventId}:extra:${index}`,
+            launchTick: snapshot.tick + index * (event.releaseIntervalTicks ?? 0),
+            index,
+            count,
+          });
+        }
+      } else if (event.type === "charge-volley") {
+        const count = Math.min(8, Math.max(1, event.projectiles ?? 1));
+        for (let index = 0; index < count; index += 1) {
+          addProjectile(actor, target, {
+            id: `${event.eventId}:charge:${index}`,
+            launchTick: snapshot.tick,
+            index,
+            count,
+          });
+        }
+      }
+    }
+    state.visualProjectiles = state.visualProjectiles.filter(
+      ({ endTick }) => endTick >= snapshot.tick,
+    );
+  }
+
+  function drawProductionProjectiles() {
+    const tick = state.simulationSnapshot?.tick;
+    if (state.presentation !== "production" || !Number.isFinite(tick)) return;
+    for (const projectile of state.visualProjectiles) {
+      if (tick < projectile.launchTick || tick > projectile.endTick) continue;
+      const progress = Math.min(1, Math.max(0,
+        (tick - projectile.launchTick) / Math.max(1, projectile.endTick - projectile.launchTick)));
+      const x = projectile.start.x + (projectile.end.x - projectile.start.x) * progress;
+      const y = projectile.start.y + (projectile.end.y - projectile.start.y) * progress;
+      const prior = Math.max(0, progress - 0.07);
+      const px = projectile.start.x + (projectile.end.x - projectile.start.x) * prior;
+      const py = projectile.start.y + (projectile.end.y - projectile.start.y) * prior;
+      const point = worldToCanvas(projection.tileToScreen(x, y, 0.18));
+      const tail = worldToCanvas(projection.tileToScreen(px, py, 0.18));
+      ctx.save();
+      ctx.strokeStyle = projectile.style.color;
+      ctx.fillStyle = projectile.style.color;
+      ctx.lineCap = "round";
+      ctx.lineWidth = Math.max(1.2, projectile.style.width * state.zoom);
+      ctx.beginPath();
+      ctx.moveTo(tail.x, tail.y);
+      ctx.lineTo(point.x, point.y);
+      ctx.stroke();
+      if (projectile.style.kind === "stone" || projectile.style.kind === "shot") {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, Math.max(2, projectile.style.width * state.zoom), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawProductionUnit(unit) {
+    const base = unitBase(unit);
+    const asset = state.unitAssets.get(unit.player_id);
+    const idle = asset?.img;
+    const sheet = asset?.sheet;
+    const idleReady = idle?.complete && idle.naturalWidth > 0;
+    const sheetReady = sheet?.img?.complete && sheet.img.naturalWidth > 0;
+    const playing = unit.alive !== false && unit.action === "attacking" && sheetReady;
+    let image = playing ? sheet.img : idle;
+    let sx = 0;
+    let sy = 0;
+    let sw = image?.naturalWidth ?? 0;
+    let sh = image?.naturalHeight ?? 0;
+    if (playing) {
+      const meta = sheet.meta;
+      const phase = Math.abs(unit.reference_id ?? 0) % Math.max(1, meta.frames);
+      const frame = (Math.floor((state.simulationSnapshot.tick * 1000 / 60) / meta.dur)
+        + phase) % meta.frames;
+      sx = frame * meta.fw;
+      sw = meta.fw;
+      sh = meta.fh;
+    }
+    const radius = unit.mechanics?.collision_size_tiles?.x ?? 0.2;
+    const box = Math.max(34, (46 + Math.min(18, radius * 22)) * state.zoom);
+    const scale = sw > 0 && sh > 0
+      ? box / Math.max(sw, sh) * (playing ? (sheet.meta.scale ?? 1) : 1)
+      : 1;
+    const dw = sw * scale;
+    const dh = sh * scale;
+    const facingWorld = projection.tileToScreen(
+      unit.position.x + Math.cos(unit.rotation) * 0.45,
+      unit.position.y + Math.sin(unit.rotation) * 0.45,
+      0,
+    );
+    const facing = worldToCanvas(facingWorld);
+    const faceRight = facing.x > base.x;
+    const teamColor = unit.team === "p2" ? "#4a9fd4"
+      : unit.team === "p4" ? "#e0bb43" : "#cf5a4b";
+
+    ctx.save();
+    if (unit.alive === false) ctx.globalAlpha = 0.22;
+    ctx.fillStyle = "rgba(8, 14, 10, .38)";
+    ctx.beginPath();
+    ctx.ellipse(base.x + box * 0.08, base.y + 2, box * 0.34, box * 0.11, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if ((playing || idleReady) && image) {
+      ctx.save();
+      if (playing) {
+        ctx.shadowColor = "rgba(255, 212, 104, .55)";
+        ctx.shadowBlur = Math.max(6, 12 * state.zoom);
+      }
+      if (faceRight) {
+        ctx.translate(base.x, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(image, sx, sy, sw, sh, -dw / 2, base.y - dh, dw, dh);
+      } else {
+        ctx.drawImage(image, sx, sy, sw, sh, base.x - dw / 2, base.y - dh, dw, dh);
+      }
+      ctx.restore();
+    } else {
+      ctx.fillStyle = teamColor;
+      ctx.beginPath();
+      ctx.arc(base.x, base.y - box * 0.35, box * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (unit.alive !== false && Number.isFinite(unit.hp) && Number.isFinite(unit.maxHp)) {
+      const barWidth = Math.max(20, box * 0.72);
+      const barHeight = Math.max(2, 3 * state.zoom);
+      const barY = base.y - Math.max(dh, box * 0.7) - 5;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(5, 8, 6, .76)";
+      ctx.fillRect(base.x - barWidth / 2, barY, barWidth, barHeight);
+      ctx.fillStyle = teamColor;
+      ctx.fillRect(base.x - barWidth / 2, barY,
+        barWidth * Math.max(0, unit.hp / unit.maxHp), barHeight);
+    }
+    ctx.restore();
+  }
+
   function drawUnit(unit) {
+    if (state.presentation === "production") {
+      drawProductionUnit(unit);
+      return;
+    }
     const { x, y, z = 0 } = unit.position;
     const base = worldToCanvas(projection.tileToScreen(x, y, z));
     const size = Math.max(7, 13 * state.zoom);
@@ -720,6 +944,7 @@ export function createMapRenderer(canvas, map) {
       for (const object of scene.objects) drawObject(object);
     }
     drawSimulationOverlays();
+    drawProductionProjectiles();
     for (const unit of state.units) drawUnit(unit);
     drawMarker(state.hovered, "rgba(239, 205, 112, .75)");
     drawMarker(state.selected, "#f3c55a");
@@ -808,6 +1033,7 @@ export function createMapRenderer(canvas, map) {
       draw();
     },
     setSimulationSnapshot(snapshot) {
+      updateProductionEffects(snapshot);
       simulationPresenter.setSimulationSnapshot(snapshot);
     },
     getSimulationSnapshot() {
@@ -833,6 +1059,11 @@ export function createMapRenderer(canvas, map) {
     },
     setSelected(object) {
       state.selected = object;
+      draw();
+    },
+    setUnitAssets(owner, assets) {
+      if (!Number.isSafeInteger(owner)) throw new TypeError("unit asset owner must be an integer");
+      state.unitAssets.set(owner, assets ?? {});
       draw();
     },
   });

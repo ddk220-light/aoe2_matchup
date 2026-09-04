@@ -146,10 +146,14 @@ def test_battle_page_uses_player_controls_and_public_defaults(client):
 def test_battle_card_metric_labels_wrap_instead_of_truncating():
     css = (ROOT / "apps" / "website" / "static" / "css" / "simulate.css").read_text()
     metric_label_rule = css.split(".matchup-metric > span {", 1)[1].split("}", 1)[0]
+    vitals_rule = css.split(".progress-vitals {", 1)[1].split("}", 1)[0]
+    hp_rule = css.split(".progress-hp-inline {", 1)[1].split("}", 1)[0]
     assert "white-space: normal" in metric_label_rule
     assert "overflow: hidden" not in metric_label_rule
     assert "text-overflow: ellipsis" not in metric_label_rule
     assert "min-height: 2.3em" in metric_label_rule
+    assert "grid-template-columns: auto minmax(0, 1fr)" in vitals_rule
+    assert "white-space: nowrap" in hp_rule
     assert ".sim-stage.battle-active .team-rail { flex-basis: clamp(250px, 21vw, 340px); }" in css
 
 

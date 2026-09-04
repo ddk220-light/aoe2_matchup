@@ -55,7 +55,10 @@ from aoe2x.dbgen.v3_mechanics import (
     mechanics_hash as calculate_mechanics_hash,
     validate_runtime_profile,
 )
-from aoe2x.js_simulation.scenario_config import build_scenario_payload
+from aoe2x.js_simulation.scenario_config import (
+    build_arena_preview_payload,
+    build_scenario_payload,
+)
 from aoe2x.advisor.top_units import load_top_units, compute_top_units
 from aoe2x.sim.unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
 from aoe2x.rank.pool_scores_query import load_pool_scores
@@ -1659,6 +1662,12 @@ def _v3_counts(army, teams, capacities):
         if count < 1 or count > limit:
             raise ValueError(f"team {index} count must be between 1 and {limit}")
     return counts
+
+
+@app.get("/api/v3/arena-preview")
+def api_v3_arena_preview():
+    """Golden Arena geometry for the empty picker and selection previews."""
+    return jsonify(build_arena_preview_payload())
 
 
 @app.post("/api/v3/battle-config")

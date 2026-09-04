@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -6,6 +7,15 @@ import {
   fittedMapZoom,
   productionUnitBoxSize,
 } from "../viewer/map-renderer.js";
+
+const websiteCss = await readFile(
+  new URL("../../../apps/website/static/css/simulate.css", import.meta.url),
+  "utf8",
+);
+const websitePage = await readFile(
+  new URL("../../../apps/website/static/js/simulate.js", import.meta.url),
+  "utf8",
+);
 
 
 test("portrait production framing fits the combat corridor by map height", () => {
@@ -30,10 +40,20 @@ test("portrait production framing fits the combat corridor by map height", () =>
 });
 
 
-test("production unit presentation scale renders sprites at 75% independently of camera zoom", () => {
+test("production unit presentation scale supports 90% sprites independently of camera zoom", () => {
   const normal = productionUnitBoxSize(0.2, 1.01);
-  const compact = productionUnitBoxSize(0.2, 1.01, 0.75);
-  assert.equal(compact, normal * 0.75);
+  const compact = productionUnitBoxSize(0.2, 1.01, 0.9);
+  assert.equal(compact, normal * 0.9);
+  assert.match(websitePage, /unitScale:\s*0\.9/);
+});
+
+
+test("mobile picker and battle share the same portrait canvas camera", () => {
+  assert.match(websiteCss, /@media \(max-width: 768px\)[\s\S]*#battleCanvas \{ aspect-ratio: 3 \/ 4; \}/);
+  assert.doesNotMatch(
+    websiteCss,
+    /\.sim-stage\.battle-active #battleCanvas \{ aspect-ratio: 3 \/ 4; \}/,
+  );
 });
 
 

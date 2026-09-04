@@ -1115,11 +1115,11 @@
     .rail-search-input { min-height: 44px; }
     .sim-topbar { justify-content: center; }
     .sim-topbar-center #startBtn { width: 100%; }
-    /* Once combat starts, use a portrait viewport. The production renderer
-       fits the full passage vertically and lets the decorative forest edges
-       crop off-screen, matching the useful phone view instead of shrinking
-       the entire 2:1 isometric map into a shallow landscape card. */
-    .sim-stage.battle-active #battleCanvas { aspect-ratio: 3 / 4; }
+    /* Keep the picker preview and the running battle on the same portrait
+       camera. The renderer fits the full passage vertically and lets the
+       decorative forest edges crop off-screen; Start no longer causes a
+       landscape-to-portrait zoom jump. */
+    #battleCanvas { aspect-ratio: 3 / 4; }
 }
 
 /* Homepage flagship "about" section — crawlable site description + tool links. */

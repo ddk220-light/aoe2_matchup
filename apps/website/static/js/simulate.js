@@ -564,7 +564,7 @@ class PageSim {
             map,
             {
                 presentation: "production",
-                unitScale: 0.75,
+                unitScale: 0.9,
             },
         );
     }

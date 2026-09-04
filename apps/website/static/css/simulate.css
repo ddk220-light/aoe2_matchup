@@ -642,9 +642,9 @@
     font-weight: 600;
 }
 .progress-vitals {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
     gap: 10px;
     margin-top: 2px;
     font-family: var(--font-body);
@@ -658,9 +658,14 @@
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     text-align: right;
+    white-space: normal;
+}
+.progress-hp-inline {
+    display: inline-block;
+    color: var(--text-muted);
+    font-weight: 600;
     white-space: nowrap;
 }
-.progress-hp-inline { color: var(--text-muted); font-weight: 600; }
 .progress-health-track {
     position: relative;
     height: 8px;
@@ -1384,7 +1389,7 @@
         font-family: var(--font-body);
         font-size: 0.98rem;
         font-weight: 700;
-        line-height: 1.15;
+        line-height: 1.25;
     }
     .sim-stage.battle-active .rail-live { margin-top: 14px; }
     .sim-stage.battle-active .progress-card { padding: 13px 14px; }

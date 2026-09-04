@@ -9,6 +9,7 @@
       age1: get("age1"), age2: get("age2"),
       mode: get("mode"),
       resources: get("resources"),
+      resources1: get("resources1"), resources2: get("resources2"),
       count1: get("count1"), count2: get("count2"),
       relics1: get("relics1"), relics2: get("relics2"),
       kills1: get("kills1"), kills2: get("kills2"),

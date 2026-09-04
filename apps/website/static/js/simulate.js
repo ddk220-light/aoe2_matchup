@@ -106,12 +106,14 @@ function updateOptionsCurrent() {
     if (!el) return;
     const checked = document.querySelector('input[name="armyMode"]:checked');
     const mode = checked ? checked.value : "resources";
-    const res = (document.getElementById("totalResources") || {}).value;
     if (mode === "resources") {
-        el.textContent = `${formatResourceBudget(res)} resources`;
+        const teamA = (document.getElementById("team1Resources") || {}).value || 5000;
+        const teamB = (document.getElementById("team2Resources") || {}).value || 5000;
+        el.textContent = `Resource-based · ${formatResourceBudget(teamA)} / ${formatResourceBudget(teamB)}`;
     } else {
-        const count = (document.getElementById("equalCount") || {}).value || "15";
-        el.textContent = `${count} each`;
+        const teamA = (document.getElementById("team1Count") || {}).value || "27";
+        const teamB = (document.getElementById("team2Count") || {}).value || "27";
+        el.textContent = `Count-based · ${teamA} / ${teamB}`;
     }
 }
 
@@ -617,12 +619,13 @@ class PageSim {
 
     showSelectionPreview(selections, images) {
         if (!this.renderer || !this.previewPlacementByOwner || this.running) return;
-        const previewCounts = {};
-        const input = document.getElementById("equalCount");
-        const count = Math.min(27, Math.max(1,
-            parseInt(input?.value, 10) || 15));
+        const previewCounts = {
+            1: Math.min(27, Math.max(1,
+                parseInt(document.getElementById("team1Count")?.value, 10) || 27)),
+            2: Math.min(27, Math.max(1,
+                parseInt(document.getElementById("team2Count")?.value, 10) || 27)),
+        };
         for (const teamNumber of [1, 2]) {
-            previewCounts[teamNumber] = count;
             this.renderer.setUnitAssets(teamNumber === 1 ? 2 : 3, {
                 img: images[teamNumber],
                 sheet: null,
@@ -1210,7 +1213,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (mode === "count") {
                     document.getElementById(
                         "countInputs",
-                    ).style.display = "flex";
+                    ).style.display = "grid";
                     document.getElementById(
                         "resourceInput",
                     ).style.display = "none";
@@ -1228,10 +1231,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
     // Keep the collapsed-options summary in sync as numbers change.
-    ["equalCount", "totalResources"].forEach((id) => {
+    ["team1Count", "team2Count", "team1Resources", "team2Resources"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.addEventListener("input", () => {
-            if (id === "equalCount") {
+            if (id === "team1Count" || id === "team2Count") {
                 const parsed = parseInt(el.value, 10);
                 if (parsed > 27) el.value = "27";
             }
@@ -1239,11 +1242,20 @@ document.addEventListener("DOMContentLoaded", async () => {
             refreshArenaPreview();
         });
     });
-    document.getElementById("equalCount")?.addEventListener("change", (event) => {
-        event.target.value = String(Math.min(27, Math.max(1,
-            parseInt(event.target.value, 10) || 15)));
-        updateOptionsCurrent();
-        refreshArenaPreview();
+    ["team1Count", "team2Count"].forEach((id) => {
+        document.getElementById(id)?.addEventListener("change", (event) => {
+            event.target.value = String(Math.min(27, Math.max(1,
+                parseInt(event.target.value, 10) || 27)));
+            updateOptionsCurrent();
+            refreshArenaPreview();
+        });
+    });
+    ["team1Resources", "team2Resources"].forEach((id) => {
+        document.getElementById(id)?.addEventListener("change", (event) => {
+            event.target.value = String(Math.max(1,
+                parseInt(event.target.value, 10) || 5000));
+            updateOptionsCurrent();
+        });
     });
     updateOptionsCurrent();
 
@@ -1297,14 +1309,28 @@ document.addEventListener("DOMContentLoaded", async () => {
             radio.dispatchEvent(new Event("change"));
         }
         if (params.has("resources")) {
-            const resEl = document.getElementById("totalResources");
-            if (resEl) resEl.value = params.get("resources");
+            for (const id of ["team1Resources", "team2Resources"]) {
+                const element = document.getElementById(id);
+                if (element) element.value = params.get("resources");
+            }
         }
-        const linkedCount = params.get("count1") || params.get("count2");
-        if (linkedCount) {
-            const count = document.getElementById("equalCount");
-            if (count) count.value = String(Math.min(27, Math.max(1,
-                parseInt(linkedCount, 10) || 15)));
+        for (const [param, id] of [
+            ["resources1", "team1Resources"],
+            ["resources2", "team2Resources"],
+        ]) {
+            if (params.has(param)) {
+                document.getElementById(id).value = String(Math.max(1,
+                    parseInt(params.get(param), 10) || 5000));
+            }
+        }
+        for (const [param, id] of [
+            ["count1", "team1Count"],
+            ["count2", "team2Count"],
+        ]) {
+            if (params.has(param)) {
+                document.getElementById(id).value = String(Math.min(27, Math.max(1,
+                    parseInt(params.get(param), 10) || 27)));
+            }
         }
         updateOptionsCurrent();
         refreshArenaPreview();
@@ -1339,18 +1365,28 @@ async function startBattle() {
         ];
         let army;
         if (armyMode === "resources") {
+            const budgets = ["team1Resources", "team2Resources"].map((id) => {
+                const input = document.getElementById(id);
+                const value = Math.max(1, parseInt(input.value, 10) || 5000);
+                input.value = String(value);
+                return value;
+            });
             army = {
-                mode: "equal_resources",
-                budget: parseInt(document.getElementById("totalResources").value, 10) || 5000,
+                mode: "resource_budgets",
+                budgets,
                 weights: { food: 1, wood: 1, gold: 1 },
                 cap: 27,
             };
         } else {
-            const count = Math.min(27, Math.max(1,
-                parseInt(document.getElementById("equalCount").value, 10) || 15));
-            document.getElementById("equalCount").value = String(count);
-            teams[0].count = count;
-            teams[1].count = count;
+            const counts = ["team1Count", "team2Count"].map((id) => {
+                const input = document.getElementById(id);
+                const value = Math.min(27, Math.max(1,
+                    parseInt(input.value, 10) || 27));
+                input.value = String(value);
+                return value;
+            });
+            teams[0].count = counts[0];
+            teams[1].count = counts[1];
             army = { mode: "explicit", cap: 27 };
         }
 
@@ -1443,9 +1479,9 @@ async function startBattle() {
         setSimPhase(true);
         pageSim.start();
 
-        const stageEl = document.getElementById("simStage");
-        if (stageEl && typeof stageEl.scrollIntoView === "function") {
-            stageEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        const arenaEl = document.getElementById("arena");
+        if (arenaEl && typeof arenaEl.scrollIntoView === "function") {
+            arenaEl.scrollIntoView({ behavior: "smooth", block: "start" });
         }
     } catch (error) {
         console.error(error);

@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   buildSelectionPreviewUnits,
   fittedMapZoom,
+  productionSpriteGroundOffset,
   productionUnitBoxSize,
 } from "../viewer/map-renderer.js";
 
@@ -53,6 +54,15 @@ test("mobile picker and battle share the same portrait canvas camera", () => {
   assert.doesNotMatch(
     websiteCss,
     /\.sim-stage\.battle-active #battleCanvas \{ aspect-ratio: 3 \/ 4; \}/,
+  );
+});
+
+
+test("attack sprites sit lower than idle sprites to meet their ground shadow", () => {
+  assert.equal(productionSpriteGroundOffset(100, false), 2.5);
+  assert.ok(Math.abs(productionSpriteGroundOffset(100, true) - 7) < 1e-9);
+  assert.ok(
+    productionSpriteGroundOffset(64, true) > productionSpriteGroundOffset(64, false),
   );
 });
 

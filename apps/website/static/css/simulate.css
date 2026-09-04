@@ -886,8 +886,8 @@
    on phones the stage becomes Team A / Team B / arena.
    ========================================================================== */
 
-/* ---- Persistent video-player controls above the arena ---- */
-.arena-player {
+/* ---- Options above the arena; fixed media-player controls below it ---- */
+.arena-toolbar {
     position: relative;
     z-index: 20;
     width: 100%;
@@ -898,7 +898,7 @@
     gap: 8px;
     margin-bottom: 8px;
 }
-.arena-player .sim-options {
+.arena-toolbar .sim-options {
     position: relative;
     flex: 0 1 auto;
     min-width: 0;
@@ -907,7 +907,7 @@
     border: 0;
     background: transparent;
 }
-.arena-player .sim-options > summary {
+.arena-toolbar .sim-options > summary {
     min-height: 40px;
     justify-content: flex-start;
     gap: 6px;
@@ -916,8 +916,8 @@
     border-radius: 7px;
     background: var(--bg-warm);
 }
-.arena-player .sim-options > summary::before { content: none; }
-.arena-player .sim-options[open] > summary {
+.arena-toolbar .sim-options > summary::before { content: none; }
+.arena-toolbar .sim-options[open] > summary {
     border-bottom: 1px solid var(--gold-dark);
     border-color: var(--gold-dark);
 }
@@ -927,12 +927,12 @@
     font-size: 1rem;
     line-height: 1;
 }
-.arena-player .sim-options-current {
+.arena-toolbar .sim-options-current {
     font-family: var(--font-body);
     font-size: var(--fs-xs);
     white-space: nowrap;
 }
-.arena-player .army-config {
+.arena-toolbar .army-config {
     position: absolute;
     z-index: 80;
     top: calc(100% + 7px);
@@ -943,58 +943,120 @@
     border-color: var(--border-light);
     box-shadow: var(--shadow-card);
 }
-.arena-player .formula-note {
+.arena-toolbar .formula-note {
     margin-bottom: 10px;
     color: var(--text-muted);
     font-size: var(--fs-xs);
     text-align: center;
 }
-.arena-player .formula-note strong { color: var(--gold); }
-.player-controls {
+.arena-toolbar .formula-note strong { color: var(--gold); }
+.arena-toolbar .start-hint {
+    flex: 1 1 auto;
+    margin-left: 4px;
+    text-align: right;
+}
+.arena-toolbar .start-hint[hidden] { display: none; }
+
+.arena-player {
+    width: 100%;
+    min-height: 54px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    margin-left: auto;
+    margin-top: 7px;
+    padding: 3px 0;
+}
+.player-controls {
+    display: grid;
+    grid-template-columns: minmax(72px, 1fr) 48px minmax(72px, 1fr);
+    align-items: center;
+    width: min(100%, 360px);
+    min-height: 48px;
 }
 .player-button {
-    min-width: 42px;
-    min-height: 40px;
-    padding: 6px 11px;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: var(--fs-sm);
+    width: 44px;
+    height: 44px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
     cursor: pointer;
     border: 1px solid var(--border);
-    border-radius: 7px;
+    border-radius: 50%;
     background: var(--bg-warm);
     color: var(--text);
     transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 .player-button.primary {
+    justify-self: center;
+    width: 48px;
+    height: 48px;
     background: var(--gold-cta);
     border-color: var(--gold-cta);
     color: var(--text-on-gold);
-    font-family: sans-serif;
-    font-size: 1rem;
 }
 .player-button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
 .player-button:disabled { opacity: 0.42; cursor: not-allowed; }
 .player-button.loading { cursor: wait; }
-.speed-button { display: inline-flex; align-items: center; gap: 4px; }
-.speed-icon { color: var(--gold); font-family: sans-serif; font-size: 1.05rem; }
+.player-control-side {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+.player-time-slot { justify-content: flex-end; padding-right: 15px; }
+.player-speed-slot { justify-content: flex-start; padding-left: 15px; }
+.media-state-icon,
+.media-glyph {
+    width: 22px;
+    height: 22px;
+    display: block;
+    fill: currentColor;
+}
+.media-state-icon { display: none; }
+.player-button[data-state="play"] .media-play,
+.player-button[data-state="pause"] .media-pause,
+.player-button[data-state="replay"] .media-replay,
+.player-button[data-state="loading"] .media-loading { display: block; }
+.media-loading {
+    width: 19px;
+    height: 19px;
+    border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: media-spin 0.8s linear infinite;
+}
+@keyframes media-spin { to { transform: rotate(360deg); } }
+.speed-button {
+    position: relative;
+    color: var(--gold);
+}
+.speed-button .media-glyph { width: 20px; height: 20px; }
+.speed-value {
+    position: absolute;
+    right: -8px;
+    bottom: -4px;
+    width: 3.2ch;
+    padding: 1px 2px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-elevated);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+    text-align: center;
+}
 .arena-player .battle-timer {
-    min-width: 3.25rem;
+    width: 7ch;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: var(--text-muted);
     font-size: var(--fs-xs);
     text-align: right;
+    font-variant-numeric: tabular-nums;
 }
-.arena-player .start-hint {
-    flex: 1 1 auto;
-    margin-left: 4px;
-    text-align: right;
-}
-.arena-player .start-hint[hidden] { display: none; }
 
 .battle-timer[hidden] { display: none; }
 
@@ -1204,23 +1266,27 @@
         line-height: 1.05;
     }
     .rail-search-input { min-height: 44px; }
-    .arena-player {
+    .arena-toolbar {
         flex-wrap: wrap;
         min-height: 44px;
     }
-    .arena-player .sim-options > summary {
+    .arena-toolbar .sim-options > summary {
         min-height: 42px;
         padding-inline: 9px;
     }
-    .arena-player .sim-options-toggle { display: none; }
-    .player-button { min-height: 42px; }
-    .arena-player .start-hint {
+    .arena-toolbar .sim-options-toggle { display: none; }
+    .arena-toolbar .start-hint {
         flex: 1 0 100%;
         margin: 0;
         text-align: center;
     }
-    .arena-player .army-config {
+    .arena-toolbar .army-config {
         width: min(340px, calc(100vw - 48px));
+    }
+    .arena-player { min-height: 56px; margin-top: 6px; }
+    .player-controls {
+        grid-template-columns: minmax(68px, 1fr) 48px minmax(68px, 1fr);
+        width: min(100%, 320px);
     }
     /* Keep the picker preview and the running battle on the same portrait
        camera. The renderer fits the full passage vertically and lets the

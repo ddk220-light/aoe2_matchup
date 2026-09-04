@@ -2198,6 +2198,8 @@ def _unit_search_index():
     rc.execute(
         "SELECT civ_name, unit_name, unit_slug FROM ref_units "
         "WHERE unit_type = 'unique' AND age = 'Imperial' "
+        "AND unit_class_name != 'Unknown' "
+        "AND lower(unit_slug) NOT LIKE '%trebuchet%' "
         "ORDER BY civ_name, unit_name"
     )
     out = [

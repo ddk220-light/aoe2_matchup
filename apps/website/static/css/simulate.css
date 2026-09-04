@@ -229,73 +229,63 @@
 }
 
 /* ---------- Unit grid ---------- */
-.unit-grid-section {
-    margin-bottom: 6px;
-}
-.unit-grid-section h4 {
-    font-family: var(--font-display);
-    font-size: var(--fs-xs);
-    color: var(--gold);
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-.unit-grid-section h4 img {
-    width: 1.125rem;
-    height: 1.125rem;
-    border-radius: 3px;
-}
 .unit-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(4.375rem, 1fr));
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 6px;
 }
 .unit-pick {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    padding: 4px;
+    min-width: 0;
+    width: auto;
+    padding: 6px 2px;
     background: var(--bg-warm);
-    border: 1px solid var(--border);
-    border-radius: 6px;
+    border: 0;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
     cursor: pointer;
     transition: all 0.2s;
-    width: 4rem;
 }
 .unit-pick:hover {
     border-color: var(--gold-dark);
     background: var(--bg-hover);
 }
 .unit-pick img {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
     border-radius: 50%;
     border: 2px solid var(--border-light);
     object-fit: cover;
     background: var(--bg);
 }
-/* Transparent in-game sprite (set via `sprite` class). The pick card is 64px
-   wide with 4px padding -> 56px content; a fixed 48x48 box (border-box, 2px
-   inner padding) fits inside with margin to spare on every side. No frame,
-   object-fit: contain so wide/tall off-shapes are contained, never cropped or
-   bleeding into neighbouring picks. */
+/* Transparent in-game sprites occupy the same visual box as civ emblems. */
 .unit-pick img.sprite {
-    width: 3rem;
-    height: 3rem;
+    width: 2.25rem;
+    height: 2.25rem;
     border: none;
     border-radius: 0;
     background: none;
     object-fit: contain;
-    padding: 2px;
+    padding: 0;
     box-sizing: border-box;
 }
 .unit-pick span {
+    display: block;
+    width: 100%;
+    overflow: hidden;
     font-size: var(--fs-xs);
     text-align: center;
     color: var(--text-muted);
     line-height: var(--lh-tight);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* ---------- Army config ---------- */
@@ -1192,6 +1182,26 @@
         line-height: 1.05;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+    .rail-picker > .unit-grid {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 0;
+    }
+    .rail-picker > .unit-grid .unit-pick {
+        min-width: 0;
+        min-height: 44px;
+        gap: 1px;
+        padding: 3px 1px;
+    }
+    .rail-picker > .unit-grid .unit-pick img,
+    .rail-picker > .unit-grid .unit-pick img.sprite {
+        width: 1.45rem;
+        height: 1.45rem;
+        padding: 0;
+    }
+    .rail-picker > .unit-grid .unit-pick span {
+        font-size: 0.48rem;
+        line-height: 1.05;
     }
     .rail-search-input { min-height: 44px; }
     .arena-player {

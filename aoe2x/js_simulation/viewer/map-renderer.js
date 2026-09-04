@@ -46,6 +46,18 @@ export function productionUnitBoxSize(radius, zoom, unitScale = 1) {
 }
 
 
+export function productionSpriteGroundOffset(drawHeight, playing = false) {
+  if (!Number.isFinite(drawHeight) || drawHeight < 0) {
+    throw new RangeError("sprite draw height must be a non-negative finite number");
+  }
+  // Idle sprites are tightly cropped with a small transparent foot margin.
+  // Attack sheets use a union crop across the whole animation, leaving more
+  // space below individual poses. Lower the image by that visual inset so the
+  // visible feet—not the transparent frame edge—meet the world-space shadow.
+  return drawHeight * (playing ? 0.07 : 0.025);
+}
+
+
 function playerTeam(playerId) {
   if (playerId === 2) return "p2";
   if (playerId === 4) return "p4";
@@ -820,6 +832,8 @@ export function createMapRenderer(canvas, map, {
       : 1;
     const dw = sw * scale;
     const dh = sh * scale;
+    const groundOffset = productionSpriteGroundOffset(dh, playing);
+    const spriteBottom = base.y + groundOffset;
     const facingWorld = projection.tileToScreen(
       unit.position.x + Math.cos(unit.rotation) * 0.45,
       unit.position.y + Math.sin(unit.rotation) * 0.45,
@@ -834,7 +848,7 @@ export function createMapRenderer(canvas, map, {
     if (unit.alive === false) ctx.globalAlpha = 0.22;
     ctx.fillStyle = "rgba(8, 14, 10, .38)";
     ctx.beginPath();
-    ctx.ellipse(base.x + box * 0.08, base.y + 2, box * 0.34, box * 0.11, 0, 0, Math.PI * 2);
+    ctx.ellipse(base.x + box * 0.08, base.y, box * 0.34, box * 0.11, 0, 0, Math.PI * 2);
     ctx.fill();
     if ((playing || idleReady) && image) {
       ctx.save();
@@ -845,9 +859,9 @@ export function createMapRenderer(canvas, map, {
       if (faceRight) {
         ctx.translate(base.x, 0);
         ctx.scale(-1, 1);
-        ctx.drawImage(image, sx, sy, sw, sh, -dw / 2, base.y - dh, dw, dh);
+        ctx.drawImage(image, sx, sy, sw, sh, -dw / 2, spriteBottom - dh, dw, dh);
       } else {
-        ctx.drawImage(image, sx, sy, sw, sh, base.x - dw / 2, base.y - dh, dw, dh);
+        ctx.drawImage(image, sx, sy, sw, sh, base.x - dw / 2, spriteBottom - dh, dw, dh);
       }
       ctx.restore();
     } else {

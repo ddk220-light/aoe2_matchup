@@ -1717,10 +1717,13 @@ def api_v3_battle_config():
         engagement = document.get("engagement_mode", "direct")
         if engagement not in ("direct", "ranged_buffer"):
             raise ValueError("engagement_mode must be direct or ranged_buffer")
+        # The public option is intentionally safe to leave on. It only changes
+        # mixed ranged/melee fights; same-family fights continue as direct
+        # engagements instead of rejecting an otherwise valid battle.
         if engagement == "ranged_buffer" and visual_family not in (
             "ranged_vs_melee", "melee_vs_ranged"
         ):
-            raise ValueError("ranged_buffer requires exactly one ranged side")
+            engagement = "direct"
         scenario = build_scenario_payload(
             visual_family,
             engine_family=engine_family,

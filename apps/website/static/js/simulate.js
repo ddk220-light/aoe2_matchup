@@ -75,17 +75,17 @@ const unitSheets = { 1: null, 2: null };
 // [data-action] + sibling data attributes rather than using inline
 // onclick= handlers, so user-controllable strings (unit name, civ name)
 // never land inside an attribute that becomes executable JavaScript.
-// Start is enabled only once both teams have a civ + unit; otherwise the hint
+// Play is enabled only once both teams have a civ + unit; otherwise the hint
 // tells first-time visitors exactly what's missing.
 function updateStartReady() {
     const ready = !!(
         teamState[1].civ && teamState[1].unitSlug &&
         teamState[2].civ && teamState[2].unitSlug
     );
-    const btn = document.getElementById("startBtn");
+    const btn = document.getElementById("playPauseBtn");
     const hint = document.getElementById("startHint");
-    if (btn) btn.disabled = !ready;
-    if (hint) hint.style.display = ready ? "none" : "";
+    if (btn) btn.disabled = battleLoading || !ready;
+    if (hint) hint.hidden = ready || !!pageSim?.config;
     return ready;
 }
 
@@ -93,21 +93,25 @@ function refreshArenaPreview() {
     pageSim?.showSelectionPreview(teamState, unitImages);
 }
 
-// Keep the "Change options" summary showing the current army setup.
+function formatResourceBudget(value) {
+    const budget = parseInt(value, 10) || 5000;
+    if (budget >= 1000 && budget % 1000 === 0) return `${budget / 1000}K`;
+    if (budget >= 1000) return `${(budget / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+    return String(budget);
+}
+
+// Keep the collapsed options summary showing the current army setup.
 function updateOptionsCurrent() {
     const el = document.getElementById("optionsCurrent");
     if (!el) return;
     const checked = document.querySelector('input[name="armyMode"]:checked');
-    const mode = checked ? checked.value : "count";
+    const mode = checked ? checked.value : "resources";
     const res = (document.getElementById("totalResources") || {}).value;
     if (mode === "resources") {
-        el.textContent = `${res || "3000"} Resources`;
-    } else if (mode === "resources_upgrades") {
-        el.textContent = `${res || "5000"} incl. Upgrades`;
+        el.textContent = `${formatResourceBudget(res)} resources`;
     } else {
-        const c1 = (document.getElementById("team1Count") || {}).value || "15";
-        const c2 = (document.getElementById("team2Count") || {}).value || "15";
-        el.textContent = `${c1} vs ${c2}`;
+        const count = (document.getElementById("equalCount") || {}).value || "15";
+        el.textContent = `${count} each`;
     }
 }
 
@@ -489,7 +493,7 @@ function initRailSearch() {
 
 // ===== PHASE TRANSITION (pick <-> battle) =====
 // Battle expands the arena and shrinks the rails to the picked unit + live team
-// stats; pick phase restores the full pickers + Start button.
+// stats. The player controls remain in place above the arena in every phase.
 function setSimPhase(battle) {
     const stage = document.getElementById("simStage");
     if (stage) stage.classList.toggle("battle-active", battle);
@@ -497,8 +501,6 @@ function setSimPhase(battle) {
         const el = document.getElementById(id);
         if (el) el.hidden = h;
     };
-    hide("startBtn", battle);
-    hide("simControls", !battle);
     hide("battleTimer", !battle);
     hide("dmgToggle", !battle);
     hide("team1Live", !battle);
@@ -510,7 +512,43 @@ function setSimPhase(battle) {
         hide("debugPanel", true);
         const t = document.getElementById("dmgToggle");
         if (t) t.setAttribute("aria-expanded", "false");
-        updateStartReady(); // restores Start button + hint state
+        updateStartReady();
+    }
+    syncPlayerControls();
+}
+
+function syncPlayerControls() {
+    const button = document.getElementById("playPauseBtn");
+    const icon = document.getElementById("playPauseIcon");
+    const stage = document.getElementById("simStage");
+    if (!button || !icon) return;
+
+    const ready = !!(
+        teamState[1].civ && teamState[1].unitSlug &&
+        teamState[2].civ && teamState[2].unitSlug
+    );
+    button.disabled = battleLoading || !ready;
+    button.classList.toggle("loading", battleLoading);
+    stage?.classList.toggle(
+        "battle-running",
+        !!pageSim?.running && !pageSim.paused,
+    );
+
+    if (battleLoading) {
+        icon.textContent = "…";
+        button.setAttribute("aria-label", "Preparing battle");
+    } else if (pageSim?.running && !pageSim.paused) {
+        icon.textContent = "Ⅱ";
+        button.setAttribute("aria-label", "Pause battle");
+    } else if (pageSim?.running && pageSim.paused) {
+        icon.textContent = "▶";
+        button.setAttribute("aria-label", "Resume battle");
+    } else if (pageSim?.complete) {
+        icon.textContent = "↻";
+        button.setAttribute("aria-label", "Replay with a new random battle");
+    } else {
+        icon.textContent = "▶";
+        button.setAttribute("aria-label", "Start battle");
     }
 }
 
@@ -538,7 +576,7 @@ class PageSim {
         this.playheadTick = 0;
         this.runId = 0;
         this.animationFrame = null;
-        this.speedMultiplier = 3.0;
+        this.speedMultiplier = 1.0;
         this.running = false;
         this.paused = false;
         this.lastTimestamp = 0;
@@ -579,10 +617,11 @@ class PageSim {
     showSelectionPreview(selections, images) {
         if (!this.renderer || !this.previewPlacementByOwner || this.running) return;
         const previewCounts = {};
+        const input = document.getElementById("equalCount");
+        const count = Math.min(27, Math.max(1,
+            parseInt(input?.value, 10) || 15));
         for (const teamNumber of [1, 2]) {
-            const input = document.getElementById(`team${teamNumber}Count`);
-            previewCounts[teamNumber] = Math.min(27, Math.max(1,
-                parseInt(input?.value, 10) || 15));
+            previewCounts[teamNumber] = count;
             this.renderer.setUnitAssets(teamNumber === 1 ? 2 : 3, {
                 img: images[teamNumber],
                 sheet: null,
@@ -677,7 +716,7 @@ class PageSim {
         this.worker.onmessage = ({ data }) => {
             if (data?.runId !== runId) return;
             if (data.type === "started") {
-                this.setStatus(`simulationv3 · seed ${this.config.seed}`);
+                this.setStatus("Battle in progress");
             } else if (data.type === "snapshots") {
                 this.snapshots.push(...data.snapshots);
             } else if (data.type === "complete") {
@@ -690,6 +729,7 @@ class PageSim {
                 this.complete = true;
                 this.running = false;
                 this.setStatus(`Simulation error: ${data.error}`, true);
+                syncPlayerControls();
                 this.worker?.terminate();
                 this.worker = null;
             }
@@ -702,9 +742,10 @@ class PageSim {
             this.complete = true;
             this.running = false;
             this.setStatus("Simulation worker failed to load", true);
+            syncPlayerControls();
         };
         this.worker.postMessage({ runId, config: this.config });
-        this.setStatus("Starting simulationv3…");
+        this.setStatus("Preparing battle…");
     }
 
     start() {
@@ -716,6 +757,7 @@ class PageSim {
         this.paused = false;
         this.lastTimestamp = performance.now();
         updateStats(null, this.unitIndex);
+        syncPlayerControls();
         this.loop();
     }
 
@@ -726,6 +768,7 @@ class PageSim {
             this.lastTimestamp = performance.now();
             this.loop();
         }
+        syncPlayerControls();
     }
 
     stop() {
@@ -749,6 +792,7 @@ class PageSim {
         updateStats(null);
         this.renderer?.showFormation();
         this.setStatus("Golden Arena ready");
+        syncPlayerControls();
     }
 
     loop() {
@@ -778,6 +822,7 @@ class PageSim {
             const winner = this.config.teams[winningTeam - 1];
             const remaining = Math.round(this.result.winnerHp);
             this.setStatus(`${winner.civ} ${winner.unit_name} wins · ${remaining} HP remaining`);
+            syncPlayerControls();
         } else {
             this.animationFrame = requestAnimationFrame(() => this.loop());
         }
@@ -1091,6 +1136,20 @@ function updateDebugPanel(sim) {
 // ===== INITIALIZATION =====
 let pageSim = null;
 let currentBattle = null;
+let battleLoading = false;
+const PLAYBACK_SPEEDS = [1, 2, 5, 10];
+let playbackSpeedIndex = 0;
+
+function setPlaybackSpeed(index) {
+    playbackSpeedIndex = ((index % PLAYBACK_SPEEDS.length) + PLAYBACK_SPEEDS.length)
+        % PLAYBACK_SPEEDS.length;
+    const speed = PLAYBACK_SPEEDS[playbackSpeedIndex];
+    if (pageSim) pageSim.speedMultiplier = speed;
+    const label = document.getElementById("speedLabel");
+    const button = document.getElementById("speedBtn");
+    if (label) label.textContent = `${speed}×`;
+    if (button) button.setAttribute("aria-label", `Playback speed ${speed}x`);
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
     const canvas = document.getElementById("battleCanvas");
@@ -1115,26 +1174,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderSelection(1);
     renderSelection(2);
 
-    // Controls
-    document
-        .getElementById("startBtn")
-        .addEventListener("click", startBattle);
-    document
-        .getElementById("pauseBtn")
-        .addEventListener("click", () => {
+    // Video-player controls: the first play starts the simulation, play/pause
+    // toggles during it, and replay starts a fresh randomized run.
+    document.getElementById("playPauseBtn").addEventListener("click", async () => {
+        if (battleLoading) return;
+        if (pageSim.running) {
             pageSim.pause();
-            document.getElementById("pauseBtn").textContent =
-                pageSim.paused ? "Resume" : "Pause";
-        });
-    document
-        .getElementById("resetBtn")
-        .addEventListener("click", () => {
-            pageSim.reset();
-            document.getElementById("pauseBtn").textContent = "Pause";
-            // Return to the pick phase: rails expand, search returns, arena
-            // shrinks, Start button comes back.
-            setSimPhase(false);
-        });
+            return;
+        }
+        await startBattle();
+    });
+    document.getElementById("speedBtn").addEventListener("click", () => {
+        setPlaybackSpeed(playbackSpeedIndex + 1);
+    });
+    setPlaybackSpeed(0);
 
     // Damage-breakdown toggle (battle phase only).
     const dmgToggle = document.getElementById("dmgToggle");
@@ -1147,16 +1200,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             dmgToggle.setAttribute("aria-expanded", String(willOpen));
         });
     }
-    const speedSlider = document.getElementById("speedSlider");
-    speedSlider.addEventListener("input", (e) => {
-        pageSim.speedMultiplier = parseFloat(e.target.value);
-        document.getElementById("speedLabel").textContent =
-            `${e.target.value}x`;
-    });
-    // Sync the sim + label to the slider's initial value (defaults to 3x).
-    pageSim.speedMultiplier = parseFloat(speedSlider.value);
-    document.getElementById("speedLabel").textContent = `${speedSlider.value}x`;
-
     // Army mode toggle
     document
         .querySelectorAll('input[name="armyMode"]')
@@ -1177,21 +1220,29 @@ document.addEventListener("DOMContentLoaded", async () => {
                     document.getElementById(
                         "resourceInput",
                     ).style.display = "flex";
-                    document.getElementById(
-                        "totalResources",
-                    ).value = "3000";
                 }
                 updateOptionsCurrent();
+                refreshArenaPreview();
             });
         });
 
     // Keep the collapsed-options summary in sync as numbers change.
-    ["team1Count", "team2Count", "totalResources"].forEach((id) => {
+    ["equalCount", "totalResources"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.addEventListener("input", () => {
+            if (id === "equalCount") {
+                const parsed = parseInt(el.value, 10);
+                if (parsed > 27) el.value = "27";
+            }
             updateOptionsCurrent();
             refreshArenaPreview();
         });
+    });
+    document.getElementById("equalCount")?.addEventListener("change", (event) => {
+        event.target.value = String(Math.min(27, Math.max(1,
+            parseInt(event.target.value, 10) || 15)));
+        updateOptionsCurrent();
+        refreshArenaPreview();
     });
     updateOptionsCurrent();
 
@@ -1248,14 +1299,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             const resEl = document.getElementById("totalResources");
             if (resEl) resEl.value = params.get("resources");
         }
-        if (params.has("count1")) {
-            const c1 = document.getElementById("team1Count");
-            if (c1) c1.value = params.get("count1");
+        const linkedCount = params.get("count1") || params.get("count2");
+        if (linkedCount) {
+            const count = document.getElementById("equalCount");
+            if (count) count.value = String(Math.min(27, Math.max(1,
+                parseInt(linkedCount, 10) || 15)));
         }
-        if (params.has("count2")) {
-            const c2 = document.getElementById("team2Count");
-            if (c2) c2.value = params.get("count2");
-        }
+        updateOptionsCurrent();
+        refreshArenaPreview();
     }
     if (dl && dl.autorun && teamState[1].unitSlug && teamState[2].unitSlug) {
         await startBattle();
@@ -1273,9 +1324,9 @@ async function startBattle() {
     }
 
     try {
-        document.getElementById("startBtn").disabled = true;
-        document.getElementById("startBtn").textContent =
-            "Loading...";
+        battleLoading = true;
+        syncPlayerControls();
+        document.getElementById("simOptions")?.removeAttribute("open");
 
         const armyMode = document.querySelector(
             'input[name="armyMode"]:checked',
@@ -1289,15 +1340,16 @@ async function startBattle() {
         if (armyMode === "resources") {
             army = {
                 mode: "equal_resources",
-                budget: parseInt(document.getElementById("totalResources").value, 10) || 3000,
+                budget: parseInt(document.getElementById("totalResources").value, 10) || 5000,
                 weights: { food: 1, wood: 1, gold: 1 },
                 cap: 27,
             };
         } else {
-            teams[0].count = Math.min(27, Math.max(1,
-                parseInt(document.getElementById("team1Count").value, 10) || 15));
-            teams[1].count = Math.min(27, Math.max(1,
-                parseInt(document.getElementById("team2Count").value, 10) || 15));
+            const count = Math.min(27, Math.max(1,
+                parseInt(document.getElementById("equalCount").value, 10) || 15));
+            document.getElementById("equalCount").value = String(count);
+            teams[0].count = count;
+            teams[1].count = count;
             army = { mode: "explicit", cap: 27 };
         }
 
@@ -1317,12 +1369,6 @@ async function startBattle() {
         if (!response.ok || config.error) {
             throw new Error(config.detail || config.error || `HTTP ${response.status}`);
         }
-        console.log("simulationv3 battle", {
-            seed: config.seed,
-            family: config.scenario.family,
-            teams: config.teams.map(({ civ, unit_name: unit, count }) => ({ civ, unit, count })),
-        });
-
         const unitCost = (mechanics) => {
             const cost = mechanics.cost;
             return cost.food + cost.wood + cost.gold;
@@ -1373,8 +1419,6 @@ async function startBattle() {
             assets,
         });
 
-        document.getElementById("team1Count").value = team1.count;
-        document.getElementById("team2Count").value = team2.count;
         updateOptionsCurrent();
 
         document.getElementById("prog1Name").textContent =
@@ -1394,9 +1438,7 @@ async function startBattle() {
             icon2.style.display = "";
         }
 
-        document.getElementById("startBtn").textContent = "Start Battle";
-        document.getElementById("pauseBtn").disabled = false;
-        document.getElementById("resetBtn").disabled = false;
+        battleLoading = false;
         setSimPhase(true);
         pageSim.start();
 
@@ -1406,11 +1448,10 @@ async function startBattle() {
         }
     } catch (error) {
         console.error(error);
+        battleLoading = false;
         pageSim?.setStatus(`Could not start: ${error.message}`, true);
         alert(`Error: ${error.message}`);
-        document.getElementById("startBtn").disabled = false;
-        document.getElementById("startBtn").textContent =
-            "Start Battle";
+        syncPlayerControls();
     }
 }
 

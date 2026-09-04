@@ -120,6 +120,20 @@ def test_arena_preview_exposes_map_and_empty_formation_slots(client):
     assert all("rotation" in slot for slot in payload["placementByOwner"]["2"])
 
 
+def test_battle_page_uses_player_controls_and_public_defaults(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    body = response.data.decode()
+    assert 'id="playPauseBtn"' in body
+    assert 'id="speedBtn"' in body
+    assert 'id="startBtn"' not in body
+    assert 'id="totalResources" value="5000"' in body
+    assert 'id="rangedBuffer" checked' in body
+    assert '<span class="rail-title">Team A</span>' in body
+    assert '<span class="rail-title">Team B</span>' in body
+    assert "simulationv3 · seed" not in body
+
+
 def test_battle_config_includes_database_owned_ranged_buffer(client):
     response = client.post(
         "/api/v3/battle-config",
@@ -146,6 +160,26 @@ def test_battle_config_includes_database_owned_ranged_buffer(client):
         {"winnerOwner": 2, "owners": [2, 4]},
         {"winnerOwner": 3, "owners": [3]},
     ]
+
+
+def test_battle_config_silently_ignores_buffer_for_same_family_fights(client):
+    response = client.post(
+        "/api/v3/battle-config",
+        json={
+            "teams": [
+                {"civ": "Spanish", "unit_slug": "champion", "count": 15},
+                {"civ": "Spanish", "unit_slug": "paladin", "count": 15},
+            ],
+            "army": {"mode": "explicit"},
+            "engagement_mode": "ranged_buffer",
+            "seed": 8,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["engagementMode"] == "direct"
+    assert payload["scenario"]["family"] == "melee_vs_melee"
+    assert payload["scenario"]["hasRangedBuffer"] is False
 
 
 def test_battle_config_accepts_zero_weight_but_rejects_all_zero(client):

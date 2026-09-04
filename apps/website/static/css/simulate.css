@@ -968,14 +968,14 @@
 }
 .player-controls {
     display: grid;
-    grid-template-columns: minmax(72px, 1fr) 48px minmax(72px, 1fr);
+    grid-template-columns: minmax(76px, 1fr) auto minmax(76px, 1fr);
     align-items: center;
-    width: min(100%, 360px);
-    min-height: 48px;
+    width: min(100%, 420px);
+    min-height: 52px;
 }
 .player-button {
-    width: 44px;
-    height: 44px;
+    width: 50px;
+    height: 50px;
     display: inline-grid;
     place-items: center;
     padding: 0;
@@ -987,9 +987,6 @@
     transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 .player-button.primary {
-    justify-self: center;
-    width: 48px;
-    height: 48px;
     background: var(--gold-cta);
     border-color: var(--gold-cta);
     color: var(--text-on-gold);
@@ -1002,8 +999,14 @@
     display: flex;
     align-items: center;
 }
-.player-time-slot { justify-content: flex-end; padding-right: 15px; }
-.player-speed-slot { justify-content: flex-start; padding-left: 15px; }
+.player-time-slot { justify-content: flex-end; padding-right: 18px; }
+.player-balance-slot { padding-left: 18px; }
+.transport-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
 .media-state-icon,
 .media-glyph {
     width: 22px;
@@ -1080,6 +1083,7 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
+    scroll-margin-top: calc(var(--nav-h, 56px) + 8px);
 }
 
 .team-rail {
@@ -1182,7 +1186,7 @@
    while the canvas repaints every frame). */
 
 /* ===== Battle phase ===== */
-.sim-stage.battle-active .team-rail { flex-basis: clamp(150px, 16vw, 190px); }
+.sim-stage.battle-active .team-rail { flex-basis: clamp(220px, 18vw, 300px); }
 .sim-stage.battle-active .rail-search { display: none; }
 .sim-stage.battle-active .rail-live { display: block; }
 /* The picked civ/unit badges stay. Changing them is disabled only while frames
@@ -1193,6 +1197,97 @@
 /* ---- Damage breakdown panel (toggled) ---- */
 #debugPanel { margin-top: 12px; }
 #debugPanel[hidden] { display: none; }
+
+/* Laptop/desktop app shell. The battle workspace consumes exactly the space
+   below the sticky navigation, so both team panels, arena and transport bar
+   remain visible without a corrective page scroll. Long pick lists scroll
+   inside their rail instead of increasing the page height. */
+@media (min-width: 1025px) and (min-height: 680px) {
+    .page-header { display: none; }
+    .sim-page { padding-block: 8px; }
+    .sim-stage {
+        height: calc(100svh - var(--nav-h, 56px) - 16px);
+        align-items: stretch;
+    }
+    .team-rail {
+        height: 100%;
+        overflow: hidden;
+    }
+    .rail-picker { max-height: calc(100% - 82px); }
+    .arena { height: 100%; }
+    .arena-toolbar,
+    .arena-player { flex: 0 0 auto; }
+    .arena-canvas-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+    #battleCanvas {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: auto;
+    }
+
+    .sim-stage.battle-active .team-rail { padding: 15px; }
+    .sim-stage.battle-active .rail-title {
+        font-family: var(--font-body);
+        font-size: 1rem;
+        letter-spacing: 0.045em;
+        text-transform: uppercase;
+    }
+    .sim-stage.battle-active .selection-badge {
+        min-height: 54px;
+        gap: 11px;
+        padding: 9px 11px;
+        margin-bottom: 9px;
+    }
+    .sim-stage.battle-active .selection-badge img,
+    .sim-stage.battle-active .selection-badge img.sprite {
+        width: 2.65rem;
+        height: 2.65rem;
+        flex: 0 0 2.65rem;
+    }
+    .sim-stage.battle-active .selection-badge .badge-text {
+        min-width: 0;
+        font-family: var(--font-body);
+        font-size: 0.98rem;
+        font-weight: 700;
+        line-height: 1.15;
+    }
+    .sim-stage.battle-active .rail-live { margin-top: 14px; }
+    .sim-stage.battle-active .progress-card { padding: 13px 14px; }
+    .sim-stage.battle-active .progress-header {
+        gap: 10px;
+        margin-bottom: 8px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+    }
+    .sim-stage.battle-active .progress-header img.sprite {
+        width: 3.6rem;
+        height: 3.6rem;
+        flex: 0 0 3.6rem;
+    }
+    .sim-stage.battle-active .progress-header .prog-name {
+        font-family: var(--font-body);
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .sim-stage.battle-active .progress-row {
+        align-items: baseline;
+        margin: 0;
+        padding: 5px 0;
+        border-bottom: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
+        font-family: var(--font-body);
+        font-size: 0.9rem;
+    }
+    .sim-stage.battle-active .progress-row:last-child { border-bottom: 0; }
+    .sim-stage.battle-active .progress-row .prog-value {
+        margin-left: 10px;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-variant-numeric: tabular-nums;
+    }
+}
 
 /* ==========================================================================
    Responsive — stage stacks to a 3-row (picker / arena / picker) layout.
@@ -1285,8 +1380,8 @@
     }
     .arena-player { min-height: 56px; margin-top: 6px; }
     .player-controls {
-        grid-template-columns: minmax(68px, 1fr) 48px minmax(68px, 1fr);
-        width: min(100%, 320px);
+        grid-template-columns: minmax(62px, 1fr) auto minmax(62px, 1fr);
+        width: min(100%, 360px);
     }
     /* Keep the picker preview and the running battle on the same portrait
        camera. The renderer fits the full passage vertically and lets the

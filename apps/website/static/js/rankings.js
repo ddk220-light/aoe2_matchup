@@ -1137,13 +1137,13 @@ function renderTable() {
     // unit identity, the category's primary score, and its special mechanics.
     // The desktop column model remains unchanged; these tags let responsive CSS
     // collapse the same semantic table without duplicating its data.
-    const mobileScoreKey = columns.some((col) => col.key === "pool_score")
-        ? "pool_score"
-        : isSiege
-            ? "anti_building_score"
-            : isNaval
-                ? "naval_effectiveness"
-                : "pes";
+    const mobileScoreKey = [
+        "ranking_score",
+        "pool_score",
+        "anti_building_score",
+        "naval_effectiveness",
+        "pes",
+    ].find((key) => columns.some((col) => col.key === key));
     for (const col of columns) {
         if (col.key === "unit_name") col.mobileColumn = "unit";
         else if (col.key === mobileScoreKey) col.mobileColumn = "score";

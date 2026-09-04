@@ -16,6 +16,7 @@ import {
     buildSelectionPreviewUnits,
     createMapRenderer,
 } from "/v3-runtime/viewer/map-renderer.js";
+import { summarizeMatchup } from "/v3-runtime/src/combat/matchup-summary.js";
 
 const RELIC_MAX = 0;
 const KILL_BONUS_MAX = 0;
@@ -295,9 +296,9 @@ function setStartKills(teamNum, n) {
 }
 
 function leaveBattleForRosterEdit() {
-    if (!pageSim?.config) return;
+    cancelMatchupPreview();
     currentBattle = null;
-    pageSim.reset();
+    if (pageSim?.config) pageSim.reset();
     setSimPhase(false);
 }
 
@@ -318,6 +319,7 @@ async function selectCiv(teamNum, civName) {
         console.error("Failed to load civ data:", e);
     }
     renderSelection(teamNum);
+    scheduleMatchupPreview();
 }
 
 function clearCiv(teamNum) {
@@ -328,6 +330,7 @@ function clearCiv(teamNum) {
     teamState[teamNum].civData = null;
     renderSelection(teamNum);
     refreshArenaPreview();
+    scheduleMatchupPreview();
 }
 
 function setTeamAge(teamNum, age) {
@@ -368,6 +371,7 @@ function selectUnit(teamNum, slug, name) {
     }
     renderSelection(teamNum);
     refreshArenaPreview();
+    scheduleMatchupPreview();
 }
 
 function clearUnit(teamNum) {
@@ -509,8 +513,9 @@ function setSimPhase(battle) {
     };
     hide("battleTimer", !battle);
     hide("dmgToggle", !battle);
-    hide("team1Live", !battle);
-    hide("team2Live", !battle);
+    const showMatchupCards = battle || !!currentBattle;
+    hide("team1Live", !showMatchupCards);
+    hide("team2Live", !showMatchupCards);
     const hint = document.getElementById("startHint");
     if (battle) {
         if (hint) hint.style.display = "none";
@@ -844,6 +849,109 @@ class PageSim {
 }
 
 // ===== LIVE STAT READOUT =====
+function setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+}
+
+function formatCombatMetric(value, suffix = "") {
+    if (!Number.isFinite(value)) return "—";
+    const rounded = Math.round(value * 10) / 10;
+    return `${rounded.toFixed(Number.isInteger(rounded) ? 0 : 1)}${suffix}`;
+}
+
+function updateHealthBar(teamNum, hp, startingHp) {
+    const fraction = startingHp > 0
+        ? Math.max(0, Math.min(1, hp / startingHp))
+        : 0;
+    const fill = document.getElementById(`prog${teamNum}HealthFill`);
+    const track = document.getElementById(`prog${teamNum}HealthTrack`);
+    if (fill) fill.style.width = `${(fraction * 100).toFixed(2)}%`;
+    if (track) {
+        track.setAttribute("aria-valuenow", String(Math.round(fraction * 100)));
+        track.setAttribute(
+            "aria-valuetext",
+            `${Math.round(hp)} of ${Math.round(startingHp)} HP remaining`,
+        );
+    }
+}
+
+function renderCallouts(teamNum, callouts) {
+    const list = document.getElementById(`prog${teamNum}Callouts`);
+    if (!list) return;
+    list.replaceChildren();
+    for (const text of callouts) {
+        const item = document.createElement("li");
+        item.textContent = text;
+        list.append(item);
+    }
+    list.hidden = callouts.length === 0;
+}
+
+function unitCost(mechanics) {
+    const cost = mechanics.cost;
+    return cost.food + cost.wood + cost.gold;
+}
+
+function battleStatsFromConfig(config) {
+    const [team1, team2] = config.teams;
+    const team1Cost = unitCost(team1.mechanics);
+    const team2Cost = unitCost(team2.mechanics);
+    return {
+        team1_civ: team1.civ,
+        team1_unit: team1.unit_slug,
+        team1_unit_name: team1.unit_name,
+        team1_count: team1.count,
+        team1_total_cost: team1Cost * team1.count,
+        team1_unit_cost: team1Cost,
+        team1_max_hp: team1.mechanics.hp,
+        team1_start_hp: team1.mechanics.hp * team1.count,
+        team2_civ: team2.civ,
+        team2_unit: team2.unit_slug,
+        team2_unit_name: team2.unit_name,
+        team2_count: team2.count,
+        team2_total_cost: team2Cost * team2.count,
+        team2_unit_cost: team2Cost,
+        team2_max_hp: team2.mechanics.hp,
+        team2_start_hp: team2.mechanics.hp * team2.count,
+        winner: null,
+    };
+}
+
+function renderMatchupCards(config) {
+    const [team1, team2] = config.teams;
+    currentBattle = battleStatsFromConfig(config);
+    const summaries = [
+        summarizeMatchup(team1.mechanics, team2.mechanics),
+        summarizeMatchup(team2.mechanics, team1.mechanics),
+    ];
+    for (const [index, team] of [team1, team2].entries()) {
+        const teamNum = index + 1;
+        const summary = summaries[index];
+        setText(`prog${teamNum}Name`, `${team.civ} ${team.unit_name}`);
+        setText(`prog${teamNum}Damage`, formatCombatMetric(summary.damagePerHit));
+        setText(`prog${teamNum}Dps`, formatCombatMetric(summary.damagePerSecond));
+        setText(`prog${teamNum}Ttk`, formatCombatMetric(summary.timeToKillSeconds, "s"));
+        const ttkMetric = document.getElementById(`prog${teamNum}TtkMetric`);
+        if (ttkMetric) {
+            ttkMetric.title = summary.timeToKillHelp;
+            ttkMetric.setAttribute(
+                "aria-label",
+                `Time to kill ${formatCombatMetric(summary.timeToKillSeconds, " seconds")}. ${summary.timeToKillHelp}`,
+            );
+        }
+        renderCallouts(teamNum, summary.callouts);
+        const icon = document.getElementById(`prog${teamNum}Icon`);
+        if (unitImages[teamNum]?.src && icon) {
+            icon.src = unitImages[teamNum].src;
+            icon.classList.toggle("sprite", !!unitIsSprite[teamNum]);
+            icon.style.display = "";
+        }
+    }
+    updateStats(null);
+    setSimPhase(!!pageSim?.config);
+}
+
 function updateStats(snapshot, unitIndex = new Map()) {
     const rows = { 2: [], 3: [] };
     for (const unit of snapshot?.units || []) {
@@ -861,35 +969,32 @@ function updateStats(snapshot, unitIndex = new Map()) {
     const t2AliveCount = snapshot ? t2Alive.length : (currentBattle?.team2_count || 0);
     const battleTime = (snapshot?.tick ?? 0) / 60;
 
-    document.getElementById("battleTimer").textContent =
-        `${battleTime.toFixed(1)}s`;
+    setText("battleTimer", `${battleTime.toFixed(1)}s`);
 
-    document.getElementById("prog1Units").textContent =
-        `${t1AliveCount} / ${rows[2].length || currentBattle?.team1_count || 0}`;
-    document.getElementById("prog1Hp").textContent =
-        `${Math.round(t1Hp)} / ${Math.round(currentBattle?.team1_start_hp || 0)}`;
+    setText("prog1Units",
+        `${t1AliveCount} / ${rows[2].length || currentBattle?.team1_count || 0}`);
+    setText("prog1Hp",
+        `${Math.round(t1Hp)} / ${Math.round(currentBattle?.team1_start_hp || 0)}`);
+    updateHealthBar(1, t1Hp, currentBattle?.team1_start_hp || 0);
     if (currentBattle) {
-        document.getElementById("prog1Res").textContent =
-            currentBattle.team1_total_cost;
+        setText("prog1Res", currentBattle.team1_total_cost);
         const lostFraction = currentBattle.team1_start_hp > 0
             ? 1 - t1Hp / currentBattle.team1_start_hp : 0;
         const t1Lost = Math.round(currentBattle.team1_total_cost * lostFraction);
-        document.getElementById("prog1Lost").textContent =
-            t1Lost;
+        setText("prog1Lost", t1Lost);
     }
 
-    document.getElementById("prog2Units").textContent =
-        `${t2AliveCount} / ${rows[3].length || currentBattle?.team2_count || 0}`;
-    document.getElementById("prog2Hp").textContent =
-        `${Math.round(t2Hp)} / ${Math.round(currentBattle?.team2_start_hp || 0)}`;
+    setText("prog2Units",
+        `${t2AliveCount} / ${rows[3].length || currentBattle?.team2_count || 0}`);
+    setText("prog2Hp",
+        `${Math.round(t2Hp)} / ${Math.round(currentBattle?.team2_start_hp || 0)}`);
+    updateHealthBar(2, t2Hp, currentBattle?.team2_start_hp || 0);
     if (currentBattle) {
-        document.getElementById("prog2Res").textContent =
-            currentBattle.team2_total_cost;
+        setText("prog2Res", currentBattle.team2_total_cost);
         const lostFraction = currentBattle.team2_start_hp > 0
             ? 1 - t2Hp / currentBattle.team2_start_hp : 0;
         const t2Lost = Math.round(currentBattle.team2_total_cost * lostFraction);
-        document.getElementById("prog2Lost").textContent =
-            t2Lost;
+        setText("prog2Lost", t2Lost);
     }
 }
 
@@ -1147,6 +1252,8 @@ function updateDebugPanel(sim) {
 let pageSim = null;
 let currentBattle = null;
 let battleLoading = false;
+let matchupPreviewSequence = 0;
+let matchupPreviewTimer = null;
 const PLAYBACK_SPEEDS = [1, 2, 5, 10];
 let playbackSpeedIndex = 0;
 
@@ -1159,6 +1266,99 @@ function setPlaybackSpeed(index) {
     const button = document.getElementById("speedBtn");
     if (label) label.textContent = `${speed}×`;
     if (button) button.setAttribute("aria-label", `Playback speed ${speed}x`);
+}
+
+function buildBattlePayload(seed) {
+    const s1 = teamState[1];
+    const s2 = teamState[2];
+    const armyMode = document.querySelector(
+        'input[name="armyMode"]:checked',
+    )?.value || "resources";
+    const teams = [
+        { civ: s1.civ, unit_slug: s1.unitSlug, age: s1.age },
+        { civ: s2.civ, unit_slug: s2.unitSlug, age: s2.age },
+    ];
+    let army;
+    if (armyMode === "resources") {
+        const budgets = ["team1Resources", "team2Resources"].map((id) => {
+            const input = document.getElementById(id);
+            const value = Math.max(1, parseInt(input.value, 10) || 5000);
+            input.value = String(value);
+            return value;
+        });
+        army = {
+            mode: "resource_budgets",
+            budgets,
+            weights: { food: 1, wood: 1, gold: 1 },
+            cap: 27,
+        };
+    } else {
+        const counts = ["team1Count", "team2Count"].map((id) => {
+            const input = document.getElementById(id);
+            const value = Math.min(27, Math.max(1,
+                parseInt(input.value, 10) || 27));
+            input.value = String(value);
+            return value;
+        });
+        teams[0].count = counts[0];
+        teams[1].count = counts[1];
+        army = { mode: "explicit", cap: 27 };
+    }
+    return {
+        teams,
+        army,
+        engagement_mode: document.getElementById("rangedBuffer")?.checked
+            ? "ranged_buffer"
+            : "direct",
+        seed,
+    };
+}
+
+async function fetchBattleConfig(payload) {
+    const response = await fetch("/api/v3/battle-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+    const config = await response.json();
+    if (!response.ok || config.error) {
+        throw new Error(config.detail || config.error || `HTTP ${response.status}`);
+    }
+    return config;
+}
+
+function cancelMatchupPreview() {
+    matchupPreviewSequence += 1;
+    if (matchupPreviewTimer !== null) {
+        clearTimeout(matchupPreviewTimer);
+        matchupPreviewTimer = null;
+    }
+}
+
+function scheduleMatchupPreview(delay = 100) {
+    cancelMatchupPreview();
+    if (pageSim?.config) return;
+    const ready = teamState[1].civ && teamState[1].unitSlug
+        && teamState[2].civ && teamState[2].unitSlug;
+    if (!ready) {
+        currentBattle = null;
+        setSimPhase(false);
+        return;
+    }
+    const sequence = matchupPreviewSequence;
+    matchupPreviewTimer = setTimeout(async () => {
+        matchupPreviewTimer = null;
+        try {
+            const config = await fetchBattleConfig(buildBattlePayload(0));
+            if (sequence !== matchupPreviewSequence || pageSim?.config) return;
+            renderMatchupCards(config);
+        } catch (error) {
+            if (sequence !== matchupPreviewSequence) return;
+            console.error("Could not load matchup statistics", error);
+            currentBattle = null;
+            setSimPhase(false);
+        }
+    }, delay);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1238,6 +1438,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
                 updateOptionsCurrent();
                 refreshArenaPreview();
+                scheduleMatchupPreview();
             });
         });
 
@@ -1251,6 +1452,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             updateOptionsCurrent();
             refreshArenaPreview();
+            scheduleMatchupPreview();
         });
     });
     ["team1Count", "team2Count"].forEach((id) => {
@@ -1259,6 +1461,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 parseInt(event.target.value, 10) || 27)));
             updateOptionsCurrent();
             refreshArenaPreview();
+            scheduleMatchupPreview();
         });
     });
     ["team1Resources", "team2Resources"].forEach((id) => {
@@ -1266,7 +1469,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             event.target.value = String(Math.max(1,
                 parseInt(event.target.value, 10) || 5000));
             updateOptionsCurrent();
+            scheduleMatchupPreview();
         });
+    });
+    document.getElementById("rangedBuffer")?.addEventListener("change", () => {
+        scheduleMatchupPreview();
     });
     updateOptionsCurrent();
 
@@ -1362,87 +1569,13 @@ async function startBattle() {
     }
 
     try {
+        cancelMatchupPreview();
         battleLoading = true;
         syncPlayerControls();
         document.getElementById("simOptions")?.removeAttribute("open");
 
-        const armyMode = document.querySelector(
-            'input[name="armyMode"]:checked',
-        ).value;
         const seed = (Math.random() * 2 ** 32) >>> 0;
-        const teams = [
-            { civ: s1.civ, unit_slug: s1.unitSlug, age: s1.age },
-            { civ: s2.civ, unit_slug: s2.unitSlug, age: s2.age },
-        ];
-        let army;
-        if (armyMode === "resources") {
-            const budgets = ["team1Resources", "team2Resources"].map((id) => {
-                const input = document.getElementById(id);
-                const value = Math.max(1, parseInt(input.value, 10) || 5000);
-                input.value = String(value);
-                return value;
-            });
-            army = {
-                mode: "resource_budgets",
-                budgets,
-                weights: { food: 1, wood: 1, gold: 1 },
-                cap: 27,
-            };
-        } else {
-            const counts = ["team1Count", "team2Count"].map((id) => {
-                const input = document.getElementById(id);
-                const value = Math.min(27, Math.max(1,
-                    parseInt(input.value, 10) || 27));
-                input.value = String(value);
-                return value;
-            });
-            teams[0].count = counts[0];
-            teams[1].count = counts[1];
-            army = { mode: "explicit", cap: 27 };
-        }
-
-        const response = await fetch("/api/v3/battle-config", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                teams,
-                army,
-                engagement_mode: document.getElementById("rangedBuffer")?.checked
-                    ? "ranged_buffer"
-                    : "direct",
-                seed,
-            }),
-        });
-        const config = await response.json();
-        if (!response.ok || config.error) {
-            throw new Error(config.detail || config.error || `HTTP ${response.status}`);
-        }
-        const unitCost = (mechanics) => {
-            const cost = mechanics.cost;
-            return cost.food + cost.wood + cost.gold;
-        };
-        const [team1, team2] = config.teams;
-        const team1Cost = unitCost(team1.mechanics);
-        const team2Cost = unitCost(team2.mechanics);
-        currentBattle = {
-            team1_civ: team1.civ,
-            team1_unit: team1.unit_slug,
-            team1_unit_name: team1.unit_name,
-            team1_count: team1.count,
-            team1_total_cost: team1Cost * team1.count,
-            team1_unit_cost: team1Cost,
-            team1_max_hp: team1.mechanics.hp,
-            team1_start_hp: team1.mechanics.hp * team1.count,
-            team2_civ: team2.civ,
-            team2_unit: team2.unit_slug,
-            team2_unit_name: team2.unit_name,
-            team2_count: team2.count,
-            team2_total_cost: team2Cost * team2.count,
-            team2_unit_cost: team2Cost,
-            team2_max_hp: team2.mechanics.hp,
-            team2_start_hp: team2.mechanics.hp * team2.count,
-            winner: null,
-        };
+        const config = await fetchBattleConfig(buildBattlePayload(seed));
 
         const assets = {
             2: { img: unitImages[1], sheet: unitSheets[1] },
@@ -1468,23 +1601,7 @@ async function startBattle() {
         });
 
         updateOptionsCurrent();
-
-        document.getElementById("prog1Name").textContent =
-            `${team1.civ} ${team1.unit_name}`;
-        document.getElementById("prog2Name").textContent =
-            `${team2.civ} ${team2.unit_name}`;
-        const icon1 = document.getElementById("prog1Icon");
-        const icon2 = document.getElementById("prog2Icon");
-        if (unitImages[1]?.src) {
-            icon1.src = unitImages[1].src;
-            icon1.classList.toggle("sprite", !!unitIsSprite[1]);
-            icon1.style.display = "";
-        }
-        if (unitImages[2]?.src) {
-            icon2.src = unitImages[2].src;
-            icon2.classList.toggle("sprite", !!unitIsSprite[2]);
-            icon2.style.display = "";
-        }
+        renderMatchupCards(config);
 
         battleLoading = false;
         setSimPhase(true);

@@ -117,6 +117,22 @@ test("roster changes remain available during active playback", () => {
 });
 
 
+test("team cards expose live health and matchup-specific combat metrics", () => {
+  for (const team of [1, 2]) {
+    assert.match(websiteTemplate, new RegExp(`id="prog${team}HealthFill"`));
+    assert.match(websiteTemplate, new RegExp(`id="prog${team}Damage"`));
+    assert.match(websiteTemplate, new RegExp(`id="prog${team}Dps"`));
+    assert.match(websiteTemplate, new RegExp(`id="prog${team}Ttk"`));
+    assert.match(websiteTemplate, new RegExp(`id="prog${team}Callouts"`));
+  }
+  assert.match(websitePage, /summarizeMatchup/);
+  assert.match(websitePage, /function scheduleMatchupPreview/);
+  assert.match(websiteCss, /\.progress-card\.team1 \.progress-health-fill/);
+  assert.match(websiteCss, /\.progress-card\.team2 \.progress-health-fill/);
+  assert.match(websiteCss, /\.matchup-metrics \{[\s\S]*grid-template-columns: repeat\(3/);
+});
+
+
 test("attack sprites sit lower than idle sprites to meet their ground shadow", () => {
   assert.equal(productionSpriteGroundOffset(100, false), 2.5);
   assert.ok(Math.abs(productionSpriteGroundOffset(100, true) - 7) < 1e-9);

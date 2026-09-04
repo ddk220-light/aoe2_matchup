@@ -33,10 +33,31 @@
                         <img id="prog1Icon" src="" alt="" style="display:none" />
                         <span class="prog-name" id="prog1Name">Team A</span>
                     </div>
-                    <div class="progress-row"><span class="prog-label">Units</span><span class="prog-value" id="prog1Units">—</span></div>
-                    <div class="progress-row"><span class="prog-label">HP</span><span class="prog-value" id="prog1Hp">—</span></div>
-                    <div class="progress-row"><span class="prog-label">Resources</span><span class="prog-value" id="prog1Res">—</span></div>
-                    <div class="progress-row"><span class="prog-label">Res Lost</span><span class="prog-value" id="prog1Lost" style="color: var(--red)">—</span></div>
+                    <div class="progress-vitals">
+                        <span class="prog-label">Remaining</span>
+                        <span class="prog-value"><span id="prog1Units">—</span> <span class="progress-hp-inline">(<span id="prog1Hp">—</span> HP)</span></span>
+                    </div>
+                    <div class="progress-health-track" id="prog1HealthTrack" role="progressbar"
+                         aria-label="Team A health remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                        <span class="progress-health-fill" id="prog1HealthFill"></span>
+                    </div>
+                    <div class="progress-economy">
+                        <span>Resources <strong id="prog1Res">—</strong></span>
+                        <span>Lost <strong id="prog1Lost">—</strong></span>
+                    </div>
+                    <div class="matchup-metrics" aria-label="Team A matchup statistics">
+                        <div class="matchup-metric">
+                            <span>Damage / hit</span><strong id="prog1Damage">—</strong>
+                        </div>
+                        <div class="matchup-metric">
+                            <span>Damage / sec</span><strong id="prog1Dps">—</strong>
+                        </div>
+                        <div class="matchup-metric matchup-ttk" id="prog1TtkMetric" tabindex="0">
+                            <span>Time to kill <span class="metric-info" aria-hidden="true">?</span></span>
+                            <strong id="prog1Ttk">—</strong>
+                        </div>
+                    </div>
+                    <ul class="matchup-callouts" id="prog1Callouts" aria-label="Team A special mechanics" hidden></ul>
                 </div>
             </div>
         </aside>
@@ -152,10 +173,31 @@
                         <img id="prog2Icon" src="" alt="" style="display:none" />
                         <span class="prog-name" id="prog2Name">Team B</span>
                     </div>
-                    <div class="progress-row"><span class="prog-label">Units</span><span class="prog-value" id="prog2Units">—</span></div>
-                    <div class="progress-row"><span class="prog-label">HP</span><span class="prog-value" id="prog2Hp">—</span></div>
-                    <div class="progress-row"><span class="prog-label">Resources</span><span class="prog-value" id="prog2Res">—</span></div>
-                    <div class="progress-row"><span class="prog-label">Res Lost</span><span class="prog-value" id="prog2Lost" style="color: var(--red)">—</span></div>
+                    <div class="progress-vitals">
+                        <span class="prog-label">Remaining</span>
+                        <span class="prog-value"><span id="prog2Units">—</span> <span class="progress-hp-inline">(<span id="prog2Hp">—</span> HP)</span></span>
+                    </div>
+                    <div class="progress-health-track" id="prog2HealthTrack" role="progressbar"
+                         aria-label="Team B health remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                        <span class="progress-health-fill" id="prog2HealthFill"></span>
+                    </div>
+                    <div class="progress-economy">
+                        <span>Resources <strong id="prog2Res">—</strong></span>
+                        <span>Lost <strong id="prog2Lost">—</strong></span>
+                    </div>
+                    <div class="matchup-metrics" aria-label="Team B matchup statistics">
+                        <div class="matchup-metric">
+                            <span>Damage / hit</span><strong id="prog2Damage">—</strong>
+                        </div>
+                        <div class="matchup-metric">
+                            <span>Damage / sec</span><strong id="prog2Dps">—</strong>
+                        </div>
+                        <div class="matchup-metric matchup-ttk" id="prog2TtkMetric" tabindex="0">
+                            <span>Time to kill <span class="metric-info" aria-hidden="true">?</span></span>
+                            <strong id="prog2Ttk">—</strong>
+                        </div>
+                    </div>
+                    <ul class="matchup-callouts" id="prog2Callouts" aria-label="Team B special mechanics" hidden></ul>
                 </div>
             </div>
         </aside>

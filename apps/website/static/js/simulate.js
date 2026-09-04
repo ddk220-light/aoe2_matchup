@@ -12,7 +12,10 @@
  * addEventListener, never through inline on*= attributes.
  */
 
-import { createMapRenderer } from "/v3-runtime/viewer/map-renderer.js";
+import {
+    buildSelectionPreviewUnits,
+    createMapRenderer,
+} from "/v3-runtime/viewer/map-renderer.js";
 
 const RELIC_MAX = 0;
 const KILL_BONUS_MAX = 0;
@@ -84,6 +87,10 @@ function updateStartReady() {
     if (btn) btn.disabled = !ready;
     if (hint) hint.style.display = ready ? "none" : "";
     return ready;
+}
+
+function refreshArenaPreview() {
+    pageSim?.showSelectionPreview(teamState, unitImages);
 }
 
 // Keep the "Change options" summary showing the current army setup.
@@ -297,6 +304,7 @@ async function selectCiv(teamNum, civName) {
     state.unitName = null;
     state.civData = null;
     renderSelection(teamNum);
+    refreshArenaPreview();
 
     // Fetch civ data
     try {
@@ -313,6 +321,7 @@ function clearCiv(teamNum) {
     teamState[teamNum].unitName = null;
     teamState[teamNum].civData = null;
     renderSelection(teamNum);
+    refreshArenaPreview();
 }
 
 function setTeamAge(teamNum, age) {
@@ -320,6 +329,7 @@ function setTeamAge(teamNum, age) {
     teamState[teamNum].unitSlug = null;
     teamState[teamNum].unitName = null;
     renderSelection(teamNum);
+    refreshArenaPreview();
 }
 
 function selectUnit(teamNum, slug, name) {
@@ -332,6 +342,7 @@ function selectUnit(teamNum, slug, name) {
     const url = spriteFor(name, teamNum);
     if (url) {
         const img = new Image();
+        img.addEventListener("load", refreshArenaPreview, { once: true });
         img.src = url;
         unitImages[teamNum] = img;
     } else {
@@ -348,12 +359,14 @@ function selectUnit(teamNum, slug, name) {
         unitSheets[teamNum] = null;
     }
     renderSelection(teamNum);
+    refreshArenaPreview();
 }
 
 function clearUnit(teamNum) {
     teamState[teamNum].unitSlug = null;
     teamState[teamNum].unitName = null;
     renderSelection(teamNum);
+    refreshArenaPreview();
 }
 
 // ===== RAIL SEARCH (civ + unique unit) =====
@@ -513,6 +526,7 @@ class PageSim {
     constructor(canvas) {
         this.canvas = canvas;
         this.renderer = null;
+        this.previewPlacementByOwner = null;
         this.worker = null;
         this.config = null;
         this.unitIndex = new Map();
@@ -541,6 +555,44 @@ class PageSim {
         if (!element) return;
         element.textContent = message;
         element.classList.toggle("error", isError);
+    }
+
+    ensureRenderer(map) {
+        if (this.renderer) return;
+        this.renderer = createMapRenderer(
+            this.canvas,
+            map,
+            {
+                presentation: "production",
+                unitScale: 0.75,
+            },
+        );
+    }
+
+    initializeArena({ map, placementByOwner }) {
+        this.ensureRenderer(map);
+        this.previewPlacementByOwner = placementByOwner;
+        this.renderer.setUnits([]);
+        this.renderer.resize();
+    }
+
+    showSelectionPreview(selections, images) {
+        if (!this.renderer || !this.previewPlacementByOwner || this.running) return;
+        const previewCounts = {};
+        for (const teamNumber of [1, 2]) {
+            const input = document.getElementById(`team${teamNumber}Count`);
+            previewCounts[teamNumber] = Math.min(27, Math.max(1,
+                parseInt(input?.value, 10) || 15));
+            this.renderer.setUnitAssets(teamNumber === 1 ? 2 : 3, {
+                img: images[teamNumber],
+                sheet: null,
+            });
+        }
+        this.renderer.setUnits(buildSelectionPreviewUnits(
+            selections,
+            this.previewPlacementByOwner,
+            previewCounts,
+        ));
     }
 
     buildUnitIndex(config) {
@@ -613,18 +665,8 @@ class PageSim {
         this.complete = false;
         this.playheadTick = 0;
         this.paused = false;
-        if (!this.renderer) {
-            this.renderer = createMapRenderer(
-                this.canvas,
-                this.config.scenario.mapFixture.map,
-                {
-                    presentation: "production",
-                    unitScale: 0.5,
-                },
-            );
-        } else {
-            this.renderer.showFormation();
-        }
+        this.ensureRenderer(this.config.scenario.mapFixture.map);
+        this.renderer.showFormation();
         this.renderer.setUnitAssets(2, assets[2]);
         this.renderer.setUnitAssets(3, assets[3]);
         if (assets[4]) this.renderer.setUnitAssets(4, assets[4]);
@@ -1058,6 +1100,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     // driver for console debugging and any future inline straggler.
     window.simulation = pageSim;
 
+    try {
+        const response = await fetch("/api/v3/arena-preview");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        pageSim.initializeArena(await response.json());
+    } catch (error) {
+        console.error("Could not load the Golden Arena preview", error);
+        pageSim.setStatus("Could not load the arena preview", true);
+    }
+
     // Render initial selection UI
     initSelectionDelegation();
     initRailSearch();
@@ -1137,7 +1188,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Keep the collapsed-options summary in sync as numbers change.
     ["team1Count", "team2Count", "totalResources"].forEach((id) => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener("input", updateOptionsCurrent);
+        if (el) el.addEventListener("input", () => {
+            updateOptionsCurrent();
+            refreshArenaPreview();
+        });
     });
     updateOptionsCurrent();
 

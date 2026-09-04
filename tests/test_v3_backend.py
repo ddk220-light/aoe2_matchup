@@ -109,6 +109,17 @@ def test_battle_config_resolves_direct_scenario_and_counts(client):
     assert all(1 <= team["count"] <= 27 for team in payload["teams"])
 
 
+def test_arena_preview_exposes_map_and_empty_formation_slots(client):
+    response = client.get("/api/v3/arena-preview")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert len(payload["map"]["tiles"]) == 256
+    assert len(payload["placementByOwner"]["2"]) == 27
+    assert len(payload["placementByOwner"]["3"]) == 27
+    assert "units" not in payload
+    assert all("rotation" in slot for slot in payload["placementByOwner"]["2"])
+
+
 def test_battle_config_includes_database_owned_ranged_buffer(client):
     response = client.post(
         "/api/v3/battle-config",

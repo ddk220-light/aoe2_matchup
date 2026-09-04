@@ -64,6 +64,30 @@ def _direct_teams() -> list[dict[str, Any]]:
     ]
 
 
+def build_arena_preview_payload() -> dict[str, Any]:
+    """Return the map and authored formation slots used by the unit picker.
+
+    The picker deliberately receives no units.  It draws the empty arena first
+    and fills these slots client-side only after the corresponding team has a
+    selected unit.
+    """
+    fixture = _melee_fixture()
+    return {
+        "map": _map_fixture()["map"],
+        "placementByOwner": {
+            owner: [
+                {
+                    "x": float(row["position"]["x"]),
+                    "y": float(row["position"]["y"]),
+                    "rotation": float(row.get("rotation", 0)),
+                }
+                for row in fixture["sides"][owner]
+            ]
+            for owner in ("2", "3")
+        },
+    }
+
+
 def build_scenario_payload(
     family: str,
     *,

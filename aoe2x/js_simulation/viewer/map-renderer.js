@@ -98,6 +98,35 @@ export function buildFormationScene(units, {
 }
 
 
+export function buildSelectionPreviewUnits(selections, placementByOwner, counts = {}) {
+  const units = [];
+  for (const [teamNumber, owner] of [[1, 2], [2, 3]]) {
+    const selection = selections?.[teamNumber];
+    if (!selection?.unitName) continue;
+    const slots = placementByOwner?.[owner] ?? placementByOwner?.[String(owner)] ?? [];
+    const requested = Number.isSafeInteger(counts?.[teamNumber])
+      ? counts[teamNumber]
+      : slots.length;
+    const count = Math.max(0, Math.min(slots.length, requested));
+    const referenceBase = owner === 2 ? 9000 : 9500;
+    for (let index = 0; index < count; index += 1) {
+      const slot = slots[index];
+      units.push({
+        reference_id: referenceBase + index,
+        player_id: owner,
+        unit_const: 0,
+        name: selection.unitName,
+        position: { x: slot.x, y: slot.y, z: 0 },
+        rotation: Number.isFinite(slot.rotation) ? slot.rotation : 0,
+        alive: true,
+        action: "idle",
+      });
+    }
+  }
+  return units;
+}
+
+
 export function pickFormationUnit(units, x, y, radius = 0.42) {
   const radiusSquared = radius * radius;
   let nearest = null;

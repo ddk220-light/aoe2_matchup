@@ -94,6 +94,7 @@ def v3_runtime_module(filename):
 # Public site URL — used for canonical URLs, sitemap, OG tags.
 # Override with SITE_URL env var if you ever change domains.
 SITE_URL = os.environ.get("SITE_URL", "https://aoe2matchup.com").rstrip("/")
+YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@AoE2Matchup"
 
 
 @app.context_processor
@@ -114,13 +115,14 @@ def inject_site_url():
 
 @app.context_processor
 def inject_footer_config():
-    """Footer-related config from env vars. Unset vars resolve to None so
-    templates can hide the corresponding link/button cleanly."""
+    """Footer-related config. The public YouTube channel is a stable site link;
+    an environment value may override it, while optional destinations remain
+    hidden when unset."""
     return {
         "contact_form_endpoint": os.environ.get("CONTACT_FORM_ENDPOINT") or None,
         "social_links": {
             "discord":   os.environ.get("SOCIAL_DISCORD_URL")   or None,
-            "youtube":   os.environ.get("SOCIAL_YOUTUBE_URL")   or None,
+            "youtube":   os.environ.get("SOCIAL_YOUTUBE_URL")   or YOUTUBE_CHANNEL_URL,
             "instagram": os.environ.get("SOCIAL_INSTAGRAM_URL") or None,
         },
     }

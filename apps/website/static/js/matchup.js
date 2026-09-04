@@ -193,6 +193,7 @@ function renderAnalysis(civName, data) {
     html += '<div class="analysis-hero-body">';
     html += '<h2 class="analysis-civ-name">' + escapeHtml(civName) + '</h2>';
     html += renderStrategicSummaryInline(summary, strategicDescription);
+    html += renderCivDeepLinks(civName);
     html += '</div>';
     html += '</div>';
 
@@ -220,6 +221,19 @@ function renderAnalysis(civName, data) {
 
     html += '</div>'; /* end role-columns */
     return html;
+}
+
+function renderCivDeepLinks(civName) {
+    var encodedCiv = encodeURIComponent(civName);
+    var wikiCiv = encodeURIComponent(civName.replace(/ /g, "_"));
+    var techTreeUrl = "https://aoe2techtree.net/#" + encodedCiv;
+    var wikiUrl = "https://ageofempires.fandom.com/wiki/" + wikiCiv;
+    return '<div class="civ-deep-links" aria-label="More about ' + escapeHtml(civName) + '">'
+        + '<a class="civ-deep-link" href="' + techTreeUrl + '" target="_blank" rel="nofollow noopener">'
+        + 'Open Tech Tree <span aria-hidden="true">↗</span></a>'
+        + '<a class="civ-deep-link" href="' + wikiUrl + '" target="_blank" rel="nofollow noopener">'
+        + 'Open Wiki <span aria-hidden="true">↗</span></a>'
+        + '</div>';
 }
 
 function buildingForUnit(unit, column, lineSlug) {

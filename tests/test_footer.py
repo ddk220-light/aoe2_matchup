@@ -31,7 +31,7 @@ def test_footer_config_all_unset(client, monkeypatch):
     assert ctx["contact_form_endpoint"] is None
     assert ctx["social_links"] == {
         "discord": None,
-        "youtube": None,
+        "youtube": "https://www.youtube.com/@AoE2Matchup",
         "instagram": None,
     }
 
@@ -63,13 +63,13 @@ def test_jsonld_includes_sameas_when_social_urls_set(client, monkeypatch):
     assert "https://instagram.com/example" in body
 
 
-def test_jsonld_omits_sameas_when_no_social_urls(client, monkeypatch):
+def test_jsonld_keeps_default_youtube_sameas_when_optional_socials_unset(client, monkeypatch):
     monkeypatch.delenv("SOCIAL_DISCORD_URL",   raising=False)
     monkeypatch.delenv("SOCIAL_YOUTUBE_URL",   raising=False)
     monkeypatch.delenv("SOCIAL_INSTAGRAM_URL", raising=False)
     body = client.get("/").data.decode()
-    # When all social URLs are unset, the sameAs key should not appear.
-    assert '"sameAs"' not in body
+    assert '"sameAs"' in body
+    assert "https://www.youtube.com/@AoE2Matchup" in body
 
 
 def test_footer_renders_on_home_page(client):
@@ -84,6 +84,8 @@ def test_footer_renders_on_home_page(client):
     assert "aoe2techtree.net" in body
     assert "genieutils" in body.lower()
     assert "ageofempires.fandom.com" in body
+    assert "https://www.youtube.com/@AoE2Matchup" in body
+    assert "AoE2 Matchup on YouTube" in body
     # Microsoft disclaimer
     assert "not affiliated" in body.lower()
     assert "Microsoft" in body

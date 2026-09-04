@@ -1,9 +1,10 @@
 """Role: serving + derive — civ power units and the live Matchup Advisor.
 
 Two halves: the civ-power-units compute/persist job (writes
-civ_power_units/<build>.json) and the serve-time advisor endpoints'
-logic (get_matchup_recommendations / get_matchup_sims, seeded RNG)
-imported by app.py.
+civ_power_units/<build>.json) and the serve-time advisor endpoints' logic
+(get_matchup_recommendations / get_matchup_sims, seeded RNG) imported by
+app.py.  The civilization pages use the V3 ranking snapshot; the advisor keeps
+its retail candidate snapshot until the full V3 matchup database is available.
 """
 
 import json
@@ -29,10 +30,15 @@ DB_PATH = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
 RANKINGS_DERIVED_DB_PATH = os.path.join(str(_DATA_DIR), "derived_data_v3.db")
 ADVISOR_DERIVED_DB_PATH = os.path.join(str(_DATA_DIR), "derived_data.db")
 POWER_UNITS_DIR = os.path.join(str(_DATA_DIR), "civ_power_units")
+ADVISOR_POWER_UNITS_DIR = os.path.join(str(_DATA_DIR), "advisor_power_units")
 
 
 def power_units_path(build_number):
     return os.path.join(POWER_UNITS_DIR, f"{build_number}.json")
+
+
+def advisor_power_units_path(build_number):
+    return os.path.join(ADVISOR_POWER_UNITS_DIR, f"{build_number}.json")
 
 
 # Civilizations that do not have access to trebuchets in-game.
@@ -1131,7 +1137,7 @@ def generate_cannon_galleon_entry(civ_name, conn, age_key="imperial", techs_by_s
 
 
 def compute_civ_power_units(build_number=None):
-    """Pre-compute power units for all civs. Returns dict keyed by civ_name."""
+    """Pre-compute V3-backed power units for all civs."""
     build_number = build_number or get_current_build() or "170934"
     conn = _get_db()
     rc = conn.cursor()
@@ -1352,6 +1358,22 @@ def load_civ_power_units(build_number=None):
         return json.load(f)
 
 
+def load_advisor_power_units(build_number=None):
+    """Load the frozen retail civ-power snapshot used for advisor candidates."""
+    build_number = build_number or get_current_build()
+    if not build_number:
+        print("ERROR: no current build in patches.db — cannot resolve "
+              "advisor_power_units/<build>.json.", file=sys.stderr)
+        return None
+    p = advisor_power_units_path(build_number)
+    if not os.path.exists(p):
+        print(f"ERROR: {p} missing — restore the committed retail advisor snapshot.",
+              file=sys.stderr)
+        return None
+    with open(p, "r") as f:
+        return json.load(f)
+
+
 ###############################################################################
 # Phase B: Matchup Recommendations (on-the-fly with targeted simulation)
 ###############################################################################
@@ -1492,10 +1514,10 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
     """
     # Deterministic output: _sim_score -> simulate_battle rolls the global RNG.
     random.seed(_SIM_SEED)
-    power_data = load_civ_power_units()
+    power_data = load_advisor_power_units()
     if not power_data:
-        return {"error": "civ_power_units/<build>.json not found -- run "
-                         "best_units.save_civ_power_units() first"}
+        return {"error": "advisor_power_units/<build>.json not found -- "
+                         "restore the committed retail advisor snapshot"}
 
     civ_a_data = power_data.get(civ_a, {}).get(age)
     civ_b_data = power_data.get(civ_b, {}).get(age)
@@ -1692,7 +1714,7 @@ def get_matchup_sims(civ_left, civ_right, age="imperial", sim_func=None):
     # external seeding .golden/capture_baseline.py applies, so the golden
     # baseline is unchanged by this seed.
     random.seed(_SIM_SEED)
-    power_data = load_civ_power_units()
+    power_data = load_advisor_power_units()
     if not power_data:
         return {"left": {}, "right": {}, "name_map": {}}
 

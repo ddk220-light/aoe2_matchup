@@ -85,6 +85,43 @@ def test_committed_power_units_match_the_hybrid_rankings_database():
         rankings.close()
 
 
+def test_advisor_power_units_keep_the_retail_snapshot():
+    with open(best_units.power_units_path("177723"), encoding="utf-8") as handle:
+        rankings_data = json.load(handle)
+    with open(best_units.advisor_power_units_path("177723"), encoding="utf-8") as handle:
+        advisor_data = json.load(handle)
+
+    rankings_jaguar = _jaguar_entry(rankings_data)
+    advisor_jaguar = _jaguar_entry(advisor_data)
+
+    assert rankings_jaguar["score"] == 85.4
+    assert advisor_jaguar["score"] == 86.9
+    assert advisor_jaguar["rank"] == 2
+    assert advisor_jaguar["median_delta"] == 49.4
+
+
+def test_advisor_entry_points_load_the_retail_power_units(monkeypatch):
+    calls = []
+
+    def retail_loader(build_number=None):
+        calls.append(("retail", build_number))
+        return {}
+
+    def reject_rankings_loader(build_number=None):
+        raise AssertionError("advisor loaded the V3 civ-power rankings artifact")
+
+    monkeypatch.setattr(best_units, "load_advisor_power_units", retail_loader)
+    monkeypatch.setattr(best_units, "load_civ_power_units", reject_rankings_loader)
+
+    assert "error" in best_units.get_matchup_recommendations("Aztecs", "Byzantines")
+    assert best_units.get_matchup_sims("Aztecs", "Byzantines") == {
+        "left": {},
+        "right": {},
+        "name_map": {},
+    }
+    assert calls == [("retail", None), ("retail", None)]
+
+
 def test_live_advisor_candidate_query_uses_retail_connector(monkeypatch):
     calls = []
     real_connector = best_units._get_advisor_derived_db

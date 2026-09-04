@@ -290,7 +290,15 @@ function setStartKills(teamNum, n) {
     renderSelection(teamNum);
 }
 
+function leaveBattleForRosterEdit() {
+    if (!pageSim?.config) return;
+    currentBattle = null;
+    pageSim.reset();
+    setSimPhase(false);
+}
+
 async function selectCiv(teamNum, civName) {
+    leaveBattleForRosterEdit();
     const state = teamState[teamNum];
     state.civ = civName;
     state.unitSlug = null;
@@ -309,6 +317,7 @@ async function selectCiv(teamNum, civName) {
 }
 
 function clearCiv(teamNum) {
+    leaveBattleForRosterEdit();
     teamState[teamNum].civ = null;
     teamState[teamNum].unitSlug = null;
     teamState[teamNum].unitName = null;
@@ -318,6 +327,7 @@ function clearCiv(teamNum) {
 }
 
 function setTeamAge(teamNum, age) {
+    leaveBattleForRosterEdit();
     teamState[teamNum].age = age;
     teamState[teamNum].unitSlug = null;
     teamState[teamNum].unitName = null;
@@ -326,6 +336,7 @@ function setTeamAge(teamNum, age) {
 }
 
 function selectUnit(teamNum, slug, name) {
+    leaveBattleForRosterEdit();
     teamState[teamNum].unitSlug = slug;
     teamState[teamNum].unitName = name;
     // Preload canvas image: the red idle sprite (both teams) when the unit has a
@@ -356,6 +367,7 @@ function selectUnit(teamNum, slug, name) {
 }
 
 function clearUnit(teamNum) {
+    leaveBattleForRosterEdit();
     teamState[teamNum].unitSlug = null;
     teamState[teamNum].unitName = null;
     renderSelection(teamNum);

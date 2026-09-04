@@ -67,24 +67,6 @@ let currentEnriched = [];
 let pinnedCell = null;
 const statChainCache = {};
 
-// Pool-scores toggle state.
-// Axis is fixed to "hp" — the cost and speed axes are still computed in
-// pool_scores.db (lib code preserved) but hidden from the UI because their
-// rankings disagree with HP in ways that aren't useful to surface yet.
-const currentScoreAxis = "hp";       // (constant; no toggle in v1 UI)
-let currentScoreScale = "average";   // "pop" | "cost" | "average"
-
-// Lines covered by pool_scores.db; toggles apply only to these tabs.
-const POOL_SCORE_LINES = new Set([
-    "infantry", "militia", "spear", "shock_infantry",
-    "archery", "archer", "skirmisher", "cav_archer", "scorpion", "gunpowder",
-    "stable", "knight", "light_cav", "camel", "steppe_lancer", "elephant",
-]);
-
-function lineUsesPoolScores(slug) {
-    return POOL_SCORE_LINES.has(slug);
-}
-
 // Per-group expansion state - fully transient, resets on page load.
 // Groups are: "GC", "AC", "AT", "AA", "Special".
 const expandedGroups = new Set();
@@ -113,77 +95,6 @@ function isExpanded(group) {
     return expandedGroups.has(group);
 }
 
-function _isPoolPage() {
-    // Pool tabs (infantry/archer/stable) — not siege/naval which keep legacy columns.
-    const isInfantry = INFANTRY_SLUGS.has(currentLine);
-    const isArchery = ARCHERY_SLUGS.has(currentLine);
-    const isStable = currentLine === "stable" ||
-        (UNIT_LINES.stable && UNIT_LINES.stable.subLines &&
-         UNIT_LINES.stable.subLines.includes(currentLine));
-    return isInfantry || isArchery || isStable;
-}
-
-function _groupExistsForCurrentPool(group) {
-    const isInfantry = INFANTRY_SLUGS.has(currentLine);
-    const isArchery = ARCHERY_SLUGS.has(currentLine);
-    const isStable = currentLine === "stable" ||
-        (UNIT_LINES.stable && UNIT_LINES.stable.subLines &&
-         UNIT_LINES.stable.subLines.includes(currentLine));
-    if (group === "Special") return isInfantry || isArchery || isStable;
-    if (group === "GC") return isInfantry || isArchery || isStable;
-    if (group === "AC") return isInfantry || isStable;
-    if (group === "AT") return isInfantry;
-    if (group === "AA") return isArchery;
-    return false;
-}
-
-// Score-axis convention: cost is "lower = better"; hp/speed are "higher = better".
-function scoreAxisDirection(axis) {
-    return axis === "cost" ? "asc" : "desc";
-}
-
-// Read a pool-scores value for a unit row, axis, scale.
-// Returns null if the unit has no pool_scores or the requested fields are missing.
-function getPoolScoreValue(unitRow, axis, scale, role = "final") {
-    const ps = unitRow && unitRow.pool_scores;
-    if (!ps || !ps.scales) return null;
-    if (scale === "average") {
-        const a = ps.scales["30v30"];
-        const b = ps.scales["3k"];
-        if (!a || !b || !a[axis] || !b[axis]) return null;
-        const va = a[axis][role];
-        const vb = b[axis][role];
-        if (va == null || vb == null) return null;
-        return (va + vb) / 2;
-    }
-    const scaleKey = scale === "pop" ? "30v30" : "3k";
-    const sc = ps.scales[scaleKey];
-    if (!sc || !sc[axis]) return null;
-    const v = sc[axis][role];
-    return v == null ? null : v;
-}
-
-// Read the per-line breakdown for one (role, line_key) under the active scale.
-function getPoolLineValue(unitRow, role, lineKey) {
-    const ps = unitRow && unitRow.pool_scores;
-    if (!ps || !ps.scales) return null;
-    const axis = currentScoreAxis;
-    const readScale = (k) => {
-        const sc = ps.scales[k];
-        if (!sc || !sc[axis] || !sc[axis].role_line_means) return null;
-        const r = sc[axis].role_line_means[role];
-        if (!r) return null;
-        const v = r[lineKey];
-        return v == null ? null : v;
-    };
-    if (currentScoreScale === "average") {
-        const a = readScale("30v30");
-        const b = readScale("3k");
-        if (a == null || b == null) return null;
-        return (a + b) / 2;
-    }
-    return readScale(currentScoreScale === "pop" ? "30v30" : "3k");
-}
 
 // ===== SCORE BREAKDOWN CONFIG =====
 const SCORE_BREAKDOWN = {
@@ -282,32 +193,6 @@ const SCORE_BREAKDOWN = {
             { key: "vs_hulk_3k",       label: "vs Hulk (3K res)",      civ: "Sicilians", slug: "hulk",    mode: "resources", res: 3000 },
         ],
     },
-    // Pool-score breakdowns (driven by toggle state).
-    pool_score: {
-        title: "Score",
-        formula: "dynamic",  // sentinel — renderer reads currentScoreAxis/Scale
-        subs: "pool_score_breakdown",
-    },
-    pool_gc: {
-        title: "GC (General Combat)",
-        formula: "dynamic",
-        subs: "pool_role_breakdown",
-    },
-    pool_ac: {
-        title: "AC (Anti-Cav)",
-        formula: "dynamic",
-        subs: "pool_role_breakdown",
-    },
-    pool_at: {
-        title: "AT (Anti-Trash)",
-        formula: "dynamic",
-        subs: "pool_role_breakdown",
-    },
-    pool_aa: {
-        title: "AA (Anti-Archer)",
-        formula: "dynamic",
-        subs: "pool_role_breakdown",
-    },
 };
 
 const SCORE_KEYS = new Set([
@@ -350,12 +235,7 @@ const SCORE_KEYS = new Set([
     "naval_effectiveness",
     "vs_galleon",
     "vs_fire",
-    // Pool scores
-    "pool_score",
-    "pool_gc",
-    "pool_ac",
-    "pool_at",
-    "pool_aa",
+    "ranking_score",
     "vs_hulk",
 ]);
 const STAT_KEYS = new Set([
@@ -585,8 +465,45 @@ function _buildSiegeBreakdownHtml(row) {
     return html;
 }
 
+function buildRankingScoreHoverHtml(row) {
+    const score = row.ranking_score;
+    const breakdown = RankingsV3Model.buildBreakdown(row);
+    let html = `<div class="hc-title">${row.unit_name || row.unit_slug} — Score</div>`;
+    html += `<div class="ranking-score-summary">`;
+    html += `<span class="ranking-score-value" style="color:${scoreColor(score)}">${score == null ? "—" : Number(score).toFixed(1)}</span>`;
+    if (row.ranking_rank != null) html += `<span>#${row.ranking_rank} in line</span>`;
+    if (row.ranking_median_delta != null) {
+        const delta = Number(row.ranking_median_delta);
+        html += `<span>${delta >= 0 ? "+" : ""}${delta.toFixed(1)} vs median</span>`;
+    }
+    html += `</div>`;
+
+    if (breakdown.roles.length) {
+        html += `<div class="ranking-breakdown-label">Role scores</div>`;
+        html += `<div class="ranking-role-grid">`;
+        for (const role of breakdown.roles) {
+            html += `<span><strong>${role.label}</strong>${Number(role.score).toFixed(1)}</span>`;
+        }
+        html += `</div>`;
+    }
+
+    if (breakdown.yardsticks.length) {
+        html += `<div class="ranking-breakdown-label">Equal-resource yardsticks</div>`;
+        html += `<div class="ranking-yardstick-grid">`;
+        for (const yardstick of breakdown.yardsticks) {
+            html += `<span>${yardstick.label}</span><strong style="color:${scoreColor(yardstick.score)}">${Number(yardstick.score).toFixed(1)}</strong>`;
+        }
+        html += `</div>`;
+        html += `<div class="hc-note">Simulation V3 · five seeded runs · 27-unit cap · food, wood, and gold weighted 1:1:1.</div>`;
+    } else {
+        html += `<div class="hc-note">This line uses its published cost-based score. Detailed V3 yardsticks will appear when that campaign is available.</div>`;
+    }
+    return html;
+}
+
 function buildScoreHoverHtml(row, scoreKey, dataKey) {
     dataKey = dataKey || scoreKey;
+    if (scoreKey === "ranking_score") return buildRankingScoreHoverHtml(row);
     const info = SCORE_BREAKDOWN[scoreKey];
     if (!info) {
         // Composite score hover cards.
@@ -649,13 +566,6 @@ function buildScoreHoverHtml(row, scoreKey, dataKey) {
         return "";
     }
     let html = `<div class="hc-title">${info.title}</div>`;
-    if (info.subs === "pool_score_breakdown") {
-        return renderPoolScoreHover(row, currentScoreAxis, currentScoreScale);
-    }
-    if (info.subs === "pool_role_breakdown") {
-        const role = scoreKey.replace("pool_", "").toUpperCase();
-        return renderPoolRoleHover(row, role, currentScoreAxis, currentScoreScale);
-    }
     if (info.subs === "siege_breakdown") {
         html += `<div class="hc-formula">${info.formula}</div>`;
         html += _buildSiegeBreakdownHtml(row);
@@ -902,14 +812,6 @@ function setAge(age) {
     if (currentData) renderTable();
 }
 
-function setScoreScale(scale) {
-    currentScoreScale = scale;
-    document.querySelectorAll("#scoreScaleToggle .score-btn").forEach((b) => {
-        b.classList.toggle("active", b.dataset.value === scale);
-    });
-    if (currentData) renderTable();
-}
-
 function renderLineSelector() {
     const container = document.getElementById("lineSelector");
     let html = '<div class="tab-bar">';
@@ -981,18 +883,6 @@ async function selectLine(slug) {
     currentLine = slug;
     unpinHoverCard();
 
-    // Show/hide the score toggles based on whether the current line is
-    // covered by pool_scores.db.
-    const togglesEl = document.querySelector(".score-toggles");
-    const noteEl = document.getElementById("scoreToggleNote");
-    if (togglesEl) {
-        const covered = lineUsesPoolScores(slug);
-        togglesEl.querySelectorAll(".score-toggle-group").forEach((g) => {
-            g.style.display = covered ? "" : "none";
-        });
-        if (noteEl) noteEl.hidden = covered;
-    }
-
     // Highlight active tab
     document
         .querySelectorAll(".unit-tab")
@@ -1008,24 +898,8 @@ async function selectLine(slug) {
     // Enable all sub-lines by default
     const lineInfo = UNIT_LINES[slug];
     enabledLines = new Set(lineInfo?.subLines || []);
-    if (lineUsesPoolScores(slug)) {
-        sortColumn = "pool_score";
-        sortDir = scoreAxisDirection(currentScoreAxis);
-    } else {
-        sortColumn =
-            slug === "stable"
-                ? "stable_effectiveness"
-                : INFANTRY_SLUGS.has(slug)
-                    ? "militia_value"
-                    : ARCHERY_SLUGS.has(slug)
-                        ? "ranged_effectiveness"
-                        : SIEGE_SLUGS.has(slug)
-                            ? "anti_building_score"
-                            : NAVAL_SLUGS.has(slug)
-                                ? "naval_effectiveness"
-                                : "pes";
-        sortDir = "desc";
-    }
+    sortColumn = "ranking_score";
+    sortDir = "desc";
     renderTable();
     // Keep the address bar shareable (/units?line=<slug>) without polluting
     // browser history. The default tab keeps the clean /units URL.
@@ -1058,149 +932,6 @@ const LINE_LABELS = {
     cannon_galleon: "Cannon Galleon",
 };
 
-// Short labels used for per-line breakdown column headers (vs <Line>).
-const LINE_LABEL_SHORT = {
-    militia: "Militia",
-    knight: "Knight",
-    archer: "Archer",
-    spear: "Spear",
-    skirmisher: "Skirm",
-    light_cav: "Lt Cav",
-    camel: "Camel",
-    steppe_lancer: "Stp Lan",
-    elephant: "Elephant",
-    cav_archer: "Cav Arch",
-    gunpowder: "Gun",
-};
-
-// Lines defined for each (pool, role) — must mirror POOL_ROLES in pool_scores_lib.py.
-const POOL_ROLE_LINES = {
-    infantry: {
-        GC: ["militia", "knight", "archer"],
-        AC: ["knight", "camel", "steppe_lancer", "elephant"],
-        AT: ["spear", "skirmisher", "light_cav"],
-    },
-    stable: {
-        GC: ["militia", "knight", "archer"],
-        AC: ["knight", "camel", "steppe_lancer", "elephant", "light_cav"],
-    },
-    archer: {
-        GC: ["militia", "knight", "archer"],
-        AA: ["archer", "skirmisher", "cav_archer", "gunpowder"],
-    },
-};
-
-function scoreColumnLabel(axis, scale) {
-    // Axis is fixed to "hp" in v1; the parameter is preserved for future re-enable.
-    const scaleLabel = scale === "pop" ? "Pop" : scale === "cost" ? "3k" : "Avg";
-    return `Score (${scaleLabel})`;
-}
-
-function scoreColumnInfo(axis, scale) {
-    const axisDesc = "HP-based score: 100 × (winner_hp − loser_hp), signed by who won, with λ=2 loss aversion.";
-    const scaleDesc = scale === "average"
-        ? "Average of pop (30v30) and cost (3k cost-matched) values."
-        : scale === "pop"
-            ? "Population-matched (30v30 fixed-count)."
-            : "Cost-matched (3k weighted resources, capped at 30 units).";
-    return `${axisDesc}\n\n${scaleDesc}\n\nFinal score = 0.7 × GC + (pool-specific role weights). No normalization, no speed/range weighting.`;
-}
-
-function roleColumnInfo(role, pool) {
-    const lineSets = {
-        GC: "militia, knight, archer line opponents",
-        AC: pool === "infantry"
-            ? "knight, camel, steppe_lancer, elephant line opponents"
-            : "knight, camel, steppe_lancer, elephant, light_cav line opponents",
-        AT: "spear, skirmisher, light_cav line opponents",
-        AA: "archer, skirmisher, cav_archer, gunpowder line opponents",
-    };
-    return `${role} role: average across ${lineSets[role]}. Within each line: mean adjusted_signed_score (λ=2 loss aversion), deduped by fingerprint. Across lines: equally weighted mean.`;
-}
-
-function _fmt(v, digits = 1) {
-    if (v == null) return "—";
-    return Number(v).toFixed(digits);
-}
-
-function renderPoolScoreHover(unitRow, axis, scale) {
-    // axis is fixed to "hp" in the v1 UI; parameter preserved for re-enable.
-    const ps = unitRow && unitRow.pool_scores;
-    if (!ps) return "<div class='hover-empty'>No pool-score data for this unit.</div>";
-
-    const scaleLabel = scale === "pop" ? "Pop (30v30)" : scale === "cost" ? "Cost (3k)" : "Average";
-    const final = getPoolScoreValue(unitRow, axis, scale, "final");
-    const gc = getPoolScoreValue(unitRow, axis, scale, "gc");
-    const ac = getPoolScoreValue(unitRow, axis, scale, "ac");
-    const at = getPoolScoreValue(unitRow, axis, scale, "at");
-    const aa = getPoolScoreValue(unitRow, axis, scale, "aa");
-
-    let rolesHtml = "";
-    if (gc != null) rolesHtml += `<span class='role'>GC ${_fmt(gc)}</span>`;
-    if (ac != null) rolesHtml += `<span class='role'>AC ${_fmt(ac)}</span>`;
-    if (at != null) rolesHtml += `<span class='role'>AT ${_fmt(at)}</span>`;
-    if (aa != null) rolesHtml += `<span class='role'>AA ${_fmt(aa)}</span>`;
-
-    let shapeHtml = "";
-    if (scale === "average") {
-        const a = ps.scales["30v30"] && ps.scales["30v30"].shape;
-        const b = ps.scales["3k"] && ps.scales["3k"].shape;
-        if (a && b) {
-            shapeHtml = `<div class='shape-pair'>
-                <div><strong>Pop:</strong> n=${a.n}, win ${_fmt(a.win_rate)}%, cat-loss ${_fmt(a.catastrophic_loss_rate)}%, stddev ${_fmt(a.stddev)}</div>
-                <div><strong>Cost:</strong> n=${b.n}, win ${_fmt(b.win_rate)}%, cat-loss ${_fmt(b.catastrophic_loss_rate)}%, stddev ${_fmt(b.stddev)}</div>
-            </div>`;
-        }
-    } else {
-        const sk = scale === "pop" ? "30v30" : "3k";
-        const sh = ps.scales[sk] && ps.scales[sk].shape;
-        if (sh) {
-            shapeHtml = `<div>n=${sh.n}, win ${_fmt(sh.win_rate)}%, cat-loss ${_fmt(sh.catastrophic_loss_rate)}%, stddev ${_fmt(sh.stddev)}</div>`;
-        }
-    }
-
-    return `<div class='hover-pool-score'>
-        <div class='hover-title'>${unitRow.unit_name || unitRow.unit_slug} — Score (${scaleLabel})</div>
-        <div class='hover-final'>final ${_fmt(final, 2)}</div>
-        <div class='hover-roles'>${rolesHtml}</div>
-        ${shapeHtml}
-        <div class='hover-note'>HP-based score: 100 × (winner_hp − loser_hp), signed by who won, λ=2 loss aversion on losses. Final = 0.7 × GC + pool-specific role weights. Higher is better.</div>
-    </div>`;
-}
-
-function renderPoolRoleHover(unitRow, role, axis, scale) {
-    const pool = unitRow && unitRow.pool_scores && unitRow.pool_scores.pool;
-    const lineSets = {
-        GC: "militia, knight, archer line opponents",
-        AC: pool === "infantry"
-            ? "knight, camel, steppe_lancer, elephant line opponents"
-            : "knight, camel, steppe_lancer, elephant, light_cav line opponents",
-        AT: "spear, skirmisher, light_cav line opponents",
-        AA: "archer, skirmisher, cav_archer, gunpowder line opponents",
-    };
-    const value = getPoolScoreValue(unitRow, axis, scale, role.toLowerCase());
-    return `<div class='hover-pool-role'>
-        <div class='hover-title'>${role} — ${(unitRow && (unitRow.unit_name || unitRow.unit_slug)) || ""}</div>
-        <div class='hover-final'>${role} = ${_fmt(value)}</div>
-        <div class='hover-note'>Average across ${lineSets[role]}.<br>Within each line: mean adjusted signed score (λ=2). Across lines: equally weighted mean. Deduped by fingerprint.</div>
-    </div>`;
-}
-
-function buildRoleLineFields(row) {
-    const ps = row.pool_scores;
-    if (!ps) return {};
-    const pool = ps.pool;
-    const def = POOL_ROLE_LINES[pool];
-    if (!def) return {};
-    const out = {};
-    for (const role of Object.keys(def)) {
-        for (const line of def[role]) {
-            out[`role_line_${role}_${line}`] = getPoolLineValue(row, role, line);
-        }
-    }
-    return out;
-}
-
 function renderTable() {
     const container = document.getElementById("tableContainer");
     if (!currentData) {
@@ -1228,56 +959,9 @@ function renderTable() {
             (r.final_cost_food || 0) +
             (r.final_cost_wood || 0) +
             (r.final_cost_gold || 0);
-        const totalArmor =
-            1 +
-            (r.final_melee_armor || 0) +
-            (r.final_pierce_armor || 0);
-        // PES: Pop Efficient Score (all 30v30 fixed-count battles)
-        const pesWeights = [
-            [r.score_30v30, 0.25],
-            [r.pop_vs_champ, 0.25],
-            [r.pop_vs_paladin, 0.25],
-            [r.pop_vs_arb, 0.25],
-        ];
-        let pesSum = 0,
-            pesTotal = 0;
-        for (const [s, w] of pesWeights) {
-            if (s > -999) {
-                pesSum += s * w;
-                pesTotal += w;
-            }
-        }
-        const pes =
-            pesTotal > 0
-                ? Math.round((pesSum / pesTotal) * 10) / 10
-                : -999;
-
-        // RES: Resource Efficient Score (resource-based battles)
-        const resWeights = [
-            [r.score_3k, 0.2],
-            [r.score_5k, 0.15],
-            [r.vs_champ, 0.217],
-            [r.vs_paladin, 0.217],
-            [r.vs_arb, 0.217],
-        ];
-        let resSum = 0,
-            resTotal = 0;
-        for (const [s, w] of resWeights) {
-            if (s > -999) {
-                resSum += s * w;
-                resTotal += w;
-            }
-        }
-        const res =
-            resTotal > 0
-                ? Math.round((resSum / resTotal) * 10) / 10
-                : -999;
-
-        return {
+        return RankingsV3Model.enrichRankingFields({
             ...r,
             dps,
-            pes,
-            res,
             armor_combined: `${r.final_melee_armor || 0}/${r.final_pierce_armor || 0}`,
             armor_sort_key: r.final_melee_armor || 0,
             total_cost: totalCost,
@@ -1285,24 +969,7 @@ function renderTable() {
                 (r.upgrade_cost_food || 0) +
                 (r.upgrade_cost_wood || 0) +
                 (r.upgrade_cost_gold || 0),
-            dps_per_cost:
-                totalCost > 0
-                    ? Math.round((dps / totalCost) * 1000) / 1000
-                    : 0,
-            ehp_per_cost:
-                totalCost > 0
-                    ? Math.round(
-                          ((r.final_hp * totalArmor) / totalCost) *
-                              10,
-                      ) / 10
-                    : 0,
-            pool_score: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "final"),
-            pool_gc: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "gc"),
-            pool_ac: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "ac"),
-            pool_at: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "at"),
-            pool_aa: getPoolScoreValue(r, currentScoreAxis, currentScoreScale, "aa"),
-            ...buildRoleLineFields(r),
-        };
+        });
     });
 
     // Apply civ filter
@@ -1354,101 +1021,17 @@ function renderTable() {
     // Store for hover handlers
     currentEnriched = filtered;
 
-    // Compute medians for color coding (exclude unique units for baseline)
-    const isInfantry = INFANTRY_SLUGS.has(currentLine);
-
-    const defaultStatCols = [
-        "pes",
-        "res",
-        "score_30v30",
-        "pop_vs_champ",
-        "pop_vs_paladin",
-        "pop_vs_arb",
-        "score_3k",
-        "score_5k",
-        "vs_champ",
-        "vs_paladin",
-        "vs_arb",
-        "dps_per_cost",
-        "ehp_per_cost",
+    // Compute medians for the uniform score + stat columns.
+    const statCols = [
+        "ranking_score",
+        "ranking_median_delta",
+        "total_cost",
         "dps",
         "final_hp",
         "final_attack",
-        "final_melee_armor",
-        "final_pierce_armor",
         "final_speed",
         "final_range",
     ];
-    const infantryStatCols = [
-        "pool_score",
-        "pool_gc",
-        "pool_ac",
-        "pool_at",
-        "dps",
-        "final_hp",
-        "final_attack",
-        "final_melee_armor",
-        "final_pierce_armor",
-        "final_speed",
-    ];
-    const archeryStatCols = [
-        "pool_score",
-        "pool_gc",
-        "pool_aa",
-        "dps",
-        "final_hp",
-        "final_attack",
-        "final_melee_armor",
-        "final_pierce_armor",
-        "final_speed",
-        "final_range",
-    ];
-    const siegeStatCols = [
-        "anti_building_score",
-        "dps",
-        "final_hp",
-        "final_attack",
-        "final_melee_armor",
-        "final_pierce_armor",
-        "final_speed",
-        "final_range",
-    ];
-    const stableStatCols = [
-        "pool_score",
-        "pool_gc",
-        "pool_ac",
-        "dps",
-        "final_hp",
-        "final_attack",
-        "final_melee_armor",
-        "final_pierce_armor",
-        "final_speed",
-    ];
-    const isArchery = ARCHERY_SLUGS.has(currentLine);
-    const isSiege = SIEGE_SLUGS.has(currentLine);
-    const isNaval = NAVAL_SLUGS.has(currentLine);
-    const navalStatCols = [
-        "naval_effectiveness",
-        "dps",
-        "final_hp",
-        "final_attack",
-        "final_melee_armor",
-        "final_pierce_armor",
-        "final_speed",
-        "final_range",
-    ];
-    const statCols =
-        currentLine === "stable"
-            ? stableStatCols
-            : isSiege
-                ? siegeStatCols
-                : isInfantry
-                    ? infantryStatCols
-                    : isArchery
-                        ? archeryStatCols
-                        : isNaval
-                            ? navalStatCols
-                            : defaultStatCols;
 
     const medians = {};
     for (const col of statCols) {
@@ -1473,71 +1056,6 @@ function renderTable() {
             return val < med ? "val-high" : "val-low";
         }
         return val > med ? "val-high" : "val-low";
-    }
-
-    function _roleColumn(role, pool, label) {
-        return {
-            key: `pool_${role.toLowerCase()}`,
-            label,
-            info: roleColumnInfo(role, pool),
-            expandable: role,
-        };
-    }
-
-    function _perLineColumns(pool, role) {
-        const lines = (POOL_ROLE_LINES[pool] && POOL_ROLE_LINES[pool][role]) || [];
-        return lines.map((line) => ({
-            key: `role_line_${role}_${line}`,
-            label: `vs ${LINE_LABEL_SHORT[line] || line}`,
-            expandable: role,
-            perLine: true,
-            hiddenWhenCollapsed: true,
-        }));
-    }
-
-    function buildColumns(pool) {
-        const showLine =
-            (pool === "infantry" && currentLine === "infantry") ||
-            (pool === "archer" && currentLine === "archery") ||
-            pool === "stable";
-        const cols = [
-            { key: "civ_name", label: "Civ" },
-            { key: "unit_name", label: "Unit" },
-            ...(showLine ? [{ key: "line_slug", label: "Line" }] : []),
-            {
-                key: "pool_score",
-                label: scoreColumnLabel(currentScoreAxis, currentScoreScale),
-                info: scoreColumnInfo(currentScoreAxis, currentScoreScale),
-            },
-            _roleColumn("GC", pool, "GC"),
-            ..._perLineColumns(pool, "GC"),
-        ];
-        if (pool === "infantry") {
-            cols.push(_roleColumn("AC", pool, "AC"), ..._perLineColumns(pool, "AC"));
-            cols.push(_roleColumn("AT", pool, "AT"), ..._perLineColumns(pool, "AT"));
-        } else if (pool === "stable") {
-            cols.push(_roleColumn("AC", pool, "AC"), ..._perLineColumns(pool, "AC"));
-        } else if (pool === "archer") {
-            cols.push(_roleColumn("AA", pool, "AA"), ..._perLineColumns(pool, "AA"));
-        }
-        cols.push(
-            { key: "dps",              label: "DPS",     expandable: "Special", hiddenWhenCollapsed: true },
-            { key: "final_hp",         label: "HP",      expandable: "Special", hiddenWhenCollapsed: true },
-            { key: "final_attack",     label: "Atk",     expandable: "Special", hiddenWhenCollapsed: true },
-            { key: "armor_combined",   label: "M/P Arm", expandable: "Special", hiddenWhenCollapsed: true },
-            { key: "final_speed",      label: "Speed",   expandable: "Special", hiddenWhenCollapsed: true },
-        );
-        if (pool === "archer") {
-            cols.push({ key: "final_range", label: "Range", expandable: "Special", hiddenWhenCollapsed: true });
-        }
-        cols.push(
-            { key: "total_cost",          label: "Cost",     expandable: "Special", hiddenWhenCollapsed: true },
-            { key: "total_upgrade_cost",  label: "Upg Cost", expandable: "Special", hiddenWhenCollapsed: true },
-        );
-        cols.push({
-            key: "special_abilities", label: "Special", expandable: "Special",
-        });
-        return cols;
     }
 
     const defaultColumns = [
@@ -1606,20 +1124,8 @@ function renderTable() {
         { key: "total_upgrade_cost", label: "Upg Cost" },
         { key: "special_abilities", label: "Special" },
     ];
-    let columns;
-    if (currentLine === "stable" || (UNIT_LINES.stable && UNIT_LINES.stable.subLines && UNIT_LINES.stable.subLines.includes(currentLine))) {
-        columns = buildColumns("stable");
-    } else if (isSiege) {
-        columns = siegeColumns;
-    } else if (isInfantry) {
-        columns = buildColumns("infantry");
-    } else if (isArchery) {
-        columns = buildColumns("archer");
-    } else if (isNaval) {
-        columns = navalColumns;
-    } else {
-        columns = defaultColumns;
-    }
+    const showLine = Boolean(UNIT_LINES[currentLine]?.subLines?.length);
+    const columns = RankingsV3Model.buildTableColumns({ showLine });
 
     const lineInfo = UNIT_LINES[currentLine];
     const titleName =
@@ -1631,16 +1137,14 @@ function renderTable() {
     const titleIcon = titleUseSprite ? spriteFor(titleName) : unitIconUrl(titleName);
     const titleImgClass = titleUseSprite ? "sprite" : "";
 
-    const allExpanded = ["GC", "AC", "AT", "AA", "Special"]
-        .filter((g) => _groupExistsForCurrentPool(g))
-        .every((g) => isExpanded(g));
+    const allExpanded = isExpanded("Special");
     const expandBtnLabel = allExpanded ? "▾ Collapse All" : "▸ Expand All";
     const expandBtnAction = allExpanded ? "collapseAll()" : "expandAll()";
 
     let html = `<div class="civ-filter-wrap">
         <input type="text" id="civFilterInput" placeholder="Filter by civilization..." value="${civFilter}" oninput="renderTable()" />
         <button class="export-btn" onclick="exportCSV()" title="Export current view as CSV">Export CSV</button>
-        ${_isPoolPage() ? `<button class="expand-btn" onclick="${expandBtnAction}">${expandBtnLabel}</button>` : ""}`;
+        <button class="expand-btn" onclick="${expandBtnAction}">${expandBtnLabel}</button>`;
     if (lineInfo?.subLines && lineInfo.subLines.length > 1) {
         html += `<div class="line-filters"><span class="line-filters-label">Lines:</span>`;
         for (const sl of lineInfo.subLines) {
@@ -1836,13 +1340,8 @@ function exportCSV() {
     const isStable = currentLine === "stable";
     const isNaval = NAVAL_SLUGS.has(currentLine);
 
-    // Sort by primary composite score descending to compute rank
-    const primaryScore = isInfantry ? "militia_value"
-        : isArchery ? "ranged_effectiveness"
-        : isStable ? "stable_effectiveness"
-        : isSiege ? "anti_building_score"
-        : isNaval ? "naval_effectiveness"
-        : "pes";
+    // Sort by the one published final score to compute display rank.
+    const primaryScore = "ranking_score";
     const ranked = [...currentEnriched].sort((a, b) => {
         const va = a[primaryScore] ?? -999;
         const vb = b[primaryScore] ?? -999;
@@ -2062,6 +1561,8 @@ function exportCSV() {
             { key: "total_upgrade_cost", label: "Upgrade Cost" },
         ];
     }
+
+    csvColumns = RankingsV3Model.buildCsvColumns();
 
     // Build CSV content
     const headers = csvColumns.map(c => c.label);

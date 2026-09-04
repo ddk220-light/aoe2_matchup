@@ -41,67 +41,6 @@
     margin-bottom: 16px;
 }
 
-/* Score axis + scale toggles */
-.score-toggles {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    align-items: center;
-    margin: 12px 0 8px;
-}
-
-.score-toggle-group {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--bg-warm);
-    border: 1px solid var(--border-light);
-    border-radius: 6px;
-    padding: 4px 8px;
-}
-
-.score-toggle-label {
-    font-family: var(--font-display);
-    font-size: var(--fs-xs);
-    color: var(--text-muted);
-    margin-right: 6px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
-.score-btn {
-    font-family: var(--font-display);
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--text-muted);
-    font-size: var(--fs-xs);
-    padding: 4px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.score-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text);
-}
-
-.score-btn.active {
-    background: var(--gold-dark);
-    color: var(--text-on-gold);
-    border-color: var(--gold);
-    font-weight: 600;
-}
-
-.score-toggle-note {
-    font-family: var(--font-display);
-    font-size: var(--fs-xs);
-    color: var(--text-muted);
-    font-style: italic;
-    flex-basis: 100%;
-    letter-spacing: 0.02em;
-}
-
 /* Tab bar */
 .tab-bar {
     display: flex;
@@ -551,16 +490,9 @@ td.hc-cell {
         height: 18px;
     }
     /* Toggle / action buttons reach the 44px touch minimum. */
-    .score-btn,
     .export-btn,
     .expand-btn {
         min-height: 44px;
-    }
-    .score-toggles {
-        gap: 10px 12px;
-    }
-    .score-toggle-group {
-        flex-wrap: wrap;
     }
 }
 
@@ -630,40 +562,52 @@ td.hc-cell {
     background: var(--bg);
 }
 
-/* Pool-score hover cards */
-.hover-pool-score, .hover-pool-role {
-    font-size: var(--fs-sm);
-    line-height: var(--lh-base);
-    max-width: 360px;
-}
-.hover-pool-score .hover-title,
-.hover-pool-role .hover-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-.hover-pool-score .hover-final,
-.hover-pool-role .hover-final {
-    font-size: var(--fs-base);
-    margin-bottom: 4px;
-}
-.hover-pool-score .hover-roles .role {
-    display: inline-block;
-    margin-right: 8px;
+/* Compact V3 score disclosure */
+.ranking-score-summary {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 8px 0 12px;
     color: var(--text-muted);
-}
-.hover-pool-score .hover-note,
-.hover-pool-role .hover-note {
     font-size: var(--fs-xs);
-    color: var(--text-muted);
-    font-style: italic;
-    margin-top: 6px;
 }
-.hover-pool-score .shape-pair > div {
-    margin: 2px 0;
+.ranking-score-value {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    line-height: 1;
 }
-.hover-empty {
-    color: var(--text-muted);
-    font-style: italic;
+.ranking-breakdown-label {
+    margin: 10px 0 5px;
+    color: var(--gold);
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+.ranking-role-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(52px, 1fr));
+    gap: 6px;
+}
+.ranking-role-grid span {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-warm);
+}
+.ranking-yardstick-grid {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) auto;
+    gap: 5px 14px;
+    align-items: baseline;
+}
+.ranking-yardstick-grid strong { text-align: right; }
+
+@media (max-width: 480px) {
+    .ranking-role-grid { grid-template-columns: repeat(2, minmax(80px, 1fr)); }
 }
 
 /* === Special column two-line layout === */

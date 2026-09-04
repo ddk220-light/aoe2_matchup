@@ -430,7 +430,7 @@ class BattleUnit:
         "id", "spawn_ord", "team", "stats",
         "cost_food", "cost_wood", "cost_gold",
         "max_hp", "current_hp", "attack",
-        "raw_attack_range", "attack_range",
+        "raw_attack_range", "attack_range", "_is_ranged_flag",
         "attack_speed", "reload_time", "attack_delay",
         "move_speed",
         "melee_armor", "pierce_armor", "attacks", "armors",

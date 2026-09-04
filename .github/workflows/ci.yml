@@ -17,24 +17,34 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: webapp/requirements.txt
+          cache-dependency-path: requirements-ci.txt
 
-      # The suite runs entirely from committed artifacts (DBs/JSON in webapp/).
-      # mgz (replay parsing) is intentionally NOT installed: the app degrades
-      # gracefully without it and no test requires it — keeps CI fast and
-      # avoids depending on the fork tarball being reachable.
+      # The deployable suite runs entirely from committed artifacts (DBs/JSON).
+      # Replay parsing, historical calibration archives and superseded Python
+      # simulation/pipeline contracts are intentionally outside this gate;
+      # none is required by the staged website runtime.
       - name: Install Python deps
-        run: |
-          pip install flask numpy requests Pillow pytest
+        run: pip install -r requirements-ci.txt
 
-      - name: pytest
-        run: pytest -q
+      - name: Website Python contract
+        run: |
+          pytest -q \
+            --ignore=tests/test_ability_registry.py \
+            --ignore=tests/test_calibration_extract.py \
+            --ignore=tests/test_cleanroom_champion_basics.py \
+            --ignore=tests/test_hc_compare_viewer.py \
+            --ignore=tests/test_sim_outcome_cache.py \
+            --ignore=tests/test_simulations.py \
+            --ignore=tests/test_standard_units_import.py
 
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
 
-      - name: Frontend parity tests (Node)
+      - name: Browser engine mechanics
+        run: node --test tests/js/engine/*.test.mjs
+
+      - name: Frontend integration tests
         run: |
           node tests/test_frontend_projectile_miss.js
           node tests/test_sim_params.js

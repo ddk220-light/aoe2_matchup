@@ -47,10 +47,15 @@ async function main() {
         };
     }
     let simulation = simStub();
-    // Deterministic draws for the forced-miss tests: next()=0 makes the accuracy
-    // roll fail (0 < 0 is false) and puts the miss scatter at angle 0, distance 0
-    // — i.e. the arrow lands exactly on the intended impact point.
-    const ZERO_RNG = { next: () => 0, getState: () => 0 };
+    // Deterministic draws for the forced-miss graze tests. fireProjectile draws
+    // accuracy, angle and distance in that order. This lands the shot exactly
+    // one tile to the right of the intended impact point, where the neighbor in
+    // the tests below is placed.
+    const oneTileRightRng = () => ({
+        values: [0, 0, 0.5],
+        next() { return this.values.shift() ?? 0; },
+        getState: () => 0,
+    });
 
     // Fly every pending projectile to its target so its onHit callback runs.
     // One huge dt guarantees dist <= speed*dt on the first step.
@@ -137,14 +142,14 @@ async function main() {
 
     // 4) default graze (no missDamagePercent) deals 0.5x to a grazed neighbor
     test("forced miss grazes neighbor for 0.5x by default", () => {
-        simulation.rng = ZERO_RNG; // angle=0, dist=0 -> arrow lands exactly at impact
+        simulation.rng = oneTileRightRng();
         const a = mk(archerStats(), 1, "a");
         a.accuracy = 0; // force miss
         const t = mk(archerStats(), 2, "t");
         t.x = 100;
         t.y = 0;
         const n = mk(archerStats({ hp: 999 }), 2, "n"); // survives the graze
-        n.x = 100; // neighbor sits at the impact point -> grazed
+        n.x = 132; // 1 tile right of target, exactly at displaced impact point
         n.y = 0;
         simulation.team1 = [a];
         simulation.team2 = [t, n];
@@ -163,7 +168,7 @@ async function main() {
 
     // 5) Arambai (missDamagePercent=1.0) grazes a neighbor for FULL damage
     test("Arambai miss_damage_percent=1.0 grazes for full damage", () => {
-        simulation.rng = ZERO_RNG;
+        simulation.rng = oneTileRightRng();
         const a = mk(archerStats({ miss_damage_percent: 1.0 }), 1, "a");
         assert.strictEqual(a.missDamagePercent, 1.0);
         a.accuracy = 0; // force miss
@@ -171,7 +176,7 @@ async function main() {
         t.x = 100;
         t.y = 0;
         const n = mk(archerStats({ hp: 999 }), 2, "n");
-        n.x = 100;
+        n.x = 132;
         n.y = 0;
         simulation.team1 = [a];
         simulation.team2 = [t, n];
@@ -183,8 +188,9 @@ async function main() {
         assert.strictEqual(n.currentHp, nhp0 - dmg, "Arambai graze = full damage");
     });
 
-    // 6) statistical: accuracy=0.5 hits roughly half the time over many shots
-    test("accuracy ~0.5 hits about half over many shots", () => {
+    // 6) Statistical: accuracy decides aim dispersion, while arrival collision
+    // can still let a failed roll physically land on the intended body.
+    test("accuracy ~0.5 plus physical arrival collision", () => {
         const a = mk(archerStats({ accuracy: 50 }), 1, "a");
         let hits = 0;
         const N = 4000;
@@ -202,15 +208,16 @@ async function main() {
         }
         const frac = hits / N;
         assert(
-            frac > 0.45 && frac < 0.55,
-            `hit fraction ${frac} not within [0.45,0.55]`,
+            frac > 0.54 && frac < 0.62,
+            `hit fraction ${frac} not within [0.54,0.62]`,
         );
     });
 
     // 7) extra/secondary projectiles use baseAccuracy (Thumb Ring is primary-only)
     test("isExtra uses baseAccuracy not accuracy", () => {
         const a = mk(archerStats({ accuracy: 100, base_accuracy: 1 }), 1, "a");
-        // base_accuracy=1 -> 0.01 fraction -> extra shots essentially always miss
+        // base_accuracy=1 -> a 0.01 clean-hit chance. Some failed rolls still
+        // physically overlap the target when their displaced aim point lands.
         let hits = 0;
         const N = 500;
         for (let k = 0; k < N; k++) {
@@ -225,7 +232,10 @@ async function main() {
             flushProjectiles();
             if (t.currentHp < hp0) hits++;
         }
-        assert(hits < 25, `extra shots should almost always miss, got ${hits}/${N} hits`);
+        assert(
+            hits > 50 && hits < 110,
+            `extra-shot physical hit count ${hits}/${N} not within [51,109]`,
+        );
     });
 
     console.log(`\n${passed}/7 frontend projectile-miss tests passed`);

@@ -13,6 +13,15 @@ const COLUMN_DEFS = {
     navy: ["galleon", "fire", "hulk", "demo"],
 };
 
+const BUILDING_LABELS = {
+    barracks: "Barracks",
+    archery_range: "Archery Range",
+    stable: "Stable",
+    castle: "Castle",
+    siege_workshop: "Siege Workshop",
+    dock: "Dock",
+};
+
 const COLUMN_LABELS = {
     cavalry: "Cavalry",
     ranged: "Ranged",
@@ -47,6 +56,9 @@ const LINE_NAMES = {
 };
 
 const COLUMN_ORDER = ["cavalry", "ranged", "infantry", "siege", "navy"];
+const BUILDING_ORDER_CIV = [
+    "barracks", "archery_range", "stable", "castle", "siege_workshop", "dock"
+];
 
 /* Player-facing tier ladder (best -> worst). The backend stamps `unit.tier`;
    these supply the human label + a one-line hint for the tooltip. Border edges
@@ -75,24 +87,36 @@ const resultsEl = document.getElementById("results");
 
 let selectedCiv = null;
 
-/* ---- Build civ grid ---- */
+/* ---- Build/enhance civ grid ----
+   The template supplies real links so the picker remains useful without JS and
+   search engines can discover each civilization without a duplicate summary.
+   JS enhances those links into the in-page selector. */
 CIVS.forEach(function (name) {
     var slug = name.toLowerCase();
-    var card = document.createElement("div");
-    card.className = "civ-card";
-    card.dataset.civ = name;
-    var img = document.createElement("img");
-    img.className = "civ-emblem";
-    img.src = CIV_EMBLEM_BASE + slug + ".png";
-    img.alt = name;
-    img.loading = "lazy";
-    var label = document.createElement("span");
-    label.className = "civ-card-name";
-    label.textContent = name;
-    card.appendChild(img);
-    card.appendChild(label);
-    card.addEventListener("click", function () { onCivClick(name); });
-    civGrid.appendChild(card);
+    var card = Array.from(civGrid.querySelectorAll(".civ-card")).find(function (candidate) {
+        return candidate.dataset.civ === name;
+    });
+    if (!card) {
+        card = document.createElement("a");
+        card.className = "civ-card";
+        card.dataset.civ = name;
+        card.href = "/civilizations/" + slug;
+        var img = document.createElement("img");
+        img.className = "civ-emblem";
+        img.src = CIV_EMBLEM_BASE + slug + ".png";
+        img.alt = name;
+        img.loading = "lazy";
+        var label = document.createElement("span");
+        label.className = "civ-card-name";
+        label.textContent = name;
+        card.appendChild(img);
+        card.appendChild(label);
+        civGrid.appendChild(card);
+    }
+    card.addEventListener("click", function (event) {
+        event.preventDefault();
+        onCivClick(name);
+    });
 });
 
 /* ---- Per-civ landing page preselect (set by civ_detail.html) ---- */
@@ -103,16 +127,13 @@ if (window.PRESELECT_CIV && CIVS.indexOf(window.PRESELECT_CIV) !== -1) {
 /* ---- Civ click handler ---- */
 function onCivClick(name) {
     if (selectedCiv === name) {
-        /* Deselect */
-        selectedCiv = null;
-        stepLabel.textContent = "Click a civilization to analyze";
-        stepLabel.className = "step-label step-civ1";
-        resetPinnedTooltips();
-        resultsEl.className = "results-container";
-        resultsEl.innerHTML = "";
+        /* Keep the selected analysis open; a second tap is a convenient way to
+           return to it after browsing the picker at the bottom of the page. */
+        resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
     } else {
         selectedCiv = name;
-        stepLabel.textContent = "Showing analysis for " + name;
+        stepLabel.textContent = "Choose another civilization";
         stepLabel.className = "step-label step-selected";
         loadAnalysis(name);
     }
@@ -125,6 +146,9 @@ function updateGrid() {
         card.classList.remove("selected-civ1", "disabled");
         if (name === selectedCiv) {
             card.classList.add("selected-civ1");
+            card.setAttribute("aria-current", "page");
+        } else {
+            card.removeAttribute("aria-current");
         }
     });
 }
@@ -172,48 +196,65 @@ function renderAnalysis(civName, data) {
     html += '</div>';
     html += '</div>';
 
-    /* Role columns grid — uniform columns; only the lines/columns this civ
-       actually has are rendered. Strength is shown per-unit, not per-column. */
+    /* Group the available units by their production building. Generic unit
+       lines map directly to their normal building; unique units default to the
+       Castle unless constants.js records an explicit alternate building. */
+    var buildings = groupUnitsByBuilding(powerUnits);
+
+    /* Building cards stay detailed on desktop and become compact, tappable
+       unit grids on mobile. */
     html += '<div class="role-columns">';
-
-    for (var i = 0; i < COLUMN_ORDER.length; i++) {
-        var colKey = COLUMN_ORDER[i];
-        var lineSlugs = COLUMN_DEFS[colKey];
-        var colData = powerUnits[colKey] || {};
-        var colLabel = COLUMN_LABELS[colKey];
-
-        /* Build only the lines that are present for this civ. A line the civ
-           lacks is skipped entirely (no "\u2014" placeholder). */
-        var linesHtml = '';
-        for (var j = 0; j < lineSlugs.length; j++) {
-            var lineSlug = lineSlugs[j];
-            var lineEntries = colData[lineSlug];
-            if (!lineEntries || lineEntries.length === 0) continue;
-
-            var lineName = LINE_NAMES[lineSlug] || slugToName(lineSlug);
-            linesHtml += '<div class="line-section">';
-            linesHtml += '<div class="line-label">' + escapeHtml(lineName) + '</div>';
-
-            var isMulti = lineEntries.length > 1;
-            linesHtml += '<div class="unit-wrap' + (isMulti ? ' multi-unit' : '') + '">';
-            for (var u = 0; u < lineEntries.length; u++) {
-                linesHtml += renderUnitBadge(lineEntries[u], colKey);
-            }
-            linesHtml += '</div>';
-            linesHtml += '</div>';
-        }
-
-        /* A column with nothing in it for this civ is dropped altogether. */
-        if (!linesHtml) continue;
-
+    for (var i = 0; i < BUILDING_ORDER_CIV.length; i++) {
+        var buildingKey = BUILDING_ORDER_CIV[i];
+        var buildingUnits = buildings[buildingKey] || [];
+        if (!buildingUnits.length) continue;
         html += '<div class="role-column">';
-        html += '<div class="role-header">' + escapeHtml(colLabel) + '</div>';
-        html += linesHtml;
+        html += '<div class="role-header">' + escapeHtml(BUILDING_LABELS[buildingKey]) + '</div>';
+        html += '<div class="building-unit-grid">';
+        for (var u = 0; u < buildingUnits.length; u++) {
+            html += renderUnitBadge(buildingUnits[u].unit, buildingUnits[u].column);
+        }
+        html += '</div>';
         html += '</div>';
     }
 
     html += '</div>'; /* end role-columns */
     return html;
+}
+
+function buildingForUnit(unit, column, lineSlug) {
+    var name = unit.unit_name || slugToName(unit.unit_slug);
+    if (unit.is_unique) {
+        var override = (typeof UNIQUE_BUILDING !== "undefined") ? UNIQUE_BUILDING[name] : null;
+        if (override) return override.toLowerCase().replace(/ /g, "_");
+        if (column === "navy" || lineSlug === "cannon_galleon") return "dock";
+        return "castle";
+    }
+    if (column === "infantry") return "barracks";
+    if (column === "cavalry") return "stable";
+    if (column === "navy" || lineSlug === "cannon_galleon") return "dock";
+    if (lineSlug === "trebuchet") return "castle";
+    if (column === "siege" || lineSlug === "scorpion") return "siege_workshop";
+    return "archery_range";
+}
+
+function groupUnitsByBuilding(powerUnits) {
+    var grouped = {};
+    for (var c = 0; c < COLUMN_ORDER.length; c++) {
+        var column = COLUMN_ORDER[c];
+        var lines = powerUnits[column] || {};
+        var lineSlugs = Object.keys(lines);
+        for (var l = 0; l < lineSlugs.length; l++) {
+            var lineSlug = lineSlugs[l];
+            var entries = lines[lineSlug] || [];
+            for (var u = 0; u < entries.length; u++) {
+                var building = buildingForUnit(entries[u], column, lineSlug);
+                if (!grouped[building]) grouped[building] = [];
+                grouped[building].push({ unit: entries[u], column: column });
+            }
+        }
+    }
+    return grouped;
 }
 
 /* ---- Unit badge renderer ---- */

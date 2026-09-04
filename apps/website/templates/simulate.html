@@ -48,7 +48,7 @@
                     <summary aria-label="Battle options">
                         <span class="options-menu-icon" aria-hidden="true">☰</span>
                         <span class="sim-options-toggle">Options</span>
-                        <span class="sim-options-current" id="optionsCurrent">5K resources</span>
+                        <span class="sim-options-current" id="optionsCurrent">Resource-based · 5K / 5K</span>
                     </summary>
                     <div class="army-config">
                         <div class="formula-note">
@@ -58,23 +58,36 @@
                         <div class="mode-toggle">
                             <label class="mode-option">
                                 <input type="radio" name="armyMode" value="resources" checked />
-                                <span>Equal resources</span>
+                                <span>Resource-based</span>
                             </label>
                             <label class="mode-option">
                                 <input type="radio" name="armyMode" value="count" />
-                                <span>Equal numbers</span>
+                                <span>Count-based</span>
                             </label>
                         </div>
-                        <div class="resource-input" id="resourceInput">
-                            <label for="totalResources">Resources per team</label>
-                            <input type="number" id="totalResources" value="5000" min="100" max="20000" step="100" />
+                        <div class="side-input-grid resource-input" id="resourceInput">
+                            <label for="team1Resources">
+                                <span>Team A</span>
+                                <input type="number" id="team1Resources" value="5000" min="1" step="100" />
+                            </label>
+                            <label for="team2Resources">
+                                <span>Team B</span>
+                                <input type="number" id="team2Resources" value="5000" min="1" step="100" />
+                            </label>
                         </div>
-                        <div class="count-inputs" id="countInputs" style="display: none">
-                            <label for="equalCount">Units per team</label>
-                            <input type="number" id="equalCount" value="15" min="1" max="27" />
+                        <div class="side-input-grid count-inputs" id="countInputs" style="display: none">
+                            <label for="team1Count">
+                                <span>Team A</span>
+                                <input type="number" id="team1Count" value="27" min="1" max="27" />
+                            </label>
+                            <label for="team2Count">
+                                <span>Team B</span>
+                                <input type="number" id="team2Count" value="27" min="1" max="27" />
+                            </label>
+                            <small class="count-limit">Maximum 27 units per side</small>
                         </div>
                         <label class="buffer-option" title="Applied automatically when one side is ranged and the other is melee">
-                            <input type="checkbox" id="rangedBuffer" checked />
+                            <input type="checkbox" id="rangedBuffer" />
                             <span>Ranged-unit buffer</span>
                         </label>
                     </div>

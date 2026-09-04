@@ -19,6 +19,12 @@ const r = readSimParams("?civ1=A&unit1=b&civ2=C&unit2=d&mode=resources&resources
 assert.strictEqual(r.mode, "resources");
 assert.strictEqual(r.resources, "3000");
 
+const split = readSimParams("?mode=resources&resources1=4200&resources2=5100&count1=21&count2=27");
+assert.strictEqual(split.resources1, "4200");
+assert.strictEqual(split.resources2, "5100");
+assert.strictEqual(split.count1, "21");
+assert.strictEqual(split.count2, "27");
+
 const c = readSimParams("?civ1=Lithuanians&unit1=paladin&relics1=2&civ2=Aztecs&unit2=elite_jaguar_warrior_aztecs&kills2=3");
 assert.strictEqual(c.relics1, "2");
 assert.strictEqual(c.relics2, null);

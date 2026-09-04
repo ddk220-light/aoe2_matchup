@@ -313,43 +313,35 @@
 .mode-option input {
     accent-color: var(--gold);
 }
-.resource-input {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: var(--fs-sm);
+.side-input-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
 }
-.resource-input label {
+.side-input-grid label {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
     color: var(--text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    text-align: left;
 }
-.resource-input input {
-    width: 100px;
+.side-input-grid input {
+    width: 100%;
     padding: 6px;
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--text);
     border-radius: 4px;
     font-size: var(--fs-sm);
-    text-align: center;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
 }
-.count-inputs {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-}
-.count-inputs label {
-    color: var(--text-muted);
-    font-size: var(--fs-sm);
-}
-.count-inputs input {
-    width: 60px;
-    padding: 6px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 4px;
-    font-size: var(--fs-sm);
+.count-limit {
+    grid-column: 1 / -1;
+    color: var(--text-dim);
+    font-size: var(--fs-xs);
     text-align: center;
 }
 
@@ -835,24 +827,11 @@
         border-radius: 6px;
         background: var(--bg);
     }
-    /* Count / resource inputs: full-width, comfortable rows. */
-    .count-inputs {
-        flex-direction: column;
-        gap: 10px;
-    }
-    .count-inputs > div {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-    }
+    /* Preserve the Team A / Team B pairing in two equal mobile columns. */
+    .side-input-grid { gap: 8px; }
     .count-inputs input,
     .resource-input input {
-        width: 120px;
-    }
-    .resource-input {
-        flex-direction: column;
-        gap: 6px;
+        width: 100%;
     }
     /* Controls: full-width buttons, speed control on its own row. */
     .controls {
@@ -1173,6 +1152,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    scroll-margin-top: calc(var(--nav-h, 56px) + 8px);
 }
 .arena-canvas-wrap {
     position: relative;

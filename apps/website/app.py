@@ -1554,10 +1554,13 @@ def api_ref_combat_unit(civ_name, unit_slug):
 
 
 _V3_FAMILY_CAPACITIES = {
-    "rvr": (21, 21),
-    "kite": (21, 21),
-    "siege": (16, 21),
-    "waves": (21, 21),
+    # The public Golden Arena supplies 27 authored placement cells on both
+    # sides for every visual family. Internal calibration tables may be smaller,
+    # but public fights pass these explicit scenario placements to the engine.
+    "rvr": (27, 27),
+    "kite": (27, 27),
+    "siege": (27, 27),
+    "waves": (27, 27),
 }
 
 
@@ -1634,8 +1637,7 @@ def _v3_counts(army, teams, capacities):
             army.get("count", 20), "army.count", minimum=1, maximum=min(limits)
         )
         counts = (count, count)
-    elif mode == "equal_resources":
-        budget = _positive_number(army.get("budget", 3000), "army.budget", maximum=20000)
+    elif mode in {"equal_resources", "resource_budgets"}:
         weights = army.get("weights", {})
         if not isinstance(weights, dict):
             raise ValueError("army.weights must be an object")
@@ -1650,14 +1652,47 @@ def _v3_counts(army, teams, capacities):
             costs.append(cost["food"] * wf + cost["wood"] * ww + cost["gold"] * wg)
         if costs[0] <= 0 or costs[1] <= 0:
             raise ValueError("selected unit has zero weighted resource cost")
-        cheap = 0 if costs[0] <= costs[1] else 1
-        dear = 1 - cheap
-        counts = [0, 0]
-        counts[cheap] = min(limits[cheap], int(budget // costs[cheap]))
-        counts[dear] = min(limits[dear], max(1, int((counts[cheap] * costs[cheap]) // costs[dear])))
-        counts = tuple(counts)
+        if mode == "equal_resources":
+            budget = _positive_number(
+                army.get("budget", 3000), "army.budget", maximum=20000
+            )
+            cheap = 0 if costs[0] <= costs[1] else 1
+            dear = 1 - cheap
+            counts = [0, 0]
+            counts[cheap] = min(limits[cheap], int(budget // costs[cheap]))
+            counts[dear] = min(
+                limits[dear],
+                max(1, int((counts[cheap] * costs[cheap]) // costs[dear])),
+            )
+            counts = tuple(counts)
+        else:
+            budgets = army.get("budgets")
+            if not isinstance(budgets, list) or len(budgets) != 2:
+                raise ValueError("army.budgets must contain Team A and Team B budgets")
+            budgets = tuple(
+                _positive_number(value, f"team {index} budget")
+                for index, value in enumerate(budgets, 1)
+            )
+            # Resource-based armies preserve the requested Team A : Team B
+            # spending ratio. If either side would exceed the scenario's 27-unit
+            # capacity, scale both theoretical counts by the same factor before
+            # flooring. Equal budgets therefore retain the established behavior:
+            # the cheaper army fills to 27 and the dearer army matches its spend.
+            theoretical = tuple(
+                budget / cost for budget, cost in zip(budgets, costs)
+            )
+            scale = min(
+                1.0,
+                *(limit / count for limit, count in zip(limits, theoretical)),
+            )
+            counts = tuple(
+                min(limit, max(1, int(count * scale)))
+                for limit, count in zip(limits, theoretical)
+            )
     else:
-        raise ValueError("army.mode must be explicit, equal_count, or equal_resources")
+        raise ValueError(
+            "army.mode must be explicit, equal_count, equal_resources, or resource_budgets"
+        )
     for index, (count, limit) in enumerate(zip(counts, limits), 1):
         if count < 1 or count > limit:
             raise ValueError(f"team {index} count must be between 1 and {limit}")

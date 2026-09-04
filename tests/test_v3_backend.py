@@ -127,13 +127,40 @@ def test_battle_page_uses_player_controls_and_public_defaults(client):
     assert 'id="playPauseBtn"' in body
     assert 'id="speedBtn"' in body
     assert 'id="startBtn"' not in body
-    assert 'id="totalResources" value="5000"' in body
-    assert 'id="rangedBuffer" checked' in body
+    assert 'id="team1Resources" value="5000"' in body
+    assert 'id="team2Resources" value="5000"' in body
+    assert 'id="team1Count" value="27"' in body
+    assert 'id="team2Count" value="27"' in body
+    assert "Resource-based" in body
+    assert "Count-based" in body
+    assert "Maximum 27 units per side" in body
+    assert 'id="rangedBuffer" checked' not in body
     assert '<span class="rail-title">Team A</span>' in body
     assert '<span class="rail-title">Team B</span>' in body
     assert "simulationv3 · seed" not in body
     assert "mounted_trebuchet_khitans" not in body
     assert "elite_longboat_vikings" not in body
+
+
+def test_resource_based_armies_accept_independent_team_budgets(client):
+    response = client.post(
+        "/api/v3/battle-config",
+        json={
+            "teams": [
+                {"civ": "Spanish", "unit_slug": "champion"},
+                {"civ": "Spanish", "unit_slug": "paladin"},
+            ],
+            "army": {
+                "mode": "resource_budgets",
+                "budgets": [5000, 5000],
+                "cap": 27,
+            },
+            "seed": 43,
+        },
+    )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert [team["count"] for team in payload["teams"]] == [27, 14]
 
 
 def test_battle_config_includes_database_owned_ranged_buffer(client):

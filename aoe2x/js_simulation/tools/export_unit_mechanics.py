@@ -640,15 +640,14 @@ def export_unit_mechanics(
     charge = None
     melee_charge = None
     charge_type = int(getattr(unit.creatable, "charge_type", 0) or 0)
-    reference_charge_count = int(reference.get("charge_projectile_count") or 0)
-    dat_charge_count = (
-        int(unit.creatable.max_total_projectiles)
-        if charge_type == 6 else
-        max(0, int(unit.creatable.max_total_projectiles)
-            - int(unit.creatable.total_projectiles))
-        if charge_type == 7 else 0
-    )
-    projectile_count = reference_charge_count or dat_charge_count
+    # ref_units is the canonical, fully-upgraded mechanics contract.  In
+    # particular, an explicit zero may disable a raw DAT charge representation
+    # when the same weapon is represented by ordinary primary/extra projectiles
+    # (Wu Fire Archer).  Falling back with ``reference_count or dat_count``
+    # resurrected that disabled raw charge and made it replace the real attack.
+    # Older reference databases without the column are rejected by the SELECT
+    # above, so zero is always meaningful here and must be preserved.
+    projectile_count = int(reference.get("charge_projectile_count") or 0)
     # A few units retain a charge_type flag while declaring no charge
     # projectiles at all.  Treat that combination as an inactive DAT feature,
     # matching the database extractor's generic max/total-projectile rule.
@@ -702,8 +701,8 @@ def export_unit_mechanics(
             "charge.charge_event": "unit.creatable.charge_event",
             "charge.projectile_unit": "unit.creatable.charge_projectile_unit",
             "charge.projectile_count": (
-                "ref_units.charge_projectile_count; fallback to the dat "
-                "charge_type-specific max/ordinary projectile delta"
+                "ref_units.charge_projectile_count (explicit zero disables "
+                "the raw dat charge representation)"
             ),
             "charge.projectile_speed_tiles_per_second": (
                 f"dat.civs[0].units[{proj_id}].speed"
@@ -765,10 +764,19 @@ def export_unit_mechanics(
         # Vanish mode is overloaded in the DAT.  Flat bolts use it to keep
         # travelling through bodies; arcing grenades/trebuchet stones use it
         # to disappear at their ground impact and must not become line-piercing.
+        tech_pass_through_fraction = float(
+            reference.get("pass_through_percent") or 0
+        )
         pass_through = (
             bool(getattr(proj.projectile, "vanish_mode", 0))
             and projectile_arc <= 0
         ) if proj.projectile is not None else False
+        # Some pass-through attacks are granted by a researched civilization
+        # technology rather than encoded on the projectile's DAT vanish mode
+        # (for example Mapuche Malon). The reference DB is the fully-upgraded
+        # source of truth for those effects, so activate the same generic line
+        # intersection mechanic whenever it supplies a positive fraction.
+        pass_through = pass_through or tech_pass_through_fraction > 0
         # Projectile smart mode (dat attribute 19, a bitfield: 1 = ballistics
         # lead on moving targets, 2 = full damage on unintended targets). The
         # raw projectile record carries the pre-Ballistics value; the
@@ -815,7 +823,7 @@ def export_unit_mechanics(
             ),
             "pass_through": pass_through,
             "pass_through_damage_fraction": (
-                (float(reference.get("pass_through_percent") or 0) or 0.5)
+                (tech_pass_through_fraction or 0.5)
                 if pass_through else 0.0
             ),
             "pass_through_count": (
@@ -894,6 +902,8 @@ def export_unit_mechanics(
             "ranged.base_accuracy_percent": "ref_units.base_accuracy",
             "ranged.pass_through": (
                 f"dat.civs[0].units[{projectile_id}].projectile.vanish_mode"
+                " OR positive ref_units.pass_through_percent from researched"
+                " civilization technology"
             ),
             "ranged.pass_through_damage_fraction": (
                 "ref_units.pass_through_percent; dat pass-through defaults to 0.5"

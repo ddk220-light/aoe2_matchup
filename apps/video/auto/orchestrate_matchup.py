@@ -100,21 +100,31 @@ def resolve_side(civ: str, slug: str):
     from overlay.overlay_data import get_unit_card
     suffix = "_" + civ.lower()
     key = slug[: -len(suffix)] if slug.endswith(suffix) else slug
-    try:
-        label = get_unit_card(civ, slug)["name"]
-    except ValueError:
+    lookup_slugs = [slug]
+    civ_slug = key + suffix
+    if civ_slug not in lookup_slugs:
+        lookup_slugs.append(civ_slug)
+    label = None
+    for lookup_slug in lookup_slugs:
+        try:
+            label = get_unit_card(civ, lookup_slug)["name"]
+            break
+        except ValueError:
+            continue
+    if label is None:
         # Newly added game units can reach the scenario catalogue before the
         # reference-stat DB is regenerated. Scenario construction only needs
         # their display label; resource-balanced batch drivers pass explicit
         # counts and therefore do not infer costs through this fallback.
         catalogue = HERE / "unique_units.json"
         rows = json.loads(catalogue.read_text(encoding="utf-8"))
-        match = next(
-            (row for row in rows if row["civ"] == civ and row["slug"] == slug),
-            None,
-        )
+        match = next((row for row in rows
+                      if row["civ"] == civ
+                      and row["slug"] in lookup_slugs), None)
         if match is None:
-            raise
+            raise ValueError(
+                f"No unit card or scenario catalogue row for {civ} {slug}"
+            )
         label = match["name"]
     return (civ, key, label)
 

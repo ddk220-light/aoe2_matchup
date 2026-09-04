@@ -66,7 +66,10 @@ def _load_stack(config: LabConfig):
     except ImportError as error:
         raise PreflightError(
             f"live-capture dependency is unavailable: {error}",
-            hint="create apps/video/.venv and install apps/video/auto/requirements_windows.txt",
+            hint=(
+                "run scripts\\aoe2lab.ps1 doctor --live; the repository launcher "
+                "repairs and validates apps/video/.venv before starting the lab"
+            ),
         ) from error
     return {
         "AoE2DEScenario": AoE2DEScenario,

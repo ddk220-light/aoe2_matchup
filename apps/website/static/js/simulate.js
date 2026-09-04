@@ -617,7 +617,10 @@ class PageSim {
             this.renderer = createMapRenderer(
                 this.canvas,
                 this.config.scenario.mapFixture.map,
-                { presentation: "production" },
+                {
+                    presentation: "production",
+                    unitScale: 0.5,
+                },
             );
         } else {
             this.renderer.showFormation();

@@ -22,6 +22,30 @@ const TERRAIN = Object.freeze({
 });
 
 
+export function fittedMapZoom({ width, height, spanX, spanY, compact = false }) {
+  for (const [name, value] of Object.entries({ width, height, spanX, spanY })) {
+    if (!Number.isFinite(value) || value <= 0) {
+      throw new RangeError(`${name} must be a positive finite number`);
+    }
+  }
+  const padding = compact ? 24 : 48;
+  const horizontalFit = Math.max(1, width - padding) / spanX;
+  const verticalFit = Math.max(1, height - padding) / spanY;
+  // A portrait phone should frame the long combat corridor, not shrink the
+  // entire 2:1 isometric diamond to fit by width. Fitting by height preserves
+  // both ends of the passage and intentionally crops the scenery at its sides.
+  return compact ? verticalFit : Math.min(horizontalFit, verticalFit);
+}
+
+
+export function productionUnitBoxSize(radius, zoom, unitScale = 1) {
+  if (!Number.isFinite(unitScale) || unitScale <= 0) {
+    throw new RangeError("production unit scale must be positive");
+  }
+  return Math.max(34, (46 + Math.min(18, radius * 22)) * zoom) * unitScale;
+}
+
+
 function playerTeam(playerId) {
   if (playerId === 2) return "p2";
   if (playerId === 4) return "p4";
@@ -304,9 +328,15 @@ function drawRock(ctx, x, y, scale) {
 }
 
 
-export function createMapRenderer(canvas, map, { presentation = "diagnostic" } = {}) {
+export function createMapRenderer(canvas, map, {
+  presentation = "diagnostic",
+  unitScale = 1,
+} = {}) {
   if (!["diagnostic", "production"].includes(presentation)) {
     throw new RangeError(`unknown map presentation ${presentation}`);
+  }
+  if (!Number.isFinite(unitScale) || unitScale <= 0) {
+    throw new RangeError("production unit scale must be positive");
   }
   const ctx = canvas.getContext("2d");
   const scene = buildRenderScene(map, { orientation: VIEW_ORIENTATION });
@@ -348,6 +378,7 @@ export function createMapRenderer(canvas, map, { presentation = "diagnostic" } =
     units: Object.freeze([]),
     simulationSnapshot: null,
     presentation,
+    unitScale,
     unitAssets: new Map(),
     visualProjectiles: [],
     mode: "formation",
@@ -754,7 +785,7 @@ export function createMapRenderer(canvas, map, { presentation = "diagnostic" } =
       sh = meta.fh;
     }
     const radius = unit.mechanics?.collision_size_tiles?.x ?? 0.2;
-    const box = Math.max(34, (46 + Math.min(18, radius * 22)) * state.zoom);
+    const box = productionUnitBoxSize(radius, state.zoom, state.unitScale);
     const scale = sw > 0 && sh > 0
       ? box / Math.max(sw, sh) * (playing ? (sheet.meta.scale ?? 1) : 1)
       : 1;
@@ -780,7 +811,7 @@ export function createMapRenderer(canvas, map, { presentation = "diagnostic" } =
       ctx.save();
       if (playing) {
         ctx.shadowColor = "rgba(255, 212, 104, .55)";
-        ctx.shadowBlur = Math.max(6, 12 * state.zoom);
+        ctx.shadowBlur = Math.max(3, 12 * state.zoom * state.unitScale);
       }
       if (faceRight) {
         ctx.translate(base.x, 0);
@@ -797,9 +828,9 @@ export function createMapRenderer(canvas, map, { presentation = "diagnostic" } =
       ctx.fill();
     }
     if (unit.alive !== false && Number.isFinite(unit.hp) && Number.isFinite(unit.maxHp)) {
-      const barWidth = Math.max(20, box * 0.72);
-      const barHeight = Math.max(2, 3 * state.zoom);
-      const barY = base.y - Math.max(dh, box * 0.7) - 5;
+      const barWidth = Math.max(10, box * 0.72);
+      const barHeight = Math.max(1, 3 * state.zoom * state.unitScale);
+      const barY = base.y - Math.max(dh, box * 0.7) - 5 * state.unitScale;
       ctx.globalAlpha = 1;
       ctx.fillStyle = "rgba(5, 8, 6, .76)";
       ctx.fillRect(base.x - barWidth / 2, barY, barWidth, barHeight);
@@ -965,8 +996,24 @@ export function createMapRenderer(canvas, map, { presentation = "diagnostic" } =
     const spanY = projectionMode === "orthographic"
       ? map.height * TILE_WIDTH / 2
       : map.height * TILE_HEIGHT;
-    state.fitZoom = Math.min((state.width - 48) / spanX, (state.height - 48) / spanY);
-    if (!Number.isFinite(state.zoom) || state.zoom === 1) state.zoom = state.fitZoom;
+    const compactCorridor = state.presentation === "production"
+      && state.width <= 768 && state.height > state.width;
+    state.fitZoom = fittedMapZoom({
+      width: state.width,
+      height: state.height,
+      spanX,
+      spanY,
+      compact: compactCorridor,
+    });
+    if (state.presentation === "production") {
+      // Production has no pan/zoom controls. Keep its framing responsive as
+      // rails collapse, the phone rotates, or the canvas changes dimensions.
+      state.zoom = state.fitZoom;
+      state.panX = 0;
+      state.panY = 0;
+    } else if (!Number.isFinite(state.zoom) || state.zoom === 1) {
+      state.zoom = state.fitZoom;
+    }
     draw();
   }
 

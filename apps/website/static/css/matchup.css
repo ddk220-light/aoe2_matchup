@@ -145,6 +145,32 @@
        to full container width on large monitors. */
     max-width: 70ch;
 }
+.civ-deep-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+.civ-deep-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 36px;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--gold);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.civ-deep-link:hover {
+    border-color: var(--gold);
+    background: var(--gold-tint);
+    color: var(--gold-light);
+}
 .analysis-hero-body .pill-row {
     margin-bottom: 4px;
 }
@@ -869,6 +895,9 @@
         max-width: 100%;
     }
     .analysis-hero-body .pill-row {
+        justify-content: center;
+    }
+    .civ-deep-links {
         justify-content: center;
     }
     .analysis-civ-name {

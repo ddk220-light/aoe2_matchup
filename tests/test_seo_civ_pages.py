@@ -34,6 +34,14 @@ def test_index_links_to_detail_pages(client):
     assert 'href="/civilizations/bengalis"' in body
 
 
+def test_civ_analyzer_has_civilization_deep_links(client):
+    script = client.get("/static/js/matchup.js").data.decode()
+    assert 'https://aoe2techtree.net/#' in script
+    assert 'https://ageofempires.fandom.com/wiki/' in script
+    assert "Open Tech Tree" in script
+    assert "Open Wiki" in script
+
+
 def test_civ_pages_in_sitemap(client):
     body = client.get("/sitemap.xml").data.decode()
     assert "/civilizations/bengalis</loc>" in body

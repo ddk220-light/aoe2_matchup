@@ -1011,6 +1011,8 @@
     position: relative;
     color: var(--gold);
 }
+.restart-button { color: var(--gold); }
+.restart-button .media-glyph { width: 20px; height: 20px; }
 .speed-button .media-glyph { width: 20px; height: 20px; }
 .speed-value {
     position: absolute;
@@ -1169,9 +1171,8 @@
 .sim-stage.battle-active .team-rail { flex-basis: clamp(220px, 18vw, 300px); }
 .sim-stage.battle-active .rail-search { display: none; }
 .sim-stage.battle-active .rail-live { display: block; }
-/* The picked civ/unit badges stay. Changing them is disabled only while frames
-   are actively playing; it returns once the result is visible. */
-.sim-stage.battle-running .change-btn { display: none; }
+/* Picked civ/unit badges and their Change actions stay available throughout
+   playback. Selecting one resets the active battle before opening its picker. */
 /* (No canvas cap to lift — the arena widens via the rail transition below.) */
 
 /* ---- Damage breakdown panel (toggled) ---- */
@@ -1321,23 +1322,23 @@
         white-space: nowrap;
     }
     .rail-picker > .unit-grid {
-        grid-template-columns: repeat(8, minmax(0, 1fr));
+        grid-template-columns: repeat(7, minmax(0, 1fr));
         gap: 0;
     }
     .rail-picker > .unit-grid .unit-pick {
         min-width: 0;
-        min-height: 44px;
+        min-height: 50px;
         gap: 1px;
         padding: 3px 1px;
     }
     .rail-picker > .unit-grid .unit-pick img,
     .rail-picker > .unit-grid .unit-pick img.sprite {
-        width: 1.45rem;
-        height: 1.45rem;
+        width: 1.68rem;
+        height: 1.68rem;
         padding: 0;
     }
     .rail-picker > .unit-grid .unit-pick span {
-        font-size: 0.48rem;
+        font-size: 0.52rem;
         line-height: 1.05;
     }
     .rail-search-input { min-height: 44px; }

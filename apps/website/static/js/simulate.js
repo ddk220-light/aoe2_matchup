@@ -83,8 +83,10 @@ function updateStartReady() {
         teamState[2].civ && teamState[2].unitSlug
     );
     const btn = document.getElementById("playPauseBtn");
+    const restartBtn = document.getElementById("restartBtn");
     const hint = document.getElementById("startHint");
     if (btn) btn.disabled = battleLoading || !ready;
+    if (restartBtn) restartBtn.disabled = battleLoading || !ready || !pageSim?.config;
     if (hint) hint.hidden = ready || !!pageSim?.config;
     return ready;
 }
@@ -523,6 +525,7 @@ function setSimPhase(battle) {
 
 function syncPlayerControls() {
     const button = document.getElementById("playPauseBtn");
+    const restartButton = document.getElementById("restartBtn");
     const stage = document.getElementById("simStage");
     if (!button) return;
 
@@ -531,6 +534,9 @@ function syncPlayerControls() {
         teamState[2].civ && teamState[2].unitSlug
     );
     button.disabled = battleLoading || !ready;
+    if (restartButton) {
+        restartButton.disabled = battleLoading || !ready || !pageSim?.config;
+    }
     button.classList.toggle("loading", battleLoading);
     stage?.classList.toggle(
         "battle-running",
@@ -547,8 +553,8 @@ function syncPlayerControls() {
         button.dataset.state = "play";
         button.setAttribute("aria-label", "Resume battle");
     } else if (pageSim?.complete) {
-        button.dataset.state = "replay";
-        button.setAttribute("aria-label", "Replay with a new random battle");
+        button.dataset.state = "play";
+        button.setAttribute("aria-label", "Start a new battle");
     } else {
         button.dataset.state = "play";
         button.setAttribute("aria-label", "Start battle");
@@ -1178,14 +1184,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderSelection(1);
     renderSelection(2);
 
-    // Video-player controls: the first play starts the simulation, play/pause
-    // toggles during it, and replay starts a fresh randomized run.
+    // Video-player controls: Play starts or resumes, while the dedicated
+    // restart control always starts a fresh randomized run.
     document.getElementById("playPauseBtn").addEventListener("click", async () => {
         if (battleLoading) return;
         if (pageSim.running) {
             pageSim.pause();
             return;
         }
+        await startBattle();
+    });
+    document.getElementById("restartBtn").addEventListener("click", async () => {
+        if (battleLoading || !pageSim.config) return;
+        if (pageSim.running && !pageSim.paused) pageSim.pause();
         await startBattle();
     });
     document.getElementById("speedBtn").addEventListener("click", () => {

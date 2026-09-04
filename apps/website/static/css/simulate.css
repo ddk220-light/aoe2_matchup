@@ -1391,7 +1391,11 @@
         font-weight: 700;
         line-height: 1.25;
     }
-    .sim-stage.battle-active .rail-live { margin-top: 14px; }
+    .sim-stage.battle-active .rail-picker {
+        flex-shrink: 0;
+        overflow-y: visible;
+    }
+    .sim-stage.battle-active .rail-live { margin-top: 6px; }
     .sim-stage.battle-active .progress-card { padding: 13px 14px; }
     .sim-stage.battle-active .progress-header {
         gap: 10px;

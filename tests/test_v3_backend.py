@@ -156,6 +156,8 @@ def test_battle_card_metric_labels_wrap_instead_of_truncating():
     assert "grid-template-columns: auto minmax(0, 1fr)" in vitals_rule
     assert "white-space: nowrap" in hp_rule
     assert ".sim-stage.battle-active .team-rail { flex-basis: clamp(250px, 21vw, 340px); }" in css
+    assert ".sim-stage.battle-active .rail-picker" in css
+    assert "overflow-y: visible" in css
     assert "@media (min-width: 1025px) and (min-height: 560px)" in css
     assert "const arenaFullyVisible" in script
     assert "if (!desktopShell && !arenaFullyVisible)" in script

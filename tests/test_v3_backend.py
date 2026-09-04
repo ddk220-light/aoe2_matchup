@@ -152,7 +152,7 @@ def test_battle_card_metric_labels_wrap_instead_of_truncating():
     assert "white-space: normal" in metric_label_rule
     assert "overflow: hidden" not in metric_label_rule
     assert "text-overflow: ellipsis" not in metric_label_rule
-    assert "min-height: 2.3em" in metric_label_rule
+    assert "min-height: 2.5em" in metric_label_rule
     assert "grid-template-columns: auto minmax(0, 1fr)" in vitals_rule
     assert "white-space: nowrap" in hp_rule
     assert ".sim-stage.battle-active .team-rail { flex-basis: clamp(250px, 21vw, 340px); }" in css

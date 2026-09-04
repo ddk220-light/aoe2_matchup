@@ -495,7 +495,7 @@ function initRailSearch() {
 
 // ===== PHASE TRANSITION (pick <-> battle) =====
 // Battle expands the arena and shrinks the rails to the picked unit + live team
-// stats. The player controls remain in place above the arena in every phase.
+// stats. The media controls remain in place below the arena in every phase.
 function setSimPhase(battle) {
     const stage = document.getElementById("simStage");
     if (stage) stage.classList.toggle("battle-active", battle);
@@ -521,9 +521,8 @@ function setSimPhase(battle) {
 
 function syncPlayerControls() {
     const button = document.getElementById("playPauseBtn");
-    const icon = document.getElementById("playPauseIcon");
     const stage = document.getElementById("simStage");
-    if (!button || !icon) return;
+    if (!button) return;
 
     const ready = !!(
         teamState[1].civ && teamState[1].unitSlug &&
@@ -537,19 +536,19 @@ function syncPlayerControls() {
     );
 
     if (battleLoading) {
-        icon.textContent = "…";
+        button.dataset.state = "loading";
         button.setAttribute("aria-label", "Preparing battle");
     } else if (pageSim?.running && !pageSim.paused) {
-        icon.textContent = "Ⅱ";
+        button.dataset.state = "pause";
         button.setAttribute("aria-label", "Pause battle");
     } else if (pageSim?.running && pageSim.paused) {
-        icon.textContent = "▶";
+        button.dataset.state = "play";
         button.setAttribute("aria-label", "Resume battle");
     } else if (pageSim?.complete) {
-        icon.textContent = "↻";
+        button.dataset.state = "replay";
         button.setAttribute("aria-label", "Replay with a new random battle");
     } else {
-        icon.textContent = "▶";
+        button.dataset.state = "play";
         button.setAttribute("aria-label", "Start battle");
     }
 }

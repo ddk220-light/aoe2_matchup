@@ -2,7 +2,7 @@
 
 All page + API routes (battle sim home, rankings, civ pages, matchup advisor,
 patch tracker, SEO landing pages, sitemap). Serves the committed data artifacts —
-aoe2_reference.db, derived_data.db, pool_scores.db, patches.db,
+aoe2_reference.db, derived_data.db, derived_data_v3.db, patches.db,
 civ_power_units/<build>.json — and only simulates at serve
 time for the live Matchup Advisor endpoints (best_units.get_matchup_sims /
 get_matchup_recommendations).
@@ -57,7 +57,6 @@ from aoe2x.dbgen.v3_mechanics import (
 from aoe2x.js_simulation.scenario_config import build_scenario_payload
 from aoe2x.advisor.top_units import load_top_units, compute_top_units
 from aoe2x.sim.unit_lines import UNIT_LINES, TREBUCHET_SLUGS, CIV_MISSING_UNITS
-from aoe2x.rank.pool_scores_query import load_pool_scores
 from aoe2x.batch.patches_db import get_current_build
 from aoe2x.assets import config as _assets_cfg
 from aoe2x.assets import catalog as _assets_catalog
@@ -127,7 +126,7 @@ from aoe2x.paths import GOLDEN_DIR as _GOLDEN_DIR
 
 DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_units.db")
 REF_DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db")
-DERIVED_DB_PATH = os.path.join(str(_GOLDEN_DIR), "derived_data.db")
+RANKINGS_DERIVED_DB_PATH = os.path.join(str(_GOLDEN_DIR), "derived_data_v3.db")
 PATCHES_DB_PATH = os.path.join(str(_GOLDEN_DIR), "patches.db")
 
 # Age definitions — the site is Imperial-only (2026-06-11): the DBs carry
@@ -151,11 +150,9 @@ def get_ref_db():
     return conn
 
 
-def get_derived_db():
-    """Get a connection to the derived-data database (battle_scores produced
-    by webapp/derive_unit_rankings.py from matchup_db.db raw battles).
-    """
-    conn = sqlite3.connect(DERIVED_DB_PATH)
+def get_rankings_derived_db():
+    """Get the staged V3 rankings database, including retained siege/naval rows."""
+    conn = sqlite3.connect(RANKINGS_DERIVED_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -670,12 +667,6 @@ _UNIT_LINE_PAGES = [
 ]
 _UNIT_LINE_PAGE_BY_URL = {p["url"]: p for p in _UNIT_LINE_PAGES}
 
-# Score keys checked (in order) for the SSR table's single "Sim score" column.
-_LINE_PAGE_SCORE_KEYS = ("general_combat", "ranged_effectiveness",
-                         "stable_effectiveness", "anti_building_score",
-                         "naval_effectiveness")
-
-
 @app.route("/units/<line_url>")
 def unit_line_page(line_url):
     """Per-unit-line landing page ("aoe2 fire lancer" searches): SSR ranked
@@ -690,11 +681,8 @@ def unit_line_page(line_url):
         abort(404)
 
     def _row_score(r):
-        for k in _LINE_PAGE_SCORE_KEYS:
-            v = r.get(k)
-            if isinstance(v, (int, float)):
-                return v
-        return None
+        value = r.get("ranking_score")
+        return value if isinstance(value, (int, float)) else None
 
     rows = [(r, _row_score(r)) for r in data["imperial"]]
     rows.sort(key=lambda t: (-(t[1] if t[1] is not None else float("-inf")),
@@ -869,9 +857,9 @@ def _data_lastmod():
     the deploy day — a stable signal that only moves when the data actually
     changes. Falls back to today if no artifact is present (fresh checkout)."""
     candidates = [
+        os.path.join(str(_GOLDEN_DIR), "derived_data_v3.db"),
         os.path.join(str(_GOLDEN_DIR), "derived_data.db"),
         os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db"),
-        os.path.join(str(_GOLDEN_DIR), "pool_scores.db"),
     ]
     mtimes = [os.path.getmtime(p) for p in candidates if os.path.exists(p)]
     if not mtimes:
@@ -1706,6 +1694,44 @@ STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"
 SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon", "cannon_galleon"}
 NAVAL_LINE_SLUGS = {"galleon", "fire", "hulk", "naval"}
 
+FINAL_SCORE_TYPE_BY_LINE = {
+    "militia": "militia_value",
+    "spear": "militia_value",
+    "shock_infantry": "militia_value",
+    "archer": "ranged_effectiveness",
+    "skirmisher": "ranged_effectiveness",
+    "cav_archer": "ranged_effectiveness",
+    "scorpion": "ranged_effectiveness",
+    "gunpowder": "ranged_effectiveness",
+    "knight": "stable_effectiveness",
+    "light_cav": "stable_effectiveness",
+    "camel": "stable_effectiveness",
+    "steppe_lancer": "stable_effectiveness",
+    "elephant": "stable_effectiveness",
+    "ram": "anti_building_score",
+    "trebuchet": "anti_building_score",
+    "bombard_cannon": "anti_building_score",
+    "cannon_galleon": "anti_building_score",
+    "galleon": "naval_effectiveness",
+    "fire": "naval_effectiveness",
+    "hulk": "naval_effectiveness",
+}
+
+_V3_FINAL_SCORE_TYPES = {
+    "militia_value",
+    "ranged_effectiveness",
+    "stable_effectiveness",
+}
+
+_V3_BREAKDOWN_YARDSTICKS = (
+    ("champion", "Champion", "gc_v3_27_vs_champ"),
+    ("paladin", "Paladin", "gc_v3_27_vs_paladin"),
+    ("arbalester", "Arbalester", "gc_v3_27_vs_arb"),
+    ("halberdier", "Halberdier", "at_v3_27_vs_halb"),
+    ("elite_skirmisher", "Elite Skirmisher", "at_v3_27_vs_elite_skirm"),
+    ("hussar", "Hussar", "at_v3_27_vs_hussar"),
+)
+
 def get_unit_line_data(line_slug):
     """Return comparison data for a unit line across all civs as a plain dict.
 
@@ -1737,53 +1763,40 @@ def get_unit_line_data(line_slug):
 
     # Load role scores from DB (keyed by "age|civ_name|unit_slug")
     _db_role_scores = {}
-    _score_line_slugs = [
-        s for s in sub_lines
-        if s in INFANTRY_LINE_SLUGS or s in ARCHERY_LINE_SLUGS or s in NAVAL_LINE_SLUGS
-    ]
-    # Stable and siege scores are stored per sub-line in DB
-    if line_slug == "stable":
-        _score_line_slugs = list(STABLE_LINE_SLUGS)
-    elif line_slug == "siege":
-        _score_line_slugs = ["ram", "trebuchet", "bombard_cannon", "cannon_galleon"]
-    elif line_slug == "naval":
-        _score_line_slugs = ["galleon", "fire", "hulk"]
+    scored_lines = (
+        INFANTRY_LINE_SLUGS
+        | ARCHERY_LINE_SLUGS
+        | STABLE_LINE_SLUGS
+        | SIEGE_LINE_SLUGS
+        | NAVAL_LINE_SLUGS
+    )
+    _score_line_slugs = [s for s in sub_lines if s in scored_lines]
     if _score_line_slugs:
-        # Battle scores live in derived_data.db (produced by
-        # webapp/derive_unit_rankings.py from raw matchup_db.db rows).
-        # Fall back to the reference DB only if derived_data is missing — the
-        # legacy reference battle_scores table has been empty since the
-        # simulation pipeline was rebuilt for the sim-improvements branch.
-        derived_conn = get_derived_db()
+        derived_conn = get_rankings_derived_db()
         placeholders = ",".join("?" for _ in _score_line_slugs)
         _bld = current_build()
         if _bld:
             derived_rows = derived_conn.execute(
-                f"SELECT age, civ_name, unit_slug, score_type, score_value "
+                f"SELECT age, civ_name, unit_slug, score_type, score_value, rank, median_delta "
                 f"FROM battle_scores WHERE line_slug IN ({placeholders}) "
                 f"AND build_number = ?",
                 _score_line_slugs + [_bld],
             ).fetchall()
         else:
             derived_rows = derived_conn.execute(
-                f"SELECT age, civ_name, unit_slug, score_type, score_value "
+                f"SELECT age, civ_name, unit_slug, score_type, score_value, rank, median_delta "
                 f"FROM battle_scores WHERE line_slug IN ({placeholders})",
                 _score_line_slugs,
             ).fetchall()
         derived_conn.close()
 
-        if not derived_rows:
-            rc.execute(
-                f"SELECT age, civ_name, unit_slug, score_type, score_value FROM battle_scores WHERE line_slug IN ({placeholders})",
-                _score_line_slugs,
-            )
-            derived_rows = rc.fetchall()
-
         for bs_row in derived_rows:
             uk = f"{bs_row['age'].lower()}|{bs_row['civ_name']}|{bs_row['unit_slug']}"
-            _db_role_scores.setdefault(uk, {})[bs_row["score_type"]] = bs_row[
-                "score_value"
-            ]
+            _db_role_scores.setdefault(uk, {})[bs_row["score_type"]] = {
+                "score_value": bs_row["score_value"],
+                "rank": bs_row["rank"],
+                "median_delta": bs_row["median_delta"],
+            }
 
     def _attach_scores(entry, age_key, sub_slug):
         """Attach role scores from derived_data.db (battle_scores table).
@@ -1793,8 +1806,39 @@ def get_unit_line_data(line_slug):
         treats missing keys as "no score" (same as the old -999 sentinels).
         """
         unit_key = f"{age_key}|{entry['civ_name']}|{entry['unit_slug']}"
-        for rk, rv in _db_role_scores.get(unit_key, {}).items():
-            entry[rk] = rv
+        score_rows = _db_role_scores.get(unit_key, {})
+        for score_type, score_row in score_rows.items():
+            entry[score_type] = score_row["score_value"]
+
+        final_type = FINAL_SCORE_TYPE_BY_LINE.get(sub_slug)
+        final_row = score_rows.get(final_type) if final_type else None
+        if final_row:
+            entry["ranking_score_type"] = final_type
+            entry["ranking_score"] = final_row["score_value"]
+            entry["ranking_rank"] = final_row["rank"]
+            entry["ranking_median_delta"] = final_row["median_delta"]
+
+        if final_type in _V3_FINAL_SCORE_TYPES:
+            roles = {
+                label: entry.get(score_type)
+                for label, score_type in (
+                    ("GC", "general_combat"),
+                    ("AC", "anti_cav"),
+                    ("AT", "anti_trash"),
+                    ("AA", "anti_archer"),
+                )
+                if entry.get(score_type) is not None
+            }
+            yardsticks = [
+                {"key": key, "label": label, "score": entry.get(score_type)}
+                for key, label, score_type in _V3_BREAKDOWN_YARDSTICKS
+                if entry.get(score_type) is not None
+            ]
+            if roles or yardsticks:
+                entry["ranking_breakdown"] = {
+                    "roles": roles,
+                    "yardsticks": yardsticks,
+                }
 
     _ABILITY_LABELS = {
         "ignores_melee_armor": "Ignores melee armor",
@@ -1965,20 +2009,6 @@ def get_unit_line_data(line_slug):
     if line_slug == "stable":
         result["imperial"] = [u for u in result["imperial"] if "ele_archer" not in u["unit_slug"]]
 
-    # Attach pool_scores payload for units covered by pool_scores.db.
-    # Out-of-pool units (siege/naval) simply don't get the field.
-    pool_scores_db_path = os.path.join(str(_GOLDEN_DIR), "pool_scores.db")
-    all_unit_pairs = [
-        (entry["civ_name"], entry["unit_slug"])
-        for entry in result["imperial"]
-    ]
-    pool_scores_by_unit = load_pool_scores(pool_scores_db_path, all_unit_pairs,
-                                           build_number=current_build())
-    for entry in result["imperial"]:
-        key = (entry["civ_name"], entry["unit_slug"])
-        if key in pool_scores_by_unit:
-            entry["pool_scores"] = pool_scores_by_unit[key]
-
     ref_conn.close()
     return result
 
@@ -1991,38 +2021,14 @@ _RANKINGS_HEADLINE_LINES = [
     ("siege", "Siege"),
     ("naval", "Naval"),
 ]
-# Role-score keys to fall back on when a unit has no pool_scores (siege/naval).
-_RANKING_FALLBACK_SCORE_KEYS = (
-    "anti_building_score", "naval_effectiveness",
-    "general_combat", "ranged_effectiveness", "stable_effectiveness",
-)
-
-
 def _ranking_default_score(unit):
-    """A unit's default 'Average' score: mean of its 30v30 and 3k pool HP-scores,
-    or a role score for siege/naval. Mirrors the interactive table's default view.
-    Returns None if the unit has no usable score."""
-    ps = unit.get("pool_scores")
-    if ps:
-        vals = []
-        for scale in ("30v30", "3k"):
-            v = ((ps.get("scales", {}) or {}).get(scale, {}) or {}).get("hp", {}) or {}
-            f = v.get("final")
-            if isinstance(f, (int, float)):
-                vals.append(f)
-        # Match the interactive table: the 'Average' view needs BOTH scales — a
-        # pool unit missing either is excluded (return None) rather than scored
-        # on one scale or falling through to a role metric.
-        return sum(vals) / 2 if len(vals) == 2 else None
-    for k in _RANKING_FALLBACK_SCORE_KEYS:
-        v = unit.get(k)
-        if isinstance(v, (int, float)) and v != -999:
-            return v
-    return None
+    """Return the one published final ranking score for a unit."""
+    value = unit.get("ranking_score")
+    return value if isinstance(value, (int, float)) else None
 
 
 def get_rankings_overview_data(top_n=8):
-    """Top units per headline category by default 'Average' score, for SSR.
+    """Top units per headline category by the published final score, for SSR.
     Reuses get_unit_line_data so the overview can't diverge from the API."""
     out = []
     for line_slug, label in _RANKINGS_HEADLINE_LINES:

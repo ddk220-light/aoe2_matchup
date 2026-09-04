@@ -158,7 +158,7 @@ def test_battle_card_metric_labels_wrap_instead_of_truncating():
     assert ".sim-stage.battle-active .team-rail { flex-basis: clamp(250px, 21vw, 340px); }" in css
     assert "@media (min-width: 1025px) and (min-height: 560px)" in css
     assert "const arenaFullyVisible" in script
-    assert 'block: desktopShell ? "nearest" : "start"' in script
+    assert "if (!desktopShell && !arenaFullyVisible)" in script
 
 
 def test_resource_based_armies_accept_independent_team_budgets(client):

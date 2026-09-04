@@ -80,6 +80,17 @@ test("the next captured unique roster has generated Imperial mechanics", async (
 });
 
 
+test("Elite Fire Archer uses its canonical primary-plus-secondary volley", async () => {
+  const fireArcher = await mechanics("elite_fire_archer_wu");
+  assert.equal(fireArcher.charge, null,
+    "the reference DB's explicit zero must not resurrect the raw DAT charge");
+  assert.equal(fireArcher.effects.extra_projectiles, 2);
+  assert.deepEqual(fireArcher.ranged.extra_projectile_attacks, { "3": 3 });
+  assert.equal(fireArcher.attack_classes["3"], 10,
+    "the primary arrow includes the fully researched attack upgrades");
+});
+
+
 test("Elite Konnik spawns its complete foot form after the DAT dismount time", async () => {
   const konnik = await mechanics("elite_konnik_bulgarians");
   const paladin = await mechanics("paladin");

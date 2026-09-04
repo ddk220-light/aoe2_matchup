@@ -2,37 +2,37 @@
   "age": "Imperial",
   "armor_classes": {
     "15": 0,
-    "19": 0,
-    "3": 2,
+    "3": 4,
     "31": 0,
-    "4": 2
+    "38": 0,
+    "4": 3
   },
   "attack_animation": {
-    "frame_duration_seconds": 0.05000000074505806,
+    "frame_duration_seconds": 0.05684799700975418,
     "frames": 30,
-    "graphic": 2843,
-    "seconds": 1.5000000223517418
+    "graphic": 7641,
+    "seconds": 1.7054399102926254
   },
   "attack_classes": {
-    "16": 4,
-    "17": 0,
-    "20": 1,
-    "21": 4,
-    "27": 2,
-    "3": 10
+    "1": 4,
+    "20": 3,
+    "21": 0,
+    "25": 4,
+    "27": 1,
+    "3": 7
   },
-  "attack_delay_seconds": 0.5000000074505806,
-  "attack_graphic": 2843,
-  "attack_range_tiles": 9.0,
+  "attack_delay_seconds": 0.7958719581365585,
+  "attack_graphic": 7641,
+  "attack_range_tiles": 7.0,
   "blast": {
-    "attack_level": 6,
-    "damage_fraction": 0.10000000149011612,
+    "attack_level": 3,
+    "damage_fraction": 1.0,
     "defense_level": 3,
     "friendly_fire_damage": 1.0,
-    "width_tiles": 0.25
+    "width_tiles": 0.0
   },
   "charge": null,
-  "civilization": "Wu",
+  "civilization": "Mapuche",
   "clearance_size_tiles": {
     "x": 0.2,
     "y": 0.2
@@ -44,41 +44,29 @@
   },
   "damage_reduction_by_attacker_category": null,
   "death_animation": {
-    "frame_duration_seconds": 0.05000000447034836,
+    "frame_duration_seconds": 0.03333333507180214,
     "frames": 30,
-    "graphic": 2844,
-    "seconds": 1.5000001341104507
+    "graphic": 7642,
+    "seconds": 1.0000000521540642
   },
   "derived": {
-    "damage_vs_self": 8
+    "damage_vs_self": 3
   },
   "effects": {
-    "base_accuracy": 85.0,
-    "charge_projectile_attacks": {
-      "16": 3,
-      "17": 0,
-      "20": 1,
-      "21": 4,
-      "27": 2,
-      "3": 5
-    },
-    "charge_projectile_speed": 7.0,
-    "extra_projectile_attacks": {
-      "3": 3
-    },
-    "extra_projectiles": 2,
+    "base_accuracy": 90.0,
     "pass_through_count": 1,
+    "pass_through_percent": 0.3,
     "splash_on_hit_fraction": 1.0
   },
-  "frame_delay": 10,
-  "hp": 40,
+  "frame_delay": 14,
+  "hp": 50,
   "idle_animation": {
     "frame_duration_seconds": 0.05000000074505806,
     "frames": 60,
-    "graphic": 2845,
+    "graphic": 7643,
     "seconds": 3.0000000447034836
   },
-  "line_of_sight_tiles": 14.0,
+  "line_of_sight_tiles": 9.0,
   "melee_charge": null,
   "min_collision_size_multiplier": 1.0,
   "movement_blocks": {
@@ -97,7 +85,7 @@
   },
   "population_space": 1.0,
   "provenance": {
-    "dat_selector": "dat.civs[name='Wu'].units[1970]",
+    "dat_selector": "dat.civs[name='Mapuche'].units[185]",
     "dat_sha256": "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF",
     "fields": {
       "age": "ref_units.age",
@@ -147,68 +135,66 @@
       "ranged.impact_splash_friendly_fire_fraction": "unit.type_50.friendly_fire_damage",
       "ranged.impact_splash_radius_tiles": "ref_units.splash_on_hit_radius",
       "ranged.min_range_tiles": "ref_units.min_range",
-      "ranged.pass_through": "dat.civs[0].units[1971].projectile.vanish_mode OR positive ref_units.pass_through_percent from researched civilization technology",
+      "ranged.pass_through": "dat.civs[0].units[187].projectile.vanish_mode OR positive ref_units.pass_through_percent from researched civilization technology",
       "ranged.pass_through_count": "ref_units.pass_through_count",
       "ranged.pass_through_damage_fraction": "ref_units.pass_through_percent; dat pass-through defaults to 0.5",
-      "ranged.projectile_arc": "dat.civs[0].units[1971].projectile.projectile_arc",
-      "ranged.projectile_half_width_tiles": "dat.civs[0].units[1971].collision_size_x",
-      "ranged.projectile_hit_mode": "dat.civs[0].units[1971].projectile.hit_mode",
+      "ranged.projectile_arc": "dat.civs[0].units[187].projectile.projectile_arc",
+      "ranged.projectile_half_width_tiles": "dat.civs[0].units[187].collision_size_x",
+      "ranged.projectile_hit_mode": "dat.civs[0].units[187].projectile.hit_mode",
       "ranged.projectile_spawning_area": "unit.creatable.projectile_spawning_area[0:2]",
-      "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[1971].speed",
+      "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[187].speed",
       "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
       "ranged.secondary_projectile_count": "unit.creatable.total_projectiles - 1",
       "ranged.secondary_projectile_half_width_tiles": "dat.civs[0].units[unit.creatable.secondary_projectile_unit].collision_size_x",
       "ranged.secondary_projectile_hit_mode": "dat.civs[0].units[unit.creatable.secondary_projectile_unit].projectile.hit_mode",
       "ranged.secondary_projectile_unit": "unit.creatable.secondary_projectile_unit",
-      "ranged.smart_mode": "dat.civs[0].units[1971].projectile.smart_mode | 1 when dat tech 93 (Ballistics) sets attribute 19 on projectile 1971 (Imperial fully-teched model)",
+      "ranged.smart_mode": "dat.civs[0].units[187].projectile.smart_mode | 1 when dat tech 93 (Ballistics) sets attribute 19 on projectile 187 (Imperial fully-teched model)",
       "reload_seconds": "ref_units.final_reload_time * matching civilization tech-tree effect type 5 on reload attribute 10",
       "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
       "unit_master": "unit.id",
       "walk_animation": "graphics[unit.dead_fish.walking_graphic]"
     },
     "reference_db_sha256": "D92BE153BEEC54FD5A08A2C3F940383DA8A406C93794BEF5699FE51C5B163D36",
-    "reference_selector": "ref_units WHERE unit_slug='elite_fire_archer_wu' AND civ_name='Wu' AND age='Imperial'",
-    "reload_base_seconds": 3.5,
+    "reference_selector": "ref_units WHERE unit_slug='imp_slinger' AND civ_name='Mapuche' AND age='Imperial'",
+    "reload_base_seconds": 2.0,
     "reload_multiplier": 1.0
   },
   "ranged": {
     "accuracy_dispersion_tiles": 0.33000001311302185,
-    "accuracy_percent": 85.0,
-    "base_accuracy_percent": 85.0,
-    "extra_projectile_attacks": {
-      "3": 3
-    },
-    "extra_projectile_count": 2,
+    "accuracy_percent": 90.0,
+    "base_accuracy_percent": 90.0,
+    "extra_projectile_attacks": null,
+    "extra_projectile_count": 0,
     "first_attack_extra_projectiles": 0,
     "impact_splash_damage_fraction": 1.0,
     "impact_splash_friendly_fire_fraction": 1.0,
     "impact_splash_radius_tiles": 0.0,
-    "min_range_tiles": 0.0,
+    "min_range_tiles": 1.0,
     "pass_through": true,
     "pass_through_count": 1,
-    "pass_through_damage_fraction": 0.5,
-    "projectile_arc": -0.05999999865889549,
+    "pass_through_damage_fraction": 0.3,
+    "projectile_arc": -0.029999999329447746,
     "projectile_half_width_tiles": 0.1,
     "projectile_hit_mode": 0,
     "projectile_spawning_area": [
-      0.5,
-      0.5
+      1.0,
+      1.0
     ],
     "projectile_speed_tiles_per_second": 7.0,
-    "projectile_unit": 1971,
+    "projectile_unit": 187,
     "secondary_projectile_count": 0,
     "secondary_projectile_half_width_tiles": 0.0,
     "secondary_projectile_hit_mode": 0,
     "secondary_projectile_unit": -1,
-    "smart_mode": 3
+    "smart_mode": 1
   },
-  "reload_seconds": 3.5,
+  "reload_seconds": 2.0,
   "speed_tiles_per_second": 0.96,
-  "unit_master": 1970,
+  "unit_master": 185,
   "walk_animation": {
-    "frame_duration_seconds": 0.03487500175833702,
+    "frame_duration_seconds": 0.023250002413988113,
     "frames": 30,
-    "graphic": 2847,
-    "seconds": 1.0462500527501106
+    "graphic": 7645,
+    "seconds": 0.6975000724196434
   }
 }

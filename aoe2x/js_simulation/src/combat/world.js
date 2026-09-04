@@ -1612,10 +1612,11 @@ export function createWorld(scenario) {
     ...(contactSteeringStates ? { contactSteeringStates } : {}),
     ...(anyCharge ? { projectiles: Object.freeze([]) } : {}),
     ...(anyHazard ? { hazards: Object.freeze([]) } : {}),
-    // Deterministic per-shot RNG, present only when a unit can miss or blast
-    // (dat accuracy < 100 or blast width > 0 — nothing in the converged
-    // corpus). Seeded with the golden constant; state lives OUTSIDE units so
-    // no hash can move. Mutable by design across ticks, like kiteState.
+    // Deterministic per-shot RNG, present only when a unit can miss or blast.
+    // A simulation seed must reproduce one complete stochastic fight, so it
+    // also selects the projectile-spread stream. Seed zero preserves the
+    // historical stream; other seeds no longer replay identical scatter.
+    // State lives outside units so no unit hash can move.
     ...(units.some((unit) => {
       const spec = rangedSpec(unit.mechanics);
       return spec && (spec.accuracyPercent < 100
@@ -1623,7 +1624,7 @@ export function createWorld(scenario) {
         || spec.blastRadius > 0 || spec.secondaryCount > 0
         || (spec.extraProjectileCount + spec.firstAttackExtraProjectiles > 0
           && spec.spawnArea.some((dimension) => dimension > 0)));
-    }) ? { shotRng: { state: 20260411 >>> 0 } } : {}),
+    }) ? { shotRng: { state: (20260411 ^ (scenario.openingSeed ?? 0)) >>> 0 } } : {}),
     tick: 0,
     ratio: scenario.ratio,
     mapHash: scenario.mapHash,

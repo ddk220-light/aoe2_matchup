@@ -85,7 +85,10 @@ def _job(config: LabConfig, request: dict[str, Any]) -> tuple[Job, dict[str, Any
 
 
 def _print(value: Any) -> None:
-    print(json.dumps(value, indent=2, ensure_ascii=False))
+    # Windows PowerShell can still expose a legacy console code page. Escaping
+    # non-ASCII keeps status/report output deterministic even when unit labels
+    # or progress text contain symbols outside that page.
+    print(json.dumps(value, indent=2, ensure_ascii=True))
 
 
 def _normalize_batch_row(row: dict[str, Any], defaults: dict[str, Any]) -> dict[str, Any]:

@@ -34,12 +34,28 @@ live dependency doctor. Edit `aoe2lab.toml` if the scenario directory cannot be
 auto-detected or a non-default executable/tool path is needed. Machine paths and
 credentials stay local.
 
+After bootstrap, use the repository launcher for every command:
+
+```powershell
+.\scripts\aoe2lab.ps1 doctor --live --ui
+.\scripts\aoe2lab.ps1 batch .\my-batch.toml --phase full --seeds 5 --live-repeats 5
+```
+
+The launcher validates the complete Python import stack, not merely
+`python.exe --version`. If the virtual-environment launcher points at a Python
+installation that moved or was removed, it invokes the bootstrap repair using
+the configured machine Python and then continues. This prevents a stale venv
+or a general-purpose Python without `AoE2ScenarioParser` from reaching a live
+run. On machines where Python is not on `PATH`, set
+`[paths].bootstrap_python` in the gitignored `aoe2lab.toml` to a stable system
+Python executable; it is used only to create or repair the repository venv.
+
 Before a game-bound run, open AoE2:DE in the normal Scenario Editor UI and leave
 it frontmost. The automation deliberately does not guess its way through Steam,
 profile selection, game menus, or a save-changes modal.
 
 ```powershell
-apps\video\.venv\Scripts\aoe2lab.exe doctor --live --ui
+.\scripts\aoe2lab.ps1 doctor --live --ui
 ```
 
 That command is non-mutating. It verifies Node, writable artifact storage, all

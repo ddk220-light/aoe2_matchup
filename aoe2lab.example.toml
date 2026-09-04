@@ -5,6 +5,12 @@
 [paths]
 artifacts = "aoe2x/js_simulation/calibration/lab"
 node = "node"
+# All lab commands use this repository-owned runtime. The bootstrap repairs it
+# if the system Python it was created from moves or is removed.
+python = "apps/video/.venv/Scripts/python.exe"
+# Optional but recommended on Windows: a stable system Python used only to
+# create or repair the repository venv when its launcher becomes stale.
+# bootstrap_python = "C:/Python312/python.exe"
 
 [game]
 # The lab validates this path when supplied. Game-bound commands still require
@@ -15,7 +21,7 @@ window_title = "Age of Empires II: Definitive Edition"
 
 [grpc]
 # Defaults point at this repository's video venv and aoe2x/grpc scripts.
-# python = "apps/video/.venv/Scripts/python.exe"
+python = "apps/video/.venv/Scripts/python.exe"
 # logger = "aoe2x/grpc/grpc_hp_log.py"
 # redecoder = "aoe2x/grpc/redecode_hp.py"
 

@@ -14,7 +14,9 @@ for back-compat, so existing imports keep working.
 """
 from __future__ import annotations
 
+import json
 from datetime import datetime
+from pathlib import Path
 
 
 def log(msg, logfile=None):
@@ -43,7 +45,35 @@ def resolve_side(civ: str, slug: str):
     from overlay.overlay_data import get_unit_card
     suffix = "_" + civ.lower()
     key = slug[: -len(suffix)] if slug.endswith(suffix) else slug
-    label = get_unit_card(civ, slug)["name"]
+    lookup_slugs = [slug]
+    civ_slug = key + suffix
+    if civ_slug not in lookup_slugs:
+        lookup_slugs.append(civ_slug)
+
+    label = None
+    for lookup_slug in lookup_slugs:
+        try:
+            label = get_unit_card(civ, lookup_slug)["name"]
+            break
+        except ValueError:
+            continue
+
+    if label is None:
+        # Newly added game units can reach the scenario catalogue before the
+        # reference-stat DB is regenerated. Scenario construction only needs
+        # their display label; resource-balanced batch drivers pass explicit
+        # counts and therefore do not infer costs through this fallback.
+        catalogue = Path(__file__).resolve().with_name("unique_units.json")
+        rows = json.loads(catalogue.read_text(encoding="utf-8"))
+        match = next((row for row in rows
+                      if row["civ"] == civ
+                      and row["slug"] in lookup_slugs), None)
+        if match is None:
+            raise ValueError(
+                f"No unit card or scenario catalogue row for {civ} {slug}"
+            )
+        label = match["name"]
+
     name_key = label.lower().replace(" ", "_").replace("-", "_")
     if name_key != key:
         from build_run import unit_const

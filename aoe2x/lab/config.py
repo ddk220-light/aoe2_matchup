@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -27,7 +26,7 @@ class LabConfig:
     config_path: Path | None
     artifacts_root: Path
     node: str
-    python: str
+    python: Path
     game_executable: Path | None
     scenario_directory: Path | None
     game_window_title: str
@@ -84,6 +83,11 @@ def load_config(path: str | Path | None = None) -> LabConfig:
     viewer = _section(data, "viewer")
     video_root = root / "apps" / "video"
     grpc_root = root / "aoe2x" / "grpc"
+    lab_python = _path(
+        root,
+        paths.get("python") or os.environ.get("AOE2LAB_PYTHON"),
+        video_root / ".venv" / "Scripts" / "python.exe",
+    )
     artifacts = _path(
         root,
         paths.get("artifacts"),
@@ -130,7 +134,7 @@ def load_config(path: str | Path | None = None) -> LabConfig:
         config_path=config_path,
         artifacts_root=artifacts,
         node=node,
-        python=str(paths.get("python") or sys.executable),
+        python=lab_python,
         game_executable=game_executable,
         scenario_directory=_path(root, scenario_value, None),
         game_window_title=str(game.get(

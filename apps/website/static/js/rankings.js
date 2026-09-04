@@ -369,6 +369,9 @@ function pinHoverCard(targetEl, html) {
 }
 
 function unpinHoverCard() {
+    if (pinnedCell && typeof pinnedCell.setAttribute === "function") {
+        pinnedCell.setAttribute("aria-expanded", "false");
+    }
     pinnedCell = null;
     const hc = getHoverCardEl();
     hc.classList.remove("visible", "pinned");
@@ -438,6 +441,35 @@ document.addEventListener(
     },
     true,  // capture: run before the outside-tap dismiss handler above
 );
+
+function scoreMethodCategory() {
+    if (INFANTRY_SLUGS.has(currentLine)) return "infantry";
+    if (ARCHERY_SLUGS.has(currentLine)) return "archery";
+    if (
+        currentLine === "stable" ||
+        (UNIT_LINES.stable?.subLines || []).includes(currentLine)
+    ) return "stable";
+    if (SIEGE_SLUGS.has(currentLine)) return "siege";
+    if (NAVAL_SLUGS.has(currentLine)) return "naval";
+    return null;
+}
+
+function onScoreMethodInfoClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const button = event.currentTarget;
+    const category = scoreMethodCategory();
+    const html =
+        typeof RankingsScoreMethod !== "undefined"
+            ? RankingsScoreMethod.buildHtml(category)
+            : "";
+    if (!html) return;
+    pinHoverCard(button, html);
+    button.setAttribute(
+        "aria-expanded",
+        pinnedCell === button ? "true" : "false",
+    );
+}
 
 // ===== HOVER CARD BUILDERS =====
 function scoreColor(v) {
@@ -1241,9 +1273,11 @@ function renderTable() {
                 ? "\u25B2"
                 : "\u25BC"
             : "\u25B4";
-        const infoHtml = col.info
-            ? `<span class="info-icon" title="${col.info}">\u24D8</span>`
-            : "";
+        const infoHtml = col.mobileColumn === "score"
+            ? `<button type="button" class="score-method-info" data-info-pin aria-label="How this score is calculated" aria-expanded="false" title="How this score is calculated" onclick="onScoreMethodInfoClick(event)">i</button>`
+            : col.info
+                ? `<span class="info-icon" title="${col.info}">\u24D8</span>`
+                : "";
         let chevronHtml = "";
         if (col.expandable && !col.hiddenWhenCollapsed) {
             const expanded = isExpanded(col.expandable);

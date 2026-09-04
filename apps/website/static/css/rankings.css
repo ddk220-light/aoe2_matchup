@@ -226,6 +226,34 @@
 .info-icon:hover {
     opacity: 1;
 }
+.score-method-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-left: 5px;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--gold) 72%, var(--border));
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
+    color: var(--gold-light);
+    font-family: Georgia, serif;
+    font-size: 0.72rem;
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: middle;
+    cursor: pointer;
+}
+.score-method-info:hover,
+.score-method-info:focus-visible,
+.score-method-info[aria-expanded="true"] {
+    border-color: var(--gold-light);
+    background: var(--gold-glow);
+    color: var(--gold);
+    outline: none;
+}
 .stats-table td {
     border: 1px solid var(--border-light);
     padding: 7px 10px;
@@ -354,6 +382,47 @@
     color: var(--text-muted);
     font-size: var(--fs-xs);
     margin-bottom: 6px;
+}
+.score-method-label {
+    margin-top: 9px;
+    color: var(--gold);
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+.score-method-setting,
+.score-method-adjustment {
+    margin-top: 3px;
+    line-height: 1.42;
+}
+.score-method-rows {
+    margin-top: 4px;
+}
+.score-method-row {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-light);
+    line-height: 1.3;
+}
+.score-method-row strong {
+    color: var(--gold-light);
+}
+.score-method-row span {
+    color: var(--text-muted);
+}
+.score-method-adjustment {
+    padding: 7px 9px;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--gold-tint);
+    color: var(--text);
+}
+.score-method-note {
+    margin-top: 8px;
 }
 .hover-card .hc-row {
     display: flex;
@@ -896,6 +965,12 @@ td.hc-cell {
     #tableContainer .stats-table .col-chevron,
     #tableContainer .stats-table .sort-arrow {
         display: none;
+    }
+    #tableContainer .stats-table th[data-mobile-column="score"] .score-method-info {
+        width: 22px;
+        height: 22px;
+        margin-left: 3px;
+        font-size: 0.78rem;
     }
     #tableContainer .stats-table tr.unique-row td:first-child,
     #tableContainer .stats-table tr.unique-row td.mobile-column-unit {

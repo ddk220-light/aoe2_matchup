@@ -633,6 +633,131 @@
 .progress-row .prog-value {
     font-weight: 600;
 }
+.progress-vitals {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 2px;
+    font-family: var(--font-body);
+    font-size: var(--fs-xs);
+}
+.progress-vitals .prog-label { color: var(--text-muted); }
+.progress-vitals .prog-value {
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+.progress-hp-inline { color: var(--text-muted); font-weight: 600; }
+.progress-health-track {
+    position: relative;
+    height: 8px;
+    margin: 7px 0 6px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg) 80%, black);
+}
+.progress-health-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 100%;
+    border-radius: inherit;
+    transition: width 120ms linear;
+}
+.progress-card.team1 .progress-health-fill {
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--team1) 70%, #183349),
+        color-mix(in srgb, var(--team1) 88%, white));
+}
+.progress-card.team2 .progress-health-fill {
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--team2) 82%, #5b1919),
+        color-mix(in srgb, var(--team2) 88%, white));
+}
+.progress-economy {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 0.62rem;
+}
+.progress-economy strong {
+    margin-left: 2px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+.matchup-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    margin-top: 9px;
+}
+.matchup-metric {
+    min-width: 0;
+    padding: 7px 4px 6px;
+    border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    text-align: center;
+}
+.matchup-metric > span {
+    display: block;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 0.56rem;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.matchup-metric > strong {
+    display: block;
+    margin-top: 3px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+}
+.matchup-ttk { cursor: help; }
+.matchup-ttk:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+}
+.metric-info {
+    display: inline-grid;
+    width: 0.75rem;
+    height: 0.75rem;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: 0.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.matchup-callouts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+.matchup-callouts[hidden] { display: none; }
+.matchup-callouts li {
+    max-width: 100%;
+    padding: 3px 6px;
+    border: 1px solid color-mix(in srgb, var(--gold) 28%, var(--border));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--gold-tint) 45%, transparent);
+    color: var(--text-muted);
+    font-size: 0.58rem;
+    line-height: 1.25;
+}
 .battle-timer {
     text-align: center;
     font-family: var(--font-display);

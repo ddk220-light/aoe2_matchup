@@ -26,8 +26,8 @@ _SIM_SEED = 20260411
 from aoe2x.paths import GOLDEN_DIR as _DATA_DIR
 
 DB_PATH = os.path.join(str(_DATA_DIR), "aoe2_reference.db")
-DERIVED_DB_PATH = os.path.join(str(_DATA_DIR), "derived_data.db")
-POOL_SCORES_DB_PATH = os.path.join(str(_DATA_DIR), "pool_scores.db")
+RANKINGS_DERIVED_DB_PATH = os.path.join(str(_DATA_DIR), "derived_data_v3.db")
+ADVISOR_DERIVED_DB_PATH = os.path.join(str(_DATA_DIR), "derived_data.db")
 POWER_UNITS_DIR = os.path.join(str(_DATA_DIR), "civ_power_units")
 
 
@@ -54,94 +54,18 @@ def _get_db():
     return conn
 
 
-def _get_derived_db():
-    """Derived DB — battle_scores live here (yardstick land sims + naval/siege)."""
-    conn = sqlite3.connect(DERIVED_DB_PATH)
+def _get_rankings_derived_db():
+    """Hybrid V3 DB used to generate unit rankings and civ power units."""
+    conn = sqlite3.connect(RANKINGS_DERIVED_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
-# ---- Pool-scores percentile (matches what the rankings page shows) ---------
-
-def _line_imperial_slugs(line_def):
-    """Return all imperial-age unit slugs that belong to a unit line."""
-    out = set()
-    if line_def.get("imperial_slug"):
-        out.add(line_def["imperial_slug"])
-    for s in line_def.get("extra_imperial_slugs") or []:
-        out.add(s)
-    for civ, val in (line_def.get("unique_units") or {}).items():
-        # val is a (castle, imperial) pair, or a list of pairs for civs with
-        # two uniques on one line (e.g. Incas: Kamayuk + Champi Warrior)
-        pairs = val if isinstance(val, list) else [val]
-        for pair in pairs:
-            if pair and len(pair) > 1 and pair[1]:
-                out.add(pair[1])
-    return {s for s in out if s}
-
-
-def _load_pool_score_percentiles(build_number=None):
-    """Compute per-(line_slug, civ, unit_slug) percentile from pool_scores.db.
-
-    Mirrors the rankings-page methodology: average of `final_score` at
-    scale=30v30 and scale=3k on the `hp` axis (the page's default view).
-    Percentile is computed within each line (not within the whole pool),
-    so a strong cav_archer-line unit isn't dragged down by a stacked archer
-    pool full of arbalester variants.
-
-    Returns dict keyed by (line_slug, civ, unit_slug) -> percentile float.
-    """
-    build_number = build_number or get_current_build() or "170934"
-    if not os.path.exists(POOL_SCORES_DB_PATH):
-        return {}
-    from aoe2x.sim.unit_lines import UNIT_LINES
-
-    conn = sqlite3.connect(POOL_SCORES_DB_PATH)
+def _get_advisor_derived_db():
+    """Complete retail DB retained for Matchup Advisor candidate selection."""
+    conn = sqlite3.connect(ADVISOR_DERIVED_DB_PATH)
     conn.row_factory = sqlite3.Row
-
-    # Build {slug -> line_slug} via imperial slugs of each line we score.
-    SCORED_LINES = ("light_cav", "knight", "camel", "steppe_lancer", "elephant",
-                    "skirmisher", "archer", "cav_archer", "gunpowder", "scorpion",
-                    "militia", "spear", "shock_infantry")
-    slug_to_line = {}
-    for ls in SCORED_LINES:
-        for s in _line_imperial_slugs(UNIT_LINES[ls]):
-            slug_to_line[s] = ls
-
-    # Pull all hp scores for these slugs at both scales.
-    rows = conn.execute(
-        "SELECT civ_name, unit_slug, scale, final_score FROM pool_scores "
-        "WHERE axis='hp' AND build_number = ?",
-        (build_number,),
-    ).fetchall()
-    conn.close()
-
-    # Average 30v30 + 3k for each (civ, slug)
-    from collections import defaultdict
-    bucket: dict[tuple[str, str], list[float]] = defaultdict(list)
-    for r in rows:
-        if r["unit_slug"] not in slug_to_line:
-            continue
-        bucket[(r["civ_name"], r["unit_slug"])].append(r["final_score"])
-    avg = {k: sum(v) / len(v) for k, v in bucket.items() if len(v) == 2}
-
-    # Group by line, sort, assign percentile (rank 1 = best)
-    by_line: dict[str, list[tuple[str, str, float]]] = defaultdict(list)
-    for (civ, slug), score in avg.items():
-        line = slug_to_line[slug]
-        by_line[line].append((civ, slug, score))
-    out: dict[tuple[str, str, str], float] = {}
-    for line, entries in by_line.items():
-        entries.sort(key=lambda e: -e[2])
-        n = len(entries)
-        if n <= 1:
-            for civ, slug, _ in entries:
-                out[(line, civ, slug)] = 50.0
-            continue
-        for rank, (civ, slug, _) in enumerate(entries, 1):
-            pct = round((n - rank) / (n - 1) * 100, 1)
-            out[(line, civ, slug)] = pct
-    return out
+    return conn
 
 
 def _fetch_unit_stats(conn, civ_name, unit_slug, age="Imperial"):
@@ -782,16 +706,11 @@ def _parse_techs_and_bonuses(techs_list, effects_list, slug="", is_unique=False,
     return standard_techs, bonus_abilities, special_effects
 
 
-def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slug, effects_by_slug, line_counts=None, score_type="", ease_by_slug=None, pool_pct_lookup=None, age_key="imperial"):
+def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slug, effects_by_slug, line_counts=None, score_type="", ease_by_slug=None):
     """Build a single unit entry dict with stats, techs, bonuses, and effects.
 
-    Percentile preference for ranked land lines (cavalry/ranged/infantry):
-      1. pool_scores.db average-hp percentile (mirrors the rankings page) when
-         this is an imperial-age unit and `pool_pct_lookup` has it.
-      2. Fall back to derived_data.battle_scores rank-based percentile.
-
-    Siege and navy lines pass `pool_pct_lookup=None` and always use the
-    fallback (their rankings come from anti_building_score / naval_effectiveness).
+    Percentiles come from the published rank within the unit line, so civ pages
+    and the rankings table share the same source and ordering.
     """
     slug = row["unit_slug"]
     unit_name, stats = _fetch_unit_stats(conn, civ_name, slug, db_age)
@@ -804,15 +723,10 @@ def _build_unit_entry(row, civ_name, conn, db_age, reference_techs, techs_by_slu
     excl_slug = slug if not (unit_name and "Elephant" in unit_name) else ""
     missing = _compute_missing_techs(standard_techs, reference_techs.get(slug, set()), excl_slug)
 
-    # Percentile: prefer pool_scores when available (imperial only), else fall back.
-    percentile = None
-    if pool_pct_lookup and age_key == "imperial":
-        percentile = pool_pct_lookup.get((row["line_slug"], civ_name, slug))
-    if percentile is None:
-        total_count = 1
-        if line_counts and score_type:
-            total_count = line_counts.get((row["line_slug"], score_type), 1)
-        percentile = _compute_percentile(row["rank"], total_count)
+    total_count = 1
+    if line_counts and score_type:
+        total_count = line_counts.get((row["line_slug"], score_type), 1)
+    percentile = _compute_percentile(row["rank"], total_count)
     strength = _classify_strength(percentile)
     speed = stats["speed"] if stats else 0
 
@@ -1221,14 +1135,8 @@ def compute_civ_power_units(build_number=None):
     build_number = build_number or get_current_build() or "170934"
     conn = _get_db()
     rc = conn.cursor()
-    derived_conn = _get_derived_db()
+    derived_conn = _get_rankings_derived_db()
     drc = derived_conn.cursor()
-
-    # Pool-score percentiles (imperial only) — these match what the rankings
-    # page shows so the civ page agrees with it. Siege/navy lines aren't in
-    # pool_scores; they fall back to battle_scores rank percentile inside
-    # `_build_unit_entry`.
-    pool_pct_lookup = _load_pool_score_percentiles(build_number)
 
     # Civ list comes from ref_units (master list), not battle_scores —
     # navy/siege civs without scores still appear.
@@ -1310,17 +1218,11 @@ def compute_civ_power_units(build_number=None):
 
                     if rows:
                         entries = []
-                        # Siege/navy lines aren't in pool_scores; pass None there
-                        # so we keep using anti_building_score / naval_effectiveness
-                        # rank percentile.
-                        pool_lookup_for_line = (
-                            pool_pct_lookup if col_key in ("cavalry", "ranged", "infantry") else None
-                        )
                         for row in rows:
                             entry = _build_unit_entry(
                                 row, civ, conn, db_age, reference_techs,
                                 techs_by_slug, effects_by_slug, line_counts, score_type,
-                                ease_by_slug, pool_lookup_for_line, age_key,
+                                ease_by_slug,
                             )
                             entries.append(entry)
                         col_data[line_slug] = entries
@@ -1643,7 +1545,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
 
     # Step 2: Find counter candidates from battle_scores (in derived_data.db)
     build_number = get_current_build() or "170934"
-    derived_conn = _get_derived_db()
+    derived_conn = _get_advisor_derived_db()
     drc = derived_conn.cursor()
     db_age = "Imperial"  # Imperial-only data model (age validated upstream)
 

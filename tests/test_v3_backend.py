@@ -124,6 +124,7 @@ def test_battle_page_uses_player_controls_and_public_defaults(client):
     response = client.get("/")
     assert response.status_code == 200
     body = response.data.decode()
+    assert 'id="restartBtn"' in body
     assert 'id="playPauseBtn"' in body
     assert 'id="speedBtn"' in body
     assert 'id="startBtn"' not in body

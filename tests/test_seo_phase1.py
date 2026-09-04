@@ -19,24 +19,14 @@ def test_get_civ_overview_data_shape(client):
     assert unit["name"]
 
 
-def test_civ_overview_ssr_renders_all_civs(client):
+def test_civ_picker_renders_all_civ_links_without_duplicate_overview(client):
     import app
     civs = app._get_ref_civs()
     body = client.get("/civilizations").data.decode()
     for civ in civs:
-        assert civ in body, f"{civ} missing from civ SSR"
-    assert 'id="civ-ssr"' in body
-
-
-def test_civ_overview_ssr_has_descriptions_and_units(client):
-    import app
-    data = app.get_civ_overview_data()
-    body = client.get("/civilizations").data.decode()
-    # At least one strategic description rendered (they begin "This civ ...").
-    assert "This civ" in body
-    # A power-unit name renders as crawlable text.
-    sample = next(c for c in data if c["roles"])
-    assert sample["roles"][0]["units"][0]["name"] in body
+        assert f'data-civ="{civ}"' in body, f"{civ} missing from civ picker"
+        assert f'href="/civilizations/{civ.lower()}"' in body
+    assert 'id="civ-ssr"' not in body
 
 
 def test_civ_overview_itemlist_jsonld(client):

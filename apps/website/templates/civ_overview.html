@@ -26,33 +26,24 @@
 </div>
 
 <div class="container-wide">
+    {# Hidden until a civilization is selected. Keeping this before the picker
+       makes the selected analysis the page's lead content, with the picker
+       available below it for switching civilizations. #}
+    <div id="results" class="results-container" aria-live="polite"></div>
+
     <div class="civ-selector">
         <div class="step-label step-civ1" id="step-label">
             Click a civilization to analyze
         </div>
-        <div class="civ-grid" id="civ-grid"></div>
-    </div>
-
-    <div id="results" class="results-container"></div>
-
-    {# Visible "browse all civs" text reference: every civ's identity + power
-       units. A user-facing scannable view AND fully crawlable HTML. Same data
-       as /api/civ-power-units via get_civ_overview_data(). #}
-    <section id="civ-ssr" class="civ-ssr" aria-label="All civilizations at a glance">
-        <h2 class="civ-ssr-title">All {{ civ_overview | length }} civilizations at a glance</h2>
-        <p class="civ-ssr-intro">Each civilization's strategic identity and its strongest fully-upgraded units, by role. Use the selector above for the full interactive breakdown.</p>
-        {% for civ in civ_overview %}
-        <article class="civ-ssr-civ" id="civ-{{ civ.slug }}">
-            <h3><a href="/civilizations/{{ civ.slug }}">{{ civ.name }}</a></h3>
-            {% if civ.description %}<p class="civ-ssr-desc">{{ civ.description }}</p>{% endif %}
-            {% for role in civ.roles %}
-            <p class="civ-ssr-role"><span class="civ-ssr-role-label">{{ role.label }}:</span>
-                {% for unit in role.units %}{% if unit.is_unique %}<strong class="civ-ssr-unique" title="Unique unit">{{ unit.name }}</strong>{% else %}{{ unit.name }}{% endif %}{% if unit.tier %} ({{ unit.tier }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
-            </p>
+        <div class="civ-grid" id="civ-grid">
+            {% for civ in civs %}
+            <a class="civ-card" data-civ="{{ civ }}" href="/civilizations/{{ civ | lower }}">
+                <img class="civ-emblem" src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ | lower }}.png" alt="{{ civ }}" loading="lazy">
+                <span class="civ-card-name">{{ civ }}</span>
+            </a>
             {% endfor %}
-        </article>
-        {% endfor %}
-    </section>
+        </div>
+    </div>
 </div>
 {% endblock %}
 

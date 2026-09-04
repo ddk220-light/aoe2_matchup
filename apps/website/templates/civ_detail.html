@@ -31,23 +31,19 @@
     <p class="civ-detail-nav"><a href="/civilizations">&larr; All civilizations</a>
        &middot; <a href="/matchup-advisor">Matchup Advisor</a></p>
 
+    <div id="results" class="results-container" aria-live="polite"></div>
+
     <div class="civ-selector">
         <div class="step-label step-civ1" id="step-label">Loading {{ civ.name }} analysis&hellip;</div>
-        <div class="civ-grid" id="civ-grid"></div>
+        <div class="civ-grid" id="civ-grid">
+            {% for civ_name in civs %}
+            <a class="civ-card" data-civ="{{ civ_name }}" href="/civilizations/{{ civ_name | lower }}">
+                <img class="civ-emblem" src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ_name | lower }}.png" alt="{{ civ_name }}" loading="lazy">
+                <span class="civ-card-name">{{ civ_name }}</span>
+            </a>
+            {% endfor %}
+        </div>
     </div>
-
-    <div id="results" class="results-container"></div>
-
-    <section class="civ-ssr" aria-label="{{ civ.name }} overview">
-        <h2 class="civ-ssr-title">{{ civ.name }} at a glance</h2>
-        {% if civ.description %}<p class="civ-ssr-desc">{{ civ.description }}</p>{% endif %}
-        {% for role in civ.roles %}
-        <p class="civ-ssr-role"><span class="civ-ssr-role-label">{{ role.label }}:</span>
-            {% for unit in role.units %}{% if unit.is_unique %}<strong class="civ-ssr-unique" title="Unique unit">{{ unit.name }}</strong>{% else %}{{ unit.name }}{% endif %}{% if unit.tier %} ({{ unit.tier }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
-        </p>
-        {% endfor %}
-        <p class="civ-ssr-intro">Tiers come from full round-robin battle simulations at Imperial-age upgrades — see <a href="/about">how it works</a>.</p>
-    </section>
 </div>
 {% endblock %}
 

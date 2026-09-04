@@ -6,7 +6,7 @@
 /* --- Civ Selector --- */
 .civ-selector {
     text-align: center;
-    margin-bottom: 20px;
+    margin: 24px 0 20px;
 }
 .civ-selector h3 {
     margin-bottom: 12px;
@@ -56,6 +56,7 @@
     will-change: transform;
     /* Comfortable touch target on phones (emblem shrinks at small sizes). */
     min-height: 44px;
+    text-decoration: none;
 }
 .civ-card:hover {
     transform: translateY(-2px) scale(1.025);
@@ -102,6 +103,7 @@
 }
 .results-container.visible {
     display: block;
+    scroll-margin-top: 88px;
 }
 
 /* --- Analysis Hero (header + strategic summary side-by-side) --- */
@@ -195,6 +197,12 @@
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 8px;
     margin-bottom: 24px;
+}
+
+.building-unit-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 /* --- Role Column ---
@@ -825,15 +833,26 @@
 /* --- xs: true phone (360–480) — single column, hero stacks, bottom-sheet --- */
 @media (max-width: 480px) {
     .civ-grid {
-        grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 4px;
+    }
+    .civ-card {
+        min-height: 58px;
+        padding: 5px 2px 4px;
+        border-radius: 6px;
     }
     .civ-emblem {
-        width: 36px;
-        height: 36px;
+        width: 30px;
+        height: 30px;
+        margin-bottom: 3px;
     }
     .civ-card-name {
-        font-size: var(--fs-xs);
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.62rem;
     }
     .analysis-hero {
         flex-direction: column;
@@ -860,12 +879,12 @@
         height: 56px;
     }
     .unit-badge-icon {
-        width: 52px;
-        height: 52px;
+        width: 48px;
+        height: 48px;
     }
     .signature-icon {
-        width: 60px;
-        height: 60px;
+        width: 52px;
+        height: 52px;
     }
     .unit-badge-name {
         font-size: var(--fs-xs);
@@ -879,6 +898,50 @@
     }
     .line-label {
         font-size: var(--fs-xs);
+    }
+
+    .role-columns {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .role-column {
+        padding: 10px;
+    }
+    .building-unit-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+    .unit-badge,
+    .unit-badge.signature {
+        min-width: 0;
+        min-height: 106px;
+        padding: 7px 4px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        text-align: center;
+        border-left-width: 1px;
+    }
+    .unit-badge-info {
+        flex: 0 1 auto;
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .unit-badge-name,
+    .unit-badge.signature .unit-badge-name {
+        display: -webkit-box;
+        overflow: hidden;
+        white-space: normal;
+        text-overflow: ellipsis;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        font-size: 0.68rem;
+        line-height: 1.15;
+    }
+    .unit-badge-rank {
+        display: none;
     }
 
     /* Bottom-sheet: the pinned tooltip detaches from the badge and pins to the
@@ -916,6 +979,15 @@
     }
 }
 
+@media (max-width: 360px) {
+    .civ-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .building-unit-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
 @keyframes tooltipSheetUp {
     from { transform: translateY(12px); opacity: 0; }
     to   { transform: translateY(0); opacity: 1; }
@@ -927,57 +999,4 @@
     }
 }
 
-/* "All civilizations at a glance" — a visible, browsable text reference that
-   doubles as the crawlable layer (see civ_overview.html). */
-.civ-ssr {
-    max-width: var(--container-max);
-    margin: 40px auto 0;
-    padding: 28px var(--gutter) 48px;
-    border-top: 1px solid var(--border);
-}
-.civ-ssr-title {
-    font-family: var(--font-display);
-    color: var(--gold);
-    font-size: var(--fs-lg);
-    letter-spacing: 0.04em;
-    margin: 0 0 6px;
-}
-.civ-ssr-intro {
-    color: var(--text-muted);
-    font-size: var(--fs-sm);
-    font-style: italic;
-    margin: 0 0 20px;
-}
-.civ-ssr-civ {
-    border-top: 1px solid var(--border);
-    padding: 16px 0;
-}
-.civ-ssr-civ h3 {
-    color: var(--gold);
-    font-size: var(--fs-md);
-    margin: 0 0 6px;
-}
-.civ-ssr-desc {
-    color: var(--text-muted);
-    font-size: var(--fs-sm);
-    margin: 0 0 8px;
-    line-height: var(--lh-base);
-}
-.civ-ssr-role {
-    font-size: var(--fs-sm);
-    margin: 2px 0;
-}
-.civ-ssr-role-label {
-    color: var(--gold);
-    font-weight: 600;
-    margin-right: 4px;
-}
-/* The civ's unique unit, called out within its role line. */
-.civ-ssr-unique {
-    color: var(--gold);
-    font-weight: 600;
-}
-/* Per-civ landing pages */
-.civ-ssr-civ h3 a { color: inherit; text-decoration: none; }
-.civ-ssr-civ h3 a:hover { color: var(--gold); text-decoration: underline; }
 .civ-detail-nav { margin: 0 0 14px; font-size: var(--fs-sm, 0.9rem); }

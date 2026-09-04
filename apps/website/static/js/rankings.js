@@ -1137,7 +1137,7 @@ function renderTable() {
     // unit identity, the category's primary score, and its special mechanics.
     // The desktop column model remains unchanged; these tags let responsive CSS
     // collapse the same semantic table without duplicating its data.
-    const mobileScoreKey = lineUsesPoolScores(currentLine)
+    const mobileScoreKey = columns.some((col) => col.key === "pool_score")
         ? "pool_score"
         : isSiege
             ? "anti_building_score"

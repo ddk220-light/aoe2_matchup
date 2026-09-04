@@ -90,20 +90,20 @@
                     <div class="player-control-side player-time-slot">
                         <div class="battle-timer" id="battleTimer" hidden>0.0s</div>
                     </div>
-                    <button class="player-button primary" id="playPauseBtn" type="button"
-                            data-state="play" aria-label="Start battle" disabled>
-                        <span class="media-state-icon media-play" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false"><path d="M7 4.8v14.4L19 12 7 4.8Z" /></svg>
-                        </span>
-                        <span class="media-state-icon media-pause" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false"><path d="M6.5 5h4v14h-4zm7 0h4v14h-4z" /></svg>
-                        </span>
-                        <span class="media-state-icon media-replay" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false"><path d="M7.2 7.1A7 7 0 1 1 5 12H2.8a9.2 9.2 0 1 0 2.7-6.5L3 3v6h6L7.2 7.1Z" /></svg>
-                        </span>
-                        <span class="media-state-icon media-loading" aria-hidden="true"></span>
-                    </button>
-                    <div class="player-control-side player-speed-slot">
+                    <div class="transport-controls">
+                        <button class="player-button primary" id="playPauseBtn" type="button"
+                                data-state="play" aria-label="Start battle" disabled>
+                            <span class="media-state-icon media-play" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false"><path d="M7 4.8v14.4L19 12 7 4.8Z" /></svg>
+                            </span>
+                            <span class="media-state-icon media-pause" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false"><path d="M6.5 5h4v14h-4zm7 0h4v14h-4z" /></svg>
+                            </span>
+                            <span class="media-state-icon media-replay" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false"><path d="M7.2 7.1A7 7 0 1 1 5 12H2.8a9.2 9.2 0 1 0 2.7-6.5L3 3v6h6L7.2 7.1Z" /></svg>
+                            </span>
+                            <span class="media-state-icon media-loading" aria-hidden="true"></span>
+                        </button>
                         <button class="player-button speed-button" id="speedBtn" type="button"
                                 aria-label="Playback speed 1x">
                             <svg class="media-glyph" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
@@ -112,6 +112,7 @@
                             <span class="speed-value" id="speedLabel">1×</span>
                         </button>
                     </div>
+                    <div class="player-control-side player-balance-slot" aria-hidden="true"></div>
                 </div>
             </div>
         </div>

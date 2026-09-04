@@ -17,6 +17,10 @@ const websitePage = await readFile(
   new URL("../../../apps/website/static/js/simulate.js", import.meta.url),
   "utf8",
 );
+const websiteTemplate = await readFile(
+  new URL("../../../apps/website/templates/simulate.html", import.meta.url),
+  "utf8",
+);
 
 
 test("portrait production framing fits the combat corridor by map height", () => {
@@ -41,6 +45,28 @@ test("portrait production framing fits the combat corridor by map height", () =>
 });
 
 
+test("landscape production framing also crops decorative side space", () => {
+  const fullMap = fittedMapZoom({
+    width: 1080,
+    height: 680,
+    spanX: 1376,
+    spanY: 688,
+  });
+  const corridor = fittedMapZoom({
+    width: 1080,
+    height: 680,
+    spanX: 1376,
+    spanY: 688,
+    compact: true,
+  });
+
+  assert.equal(fullMap, 1032 / 1376);
+  assert.equal(corridor, 656 / 688);
+  assert.ok(corridor > fullMap,
+    "the desktop camera should use more of the canvas for the playable lane");
+});
+
+
 test("production unit presentation scale supports 90% sprites independently of camera zoom", () => {
   const normal = productionUnitBoxSize(0.2, 1.01);
   const compact = productionUnitBoxSize(0.2, 1.01, 0.9);
@@ -55,6 +81,17 @@ test("mobile picker and battle share the same portrait canvas camera", () => {
     websiteCss,
     /\.sim-stage\.battle-active #battleCanvas \{ aspect-ratio: 3 \/ 4; \}/,
   );
+});
+
+
+test("desktop battle shell fits below navigation and centers equal transport buttons", () => {
+  assert.match(
+    websiteCss,
+    /@media \(min-width: 1025px\) and \(min-height: 680px\)[\s\S]*height: calc\(100svh - var\(--nav-h, 56px\) - 16px\)/,
+  );
+  assert.match(websiteCss, /\.player-button \{[\s\S]*width: 50px;[\s\S]*height: 50px;/);
+  assert.match(websiteCss, /\.transport-controls \{[\s\S]*justify-content: center;/);
+  assert.match(websiteTemplate, /class="transport-controls"/);
 });
 
 

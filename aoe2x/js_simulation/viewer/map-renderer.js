@@ -31,9 +31,10 @@ export function fittedMapZoom({ width, height, spanX, spanY, compact = false }) 
   const padding = compact ? 24 : 48;
   const horizontalFit = Math.max(1, width - padding) / spanX;
   const verticalFit = Math.max(1, height - padding) / spanY;
-  // A portrait phone should frame the long combat corridor, not shrink the
-  // entire 2:1 isometric diamond to fit by width. Fitting by height preserves
-  // both ends of the passage and intentionally crops the scenery at its sides.
+  // The production battle view frames the long combat corridor instead of
+  // shrinking the entire 2:1 isometric diamond to fit by width. Fitting by
+  // height preserves both army ends and intentionally crops decorative scenery
+  // at the sides on both landscape and portrait screens.
   return compact ? verticalFit : Math.min(horizontalFit, verticalFit);
 }
 
@@ -1039,8 +1040,7 @@ export function createMapRenderer(canvas, map, {
     const spanY = projectionMode === "orthographic"
       ? map.height * TILE_WIDTH / 2
       : map.height * TILE_HEIGHT;
-    const compactCorridor = state.presentation === "production"
-      && state.width <= 768 && state.height > state.width;
+    const compactCorridor = state.presentation === "production";
     state.fitZoom = fittedMapZoom({
       width: state.width,
       height: state.height,

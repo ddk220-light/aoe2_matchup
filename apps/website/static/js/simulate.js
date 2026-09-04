@@ -1612,13 +1612,13 @@ async function startBattle() {
             const arenaRect = arenaEl.getBoundingClientRect();
             const arenaFullyVisible = arenaRect.top >= 0
                 && arenaRect.bottom <= window.innerHeight;
-            if (!arenaFullyVisible) {
-                const desktopShell = window.matchMedia(
-                    "(min-width: 1025px) and (min-height: 560px)",
-                ).matches;
+            const desktopShell = window.matchMedia(
+                "(min-width: 1025px) and (min-height: 560px)",
+            ).matches;
+            if (!desktopShell && !arenaFullyVisible) {
                 arenaEl.scrollIntoView({
                     behavior: "smooth",
-                    block: desktopShell ? "nearest" : "start",
+                    block: "start",
                 });
             }
         }

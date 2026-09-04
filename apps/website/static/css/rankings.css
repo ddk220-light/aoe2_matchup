@@ -5,8 +5,8 @@
    RESPONSIVE SCALE (shared site-wide, mobile-first; align all queries to these):
      xs  <= 480px  small phone (PRIMARY TARGET) — 1 col, full-width controls,
                    stacked controls, bottom-sheet hover-cards.
-     sm  <= 768px  large phone / small tablet — table = scroll+sticky-first-col,
-                   filters/tabs wrap, 44px touch targets.
+     sm  <= 768px  large phone / small tablet — compact three-column table,
+                   five always-visible category tabs, 44px touch targets.
      md  <= 1024px tablet landscape / small laptop.
      lg  >= 1025px desktop default (base, no query).
      xl  >= 1600px large monitor — use more width (data container).
@@ -165,6 +165,12 @@
     object-fit: contain;
     padding: 1px;
     flex-shrink: 0;
+}
+.unit-tab-label-mobile,
+.table-title-mobile,
+.mobile-score-label,
+.mobile-civ-qualifier {
+    display: none;
 }
 .tab-separator {
     width: 1px;
@@ -335,6 +341,9 @@
     gap: 6px;
     position: relative;
     font-family: var(--font-body);
+}
+.unit-cell-copy {
+    min-width: 0;
 }
 .unit-cell img {
     width: 1.5rem;
@@ -776,6 +785,198 @@ td.hc-cell {
 .rankings-ssr-lines ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
 .rankings-ssr-lines a { color: var(--text-muted); font-size: var(--fs-sm, 0.9rem); text-decoration: none; }
 .rankings-ssr-lines a:hover { color: var(--gold); text-decoration: underline; }
+
+/* Mobile rankings are a purpose-built summary rather than a horizontally
+   clipped desktop spreadsheet. The same underlying rows remain in the DOM,
+   while only Unit, Score, and Special are presented at phone widths. */
+@media (max-width: 768px) {
+    .rankings-container {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    #lineSelector .tab-bar {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        width: 100%;
+        overflow: hidden;
+        scrollbar-width: none;
+    }
+    #lineSelector .tab-separator {
+        display: none;
+    }
+    #lineSelector .unit-tab {
+        flex: none;
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+        gap: 3px;
+        padding: 9px 3px;
+        font-size: 0.65rem;
+        scroll-snap-align: none;
+    }
+    #lineSelector .unit-tab.active {
+        flex: none;
+        width: 100%;
+    }
+    #lineSelector .unit-tab-label-desktop {
+        display: none;
+    }
+    #lineSelector .unit-tab-label-mobile {
+        display: none;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #lineSelector .unit-tab.active .unit-tab-label-mobile {
+        display: inline;
+    }
+
+    #tableContainer .civ-filter-wrap > input[type="text"],
+    #tableContainer .civ-filter-wrap > .export-btn,
+    #tableContainer .civ-filter-wrap > .expand-btn {
+        display: none;
+    }
+    #tableContainer .civ-filter-wrap {
+        margin-bottom: 8px;
+    }
+    #tableContainer .line-filters {
+        width: 100%;
+        gap: 4px 10px;
+    }
+    #tableContainer .line-checkbox {
+        min-height: 32px;
+        padding: 0;
+        font-size: 0.72rem;
+    }
+    #tableContainer .line-checkbox input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+    }
+
+    #tableContainer {
+        margin-top: 12px;
+        overflow-x: hidden;
+    }
+    #tableContainer .table-title {
+        margin-bottom: 8px;
+    }
+    #tableContainer .table-title-desktop {
+        display: none;
+    }
+    #tableContainer .table-title-mobile {
+        display: inline;
+    }
+
+    #tableContainer .stats-table {
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+        font-size: 0.75rem;
+    }
+    #tableContainer .stats-table th,
+    #tableContainer .stats-table td {
+        display: none;
+        position: static;
+        box-sizing: border-box;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+    #tableContainer .stats-table th[data-mobile-column],
+    #tableContainer .stats-table td.mobile-column {
+        display: table-cell;
+    }
+    #tableContainer .stats-table th {
+        top: var(--nav-h, 0px);
+        padding: 7px 6px;
+        font-size: 0.68rem;
+    }
+    #tableContainer .stats-table td {
+        padding: 7px 6px;
+        vertical-align: middle;
+        line-height: 1.25;
+    }
+    #tableContainer .stats-table th[data-mobile-column="unit"],
+    #tableContainer .stats-table td.mobile-column-unit {
+        width: 48%;
+    }
+    #tableContainer .stats-table th[data-mobile-column="score"],
+    #tableContainer .stats-table td.mobile-column-score {
+        width: 17%;
+        text-align: center;
+    }
+    #tableContainer .stats-table th[data-mobile-column="special"],
+    #tableContainer .stats-table td.mobile-column-special {
+        width: 35%;
+    }
+    #tableContainer .stats-table th[data-mobile-column="score"] .desktop-column-label {
+        display: none;
+    }
+    #tableContainer .mobile-score-label {
+        display: inline;
+    }
+    #tableContainer .stats-table .info-icon,
+    #tableContainer .stats-table .col-chevron,
+    #tableContainer .stats-table .sort-arrow {
+        display: none;
+    }
+    #tableContainer .stats-table tr.unique-row td:first-child,
+    #tableContainer .stats-table tr.unique-row td.mobile-column-unit {
+        padding-left: 6px;
+    }
+
+    #tableContainer .unit-cell {
+        align-items: flex-start;
+        gap: 5px;
+        min-width: 0;
+    }
+    #tableContainer .unit-cell > img,
+    #tableContainer .unit-cell img.sprite {
+        width: 25px;
+        height: 25px;
+        flex: 0 0 25px;
+    }
+    #tableContainer .unit-cell-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    #tableContainer .unit-cell-name {
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    #tableContainer .mobile-civ-qualifier {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        color: var(--text-muted);
+        font-size: 0.64rem;
+        line-height: 1.15;
+    }
+    #tableContainer .mobile-civ-qualifier img {
+        width: 12px;
+        height: 12px;
+        flex: 0 0 12px;
+        border: 0;
+        border-radius: 50%;
+        padding: 0;
+    }
+
+    #tableContainer .special-cell {
+        max-width: none;
+        font-size: 0.64rem;
+        line-height: 1.25;
+    }
+    #tableContainer .special-cell > div {
+        max-width: none;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+    }
+}
 .line-page-nav { margin: 0 0 10px; }
 .line-page-cta { font-weight: 600; }
 .line-page-desc { color: var(--text-muted); max-width: 820px; line-height: 1.6; margin: 0 0 16px; }

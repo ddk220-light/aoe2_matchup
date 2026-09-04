@@ -8,6 +8,7 @@
 const UNIT_LINES = {
     infantry: {
         name: "Infantry Effectiveness",
+        shortName: "Infantry",
         building: "Barracks",
         castle: "Long Swordsman",
         imperial: "Champion",
@@ -16,6 +17,7 @@ const UNIT_LINES = {
     },
     archery: {
         name: "Ranged Effectiveness",
+        shortName: "Ranged",
         building: "Archery Range",
         castle: "Crossbowman",
         imperial: "Arbalester",
@@ -24,6 +26,7 @@ const UNIT_LINES = {
     },
     stable: {
         name: "Stable Effectiveness",
+        shortName: "Stable",
         building: "Stable",
         castle: "Knight",
         imperial: "Paladin",
@@ -32,6 +35,7 @@ const UNIT_LINES = {
     },
     siege: {
         name: "Anti-Building Effectiveness",
+        shortName: "Siege",
         building: "Siege Workshop",
         castle: "Battering Ram",
         imperial: "Trebuchet",
@@ -40,6 +44,7 @@ const UNIT_LINES = {
     },
     naval: {
         name: "Naval Effectiveness",
+        shortName: "Naval",
         building: "Dock",
         castle: "War Galley",
         imperial: "Galleon",
@@ -940,9 +945,10 @@ function renderLineSelector() {
             currentLine === slug ? " active" : "";
         const unavailClass = unavailable ? " unavailable" : "";
 
-        html += `<button class="unit-tab${activeClass}${unavailClass}" onclick="selectLine('${slug}')">
+        html += `<button class="unit-tab${activeClass}${unavailClass}" onclick="selectLine('${slug}')" aria-label="${line.name}" title="${line.name}">
             <img class="${tabImgClass}" src="${iUrl}" alt="${line.name}" data-anim-name="${tabName}" onerror="this.style.display='none'" />
-            ${line.name}
+            <span class="unit-tab-label unit-tab-label-desktop">${line.name}</span>
+            <span class="unit-tab-label unit-tab-label-mobile">${line.shortName}</span>
         </button>`;
     }
     html += '</div>';
@@ -1621,6 +1627,31 @@ function renderTable() {
         columns = defaultColumns;
     }
 
+    // Mobile deliberately presents one decision-focused view of every category:
+    // unit identity, the category's primary score, and its special mechanics.
+    // The desktop column model remains unchanged; these tags let responsive CSS
+    // collapse the same semantic table without duplicating its data.
+    const mobileScoreKey = lineUsesPoolScores(currentLine)
+        ? "pool_score"
+        : isSiege
+            ? "anti_building_score"
+            : isNaval
+                ? "naval_effectiveness"
+                : "pes";
+    for (const col of columns) {
+        if (col.key === "unit_name") col.mobileColumn = "unit";
+        else if (col.key === mobileScoreKey) col.mobileColumn = "score";
+        else if (col.key === "special_abilities") col.mobileColumn = "special";
+    }
+
+    // Qualify only repeated generic names on mobile. Unique-unit rows carry
+    // their civilization in the unit itself and do not need redundant labels.
+    const unitNameCounts = new Map();
+    for (const row of filtered) {
+        const nameKey = String(row.unit_name || "").trim().toLowerCase();
+        unitNameCounts.set(nameKey, (unitNameCounts.get(nameKey) || 0) + 1);
+    }
+
     const lineInfo = UNIT_LINES[currentLine];
     const titleName =
         currentAge === "Castle"
@@ -1654,7 +1685,8 @@ function renderTable() {
 
     html += `<div class="table-title">
         <img class="${titleImgClass}" src="${titleIcon}" alt="" data-anim-name="${titleName}" onerror="this.style.display='none'" />
-        ${currentData.line_name} — ${currentAge} Age (${filtered.length} units)
+        <span class="table-title-desktop">${currentData.line_name} — ${currentAge} Age (${filtered.length} units)</span>
+        <span class="table-title-mobile">${lineInfo?.shortName || currentData.line_name}</span>
     </div>`;
 
     html += '<table class="stats-table"><thead><tr>';
@@ -1679,8 +1711,14 @@ function renderTable() {
             : (col.hiddenWhenCollapsed ? "col-expandable" : "");
         const sortedClass = isSorted ? "sorted" : "";
         const cls = [collapsedClass, sortedClass].filter(Boolean).join(" ");
-        html += `<th class="${cls}" onclick="sortBy('${col.key}')">
-            ${col.label}${infoHtml}${chevronHtml}<span class="sort-arrow">${arrow}</span>
+        const mobileColumnAttr = col.mobileColumn
+            ? ` data-mobile-column="${col.mobileColumn}"`
+            : "";
+        const mobileScoreLabel = col.mobileColumn === "score"
+            ? '<span class="mobile-score-label">Score</span>'
+            : "";
+        html += `<th class="${cls}" data-column="${col.key}"${mobileColumnAttr} onclick="sortBy('${col.key}')">
+            <span class="desktop-column-label">${col.label}</span>${mobileScoreLabel}${infoHtml}${chevronHtml}<span class="sort-arrow">${arrow}</span>
         </th>`;
     }
     html += "</tr></thead><tbody>";
@@ -1693,9 +1731,12 @@ function renderTable() {
         const expandableClass = col.hiddenWhenCollapsed
             ? (collapsed ? "col-expandable collapsed" : "col-expandable")
             : "";
+        const mobileColumnClass = col.mobileColumn
+            ? ` mobile-column mobile-column-${col.mobileColumn}`
+            : "";
         if (k === "civ_name") {
             const civImg = `${CIV_EMBLEM_BASE}${v.toLowerCase()}.png`;
-            return `<td class="${expandableClass}"><div class="civ-cell">
+            return `<td class="${expandableClass}${mobileColumnClass}"><div class="civ-cell">
                 <img src="${civImg}" alt="${v}" onerror="this.style.display='none'" />
                 ${v}
             </div></td>`;
@@ -1705,13 +1746,19 @@ function renderTable() {
                 typeof hasSprite === "function" && hasSprite(v);
             const unitImg = cellUseSprite ? spriteFor(v) : unitIconUrl(v);
             const cellImgClass = cellUseSprite ? "sprite" : "";
-            return `<td class="${expandableClass}"><div class="unit-cell">
+            const nameKey = String(v || "").trim().toLowerCase();
+            const needsCivQualifier = !row.is_unique && (unitNameCounts.get(nameKey) || 0) > 1;
+            const civImg = `${CIV_EMBLEM_BASE}${row.civ_name.toLowerCase()}.png`;
+            const civQualifier = needsCivQualifier
+                ? `<span class="mobile-civ-qualifier">(<img src="${civImg}" alt="" onerror="this.style.display='none'" />${row.civ_name})</span>`
+                : "";
+            return `<td class="${expandableClass}${mobileColumnClass}"><div class="unit-cell">
                 <img class="${cellImgClass}" src="${unitImg}" alt="${v}" data-anim-name="${v}" onerror="this.style.display='none'" />
-                ${v}${row.is_unique ? " *" : ""}
+                <span class="unit-cell-copy"><span class="unit-cell-name">${v}${row.is_unique ? " *" : ""}</span>${civQualifier}</span>
             </div></td>`;
         }
         if (k === "line_slug") {
-            return `<td class="${expandableClass}">${LINE_LABELS[v] || v}</td>`;
+            return `<td class="${expandableClass}${mobileColumnClass}">${LINE_LABELS[v] || v}</td>`;
         }
         if (k === "special_abilities") {
             const effects = v || "";
@@ -1742,7 +1789,7 @@ function renderTable() {
                 );
             }
             if (lines.length === 0) lines.push("\u2014");
-            return `<td class="special-cell ${expandableClass}">${lines.join("")}</td>`;
+            return `<td class="special-cell ${expandableClass}${mobileColumnClass}">${lines.join("")}</td>`;
         }
         if (k.startsWith("role_line_")) {
             if (v === undefined || v === null) return `<td class="${expandableClass}">\u2014</td>`;
@@ -1753,7 +1800,7 @@ function renderTable() {
         }
         // Numeric columns with color coding
         if (v === undefined || v === null || v <= -999) {
-            return `<td class="${expandableClass}">\u2014</td>`;
+            return `<td class="${expandableClass}${mobileColumnClass}">\u2014</td>`;
         }
 
         const cls = valClass(k, v);
@@ -1777,12 +1824,12 @@ function renderTable() {
         else formatted = typeof v === "number" ? v.toFixed(1) : v;
 
         if (isScore) {
-            return `<td class="${cls}${hcClass} ${expandableClass}" onmouseenter="onScoreCellEnter(event,${rowIdx},'${k}')" onmouseleave="onScoreCellLeave()" onclick="onScoreCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
+            return `<td class="${cls}${hcClass} ${expandableClass}${mobileColumnClass}" onmouseenter="onScoreCellEnter(event,${rowIdx},'${k}')" onmouseleave="onScoreCellLeave()" onclick="onScoreCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
         }
         if (isStat) {
-            return `<td class="${cls}${hcClass} ${expandableClass}" onmouseenter="onStatCellEnter(event,${rowIdx},'${k}')" onmouseleave="onStatCellLeave()" onclick="onStatCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
+            return `<td class="${cls}${hcClass} ${expandableClass}${mobileColumnClass}" onmouseenter="onStatCellEnter(event,${rowIdx},'${k}')" onmouseleave="onStatCellLeave()" onclick="onStatCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
         }
-        return `<td class="${cls} ${expandableClass}">${formatted}</td>`;
+        return `<td class="${cls} ${expandableClass}${mobileColumnClass}">${formatted}</td>`;
     }
 
     for (let i = 0; i < filtered.length; i++) {

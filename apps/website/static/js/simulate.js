@@ -115,6 +115,15 @@ function updateOptionsCurrent() {
     }
 }
 
+function isBattlePickerUnit(unit) {
+    const type = String(unit?.unit_type || "").toLowerCase();
+    const unitClass = String(unit?.unit_class_name || "").toLowerCase();
+    const slug = String(unit?.unit_slug || unit?.slug || "").toLowerCase();
+    return type !== "naval"
+        && unitClass !== "unknown"
+        && !slug.includes("trebuchet");
+}
+
 function renderSelection(teamNum) {
     const container = document.getElementById(
         `team${teamNum}Selection`,
@@ -149,45 +158,25 @@ function renderSelection(teamNum) {
         // Imperial-only (fully upgraded). Age toggle removed.
         if (state.civData) {
             const units =
-                state.civData.units_by_age[state.age] || [];
-            const groups = {};
+                (state.civData.units_by_age[state.age] || [])
+                    .filter(isBattlePickerUnit);
+            html += '<div class="unit-grid">';
             for (const u of units) {
-                let bldg =
-                    CLASS_TO_BUILDING[u.unit_class_name] ||
-                    "Castle";
-                if (u.unit_type === "unique")
-                    bldg = UNIQUE_BUILDING[u.unit_name] || "Castle";
-                if (!groups[bldg]) groups[bldg] = [];
-                groups[bldg].push(u);
+                const useSprite =
+                    typeof hasSprite === "function" &&
+                    hasSprite(u.unit_name);
+                const iUrl = useSprite
+                    ? spriteFor(u.unit_name)
+                    : unitIconUrl(u.unit_name);
+                const imgCls = useSprite ? ' class="sprite"' : "";
+                const nameSafe = escapeHtml(u.unit_name);
+                const slugSafe = escapeHtml(u.unit_slug);
+                html += `<div class="unit-pick" title="${nameSafe}" data-action="selectUnit" data-team="${teamNum}" data-slug="${slugSafe}" data-name="${nameSafe}">
+                            <img${imgCls} src="${iUrl}" alt="${nameSafe}" onerror="this.style.display='none'" />
+                            <span>${nameSafe}</span>
+                        </div>`;
             }
-            for (const bldg of BUILDING_ORDER) {
-                const bUnits = groups[bldg];
-                if (!bUnits || bUnits.length === 0) continue;
-                const bIconId = BUILDING_ICONS[bldg];
-                const bldgSafe = escapeHtml(bldg);
-                html += `<div class="unit-grid-section">
-                            <h4><img src="${iconUrl(bIconId)}" alt="${bldgSafe}" onerror="this.style.display='none'" /> ${bldgSafe}</h4>
-                            <div class="unit-grid">`;
-                for (const u of bUnits) {
-                    // Transparent in-game sprite when available (red default);
-                    // spriteless units (naval) keep the boxed portrait. The
-                    // `sprite` class drops the circular frame in CSS.
-                    const useSprite =
-                        typeof hasSprite === "function" &&
-                        hasSprite(u.unit_name);
-                    const iUrl = useSprite
-                        ? spriteFor(u.unit_name)
-                        : unitIconUrl(u.unit_name);
-                    const imgCls = useSprite ? ' class="sprite"' : "";
-                    const nameSafe = escapeHtml(u.unit_name);
-                    const slugSafe = escapeHtml(u.unit_slug);
-                    html += `<div class="unit-pick" data-action="selectUnit" data-team="${teamNum}" data-slug="${slugSafe}" data-name="${nameSafe}">
-                                <img${imgCls} src="${iUrl}" alt="${nameSafe}" onerror="this.style.display='none'" />
-                                <span>${nameSafe}</span>
-                            </div>`;
-                }
-                html += "</div></div>";
-            }
+            html += "</div>";
         } else {
             html +=
                 '<div style="color:var(--text-muted);font-size:0.8rem;padding:8px">Loading units...</div>';
@@ -390,6 +379,7 @@ const SEARCH_ITEMS = (() => {
     }
     for (const u of _UNIT_SEARCH) {
         if (!enabled.has(u.civ)) continue;
+        if (!isBattlePickerUnit(u)) continue;
         items.push({
             type: "unit",
             civ: u.civ,

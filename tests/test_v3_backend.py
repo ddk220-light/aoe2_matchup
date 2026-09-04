@@ -132,6 +132,8 @@ def test_battle_page_uses_player_controls_and_public_defaults(client):
     assert '<span class="rail-title">Team A</span>' in body
     assert '<span class="rail-title">Team B</span>' in body
     assert "simulationv3 · seed" not in body
+    assert "mounted_trebuchet_khitans" not in body
+    assert "elite_longboat_vikings" not in body
 
 
 def test_battle_config_includes_database_owned_ranged_buffer(client):

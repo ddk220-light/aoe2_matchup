@@ -70,7 +70,46 @@ let enabledLines = new Set();
 let sortDir = "asc";
 let currentEnriched = [];
 let pinnedCell = null;
+let selectedRankingRowKey = null;
 const statChainCache = {};
+
+function rankingRowKey(row) {
+    return encodeURIComponent(
+        `${row.civ_name || ""}::${row.unit_slug || row.unit_name || ""}`,
+    );
+}
+
+// Civ bonuses are supplied in age order. When the same percentage modifier is
+// upgraded repeatedly, describe the final Imperial effect instead of repeating
+// every earlier age's value.
+function compactProgressiveBonuses(bonuses) {
+    const parsed = (Array.isArray(bonuses) ? bonuses : []).map((value, index) => {
+        const text = String(value);
+        const match = text.match(/^(.*?)([+\-\u2212]\s*\d+(?:\.\d+)?)%(.*)$/);
+        if (!match) return { text, index, progressionKey: null };
+
+        const normalize = (part) =>
+            part.trim().toLowerCase().replace(/\s+/g, " ");
+        return {
+            text,
+            index,
+            progressionKey: `${normalize(match[1])}|%|${normalize(match[3])}`,
+        };
+    });
+    const finalIndexByProgression = new Map();
+    parsed.forEach((item) => {
+        if (item.progressionKey) {
+            finalIndexByProgression.set(item.progressionKey, item.index);
+        }
+    });
+    return parsed
+        .filter(
+            (item) =>
+                !item.progressionKey ||
+                finalIndexByProgression.get(item.progressionKey) === item.index,
+        )
+        .map((item) => item.text);
+}
 
 // Per-group expansion state - fully transient, resets on page load.
 // Groups are: "GC", "AC", "AT", "AA", "Special".
@@ -887,6 +926,7 @@ const NAVAL_SLUGS = new Set([
 
 async function selectLine(slug) {
     currentLine = slug;
+    selectedRankingRowKey = null;
     unpinHoverCard();
 
     // Highlight active tab
@@ -1249,6 +1289,12 @@ function renderTable() {
             const cellUseSprite =
                 typeof hasSprite === "function" && hasSprite(v);
             const unitImg = cellUseSprite ? spriteFor(v) : unitIconUrl(v);
+            const selectedAnimation =
+                selectedRankingRowKey === rankingRowKey(row) &&
+                typeof animFor === "function"
+                    ? animFor(v)
+                    : null;
+            const displayedUnitImg = selectedAnimation || unitImg;
             const cellImgClass = cellUseSprite ? "sprite" : "";
             const nameKey = String(v || "").trim().toLowerCase();
             const needsCivQualifier = !row.is_unique && (unitNameCounts.get(nameKey) || 0) > 1;
@@ -1257,7 +1303,7 @@ function renderTable() {
                 ? `<span class="mobile-civ-qualifier">(<img src="${civImg}" alt="" onerror="this.style.display='none'" />${row.civ_name})</span>`
                 : "";
             return `<td class="${expandableClass}${mobileColumnClass}"><div class="unit-cell">
-                <img class="${cellImgClass}" src="${unitImg}" alt="${v}" data-anim-name="${v}" onerror="this.style.display='none'" />
+                <img class="${cellImgClass}" src="${displayedUnitImg}" alt="${v}" data-anim-name="${v}" onerror="this.style.display='none'" />
                 <span class="unit-cell-copy"><span class="unit-cell-name">${v}${row.is_unique ? " *" : ""}</span>${civQualifier}</span>
             </div></td>`;
         }
@@ -1267,7 +1313,7 @@ function renderTable() {
         if (k === "special_abilities") {
             const effects = v || "";
             const missing = row.missing_techs || [];
-            const bonuses = row.civ_bonus_techs || [];
+            const bonuses = compactProgressiveBonuses(row.civ_bonus_techs || []);
             const lines = [];
             const esc = (s) =>
                 String(s)
@@ -1338,8 +1384,12 @@ function renderTable() {
 
     for (let i = 0; i < filtered.length; i++) {
         const row = filtered[i];
-        const rowClass = row.is_unique ? "unique-row" : "";
-        html += `<tr class="${rowClass}" data-unit-slug="${(row.unit_slug || "")}">`;
+        const rowKey = rankingRowKey(row);
+        const rowClasses = [
+            row.is_unique ? "unique-row" : "",
+            selectedRankingRowKey === rowKey ? "ranking-row-selected" : "",
+        ].filter(Boolean).join(" ");
+        html += `<tr class="${rowClasses}" data-unit-slug="${(row.unit_slug || "")}" data-ranking-key="${rowKey}" tabindex="0" aria-selected="${selectedRankingRowKey === rowKey}">`;
         for (const col of columns) {
             html += fmtCell(col, row, i);
         }
@@ -1348,6 +1398,27 @@ function renderTable() {
 
     html += "</tbody></table>";
     container.innerHTML = html;
+
+    const selectRenderedRow = (tr) => {
+        const key = tr?.dataset.rankingKey;
+        if (!key) return;
+        selectedRankingRowKey = selectedRankingRowKey === key ? null : key;
+        renderTable();
+    };
+    const tableBody = container.querySelector("tbody");
+    if (tableBody) {
+        tableBody.addEventListener("click", (event) => {
+            if (event.target.closest("a, button, input, label, .hc-cell")) return;
+            selectRenderedRow(event.target.closest("tr[data-ranking-key]"));
+        });
+        tableBody.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            const tr = event.target.closest("tr[data-ranking-key]");
+            if (!tr) return;
+            event.preventDefault();
+            selectRenderedRow(tr);
+        });
+    }
 
     // Restore focus to filter input if it was active
     if (civFilter) {

@@ -250,6 +250,14 @@
 .stats-table tr.missing-row {
     opacity: 0.35;
 }
+.stats-table tr.ranking-row-selected {
+    outline: 2px solid var(--gold);
+    outline-offset: -2px;
+    background: var(--gold-glow);
+}
+.stats-table tr.ranking-row-selected td:first-child {
+    background: var(--gold-glow);
+}
 
 /* Cell coloring — tamed strength scale (single source of truth). */
 .val-high {
@@ -285,8 +293,8 @@
     min-width: 0;
 }
 .unit-cell img {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.95rem;
+    height: 1.95rem;
     border-radius: 50%;
     border: 1px solid var(--border-light);
     object-fit: cover;
@@ -298,8 +306,8 @@
    sprite inside the box, flex-shrink:0 stops the unit name from squeezing it, and the
    box stays well inside the cell's content width so it never crosses into neighbours. */
 .unit-cell img.sprite {
-    width: 1.625rem;
-    height: 1.625rem;
+    width: 2.1rem;
+    height: 2.1rem;
     border: none;
     border-radius: 0;
     background: none;
@@ -744,9 +752,12 @@ td.hc-cell {
     #lineSelector .tab-bar {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 4px;
         width: 100%;
         overflow: hidden;
         scrollbar-width: none;
+        border-bottom: 0;
+        padding-bottom: 2px;
     }
     #lineSelector .tab-separator {
         display: none;
@@ -755,24 +766,44 @@ td.hc-cell {
         flex: none;
         width: 100%;
         min-width: 0;
+        min-height: 62px;
+        box-sizing: border-box;
+        flex-direction: column;
         justify-content: center;
-        gap: 3px;
-        padding: 9px 3px;
+        gap: 2px;
+        padding: 5px 2px;
         font-size: 0.65rem;
         scroll-snap-align: none;
+        border: 1px solid var(--border-light);
+        border-bottom: 2px solid var(--border-light);
+        border-radius: 8px 8px 3px 3px;
+        background: var(--bg-warm);
     }
     #lineSelector .unit-tab.active {
         flex: none;
         width: 100%;
+        border-color: var(--gold-dark);
+        border-bottom-color: var(--gold);
+        background: var(--gold-glow);
+    }
+    #lineSelector .unit-tab > img,
+    #lineSelector .unit-tab > img.sprite {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+        padding: 0;
     }
     #lineSelector .unit-tab-label-desktop {
         display: none;
     }
     #lineSelector .unit-tab-label-mobile {
         display: none;
+        width: 100%;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
+        line-height: 1;
+        text-align: center;
     }
     #lineSelector .unit-tab.active .unit-tab-label-mobile {
         display: inline;
@@ -878,9 +909,9 @@ td.hc-cell {
     }
     #tableContainer .unit-cell > img,
     #tableContainer .unit-cell img.sprite {
-        width: 25px;
-        height: 25px;
-        flex: 0 0 25px;
+        width: 33px;
+        height: 33px;
+        flex: 0 0 33px;
     }
     #tableContainer .unit-cell-copy {
         display: flex;

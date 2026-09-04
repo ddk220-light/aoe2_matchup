@@ -4,7 +4,7 @@
 
 **Goal:** Publish the completed Simulation V3 land-unit campaign as the single cost-based rankings source on staging while retaining retail Siege, Naval, and Matchup Advisor candidate data.
 
-**Architecture:** Build a new same-schema `derived_data_v3.db` from an explicit union of V3 land scores and retail Siege/Naval scores, then route rankings, SEO unit pages, and civilization power generation to that artifact. Keep Matchup Advisor candidate selection on `derived_data.db`, simplify the rankings UI to one score model, regenerate the committed power-unit JSON, and fast-forward the result into `staging` without touching `main`.
+**Architecture:** Build a new same-schema `derived_data_v3.db` from an explicit union of V3 land scores and retail Siege/Naval scores, then route rankings, SEO unit pages, and civilization power generation to that artifact. Keep Matchup Advisor candidate selection on `derived_data.db` and a frozen retail power-unit snapshot, simplify the rankings UI to one score model, regenerate the committed V3 power-unit JSON, and fast-forward the result into `staging` without touching `main`.
 
 **Tech Stack:** Python 3.11, SQLite, Flask/Jinja, browser JavaScript/CSS, pytest, Node syntax checking, Git/GitHub Actions, Railway staging auto-deploy.
 
@@ -18,7 +18,7 @@
 - Publish exactly the accepted V3 source snapshot: 755 variants total, 4,530 matchups, 22,650 runs, 15,855 score rows, five runs per matchup, six yardsticks per variant, and zero failures.
 - Publish V3 score rows only for stages `infantry`, `archery`, and `cavalry`; do not publish V3 `v3_combat_effectiveness` Siege rows.
 - Keep Mangonel stat-only and keep retail Siege/Naval ranking semantics.
-- Rankings, SEO unit-line pages, and civilization power units use `derived_data_v3.db`; Matchup Advisor candidate selection uses `derived_data.db`.
+- Rankings, SEO unit-line pages, and civilization power units use `derived_data_v3.db`; Matchup Advisor candidate selection uses `derived_data.db` plus `advisor_power_units/<build>.json`.
 - Remove the Pop/Cost/Average ranking-scale UI and all rankings-page reads from `pool_scores.db`.
 - Keep one visually uniform table and do not add legacy-source badges for Siege/Naval.
 - Preserve all current staging changes by working from and reintegrating with `origin/staging`.
@@ -35,6 +35,7 @@
 - `tests/test_v3_rankings_ui.py` — template/JavaScript contract tests for the single-score uniform table.
 - `data/golden/derived_data_v3.db` — committed hybrid serving database.
 - `data/golden/derived_data_v3.metadata.json` — committed source and validation manifest.
+- `data/golden/advisor_power_units/177723.json` — frozen pre-cutover retail candidate snapshot used only by Matchup Advisor.
 
 ### Modify
 
@@ -527,6 +528,7 @@ git commit -m "feat: serve rankings from v3 data"
 - Consumes: hybrid rankings database for offline civilization power generation and retail database for live advisor candidates.
 - Produces: `_get_rankings_derived_db() -> sqlite3.Connection` and `_get_advisor_derived_db() -> sqlite3.Connection`.
 - Produces: regenerated `data/golden/civ_power_units/177723.json`.
+- Produces: frozen `data/golden/advisor_power_units/177723.json` for both live advisor entry points.
 
 - [ ] **Step 1: Write failing routing and percentile tests**
 

@@ -143,8 +143,9 @@ Database selection is explicit by product surface:
 | --- | --- |
 | Main unit rankings API/page | `derived_data_v3.db` |
 | SEO unit-line pages | `derived_data_v3.db` |
-| Civilization power unit ranking generation/loading | `derived_data_v3.db` |
-| Matchup Advisor candidate selection | existing `derived_data.db` |
+| Civilization power unit ranking generation | `derived_data_v3.db` |
+| Civilization page/API power-unit loading | `civ_power_units/<build>.json` generated from V3 |
+| Matchup Advisor candidate selection | existing `derived_data.db` plus frozen `advisor_power_units/<build>.json` |
 | Siege ranking rows | retained retail rows inside `derived_data_v3.db` |
 | Naval ranking rows | retained retail rows inside `derived_data_v3.db` |
 
@@ -152,6 +153,12 @@ The advisor boundary must be represented by a separately named legacy/retail
 database loader or path. It must not depend on a global `DERIVED_DB_PATH` that
 is changed for rankings, because that would switch candidate selection as an
 accidental side effect.
+
+Both advisor entry points also collect their candidate roster and opponent
+strengths from the power-unit JSON. They therefore load a separately named,
+frozen retail snapshot rather than the regenerated V3 civilization-page
+artifact. This keeps advisor behavior unchanged until the complete V3 matchup
+corpus is ready.
 
 Civilization power units stop preferring `pool_scores.db` percentiles for land
 families. They use the same final V3 family scores and partitions as the unit

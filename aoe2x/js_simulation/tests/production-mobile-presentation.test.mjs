@@ -5,6 +5,8 @@ import test from "node:test";
 import {
   buildSelectionPreviewUnits,
   fittedMapZoom,
+  productionProjectileElevation,
+  productionProjectileStyle,
   productionSpriteGroundOffset,
   productionUnitBoxSize,
 } from "../viewer/map-renderer.js";
@@ -87,7 +89,7 @@ test("mobile picker and battle share the same portrait canvas camera", () => {
 test("desktop battle shell fits below navigation and centers equal transport buttons", () => {
   assert.match(
     websiteCss,
-    /@media \(min-width: 1025px\) and \(min-height: 680px\)[\s\S]*height: calc\(100svh - var\(--nav-h, 56px\) - 16px\)/,
+    /@media \(min-width: 1025px\) and \(min-height: 560px\)[\s\S]*height: calc\(100svh - var\(--nav-h, 56px\) - 16px\)/,
   );
   assert.match(websiteCss, /\.player-button \{[\s\S]*width: 50px;[\s\S]*height: 50px;/);
   assert.match(websiteCss, /\.transport-controls \{[\s\S]*justify-content: center;/);
@@ -139,6 +141,49 @@ test("attack sprites sit lower than idle sprites to meet their ground shadow", (
   assert.ok(
     productionSpriteGroundOffset(64, true) > productionSpriteGroundOffset(64, false),
   );
+});
+
+
+test("production arrows arc for foot and cavalry archer families only", () => {
+  assert.equal(productionProjectileStyle({ slug: "arbalester" }).flight, "arc");
+  assert.equal(productionProjectileStyle({ slug: "heavy_cav_archer" }).flight, "arc");
+  assert.equal(productionProjectileStyle({ slug: "elite_chu_ko_nu_chinese" }).flight, "arc");
+  assert.equal(productionProjectileStyle({ slug: "elite_throwing_axeman" }).flight, "linear");
+  assert.equal(productionProjectileStyle({ slug: "elite_mameluke" }).flight, "linear");
+  assert.equal(productionProjectileStyle({ slug: "hand_cannoneer" }).flight, "linear");
+});
+
+
+test("production arrow curve preserves launch and impact while peaking mid-flight", () => {
+  const projectile = {
+    start: { x: 2, y: 4 },
+    end: { x: 10, y: 4 },
+    style: productionProjectileStyle({ slug: "arbalester" }),
+  };
+  const launch = productionProjectileElevation(projectile, 0);
+  const middle = productionProjectileElevation(projectile, 0.5);
+  const impact = productionProjectileElevation(projectile, 1);
+
+  assert.equal(launch, 0.18);
+  assert.equal(impact, 0.18);
+  assert.ok(middle > launch + 1.4);
+  assert.equal(
+    productionProjectileElevation(projectile, 0.25),
+    productionProjectileElevation(projectile, 0.75),
+  );
+});
+
+
+test("non-arrow projectile families retain a flat visual trajectory", () => {
+  const projectile = {
+    start: { x: 2, y: 4 },
+    end: { x: 10, y: 4 },
+    style: productionProjectileStyle({ slug: "elite_throwing_axeman" }),
+  };
+
+  assert.equal(productionProjectileElevation(projectile, 0), 0.18);
+  assert.equal(productionProjectileElevation(projectile, 0.5), 0.18);
+  assert.equal(productionProjectileElevation(projectile, 1), 0.18);
 });
 
 

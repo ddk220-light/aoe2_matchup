@@ -10,6 +10,25 @@ const TILE_WIDTH = 86;
 const TILE_HEIGHT = 43;
 const MAP_CENTRE_WORLD = { x: 0, y: 16 * TILE_HEIGHT / 2 };
 const VIEW_ORIENTATION = "counterclockwise";
+const PROJECTILE_GROUND_ELEVATION = 0.18;
+
+// Visual-only classification for units whose projectile is a bow or crossbow
+// arrow. Keeping this as an allow-list prevents ranged-but-thrown weapons
+// (axes, javelins, knives, darts, bolas, and bullets) from inheriting an arrow
+// arc just because the combat engine represents all of them as ranged attacks.
+// Markers cover the generic lines and every bow/crossbow family registered by
+// the V3 engine. This classification never feeds back into combat resolution.
+const ARROW_ARC_MARKERS = Object.freeze([
+  "arbalester",
+  "archer",
+  "crossbow",
+  "longbow",
+  "chu_ko_nu",
+  "kipchak",
+  "mangudai",
+  "ratha_(ranged)",
+  "xianbei_raider",
+]);
 
 const TERRAIN = Object.freeze({
   DIRT_1: { top: "#788b50", edge: "#53633a", grain: "#91a760" },
@@ -56,6 +75,44 @@ export function productionSpriteGroundOffset(drawHeight, playing = false) {
   // space below individual poses. Lower the image by that visual inset so the
   // visible feet—not the transparent frame edge—meet the world-space shadow.
   return drawHeight * (playing ? 0.07 : 0.025);
+}
+
+
+export function productionProjectileStyle(unit) {
+  const slug = String(unit?.slug ?? "").toLowerCase();
+  const label = String(unit?.label ?? unit?.name ?? "").toLowerCase();
+  const identity = `${slug} ${label}`;
+  const ranged = unit?.mechanics?.ranged;
+  if ((ranged?.projectile_arc ?? 0) >= 0.25 || slug.includes("onager")) {
+    return { kind: "stone", flight: "linear", color: "#6d665b", width: 5 };
+  }
+  if (slug.includes("scorpion") || slug.includes("ballista")) {
+    return { kind: "bolt", flight: "linear", color: "#c9944a", width: 3.2 };
+  }
+  if (slug.includes("cannon") || slug.includes("grenadier") || slug.includes("arambai")) {
+    return { kind: "shot", flight: "linear", color: "#242321", width: 4 };
+  }
+  const flight = ARROW_ARC_MARKERS.some((marker) => identity.includes(marker))
+    ? "arc"
+    : "linear";
+  return { kind: "arrow", flight, color: "#dfc17a", width: 2.2 };
+}
+
+
+export function productionProjectileElevation(projectile, progress) {
+  if (!Number.isFinite(progress)) throw new TypeError("projectile progress must be finite");
+  const normalized = Math.min(1, Math.max(0, progress));
+  if (projectile?.style?.flight !== "arc") return PROJECTILE_GROUND_ELEVATION;
+
+  const dx = (projectile?.end?.x ?? 0) - (projectile?.start?.x ?? 0);
+  const dy = (projectile?.end?.y ?? 0) - (projectile?.start?.y ?? 0);
+  const distance = Math.hypot(dx, dy);
+  // Scale the apex with shot length, while keeping short arrows readable and
+  // long-range arrows below the unit-name/health overlays. The parabola is
+  // exactly zero at launch and impact, so the established visual endpoint and
+  // flight duration remain unchanged.
+  const apex = Math.min(1.45, Math.max(0.45, distance * 0.19));
+  return PROJECTILE_GROUND_ELEVATION + apex * 4 * normalized * (1 - normalized);
 }
 
 
@@ -669,21 +726,6 @@ export function createMapRenderer(canvas, map, {
     ctx.restore();
   }
 
-  function projectileStyle(unit) {
-    const slug = String(unit.slug ?? "").toLowerCase();
-    const ranged = unit.mechanics?.ranged;
-    if ((ranged?.projectile_arc ?? 0) >= 0.25 || slug.includes("onager")) {
-      return { kind: "stone", color: "#6d665b", width: 5 };
-    }
-    if (slug.includes("scorpion") || slug.includes("ballista")) {
-      return { kind: "bolt", color: "#c9944a", width: 3.2 };
-    }
-    if (slug.includes("cannon") || slug.includes("grenadier") || slug.includes("arambai")) {
-      return { kind: "shot", color: "#242321", width: 4 };
-    }
-    return { kind: "arrow", color: "#dfc17a", width: 2.2 };
-  }
-
   function updateProductionEffects(snapshot) {
     if (state.presentation !== "production") return;
     const previousTick = state.simulationSnapshot?.tick ?? -1;
@@ -721,7 +763,7 @@ export function createMapRenderer(canvas, map, {
         endTick: launchTick + Math.max(2, Math.ceil(distance / speed * 60)),
         start: { x: actor.x + offsetX, y: actor.y + offsetY },
         end: { x: target.x + offsetX, y: target.y + offsetY },
-        style: projectileStyle(actor),
+        style: productionProjectileStyle(actor),
       });
     };
 
@@ -784,8 +826,10 @@ export function createMapRenderer(canvas, map, {
       const prior = Math.max(0, progress - 0.07);
       const px = projectile.start.x + (projectile.end.x - projectile.start.x) * prior;
       const py = projectile.start.y + (projectile.end.y - projectile.start.y) * prior;
-      const point = worldToCanvas(projection.tileToScreen(x, y, 0.18));
-      const tail = worldToCanvas(projection.tileToScreen(px, py, 0.18));
+      const pointElevation = productionProjectileElevation(projectile, progress);
+      const tailElevation = productionProjectileElevation(projectile, prior);
+      const point = worldToCanvas(projection.tileToScreen(x, y, pointElevation));
+      const tail = worldToCanvas(projection.tileToScreen(px, py, tailElevation));
       ctx.save();
       ctx.strokeStyle = projectile.style.color;
       ctx.fillStyle = projectile.style.color;

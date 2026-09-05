@@ -19,10 +19,9 @@ const websiteCss = await readFile(
   new URL("../../../apps/website/static/css/simulate.css", import.meta.url),
   "utf8",
 );
-const websitePage = await readFile(
-  new URL("../../../apps/website/static/js/simulate.js", import.meta.url),
-  "utf8",
-);
+const websitePage = (await Promise.all([
+  "simulate.js", "battle/playback.js", "battle/statistics.js", "battle/selection.js",
+].map(path => readFile(new URL(`../../../apps/website/static/js/${path}`, import.meta.url), "utf8")))).join("\n");
 const websiteTemplate = await readFile(
   new URL("../../../apps/website/templates/simulate.html", import.meta.url),
   "utf8",
@@ -136,7 +135,7 @@ test("roster changes remain available during active playback", () => {
   assert.doesNotMatch(websiteCss, /\.battle-running \.change-btn\s*\{[^}]*display:\s*none/);
   assert.match(
     websitePage,
-    /function leaveBattleForRosterEdit\(\)[\s\S]*pageSim\.reset\(\);[\s\S]*setSimPhase\(false\);/,
+    /function leaveBattleForRosterEdit\(\)[\s\S]*pageSim\?\.reset\(\);[\s\S]*setSimPhase\(false\);/,
   );
 });
 

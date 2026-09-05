@@ -1,5 +1,9 @@
 # Architecture Overview
 
+> Historical architecture (June 2026). Start with [Current website architecture](CURRENT.md)
+> for the active V3 runtime, module ownership, crawler configuration and release gates.
+> The engine/frontend ownership below describes the earlier implementation.
+
 *Last verified: 2026-06-09 · game build 177723 · branch `staging`*
 
 This is the entry point for the architecture doc set. It gives the system map, the

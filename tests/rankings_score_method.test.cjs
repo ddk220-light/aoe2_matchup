@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
+globalThis.RANKING_METHODS = require("../data/golden/derived_data_v3.metadata.json").methodology;
 const scoreMethod = require("../apps/website/static/js/rankings_score_method.js");
 
 test("land score help names the V3 matchups and settings", () => {

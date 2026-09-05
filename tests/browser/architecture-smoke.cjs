@@ -1,0 +1,48 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+(async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true});
+ const base=process.env.QA_URL || 'http://127.0.0.1:5056';
+ fs.mkdirSync('.scratch/architecture-qa',{recursive:true});
+ for(const [name,viewport] of [['laptop',{width:1366,height:768}],['mobile',{width:390,height:844}]]) {
+  const context=await browser.newContext({viewport});const page=await context.newPage();const errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/?civ1=Spanish&unit1=hand_cannoneer&civ2=Chinese&unit2=arbalester&mode=count&count1=5&count2=5');
+  await page.waitForFunction(()=>window.simulation?.renderer && document.querySelector('#prog1Name')?.textContent.includes('Hand Cannoneer'));
+  await page.locator('#playPauseBtn').click();
+  await page.waitForFunction(()=>window.simulation?.state==='playing');
+  const seed=await page.evaluate(()=>window.simulation.config.seed);
+  await page.locator('#playPauseBtn').click();
+  assert.equal(await page.evaluate(()=>window.simulation.state),'paused');
+  await page.waitForTimeout(500);
+  await page.screenshot({path:'.scratch/architecture-qa/'+name+'-battle.png',fullPage:false});
+  await page.locator('#playPauseBtn').click();
+  await page.locator('#speedBtn').click();await page.locator('#speedBtn').click();await page.locator('#speedBtn').click();
+  await page.waitForFunction(()=>window.simulation.state==='completed',{},{timeout:30000});
+  await page.locator('#restartBtn').click();
+  await page.waitForFunction(old=>window.simulation?.config?.seed!==old && window.simulation.state==='playing',seed);
+  await page.locator('[data-action="clearUnit"][data-team="1"]').click();
+  assert.equal(await page.evaluate(()=>window.simulation.state),'selecting');
+  assert.equal(await page.evaluate(()=>window.simulation.config),null);
+  assert.ok(await page.locator('[data-action="selectUnit"]').count()>0);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.goto(base+'/civilizations/spanish');
+  await page.waitForSelector('#results .unit-badge');
+  await page.waitForTimeout(500);
+  await page.screenshot({path:'.scratch/architecture-qa/'+name+'-civilization.png',fullPage:false});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.goto(base+'/units');await page.waitForSelector('#tableContainer tbody tr');
+  await page.waitForTimeout(500);
+  await page.screenshot({path:'.scratch/architecture-qa/'+name+'-rankings.png',fullPage:false});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  assert.deepEqual(errors,[]);
+  console.log(name+': playback, restart, selection reset, three-page layout PASS');
+  await context.close();
+ }
+ const context=await browser.newContext({javaScriptEnabled:false});const page=await context.newPage();
+ await page.goto(base+'/civilizations/spanish');assert.ok(await page.locator('#results .unit-badge').count()>5);
+ assert.ok((await page.locator('#results').innerText()).includes('Spanish'));
+ console.log('JavaScript disabled: civilization text, units and links PASS');
+ await browser.close();
+})().catch(e=>{console.error(e);process.exit(1);});

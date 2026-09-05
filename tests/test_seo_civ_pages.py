@@ -35,7 +35,7 @@ def test_index_links_to_detail_pages(client):
 
 
 def test_civ_analyzer_has_civilization_deep_links(client):
-    script = client.get("/static/js/matchup.js").data.decode()
+    script = client.get("/static/js/civilization-view.js").data.decode()
     assert 'https://aoe2techtree.net/#' in script
     assert 'https://ageofempires.fandom.com/wiki/' in script
     assert "Open Tech Tree" in script

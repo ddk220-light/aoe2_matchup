@@ -1,0 +1,28 @@
+{# Initial HTML uses the same analysis payload as the interactive view. #}
+<div class="analysis-hero">
+    <img class="analysis-emblem" src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ.slug }}.png" alt="{{ civ.name }}">
+    <div class="analysis-hero-body">
+        <h2 class="analysis-civ-name">{{ civ.name }}</h2>
+        <p>{{ analysis.strategic_description }}</p>
+    </div>
+</div>
+<div class="civ-deep-links">
+    <a class="civ-deep-link" href="https://aoe2techtree.net/#{{ civ.slug }}" target="_blank" rel="noopener">Open Tech Tree ↗</a>
+    <a class="civ-deep-link" href="https://ageofempires.fandom.com/wiki/{{ civ.name | urlencode }}" target="_blank" rel="noopener">Open Wiki ↗</a>
+</div>
+{% for building, units in civ_buildings.items() %}
+<section class="role-section">
+    <h3 class="role-header">{{ building | replace('_', ' ') | title }}</h3>
+    <div class="building-unit-grid">
+        {% for unit in units %}
+        <a class="unit-badge{% if unit.tier %} is-tier-{{ unit.tier }}{% endif %}"
+           href="/?{{ {'civ1':civ.name, 'unit1':unit.unit_slug} | urlencode }}">
+            {% set icon = site_catalog.icon_names.get(unit.unit_name) %}
+            {% if icon %}<img class="unit-badge-icon" src="/static/img/units/{{ icon }}.png" alt="" loading="lazy">{% endif %}
+            <span class="unit-badge-info"><span class="unit-badge-name">{{ unit.unit_name }}</span>
+            {% if unit.tier %}<span class="unit-badge-rank tier-{{ unit.tier }}">{{ unit.tier | title }}</span>{% endif %}</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endfor %}

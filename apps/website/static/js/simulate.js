@@ -1,3 +1,4 @@
+import {ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING, ICON_BASE, CIV_EMBLEM_BASE} from "./shared/catalog.js";
 /*
  * Role: page — the Battle Sim page shell served at /.
  *
@@ -12,11 +13,10 @@
  * addEventListener, never through inline on*= attributes.
  */
 
-import {
-    buildSelectionPreviewUnits,
-    createMapRenderer,
-} from "/v3-runtime/viewer/map-renderer.js";
-import { summarizeMatchup } from "/v3-runtime/src/combat/matchup-summary.js";
+import { createPlaybackController } from "./battle/playback.js";
+import { createStatisticsView } from "./battle/statistics.js";
+import { LatestRequest, requestJson } from "./shared/api.js";
+import { createTeamState, readBattleOptions } from "./battle/selection.js";
 
 const RELIC_MAX = 0;
 const KILL_BONUS_MAX = 0;
@@ -40,26 +40,7 @@ function hasKillOption(state) {
 }
 
 // ===== SELECTION STATE =====
-const teamState = {
-    1: {
-        civ: null,
-        age: "Imperial",
-        unitSlug: null,
-        unitName: null,
-        civData: null,
-        relics: RELIC_MAX,
-        startKills: 0,
-    },
-    2: {
-        civ: null,
-        age: "Imperial",
-        unitSlug: null,
-        unitName: null,
-        civData: null,
-        relics: RELIC_MAX,
-        startKills: 0,
-    },
-};
+const teamState = createTeamState();
 
 // Preloaded unit images for canvas
 const unitImages = { 1: null, 2: null };
@@ -296,9 +277,11 @@ function setStartKills(teamNum, n) {
 }
 
 function leaveBattleForRosterEdit() {
+    battleRequest.cancel();
+    battleLoading = false;
     cancelMatchupPreview();
     currentBattle = null;
-    if (pageSim?.config) pageSim.reset();
+    pageSim?.reset();
     setSimPhase(false);
 }
 
@@ -312,10 +295,13 @@ async function selectCiv(teamNum, civName) {
     renderSelection(teamNum);
     refreshArenaPreview();
 
-    // Fetch civ data
+    const ticket = civRequests[teamNum].begin();
     try {
-        state.civData = await apiGet(`/api/ref/civ/${civName}`);
+        const data = await requestJson(`/api/ref/civ/${encodeURIComponent(civName)}`, {signal:ticket.signal});
+        if (!ticket.isCurrent() || state.civ !== civName) return;
+        state.civData = data;
     } catch (e) {
+        if (!ticket.isCurrent() || e.name === "AbortError") return;
         console.error("Failed to load civ data:", e);
     }
     renderSelection(teamNum);
@@ -323,6 +309,7 @@ async function selectCiv(teamNum, civName) {
 }
 
 function clearCiv(teamNum) {
+    civRequests[teamNum].cancel();
     leaveBattleForRosterEdit();
     teamState[teamNum].civ = null;
     teamState[teamNum].unitSlug = null;
@@ -465,7 +452,7 @@ function clearSearch(teamNum) {
 async function pickFromSearch(teamNum, item) {
     clearSearch(teamNum);
     await selectCiv(teamNum, item.civ); // also loads civData for the grid
-    if (item.type === "unit") {
+    if (item.type === "unit" && teamState[teamNum].civ === item.civ && teamState[teamNum].civData) {
         selectUnit(teamNum, item.slug, item.name);
     }
 }
@@ -567,687 +554,6 @@ function syncPlayerControls() {
 }
 
 // ===== PAGE-SIDE V3 PLAYBACK DRIVER =====
-function deepFreeze(value, visited = new Set()) {
-    if (!value || typeof value !== "object" || visited.has(value)) return value;
-    visited.add(value);
-    for (const child of Object.values(value)) deepFreeze(child, visited);
-    return Object.freeze(value);
-}
-
-class PageSim {
-    constructor(canvas) {
-        this.canvas = canvas;
-        this.renderer = null;
-        this.previewPlacementByOwner = null;
-        this.worker = null;
-        this.config = null;
-        this.unitIndex = new Map();
-        this.snapshots = [];
-        this.cursor = 0;
-        this.latestSnapshot = null;
-        this.result = null;
-        this.complete = false;
-        this.playheadTick = 0;
-        this.runId = 0;
-        this.animationFrame = null;
-        this.speedMultiplier = 1.0;
-        this.running = false;
-        this.paused = false;
-        this.lastTimestamp = 0;
-        this.resizeObserver = new ResizeObserver(() => this.renderer?.resize());
-        this.resizeObserver.observe(canvas);
-    }
-
-    get winner() {
-        return this.result?.winnerOwner ?? null;
-    }
-
-    setStatus(message, isError = false) {
-        const element = document.getElementById("v3MapStatus");
-        if (!element) return;
-        element.textContent = message;
-        element.classList.toggle("error", isError);
-    }
-
-    ensureRenderer(map) {
-        if (this.renderer) return;
-        this.renderer = createMapRenderer(
-            this.canvas,
-            map,
-            {
-                presentation: "production",
-                unitScale: 0.9,
-            },
-        );
-    }
-
-    initializeArena({ map, placementByOwner }) {
-        this.ensureRenderer(map);
-        this.previewPlacementByOwner = placementByOwner;
-        this.renderer.setUnits([]);
-        this.renderer.resize();
-    }
-
-    showSelectionPreview(selections, images) {
-        if (!this.renderer || !this.previewPlacementByOwner || this.running) return;
-        const previewCounts = {
-            1: Math.min(27, Math.max(1,
-                parseInt(document.getElementById("team1Count")?.value, 10) || 27)),
-            2: Math.min(27, Math.max(1,
-                parseInt(document.getElementById("team2Count")?.value, 10) || 27)),
-        };
-        for (const teamNumber of [1, 2]) {
-            this.renderer.setUnitAssets(teamNumber === 1 ? 2 : 3, {
-                img: images[teamNumber],
-                sheet: null,
-            });
-        }
-        this.renderer.setUnits(buildSelectionPreviewUnits(
-            selections,
-            this.previewPlacementByOwner,
-            previewCounts,
-        ));
-    }
-
-    buildUnitIndex(config) {
-        const index = new Map();
-        const addArmy = (owner, team, count) => {
-            const base = owner === 2 ? 9000 : owner === 3 ? 9500 : 10000;
-            for (let offset = 0; offset < count; offset += 1) {
-                index.set(base + offset, {
-                    owner,
-                    slug: team.mechanics.unit_slug,
-                    label: team.unit_name,
-                    master: team.mechanics.unit_master,
-                    mechanics: team.mechanics,
-                });
-            }
-        };
-        addArmy(2, config.teams[0], config.teams[0].count);
-        addArmy(3, config.teams[1], config.teams[1].count);
-        const auxiliary = config.scenario.auxiliaryArmiesByOwner || {};
-        for (const [ownerText, army] of Object.entries(auxiliary)) {
-            const owner = Number(ownerText);
-            addArmy(owner, {
-                unit_name: army.unit_name || "Scout Cavalry",
-                mechanics: army.mechanics,
-            }, army.cells.length);
-        }
-        return index;
-    }
-
-    rendererSnapshot(snapshot) {
-        const units = snapshot.units.map((row) => {
-            const [referenceId, x, y, facing, hp, alive, action,
-                pursuitTargetId, engagedTargetId, attackTargetId] = row;
-            const meta = this.unitIndex.get(referenceId);
-            if (!meta) throw new Error(`Missing unit metadata for ${referenceId}`);
-            return {
-                referenceId,
-                x,
-                y,
-                facing,
-                hp,
-                alive: alive === 1,
-                action,
-                pursuitTargetId,
-                engagedTargetId,
-                attackTargetId,
-                owner: meta.owner,
-                slug: meta.slug,
-                label: meta.label,
-                unitMaster: meta.master,
-                mechanics: meta.mechanics,
-            };
-        });
-        return deepFreeze({
-            tick: snapshot.tick,
-            units,
-            events: snapshot.events,
-            ...(snapshot.navigation ? { navigation: snapshot.navigation } : {}),
-        });
-    }
-
-    setup({ config, assets }) {
-        this.stop();
-        this.config = deepFreeze(config);
-        this.unitIndex = this.buildUnitIndex(this.config);
-        this.snapshots = [];
-        this.cursor = 0;
-        this.latestSnapshot = null;
-        this.result = null;
-        this.complete = false;
-        this.playheadTick = 0;
-        this.paused = false;
-        this.ensureRenderer(this.config.scenario.mapFixture.map);
-        this.renderer.showFormation();
-        this.renderer.setUnitAssets(2, assets[2]);
-        this.renderer.setUnitAssets(3, assets[3]);
-        if (assets[4]) this.renderer.setUnitAssets(4, assets[4]);
-        this.renderer.resize();
-
-        const runId = ++this.runId;
-        this.worker = new Worker("/static/js/v3_sim_worker.js", { type: "module" });
-        this.worker.onmessage = ({ data }) => {
-            if (data?.runId !== runId) return;
-            if (data.type === "started") {
-                this.setStatus("Battle in progress");
-            } else if (data.type === "snapshots") {
-                this.snapshots.push(...data.snapshots);
-            } else if (data.type === "complete") {
-                this.result = data.result;
-                this.complete = true;
-                this.worker?.terminate();
-                this.worker = null;
-            } else if (data.type === "error") {
-                console.error("simulationv3 worker failed", data.error, data.stack);
-                this.complete = true;
-                this.running = false;
-                this.setStatus(`Simulation error: ${data.error}`, true);
-                syncPlayerControls();
-                this.worker?.terminate();
-                this.worker = null;
-            }
-        };
-        this.worker.onerror = (event) => {
-            console.error(
-                `simulationv3 worker error: ${event.message || "unknown error"} `
-                + `at ${event.filename || "worker"}:${event.lineno || 0}:${event.colno || 0}`,
-            );
-            this.complete = true;
-            this.running = false;
-            this.setStatus("Simulation worker failed to load", true);
-            syncPlayerControls();
-        };
-        this.worker.postMessage({ runId, config: this.config });
-        this.setStatus("Preparing battle…");
-    }
-
-    start() {
-        if (!this.config) {
-            alert("Please configure both teams");
-            return;
-        }
-        this.running = true;
-        this.paused = false;
-        this.lastTimestamp = performance.now();
-        updateStats(null, this.unitIndex);
-        syncPlayerControls();
-        this.loop();
-    }
-
-    pause() {
-        if (!this.running) return;
-        this.paused = !this.paused;
-        if (!this.paused) {
-            this.lastTimestamp = performance.now();
-            this.loop();
-        }
-        syncPlayerControls();
-    }
-
-    stop() {
-        if (this.animationFrame !== null) cancelAnimationFrame(this.animationFrame);
-        this.animationFrame = null;
-        this.worker?.terminate();
-        this.worker = null;
-        this.running = false;
-        this.paused = false;
-    }
-
-    reset() {
-        this.stop();
-        this.config = null;
-        this.snapshots = [];
-        this.cursor = 0;
-        this.latestSnapshot = null;
-        this.result = null;
-        this.complete = false;
-        this.playheadTick = 0;
-        updateStats(null);
-        this.renderer?.showFormation();
-        this.setStatus("Golden Arena ready");
-        syncPlayerControls();
-    }
-
-    loop() {
-        if (!this.running || this.paused) return;
-        const now = performance.now();
-        const elapsed = Math.min((now - this.lastTimestamp) / 1000, 0.25);
-        this.lastTimestamp = now;
-        if (this.cursor < this.snapshots.length || this.complete) {
-            this.playheadTick += elapsed * this.speedMultiplier * 60;
-        }
-        while (
-            this.cursor < this.snapshots.length
-            && this.snapshots[this.cursor].tick <= this.playheadTick
-        ) {
-            this.latestSnapshot = this.snapshots[this.cursor];
-            this.cursor += 1;
-        }
-        if (this.latestSnapshot) {
-            const snapshot = this.rendererSnapshot(this.latestSnapshot);
-            this.renderer.setSimulationSnapshot(snapshot);
-            updateStats(snapshot, this.unitIndex);
-        }
-        if (this.complete && this.cursor >= this.snapshots.length && this.result) {
-            this.running = false;
-            updateBattleWinner(this.result.winnerOwner);
-            const winningTeam = this.result.winnerOwner === 2 ? 1 : 2;
-            const winner = this.config.teams[winningTeam - 1];
-            const remaining = Math.round(this.result.winnerHp);
-            this.setStatus(`${winner.civ} ${winner.unit_name} wins · ${remaining} HP remaining`);
-            syncPlayerControls();
-        } else {
-            this.animationFrame = requestAnimationFrame(() => this.loop());
-        }
-    }
-
-    render() {
-        this.renderer?.resize();
-    }
-}
-
-// ===== LIVE STAT READOUT =====
-function setText(id, value) {
-    const element = document.getElementById(id);
-    if (element) element.textContent = value;
-}
-
-function formatCombatMetric(value, suffix = "") {
-    if (!Number.isFinite(value)) return "—";
-    const rounded = Math.round(value * 10) / 10;
-    return `${rounded.toFixed(Number.isInteger(rounded) ? 0 : 1)}${suffix}`;
-}
-
-function updateHealthBar(teamNum, hp, startingHp) {
-    const fraction = startingHp > 0
-        ? Math.max(0, Math.min(1, hp / startingHp))
-        : 0;
-    const fill = document.getElementById(`prog${teamNum}HealthFill`);
-    const track = document.getElementById(`prog${teamNum}HealthTrack`);
-    if (fill) fill.style.width = `${(fraction * 100).toFixed(2)}%`;
-    if (track) {
-        track.setAttribute("aria-valuenow", String(Math.round(fraction * 100)));
-        track.setAttribute(
-            "aria-valuetext",
-            `${Math.round(hp)} of ${Math.round(startingHp)} HP remaining`,
-        );
-    }
-}
-
-function renderCallouts(teamNum, callouts) {
-    const list = document.getElementById(`prog${teamNum}Callouts`);
-    if (!list) return;
-    list.replaceChildren();
-    for (const text of callouts) {
-        const item = document.createElement("li");
-        item.textContent = text;
-        list.append(item);
-    }
-    list.hidden = callouts.length === 0;
-}
-
-function unitCost(mechanics) {
-    const cost = mechanics.cost;
-    return cost.food + cost.wood + cost.gold;
-}
-
-function battleStatsFromConfig(config) {
-    const [team1, team2] = config.teams;
-    const team1Cost = unitCost(team1.mechanics);
-    const team2Cost = unitCost(team2.mechanics);
-    return {
-        team1_civ: team1.civ,
-        team1_unit: team1.unit_slug,
-        team1_unit_name: team1.unit_name,
-        team1_count: team1.count,
-        team1_total_cost: team1Cost * team1.count,
-        team1_unit_cost: team1Cost,
-        team1_max_hp: team1.mechanics.hp,
-        team1_start_hp: team1.mechanics.hp * team1.count,
-        team2_civ: team2.civ,
-        team2_unit: team2.unit_slug,
-        team2_unit_name: team2.unit_name,
-        team2_count: team2.count,
-        team2_total_cost: team2Cost * team2.count,
-        team2_unit_cost: team2Cost,
-        team2_max_hp: team2.mechanics.hp,
-        team2_start_hp: team2.mechanics.hp * team2.count,
-        winner: null,
-    };
-}
-
-function renderMatchupCards(config) {
-    const [team1, team2] = config.teams;
-    currentBattle = battleStatsFromConfig(config);
-    const summaries = [
-        summarizeMatchup(team1.mechanics, team2.mechanics),
-        summarizeMatchup(team2.mechanics, team1.mechanics),
-    ];
-    for (const [index, team] of [team1, team2].entries()) {
-        const teamNum = index + 1;
-        const summary = summaries[index];
-        setText(`prog${teamNum}Name`, `${team.civ} ${team.unit_name}`);
-        setText(`prog${teamNum}Damage`, formatCombatMetric(summary.damagePerHit));
-        setText(`prog${teamNum}Dps`, formatCombatMetric(summary.damagePerSecond));
-        setText(`prog${teamNum}Ttk`, formatCombatMetric(summary.timeToKillSeconds, "s"));
-        const ttkMetric = document.getElementById(`prog${teamNum}TtkMetric`);
-        if (ttkMetric) {
-            ttkMetric.title = summary.timeToKillHelp;
-            ttkMetric.setAttribute(
-                "aria-label",
-                `Time to kill ${formatCombatMetric(summary.timeToKillSeconds, " seconds")}. ${summary.timeToKillHelp}`,
-            );
-        }
-        renderCallouts(teamNum, summary.callouts);
-        const icon = document.getElementById(`prog${teamNum}Icon`);
-        if (unitImages[teamNum]?.src && icon) {
-            icon.src = unitImages[teamNum].src;
-            icon.classList.toggle("sprite", !!unitIsSprite[teamNum]);
-            icon.style.display = "";
-        }
-    }
-    updateStats(null);
-    setSimPhase(!!pageSim?.config);
-}
-
-function updateStats(snapshot, unitIndex = new Map()) {
-    const rows = { 2: [], 3: [] };
-    for (const unit of snapshot?.units || []) {
-        if (unit.owner === 2 || unit.owner === 3) rows[unit.owner].push(unit);
-    }
-    const t1Alive = rows[2].filter((unit) => unit.alive);
-    const t2Alive = rows[3].filter((unit) => unit.alive);
-    const t1Hp = snapshot
-        ? t1Alive.reduce((sum, unit) => sum + unit.hp, 0)
-        : (currentBattle?.team1_start_hp || 0);
-    const t2Hp = snapshot
-        ? t2Alive.reduce((sum, unit) => sum + unit.hp, 0)
-        : (currentBattle?.team2_start_hp || 0);
-    const t1AliveCount = snapshot ? t1Alive.length : (currentBattle?.team1_count || 0);
-    const t2AliveCount = snapshot ? t2Alive.length : (currentBattle?.team2_count || 0);
-    const battleTime = (snapshot?.tick ?? 0) / 60;
-
-    setText("battleTimer", `${battleTime.toFixed(1)}s`);
-
-    setText("prog1Units",
-        `${t1AliveCount} / ${rows[2].length || currentBattle?.team1_count || 0}`);
-    setText("prog1Hp",
-        `${Math.round(t1Hp)} / ${Math.round(currentBattle?.team1_start_hp || 0)}`);
-    updateHealthBar(1, t1Hp, currentBattle?.team1_start_hp || 0);
-    if (currentBattle) {
-        setText("prog1Res", currentBattle.team1_total_cost);
-        const lostFraction = currentBattle.team1_start_hp > 0
-            ? 1 - t1Hp / currentBattle.team1_start_hp : 0;
-        const t1Lost = Math.round(currentBattle.team1_total_cost * lostFraction);
-        setText("prog1Lost", t1Lost);
-    }
-
-    setText("prog2Units",
-        `${t2AliveCount} / ${rows[3].length || currentBattle?.team2_count || 0}`);
-    setText("prog2Hp",
-        `${Math.round(t2Hp)} / ${Math.round(currentBattle?.team2_start_hp || 0)}`);
-    updateHealthBar(2, t2Hp, currentBattle?.team2_start_hp || 0);
-    if (currentBattle) {
-        setText("prog2Res", currentBattle.team2_total_cost);
-        const lostFraction = currentBattle.team2_start_hp > 0
-            ? 1 - t2Hp / currentBattle.team2_start_hp : 0;
-        const t2Lost = Math.round(currentBattle.team2_total_cost * lostFraction);
-        setText("prog2Lost", t2Lost);
-    }
-}
-
-// ===== DAMAGE BREAKDOWN PANEL =====
-// Free function over an engine sim — the DOM half of the old
-// BattleSimulation.updateDebugPanel. Reads sim.team1Stats/team2Stats (the
-// combat dicts the scenario builder kept) and the units' own damage model.
-function updateDebugPanel(sim) {
-    if (
-        !sim ||
-        !sim.team1Stats ||
-        !sim.team2Stats ||
-        sim.team1.length === 0 ||
-        sim.team2.length === 0
-    )
-        return;
-    const unit1 = sim.team1[0];
-    const unit2 = sim.team2[0];
-    const dmg1to2 = unit1.getDamageAgainst(unit2, true);
-    const dmg2to1 = unit2.getDamageAgainst(unit1, true);
-
-    // Build upgrade chain from stat_chain data
-    const buildUpgradeChain = (chain, classId) => {
-        if (!chain || chain.length === 0) return [];
-        const steps = [];
-        let prevVal = null;
-        for (const step of chain) {
-            const attacks = step.attacks_json
-                ? JSON.parse(step.attacks_json)
-                : {};
-            const armors = step.armors_json
-                ? JSON.parse(step.armors_json)
-                : {};
-            const atkVal = attacks[classId] ?? null;
-            const armorVal = armors[classId] ?? null;
-            if (prevVal === null) {
-                // Base stats
-                steps.push({
-                    tech: step.tech,
-                    atk: atkVal,
-                    armor: armorVal,
-                    type: step.type,
-                });
-            } else {
-                // Only record if the value changed
-                if (
-                    atkVal !== prevVal.atk ||
-                    armorVal !== prevVal.armor
-                ) {
-                    steps.push({
-                        tech: step.tech,
-                        atk: atkVal,
-                        armor: armorVal,
-                        type: step.type,
-                    });
-                }
-            }
-            prevVal = { atk: atkVal, armor: armorVal };
-        }
-        return steps;
-    };
-
-    const buildFormula = (
-        attacker,
-        defender,
-        dmgResult,
-        atkStats,
-        defStats,
-    ) => {
-        const isRanged = attacker.isRanged();
-        const baseClass = isRanged ? "3" : "4";
-        const baseAtk =
-            attacker.attacks[baseClass] || atkStats.attack;
-        const defArmorClass = isRanged ? "3" : "4";
-        const defArmor = isRanged
-            ? (defender.armors["3"] ??
-              defender.pierceArmor ??
-              0)
-            : (defender.armors["4"] ??
-              defender.meleeArmor ??
-              0);
-
-        let html = "";
-
-        // === ATTACK SECTION ===
-        html += `<div class="formula-section"><div class="formula-label">Total Attack (${isRanged ? "Pierce" : "Melee"}):</div>`;
-        html += `<div class="formula-value"><span class="attack-val">${baseAtk}</span></div>`;
-        // Show attack upgrade chain
-        const atkChain = buildUpgradeChain(
-            atkStats.stat_chain,
-            baseClass,
-        );
-        if (atkChain.length > 0) {
-            html += `<div style="margin-top:4px;padding-left:8px;">`;
-            for (const step of atkChain) {
-                const val = step.atk ?? 0;
-                const label =
-                    step.type === "base"
-                        ? step.tech
-                        : step.tech;
-                html += `<div style="font-size:0.65rem;color:var(--text-muted);">${label}: <span style="color:#f39c12">${val}</span></div>`;
-            }
-            html += `</div>`;
-        }
-        html += `</div>`;
-
-        // === BONUS ATTACK SECTION ===
-        const bonuses = dmgResult.breakdown.filter(
-            (b) =>
-                b.applies &&
-                b.classId !== "3" &&
-                b.classId !== "4" &&
-                b.damage > 0,
-        );
-        if (bonuses.length > 0) {
-            html += `<div class="formula-section"><div class="formula-label">+ Bonus Attack:</div><div class="formula-value" style="flex-direction:column;align-items:flex-start;gap:2px;">`;
-            for (const b of bonuses) {
-                html += `<div class="bonus-item">+${b.attack}`;
-                if (b.armor && b.armor > 0)
-                    html += ` <span style="color:var(--team2);font-size:0.7rem">&minus;${b.armor}</span>`;
-                html += ` = <span style="color:#fff">${b.damage}</span> <span class="class-tag">${b.className}</span></div>`;
-            }
-            html += `</div></div>`;
-        }
-
-        // === DEFENSE SECTION ===
-        html += `<div class="formula-section"><div class="formula-label">&minus; Total Defense (${isRanged ? "Pierce" : "Melee"} Armor):</div>`;
-        html += `<div class="formula-value"><span class="armor-val">${defArmor}</span></div>`;
-        // Show defense upgrade chain
-        const defChain = buildUpgradeChain(
-            defStats.stat_chain,
-            defArmorClass,
-        );
-        if (defChain.length > 0) {
-            html += `<div style="margin-top:4px;padding-left:8px;">`;
-            for (const step of defChain) {
-                const val = step.armor ?? 0;
-                html += `<div style="font-size:0.65rem;color:var(--text-muted);">${step.tech}: <span style="color:var(--team2)">${val}</span></div>`;
-            }
-            html += `</div>`;
-        }
-        html += `</div>`;
-
-        // === BONUS ARMOR SECTION ===
-        const defBonuses = dmgResult.breakdown.filter(
-            (b) =>
-                b.applies &&
-                b.classId !== "3" &&
-                b.classId !== "4" &&
-                b.armor > 0 &&
-                b.damage < b.attack,
-        );
-        if (defBonuses.length > 0) {
-            html += `<div class="formula-section"><div class="formula-label">&minus; Bonus Armor:</div><div class="formula-value" style="flex-direction:column;align-items:flex-start;gap:2px;">`;
-            for (const b of defBonuses) {
-                html += `<div><span style="color:var(--team2)">${b.armor}</span> <span class="class-tag">${b.className}</span></div>`;
-            }
-            html += `</div></div>`;
-        }
-
-        // === TOTAL ===
-        html += `<div class="formula-result"><div class="formula-label">Damage per Hit:</div>`;
-        html += `<div class="formula-total">${dmgResult.total}</div></div>`;
-
-        // === SPECIAL MECHANICS ===
-        const mechanics = [];
-        if (attacker.passThroughPercent > 0)
-            mechanics.push(
-                `Pass-through: ${Math.round(attacker.passThroughPercent * 100)}% damage to 1 unit behind target`,
-            );
-        if (
-            attacker.tramplePercent > 0 ||
-            attacker.trampleFlatDamage > 0
-        ) {
-            const parts = [];
-            if (attacker.tramplePercent > 0)
-                parts.push(
-                    `${Math.round(attacker.tramplePercent * 100)}%`,
-                );
-            if (attacker.trampleFlatDamage > 0)
-                parts.push(
-                    `+${attacker.trampleFlatDamage} flat`,
-                );
-            mechanics.push(
-                `Trample: ${parts.join(" ")} to nearby units`,
-            );
-        }
-        if (attacker.extraProjectiles > 0)
-            mechanics.push(
-                `+${attacker.extraProjectiles} extra projectile${attacker.extraProjectiles > 1 ? "s" : ""}`,
-            );
-        if (attacker.ignoresPierceArmor)
-            mechanics.push("Ignores pierce armor");
-        if (attacker.ignoresMeleeArmor)
-            mechanics.push("Ignores melee armor");
-        if (attacker.bleedDps > 0)
-            mechanics.push(
-                `Bleed: ${attacker.bleedDps} DPS for ${attacker.bleedDuration}s`,
-            );
-        if (attacker.hpRegen > 0)
-            mechanics.push(
-                `HP Regen: ${attacker.hpRegen} HP/min`,
-            );
-        if (attacker.dodgeShieldMax > 0)
-            mechanics.push(
-                `Dodge Shield: ${attacker.dodgeShieldMax} charges`,
-            );
-        if (defender.bonusDamageReduction > 0)
-            mechanics.push(
-                `Target resists ${Math.round(defender.bonusDamageReduction * 100)}% bonus damage`,
-            );
-        if (mechanics.length > 0) {
-            html += `<div style="margin-top:6px;padding:4px 6px;border-left:2px solid var(--gold);font-size:0.65rem;color:var(--text-muted)">`;
-            for (const m of mechanics) {
-                html += `<div>${m}</div>`;
-            }
-            html += `</div>`;
-        }
-
-        return html;
-    };
-
-    const team1CivSafe = escapeHtml(sim.team1Stats.civ);
-    const team1NameSafe = escapeHtml(sim.team1Stats.name);
-    const team2CivSafe = escapeHtml(sim.team2Stats.civ);
-    const team2NameSafe = escapeHtml(sim.team2Stats.name);
-
-    let html = "";
-    html += `<div class="debug-section team1"><h4>${team1CivSafe} ${team1NameSafe}</h4>`;
-    html += `<h5 style="color:var(--text-muted);margin-bottom:8px;font-size:0.7rem">&rarr; vs ${team2CivSafe} ${team2NameSafe}</h5>`;
-    html +=
-        buildFormula(
-            unit1,
-            unit2,
-            dmg1to2,
-            sim.team1Stats,
-            sim.team2Stats,
-        ) + `</div>`;
-
-    html += `<div class="debug-section team2"><h4>${team2CivSafe} ${team2NameSafe}</h4>`;
-    html += `<h5 style="color:var(--text-muted);margin-bottom:8px;font-size:0.7rem">&rarr; vs ${team1CivSafe} ${team1NameSafe}</h5>`;
-    html +=
-        buildFormula(
-            unit2,
-            unit1,
-            dmg2to1,
-            sim.team2Stats,
-            sim.team1Stats,
-        ) + `</div>`;
-
-    document.getElementById("debugContent").innerHTML = html;
-}
-
 // ===== INITIALIZATION =====
 let pageSim = null;
 let currentBattle = null;
@@ -1268,66 +574,14 @@ function setPlaybackSpeed(index) {
     if (button) button.setAttribute("aria-label", `Playback speed ${speed}x`);
 }
 
-function buildBattlePayload(seed) {
-    const s1 = teamState[1];
-    const s2 = teamState[2];
-    const armyMode = document.querySelector(
-        'input[name="armyMode"]:checked',
-    )?.value || "resources";
-    const teams = [
-        { civ: s1.civ, unit_slug: s1.unitSlug, age: s1.age },
-        { civ: s2.civ, unit_slug: s2.unitSlug, age: s2.age },
-    ];
-    let army;
-    if (armyMode === "resources") {
-        const budgets = ["team1Resources", "team2Resources"].map((id) => {
-            const input = document.getElementById(id);
-            const value = Math.max(1, parseInt(input.value, 10) || 5000);
-            input.value = String(value);
-            return value;
-        });
-        army = {
-            mode: "resource_budgets",
-            budgets,
-            weights: { food: 1, wood: 1, gold: 1 },
-            cap: 27,
-        };
-    } else {
-        const counts = ["team1Count", "team2Count"].map((id) => {
-            const input = document.getElementById(id);
-            const value = Math.min(27, Math.max(1,
-                parseInt(input.value, 10) || 27));
-            input.value = String(value);
-            return value;
-        });
-        teams[0].count = counts[0];
-        teams[1].count = counts[1];
-        army = { mode: "explicit", cap: 27 };
-    }
-    return {
-        teams,
-        army,
-        engagement_mode: document.getElementById("rangedBuffer")?.checked
-            ? "ranged_buffer"
-            : "direct",
-        seed,
-    };
-}
-
-async function fetchBattleConfig(payload) {
-    const response = await fetch("/api/v3/battle-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-    });
-    const config = await response.json();
-    if (!response.ok || config.error) {
-        throw new Error(config.detail || config.error || `HTTP ${response.status}`);
-    }
-    return config;
-}
+const battleRequest = new LatestRequest();
+const previewRequest = new LatestRequest();
+const civRequests = {1: new LatestRequest(), 2: new LatestRequest()};
+const buildBattlePayload = seed => readBattleOptions(teamState, seed);
+const fetchBattleConfig = (payload, signal) => requestJson("/api/v3/battle-config", {method:"POST", body:payload, signal});
 
 function cancelMatchupPreview() {
+    previewRequest.cancel();
     matchupPreviewSequence += 1;
     if (matchupPreviewTimer !== null) {
         clearTimeout(matchupPreviewTimer);
@@ -1349,17 +603,25 @@ function scheduleMatchupPreview(delay = 100) {
     matchupPreviewTimer = setTimeout(async () => {
         matchupPreviewTimer = null;
         try {
-            const config = await fetchBattleConfig(buildBattlePayload(0));
+            const ticket = previewRequest.begin();
+            const config = await fetchBattleConfig(buildBattlePayload(0), ticket.signal);
+            if (!ticket.isCurrent()) return;
             if (sequence !== matchupPreviewSequence || pageSim?.config) return;
             renderMatchupCards(config);
         } catch (error) {
-            if (sequence !== matchupPreviewSequence) return;
+            if (sequence !== matchupPreviewSequence || error.name === "AbortError") return;
             console.error("Could not load matchup statistics", error);
             currentBattle = null;
             setSimPhase(false);
         }
     }, delay);
 }
+
+const {updateStats, renderMatchupCards} = createStatisticsView({
+    getBattle: () => currentBattle, setBattle: value => {currentBattle = value;},
+    getPageSim: () => pageSim, unitImages, unitIsSprite, setSimPhase,
+});
+const PageSim = createPlaybackController({updateStats, syncPlayerControls, updateBattleWinner});
 
 document.addEventListener("DOMContentLoaded", async () => {
     const canvas = document.getElementById("battleCanvas");
@@ -1370,9 +632,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.simulation = pageSim;
 
     try {
-        const response = await fetch("/api/v3/arena-preview");
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        pageSim.initializeArena(await response.json());
+        pageSim.initializeArena(await requestJson("/api/v3/arena-preview"));
     } catch (error) {
         console.error("Could not load the Golden Arena preview", error);
         pageSim.setStatus("Could not load the arena preview", true);
@@ -1416,10 +676,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
     // Army mode toggle
+    const invalidateBattleOptions = () => {
+        if (battleLoading || pageSim?.config) leaveBattleForRosterEdit();
+    };
     document
         .querySelectorAll('input[name="armyMode"]')
         .forEach((radio) => {
             radio.addEventListener("change", (e) => {
+                invalidateBattleOptions();
                 const mode = e.target.value;
                 if (mode === "count") {
                     document.getElementById(
@@ -1446,6 +710,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     ["team1Count", "team2Count", "team1Resources", "team2Resources"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.addEventListener("input", () => {
+            invalidateBattleOptions();
             if (id === "team1Count" || id === "team2Count") {
                 const parsed = parseInt(el.value, 10);
                 if (parsed > 27) el.value = "27";
@@ -1457,6 +722,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     ["team1Count", "team2Count"].forEach((id) => {
         document.getElementById(id)?.addEventListener("change", (event) => {
+            invalidateBattleOptions();
             event.target.value = String(Math.min(27, Math.max(1,
                 parseInt(event.target.value, 10) || 27)));
             updateOptionsCurrent();
@@ -1466,6 +732,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     ["team1Resources", "team2Resources"].forEach((id) => {
         document.getElementById(id)?.addEventListener("change", (event) => {
+            invalidateBattleOptions();
             event.target.value = String(Math.max(1,
                 parseInt(event.target.value, 10) || 5000));
             updateOptionsCurrent();
@@ -1473,6 +740,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     });
     document.getElementById("rangedBuffer")?.addEventListener("change", () => {
+        invalidateBattleOptions();
+        refreshArenaPreview();
         scheduleMatchupPreview();
     });
     updateOptionsCurrent();
@@ -1559,6 +828,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function startBattle() {
+    const ticket = battleRequest.begin();
     const s1 = teamState[1],
         s2 = teamState[2];
     if (!s1.unitSlug || !s1.civ || !s2.unitSlug || !s2.civ) {
@@ -1571,11 +841,13 @@ async function startBattle() {
     try {
         cancelMatchupPreview();
         battleLoading = true;
+        pageSim.state = "loading";
         syncPlayerControls();
         document.getElementById("simOptions")?.removeAttribute("open");
 
         const seed = (Math.random() * 2 ** 32) >>> 0;
-        const config = await fetchBattleConfig(buildBattlePayload(seed));
+        const config = await fetchBattleConfig(buildBattlePayload(seed), ticket.signal);
+        if (!ticket.isCurrent()) return;
 
         const assets = {
             2: { img: unitImages[1], sheet: unitSheets[1] },
@@ -1623,7 +895,9 @@ async function startBattle() {
             }
         }
     } catch (error) {
+        if (!ticket.isCurrent() || error.name === "AbortError") return;
         console.error(error);
+        pageSim.state = "failed";
         battleLoading = false;
         pageSim?.setStatus(`Could not start: ${error.message}`, true);
         alert(`Error: ${error.message}`);

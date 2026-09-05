@@ -11,6 +11,7 @@ import json
 import os
 import random
 import sqlite3
+from aoe2x.storage import connect_readonly
 import statistics
 import sys
 
@@ -55,21 +56,21 @@ NAVAL_LINE_SLUGS = {"galleon", "fire", "hulk"}
 
 def _get_db():
     """Reference DB — ref_units, ref_techs_applied, ref_special_effects, etc."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = connect_readonly(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def _get_rankings_derived_db():
     """Hybrid V3 DB used to generate unit rankings and civ power units."""
-    conn = sqlite3.connect(RANKINGS_DERIVED_DB_PATH)
+    conn = connect_readonly(RANKINGS_DERIVED_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def _get_advisor_derived_db():
     """Complete retail DB retained for Matchup Advisor candidate selection."""
-    conn = sqlite3.connect(ADVISOR_DERIVED_DB_PATH)
+    conn = connect_readonly(ADVISOR_DERIVED_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 

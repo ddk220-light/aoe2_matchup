@@ -5,18 +5,23 @@ import test from "node:test";
 import {
   buildSelectionPreviewUnits,
   fittedMapZoom,
+  productionProjectileElevation,
+  productionProjectileScreenBend,
+  productionProjectileStyle,
+  productionProjectileTrailPoints,
   productionSpriteGroundOffset,
   productionUnitBoxSize,
+  productionUnitVisualClass,
+  productionUnitVisualScale,
 } from "../viewer/map-renderer.js";
 
 const websiteCss = await readFile(
   new URL("../../../apps/website/static/css/simulate.css", import.meta.url),
   "utf8",
 );
-const websitePage = await readFile(
-  new URL("../../../apps/website/static/js/simulate.js", import.meta.url),
-  "utf8",
-);
+const websitePage = (await Promise.all([
+  "simulate.js", "battle/playback.js", "battle/statistics.js", "battle/selection.js",
+].map(path => readFile(new URL(`../../../apps/website/static/js/${path}`, import.meta.url), "utf8")))).join("\n");
 const websiteTemplate = await readFile(
   new URL("../../../apps/website/templates/simulate.html", import.meta.url),
   "utf8",
@@ -71,7 +76,25 @@ test("production unit presentation scale supports 90% sprites independently of c
   const normal = productionUnitBoxSize(0.2, 1.01);
   const compact = productionUnitBoxSize(0.2, 1.01, 0.9);
   assert.equal(compact, normal * 0.9);
+  assert.equal(productionUnitBoxSize(0.1, 1.01), productionUnitBoxSize(0.6, 1.01));
   assert.match(websitePage, /unitScale:\s*0\.9/);
+});
+
+
+test("production unit visuals scale by semantic body class", () => {
+  assert.equal(productionUnitVisualClass({ slug: "elite_skirmisher" }), "foot");
+  assert.equal(productionUnitVisualClass({ slug: "hand_cannoneer" }), "foot");
+  assert.equal(productionUnitVisualClass({ slug: "elite_fire_lancer" }), "foot");
+  assert.equal(productionUnitVisualClass({ slug: "paladin" }), "mounted");
+  assert.equal(productionUnitVisualClass({ slug: "heavy_cavalry_archer" }), "mounted");
+  assert.equal(productionUnitVisualClass({ slug: "heavy_scorpion" }), "siege");
+  assert.equal(productionUnitVisualClass({ slug: "elite_battle_elephant" }), "elephant");
+  assert.equal(productionUnitVisualClass({ slug: "elite_ballista_elephant" }), "elephant");
+  assert.ok(productionUnitVisualScale({ slug: "paladin" }) > 1);
+  assert.ok(
+    productionUnitVisualScale({ slug: "elite_battle_elephant" })
+      > productionUnitVisualScale({ slug: "paladin" }),
+  );
 });
 
 
@@ -87,7 +110,7 @@ test("mobile picker and battle share the same portrait canvas camera", () => {
 test("desktop battle shell fits below navigation and centers equal transport buttons", () => {
   assert.match(
     websiteCss,
-    /@media \(min-width: 1025px\) and \(min-height: 680px\)[\s\S]*height: calc\(100svh - var\(--nav-h, 56px\) - 16px\)/,
+    /@media \(min-width: 1025px\) and \(min-height: 560px\)[\s\S]*height: calc\(100svh - var\(--nav-h, 56px\) - 16px\)/,
   );
   assert.match(websiteCss, /\.player-button \{[\s\S]*width: 50px;[\s\S]*height: 50px;/);
   assert.match(websiteCss, /\.transport-controls \{[\s\S]*justify-content: center;/);
@@ -112,7 +135,7 @@ test("roster changes remain available during active playback", () => {
   assert.doesNotMatch(websiteCss, /\.battle-running \.change-btn\s*\{[^}]*display:\s*none/);
   assert.match(
     websitePage,
-    /function leaveBattleForRosterEdit\(\)[\s\S]*pageSim\.reset\(\);[\s\S]*setSimPhase\(false\);/,
+    /function leaveBattleForRosterEdit\(\)[\s\S]*pageSim\?\.reset\(\);[\s\S]*setSimPhase\(false\);/,
   );
 });
 
@@ -139,6 +162,93 @@ test("attack sprites sit lower than idle sprites to meet their ground shadow", (
   assert.ok(
     productionSpriteGroundOffset(64, true) > productionSpriteGroundOffset(64, false),
   );
+});
+
+
+test("production arrows arc for foot and cavalry archer families only", () => {
+  assert.equal(productionProjectileStyle({ slug: "arbalester" }).flight, "arc");
+  assert.equal(productionProjectileStyle({ slug: "heavy_cav_archer" }).flight, "arc");
+  assert.equal(productionProjectileStyle({ slug: "elite_chu_ko_nu_chinese" }).flight, "arc");
+  assert.equal(productionProjectileStyle({ slug: "elite_throwing_axeman" }).flight, "linear");
+  assert.equal(productionProjectileStyle({ slug: "elite_mameluke" }).flight, "linear");
+  assert.equal(productionProjectileStyle({ slug: "hand_cannoneer" }).flight, "linear");
+});
+
+
+test("firearm projectiles use compact bullets instead of trailing shot strokes", () => {
+  for (const slug of [
+    "hand_cannoneer",
+    "elite_janissary",
+    "elite_organ_gun",
+    "elite_conquistador",
+  ]) {
+    const style = productionProjectileStyle({ slug });
+    assert.equal(style.kind, "bullet");
+    assert.equal(style.flight, "linear");
+    assert.ok(style.width < 1.5);
+  }
+  assert.equal(productionProjectileStyle({ slug: "bombard_cannon" }).kind, "shot");
+});
+
+
+test("production arrow curve preserves launch and impact while peaking mid-flight", () => {
+  const projectile = {
+    start: { x: 2, y: 4 },
+    end: { x: 10, y: 4 },
+    style: productionProjectileStyle({ slug: "arbalester" }),
+  };
+  const launch = productionProjectileElevation(projectile, 0);
+  const middle = productionProjectileElevation(projectile, 0.5);
+  const impact = productionProjectileElevation(projectile, 1);
+
+  assert.equal(launch, 0.18);
+  assert.equal(impact, 0.18);
+  assert.ok(middle > launch + 2);
+  assert.equal(
+    productionProjectileElevation(projectile, 0.25),
+    productionProjectileElevation(projectile, 0.75),
+  );
+});
+
+
+test("production arrow trail follows only the traveled arc", () => {
+  const projectile = {
+    start: { x: 2, y: 4 },
+    end: { x: 10, y: 4 },
+    style: productionProjectileStyle({ slug: "arbalester" }),
+  };
+  const trail = productionProjectileTrailPoints(projectile, 0.8, 7);
+
+  assert.equal(trail.length, 7);
+  assert.equal(trail[0].progress, 0);
+  assert.ok(Math.abs(trail.at(-1).progress - 0.8) < 1e-9);
+  assert.ok(trail.every((point) => point.progress <= 0.8 + Number.EPSILON));
+  assert.ok(trail.some((point) => point.elevation > trail.at(-1).elevation));
+});
+
+
+test("production arrow perspective bend preserves endpoints and bows mid-flight", () => {
+  const projectile = { id: "arrow:42" };
+  assert.equal(productionProjectileScreenBend(projectile, 0), 0);
+  assert.equal(productionProjectileScreenBend(projectile, 1), 0);
+  assert.equal(Math.abs(productionProjectileScreenBend(projectile, 0.5)), 1);
+  assert.equal(
+    productionProjectileScreenBend(projectile, 0.25),
+    productionProjectileScreenBend(projectile, 0.75),
+  );
+});
+
+
+test("non-arrow projectile families retain a flat visual trajectory", () => {
+  const projectile = {
+    start: { x: 2, y: 4 },
+    end: { x: 10, y: 4 },
+    style: productionProjectileStyle({ slug: "elite_throwing_axeman" }),
+  };
+
+  assert.equal(productionProjectileElevation(projectile, 0), 0.18);
+  assert.equal(productionProjectileElevation(projectile, 0.5), 0.18);
+  assert.equal(productionProjectileElevation(projectile, 1), 0.18);
 });
 
 

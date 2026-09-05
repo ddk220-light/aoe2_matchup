@@ -26,6 +26,10 @@ jobs:
       - name: Install Python deps
         run: pip install -r requirements-ci.txt
 
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
       - name: Website Python contract
         run: |
           pytest -q \
@@ -37,14 +41,20 @@ jobs:
             --ignore=tests/test_simulations.py \
             --ignore=tests/test_standard_units_import.py
 
-      - uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-
-      - name: Browser engine mechanics
+      - name: Retained legacy engine contracts
         run: node --test tests/js/engine/*.test.mjs
+
+      - name: Active V3 mechanics and production presentation
+        run: |
+          node --test \
+            aoe2x/js_simulation/tests/arena-physics-map.test.mjs \
+            aoe2x/js_simulation/tests/mechanics-schema.test.mjs \
+            aoe2x/js_simulation/tests/bolt-passthrough.test.mjs \
+            aoe2x/js_simulation/tests/conditional-damage-reduction.test.mjs \
+            aoe2x/js_simulation/tests/production-mobile-presentation.test.mjs
 
       - name: Frontend integration tests
         run: |
           node tests/test_frontend_projectile_miss.js
           node tests/test_sim_params.js
+          node --test tests/frontend_architecture.test.mjs tests/rankings_score_method.test.cjs tests/rankings_v3_model.test.cjs

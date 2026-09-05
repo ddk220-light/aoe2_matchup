@@ -65,8 +65,35 @@ from aoe2x.assets import config as _assets_cfg
 from aoe2x.assets import catalog as _assets_catalog
 
 
+from apps.website.services.catalog import site_catalog, grouped_units
+from apps.website.services.release import release_metadata
+from apps.website.services.seo import content_lastmod, sitemap_document, indexing_enabled
+from apps.website.services.civilizations import civilization_analysis, civilization_overview
+from aoe2x.rank.methodology import load_published_methods
+from apps.website.services.database import connect_readonly
+from apps.website.services.mechanics import _find_ref_unit, _load_v3_mechanics, _load_v3_auxiliary_mechanics
+from apps.website.services.rankings import get_unit_line_data as ranking_data
+from apps.website.routes.civilizations import create_blueprint as civilization_blueprint
+from apps.website.routes.battles import create_blueprint as battle_blueprint
+
 app = Flask(__name__)
 app.json.sort_keys = False
+app.config['SEARCH_INDEXING'] = os.environ.get('SEARCH_INDEXING')
+
+def allow_indexing():
+    return indexing_enabled(app.config, request.host, SITE_URL, os.environ.get('RAILWAY_ENVIRONMENT_NAME', ''))
+
+@app.after_request
+def crawler_headers(response):
+    if not allow_indexing():
+        response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
+
+
+@app.context_processor
+def inject_public_catalog():
+    return {"site_catalog": site_catalog(REF_DB_PATH), "ranking_methods": load_published_methods(_GOLDEN_DIR)}
+
 # Reject unexpectedly large request bodies before Flask buffers them.
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
@@ -105,6 +132,7 @@ def inject_site_url():
     Unset -> None so base.html simply omits the meta tag."""
     return {
         "site_url": SITE_URL,
+        "search_indexing": allow_indexing(),
         "canonical_url": None,
         "google_site_verification": os.environ.get("GOOGLE_SITE_VERIFICATION") or None,
         "bing_site_verification": os.environ.get("BING_SITE_VERIFICATION") or None,
@@ -143,21 +171,21 @@ AGES = {
 
 def get_db():
     """Get a database connection with row factory (legacy, for non-migrated endpoints)."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = connect_readonly(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def get_ref_db():
     """Get a connection to the reference/audit database."""
-    conn = sqlite3.connect(REF_DB_PATH)
+    conn = connect_readonly(REF_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def get_rankings_derived_db():
     """Get the staged V3 rankings database, including retained siege/naval rows."""
-    conn = sqlite3.connect(RANKINGS_DERIVED_DB_PATH)
+    conn = connect_readonly(RANKINGS_DERIVED_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -305,7 +333,7 @@ def render_patch_summary(md, unit_tables=None):
 
 
 def _patches_conn():
-    conn = sqlite3.connect(PATCHES_DB_PATH)
+    conn = connect_readonly(PATCHES_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -355,7 +383,7 @@ def _ref_unit_name(civ, slug):
     global _REF_UNIT_NAMES
     if _REF_UNIT_NAMES is None:
         m = {}
-        conn = sqlite3.connect(REF_DB_PATH)
+        conn = connect_readonly(REF_DB_PATH)
         for civ_name, unit_slug, unit_name, age in conn.execute(
             "SELECT civ_name, unit_slug, unit_name, age FROM ref_units"):
             key = (civ_name, unit_slug)
@@ -696,48 +724,6 @@ def unit_line_page(line_url):
                            active_nav="rankings")
 
 
-@app.route("/civilizations")
-def civ_view():
-    """Civilization analysis page — shows power units, strengths, and strategic identity."""
-    civs = _get_ref_civs()
-    return render_template(
-        "civ_overview.html",
-        civs=civs,
-        civ_overview=get_civ_overview_data(),
-        active_nav="civ_select",
-    )
-
-
-@app.route("/civilizations/<civ_name>")
-def civ_detail(civ_name):
-    """Per-civ landing page ("aoe2 <civ>" searches) — SSR identity + power
-    units, with the interactive analyzer preselected. Canonical is lowercase."""
-    slug = civ_name.lower()
-    if civ_name != slug:
-        return redirect(f"/civilizations/{slug}", code=301)
-    civ = get_civ_detail(slug)
-    if civ is None:
-        abort(404)
-    first_sentence = (civ["description"].split(". ")[0].strip().rstrip(".") + ".") \
-        if civ["description"] else ""
-    meta_desc = (f"{civ['name']} in Age of Empires II — strongest fully-upgraded "
-                 f"units by role, tiers, and strategy. {first_sentence}").strip()[:250]
-    return render_template("civ_detail.html", civ=civ, civs=_get_ref_civs(),
-                           meta_desc=meta_desc, active_nav="civ_select")
-
-
-@app.route("/civ")
-def civ_redirect():
-    """Backward compat redirect."""
-    return redirect("/civilizations", code=301)
-
-
-@app.route("/civ/<civ_name>")
-def civ_detail_redirect(civ_name):
-    """Backward compat redirect."""
-    return redirect(f"/civilizations/{civ_name.lower()}", code=301)
-
-
 @app.route("/simulate")
 def simulate_redirect():
     """Redirect old /simulate URL to homepage."""
@@ -856,93 +842,36 @@ def _matchup_seed_pairs(limit_per_side=200):
 
 @lru_cache(maxsize=1)
 def _data_lastmod():
-    """ISO date of the newest committed data artifact.
-
-    Used as the sitemap <lastmod> so it reflects real data builds rather than
-    the deploy day — a stable signal that only moves when the data actually
-    changes. Falls back to today if no artifact is present (fresh checkout)."""
-    candidates = [
-        os.path.join(str(_GOLDEN_DIR), "derived_data_v3.db"),
-        os.path.join(str(_GOLDEN_DIR), "derived_data.db"),
-        os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db"),
-    ]
-    mtimes = [os.path.getmtime(p) for p in candidates if os.path.exists(p)]
-    if not mtimes:
-        return date.today().isoformat()
-    return date.fromtimestamp(max(mtimes)).isoformat()
+    return content_lastmod(_GOLDEN_DIR)
 
 
-@app.route("/sitemap.xml")
+@app.route('/sitemap.xml')
 def sitemap_xml():
     lastmod = _data_lastmod()
-
-    # (path, changefreq, priority) for the hand-curated hub pages.
-    hub = [
-        ("/", "weekly", "1.0"),
-        ("/matchup-advisor", "weekly", "0.9"),
-        ("/units", "weekly", "0.9"),
-        ("/civilizations", "weekly", "0.9"),
-        ("/matchups", "weekly", "0.6"),
-        ("/about", "monthly", "0.5"),
-        ("/patches", "weekly", "0.7"),
-    ]
-    def _url(path, changefreq, priority):
-        return (f"<url><loc>{SITE_URL}{path}</loc>"
-                f"<lastmod>{lastmod}</lastmod>"
-                f"<changefreq>{changefreq}</changefreq>"
-                f"<priority>{priority}</priority></url>")
-
-    xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>',
-                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for path, cf, pr in hub:
-        xml_parts.append(_url(path, cf, pr))
-
-    # Per-civ landing pages ("aoe2 <civ>" searches).
-    for _c in _get_ref_civs():
-        xml_parts.append(_url(f"/civilizations/{_c.lower()}", "weekly", "0.7"))
-
-    # Per-unit-line landing pages ("aoe2 fire lancer", "aoe2 paladin", ...).
-    for _p in _UNIT_LINE_PAGES:
-        xml_parts.append(_url(f"/units/{_p['url']}", "weekly", "0.7"))
-
-    # Curated popular matchups — higher priority than the long-tail pairs.
-    for _label, _path in _popular_matchup_links():
-        xml_parts.append(_url(_path, "monthly", "0.6"))
-
-    # Per-matchup landing pages — every unique-unit pair. These are long-tail
-    # SEO targets ("X vs Y who wins"), so a lower priority than the hubs.
-    for civ_a, slug_a, civ_b, slug_b in _matchup_seed_pairs():
-        xml_parts.append(_url(f"/vs/{civ_a}/{slug_a}/{civ_b}/{slug_b}", "monthly", "0.4"))
-
-    # Per-patch landing pages + per-unit patch pages, each dated by release.
+    entries = [(path, lastmod) for path in ('/', '/matchup-advisor', '/units', '/civilizations', '/matchups', '/about', '/patches')]
+    entries.extend((f'/civilizations/{name.lower()}', lastmod) for name in _get_ref_civs())
+    entries.extend((f"/units/{page['url']}", lastmod) for page in _UNIT_LINE_PAGES)
+    conn = get_ref_db()
+    try:
+        available = {(row[0], row[1]) for row in conn.execute('SELECT civ_name, unit_slug FROM ref_units')}
+    finally:
+        conn.close()
+    for _, path in _popular_matchup_links():
+        _, _, ca, ua, cb, ub = path.split('/')
+        if (ca, ua) in available and (cb, ub) in available:
+            entries.append((path, lastmod))
+    entries.extend((f'/vs/{ca}/{ua}/{cb}/{ub}', lastmod) for ca, ua, cb, ub in _matchup_seed_pairs()
+                   if (ca, ua) in available and (cb, ub) in available)
     if os.path.exists(PATCHES_DB_PATH):
-        pconn = _patches_conn()
-        prows = pconn.execute(
-            "SELECT id, build_number, release_date FROM patches").fetchall()
-        for pr in prows:
-            rd = pr["release_date"] or lastmod
-            xml_parts.append(
-                f"<url><loc>{SITE_URL}/patches/{pr['build_number']}</loc>"
-                f"<lastmod>{rd}</lastmod><changefreq>monthly</changefreq>"
-                f"<priority>0.6</priority></url>")
-            seen = set()
-            for ur in pconn.execute(
-                "SELECT DISTINCT civ_name, unit_slug FROM patch_unit_changes WHERE patch_id=? "
-                "UNION SELECT DISTINCT my_civ, my_unit_slug FROM patch_matchup_changes WHERE patch_id=?",
-                (pr["id"], pr["id"]),
-            ).fetchall():
-                key = (ur[0], ur[1])
-                if key in seen:
-                    continue
-                seen.add(key)
-                xml_parts.append(
-                    f"<url><loc>{SITE_URL}/patches/{pr['build_number']}/{ur[0]}/{ur[1]}</loc>"
-                    f"<lastmod>{rd}</lastmod><changefreq>monthly</changefreq>"
-                    f"<priority>0.3</priority></url>")
-        pconn.close()
-
-    xml_parts.append("</urlset>")
-    return Response("\n".join(xml_parts), mimetype="application/xml")
+        conn = _patches_conn()
+        try:
+            for patch in conn.execute('SELECT id, build_number, release_date FROM patches'):
+                entries.append((f"/patches/{patch['build_number']}", patch['release_date']))
+                rows = conn.execute('SELECT civ_name, unit_slug FROM patch_unit_changes WHERE patch_id=? UNION SELECT my_civ, my_unit_slug FROM patch_matchup_changes WHERE patch_id=?', (patch['id'], patch['id']))
+                entries.extend((f"/patches/{patch['build_number']}/{row[0]}/{row[1]}", patch['release_date']) for row in rows)
+        finally:
+            conn.close()
+    return Response(sitemap_document(SITE_URL, entries), mimetype='application/xml')
 
 
 def _load_unit_for_landing(civ_name, unit_slug):
@@ -1092,6 +1021,11 @@ def _catalog_payload():
         return catalog_pg.load_catalog(build, "")
     base = _assets_cfg.ASSET_ROUTE_PREFIX if _assets_cfg.assets_enabled() else ""
     return _assets_catalog.synthesize_local(asset_base=base, build=str(build))
+
+
+@app.get('/api/release')
+def api_release():
+    return jsonify(release_metadata(_REPO_ROOT, _GOLDEN_DIR))
 
 
 @app.route("/api/assets/catalog")
@@ -1305,101 +1239,6 @@ def api_ref_civ(civ_name):
 # build_combat_dict_from_ref() is imported from combat_unit_loader
 
 
-def _find_ref_unit(rc, civ_name, unit_slug, age):
-    rc.execute(
-        "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=? AND age=?",
-        (civ_name, unit_slug, age),
-    )
-    row = rc.fetchone()
-    if row is None:
-        rc.execute(
-            "SELECT * FROM ref_units WHERE civ_name=? AND unit_slug=?",
-            (civ_name, unit_slug),
-        )
-        row = rc.fetchone()
-    return row
-
-
-def _load_v3_mechanics(rc, ref_unit_id, requested_mode=None):
-    modes = rc.execute(
-        """
-        SELECT mode, is_default, schema_version, mechanics_json,
-               mechanics_hash, source_build
-        FROM ref_unit_mechanics
-        WHERE ref_unit_id=?
-        ORDER BY is_default DESC, mode
-        """,
-        (ref_unit_id,),
-    ).fetchall()
-    if not modes:
-        raise LookupError(f"V3 mechanics missing for ref_unit_id={ref_unit_id}")
-    selected = next(
-        (
-            row for row in modes
-            if row["mode"] == requested_mode
-        ),
-        None,
-    ) if requested_mode else next((row for row in modes if row["is_default"]), None)
-    if selected is None:
-        available = ", ".join(row["mode"] for row in modes)
-        raise ValueError(f"unknown mechanics mode {requested_mode!r}; available: {available}")
-    if selected["schema_version"] != MECHANICS_SCHEMA_VERSION:
-        raise RuntimeError(
-            f"mechanics schema {selected['schema_version']} is incompatible with "
-            f"server schema {MECHANICS_SCHEMA_VERSION}"
-        )
-    try:
-        mechanics = json.loads(selected["mechanics_json"])
-        validate_runtime_profile(mechanics)
-    except (TypeError, ValueError) as exc:
-        raise RuntimeError(
-            f"invalid mechanics payload for ref_unit_id={ref_unit_id}"
-        ) from exc
-    actual_hash = calculate_mechanics_hash(mechanics)
-    if actual_hash != selected["mechanics_hash"]:
-        raise RuntimeError(f"mechanics hash mismatch for ref_unit_id={ref_unit_id}")
-    return {
-        "mechanics": mechanics,
-        "mechanics_hash": actual_hash,
-        "mechanics_schema_version": selected["schema_version"],
-        "mechanics_source_build": selected["source_build"],
-        "mechanics_mode": selected["mode"],
-        "mechanics_modes": [row["mode"] for row in modes],
-    }
-
-
-def _load_v3_auxiliary_mechanics(rc, actor_slug, mode="default"):
-    row = rc.execute(
-        """
-        SELECT schema_version, mechanics_json, mechanics_hash, source_build
-        FROM ref_auxiliary_mechanics
-        WHERE actor_slug=? AND mode=?
-        """,
-        (actor_slug, mode),
-    ).fetchone()
-    if row is None:
-        raise LookupError(f"V3 auxiliary mechanics missing for {actor_slug}:{mode}")
-    if row["schema_version"] != MECHANICS_SCHEMA_VERSION:
-        raise RuntimeError(
-            f"auxiliary mechanics schema {row['schema_version']} is incompatible"
-        )
-    try:
-        mechanics = json.loads(row["mechanics_json"])
-        validate_runtime_profile(mechanics)
-    except (TypeError, ValueError) as exc:
-        raise RuntimeError(
-            f"invalid auxiliary mechanics payload for {actor_slug}:{mode}"
-        ) from exc
-    actual_hash = calculate_mechanics_hash(mechanics)
-    if actual_hash != row["mechanics_hash"]:
-        raise RuntimeError(f"auxiliary mechanics hash mismatch for {actor_slug}:{mode}")
-    return {
-        "mechanics": mechanics,
-        "mechanics_hash": actual_hash,
-        "mechanics_source_build": row["source_build"],
-    }
-
-
 def _combat_response(rc, row, requested_mode=None, include_stat_chain=True):
     result = build_combat_dict_from_ref(row)
     if include_stat_chain:
@@ -1492,574 +1331,8 @@ def api_ref_combat_unit(civ_name, unit_slug):
     return response.make_conditional(request)
 
 
-_V3_FAMILY_CAPACITIES = {
-    # The public Golden Arena supplies 27 authored placement cells on both
-    # sides for every visual family. Internal calibration tables may be smaller,
-    # but public fights pass these explicit scenario placements to the engine.
-    "rvr": (27, 27),
-    "kite": (27, 27),
-    "siege": (27, 27),
-    "waves": (27, 27),
-}
-
-
-def _v3_engine_family(class2, class3):
-    ranged = {"mobile_ranged", "siege_ranged"}
-    if class2 in ranged and class3 in ranged:
-        return "rvr"
-    if "mobile_ranged" in (class2, class3):
-        return "kite"
-    if "siege_ranged" in (class2, class3):
-        return "siege"
-    return "waves"
-
-
-def _v3_visual_family(class2, class3):
-    ranged = {"mobile_ranged", "siege_ranged"}
-    if class2 not in ranged and class3 not in ranged:
-        return "melee_vs_melee"
-    if class2 in ranged and class3 in ranged:
-        return "ranged_vs_ranged"
-    return "ranged_vs_melee" if class2 in ranged else "melee_vs_ranged"
-
-
-def _v3_public_capacities(class2, class3, family):
-    inner2, inner3 = _V3_FAMILY_CAPACITIES[family]
-    role = {"kite": "mobile_ranged", "siege": "siege_ranged"}.get(family)
-    normalized = role is not None and class3 == role
-    return ((inner3, inner2) if normalized else (inner2, inner3)), normalized
-
-
-def _positive_number(value, label, *, maximum=None):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
-        raise ValueError(f"{label} must be a positive number")
-    if maximum is not None and value > maximum:
-        raise ValueError(f"{label} must be <= {maximum}")
-    return float(value)
-
-
-def _nonnegative_number(value, label, *, maximum=None):
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
-        raise ValueError(f"{label} must be a nonnegative number")
-    if maximum is not None and value > maximum:
-        raise ValueError(f"{label} must be <= {maximum}")
-    return float(value)
-
-
-def _bounded_integer(value, label, *, minimum, maximum):
-    if isinstance(value, bool):
-        raise ValueError(f"{label} must be an integer")
-    try:
-        integer = int(value)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"{label} must be an integer") from exc
-    if integer != value or integer < minimum or integer > maximum:
-        raise ValueError(f"{label} must be between {minimum} and {maximum}")
-    return integer
-
-
-def _v3_counts(army, teams, capacities):
-    if not isinstance(army, dict):
-        raise ValueError("army must be an object")
-    mode = army.get("mode", "equal_resources")
-    cap = _bounded_integer(army.get("cap", 27), "army.cap", minimum=1, maximum=27)
-    limits = (min(cap, capacities[0]), min(cap, capacities[1]))
-    if mode == "explicit":
-        counts = tuple(
-            _bounded_integer(
-                team.get("count"), f"team {index} count", minimum=1, maximum=limit
-            )
-            for index, (team, limit) in enumerate(zip(teams, limits), 1)
-        )
-    elif mode == "equal_count":
-        count = _bounded_integer(
-            army.get("count", 20), "army.count", minimum=1, maximum=min(limits)
-        )
-        counts = (count, count)
-    elif mode in {"equal_resources", "resource_budgets"}:
-        weights = army.get("weights", {})
-        if not isinstance(weights, dict):
-            raise ValueError("army.weights must be an object")
-        wf = _nonnegative_number(weights.get("food", 1), "food weight", maximum=10)
-        ww = _nonnegative_number(weights.get("wood", 1), "wood weight", maximum=10)
-        wg = _nonnegative_number(weights.get("gold", 1), "gold weight", maximum=10)
-        if wf + ww + wg <= 0:
-            raise ValueError("at least one resource weight must be positive")
-        costs = []
-        for team in teams:
-            cost = team["mechanics"]["cost"]
-            costs.append(cost["food"] * wf + cost["wood"] * ww + cost["gold"] * wg)
-        if costs[0] <= 0 or costs[1] <= 0:
-            raise ValueError("selected unit has zero weighted resource cost")
-        if mode == "equal_resources":
-            budget = _positive_number(
-                army.get("budget", 3000), "army.budget", maximum=20000
-            )
-            cheap = 0 if costs[0] <= costs[1] else 1
-            dear = 1 - cheap
-            counts = [0, 0]
-            counts[cheap] = min(limits[cheap], int(budget // costs[cheap]))
-            counts[dear] = min(
-                limits[dear],
-                max(1, int((counts[cheap] * costs[cheap]) // costs[dear])),
-            )
-            counts = tuple(counts)
-        else:
-            budgets = army.get("budgets")
-            if not isinstance(budgets, list) or len(budgets) != 2:
-                raise ValueError("army.budgets must contain Team A and Team B budgets")
-            budgets = tuple(
-                _positive_number(value, f"team {index} budget")
-                for index, value in enumerate(budgets, 1)
-            )
-            # Resource-based armies preserve the requested Team A : Team B
-            # spending ratio. If either side would exceed the scenario's 27-unit
-            # capacity, scale both theoretical counts by the same factor before
-            # flooring. Equal budgets therefore retain the established behavior:
-            # the cheaper army fills to 27 and the dearer army matches its spend.
-            theoretical = tuple(
-                budget / cost for budget, cost in zip(budgets, costs)
-            )
-            scale = min(
-                1.0,
-                *(limit / count for limit, count in zip(limits, theoretical)),
-            )
-            counts = tuple(
-                min(limit, max(1, int(count * scale)))
-                for limit, count in zip(limits, theoretical)
-            )
-    else:
-        raise ValueError(
-            "army.mode must be explicit, equal_count, equal_resources, or resource_budgets"
-        )
-    for index, (count, limit) in enumerate(zip(counts, limits), 1):
-        if count < 1 or count > limit:
-            raise ValueError(f"team {index} count must be between 1 and {limit}")
-    return counts
-
-
-@app.get("/api/v3/arena-preview")
-def api_v3_arena_preview():
-    """Golden Arena geometry for the empty picker and selection previews."""
-    return jsonify(build_arena_preview_payload())
-
-
-@app.post("/api/v3/battle-config")
-def api_v3_battle_config():
-    document = request.get_json(silent=True)
-    if not isinstance(document, dict):
-        return jsonify({"error": "JSON object required"}), 400
-    selections = document.get("teams")
-    if not isinstance(selections, list) or len(selections) != 2:
-        return jsonify({"error": "teams must contain exactly two selections"}), 400
-    connection = get_ref_db()
-    cursor = connection.cursor()
-    teams = []
-    try:
-        for selection in selections:
-            if not isinstance(selection, dict):
-                raise ValueError("each team selection must be an object")
-            civ = selection.get("civ")
-            slug = selection.get("unit_slug")
-            age = selection.get("age", "Imperial")
-            if _validate_civ_name(civ) is not None:
-                raise ValueError(f"unknown civilization {civ!r}")
-            if _validate_age(age) is not None:
-                raise ValueError(f"invalid age {age!r}")
-            row = _find_ref_unit(cursor, civ, slug, age)
-            if row is None:
-                raise ValueError(f"unit {slug!r} is unavailable for {civ}")
-            combat = _combat_response(
-                cursor, row, selection.get("mode"), include_stat_chain=False
-            )
-            teams.append({
-                "civ": civ,
-                "unit_slug": slug,
-                "unit_name": row["unit_name"],
-                "mode": combat["mechanics_mode"],
-                "mechanics_hash": combat["mechanics_hash"],
-                "mechanics": combat["mechanics"],
-                "count": selection.get("count"),
-            })
-        classes = (teams[0]["mechanics"]["behavior_class"], teams[1]["mechanics"]["behavior_class"])
-        engine_family = _v3_engine_family(*classes)
-        visual_family = _v3_visual_family(*classes)
-        capacities, normalized = _v3_public_capacities(*classes, engine_family)
-        counts = _v3_counts(document.get("army", {}), teams, capacities)
-        for team, count in zip(teams, counts):
-            team["count"] = count
-        engagement = document.get("engagement_mode", "direct")
-        if engagement not in ("direct", "ranged_buffer"):
-            raise ValueError("engagement_mode must be direct or ranged_buffer")
-        # The public option is intentionally safe to leave on. It only changes
-        # mixed ranged/melee fights; same-family fights continue as direct
-        # engagements instead of rejecting an otherwise valid battle.
-        if engagement == "ranged_buffer" and visual_family not in (
-            "ranged_vs_melee", "melee_vs_ranged"
-        ):
-            engagement = "direct"
-        scenario = build_scenario_payload(
-            visual_family,
-            engine_family=engine_family,
-            include_buffer=engagement == "ranged_buffer",
-        )
-        if engagement == "ranged_buffer":
-            buffer_combat = _load_v3_auxiliary_mechanics(cursor, "scout_cavalry")
-            buffer = scenario["auxiliaryArmiesByOwner"]["4"]
-            buffer.update(
-                {
-                    "unit_name": "Scout Cavalry",
-                    "mechanics_hash": buffer_combat["mechanics_hash"],
-                    "mechanics": buffer_combat["mechanics"],
-                }
-            )
-        seed = document.get("seed")
-        if seed is None:
-            seed = secrets.randbits(32)
-        if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed <= 0xFFFFFFFF:
-            raise ValueError("seed must be a uint32")
-    except (LookupError, RuntimeError, sqlite3.DatabaseError) as exc:
-        connection.close()
-        app.logger.error("V3 mechanics unavailable: %s", exc)
-        return jsonify({"error": "V3 mechanics unavailable", "detail": str(exc)}), 503
-    except ValueError as exc:
-        connection.close()
-        return jsonify({"error": str(exc)}), 400
-    connection.close()
-    return jsonify({
-        "schemaVersion": 1,
-        "engineVersion": "simulationv3",
-        "mechanicsSchemaVersion": MECHANICS_SCHEMA_VERSION,
-        "seed": seed,
-        "engagementMode": engagement,
-        "teams": teams,
-        "scenario": {**scenario, "orientationNormalized": normalized},
-    })
-
-
-INFANTRY_LINE_SLUGS = {"militia", "spear", "shock_infantry"}
-ARCHERY_LINE_SLUGS = {"archer", "skirmisher", "cav_archer", "scorpion", "gunpowder"}
-STABLE_LINE_SLUGS = {"knight", "light_cav", "camel", "steppe_lancer", "elephant"}
-SIEGE_LINE_SLUGS = {"ram", "mangonel", "trebuchet", "bombard_cannon", "cannon_galleon"}
-NAVAL_LINE_SLUGS = {"galleon", "fire", "hulk", "naval"}
-
-FINAL_SCORE_TYPE_BY_LINE = {
-    "militia": "militia_value",
-    "spear": "militia_value",
-    "shock_infantry": "militia_value",
-    "archer": "ranged_effectiveness",
-    "skirmisher": "ranged_effectiveness",
-    "cav_archer": "ranged_effectiveness",
-    "scorpion": "ranged_effectiveness",
-    "gunpowder": "ranged_effectiveness",
-    "knight": "stable_effectiveness",
-    "light_cav": "stable_effectiveness",
-    "camel": "stable_effectiveness",
-    "steppe_lancer": "stable_effectiveness",
-    "elephant": "stable_effectiveness",
-    "ram": "anti_building_score",
-    "trebuchet": "anti_building_score",
-    "bombard_cannon": "anti_building_score",
-    "cannon_galleon": "anti_building_score",
-    "galleon": "naval_effectiveness",
-    "fire": "naval_effectiveness",
-    "hulk": "naval_effectiveness",
-}
-
-_V3_FINAL_SCORE_TYPES = {
-    "militia_value",
-    "ranged_effectiveness",
-    "stable_effectiveness",
-}
-
-_V3_BREAKDOWN_YARDSTICKS = (
-    ("champion", "Champion", "gc_v3_27_vs_champ"),
-    ("paladin", "Paladin", "gc_v3_27_vs_paladin"),
-    ("arbalester", "Arbalester", "gc_v3_27_vs_arb"),
-    ("halberdier", "Halberdier", "at_v3_27_vs_halb"),
-    ("elite_skirmisher", "Elite Skirmisher", "at_v3_27_vs_elite_skirm"),
-    ("hussar", "Hussar", "at_v3_27_vs_hussar"),
-)
-
 def get_unit_line_data(line_slug):
-    """Return comparison data for a unit line across all civs as a plain dict.
-
-    Returns None if line_slug is not a known unit line.
-    Used by api_ref_unit_line and server-side rendering tasks.
-    """
-    if line_slug not in UNIT_LINES:
-        return None
-
-    line = UNIT_LINES[line_slug]
-    ref_conn = get_ref_db()
-    rc = ref_conn.cursor()
-
-    stat_cols = """id, civ_name, unit_name, unit_slug, unit_type, age,
-        final_hp, final_attack, final_melee_armor, final_pierce_armor,
-        final_speed, final_range, final_reload_time,
-        final_cost_food, final_cost_wood, final_cost_gold,
-        upgrade_cost_food, upgrade_cost_wood, upgrade_cost_gold,
-        applied_bonuses_summary"""
-
-    # Determine which sub-lines to fetch (virtual "infantry" or single line)
-    sub_lines = line.get("sub_lines", [line_slug])
-
-    result = {
-        "line_name": line["name"],
-        "building": line["building"],
-        "imperial": [],
-    }
-
-    # Load role scores from DB (keyed by "age|civ_name|unit_slug")
-    _db_role_scores = {}
-    scored_lines = (
-        INFANTRY_LINE_SLUGS
-        | ARCHERY_LINE_SLUGS
-        | STABLE_LINE_SLUGS
-        | SIEGE_LINE_SLUGS
-        | NAVAL_LINE_SLUGS
-    )
-    _score_line_slugs = [s for s in sub_lines if s in scored_lines]
-    if _score_line_slugs:
-        derived_conn = get_rankings_derived_db()
-        placeholders = ",".join("?" for _ in _score_line_slugs)
-        _bld = current_build()
-        if _bld:
-            derived_rows = derived_conn.execute(
-                f"SELECT age, civ_name, unit_slug, score_type, score_value, rank, median_delta "
-                f"FROM battle_scores WHERE line_slug IN ({placeholders}) "
-                f"AND build_number = ?",
-                _score_line_slugs + [_bld],
-            ).fetchall()
-        else:
-            derived_rows = derived_conn.execute(
-                f"SELECT age, civ_name, unit_slug, score_type, score_value, rank, median_delta "
-                f"FROM battle_scores WHERE line_slug IN ({placeholders})",
-                _score_line_slugs,
-            ).fetchall()
-        derived_conn.close()
-
-        for bs_row in derived_rows:
-            uk = f"{bs_row['age'].lower()}|{bs_row['civ_name']}|{bs_row['unit_slug']}"
-            _db_role_scores.setdefault(uk, {})[bs_row["score_type"]] = {
-                "score_value": bs_row["score_value"],
-                "rank": bs_row["rank"],
-                "median_delta": bs_row["median_delta"],
-            }
-
-    def _attach_scores(entry, age_key, sub_slug):
-        """Attach role scores from derived_data.db (battle_scores table).
-
-        Scores are only loaded for the infantry/archery/stable/siege/naval
-        sub-lines, so other lines simply get no score keys — rankings.js
-        treats missing keys as "no score" (same as the old -999 sentinels).
-        """
-        unit_key = f"{age_key}|{entry['civ_name']}|{entry['unit_slug']}"
-        score_rows = _db_role_scores.get(unit_key, {})
-        for score_type, score_row in score_rows.items():
-            entry[score_type] = score_row["score_value"]
-
-        final_type = FINAL_SCORE_TYPE_BY_LINE.get(sub_slug)
-        final_row = score_rows.get(final_type) if final_type else None
-        if final_row:
-            entry["ranking_score_type"] = final_type
-            entry["ranking_score"] = final_row["score_value"]
-            entry["ranking_rank"] = final_row["rank"]
-            entry["ranking_median_delta"] = final_row["median_delta"]
-
-        if final_type in _V3_FINAL_SCORE_TYPES:
-            roles = {
-                label: entry.get(score_type)
-                for label, score_type in (
-                    ("GC", "general_combat"),
-                    ("AC", "anti_cav"),
-                    ("AT", "anti_trash"),
-                    ("AA", "anti_archer"),
-                )
-                if entry.get(score_type) is not None
-            }
-            yardsticks = [
-                {"key": key, "label": label, "score": entry.get(score_type)}
-                for key, label, score_type in _V3_BREAKDOWN_YARDSTICKS
-                if entry.get(score_type) is not None
-            ]
-            if roles or yardsticks:
-                entry["ranking_breakdown"] = {
-                    "roles": roles,
-                    "yardsticks": yardsticks,
-                }
-
-    _ABILITY_LABELS = {
-        "ignores_melee_armor": "Ignores melee armor",
-        "ignores_pierce_armor": "Ignores pierce armor",
-        "trample_percent": "Trample {v:.0%}",
-        "trample_flat_damage": "Trample +{v:.0f} dmg",
-        "trample_radius": None,
-        "bonus_damage_reduction": "{v:.0%} bonus dmg reduction",
-        "damage_reflect_percent": "Reflects {v:.0%} melee dmg",
-        "hp_regen": "{v:.0f} HP/min regen",
-        "attack_bonus_per_kill": "+{v:.0f} atk per kill",
-        "pop_space": "{v} pop space",
-        "armor_strip_per_hit": "Strips {v:.0f} armor/hit",
-        "bleed_dps": "Bleed {v:.0f} dps",
-        "bleed_duration": None,
-        "pass_through_percent": "Pass-through dmg",
-        "pass_through_count": None,
-        "extra_proj_scatter": "Projectiles scatter",
-        "miss_damage_percent": "Missed shots deal {v:.0%} dmg",
-        "hp_per_kill": "+{v:.0f} HP per kill",
-        "hp_per_kill_max": None,
-        "charge_attack_melee": "Charge +{v:.0f} melee",
-        "charge_recharge_time": None,
-        "block_first_melee": "Blocks first melee hit",
-        "hp_transform_threshold": "Transforms at {v:.0%} HP",
-        "dodge_shield_max": "Dodge shield ({v:.0f} charges)",
-        "dodge_shield_recharge": None,
-    }
-
-    # Build reference tech sets per unit_slug across all civs in scope.
-    # For each slug, the set of standard techs that ≥2 civs have applied.
-    # Used for missing-techs computation — a civ "missing" a tech is one in
-    # this reference set that they don't have applied.
-    #
-    # The ≥2 civ filter drops civ-locked work_rate / standard techs that only
-    # one civ ever has (e.g. Goths' "Gothic Perfusion" has tech_type='work_rate'
-    # and only Goths get it — without this filter every other civ's militia
-    # line would falsely show "Missing: Gothic Perfusion").
-    _per_slug_civ_techs: dict[tuple[str, str], list[tuple[str, str]]] = {}
-    rc.execute("""
-        SELECT ru.civ_name, ru.unit_slug, rta.tech_name, rta.tech_type
-          FROM ref_units ru
-          JOIN ref_techs_applied rta ON rta.ref_unit_id = ru.id
-    """)
-    for r in rc.fetchall():
-        _per_slug_civ_techs.setdefault((r["civ_name"], r["unit_slug"]), []).append(
-            (r["tech_name"], r["tech_type"])
-        )
-    # Count, per (slug, tech), how many civs apply it.
-    _slug_tech_civ_counts: dict[tuple[str, str], int] = {}
-    for (civ, slug), techs in _per_slug_civ_techs.items():
-        standard_techs, _bonus, _eff = parse_techs_and_bonuses(techs, [])
-        for tech in standard_techs:
-            _slug_tech_civ_counts[(slug, tech)] = _slug_tech_civ_counts.get((slug, tech), 0) + 1
-    # Reference set per slug = standard techs applied by ≥2 civs.
-    _reference_techs_by_slug: dict[str, set[str]] = {}
-    for (slug, tech), count in _slug_tech_civ_counts.items():
-        if count >= 2:
-            _reference_techs_by_slug.setdefault(slug, set()).add(tech)
-
-    def _attach_special(entry):
-        rc.execute(
-            "SELECT property_name, property_value FROM ref_special_effects WHERE ref_unit_id=?",
-            (entry["id"],),
-        )
-        parts = []
-        for pname, pval in rc.fetchall():
-            label = _ABILITY_LABELS.get(pname)
-            if label is None:
-                continue
-            try:
-                v = float(pval)
-            except (ValueError, TypeError):
-                continue
-            if v == 0:
-                continue
-            parts.append(label.format(v=v))
-        entry["special_abilities"] = "; ".join(parts) if parts else ""
-
-        # Missing techs: this civ's standard techs vs the per-slug reference.
-        civ_techs = _per_slug_civ_techs.get((entry["civ_name"], entry["unit_slug"]), [])
-        standard_techs, bonus_abilities, _eff = parse_techs_and_bonuses(civ_techs, [])
-        reference = _reference_techs_by_slug.get(entry["unit_slug"], set())
-        entry["missing_techs"] = compute_missing_techs(standard_techs, reference, entry["unit_slug"])
-
-        # Civ bonuses + unique techs as a separate display field. These are stat
-        # boosts (e.g. "+15 HP" via "Skirm Spear +5 HP × 3 ages") and named effects
-        # (e.g. "Garland Wars", "Druzhina") that don't fit ref_special_effects but
-        # belong in the Special cell as the third info line.
-        # De-dupe and drop blatantly internal-looking names (containing 'attr_').
-        seen = set()
-        cleaned = []
-        for name in bonus_abilities:
-            if "attr_" in name:
-                continue
-            if name in seen:
-                continue
-            seen.add(name)
-            cleaned.append(name)
-        entry["civ_bonus_techs"] = cleaned
-
-    # Fetch units for each sub-line
-    for sub_slug in sub_lines:
-        sub_line = UNIT_LINES[sub_slug]
-
-        # Standard units (Imperial only)
-        for age_key, slug_key, slugs_key, db_age in [
-            ("imperial", "imperial_slug", "imperial_slugs", "Imperial"),
-        ]:
-            slugs = sub_line.get(
-                slugs_key, [sub_line.get(slug_key)] if sub_line.get(slug_key) else []
-            )
-            for slug in slugs:
-                rc.execute(
-                    f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
-                    (slug, db_age),
-                )
-                for row in rc.fetchall():
-                    if (row["civ_name"], slug) in CIV_MISSING_UNITS:
-                        continue
-                    entry = dict(row)
-                    entry["is_unique"] = False
-                    entry["line_slug"] = sub_slug
-                    _attach_scores(entry, age_key, sub_slug)
-                    _attach_special(entry)
-                    result[age_key].append(entry)
-
-        # Extra standard units
-        for extra_slug in sub_line.get("extra_imperial_slugs", []):
-            rc.execute(
-                f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND age=? ORDER BY civ_name",
-                (extra_slug, "Imperial"),
-            )
-            for row in rc.fetchall():
-                if (row["civ_name"], extra_slug) in CIV_MISSING_UNITS:
-                    continue
-                entry = dict(row)
-                entry["is_unique"] = False
-                entry["line_slug"] = sub_slug
-                _attach_scores(entry, "imperial", sub_slug)
-                _attach_special(entry)
-                result["imperial"].append(entry)
-
-        # Unique units (value may be a single (castle, imperial) tuple or a list
-        # of such tuples — only the imperial slug is served)
-        for civ_name, entries in sub_line.get("unique_units", {}).items():
-            entries = entries if isinstance(entries, list) else [entries]
-            for _castle_uu, imperial_uu in entries:
-                for uu_slug, age_key, db_age in [
-                    (imperial_uu, "imperial", "Imperial"),
-                ]:
-                    if not uu_slug:
-                        continue
-                    rc.execute(
-                        f"SELECT {stat_cols} FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?",
-                        (uu_slug, civ_name, db_age),
-                    )
-                    row = rc.fetchone()
-                    if row:
-                        entry = dict(row)
-                        entry["is_unique"] = True
-                        entry["line_slug"] = sub_slug
-                        _attach_scores(entry, age_key, sub_slug)
-                        _attach_special(entry)
-                        result[age_key].append(entry)
-
-    # Exclude Elephant Archers from stable (ranged, already in archery rankings)
-    if line_slug == "stable":
-        result["imperial"] = [u for u in result["imperial"] if "ele_archer" not in u["unit_slug"]]
-
-    ref_conn.close()
-    return result
+    return ranking_data(line_slug, get_ref_db=get_ref_db, get_rankings_derived_db=get_rankings_derived_db, current_build=current_build)
 
 
 # Headline categories for the server-rendered "Rankings at a glance" section.
@@ -2121,42 +1394,7 @@ _CIV_ROLE_LABELS = [
 
 
 def get_civ_overview_data():
-    """Server-renderable overview for every civ: name, the auto-generated
-    strategic description, and power units grouped by role.
-
-    Shares its data source (load_civ_power_units) with the /api/civ-power-units
-    route, so the server-rendered page and the JSON API never diverge. Degrades
-    to empty descriptions/roles if the power-units file is missing, so the page
-    still renders the civ list rather than 500ing."""
-    civs = _get_ref_civs()
-    power = load_civ_power_units(build_number=current_build()) or {}
-    out = []
-    for civ in civs:
-        civ_age = (power.get(civ) or {}).get("imperial") or {}
-        power_units = civ_age.get("power_units") or {}
-        roles = []
-        for role_key, role_label in _CIV_ROLE_LABELS:
-            units = []
-            for _line_slug, entries in (power_units.get(role_key) or {}).items():
-                for e in (entries or []):
-                    slug = e.get("unit_slug") or ""
-                    units.append({
-                        "name": e.get("unit_name") or slug.replace("_", " ").title(),
-                        "slug": slug,
-                        # `tier` is the real field; `strength` is a legacy synonym
-                        # kept only as a defensive fallback (absent in current data).
-                        "tier": (e.get("tier") or e.get("strength") or "").title(),
-                        "is_unique": bool(e.get("is_unique")),
-                    })
-            if units:
-                roles.append({"label": role_label, "units": units})
-        out.append({
-            "name": civ,
-            "slug": civ.lower(),
-            "description": civ_age.get("strategic_description") or "",
-            "roles": roles,
-        })
-    return out
+    return civilization_overview(_get_ref_civs(), build_number=current_build())
 
 
 def get_civ_detail(slug):
@@ -2215,6 +1453,10 @@ def _valid_civs():
     return frozenset(_get_ref_civs())
 
 
+app.register_blueprint(battle_blueprint(lambda: get_ref_db(), lambda: _valid_civs()))
+app.register_blueprint(civilization_blueprint(_get_ref_civs, get_civ_detail, get_civ_overview_data, current_build))
+
+
 def _validate_civ_name(name):
     """Return None if `name` is a known civilization, else a Flask 400
     response. Compare is case-sensitive — call sites must pass the
@@ -2253,16 +1495,13 @@ def api_civ_power_units(civ_name):
     err = _validate_age(age)
     if err:
         return err
-    data = load_civ_power_units(build_number=current_build())
-    if not data:
-        return jsonify({"error": "civ_power_units/<build>.json not found"}), 500
-    civ_data = data.get(civ_name)
-    if not civ_data:
-        return jsonify({"error": f"Civilization '{civ_name}' not found"}), 404
-    age_data = civ_data.get(age)
-    if not age_data:
-        return jsonify({"error": f"No {age} data for {civ_name}"}), 404
-    return jsonify({"civ_name": civ_name, "age": age, **age_data})
+    try:
+        return jsonify(civilization_analysis(civ_name, age, build_number=current_build()))
+    except FileNotFoundError as exc:
+        return jsonify(error=str(exc)), 500
+    except LookupError as exc:
+        return jsonify(error=str(exc)), 404
+
 
 
 def _top_units_data():

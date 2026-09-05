@@ -10,6 +10,70 @@ const TILE_WIDTH = 86;
 const TILE_HEIGHT = 43;
 const MAP_CENTRE_WORLD = { x: 0, y: 16 * TILE_HEIGHT / 2 };
 const VIEW_ORIENTATION = "counterclockwise";
+const PROJECTILE_GROUND_ELEVATION = 0.18;
+
+// Visual-only classification for units whose projectile is a bow or crossbow
+// arrow. Keeping this as an allow-list prevents ranged-but-thrown weapons
+// (axes, javelins, knives, darts, bolas, and bullets) from inheriting an arrow
+// arc just because the combat engine represents all of them as ranged attacks.
+// Markers cover the generic lines and every bow/crossbow family registered by
+// the V3 engine. This classification never feeds back into combat resolution.
+const ARROW_ARC_MARKERS = Object.freeze([
+  "arbalester",
+  "archer",
+  "crossbow",
+  "longbow",
+  "chu_ko_nu",
+  "kipchak",
+  "mangudai",
+  "ratha_(ranged)",
+  "xianbei_raider",
+]);
+
+const BULLET_PROJECTILE_MARKERS = Object.freeze([
+  "hand cannon",
+  "janissary",
+  "organ gun",
+  "conquistador",
+]);
+
+const SIEGE_VISUAL_MARKERS = Object.freeze([
+  "scorpion",
+  "onager",
+  "mangonel",
+  "trebuchet",
+  "bombard cannon",
+  "rocket cart",
+  "siege tower",
+  "battering ram",
+  "capped ram",
+  "siege ram",
+  "hussite wagon",
+  "war wagon",
+  "war chariot",
+]);
+
+const MOUNTED_VISUAL_MARKERS = Object.freeze([
+  "cavalry",
+  "cavalier",
+  "knight",
+  "paladin",
+  "hussar",
+  "camel",
+  "rider",
+  "mounted",
+  "cataphract",
+  "boyar",
+  "konnik",
+  "keshik",
+  "mangudai",
+  "kipchak",
+  "arambai",
+  "ratha",
+  "coustillier",
+  "shrivamsha",
+  "steppe lancer",
+]);
 
 const TERRAIN = Object.freeze({
   DIRT_1: { top: "#788b50", edge: "#53633a", grain: "#91a760" },
@@ -39,11 +103,44 @@ export function fittedMapZoom({ width, height, spanX, spanY, compact = false }) 
 }
 
 
-export function productionUnitBoxSize(radius, zoom, unitScale = 1) {
+export function productionUnitVisualClass(unit) {
+  const identity = [
+    unit?.slug,
+    unit?.name,
+    unit?.label,
+    unit?.mechanics?.unit_slug,
+    unit?.mechanics?.unit_name,
+  ].filter(Boolean).join(" ").toLowerCase().replace(/[_()-]+/g, " ");
+  if (identity.includes("elephant")) return "elephant";
+  if (unit?.mechanics?.behavior_class === "siege_ranged"
+      || SIEGE_VISUAL_MARKERS.some((marker) => identity.includes(marker))) {
+    return "siege";
+  }
+  if (MOUNTED_VISUAL_MARKERS.some((marker) => identity.includes(marker))) return "mounted";
+  return "foot";
+}
+
+
+export function productionUnitVisualScale(unit) {
+  const visualClass = productionUnitVisualClass(unit);
+  if (visualClass === "elephant") return 1.32;
+  if (visualClass === "siege") return 1.18;
+  if (visualClass === "mounted") return 1.14;
+  return 1;
+}
+
+
+export function productionUnitBoxSize(_radius, zoom, unitScale = 1, visualScale = 1) {
   if (!Number.isFinite(unitScale) || unitScale <= 0) {
     throw new RangeError("production unit scale must be positive");
   }
-  return Math.max(34, (46 + Math.min(18, radius * 22)) * zoom) * unitScale;
+  if (!Number.isFinite(visualScale) || visualScale <= 0) {
+    throw new RangeError("production visual class scale must be positive");
+  }
+  // Normalize people by vertical figure height instead of collision radius.
+  // Collision remains physics-only; mounted, elephant, and siege silhouettes
+  // receive a small semantic presentation scale at the call site.
+  return Math.max(34, 50 * zoom) * unitScale * visualScale;
 }
 
 
@@ -56,6 +153,98 @@ export function productionSpriteGroundOffset(drawHeight, playing = false) {
   // space below individual poses. Lower the image by that visual inset so the
   // visible feet—not the transparent frame edge—meet the world-space shadow.
   return drawHeight * (playing ? 0.07 : 0.025);
+}
+
+
+export function productionProjectileStyle(unit) {
+  const slug = String(unit?.slug ?? "").toLowerCase();
+  const label = String(unit?.label ?? unit?.name ?? "").toLowerCase();
+  const identity = `${slug} ${label}`;
+  const words = identity.replace(/[_()-]+/g, " ");
+  const ranged = unit?.mechanics?.ranged;
+  if ((ranged?.projectile_arc ?? 0) >= 0.25 || slug.includes("onager")) {
+    return { kind: "stone", flight: "linear", color: "#6d665b", width: 5 };
+  }
+  if (slug.includes("scorpion") || slug.includes("ballista")) {
+    return { kind: "bolt", flight: "linear", color: "#c9944a", width: 3.2 };
+  }
+  if (BULLET_PROJECTILE_MARKERS.some((marker) => words.includes(marker))) {
+    return {
+      kind: "bullet",
+      flight: "linear",
+      color: "#666c70",
+      rimColor: "#15191c",
+      highlightColor: "#b8bec1",
+      width: 1.15,
+    };
+  }
+  if (slug.includes("cannon") || slug.includes("grenadier") || slug.includes("arambai")) {
+    return { kind: "shot", flight: "linear", color: "#242321", width: 4 };
+  }
+  const flight = ARROW_ARC_MARKERS.some((marker) => identity.includes(marker))
+    ? "arc"
+    : "linear";
+  return {
+    kind: "arrow",
+    flight,
+    color: "#3d2818",
+    width: 0.78,
+    shaftColor: "#3d2818",
+    headColor: "#d0a552",
+    headOutline: "#4a321e",
+    fletchingColor: "#74352b",
+  };
+}
+
+
+export function productionProjectileElevation(projectile, progress) {
+  if (!Number.isFinite(progress)) throw new TypeError("projectile progress must be finite");
+  const normalized = Math.min(1, Math.max(0, progress));
+  if (projectile?.style?.flight !== "arc") return PROJECTILE_GROUND_ELEVATION;
+
+  const dx = (projectile?.end?.x ?? 0) - (projectile?.start?.x ?? 0);
+  const dy = (projectile?.end?.y ?? 0) - (projectile?.start?.y ?? 0);
+  const distance = Math.hypot(dx, dy);
+  // Scale the apex with shot length, while keeping short arrows readable and
+  // long-range arrows below the unit-name/health overlays. The parabola is
+  // exactly zero at launch and impact, so the established visual endpoint and
+  // flight duration remain unchanged.
+  const apex = Math.min(2.15, Math.max(0.6, distance * 0.28));
+  return PROJECTILE_GROUND_ELEVATION + apex * 4 * normalized * (1 - normalized);
+}
+
+
+export function productionProjectileTrailPoints(projectile, progress, sampleCount = 12) {
+  if (!Number.isFinite(progress)) throw new TypeError("projectile progress must be finite");
+  if (!Number.isInteger(sampleCount) || sampleCount < 2) {
+    throw new RangeError("projectile trail sample count must be an integer of at least 2");
+  }
+  const normalized = Math.min(1, Math.max(0, progress));
+  const startProgress = 0;
+  return Array.from({ length: sampleCount }, (_, index) => {
+    const sampleProgress = startProgress
+      + (normalized - startProgress) * index / (sampleCount - 1);
+    return {
+      progress: sampleProgress,
+      x: projectile.start.x + (projectile.end.x - projectile.start.x) * sampleProgress,
+      y: projectile.start.y + (projectile.end.y - projectile.start.y) * sampleProgress,
+      elevation: productionProjectileElevation(projectile, sampleProgress),
+    };
+  });
+}
+
+
+export function productionProjectileScreenBend(projectile, progress) {
+  if (!Number.isFinite(progress)) throw new TypeError("projectile progress must be finite");
+  const normalized = Math.min(1, Math.max(0, progress));
+  if (normalized === 0 || normalized === 1) return 0;
+  const identity = String(projectile?.id ?? "arrow");
+  let hash = 0;
+  for (let index = 0; index < identity.length; index += 1) {
+    hash = ((hash << 5) - hash + identity.charCodeAt(index)) | 0;
+  }
+  const side = (hash & 1) === 0 ? 1 : -1;
+  return side * 4 * normalized * (1 - normalized);
 }
 
 
@@ -669,21 +858,6 @@ export function createMapRenderer(canvas, map, {
     ctx.restore();
   }
 
-  function projectileStyle(unit) {
-    const slug = String(unit.slug ?? "").toLowerCase();
-    const ranged = unit.mechanics?.ranged;
-    if ((ranged?.projectile_arc ?? 0) >= 0.25 || slug.includes("onager")) {
-      return { kind: "stone", color: "#6d665b", width: 5 };
-    }
-    if (slug.includes("scorpion") || slug.includes("ballista")) {
-      return { kind: "bolt", color: "#c9944a", width: 3.2 };
-    }
-    if (slug.includes("cannon") || slug.includes("grenadier") || slug.includes("arambai")) {
-      return { kind: "shot", color: "#242321", width: 4 };
-    }
-    return { kind: "arrow", color: "#dfc17a", width: 2.2 };
-  }
-
   function updateProductionEffects(snapshot) {
     if (state.presentation !== "production") return;
     const previousTick = state.simulationSnapshot?.tick ?? -1;
@@ -721,7 +895,7 @@ export function createMapRenderer(canvas, map, {
         endTick: launchTick + Math.max(2, Math.ceil(distance / speed * 60)),
         start: { x: actor.x + offsetX, y: actor.y + offsetY },
         end: { x: target.x + offsetX, y: target.y + offsetY },
-        style: projectileStyle(actor),
+        style: productionProjectileStyle(actor),
       });
     };
 
@@ -784,17 +958,169 @@ export function createMapRenderer(canvas, map, {
       const prior = Math.max(0, progress - 0.07);
       const px = projectile.start.x + (projectile.end.x - projectile.start.x) * prior;
       const py = projectile.start.y + (projectile.end.y - projectile.start.y) * prior;
-      const point = worldToCanvas(projection.tileToScreen(x, y, 0.18));
-      const tail = worldToCanvas(projection.tileToScreen(px, py, 0.18));
+      const pointElevation = productionProjectileElevation(projectile, progress);
+      const tailElevation = productionProjectileElevation(projectile, prior);
+      const point = worldToCanvas(projection.tileToScreen(x, y, pointElevation));
+      const tail = worldToCanvas(projection.tileToScreen(px, py, tailElevation));
       ctx.save();
-      ctx.strokeStyle = projectile.style.color;
-      ctx.fillStyle = projectile.style.color;
-      ctx.lineCap = "round";
-      ctx.lineWidth = Math.max(1.2, projectile.style.width * state.zoom);
-      ctx.beginPath();
-      ctx.moveTo(tail.x, tail.y);
-      ctx.lineTo(point.x, point.y);
-      ctx.stroke();
+      if (projectile.style.kind === "bullet") {
+        const radius = Math.max(2.1, Math.min(2.9, projectile.style.width * state.zoom * 2));
+        ctx.shadowColor = "rgba(22, 25, 27, 0.48)";
+        ctx.shadowBlur = Math.max(1, 1.6 * state.zoom);
+        ctx.fillStyle = projectile.style.color;
+        ctx.strokeStyle = projectile.style.rimColor;
+        ctx.lineWidth = Math.max(0.4, 0.5 * state.zoom);
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = projectile.style.highlightColor;
+        ctx.beginPath();
+        ctx.arc(
+          point.x - radius * 0.28,
+          point.y - radius * 0.3,
+          Math.max(0.28, radius * 0.26),
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      } else if (projectile.style.kind === "arrow" && projectile.style.flight === "arc") {
+        const groundStart = worldToCanvas(projection.tileToScreen(
+          projectile.start.x,
+          projectile.start.y,
+          PROJECTILE_GROUND_ELEVATION,
+        ));
+        const groundEnd = worldToCanvas(projection.tileToScreen(
+          projectile.end.x,
+          projectile.end.y,
+          PROJECTILE_GROUND_ELEVATION,
+        ));
+        const groundDx = groundEnd.x - groundStart.x;
+        const groundDy = groundEnd.y - groundStart.y;
+        const groundLength = Math.max(0.001, Math.hypot(groundDx, groundDy));
+        const curveNormalX = -groundDy / groundLength;
+        const curveNormalY = groundDx / groundLength;
+        const bendPixels = Math.max(16, Math.min(28, 24 * state.zoom));
+        const applyPerspectiveBend = (screenPoint, sampleProgress) => ({
+          x: screenPoint.x
+            + curveNormalX * bendPixels
+              * productionProjectileScreenBend(projectile, sampleProgress),
+          y: screenPoint.y
+            + curveNormalY * bendPixels
+              * productionProjectileScreenBend(projectile, sampleProgress),
+        });
+        const bentPoint = applyPerspectiveBend(point, progress);
+        const bentTail = applyPerspectiveBend(tail, prior);
+        point.x = bentPoint.x;
+        point.y = bentPoint.y;
+        tail.x = bentTail.x;
+        tail.y = bentTail.y;
+
+        const groundPoint = worldToCanvas(projection.tileToScreen(
+          x,
+          y,
+          PROJECTILE_GROUND_ELEVATION,
+        ));
+        ctx.fillStyle = "rgba(21, 26, 19, 0.2)";
+        ctx.beginPath();
+        ctx.ellipse(
+          groundPoint.x,
+          groundPoint.y,
+          Math.max(2, 3.2 * state.zoom),
+          Math.max(0.7, 1.05 * state.zoom),
+          0,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+
+        const trail = productionProjectileTrailPoints(projectile, progress).map((sample) => {
+          const projected = worldToCanvas(projection.tileToScreen(
+            sample.x,
+            sample.y,
+            sample.elevation,
+          ));
+          return applyPerspectiveBend(projected, sample.progress);
+        });
+        ctx.lineCap = "round";
+        ctx.lineWidth = Math.max(0.9, 1.15 * state.zoom);
+        for (let index = 1; index < trail.length; index += 1) {
+          const alpha = 0.08 + 0.34 * index / (trail.length - 1);
+          ctx.strokeStyle = `rgba(91, 55, 27, ${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(trail[index - 1].x, trail[index - 1].y);
+          ctx.lineTo(trail[index].x, trail[index].y);
+          ctx.stroke();
+        }
+
+        const tangentX = point.x - tail.x;
+        const tangentY = point.y - tail.y;
+        const tangentLength = Math.max(0.001, Math.hypot(tangentX, tangentY));
+        const directionX = tangentX / tangentLength;
+        const directionY = tangentY / tangentLength;
+        const normalX = -directionY;
+        const normalY = directionX;
+        const arrowLength = Math.max(13, Math.min(20, 18 * state.zoom));
+        const headLength = Math.max(4.8, arrowLength * 0.38);
+        const headWidth = Math.max(2.2, headLength * 0.44);
+        const rearX = point.x - directionX * arrowLength;
+        const rearY = point.y - directionY * arrowLength;
+        const headBaseX = point.x - directionX * headLength;
+        const headBaseY = point.y - directionY * headLength;
+
+        ctx.shadowColor = "rgba(7, 10, 8, 0.55)";
+        ctx.shadowBlur = Math.max(1, 1.8 * state.zoom);
+        ctx.strokeStyle = projectile.style.shaftColor;
+        ctx.lineWidth = Math.max(0.72, projectile.style.width * state.zoom);
+        ctx.beginPath();
+        ctx.moveTo(rearX, rearY);
+        ctx.lineTo(headBaseX, headBaseY);
+        ctx.stroke();
+
+        ctx.fillStyle = projectile.style.headColor;
+        ctx.strokeStyle = projectile.style.headOutline;
+        ctx.lineWidth = Math.max(0.45, 0.55 * state.zoom);
+        ctx.beginPath();
+        ctx.moveTo(point.x, point.y);
+        ctx.lineTo(
+          headBaseX + normalX * headWidth / 2,
+          headBaseY + normalY * headWidth / 2,
+        );
+        ctx.lineTo(
+          headBaseX - normalX * headWidth / 2,
+          headBaseY - normalY * headWidth / 2,
+        );
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        const featherLength = Math.max(3, arrowLength * 0.24);
+        const featherWidth = Math.max(0.7, arrowLength * 0.055);
+        ctx.strokeStyle = projectile.style.fletchingColor;
+        ctx.lineWidth = Math.max(0.58, 0.68 * state.zoom);
+        ctx.beginPath();
+        ctx.moveTo(rearX + directionX, rearY + directionY);
+        ctx.lineTo(
+          rearX + directionX * featherLength + normalX * featherWidth,
+          rearY + directionY * featherLength + normalY * featherWidth,
+        );
+        ctx.moveTo(rearX + directionX, rearY + directionY);
+        ctx.lineTo(
+          rearX + directionX * featherLength - normalX * featherWidth,
+          rearY + directionY * featherLength - normalY * featherWidth,
+        );
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = projectile.style.color;
+        ctx.fillStyle = projectile.style.color;
+        ctx.lineCap = "round";
+        ctx.lineWidth = Math.max(1.2, projectile.style.width * state.zoom);
+        ctx.beginPath();
+        ctx.moveTo(tail.x, tail.y);
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+      }
       if (projectile.style.kind === "stone" || projectile.style.kind === "shot") {
         ctx.beginPath();
         ctx.arc(point.x, point.y, Math.max(2, projectile.style.width * state.zoom), 0, Math.PI * 2);
@@ -827,10 +1153,26 @@ export function createMapRenderer(canvas, map, {
       sh = meta.fh;
     }
     const radius = unit.mechanics?.collision_size_tiles?.x ?? 0.2;
-    const box = productionUnitBoxSize(radius, state.zoom, state.unitScale);
-    const scale = sw > 0 && sh > 0
-      ? box / Math.max(sw, sh) * (playing ? (sheet.meta.scale ?? 1) : 1)
-      : 1;
+    const visualScale = productionUnitVisualScale(unit);
+    const box = productionUnitBoxSize(radius, state.zoom, state.unitScale, visualScale);
+    const idleWidth = idleReady ? idle.naturalWidth : 0;
+    const idleHeight = idleReady ? idle.naturalHeight : 0;
+    let scale = 1;
+    if (sw > 0 && sh > 0) {
+      if (playing) {
+        // Sheet metadata compensates the union crop around an attack sequence.
+        // Convert its existing longest-side calibration to the idle sprite's
+        // height-based scale so wide weapons do not shrink the unit's body.
+        const idleHeightCorrection = idleHeight > 0
+          ? Math.max(idleWidth, idleHeight) / idleHeight
+          : 1;
+        scale = box / Math.max(sw, sh)
+          * (sheet.meta.scale ?? 1)
+          * idleHeightCorrection;
+      } else {
+        scale = box / sh;
+      }
+    }
     const dw = sw * scale;
     const dh = sh * scale;
     const groundOffset = productionSpriteGroundOffset(dh, playing);

@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+from aoe2x.storage import connect_readonly
 import sys
 
 from aoe2x.sim.unit_lines import UNIT_LINES
@@ -65,7 +66,7 @@ def compute_top_units(ref_db: str = REF_DB) -> dict:
     Imperial, e.g. Cumans Camel Rider, Dravidians Battle Elephant). Only lines
     the civ actually fields are included.
     """
-    conn = sqlite3.connect(ref_db)
+    conn = connect_readonly(ref_db)
     conn.row_factory = sqlite3.Row
     rows = {  # (civ, slug, age) -> unit_name
         (r["civ_name"], r["unit_slug"], r["age"]): r["unit_name"]

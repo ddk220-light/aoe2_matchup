@@ -64,6 +64,8 @@
 
 {% block page_js %}
 <script src="{{ url_for('static', filename='js/rankings_v3_model.js') }}"></script>
+<script>window.RANKING_METHODS = {{ ranking_methods | tojson }};</script>
 <script src="{{ url_for('static', filename='js/rankings_score_method.js') }}"></script>
+<script src="{{ url_for('static', filename='js/rankings-view.js') }}"></script>
 <script src="{{ url_for('static', filename='js/rankings.js') }}"></script>
 {% endblock %}

@@ -31,7 +31,7 @@
     <p class="civ-detail-nav"><a href="/civilizations">&larr; All civilizations</a>
        &middot; <a href="/matchup-advisor">Matchup Advisor</a></p>
 
-    <div id="results" class="results-container" aria-live="polite"></div>
+    <div id="results" class="results-container visible" aria-live="polite">{% include "_civ_content.html" %}</div>
 
     <div class="civ-selector">
         <div class="step-label step-civ1" id="step-label">Loading {{ civ.name }} analysis&hellip;</div>
@@ -51,6 +51,8 @@
 <script>
     const CIVS = {{ civs | tojson }};
     window.PRESELECT_CIV = {{ civ.name | tojson }};
+    window.CIV_ANALYSIS = {{ analysis | tojson }};
 </script>
+<script src="{{ url_for('static', filename='js/civilization-view.js') }}"></script>
 <script src="{{ url_for('static', filename='js/matchup.js') }}"></script>
 {% endblock %}

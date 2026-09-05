@@ -51,5 +51,6 @@
 <script>
     const CIVS = {{ civs | tojson }};
 </script>
+<script src="{{ url_for('static', filename='js/civilization-view.js') }}"></script>
 <script src="{{ url_for('static', filename='js/matchup.js') }}"></script>
 {% endblock %}

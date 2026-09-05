@@ -11,6 +11,7 @@ from pathlib import Path
 import sqlite3
 import tempfile
 
+from aoe2x.rank.methodology import load_methodology
 from aoe2x.rank.derived_db import create_db as create_derived_db
 
 
@@ -372,8 +373,9 @@ def build_serving_db(
         "schema_version": 1,
         "game_build": build_number,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "v3_source": str(Path(v3_db_path).resolve()),
-        "retail_source": str(Path(retail_db_path).resolve()),
+        "v3_source": Path(v3_db_path).name,
+        "retail_source": Path(retail_db_path).name,
+        "methodology": load_methodology(),
         "engine_revision": metadata["engine_revision"],
         "mechanics_build": metadata["source_mechanics_build"],
         "seed_count": metadata["seed_count"],

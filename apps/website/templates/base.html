@@ -15,7 +15,7 @@
     <title>{% block title %}AoE2 Matchup — Simulate any matchup, fully upgraded{% endblock %}</title>
     {# ---- SEO meta ---- #}
     <meta name="description" content="{% block meta_description %}Free Age of Empires II matchup simulator. Every unit, fully upgraded, all 53 civilizations — tick-by-tick battle simulations to settle who actually wins.{% endblock %}" />
-    <meta name="robots" content="{% block meta_robots %}index,follow,max-image-preview:large,max-snippet:-1{% endblock %}" />
+    <meta name="robots" content="{% if not search_indexing %}noindex, nofollow{% else %}{% block meta_robots %}index, follow, max-image-preview:large,max-snippet:-1{% endblock %}{% endif %}" />
     {# ---- Search-engine ownership verification (Search Console / Bing) ---- #}
     {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}" />{% endif %}
     {% if bing_site_verification %}<meta name="msvalidate.01" content="{{ bing_site_verification }}" />{% endif %}
@@ -170,6 +170,7 @@
 
     {% include '_footer.html' %}
 
+    <script>window.SITE_CATALOG = {{ site_catalog | tojson }};</script>
     <script src="{{ url_for('static', filename='js/constants.js') }}"></script>
     <script src="{{ url_for('static', filename='js/unit_sprites.js') }}"></script>
     <script src="{{ url_for('static', filename='js/api_client.js') }}"></script>

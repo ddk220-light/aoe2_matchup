@@ -65,13 +65,35 @@ from aoe2x.assets import config as _assets_cfg
 from aoe2x.assets import catalog as _assets_catalog
 
 
+from apps.website.services.catalog import site_catalog, grouped_units
+from apps.website.services.release import release_metadata
+from apps.website.services.seo import content_lastmod, sitemap_document, indexing_enabled
+from apps.website.services.civilizations import civilization_analysis, civilization_overview
+from aoe2x.rank.methodology import load_published_methods
 from apps.website.services.database import connect_readonly
 from apps.website.services.mechanics import _find_ref_unit, _load_v3_mechanics, _load_v3_auxiliary_mechanics
 from apps.website.services.rankings import get_unit_line_data as ranking_data
+from apps.website.routes.civilizations import create_blueprint as civilization_blueprint
 from apps.website.routes.battles import create_blueprint as battle_blueprint
 
 app = Flask(__name__)
 app.json.sort_keys = False
+app.config['SEARCH_INDEXING'] = os.environ.get('SEARCH_INDEXING')
+
+def allow_indexing():
+    return indexing_enabled(app.config, request.host, SITE_URL, os.environ.get('RAILWAY_ENVIRONMENT_NAME', ''))
+
+@app.after_request
+def crawler_headers(response):
+    if not allow_indexing():
+        response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
+
+
+@app.context_processor
+def inject_public_catalog():
+    return {"site_catalog": site_catalog(REF_DB_PATH), "ranking_methods": load_published_methods(_GOLDEN_DIR)}
+
 # Reject unexpectedly large request bodies before Flask buffers them.
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
@@ -110,6 +132,7 @@ def inject_site_url():
     Unset -> None so base.html simply omits the meta tag."""
     return {
         "site_url": SITE_URL,
+        "search_indexing": allow_indexing(),
         "canonical_url": None,
         "google_site_verification": os.environ.get("GOOGLE_SITE_VERIFICATION") or None,
         "bing_site_verification": os.environ.get("BING_SITE_VERIFICATION") or None,
@@ -701,48 +724,6 @@ def unit_line_page(line_url):
                            active_nav="rankings")
 
 
-@app.route("/civilizations")
-def civ_view():
-    """Civilization analysis page — shows power units, strengths, and strategic identity."""
-    civs = _get_ref_civs()
-    return render_template(
-        "civ_overview.html",
-        civs=civs,
-        civ_overview=get_civ_overview_data(),
-        active_nav="civ_select",
-    )
-
-
-@app.route("/civilizations/<civ_name>")
-def civ_detail(civ_name):
-    """Per-civ landing page ("aoe2 <civ>" searches) — SSR identity + power
-    units, with the interactive analyzer preselected. Canonical is lowercase."""
-    slug = civ_name.lower()
-    if civ_name != slug:
-        return redirect(f"/civilizations/{slug}", code=301)
-    civ = get_civ_detail(slug)
-    if civ is None:
-        abort(404)
-    first_sentence = (civ["description"].split(". ")[0].strip().rstrip(".") + ".") \
-        if civ["description"] else ""
-    meta_desc = (f"{civ['name']} in Age of Empires II — strongest fully-upgraded "
-                 f"units by role, tiers, and strategy. {first_sentence}").strip()[:250]
-    return render_template("civ_detail.html", civ=civ, civs=_get_ref_civs(),
-                           meta_desc=meta_desc, active_nav="civ_select")
-
-
-@app.route("/civ")
-def civ_redirect():
-    """Backward compat redirect."""
-    return redirect("/civilizations", code=301)
-
-
-@app.route("/civ/<civ_name>")
-def civ_detail_redirect(civ_name):
-    """Backward compat redirect."""
-    return redirect(f"/civilizations/{civ_name.lower()}", code=301)
-
-
 @app.route("/simulate")
 def simulate_redirect():
     """Redirect old /simulate URL to homepage."""
@@ -861,93 +842,36 @@ def _matchup_seed_pairs(limit_per_side=200):
 
 @lru_cache(maxsize=1)
 def _data_lastmod():
-    """ISO date of the newest committed data artifact.
-
-    Used as the sitemap <lastmod> so it reflects real data builds rather than
-    the deploy day — a stable signal that only moves when the data actually
-    changes. Falls back to today if no artifact is present (fresh checkout)."""
-    candidates = [
-        os.path.join(str(_GOLDEN_DIR), "derived_data_v3.db"),
-        os.path.join(str(_GOLDEN_DIR), "derived_data.db"),
-        os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db"),
-    ]
-    mtimes = [os.path.getmtime(p) for p in candidates if os.path.exists(p)]
-    if not mtimes:
-        return date.today().isoformat()
-    return date.fromtimestamp(max(mtimes)).isoformat()
+    return content_lastmod(_GOLDEN_DIR)
 
 
-@app.route("/sitemap.xml")
+@app.route('/sitemap.xml')
 def sitemap_xml():
     lastmod = _data_lastmod()
-
-    # (path, changefreq, priority) for the hand-curated hub pages.
-    hub = [
-        ("/", "weekly", "1.0"),
-        ("/matchup-advisor", "weekly", "0.9"),
-        ("/units", "weekly", "0.9"),
-        ("/civilizations", "weekly", "0.9"),
-        ("/matchups", "weekly", "0.6"),
-        ("/about", "monthly", "0.5"),
-        ("/patches", "weekly", "0.7"),
-    ]
-    def _url(path, changefreq, priority):
-        return (f"<url><loc>{SITE_URL}{path}</loc>"
-                f"<lastmod>{lastmod}</lastmod>"
-                f"<changefreq>{changefreq}</changefreq>"
-                f"<priority>{priority}</priority></url>")
-
-    xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>',
-                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for path, cf, pr in hub:
-        xml_parts.append(_url(path, cf, pr))
-
-    # Per-civ landing pages ("aoe2 <civ>" searches).
-    for _c in _get_ref_civs():
-        xml_parts.append(_url(f"/civilizations/{_c.lower()}", "weekly", "0.7"))
-
-    # Per-unit-line landing pages ("aoe2 fire lancer", "aoe2 paladin", ...).
-    for _p in _UNIT_LINE_PAGES:
-        xml_parts.append(_url(f"/units/{_p['url']}", "weekly", "0.7"))
-
-    # Curated popular matchups — higher priority than the long-tail pairs.
-    for _label, _path in _popular_matchup_links():
-        xml_parts.append(_url(_path, "monthly", "0.6"))
-
-    # Per-matchup landing pages — every unique-unit pair. These are long-tail
-    # SEO targets ("X vs Y who wins"), so a lower priority than the hubs.
-    for civ_a, slug_a, civ_b, slug_b in _matchup_seed_pairs():
-        xml_parts.append(_url(f"/vs/{civ_a}/{slug_a}/{civ_b}/{slug_b}", "monthly", "0.4"))
-
-    # Per-patch landing pages + per-unit patch pages, each dated by release.
+    entries = [(path, lastmod) for path in ('/', '/matchup-advisor', '/units', '/civilizations', '/matchups', '/about', '/patches')]
+    entries.extend((f'/civilizations/{name.lower()}', lastmod) for name in _get_ref_civs())
+    entries.extend((f"/units/{page['url']}", lastmod) for page in _UNIT_LINE_PAGES)
+    conn = get_ref_db()
+    try:
+        available = {(row[0], row[1]) for row in conn.execute('SELECT civ_name, unit_slug FROM ref_units')}
+    finally:
+        conn.close()
+    for _, path in _popular_matchup_links():
+        _, _, ca, ua, cb, ub = path.split('/')
+        if (ca, ua) in available and (cb, ub) in available:
+            entries.append((path, lastmod))
+    entries.extend((f'/vs/{ca}/{ua}/{cb}/{ub}', lastmod) for ca, ua, cb, ub in _matchup_seed_pairs()
+                   if (ca, ua) in available and (cb, ub) in available)
     if os.path.exists(PATCHES_DB_PATH):
-        pconn = _patches_conn()
-        prows = pconn.execute(
-            "SELECT id, build_number, release_date FROM patches").fetchall()
-        for pr in prows:
-            rd = pr["release_date"] or lastmod
-            xml_parts.append(
-                f"<url><loc>{SITE_URL}/patches/{pr['build_number']}</loc>"
-                f"<lastmod>{rd}</lastmod><changefreq>monthly</changefreq>"
-                f"<priority>0.6</priority></url>")
-            seen = set()
-            for ur in pconn.execute(
-                "SELECT DISTINCT civ_name, unit_slug FROM patch_unit_changes WHERE patch_id=? "
-                "UNION SELECT DISTINCT my_civ, my_unit_slug FROM patch_matchup_changes WHERE patch_id=?",
-                (pr["id"], pr["id"]),
-            ).fetchall():
-                key = (ur[0], ur[1])
-                if key in seen:
-                    continue
-                seen.add(key)
-                xml_parts.append(
-                    f"<url><loc>{SITE_URL}/patches/{pr['build_number']}/{ur[0]}/{ur[1]}</loc>"
-                    f"<lastmod>{rd}</lastmod><changefreq>monthly</changefreq>"
-                    f"<priority>0.3</priority></url>")
-        pconn.close()
-
-    xml_parts.append("</urlset>")
-    return Response("\n".join(xml_parts), mimetype="application/xml")
+        conn = _patches_conn()
+        try:
+            for patch in conn.execute('SELECT id, build_number, release_date FROM patches'):
+                entries.append((f"/patches/{patch['build_number']}", patch['release_date']))
+                rows = conn.execute('SELECT civ_name, unit_slug FROM patch_unit_changes WHERE patch_id=? UNION SELECT my_civ, my_unit_slug FROM patch_matchup_changes WHERE patch_id=?', (patch['id'], patch['id']))
+                entries.extend((f"/patches/{patch['build_number']}/{row[0]}/{row[1]}", patch['release_date']) for row in rows)
+        finally:
+            conn.close()
+    return Response(sitemap_document(SITE_URL, entries), mimetype='application/xml')
 
 
 def _load_unit_for_landing(civ_name, unit_slug):
@@ -1097,6 +1021,11 @@ def _catalog_payload():
         return catalog_pg.load_catalog(build, "")
     base = _assets_cfg.ASSET_ROUTE_PREFIX if _assets_cfg.assets_enabled() else ""
     return _assets_catalog.synthesize_local(asset_base=base, build=str(build))
+
+
+@app.get('/api/release')
+def api_release():
+    return jsonify(release_metadata(_REPO_ROOT, _GOLDEN_DIR))
 
 
 @app.route("/api/assets/catalog")
@@ -1465,42 +1394,7 @@ _CIV_ROLE_LABELS = [
 
 
 def get_civ_overview_data():
-    """Server-renderable overview for every civ: name, the auto-generated
-    strategic description, and power units grouped by role.
-
-    Shares its data source (load_civ_power_units) with the /api/civ-power-units
-    route, so the server-rendered page and the JSON API never diverge. Degrades
-    to empty descriptions/roles if the power-units file is missing, so the page
-    still renders the civ list rather than 500ing."""
-    civs = _get_ref_civs()
-    power = load_civ_power_units(build_number=current_build()) or {}
-    out = []
-    for civ in civs:
-        civ_age = (power.get(civ) or {}).get("imperial") or {}
-        power_units = civ_age.get("power_units") or {}
-        roles = []
-        for role_key, role_label in _CIV_ROLE_LABELS:
-            units = []
-            for _line_slug, entries in (power_units.get(role_key) or {}).items():
-                for e in (entries or []):
-                    slug = e.get("unit_slug") or ""
-                    units.append({
-                        "name": e.get("unit_name") or slug.replace("_", " ").title(),
-                        "slug": slug,
-                        # `tier` is the real field; `strength` is a legacy synonym
-                        # kept only as a defensive fallback (absent in current data).
-                        "tier": (e.get("tier") or e.get("strength") or "").title(),
-                        "is_unique": bool(e.get("is_unique")),
-                    })
-            if units:
-                roles.append({"label": role_label, "units": units})
-        out.append({
-            "name": civ,
-            "slug": civ.lower(),
-            "description": civ_age.get("strategic_description") or "",
-            "roles": roles,
-        })
-    return out
+    return civilization_overview(_get_ref_civs(), build_number=current_build())
 
 
 def get_civ_detail(slug):
@@ -1560,6 +1454,7 @@ def _valid_civs():
 
 
 app.register_blueprint(battle_blueprint(lambda: get_ref_db(), lambda: _valid_civs()))
+app.register_blueprint(civilization_blueprint(_get_ref_civs, get_civ_detail, get_civ_overview_data, current_build))
 
 
 def _validate_civ_name(name):
@@ -1600,16 +1495,13 @@ def api_civ_power_units(civ_name):
     err = _validate_age(age)
     if err:
         return err
-    data = load_civ_power_units(build_number=current_build())
-    if not data:
-        return jsonify({"error": "civ_power_units/<build>.json not found"}), 500
-    civ_data = data.get(civ_name)
-    if not civ_data:
-        return jsonify({"error": f"Civilization '{civ_name}' not found"}), 404
-    age_data = civ_data.get(age)
-    if not age_data:
-        return jsonify({"error": f"No {age} data for {civ_name}"}), 404
-    return jsonify({"civ_name": civ_name, "age": age, **age_data})
+    try:
+        return jsonify(civilization_analysis(civ_name, age, build_number=current_build()))
+    except FileNotFoundError as exc:
+        return jsonify(error=str(exc)), 500
+    except LookupError as exc:
+        return jsonify(error=str(exc)), 404
+
 
 
 def _top_units_data():

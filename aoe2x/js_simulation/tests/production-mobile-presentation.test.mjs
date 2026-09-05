@@ -11,6 +11,8 @@ import {
   productionProjectileTrailPoints,
   productionSpriteGroundOffset,
   productionUnitBoxSize,
+  productionUnitVisualClass,
+  productionUnitVisualScale,
 } from "../viewer/map-renderer.js";
 
 const websiteCss = await readFile(
@@ -75,7 +77,25 @@ test("production unit presentation scale supports 90% sprites independently of c
   const normal = productionUnitBoxSize(0.2, 1.01);
   const compact = productionUnitBoxSize(0.2, 1.01, 0.9);
   assert.equal(compact, normal * 0.9);
+  assert.equal(productionUnitBoxSize(0.1, 1.01), productionUnitBoxSize(0.6, 1.01));
   assert.match(websitePage, /unitScale:\s*0\.9/);
+});
+
+
+test("production unit visuals scale by semantic body class", () => {
+  assert.equal(productionUnitVisualClass({ slug: "elite_skirmisher" }), "foot");
+  assert.equal(productionUnitVisualClass({ slug: "hand_cannoneer" }), "foot");
+  assert.equal(productionUnitVisualClass({ slug: "elite_fire_lancer" }), "foot");
+  assert.equal(productionUnitVisualClass({ slug: "paladin" }), "mounted");
+  assert.equal(productionUnitVisualClass({ slug: "heavy_cavalry_archer" }), "mounted");
+  assert.equal(productionUnitVisualClass({ slug: "heavy_scorpion" }), "siege");
+  assert.equal(productionUnitVisualClass({ slug: "elite_battle_elephant" }), "elephant");
+  assert.equal(productionUnitVisualClass({ slug: "elite_ballista_elephant" }), "elephant");
+  assert.ok(productionUnitVisualScale({ slug: "paladin" }) > 1);
+  assert.ok(
+    productionUnitVisualScale({ slug: "elite_battle_elephant" })
+      > productionUnitVisualScale({ slug: "paladin" }),
+  );
 });
 
 
@@ -153,6 +173,22 @@ test("production arrows arc for foot and cavalry archer families only", () => {
   assert.equal(productionProjectileStyle({ slug: "elite_throwing_axeman" }).flight, "linear");
   assert.equal(productionProjectileStyle({ slug: "elite_mameluke" }).flight, "linear");
   assert.equal(productionProjectileStyle({ slug: "hand_cannoneer" }).flight, "linear");
+});
+
+
+test("firearm projectiles use compact bullets instead of trailing shot strokes", () => {
+  for (const slug of [
+    "hand_cannoneer",
+    "elite_janissary",
+    "elite_organ_gun",
+    "elite_conquistador",
+  ]) {
+    const style = productionProjectileStyle({ slug });
+    assert.equal(style.kind, "bullet");
+    assert.equal(style.flight, "linear");
+    assert.ok(style.width < 1.5);
+  }
+  assert.equal(productionProjectileStyle({ slug: "bombard_cannon" }).kind, "shot");
 });
 
 

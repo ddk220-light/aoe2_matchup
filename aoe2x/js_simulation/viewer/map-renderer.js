@@ -30,6 +30,51 @@ const ARROW_ARC_MARKERS = Object.freeze([
   "xianbei_raider",
 ]);
 
+const BULLET_PROJECTILE_MARKERS = Object.freeze([
+  "hand cannon",
+  "janissary",
+  "organ gun",
+  "conquistador",
+]);
+
+const SIEGE_VISUAL_MARKERS = Object.freeze([
+  "scorpion",
+  "onager",
+  "mangonel",
+  "trebuchet",
+  "bombard cannon",
+  "rocket cart",
+  "siege tower",
+  "battering ram",
+  "capped ram",
+  "siege ram",
+  "hussite wagon",
+  "war wagon",
+  "war chariot",
+]);
+
+const MOUNTED_VISUAL_MARKERS = Object.freeze([
+  "cavalry",
+  "cavalier",
+  "knight",
+  "paladin",
+  "hussar",
+  "camel",
+  "rider",
+  "mounted",
+  "cataphract",
+  "boyar",
+  "konnik",
+  "keshik",
+  "mangudai",
+  "kipchak",
+  "arambai",
+  "ratha",
+  "coustillier",
+  "shrivamsha",
+  "steppe lancer",
+]);
+
 const TERRAIN = Object.freeze({
   DIRT_1: { top: "#788b50", edge: "#53633a", grain: "#91a760" },
   FOREST_DRY_SOUTH_AMERICAN: { top: "#49643a", edge: "#2e472c", grain: "#66804d" },
@@ -58,11 +103,44 @@ export function fittedMapZoom({ width, height, spanX, spanY, compact = false }) 
 }
 
 
-export function productionUnitBoxSize(radius, zoom, unitScale = 1) {
+export function productionUnitVisualClass(unit) {
+  const identity = [
+    unit?.slug,
+    unit?.name,
+    unit?.label,
+    unit?.mechanics?.unit_slug,
+    unit?.mechanics?.unit_name,
+  ].filter(Boolean).join(" ").toLowerCase().replace(/[_()-]+/g, " ");
+  if (identity.includes("elephant")) return "elephant";
+  if (unit?.mechanics?.behavior_class === "siege_ranged"
+      || SIEGE_VISUAL_MARKERS.some((marker) => identity.includes(marker))) {
+    return "siege";
+  }
+  if (MOUNTED_VISUAL_MARKERS.some((marker) => identity.includes(marker))) return "mounted";
+  return "foot";
+}
+
+
+export function productionUnitVisualScale(unit) {
+  const visualClass = productionUnitVisualClass(unit);
+  if (visualClass === "elephant") return 1.32;
+  if (visualClass === "siege") return 1.18;
+  if (visualClass === "mounted") return 1.14;
+  return 1;
+}
+
+
+export function productionUnitBoxSize(_radius, zoom, unitScale = 1, visualScale = 1) {
   if (!Number.isFinite(unitScale) || unitScale <= 0) {
     throw new RangeError("production unit scale must be positive");
   }
-  return Math.max(34, (46 + Math.min(18, radius * 22)) * zoom) * unitScale;
+  if (!Number.isFinite(visualScale) || visualScale <= 0) {
+    throw new RangeError("production visual class scale must be positive");
+  }
+  // Normalize people by vertical figure height instead of collision radius.
+  // Collision remains physics-only; mounted, elephant, and siege silhouettes
+  // receive a small semantic presentation scale at the call site.
+  return Math.max(34, 50 * zoom) * unitScale * visualScale;
 }
 
 
@@ -82,12 +160,23 @@ export function productionProjectileStyle(unit) {
   const slug = String(unit?.slug ?? "").toLowerCase();
   const label = String(unit?.label ?? unit?.name ?? "").toLowerCase();
   const identity = `${slug} ${label}`;
+  const words = identity.replace(/[_()-]+/g, " ");
   const ranged = unit?.mechanics?.ranged;
   if ((ranged?.projectile_arc ?? 0) >= 0.25 || slug.includes("onager")) {
     return { kind: "stone", flight: "linear", color: "#6d665b", width: 5 };
   }
   if (slug.includes("scorpion") || slug.includes("ballista")) {
     return { kind: "bolt", flight: "linear", color: "#c9944a", width: 3.2 };
+  }
+  if (BULLET_PROJECTILE_MARKERS.some((marker) => words.includes(marker))) {
+    return {
+      kind: "bullet",
+      flight: "linear",
+      color: "#bfc5c8",
+      rimColor: "#596066",
+      highlightColor: "#f1f3f4",
+      width: 1.15,
+    };
   }
   if (slug.includes("cannon") || slug.includes("grenadier") || slug.includes("arambai")) {
     return { kind: "shot", flight: "linear", color: "#242321", width: 4 };
@@ -874,7 +963,29 @@ export function createMapRenderer(canvas, map, {
       const point = worldToCanvas(projection.tileToScreen(x, y, pointElevation));
       const tail = worldToCanvas(projection.tileToScreen(px, py, tailElevation));
       ctx.save();
-      if (projectile.style.kind === "arrow" && projectile.style.flight === "arc") {
+      if (projectile.style.kind === "bullet") {
+        const radius = Math.max(1.05, Math.min(1.45, projectile.style.width * state.zoom));
+        ctx.shadowColor = "rgba(22, 25, 27, 0.48)";
+        ctx.shadowBlur = Math.max(1, 1.6 * state.zoom);
+        ctx.fillStyle = projectile.style.color;
+        ctx.strokeStyle = projectile.style.rimColor;
+        ctx.lineWidth = Math.max(0.4, 0.5 * state.zoom);
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = projectile.style.highlightColor;
+        ctx.beginPath();
+        ctx.arc(
+          point.x - radius * 0.28,
+          point.y - radius * 0.3,
+          Math.max(0.28, radius * 0.26),
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+      } else if (projectile.style.kind === "arrow" && projectile.style.flight === "arc") {
         const groundStart = worldToCanvas(projection.tileToScreen(
           projectile.start.x,
           projectile.start.y,
@@ -1042,10 +1153,26 @@ export function createMapRenderer(canvas, map, {
       sh = meta.fh;
     }
     const radius = unit.mechanics?.collision_size_tiles?.x ?? 0.2;
-    const box = productionUnitBoxSize(radius, state.zoom, state.unitScale);
-    const scale = sw > 0 && sh > 0
-      ? box / Math.max(sw, sh) * (playing ? (sheet.meta.scale ?? 1) : 1)
-      : 1;
+    const visualScale = productionUnitVisualScale(unit);
+    const box = productionUnitBoxSize(radius, state.zoom, state.unitScale, visualScale);
+    const idleWidth = idleReady ? idle.naturalWidth : 0;
+    const idleHeight = idleReady ? idle.naturalHeight : 0;
+    let scale = 1;
+    if (sw > 0 && sh > 0) {
+      if (playing) {
+        // Sheet metadata compensates the union crop around an attack sequence.
+        // Convert its existing longest-side calibration to the idle sprite's
+        // height-based scale so wide weapons do not shrink the unit's body.
+        const idleHeightCorrection = idleHeight > 0
+          ? Math.max(idleWidth, idleHeight) / idleHeight
+          : 1;
+        scale = box / Math.max(sw, sh)
+          * (sheet.meta.scale ?? 1)
+          * idleHeightCorrection;
+      } else {
+        scale = box / sh;
+      }
+    }
     const dw = sw * scale;
     const dh = sh * scale;
     const groundOffset = productionSpriteGroundOffset(dh, playing);

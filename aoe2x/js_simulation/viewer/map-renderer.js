@@ -95,7 +95,16 @@ export function productionProjectileStyle(unit) {
   const flight = ARROW_ARC_MARKERS.some((marker) => identity.includes(marker))
     ? "arc"
     : "linear";
-  return { kind: "arrow", flight, color: "#dfc17a", width: 2.2 };
+  return {
+    kind: "arrow",
+    flight,
+    color: "#4b301b",
+    width: 1.35,
+    shaftColor: "#4b301b",
+    shaftHighlight: "#98683b",
+    headColor: "#b28a50",
+    fletchingColor: "#853d31",
+  };
 }
 
 
@@ -111,8 +120,42 @@ export function productionProjectileElevation(projectile, progress) {
   // long-range arrows below the unit-name/health overlays. The parabola is
   // exactly zero at launch and impact, so the established visual endpoint and
   // flight duration remain unchanged.
-  const apex = Math.min(1.45, Math.max(0.45, distance * 0.19));
+  const apex = Math.min(2.15, Math.max(0.6, distance * 0.28));
   return PROJECTILE_GROUND_ELEVATION + apex * 4 * normalized * (1 - normalized);
+}
+
+
+export function productionProjectileTrailPoints(projectile, progress, sampleCount = 12) {
+  if (!Number.isFinite(progress)) throw new TypeError("projectile progress must be finite");
+  if (!Number.isInteger(sampleCount) || sampleCount < 2) {
+    throw new RangeError("projectile trail sample count must be an integer of at least 2");
+  }
+  const normalized = Math.min(1, Math.max(0, progress));
+  const startProgress = 0;
+  return Array.from({ length: sampleCount }, (_, index) => {
+    const sampleProgress = startProgress
+      + (normalized - startProgress) * index / (sampleCount - 1);
+    return {
+      progress: sampleProgress,
+      x: projectile.start.x + (projectile.end.x - projectile.start.x) * sampleProgress,
+      y: projectile.start.y + (projectile.end.y - projectile.start.y) * sampleProgress,
+      elevation: productionProjectileElevation(projectile, sampleProgress),
+    };
+  });
+}
+
+
+export function productionProjectileScreenBend(projectile, progress) {
+  if (!Number.isFinite(progress)) throw new TypeError("projectile progress must be finite");
+  const normalized = Math.min(1, Math.max(0, progress));
+  if (normalized === 0 || normalized === 1) return 0;
+  const identity = String(projectile?.id ?? "arrow");
+  let hash = 0;
+  for (let index = 0; index < identity.length; index += 1) {
+    hash = ((hash << 5) - hash + identity.charCodeAt(index)) | 0;
+  }
+  const side = (hash & 1) === 0 ? 1 : -1;
+  return side * 4 * normalized * (1 - normalized);
 }
 
 
@@ -831,14 +874,148 @@ export function createMapRenderer(canvas, map, {
       const point = worldToCanvas(projection.tileToScreen(x, y, pointElevation));
       const tail = worldToCanvas(projection.tileToScreen(px, py, tailElevation));
       ctx.save();
-      ctx.strokeStyle = projectile.style.color;
-      ctx.fillStyle = projectile.style.color;
-      ctx.lineCap = "round";
-      ctx.lineWidth = Math.max(1.2, projectile.style.width * state.zoom);
-      ctx.beginPath();
-      ctx.moveTo(tail.x, tail.y);
-      ctx.lineTo(point.x, point.y);
-      ctx.stroke();
+      if (projectile.style.kind === "arrow" && projectile.style.flight === "arc") {
+        const groundStart = worldToCanvas(projection.tileToScreen(
+          projectile.start.x,
+          projectile.start.y,
+          PROJECTILE_GROUND_ELEVATION,
+        ));
+        const groundEnd = worldToCanvas(projection.tileToScreen(
+          projectile.end.x,
+          projectile.end.y,
+          PROJECTILE_GROUND_ELEVATION,
+        ));
+        const groundDx = groundEnd.x - groundStart.x;
+        const groundDy = groundEnd.y - groundStart.y;
+        const groundLength = Math.max(0.001, Math.hypot(groundDx, groundDy));
+        const curveNormalX = -groundDy / groundLength;
+        const curveNormalY = groundDx / groundLength;
+        const bendPixels = Math.max(16, Math.min(28, 24 * state.zoom));
+        const applyPerspectiveBend = (screenPoint, sampleProgress) => ({
+          x: screenPoint.x
+            + curveNormalX * bendPixels
+              * productionProjectileScreenBend(projectile, sampleProgress),
+          y: screenPoint.y
+            + curveNormalY * bendPixels
+              * productionProjectileScreenBend(projectile, sampleProgress),
+        });
+        const bentPoint = applyPerspectiveBend(point, progress);
+        const bentTail = applyPerspectiveBend(tail, prior);
+        point.x = bentPoint.x;
+        point.y = bentPoint.y;
+        tail.x = bentTail.x;
+        tail.y = bentTail.y;
+
+        const groundPoint = worldToCanvas(projection.tileToScreen(
+          x,
+          y,
+          PROJECTILE_GROUND_ELEVATION,
+        ));
+        ctx.fillStyle = "rgba(21, 26, 19, 0.2)";
+        ctx.beginPath();
+        ctx.ellipse(
+          groundPoint.x,
+          groundPoint.y,
+          Math.max(2, 3.2 * state.zoom),
+          Math.max(0.7, 1.05 * state.zoom),
+          0,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fill();
+
+        const trail = productionProjectileTrailPoints(projectile, progress).map((sample) => {
+          const projected = worldToCanvas(projection.tileToScreen(
+            sample.x,
+            sample.y,
+            sample.elevation,
+          ));
+          return applyPerspectiveBend(projected, sample.progress);
+        });
+        ctx.lineCap = "round";
+        ctx.lineWidth = Math.max(0.9, 1.15 * state.zoom);
+        for (let index = 1; index < trail.length; index += 1) {
+          const alpha = 0.08 + 0.34 * index / (trail.length - 1);
+          ctx.strokeStyle = `rgba(91, 55, 27, ${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(trail[index - 1].x, trail[index - 1].y);
+          ctx.lineTo(trail[index].x, trail[index].y);
+          ctx.stroke();
+        }
+
+        const tangentX = point.x - tail.x;
+        const tangentY = point.y - tail.y;
+        const tangentLength = Math.max(0.001, Math.hypot(tangentX, tangentY));
+        const directionX = tangentX / tangentLength;
+        const directionY = tangentY / tangentLength;
+        const normalX = -directionY;
+        const normalY = directionX;
+        const arrowLength = Math.max(13, Math.min(20, 18 * state.zoom));
+        const headLength = Math.max(4, arrowLength * 0.34);
+        const headWidth = Math.max(2.7, headLength * 0.72);
+        const rearX = point.x - directionX * arrowLength;
+        const rearY = point.y - directionY * arrowLength;
+        const headBaseX = point.x - directionX * headLength;
+        const headBaseY = point.y - directionY * headLength;
+
+        ctx.shadowColor = "rgba(7, 10, 8, 0.55)";
+        ctx.shadowBlur = Math.max(1, 1.8 * state.zoom);
+        ctx.strokeStyle = projectile.style.shaftColor;
+        ctx.lineWidth = Math.max(1.35, projectile.style.width * state.zoom);
+        ctx.beginPath();
+        ctx.moveTo(rearX, rearY);
+        ctx.lineTo(headBaseX, headBaseY);
+        ctx.stroke();
+        ctx.strokeStyle = projectile.style.shaftHighlight;
+        ctx.lineWidth = Math.max(0.55, 0.65 * state.zoom);
+        ctx.beginPath();
+        ctx.moveTo(rearX + normalX * 0.45, rearY + normalY * 0.45);
+        ctx.lineTo(headBaseX + normalX * 0.45, headBaseY + normalY * 0.45);
+        ctx.stroke();
+
+        ctx.fillStyle = projectile.style.headColor;
+        ctx.beginPath();
+        ctx.moveTo(point.x, point.y);
+        ctx.lineTo(
+          headBaseX + normalX * headWidth / 2,
+          headBaseY + normalY * headWidth / 2,
+        );
+        ctx.lineTo(
+          headBaseX - normalX * headWidth / 2,
+          headBaseY - normalY * headWidth / 2,
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        const featherLength = Math.max(3, arrowLength * 0.27);
+        const featherWidth = Math.max(1.8, arrowLength * 0.16);
+        ctx.fillStyle = projectile.style.fletchingColor;
+        ctx.beginPath();
+        ctx.moveTo(rearX, rearY);
+        ctx.lineTo(
+          rearX + directionX * featherLength + normalX * featherWidth,
+          rearY + directionY * featherLength + normalY * featherWidth,
+        );
+        ctx.lineTo(
+          rearX + directionX * featherLength,
+          rearY + directionY * featherLength,
+        );
+        ctx.lineTo(
+          rearX + directionX * featherLength - normalX * featherWidth,
+          rearY + directionY * featherLength - normalY * featherWidth,
+        );
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = projectile.style.color;
+        ctx.fillStyle = projectile.style.color;
+        ctx.lineCap = "round";
+        ctx.lineWidth = Math.max(1.2, projectile.style.width * state.zoom);
+        ctx.beginPath();
+        ctx.moveTo(tail.x, tail.y);
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+      }
       if (projectile.style.kind === "stone" || projectile.style.kind === "shot") {
         ctx.beginPath();
         ctx.arc(point.x, point.y, Math.max(2, projectile.style.width * state.zoom), 0, Math.PI * 2);

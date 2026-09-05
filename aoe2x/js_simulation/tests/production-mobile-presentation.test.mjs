@@ -6,7 +6,9 @@ import {
   buildSelectionPreviewUnits,
   fittedMapZoom,
   productionProjectileElevation,
+  productionProjectileScreenBend,
   productionProjectileStyle,
+  productionProjectileTrailPoints,
   productionSpriteGroundOffset,
   productionUnitBoxSize,
 } from "../viewer/map-renderer.js";
@@ -166,10 +168,38 @@ test("production arrow curve preserves launch and impact while peaking mid-fligh
 
   assert.equal(launch, 0.18);
   assert.equal(impact, 0.18);
-  assert.ok(middle > launch + 1.4);
+  assert.ok(middle > launch + 2);
   assert.equal(
     productionProjectileElevation(projectile, 0.25),
     productionProjectileElevation(projectile, 0.75),
+  );
+});
+
+
+test("production arrow trail follows only the traveled arc", () => {
+  const projectile = {
+    start: { x: 2, y: 4 },
+    end: { x: 10, y: 4 },
+    style: productionProjectileStyle({ slug: "arbalester" }),
+  };
+  const trail = productionProjectileTrailPoints(projectile, 0.8, 7);
+
+  assert.equal(trail.length, 7);
+  assert.equal(trail[0].progress, 0);
+  assert.ok(Math.abs(trail.at(-1).progress - 0.8) < 1e-9);
+  assert.ok(trail.every((point) => point.progress <= 0.8 + Number.EPSILON));
+  assert.ok(trail.some((point) => point.elevation > trail.at(-1).elevation));
+});
+
+
+test("production arrow perspective bend preserves endpoints and bows mid-flight", () => {
+  const projectile = { id: "arrow:42" };
+  assert.equal(productionProjectileScreenBend(projectile, 0), 0);
+  assert.equal(productionProjectileScreenBend(projectile, 1), 0);
+  assert.equal(Math.abs(productionProjectileScreenBend(projectile, 0.5)), 1);
+  assert.equal(
+    productionProjectileScreenBend(projectile, 0.25),
+    productionProjectileScreenBend(projectile, 0.75),
   );
 });
 

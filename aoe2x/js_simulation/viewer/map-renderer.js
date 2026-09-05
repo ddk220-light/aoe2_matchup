@@ -964,7 +964,7 @@ export function createMapRenderer(canvas, map, {
       const tail = worldToCanvas(projection.tileToScreen(px, py, tailElevation));
       ctx.save();
       if (projectile.style.kind === "bullet") {
-        const radius = Math.max(1.05, Math.min(1.45, projectile.style.width * state.zoom));
+        const radius = Math.max(2.1, Math.min(2.9, projectile.style.width * state.zoom * 2));
         ctx.shadowColor = "rgba(22, 25, 27, 0.48)";
         ctx.shadowBlur = Math.max(1, 1.6 * state.zoom);
         ctx.fillStyle = projectile.style.color;

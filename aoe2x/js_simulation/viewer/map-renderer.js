@@ -1,3 +1,4 @@
+import { NATIVE_REFERENCE_HEIGHT, NATIVE_SPRITE_HEIGHTS } from "./unit-sprite-geometry.js";
 import {
   compareMapDepth,
   createProjection,
@@ -121,12 +122,42 @@ export function productionUnitVisualClass(unit) {
 }
 
 
-export function productionUnitVisualScale(unit) {
+function fallbackUnitVisualScale(unit) {
   const visualClass = productionUnitVisualClass(unit);
   if (visualClass === "elephant") return 1.32;
   if (visualClass === "siege") return 1.18;
   if (visualClass === "mounted") return 1.14;
   return 1;
+}
+
+
+export function productionUnitVisualScale(unit) {
+  // Web sprites are individually resized during publishing. Restore the
+  // original common pixel scale, anchored to the existing halberdier height.
+  // Native crop heights include weapons: a taller pike therefore expands the
+  // image instead of forcing the person carrying it into a smaller body.
+  for (const identity of [unit?.slug, unit?.mechanics?.unit_slug,
+    unit?.label, unit?.name, unit?.mechanics?.unit_name]) {
+    const slug = String(identity ?? "").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    const height = Object.hasOwn(NATIVE_SPRITE_HEIGHTS, slug)
+      ? NATIVE_SPRITE_HEIGHTS[slug] : null;
+    if (height) return height / NATIVE_REFERENCE_HEIGHT;
+  }
+  return fallbackUnitVisualScale(unit);
+}
+
+
+export function productionSpriteDrawScale({ box, width, height,
+  idleWidth = width, idleHeight = height, playing = false, animationScale = 1 }) {
+  if (!(width > 0 && height > 0)) return 1;
+  if (!playing) return box / height;
+  // Existing sheet metadata relates attack union crops to the published idle
+  // image. Apply the SAME native pixel correction to idle and attack so the
+  // body does not change size when the unit starts swinging its weapon.
+  const idleHeightCorrection = idleHeight > 0
+    ? Math.max(idleWidth, idleHeight) / idleHeight : 1;
+  return box / Math.max(width, height) * animationScale * idleHeightCorrection;
 }
 
 
@@ -137,9 +168,8 @@ export function productionUnitBoxSize(_radius, zoom, unitScale = 1, visualScale 
   if (!Number.isFinite(visualScale) || visualScale <= 0) {
     throw new RangeError("production visual class scale must be positive");
   }
-  // Normalize people by vertical figure height instead of collision radius.
-  // Collision remains physics-only; mounted, elephant, and siege silhouettes
-  // receive a small semantic presentation scale at the call site.
+  // Baseline display height, independent of collision radius. The call site
+  // restores the native sprite proportions with visualScale.
   return Math.max(34, 50 * zoom) * unitScale * visualScale;
 }
 
@@ -1157,22 +1187,15 @@ export function createMapRenderer(canvas, map, {
     const box = productionUnitBoxSize(radius, state.zoom, state.unitScale, visualScale);
     const idleWidth = idleReady ? idle.naturalWidth : 0;
     const idleHeight = idleReady ? idle.naturalHeight : 0;
-    let scale = 1;
-    if (sw > 0 && sh > 0) {
-      if (playing) {
-        // Sheet metadata compensates the union crop around an attack sequence.
-        // Convert its existing longest-side calibration to the idle sprite's
-        // height-based scale so wide weapons do not shrink the unit's body.
-        const idleHeightCorrection = idleHeight > 0
-          ? Math.max(idleWidth, idleHeight) / idleHeight
-          : 1;
-        scale = box / Math.max(sw, sh)
-          * (sheet.meta.scale ?? 1)
-          * idleHeightCorrection;
-      } else {
-        scale = box / sh;
-      }
-    }
+    const scale = productionSpriteDrawScale({
+      box, width: sw, height: sh, idleWidth, idleHeight, playing,
+      animationScale: sheet?.meta?.scale ?? 1,
+    });
+    // UI markers describe the unit, not the full weapon silhouette. Keeping
+    // them separate prevents the Kamayuk's pike from doubling its HP bar and
+    // ground shadow along with the image.
+    const markerBox = productionUnitBoxSize(radius, state.zoom, state.unitScale,
+      fallbackUnitVisualScale(unit));
     const dw = sw * scale;
     const dh = sh * scale;
     const groundOffset = productionSpriteGroundOffset(dh, playing);
@@ -1191,7 +1214,7 @@ export function createMapRenderer(canvas, map, {
     if (unit.alive === false) ctx.globalAlpha = 0.22;
     ctx.fillStyle = "rgba(8, 14, 10, .38)";
     ctx.beginPath();
-    ctx.ellipse(base.x + box * 0.08, base.y, box * 0.34, box * 0.11, 0, 0, Math.PI * 2);
+    ctx.ellipse(base.x + markerBox * 0.08, base.y, markerBox * 0.34, markerBox * 0.11, 0, 0, Math.PI * 2);
     ctx.fill();
     if ((playing || idleReady) && image) {
       ctx.save();
@@ -1214,7 +1237,7 @@ export function createMapRenderer(canvas, map, {
       ctx.fill();
     }
     if (unit.alive !== false && Number.isFinite(unit.hp) && Number.isFinite(unit.maxHp)) {
-      const barWidth = Math.max(10, box * 0.72);
+      const barWidth = Math.max(10, markerBox * 0.72);
       const barHeight = Math.max(1, 3 * state.zoom * state.unitScale);
       const barY = base.y - Math.max(dh, box * 0.7) - 5 * state.unitScale;
       ctx.globalAlpha = 1;

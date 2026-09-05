@@ -10,6 +10,7 @@ import {
   productionProjectileStyle,
   productionProjectileTrailPoints,
   productionSpriteGroundOffset,
+  productionSpriteDrawScale,
   productionUnitBoxSize,
   productionUnitVisualClass,
   productionUnitVisualScale,
@@ -277,4 +278,48 @@ test("selection preview stays empty until a team picks a unit", () => {
     { 1: 1, 2: 1 },
   );
   assert.deepEqual(both.map(({ player_id: owner }) => owner), [2, 3]);
+});
+
+
+test("native sprite scale preserves the halberdier and the game’s relative sizes", () => {
+  assert.equal(productionUnitVisualScale({ slug: "halberdier" }), 1);
+  assert.equal(productionUnitVisualScale({ slug: "champion" }), 54 / 48);
+  assert.equal(productionUnitVisualScale({ slug: "paladin" }), 74 / 48);
+  assert.equal(productionUnitVisualScale({ slug: "elite_battle_elephant" }), 104 / 48);
+  assert.equal(productionUnitVisualScale({ slug: "hussite_wagon" }), 102 / 48);
+  assert.equal(productionUnitVisualScale({ slug: "war_wagon" }), 116 / 48);
+  assert.equal(productionUnitVisualScale({ slug: "unknown", label: "Elite Kamayuk" }), 95 / 48);
+  assert.equal(productionUnitVisualScale({ slug: "elite_kamayuk_incas", label: "Elite Kamayuk" }), 95 / 48);
+  assert.equal(productionUnitVisualScale({ slug: "elite_elephant", label: "Elite Battle Elephant" }), 104 / 48);
+  assert.equal(productionUnitVisualScale({ slug: "unknown_foot_unit" }), 1);
+});
+
+
+test("a taller weapon does not shrink the native body pixel scale", () => {
+  // These are full native crop heights, including the polearm. Converting
+  // source pixels into display pixels must be identical for both units.
+  const nativeHeights = { halberdier: 48, elite_kamayuk: 95 };
+  const publishedHeights = { halberdier: 292, elite_kamayuk: 384 };
+  for (const zoom of [0.5, 1, 1.5]) {
+    const pixelsPerNativePixel = Object.entries(nativeHeights).map(([slug, height]) => {
+      const box = productionUnitBoxSize(0.2, zoom, 0.9, productionUnitVisualScale({ slug }));
+      const scale = productionSpriteDrawScale({ box, width: 384, height: publishedHeights[slug] });
+      return publishedHeights[slug] * scale / height;
+    });
+    assert.ok(Math.abs(pixelsPerNativePixel[0] - pixelsPerNativePixel[1]) < 1e-10);
+  }
+});
+
+
+test("native correction is applied equally to idle and attack sheets", () => {
+  for (const slug of ["halberdier", "elite_kamayuk", "paladin", "war_wagon"]) {
+    const correction = productionUnitVisualScale({ slug });
+    for (const playing of [false, true]) {
+      const options = { box: 45, width: 96, height: 64,
+        idleWidth: 384, idleHeight: 292, animationScale: 1.7, playing };
+      const before = productionSpriteDrawScale(options);
+      const after = productionSpriteDrawScale({ ...options, box: options.box * correction });
+      assert.ok(Math.abs(after / before - correction) < 1e-10);
+    }
+  }
 });

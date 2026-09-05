@@ -109,7 +109,9 @@ def v3_runtime_module(filename):
     and Node-only runners stay outside the HTTP surface.
     """
     normalized = filename.replace("\\", "/")
-    allowed = normalized.startswith("src/") or normalized == "viewer/map-renderer.js"
+    allowed = normalized.startswith("src/") or normalized in {
+        "viewer/map-renderer.js", "viewer/unit-sprite-geometry.js",
+    }
     if not allowed or not normalized.endswith(".js"):
         abort(404)
     response = send_from_directory(_V3_RUNTIME_ROOT, normalized, conditional=True)

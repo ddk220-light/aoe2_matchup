@@ -24,6 +24,17 @@ def test_serving_database_is_readonly():
         conn.close()
 
 
+def test_civilization_overview_loads_release_once(monkeypatch):
+    from apps.website.services import civilizations
+    calls = []
+    def load(**kwargs):
+        calls.append(kwargs)
+        return {'Spanish': {'imperial': {}}, 'Chinese': {'imperial': {}}}
+    monkeypatch.setattr(civilizations, 'load_civ_power_units', load)
+    assert len(civilizations.civilization_overview(['Spanish', 'Chinese'])) == 2
+    assert len(calls) == 1
+
+
 def test_all_civilizations_have_html_content_and_links_without_javascript(client):
     for name in app._get_ref_civs():
         response = client.get('/civilizations/' + name.lower())

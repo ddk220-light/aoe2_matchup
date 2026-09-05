@@ -2,7 +2,9 @@
 from aoe2x.advisor.best_units import load_civ_power_units
 
 def civilization_analysis(name, age='imperial', *, build_number=None):
-    data = load_civ_power_units(build_number=build_number)
+    return _analysis_from_data(load_civ_power_units(build_number=build_number), name, age)
+
+def _analysis_from_data(data, name, age):
     if not data:
         raise FileNotFoundError('civ_power_units/<build>.json not found')
     if name not in data:
@@ -12,10 +14,11 @@ def civilization_analysis(name, age='imperial', *, build_number=None):
     return {'civ_name':name, 'age':age, **data[name][age]}
 
 def civilization_overview(names, *, build_number=None):
+    data = load_civ_power_units(build_number=build_number)
     out = []
     for name in names:
         try:
-            analysis = civilization_analysis(name, build_number=build_number)
+            analysis = _analysis_from_data(data, name, 'imperial')
         except (FileNotFoundError, LookupError):
             analysis = {}
         roles = []

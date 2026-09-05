@@ -165,12 +165,12 @@
 }
 .stats-table th {
     background: var(--bg-warm);
-    border: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border);
     padding: 8px 10px;
     text-align: left;
     font-family: var(--font-display);
     font-size: var(--fs-xs);
-    color: var(--gold);
+    color: var(--text);
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
@@ -199,10 +199,10 @@
 /* Preserve the unique-row / hover backgrounds on the sticky first cell so it
    doesn't show the default --bg-deep over a tinted/hovered row. */
 .stats-table tr.unique-row td:first-child {
-    background: var(--gold-tint);
+    background: color-mix(in srgb, var(--gold) 6%, var(--bg-deep));
 }
 .stats-table tr:hover td:first-child {
-    background: var(--gold-glow);
+    background: color-mix(in srgb, var(--gold) 8%, var(--bg-deep));
 }
 .stats-table th:hover {
     background: var(--gold-tint);
@@ -255,11 +255,11 @@
     outline: none;
 }
 .stats-table td {
-    border: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border);
     padding: 7px 10px;
     white-space: nowrap;
     letter-spacing: 0.01em;
-    font-family: var(--font-mono);
+    font-family: var(--font-body);
 }
 .stats-table tr {
     background: var(--bg-deep);
@@ -269,11 +269,11 @@
     background: var(--gold-glow);
 }
 .stats-table tr.unique-row {
-    border-left: 2px solid color-mix(in srgb, var(--gold) 55%, var(--border));
+    border-left: 0;
     background: var(--gold-tint);
 }
 .stats-table tr.unique-row td:first-child {
-    padding-left: 20px;
+    padding-left: 10px;
 }
 .stats-table tr.missing-row {
     opacity: 0.35;
@@ -295,7 +295,7 @@
     color: var(--poor);
 }
 
-/* Civ cell — name text stays body font (td defaults to mono for numbers). */
+/* Civ cell — name text stays body font (tabular numerals keep numbers aligned). */
 .civ-cell {
     display: flex;
     align-items: center;
@@ -309,7 +309,7 @@
     object-fit: cover;
 }
 
-/* Unit cell — name text stays body font (td defaults to mono for numbers). */
+/* Unit cell — name text stays body font (tabular numerals keep numbers aligned). */
 .unit-cell {
     display: flex;
     align-items: center;
@@ -389,8 +389,8 @@
     font-family: var(--font-display);
     font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
 }
 .score-method-setting,
 .score-method-adjustment {
@@ -668,8 +668,8 @@ td.hc-cell {
     color: var(--gold);
     font-family: var(--font-display);
     font-size: var(--fs-xs);
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
 }
 .ranking-role-grid {
     display: grid;
@@ -771,7 +771,7 @@ td.hc-cell {
     font-family: var(--font-display);
     color: var(--gold);
     font-size: var(--fs-lg);
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
     margin: 0 0 8px;
 }
 .rankings-ssr-intro {

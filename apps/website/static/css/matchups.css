@@ -16,11 +16,11 @@
     font-family: var(--font-display);
     font-size: var(--fs-lg);
     color: var(--gold);
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
     margin: 0 0 14px;
     padding-bottom: 10px;
     border-bottom: 1px solid;
-    border-image: linear-gradient(90deg, var(--gold-glow) 0%, var(--border) 60%, transparent 100%) 1;
+    border-color: var(--border);
 }
 
 .matchup-group-civ {
@@ -71,7 +71,7 @@
 }
 
 .popular-matchups { margin: 0 0 28px; padding: 18px 20px; background: var(--bg-warm); border: 1px solid var(--border); border-radius: 12px; }
-.popular-matchups h2 { font-family: var(--font-display); color: var(--gold); font-size: var(--fs-lg); margin: 0 0 12px; letter-spacing: 0.04em; }
+.popular-matchups h2 { font-family: var(--font-display); color: var(--gold); font-size: var(--fs-lg); margin: 0 0 12px; letter-spacing: 0; }
 .popular-matchups-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 18px; }
 .popular-matchups-list a { color: var(--text); text-decoration: none; font-size: var(--fs-sm); display: block; padding: 4px 6px; border-radius: 6px; }
 .popular-matchups-list a:hover { color: var(--gold); background: var(--bg-hover); }

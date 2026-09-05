@@ -40,35 +40,34 @@
     --container-app:    min(100% - 2 * var(--gutter), 1920px);   /* dense multi-panel tools */
     --nav-h:            56px;                                    /* sticky-nav height; refined at runtime by base.html */
 
-    /* Backgrounds / surfaces — warm parchment, never pure white */
-    --bg-deep:          #efe9dc;
-    --bg:               #f6f1e7;
-    --bg-warm:          #ece4d4;
-    --bg-hover:         #e1d7c4;
+    /* Quiet warm paper with flat panels. */
+    --bg-deep:          #f4f3ef;
+    --bg:               #faf9f6;
+    --bg-warm:          #faf9f6;
+    --bg-hover:         #eeede8;
     --surface:          var(--bg);
-    --surface-elevated: #fbf7ee;
+    --surface-elevated: #ffffff;
 
     /* Borders */
-    --border:           #c9bda3;
-    --border-light:     #b7a986;
+    --border:           #deddd6;
+    --border-light:     #b7b8ae;
 
     /* Text */
-    --text:             #241d10;
-    --text-muted:       #5f5235;
-    --text-dim:         #6f6346;
+    --text:             #292c28;
+    --text-muted:       #555c54;
+    --text-dim:         #656b62;
 
-    /* Gold (accent). --gold darkened to clear AA (4.5:1) as heading/nav/link text
-       on card surfaces; --gold-cta brightened so dark text on the CTA fill clears AA. */
-    --gold:             #7a5c0c;
-    --gold-light:       #a07e1f;
-    --gold-dark:        #6b4f0e;
-    --gold-glow:        rgba(138, 106, 18, 0.12);
-    --gold-cta:         #a37d15;
-    --text-on-gold:     #1a1408;
+    /* Muted green accent; retain legacy gold token names for page consumers. */
+    --gold:             #46634c;
+    --gold-light:       #344e3a;
+    --gold-dark:        #46634c;
+    --gold-glow:        rgba(70, 99, 76, 0.08);
+    --gold-cta:         #46634c;
+    --text-on-gold:     #ffffff;
 
     /* Tamed strength scale (semantic, not neon) */
     --strong:           #2f6b34;
-    --average:          #6f6346;
+    --average:          #656b62;
     --weak:             #9a5a17;
     --poor:             #9e2b22;
     --signature:        var(--gold);
@@ -80,7 +79,7 @@
     --weak-tint:        rgba(154, 90, 23, 0.12);
     --poor-tint:        rgba(158, 43, 34, 0.12);
     --situational-tint: rgba(63, 96, 121, 0.12);
-    --gold-tint:        rgba(138, 106, 18, 0.10);
+    --gold-tint:        rgba(70, 99, 76, 0.06);
 
     /* Directional aliases (collapse old neon duplicates onto strength scale) */
     --win:              var(--strong);
@@ -106,7 +105,7 @@
     --green:            var(--strong);
 
     /* Typography — families */
-    --font-display:     "Cinzel", Georgia, serif;
+    --font-display:     var(--font-body);
     --font-body:        "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-mono:        "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
@@ -124,41 +123,41 @@
     --lh-base:          1.55;
     --lh-loose:         1.65;
 
-    /* Shadows — calm, standardised */
-    --shadow-sm:        0 2px 8px rgba(0, 0, 0, 0.10);
+    /* Flat controls; shadows are reserved for floating surfaces. */
+    --shadow-sm:        none;
     --shadow-card:      0 2px 10px rgba(0, 0, 0, 0.12);
 }
 
 /* ---------- DARK MODE (opt-in) ---------- */
 [data-theme="dark"] {
-    /* Backgrounds / surfaces — warm brown shell */
-    --bg-deep:          #120d07;
-    --bg:               #1e1610;
-    --bg-warm:          #2a1f14;
-    --bg-hover:         #342618;
+    /* Neutral charcoal surfaces. */
+    --bg-deep:          #1c1f1d;
+    --bg:               #242824;
+    --bg-warm:          #242824;
+    --bg-hover:         #303630;
     --surface:          var(--bg);
-    --surface-elevated: #251c12;
+    --surface-elevated: #2b302b;
 
     /* Borders */
-    --border:           #3d2e1e;
-    --border-light:     #5a4228;
+    --border:           #3c433d;
+    --border-light:     #626c62;
 
     /* Text */
-    --text:             #ece1cd;
-    --text-muted:       #b3a484;
-    --text-dim:         #8c7c5e;
+    --text:             #e7eae3;
+    --text-muted:       #b8c0b4;
+    --text-dim:         #9da798;
 
-    /* Gold */
-    --gold:             #cdac50;
-    --gold-light:       #ddbd66;
-    --gold-dark:        #8b6914;
-    --gold-glow:        rgba(205, 172, 80, 0.15);
-    --gold-cta:         #cdac50;
-    --text-on-gold:     #1a1408;
+    /* Accent */
+    --gold:             #b3c6a6;
+    --gold-light:       #d0dfc5;
+    --gold-dark:        #b3c6a6;
+    --gold-glow:        rgba(179, 198, 166, 0.08);
+    --gold-cta:         #b3c6a6;
+    --text-on-gold:     #1c1f1d;
 
     /* Tamed strength scale */
     --strong:           #6fb15e;
-    --average:          #b3a484;
+    --average:          #b8c0b4;
     --weak:             #cf9a4a;
     --poor:             #cf6a5e;
     --signature:        var(--gold);
@@ -168,7 +167,7 @@
     --weak-tint:        rgba(207, 154, 74, 0.14);
     --poor-tint:        rgba(207, 106, 94, 0.14);
     --situational-tint: rgba(127, 166, 196, 0.14);
-    --gold-tint:        rgba(205, 172, 80, 0.14);
+    --gold-tint:        rgba(179, 198, 166, 0.08);
 
     /* Directional aliases */
     --win:              var(--strong);
@@ -193,8 +192,8 @@
     --red:              var(--poor);
     --green:            var(--strong);
 
-    /* Shadows — deeper for dark surfaces */
-    --shadow-sm:        0 2px 8px rgba(0, 0, 0, 0.22);
+    /* Floating surfaces need more separation in dark mode. */
+    --shadow-sm:        none;
     --shadow-card:      0 2px 10px rgba(0, 0, 0, 0.28);
 }
 
@@ -258,10 +257,6 @@ html {
 body {
     font-family: var(--font-body);
     background: var(--bg-deep);
-    /* LIGHT default gradients (warm parchment wash) */
-    background-image:
-        radial-gradient(ellipse at top, rgba(200, 189, 168, 0.35) 0%, transparent 55%),
-        radial-gradient(ellipse at center, rgba(200, 189, 168, 0.3) 0%, transparent 70%);
     color: var(--text);
     min-height: 100vh;
     line-height: var(--lh-base);
@@ -269,31 +264,7 @@ body {
     position: relative;
 }
 
-/* Subtle film-grain / parchment texture overlay (no glow, additive depth only) */
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    /* LIGHT default — gentle multiply */
-    opacity: 0.18;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.78  0 0 0 0 0.66  0 0 0 0 0.30  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-    mix-blend-mode: multiply;
-}
-
-[data-theme="dark"] body {
-    background-image:
-        radial-gradient(ellipse at top, rgba(58, 14, 14, 0.35) 0%, transparent 55%),
-        radial-gradient(ellipse at center, rgba(42, 31, 20, 0.4) 0%, transparent 70%);
-}
-
-[data-theme="dark"] body::before {
-    opacity: 0.35;
-    mix-blend-mode: overlay;
-}
-
-/* Lift content above the texture overlay */
+/* Keep content stacking consistent with sticky navigation. */
 .site-nav,
 .page-header,
 .container,
@@ -303,31 +274,20 @@ main {
     z-index: 1;
 }
 
-/* Smooth theme transition */
-body,
-body *:not(#battleCanvas):not(.spinner):not(img) {
-    transition:
-        background-color 0.3s ease,
-        color 0.3s ease,
-        border-color 0.3s ease,
-        box-shadow 0.3s ease,
-        transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
-        filter 0.25s ease;
-}
-
+/* Controls provide their own state transitions. */
 h1, h2, h3 {
     font-family: var(--font-display);
-    color: var(--gold);
+    color: var(--text);
 }
 
 h1 {
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
 }
 
 h2, h3 {
     font-weight: 600;
-    letter-spacing: 0.03em;
+    letter-spacing: 0;
 }
 
 a {
@@ -347,13 +307,11 @@ a:hover {
     /* sides clear the notch on landscape phones; --gutter is the floor */
     padding-left: max(24px, env(safe-area-inset-left));
     padding-right: max(24px, env(safe-area-inset-right));
-    background: linear-gradient(180deg, var(--bg-warm) 0%, var(--bg) 100%);
-    border-bottom: 2px solid var(--border);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
     z-index: 1000;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
 }
 
 .nav-brand {
@@ -405,17 +363,10 @@ a:hover {
 .nav-tab-icon {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     margin-bottom: 4px;
-    border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
-    border-radius: 50%;
-    background: linear-gradient(145deg, var(--bg-warm), var(--bg-deep));
-    color: var(--text-dim);
-    opacity: 0.82;
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--border-light) 35%, transparent);
-    transition: opacity 0.25s, color 0.25s, border-color 0.25s,
-                background-color 0.25s, box-shadow 0.25s;
+    color: var(--text-muted);
 }
 
 .nav-tab-icon svg {
@@ -429,7 +380,7 @@ a:hover {
     font-weight: 600;
     font-size: var(--fs-sm);
     color: var(--text-muted);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     white-space: nowrap;
     transition: color 0.25s;
 }
@@ -438,8 +389,8 @@ a:hover {
     font-size: var(--fs-xs);
     color: var(--text-dim);
     margin-top: 1px;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
     transition: color 0.25s;
 }
 
@@ -465,28 +416,22 @@ a:hover {
 
 /* Active state */
 .nav-tab.active {
-    background: var(--bg-deep);
-    border-color: var(--border-light);
+    background: transparent;
+    border-color: transparent;
 }
 
 .nav-tab.active::after {
     content: "";
     position: absolute;
-    top: 0;
-    left: 20%;
-    right: 20%;
+    bottom: 0;
+    left: 24px;
+    right: 24px;
     height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    border-radius: 0 0 2px 2px;
+    background: var(--gold);
 }
 
 .nav-tab.active .nav-tab-icon {
-    opacity: 1;
     color: var(--gold);
-    border-color: var(--gold);
-    background: radial-gradient(circle at 50% 35%, var(--gold-tint), var(--bg-deep) 72%);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 12%, transparent),
-                inset 0 1px 0 color-mix(in srgb, var(--gold-light) 35%, transparent);
 }
 
 .nav-tab.active .nav-tab-label {
@@ -499,40 +444,30 @@ a:hover {
 
 /* ---------- Page Header ---------- */
 .page-header {
-    padding: 36px 24px 32px;
-    background:
-        radial-gradient(ellipse at center top, var(--header-glow) 0%, transparent 60%),
-        linear-gradient(180deg, var(--bg-warm) 0%, var(--bg-warm) 60%, var(--bg) 100%);
-    border-bottom: 1px solid;
-    border-image: linear-gradient(90deg, transparent 8%, var(--gold-glow) 30%, var(--gold) 50%, var(--gold-glow) 70%, transparent 92%) 1;
+    padding: 32px 24px 24px;
+    background: transparent;
     text-align: center;
     overflow: hidden;
 }
 
-/* Decorative ornament: soft gold rule with diamond marks above the title */
+/* Titles need no decorative ornament. */
 .page-header::before {
-    content: "";
-    display: block;
-    width: 120px;
-    height: 1px;
-    margin: 0 auto 14px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    opacity: 0.55;
+    content: none;
 }
 
 .page-header h1 {
     font-size: var(--fs-xl);
     margin-bottom: 8px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0;
     line-height: var(--lh-tight);
-    color: var(--gold);
+    color: var(--text);
 }
 
 .page-header .subtitle {
     font-size: var(--fs-base);
     color: var(--text-muted);
-    letter-spacing: 0.03em;
-    font-style: italic;
+    letter-spacing: 0;
+    font-style: normal;
     max-width: 640px;
     margin: 0 auto;
     line-height: var(--lh-base);
@@ -544,7 +479,7 @@ a:hover {
     }
     .page-header h1 {
         font-size: 1.55rem;
-        letter-spacing: 0.06em;
+        letter-spacing: 0;
     }
     .page-header::before {
         width: 80px;
@@ -575,14 +510,12 @@ a:hover {
     background: var(--bg-warm);
     border: 1px solid var(--border);
     border-radius: 10px;
-    box-shadow: var(--shadow-card);
+    box-shadow: none;
     transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .card:hover {
-    border-color: var(--gold-dark);
-    box-shadow: var(--shadow-sm);
-    transform: translateY(-1px);
+    border-color: var(--border);
 }
 
 /* ---------- Buttons ---------- */
@@ -605,18 +538,16 @@ a:hover {
 
 .btn:hover {
     border-color: var(--border-light);
-    transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
 }
 
 .btn-gold {
     border: none;
-    background: linear-gradient(135deg, var(--gold-dark), var(--gold-cta));
+    background: var(--gold-cta);
     color: var(--text-on-gold);
 }
 
 .btn-gold:hover {
-    transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
     filter: brightness(1.06);
 }
@@ -733,7 +664,7 @@ a:hover {
 
 .theme-toggle-label {
     font-size: var(--fs-xs);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
 }
 
 /* --- Hamburger (phones only; toggles the labelled nav drop-down) --- */
@@ -817,10 +748,10 @@ a:hover {
         padding-right: max(var(--gutter), env(safe-area-inset-right));
     }
 
-    /* Compact to the logo mark so the icon row + controls fit one line. */
+    /* Keep the wordmark readable beside the compact navigation. */
     .nav-brand {
         flex-shrink: 0;
-        font-size: 0;            /* hide the wordmark text, keep the icon */
+        font-size: var(--fs-sm);
         gap: 0;
         padding: 8px 0;
     }
@@ -884,7 +815,7 @@ a:hover {
         margin: 0;
         padding: 8px;
         background: var(--bg-warm);
-        border-bottom: 2px solid var(--border);
+        border-bottom: 1px solid var(--border);
         box-shadow: var(--shadow-card);
     }
     .site-nav.nav-open .nav-tab {
@@ -915,8 +846,8 @@ a:hover {
     padding: 2.5rem var(--gutter) 1.25rem;
     /* clear the home-indicator on notched phones */
     padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
-    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
-    border-top: 2px solid var(--border);
+    background: var(--bg-deep);
+    border-top: 1px solid var(--border);
     color: var(--text-muted);
     font-family: var(--font-body);
     font-size: var(--fs-base);
@@ -944,7 +875,7 @@ a:hover {
     font-family: var(--font-display);
     font-weight: 700;
     font-size: var(--fs-md);
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
 }
 .site-footer-tagline {
     color: var(--text-muted);
@@ -955,8 +886,8 @@ a:hover {
     font-family: var(--font-display);
     font-size: var(--fs-sm);
     font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
     color: var(--text);
     margin: 0 0 0.85rem;
 }
@@ -1267,70 +1198,12 @@ a:hover {
     .contact-modal-panel { animation: none; }
 }
 
-/* ==========================================================================
-   Page entrance animations — staggered fade-up for content sections.
-   Smooth, gentle (14px lift, 0.55s cubic-bezier). Disabled for reduced motion.
-   ========================================================================== */
-@keyframes pageFadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(14px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Keep keyboard navigation visible on both themes. */
+:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
 }
-
-@keyframes pageFadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-.page-header {
-    animation: pageFadeIn 0.55s ease-out both;
-}
-
-.container > *,
-.container-wide > * {
-    animation: pageFadeUp 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-.container > *:nth-child(1),
-.container-wide > *:nth-child(1) { animation-delay: 0.05s; }
-
-.container > *:nth-child(2),
-.container-wide > *:nth-child(2) { animation-delay: 0.12s; }
-
-.container > *:nth-child(3),
-.container-wide > *:nth-child(3) { animation-delay: 0.19s; }
-
-.container > *:nth-child(4),
-.container-wide > *:nth-child(4) { animation-delay: 0.26s; }
-
-.container > *:nth-child(5),
-.container-wide > *:nth-child(5) { animation-delay: 0.32s; }
-
-.container > *:nth-child(n+6),
-.container-wide > *:nth-child(n+6) { animation-delay: 0.36s; }
 
 @media (prefers-reduced-motion: reduce) {
-    .page-header,
-    .container > *,
-    .container-wide > * {
-        animation: none;
-    }
-    /* Neutralise the global transform/filter transition (the theme-transition
-       rule applies it to nearly every element and was previously ungated). */
-    body,
-    body *:not(#battleCanvas):not(.spinner):not(img) {
-        transition:
-            background-color 0.3s ease,
-            color 0.3s ease,
-            border-color 0.3s ease,
-            box-shadow 0.3s ease;
-    }
-    html {
-        scroll-behavior: auto;
-    }
+    html { scroll-behavior: auto; }
 }

@@ -43,8 +43,8 @@
     flex-direction: column;
     align-items: center;
     padding: 12px 6px 10px;
-    background: var(--bg-warm);
-    border: 1px solid var(--border);
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: 10px;
     cursor: pointer;
     transition:
@@ -59,13 +59,13 @@
     text-decoration: none;
 }
 .civ-card:hover {
-    transform: translateY(-2px) scale(1.025);
+    transform: none;
     border-color: var(--border-light);
     background: var(--bg-hover);
     box-shadow: var(--shadow-sm);
 }
 .civ-card:hover .civ-emblem {
-    transform: scale(1.04);
+    transform: none;
 }
 .civ-card:hover .civ-card-name {
     color: var(--gold-light);
@@ -249,8 +249,8 @@
     color: var(--gold);
     font-size: var(--fs-xs);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    text-transform: none;
+    letter-spacing: 0;
     margin-bottom: 6px;
     text-align: center;
     font-family: var(--font-display);
@@ -265,7 +265,7 @@
     color: var(--text-muted);
     font-size: var(--fs-xs);
     font-weight: 500;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
     margin-bottom: 3px;
     padding-left: 2px;
@@ -278,7 +278,7 @@
        transform afterward — a lingering transform: translateY(0) would make the
        wrapper the containing block for the card's position:fixed (see the card
        positioning notes below). */
-    animation: cardSlideIn 0.35s ease backwards;
+    animation: none;
 }
 
 /* --- Multi-unit layout (2+ units in same line) --- */
@@ -455,7 +455,7 @@
 .unit-badge-rank {
     font-size: var(--fs-xs);
     font-weight: 700;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
     padding: 2px 6px;
     border-radius: 10px;
@@ -684,8 +684,7 @@
     border: none;
     border-radius: 10px;
     object-fit: contain;
-    background: radial-gradient(ellipse at 50% 78%,
-        color-mix(in srgb, var(--gold) 12%, transparent), transparent 70%);
+    background: transparent;
     box-shadow: none;
 }
 .tt-head-text {
@@ -750,7 +749,7 @@
     display: inline-block;
     font-size: var(--fs-xs);
     font-weight: 700;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.5px;
     padding: 2px 8px;
     border-radius: 10px;

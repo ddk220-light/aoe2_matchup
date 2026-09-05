@@ -172,9 +172,9 @@ export function productionProjectileStyle(unit) {
     return {
       kind: "bullet",
       flight: "linear",
-      color: "#bfc5c8",
-      rimColor: "#596066",
-      highlightColor: "#f1f3f4",
+      color: "#666c70",
+      rimColor: "#15191c",
+      highlightColor: "#b8bec1",
       width: 1.15,
     };
   }

@@ -98,12 +98,12 @@ export function productionProjectileStyle(unit) {
   return {
     kind: "arrow",
     flight,
-    color: "#4b301b",
-    width: 1.35,
-    shaftColor: "#4b301b",
-    shaftHighlight: "#98683b",
-    headColor: "#b28a50",
-    fletchingColor: "#853d31",
+    color: "#3d2818",
+    width: 0.78,
+    shaftColor: "#3d2818",
+    headColor: "#d0a552",
+    headOutline: "#4a321e",
+    fletchingColor: "#74352b",
   };
 }
 
@@ -951,8 +951,8 @@ export function createMapRenderer(canvas, map, {
         const normalX = -directionY;
         const normalY = directionX;
         const arrowLength = Math.max(13, Math.min(20, 18 * state.zoom));
-        const headLength = Math.max(4, arrowLength * 0.34);
-        const headWidth = Math.max(2.7, headLength * 0.72);
+        const headLength = Math.max(4.8, arrowLength * 0.38);
+        const headWidth = Math.max(2.2, headLength * 0.44);
         const rearX = point.x - directionX * arrowLength;
         const rearY = point.y - directionY * arrowLength;
         const headBaseX = point.x - directionX * headLength;
@@ -961,19 +961,15 @@ export function createMapRenderer(canvas, map, {
         ctx.shadowColor = "rgba(7, 10, 8, 0.55)";
         ctx.shadowBlur = Math.max(1, 1.8 * state.zoom);
         ctx.strokeStyle = projectile.style.shaftColor;
-        ctx.lineWidth = Math.max(1.35, projectile.style.width * state.zoom);
+        ctx.lineWidth = Math.max(0.72, projectile.style.width * state.zoom);
         ctx.beginPath();
         ctx.moveTo(rearX, rearY);
         ctx.lineTo(headBaseX, headBaseY);
         ctx.stroke();
-        ctx.strokeStyle = projectile.style.shaftHighlight;
-        ctx.lineWidth = Math.max(0.55, 0.65 * state.zoom);
-        ctx.beginPath();
-        ctx.moveTo(rearX + normalX * 0.45, rearY + normalY * 0.45);
-        ctx.lineTo(headBaseX + normalX * 0.45, headBaseY + normalY * 0.45);
-        ctx.stroke();
 
         ctx.fillStyle = projectile.style.headColor;
+        ctx.strokeStyle = projectile.style.headOutline;
+        ctx.lineWidth = Math.max(0.45, 0.55 * state.zoom);
         ctx.beginPath();
         ctx.moveTo(point.x, point.y);
         ctx.lineTo(
@@ -986,26 +982,24 @@ export function createMapRenderer(canvas, map, {
         );
         ctx.closePath();
         ctx.fill();
+        ctx.stroke();
 
-        const featherLength = Math.max(3, arrowLength * 0.27);
-        const featherWidth = Math.max(1.8, arrowLength * 0.16);
-        ctx.fillStyle = projectile.style.fletchingColor;
+        const featherLength = Math.max(3, arrowLength * 0.24);
+        const featherWidth = Math.max(0.7, arrowLength * 0.055);
+        ctx.strokeStyle = projectile.style.fletchingColor;
+        ctx.lineWidth = Math.max(0.58, 0.68 * state.zoom);
         ctx.beginPath();
-        ctx.moveTo(rearX, rearY);
+        ctx.moveTo(rearX + directionX, rearY + directionY);
         ctx.lineTo(
           rearX + directionX * featherLength + normalX * featherWidth,
           rearY + directionY * featherLength + normalY * featherWidth,
         );
-        ctx.lineTo(
-          rearX + directionX * featherLength,
-          rearY + directionY * featherLength,
-        );
+        ctx.moveTo(rearX + directionX, rearY + directionY);
         ctx.lineTo(
           rearX + directionX * featherLength - normalX * featherWidth,
           rearY + directionY * featherLength - normalY * featherWidth,
         );
-        ctx.closePath();
-        ctx.fill();
+        ctx.stroke();
       } else {
         ctx.strokeStyle = projectile.style.color;
         ctx.fillStyle = projectile.style.color;

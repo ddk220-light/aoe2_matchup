@@ -167,6 +167,12 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
     scenario_type = stack["AoE2DEScenario"]
     source = scenario_type.from_file(str(source_path))
     target = scenario_type.from_file(str(generated))
+    civilizations = {
+        int(player.player_id): player.civilization
+        for player in target.player_manager.players
+    }
+    if civilizations[1] != civilizations[3]:
+        raise LiveCaptureError("generated Player 1 civilization must match Player 3 for music")
     cameras = _camera_configuration(source)
     # User's corrected Default 1 (2026-09-07), shared by all four 16x16 goldens.
     if cameras != ((0, 1, 8, 7, -1, 1),):
@@ -215,6 +221,7 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
         "playerRuntimeConfigurationMatchesGolden": True,
         "triggerStructureMatchesGolden": True,
         "cameraMatchesGolden": True,
+        "spectatorCivilizationMatchesPlayer3": True,
         "camera": {"player": 1, "x": 8, "y": 7, "scroll": 1},
     }
 

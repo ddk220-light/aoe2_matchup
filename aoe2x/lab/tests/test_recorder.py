@@ -41,9 +41,26 @@ def test_unequal_rosters_preserve_default1_camera_and_golden(sides, tmp_path):
             counts=(11, 23), template=golden_path(config, plan["scenario"]["family"]),
             ranged=(plan["side2"]["ranged"], plan["side3"]["ranged"]),
         )
-        assert _validate_scenario(config, plan, generated, stack)["cameraMatchesGolden"]
+        validation = _validate_scenario(config, plan, generated, stack)
+        assert validation["cameraMatchesGolden"]
+        assert validation["spectatorCivilizationMatchesPlayer3"]
         scenario = stack["AoE2DEScenario"].from_file(str(generated))
         assert _camera_configuration(scenario) == ((0, 1, 8, 7, -1, 1),)
+        players = {int(player.player_id): player for player in scenario.player_manager.players}
+        from build_run import civ_enum
+
+        assert players[2].civilization == civ_enum(plan["side2"]["civ"])
+        assert players[3].civilization == civ_enum(plan["side3"]["civ"])
+        assert players[1].civilization == players[3].civilization
+        original_civ = players[1].civilization
+        players[1].civilization = (
+            civ_enum("Spanish") if original_civ != civ_enum("Spanish") else civ_enum("Wei")
+        )
+        wrong_civ = tmp_path / "wrong-civilization.aoe2scenario"
+        scenario.write_to_file(str(wrong_civ))
+        with pytest.raises(LiveCaptureError, match="Player 1 civilization must match Player 3"):
+            _validate_scenario(config, plan, wrong_civ, stack)
+        players[1].civilization = original_civ
         scenario.trigger_manager.triggers[0].effects[0].location_x = 2
         tampered = tmp_path / "tampered.aoe2scenario"
         scenario.write_to_file(str(tampered))

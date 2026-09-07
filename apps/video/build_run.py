@@ -286,7 +286,7 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
 
     player(P_SIDE1).civilization = civ_enum(civ1)
     player(P_SIDE2).civilization = civ_enum(civ2)
-    player(P_SPECTATOR).civilization = civ_enum(civ2)    # P1 spectator hears side-2 music
+    player(P_SPECTATOR).civilization = player(P_SIDE2).civilization  # P1 hears P3's music
 
     old1 = _test_const(um.get_player_units(P_SIDE1))
     old2 = _test_const(um.get_player_units(P_SIDE2))

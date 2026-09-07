@@ -139,3 +139,15 @@ frames from the cut through the original last frame are retained. Compared the
 decoded first and last output frames with their raw counterparts, inspected the
 first frame visually, and verified an offline resume reused the clip. All
 **17 lab tests** passed, including the real video/audio trimming regression.
+
+## Follow-up: spectator civilization and music
+
+Generated Player 1 explicitly inherits Player 3's civilization so the spectator
+uses that civilization's music. Lab scenario validation rejects a mismatch before
+capture. Regression coverage checks the requested combat civilizations and
+spectator inheritance across all four golden families, including rejection of a
+saved scenario with a different spectator civilization.
+
+Read back the existing spike scenario: Player 1 is Spanish, Player 2 is Wei
+(Elite Tiger Cavalry), and Player 3 is Spanish (Paladins). The 15 recorder and
+workflow tests passed. No additional video was recorded.

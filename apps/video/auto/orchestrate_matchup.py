@@ -98,6 +98,15 @@ def resolve_side(civ: str, slug: str):
     unit's display name from the reference DB."""
     import json
     from overlay.overlay_data import get_unit_card
+    # Recording metadata is independent of calibrated simulation fixtures and
+    # uses explicit object keys for unique upgrades and switchable attack modes.
+    roster_path = Path(__file__).resolve().parents[3] / "data" / "unique-unit-roster.json"
+    if roster_path.exists():
+        roster = json.loads(roster_path.read_text(encoding="utf-8"))
+        match = next((row for row in roster["units"]
+                      if row["civ"] == civ and row["slug"] == slug), None)
+        if match:
+            return (civ, match["scenarioKey"], match["label"])
     suffix = "_" + civ.lower()
     key = slug[: -len(suffix)] if slug.endswith(suffix) else slug
     lookup_slugs = [slug]

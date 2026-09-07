@@ -2,6 +2,28 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createLabPlan } from "../tools/aoe2lab_worker.mjs";
+import { unitBySlug } from "../src/unit-registry.js";
+
+test("recording roster preserves Tiger P2 and ranged screens for melee-damage throwers", () => {
+  for (const slug of ["elite_composite_bowman_armenians", "elite_throwing_axeman",
+    "elite_gbeto", "elite_mameluke_saracens", "elite_ratha_(ranged)_bengalis"]) {
+    const plan = createLabPlan(request({
+      side2: { slug: "elite_tiger_cavalry_wei" }, side3: { slug },
+    }));
+    assert.equal(plan.side2.slug, "elite_tiger_cavalry_wei");
+    assert.equal(plan.side3.slug, slug);
+    assert.equal(plan.scenario.family, "melee_vs_ranged");
+    assert.equal(plan.scenario.hasPlayer4Gate, true);
+  }
+  const jaguar = createLabPlan(request({
+    side2: { slug: "elite_tiger_cavalry_wei" },
+    side3: { slug: "elite_jaguar_warrior_aztecs" },
+  }));
+  assert.equal(jaguar.scenario.family, "melee_vs_melee");
+  assert.equal(jaguar.side3.weightedCost, 90);
+  assert.equal(unitBySlug("elite_jaguar_warrior_aztecs"), undefined);
+  assert.equal(unitBySlug("elite_composite_bowman_armenians"), undefined);
+});
 
 
 function request(overrides = {}) {

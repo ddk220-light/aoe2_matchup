@@ -28,6 +28,9 @@ def test_recorder_cli_keeps_raw_and_rejects_destructive_policy():
     ("arbalester", "arbalester"),
     ("arbalester", "paladin"),
     ("paladin", "arbalester"),
+    ("elite_tiger_cavalry_wei", "elite_composite_bowman_armenians"),
+    ("elite_tiger_cavalry_wei", "elite_jaguar_warrior_aztecs"),
+    ("elite_tiger_cavalry_wei", "elite_mameluke_saracens"),
 ])
 def test_unequal_rosters_preserve_default1_camera_and_golden(sides, tmp_path):
     config = load_config()

@@ -16,6 +16,7 @@ import {
 } from "../src/lab-scenario.js";
 import { resolveFamily } from "../src/placement.js";
 import { unitBySlug } from "../src/unit-registry.js";
+import { recordingUnitBySlug } from "../src/recording-unit-registry.js";
 
 
 const SIM_ROOT = new URL("../", import.meta.url);
@@ -95,8 +96,8 @@ function deriveCounts(side2, side3, balance) {
 
 export function createLabPlan(request) {
   if (request?.schemaVersion !== 1) throw new TypeError("request schemaVersion must be 1");
-  const side2 = unitBySlug(request.side2?.slug);
-  const side3 = unitBySlug(request.side3?.slug);
+  const side2 = recordingUnitBySlug(request.side2?.slug);
+  const side3 = recordingUnitBySlug(request.side3?.slug);
   if (!side2 || !side3) {
     throw new RangeError(`unknown unit: ${request.side2?.slug ?? "?"} or ${request.side3?.slug ?? "?"}`);
   }
@@ -160,6 +161,9 @@ async function runSeed(plan, seed) {
     throw new TypeError("a persisted AOE2 Lab plan is required");
   }
   requireInteger(seed, "seed", 0, Number.MAX_SAFE_INTEGER);
+  if (!unitBySlug(plan.side2.slug) || !unitBySlug(plan.side3.slug)) {
+    throw new RangeError("recording-only unit has no calibrated simulation fixture; use recorder mode");
+  }
   const scenario = await loadLabScenario(SIM_ROOT, plan.side2.slug, plan.side3.slug);
   if (scenario.family !== plan.scenario.family
       || scenario.goldenSha256 !== plan.scenario.goldenSha256) {

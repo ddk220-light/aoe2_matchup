@@ -19,6 +19,7 @@ from .retention import (
     validate_retained_statistics,
 )
 from .recording import recorder_retention, validate_recording_bundle, write_recording_bundle
+from .battle_clip import prepare_battle_clip
 
 
 GOLDENS = {
@@ -436,6 +437,9 @@ def _summarize_live(job: Job, repeats: int) -> dict:
             **manifest["capture"],
             "retention": manifest.get("retention", {"mode": "raw"}),
             "mode": manifest.get("mode", "statistics"),
+            "battleVideo": (
+                f"live/run_{repeat:03d}/{manifest['battleVideo']}" if manifest.get("battleVideo") else None
+            ),
             "recording": (
                 f"live/run_{repeat:03d}/recording.json" if manifest.get("recording") else None
             ),
@@ -500,6 +504,7 @@ def run_live(
                 if not (run_directory / "recording.json").exists():
                     write_recording_bundle(run_directory, plan, _validate_capture(run_directory, plan))
                 validate_recording_bundle(run_directory, plan)
+                existing["battleVideo"] = prepare_battle_clip(run_directory, plan)["video"]
                 existing["mode"] = "recorder"
                 existing["recording"] = "recording.json"
             existing["capture"] = validate_retained_statistics(
@@ -633,6 +638,13 @@ def run_live(
             raise LiveCaptureError(
                 f"live repeat {repeat} failed after {retries + 1} attempts: {error}"
             ) from error
+        if mode == "recorder":
+            # The capture checkpoint is already durable. A clip failure can be
+            # resumed offline and must never trigger another live recording.
+            clip = prepare_battle_clip(run_directory, plan)
+            run_manifest = read_json(manifest_path)
+            run_manifest["battleVideo"] = clip["video"]
+            write_json(manifest_path, run_manifest)
         complete.append(repeat)
         job.update_section("live", completedRepeats=complete, lastCompletedRepeat=repeat)
     summary = _summarize_live(job, repeats)

@@ -95,6 +95,7 @@ def test_recorder_resume_needs_no_game_and_default_live_cannot_delete_it(tmp_pat
     write_recording_bundle(run, plan, capture)
     write_json(run / "manifest.json", {"capture": capture, "mode": "recorder", "retention": {"mode": "raw"}})
     monkeypatch.setattr("aoe2x.lab.live._load_stack", lambda _: {})
+    monkeypatch.setattr("aoe2x.lab.live.prepare_battle_clip", lambda *args: {"video": "battle.mp4"})
     def no_game(*args, **kwargs):
         pytest.fail("a completed recorder resume must not inspect or operate the game")
     monkeypatch.setattr("aoe2x.lab.live.preflight_live", no_game)

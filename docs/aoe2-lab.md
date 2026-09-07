@@ -69,8 +69,10 @@ current editor screen.
 ### Recorder mode: raw footage for later overlays
 
 Use `record` (equivalent to `live --mode recorder`) to play a matchup in the real
-game and retain an expanded, checksummed recording folder. It does not compose
-an overlay or create a ZIP. The normal lab balance default is equal resources,
+game and retain an expanded, checksummed recording folder. Its default output is
+`battle.mp4`, starting on the first in-game frame with audio trimmed to the same
+instant. The existing ending is preserved. It does not compose an overlay or
+create a ZIP. The normal lab balance default is equal resources,
 with the cheaper army capped at 27; pass `--balance equal_count --count 27` when
 equal numbers are wanted.
 
@@ -93,6 +95,9 @@ runs/<job_id>/
   live/run_001/
     manifest.json
     recording.json                  checksums, side ownership, clocks, media metadata
+    battle.mp4                      default output: game start through original ending
+    battle.hp.json                  sidecar with offsets shifted for battle.mp4
+    battle-trim.log
     <matchup>.aoe2scenario
     capture_attempt_1.log
     grpc_logger.log
@@ -107,12 +112,15 @@ runs/<job_id>/
 `recording.json` indexes exact file sizes and SHA-256 checksums, the canonical
 plan hash, player-2/player-3 label mapping, game version, video geometry,
 duration, audio presence, and synchronization metadata. All file paths in that
-index are relative to its repeat folder. Keep the job's plan/request alongside
+index are relative to its repeat folder. `defaultVideo` selects `battleVideo`;
+`presentation` records the exact removed frame count/time and output media facts.
+The original capture and gRPC evidence remain unchanged. Keep the job's plan/request alongside
 it when moving evidence for later processing. Rows in the HP sidecar already
 use video-duration seconds (`clock=video`); do not divide them by game speed again.
 
 Rerunning the identical request verifies the existing files and skips game
-capture for completed repeats. Missing or altered recordings fail validation.
+capture for completed repeats. Older raw-only bundles gain the battle clip
+offline; completed clips are reused. Missing or altered recordings fail validation.
 A stats-only historical job cannot become a recording without recapture under
 a new job ID. Recorder mode forces raw retention and rejects `stats`/`archive`;
 later default `live` resumes preserve the explicit recorder retention. Failed
@@ -123,6 +131,15 @@ Before recording, keep AoE2 maximized/fullscreen on the primary display in the
 Scenario Editor or Load Scenario page. Do not switch apps during capture:
 the Windows recorder captures the desktop. Audio is included only when the
 configured loopback device is available; the bundle reports `hasAudio`.
+
+Capture starts before Test so encoder startup cannot lose the first game frames.
+After capture, the dark-load-to-bright-arena transition identifies the first
+in-game frame. Video and audio are trimmed together at that frame, removing the
+editor/menu lead-in and any spoken menu labels captured there. There is no
+automation speech-generation code. No extra patrol delay, fade, or tail trim is
+applied. If the game-start transition cannot be identified, the raw capture stays
+available and the clip stage fails explicitly. Clipping errors can be retried
+without replaying the fight.
 
 The four goldens retain the centered camera authored in the user's corrected
 Default 1: first trigger `Starting`, player 1, `(8, 7)` on the 16x16 map, scrolling

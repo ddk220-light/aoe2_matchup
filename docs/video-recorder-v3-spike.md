@@ -116,3 +116,26 @@ No overlay was rendered in this spike.
 Large capture/playback files and machine settings remain gitignored. The code,
 repeatable request, and this report are the versioned deliverables; the actual
 video and gRPC evidence remain available in the local job folder.
+
+## Follow-up: start at the battle, omit menu audio
+
+Recorder output now defaults to `live/run_001/battle.mp4`. Both audio and video
+begin at the detected first in-game frame; the raw tape and its original end
+remain intact. `battle.hp.json` shifts the video offsets by the removed lead-in
+without changing any measured rows. `recording.json` indexes both originals and
+the default clip and records the exact cut in `presentation`.
+
+The same batch command upgrades the existing spike offline. A synthetic media
+regression checks exact first/last frames, frame count, audio-start content, and
+no re-encoding on resume. It caught and fixed a one-frame timestamp error in the
+shared detector: OpenCV's timestamp immediately after seeking could describe the
+previous frame; the detector now uses the decoded frame index. The automation
+contains no speech-generation calls; removing the pre-game audio removes spoken
+menu cues captured during navigation.
+
+For this spike the cut is raw frame **535**, or **8.916667 seconds**. The new
+MP4 is **54.508 seconds**, 2560x1440 at 60 fps with audio. All **3,262** video
+frames from the cut through the original last frame are retained. Compared the
+decoded first and last output frames with their raw counterparts, inspected the
+first frame visually, and verified an offline resume reused the clip. All
+**17 lab tests** passed, including the real video/audio trimming regression.

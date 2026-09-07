@@ -160,12 +160,14 @@ def find_game_start(video_path, t_from=1.0, t_to=25.0, coarse=0.5):
         # frame-step refine inside (bracket - coarse, bracket]: ONE seek, then decode
         # sequentially (per-frame seeks on long-GOP H.264 are what made this slow)
         cap.set(cv2.CAP_PROP_POS_MSEC, max(t_from, bracket - coarse) * 1000.0)
-        base_t = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
         for i in range(int(fps * (coarse + 0.2)) + 2):
             ok, fr = cap.read()
             if not ok:
                 break
-            t = base_t + i / fps
+            # POS_MSEC immediately after a seek can refer to the preceding frame
+            # (e.g. MJPEG reports 0.4667 after seeking to 0.5 at 30fps). Use the
+            # decoded frame's index; POS_FRAMES now points at the NEXT frame.
+            t = (cap.get(cv2.CAP_PROP_POS_FRAMES) - 1) / fps
             small = cv2.resize(fr, (160, 90))
             if float(cv2.cvtColor(small, cv2.COLOR_BGR2GRAY).mean()) >= _GAME_LUMA:
                 return round(t, 3)

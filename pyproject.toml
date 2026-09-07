@@ -14,6 +14,9 @@ requires-python = ">=3.10"
 # deps stay in each app's requirements.txt (apps/ after Stage 7).
 dependencies = []
 
+[project.scripts]
+aoe2lab = "aoe2x.lab.cli:main"
+
 [tool.setuptools.packages.find]
 include = ["aoe2x*"]
 

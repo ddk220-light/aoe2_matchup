@@ -102,3 +102,9 @@ data/local/matchup_db.db
 # gRPC mTLS client credentials (CadeRemote) — NEVER commit; live beside aoe2x/grpc/
 aoe2x/grpc/*.key
 aoe2x/grpc/*.pem
+
+# Portable lab machine settings and generated capture/simulation evidence
+/aoe2lab.toml
+/aoe2x/js_simulation/calibration/lab/
+/aoe2x/js_simulation/.tmp-genieutils/
+/aoe2x/js_simulation/*.log

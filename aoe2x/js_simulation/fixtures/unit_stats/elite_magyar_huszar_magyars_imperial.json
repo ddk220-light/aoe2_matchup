@@ -1,0 +1,134 @@
+{
+  "age": "Imperial",
+  "armor_classes": {
+    "19": 0,
+    "3": 6,
+    "31": 0,
+    "4": 3,
+    "8": 0
+  },
+  "attack_animation": {
+    "frame_duration_seconds": 0.02500000037252903,
+    "frames": 60,
+    "graphic": 1939,
+    "seconds": 1.5000000223517418
+  },
+  "attack_classes": {
+    "11": 0,
+    "17": 2,
+    "20": 8,
+    "21": 0,
+    "31": 0,
+    "38": 0,
+    "39": -3,
+    "4": 15
+  },
+  "attack_delay_seconds": 0.7500000111758709,
+  "attack_graphic": 1939,
+  "attack_range_tiles": 0.0,
+  "blast": {
+    "attack_level": 0,
+    "damage_fraction": 1.0,
+    "defense_level": 3,
+    "friendly_fire_damage": 1.0,
+    "width_tiles": 0.0
+  },
+  "charge": null,
+  "civilization": "Magyars",
+  "clearance_size_tiles": {
+    "x": 0.25,
+    "y": 0.25
+  },
+  "collision_size_tiles": {
+    "x": 0.25,
+    "y": 0.25,
+    "z": 2.0
+  },
+  "damage_reduction_by_attacker_category": null,
+  "derived": {
+    "damage_vs_self": 12
+  },
+  "frame_delay": 0,
+  "hp": 110,
+  "idle_animation": {
+    "frame_duration_seconds": 0.06666667014360428,
+    "frames": 45,
+    "graphic": 1943,
+    "seconds": 3.0000001564621925
+  },
+  "line_of_sight_tiles": 6.0,
+  "min_collision_size_multiplier": 0.5,
+  "movement_blocks": {
+    "fly_mode": 0,
+    "hill_mode": 0,
+    "terrain_restriction": 28
+  },
+  "obstruction": {
+    "class": 2,
+    "type": 5
+  },
+  "outline_size_tiles": {
+    "x": 0.4,
+    "y": 0.4,
+    "z": 2.0
+  },
+  "population_space": 1.0,
+  "provenance": {
+    "dat_selector": "dat.civs[name='Magyars'].units[871]",
+    "dat_sha256": "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF",
+    "fields": {
+      "age": "ref_units.age",
+      "armor_classes": "ref_units.final_armors_json",
+      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration",
+      "attack_animation.frames": "graphics[attack_graphic].frame_count",
+      "attack_animation.graphic": "unit.type_50.attack_graphic",
+      "attack_animation.seconds": "frames * frame_duration",
+      "attack_classes": "ref_units.final_attacks_json",
+      "attack_delay_seconds": "frame_delay unset (0): hit at the attack-animation midpoint",
+      "attack_graphic": "unit.type_50.attack_graphic",
+      "attack_range_tiles": "ref_units.final_range",
+      "blast.attack_level": "unit.type_50.blast_attack_level",
+      "blast.damage_fraction": "unit.type_50.blast_damage",
+      "blast.defense_level": "unit.blast_defense_level",
+      "blast.friendly_fire_damage": "unit.type_50.friendly_fire_damage",
+      "blast.width_tiles": "unit.type_50.blast_width",
+      "civilization": "ref_units.civ_name",
+      "clearance_size_tiles.x": "unit.clearance_size[0]",
+      "clearance_size_tiles.y": "unit.clearance_size[1]",
+      "collision_size_tiles.x": "unit.collision_size_x",
+      "collision_size_tiles.y": "unit.collision_size_y",
+      "collision_size_tiles.z": "unit.collision_size_z",
+      "derived.damage_vs_self": "AoE class rule(ref_units.final_attacks_json, ref_units.final_armors_json)",
+      "frame_delay": "unit.type_50.frame_delay",
+      "hp": "ref_units.final_hp",
+      "idle_animation": "graphics[unit.standing_graphic[0]]",
+      "line_of_sight_tiles": "ref_units.final_los",
+      "min_collision_size_multiplier": "unit.dead_fish.min_collision_size_multiplier",
+      "movement_blocks.fly_mode": "unit.fly_mode",
+      "movement_blocks.hill_mode": "unit.hill_mode",
+      "movement_blocks.terrain_restriction": "unit.terrain_restriction",
+      "obstruction.class": "unit.obstruction_class",
+      "obstruction.type": "unit.obstruction_type",
+      "outline_size_tiles.x": "unit.outline_size_x",
+      "outline_size_tiles.y": "unit.outline_size_y",
+      "outline_size_tiles.z": "unit.outline_size_z",
+      "population_space": "ref_units.pop_space",
+      "reload_seconds": "ref_units.final_reload_time",
+      "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
+      "unit_master": "unit.id",
+      "walk_animation": "graphics[unit.dead_fish.walking_graphic]"
+    },
+    "reference_db_sha256": "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087",
+    "reference_selector": "ref_units WHERE unit_slug='elite_magyar_huszar_magyars' AND civ_name='Magyars' AND age='Imperial'"
+  },
+  "ranged": null,
+  "reload_seconds": 1.8,
+  "speed_tiles_per_second": 1.6500000357627869,
+  "unit_master": 871,
+  "walk_animation": {
+    "frame_duration_seconds": 0.03750000149011612,
+    "frames": 30,
+    "graphic": 1945,
+    "seconds": 1.1250000447034836
+  }
+}

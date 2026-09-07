@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Immutable AOE2 Lab scenario families. Runtime generation may only replace civilizations, army unit types, counts, and labels; it must preserve AI, P4, diplomacy, triggers, and first-N positions.",
+  "goldens": {
+    "melee_vs_melee": {
+      "file": "melee_vs_melee.aoe2scenario",
+      "sha256": "31f3bed38ce0512b484124d89d5aa4e97318b3ea55c398bb8dad27242c769f4e"
+    },
+    "ranged_vs_ranged": {
+      "file": "ranged_vs_ranged.aoe2scenario",
+      "sha256": "f44097ef86e6b123c6dfeb4989842e548af91f0d492e69caf6de87148f040883"
+    },
+    "ranged_vs_melee": {
+      "file": "ranged_vs_melee.aoe2scenario",
+      "sha256": "13c41485a00943ef525cab848d835d1379259fc8fff38b83d4ec510bc8824783"
+    },
+    "melee_vs_ranged": {
+      "file": "melee_vs_ranged.aoe2scenario",
+      "sha256": "faf8d616ac9bb4601c4582deccec0984e997617d8c121bc44d698c7963f038a8"
+    }
+  },
+  "aiInvariant": {
+    "players2To4Name": "NoneAi",
+    "players2To4Type": 2,
+    "embeddedPerSha256": "9c35b35e0992cbd8cbb021511a14807af346b156d702535237650969014955d7",
+    "behavior": "(disable-self)"
+  }
+}

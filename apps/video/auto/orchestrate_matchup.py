@@ -96,10 +96,36 @@ def resolve_side(civ: str, slug: str):
     The scenario unit key is the slug minus its civ suffix (unique-unit slugs carry
     one, e.g. 'elite_temple_guard_muisca' -> 'elite_temple_guard'); the label is the
     unit's display name from the reference DB."""
+    import json
     from overlay.overlay_data import get_unit_card
     suffix = "_" + civ.lower()
     key = slug[: -len(suffix)] if slug.endswith(suffix) else slug
-    label = get_unit_card(civ, slug)["name"]
+    lookup_slugs = [slug]
+    civ_slug = key + suffix
+    if civ_slug not in lookup_slugs:
+        lookup_slugs.append(civ_slug)
+    label = None
+    for lookup_slug in lookup_slugs:
+        try:
+            label = get_unit_card(civ, lookup_slug)["name"]
+            break
+        except ValueError:
+            continue
+    if label is None:
+        # Newly added game units can reach the scenario catalogue before the
+        # reference-stat DB is regenerated. Scenario construction only needs
+        # their display label; resource-balanced batch drivers pass explicit
+        # counts and therefore do not infer costs through this fallback.
+        catalogue = HERE / "unique_units.json"
+        rows = json.loads(catalogue.read_text(encoding="utf-8"))
+        match = next((row for row in rows
+                      if row["civ"] == civ
+                      and row["slug"] in lookup_slugs), None)
+        if match is None:
+            raise ValueError(
+                f"No unit card or scenario catalogue row for {civ} {slug}"
+            )
+        label = match["name"]
     return (civ, key, label)
 
 
@@ -248,7 +274,7 @@ def _reach_load_page(state, logfile) -> bool:
     if state == "load_dialog":
         return True
     if state == "editor":
-        if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu", dbl=True):
+        if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu"):
             return False
         time.sleep(0.8)
         state = "main_menu"
@@ -284,7 +310,7 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     -> Load -> (save? No) -> editor -> Menu. OCR only as cheap per-gate verification."""
     st = start_state
     if st == "editor":
-        _click_frac(*FP_MENU, logfile=logfile, label="Menu", dbl=True, settle=0.9)
+        _click_frac(*FP_MENU, logfile=logfile, label="Menu", settle=0.9)
         st = "main_menu"
     if st == "main_menu":
         _click_frac(*FP_LOAD_MENU, logfile=logfile, label="Load Scenario", settle=0.5)
@@ -317,10 +343,13 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     # the small scenario loads in ~2s; a fixed wait beats an OCR poll here (each editor
     # check is a ~5s OCR). GATE C below catches the rare case where it wasn't ready.
     time.sleep(2.5)
-    _click_frac(*FP_MENU, logfile=logfile, label="Menu", dbl=True, settle=0.7)
+    # A double-click is not idempotent here: on current AoE2 builds the first
+    # click opens the editor menu and the second can immediately close it again.
+    # Use one click, then let the Test gate below verify the resulting dialog.
+    _click_frac(*FP_MENU, logfile=logfile, label="Menu", settle=0.7)
     # GATE C: the menu dialog (with 'Test') must be up; else OCR-find Menu (self-correcting)
     if not _wait_text("Test", R_DIALOG, tries=3):
-        if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu", dbl=True):
+        if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu"):
             return False
         time.sleep(0.6)
     return True
@@ -341,7 +370,7 @@ def _navigate_ocr(start_state, scenario_name, logfile) -> bool:
         return False
     _dismiss_save_prompt(logfile)          # loading over the open scenario can re-prompt
     time.sleep(2.5)
-    if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu", dbl=True):
+    if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu"):
         return False
     time.sleep(0.8)
     return True
@@ -374,13 +403,14 @@ def _in_editor(img=None) -> bool:
     return any(k in tabs for k in ("terrain", "diplomacy", "triggers", "cinematics"))
 
 
-def return_to_editor(logfile, retries=10) -> bool:
+def return_to_editor(logfile, retries=4) -> bool:
     """Quit the running test back to the Scenario Editor so the game is clean for the
     NEXT run. The no-lose scenario holds the result on screen WITHOUT ending the game
     (no banner), so the path is: open the in-game Menu (F10) -> 'Quit Current Game' ->
     'Yes'. A leftover defeat banner ('Continue') is handled too, for safety. Idempotent:
     returns True once the editor tabs are visible. Uses the cheap editor check + warm OCR
     + tightened waits; Quit is tried before the (legacy) banner to save an OCR/iter."""
+    menu_request_sent = False
     for _ in range(retries):
         _focus_game()
         img = vision.grab()
@@ -398,15 +428,29 @@ def return_to_editor(logfile, retries=10) -> bool:
                 ui.click(y)
             log("[end] Quit -> Yes", logfile)
             time.sleep(2.0)
+            menu_request_sent = False
             continue
         # legacy defeat banner (shouldn't occur with no-lose triggers)
         if vision.detect_end(img):
             pt = vision.find_text(img, "Continue", region=R_CONTINUE)
             if pt:
                 ui.click(pt); time.sleep(2.0); continue
-        # otherwise open the in-game menu via the F10 hotkey (bound in-game on Windows)
+        # Never hammer F10 through an unknown game/error state. One menu request is
+        # enough; if it does not reveal Quit, preserve the screen for diagnostics and
+        # fail the run rather than blindly toggling UI.
+        dialog_text = vision.ocr_text(img, (0.14, 0.14, 0.86, 0.86)).strip()
+        lowered = dialog_text.lower()
+        if any(marker in lowered for marker in (
+                "error", ".per", "failed", "unable", "cannot", "could not")):
+            log(f"[end] ERROR dialog blocks cleanup: {dialog_text[:500]!r}", logfile)
+            return False
+        if menu_request_sent:
+            log("[end] F10 did not expose a recognized Quit menu; stopping input", logfile)
+            return False
+        # Otherwise open the in-game menu once via the configured F10 hotkey.
         platform_io.key("f10")
         log("[end] opened in-game menu (F10)", logfile)
+        menu_request_sent = True
         time.sleep(1.0)
     ok = _in_editor()
     log(f"[end] {'in editor' if ok else 'WARNING: editor not confirmed'}", logfile)
@@ -418,10 +462,11 @@ def _flag_no_result(final_path, got_result: bool, logfile=None):
     probably truncated mid-battle. Don't fail the run (the footage may still be usable);
     flag it loudly with a marker file next to the output so a sweep can't silently ship
     a clip that ends before the fight does."""
+    marker = Path(str(Path(final_path).with_suffix("")) + ".NO_RESULT.txt")
     if got_result:
+        marker.unlink(missing_ok=True)
         return
     try:
-        marker = Path(str(Path(final_path).with_suffix("")) + ".NO_RESULT.txt")
         marker.write_text(
             "The watch loop hit the recording cap without detecting the WINS result\n"
             "banner — this clip may end mid-battle. Re-run with a higher --cap, or\n"
@@ -435,7 +480,9 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
                 cap=240, mode="count", unit_cap=30, live_overlay=True, compose=True,
                 out_mov=os.path.join(TMP, "auto_fight.mov"),
                 final=os.path.join(TMP, "auto_matchup_FINAL.mp4"),
-                dismiss_after=True, logfile=None) -> Path:
+                dismiss_after=True, logfile=None, template=None,
+                counts_override=None, ranged_override=None,
+                scenario_validator=None, require_grpc=False) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
 
@@ -450,15 +497,28 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     # 1. BUILD the run scenario from the golden template (swap units/civs, no tech)
     side1 = resolve_side(civ1, slug1)
     side2 = resolve_side(civ2, slug2)
-    if mode == "resources":
+    if counts_override is not None:
+        if (not isinstance(counts_override, (tuple, list))
+                or len(counts_override) != 2
+                or not all(isinstance(value, int) and value > 0 for value in counts_override)):
+            raise ValueError("counts_override must be a pair of positive integers")
+        counts = tuple(counts_override)
+    elif mode == "resources":
         counts = equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap)
     else:
         counts = (unit_cap, unit_cap)
     run_path = RUN_DIR / f"{side1[1]}_vs_{side2[1]}.aoe2scenario"
     from overlay.overlay_data import get_unit_card
-    ranged = (bool(get_unit_card(civ1, slug1).get("is_ranged")),
-              bool(get_unit_card(civ2, slug2).get("is_ranged")))
-    build_run(side1, side2, run_path, counts=counts, ranged=ranged)
+    ranged = tuple(ranged_override) if ranged_override is not None else (
+        bool(get_unit_card(civ1, slug1).get("is_ranged")),
+        bool(get_unit_card(civ2, slug2).get("is_ranged")),
+    )
+    if len(ranged) != 2 or not all(isinstance(value, bool) for value in ranged):
+        raise ValueError("ranged_override must be a pair of booleans")
+    build_kwargs = {} if template is None else {"template": Path(template)}
+    build_run(side1, side2, run_path, counts=counts, ranged=ranged, **build_kwargs)
+    if scenario_validator is not None:
+        scenario_validator(run_path)
     log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "
         f"[{mode}] ranged={ranged} -> {run_path}", logfile)
 
@@ -481,17 +541,27 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     # EXACT battle-end (gRPC army-count -> 0, OCR fallback). Whatever happens, ALWAYS stop
     # the logger + recorder and dismiss back to the editor, so one bad run can't orphan them.
     grpc_prefix = os.path.join(TMP, "grpc_" + Path(out_mov).stem)
-    grpc_proc = grpc_capture.start_logger(grpc_prefix, dur=cap + 30, logfile=logfile)
-    rec = start_recorder(out_mov, cap, logfile=logfile)
-    t_rec = time.time()
+    grpc_proc = rec = None
     t_gs = None
     got_result = False
+    cleanup_ok = True
     try:
+        grpc_proc = grpc_capture.start_logger(grpc_prefix, dur=cap + 30, logfile=logfile)
+        if require_grpc and grpc_proc is None:
+            raise RuntimeError("required gRPC logger could not start")
+        rec = start_recorder(out_mov, cap, logfile=logfile)
+        t_rec = time.time()
         if not find_and_click("Test", R_DIALOG, logfile, "Test"):
             raise RuntimeError("could not click Test")
         t_test = time.time()
         _park_cursor(logfile)                                 # cursor out of the captured frame
         t_gs = wait_for_game_start(t_test, logfile=logfile)   # when the fight actually begins
+        if require_grpc and not grpc_capture.wait_for_stream(grpc_prefix, grpc_proc):
+            diagnostic = grpc_capture.logger_diagnostic(grpc_prefix)
+            raise RuntimeError(
+                "Scenario Editor Test produced no gRPC frames; the fight did not "
+                f"start correctly. Logger: {diagnostic}"
+            )
         # End-detection: the in-game "WINS" banner is the GAME'S OWN verdict, so OCR reads
         # it correctly every run. The gRPC recorder's LIVE TAILER (fixed decoder) writes
         # <prefix>.END the moment one army hits 0 — the exact battle end; the WINS-banner
@@ -501,10 +571,18 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
             end_flag=(grpc_prefix + ".END") if grpc_proc else None)
         time.sleep(RESULT_HOLD)            # keep recording the on-screen result hold
     finally:
-        stop_recorder(rec, out_mov, logfile)
-        grpc_capture.stop_logger(grpc_proc, logfile=logfile)
-        if dismiss_after:
-            return_to_editor(logfile)
+        try:
+            if rec is not None:
+                stop_recorder(rec, out_mov, logfile)
+        finally:
+            grpc_capture.stop_logger(grpc_proc, logfile=logfile)
+            if dismiss_after:
+                cleanup_ok = return_to_editor(logfile)
+
+    if dismiss_after and not cleanup_ok:
+        raise RuntimeError(
+            "could not safely return to Scenario Editor; stopped sending input"
+        )
 
     # recording sanity: an empty/tiny .mov means the capture failed (Screen Recording
     # grant missing, or the recorder never started) — fail loudly, don't compose black.

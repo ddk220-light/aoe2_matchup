@@ -1,0 +1,207 @@
+{
+  "age": "Imperial",
+  "armor_classes": {
+    "15": 0,
+    "19": 0,
+    "3": 4,
+    "31": 0,
+    "4": 3
+  },
+  "attack_animation": {
+    "frame_duration_seconds": 0.011666666716337204,
+    "frames": 60,
+    "graphic": 1552,
+    "seconds": 0.7000000029802322
+  },
+  "attack_classes": {
+    "17": 0,
+    "21": 0,
+    "27": 2,
+    "3": 14,
+    "4": 0,
+    "8": 0
+  },
+  "attack_delay_seconds": 0.22166666761040688,
+  "attack_graphic": 1552,
+  "attack_range_tiles": 7.0,
+  "blast": {
+    "attack_level": 3,
+    "damage_fraction": 1.0,
+    "defense_level": 3,
+    "friendly_fire_damage": 1.0,
+    "width_tiles": 0.0
+  },
+  "charge": null,
+  "civilization": "Chinese",
+  "clearance_size_tiles": {
+    "x": 0.2,
+    "y": 0.2
+  },
+  "collision_size_tiles": {
+    "x": 0.2,
+    "y": 0.2,
+    "z": 2.0
+  },
+  "damage_reduction_by_attacker_category": null,
+  "derived": {
+    "damage_vs_self": 10
+  },
+  "effects": {
+    "base_accuracy": 85.0,
+    "extra_projectile_attacks": {
+      "3": 3
+    },
+    "extra_projectiles": 4,
+    "pass_through_count": 1,
+    "splash_on_hit_fraction": 1.0
+  },
+  "frame_delay": 19,
+  "hp": 50,
+  "idle_animation": {
+    "frame_duration_seconds": 0.05000000074505806,
+    "frames": 60,
+    "graphic": 1554,
+    "seconds": 3.0000000447034836
+  },
+  "line_of_sight_tiles": 9.0,
+  "min_collision_size_multiplier": 1.0,
+  "mode_validation": {
+    "live_frames_bin": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\live_observations\\requested_roster_vs_arb_paladin_1x_2026-08-31\\elite_chu_ko_nu_chinese_vs_arbalester\\run_001\\raw recordings\\elite_chu_ko_nu_chinese_vs_arbalester.frames.bin",
+    "run": 1
+  },
+  "movement_blocks": {
+    "fly_mode": 0,
+    "hill_mode": 0,
+    "terrain_restriction": 7
+  },
+  "obstruction": {
+    "class": 2,
+    "type": 5
+  },
+  "outline_size_tiles": {
+    "x": 0.2,
+    "y": 0.2,
+    "z": 2.0
+  },
+  "population_space": 1.0,
+  "provenance": {
+    "dat_selector": "dat.civs[name='Chinese'].units[559]",
+    "dat_sha256": "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF",
+    "fields": {
+      "age": "ref_units.age",
+      "armor_classes": "ref_units.final_armors_json",
+      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration",
+      "attack_animation.frames": "graphics[attack_graphic].frame_count",
+      "attack_animation.graphic": "unit.type_50.attack_graphic",
+      "attack_animation.seconds": "frames * frame_duration",
+      "attack_classes": "ref_units.final_attacks_json",
+      "attack_delay_seconds": "hit on animation frame frame_delay: attack animation seconds * frame_delay / frames",
+      "attack_graphic": "unit.type_50.attack_graphic",
+      "attack_range_tiles": "ref_units.final_range",
+      "blast.attack_level": "unit.type_50.blast_attack_level",
+      "blast.damage_fraction": "unit.type_50.blast_damage",
+      "blast.defense_level": "unit.blast_defense_level",
+      "blast.friendly_fire_damage": "unit.type_50.friendly_fire_damage",
+      "blast.width_tiles": "unit.type_50.blast_width",
+      "civilization": "ref_units.civ_name",
+      "clearance_size_tiles.x": "unit.clearance_size[0]",
+      "clearance_size_tiles.y": "unit.clearance_size[1]",
+      "collision_size_tiles.x": "unit.collision_size_x",
+      "collision_size_tiles.y": "unit.collision_size_y",
+      "collision_size_tiles.z": "unit.collision_size_z",
+      "derived.damage_vs_self": "AoE class rule(ref_units.final_attacks_json, ref_units.final_armors_json)",
+      "frame_delay": "unit.type_50.frame_delay",
+      "hp": "ref_units.final_hp",
+      "idle_animation": "graphics[unit.standing_graphic[0]]",
+      "line_of_sight_tiles": "ref_units.final_los",
+      "min_collision_size_multiplier": "unit.dead_fish.min_collision_size_multiplier",
+      "movement_blocks.fly_mode": "unit.fly_mode",
+      "movement_blocks.hill_mode": "unit.hill_mode",
+      "movement_blocks.terrain_restriction": "unit.terrain_restriction",
+      "obstruction.class": "unit.obstruction_class",
+      "obstruction.type": "unit.obstruction_type",
+      "outline_size_tiles.x": "unit.outline_size_x",
+      "outline_size_tiles.y": "unit.outline_size_y",
+      "outline_size_tiles.z": "unit.outline_size_z",
+      "population_space": "ref_units.pop_space",
+      "ranged.accuracy_dispersion_tiles": "unit.type_50.accuracy_dispersion",
+      "ranged.accuracy_percent": "ref_units.final_accuracy (not simulated: 98.7% of tape shots resolve deterministically; see measurement note)",
+      "ranged.base_accuracy_percent": "ref_units.base_accuracy",
+      "ranged.extra_projectile_attacks": "ref_units.extra_projectile_attacks_json",
+      "ranged.extra_projectile_count": "ref_units.extra_projectiles",
+      "ranged.first_attack_extra_projectiles": "ref_units.first_attack_extra_projectiles",
+      "ranged.impact_splash_damage_fraction": "ref_units.splash_on_hit_fraction",
+      "ranged.impact_splash_friendly_fire_fraction": "unit.type_50.friendly_fire_damage",
+      "ranged.impact_splash_radius_tiles": "ref_units.splash_on_hit_radius",
+      "ranged.min_range_tiles": "ref_units.min_range",
+      "ranged.pass_through": "dat.civs[0].units[510].projectile.vanish_mode",
+      "ranged.pass_through_count": "ref_units.pass_through_count",
+      "ranged.pass_through_damage_fraction": "ref_units.pass_through_percent; dat pass-through defaults to 0.5",
+      "ranged.projectile_arc": "dat.civs[0].units[510].projectile.projectile_arc",
+      "ranged.projectile_half_width_tiles": "dat.civs[0].units[510].collision_size_x",
+      "ranged.projectile_spawning_area": "unit.creatable.projectile_spawning_area[0:2]",
+      "ranged.projectile_speed_tiles_per_second": "dat.civs[0].units[510].speed",
+      "ranged.projectile_unit": "unit.type_50.projectile_unit_id",
+      "ranged.reload_after_final_projectile": "full-rate same-actor volley start gap equals final release + DAT reload",
+      "ranged.secondary_projectile_count": "unit.creatable.total_projectiles - 1",
+      "ranged.secondary_projectile_half_width_tiles": "dat.civs[0].units[unit.creatable.secondary_projectile_unit].collision_size_x",
+      "ranged.secondary_projectile_unit": "unit.creatable.secondary_projectile_unit",
+      "ranged.smart_mode": "dat.civs[0].units[510].projectile.smart_mode | 1 when dat tech 93 (Ballistics) sets attribute 19 on projectile 510 (Imperial fully-teched model)",
+      "ranged.volley_double_release_percent": "elite_chu_ko_nu_chinese_vs_arbalester run_001 frames.bin: source-attributed arrows release in groups of one or two at roughly 0.28 s intervals; 91 of 269 complete-volley release groups contain two arrows",
+      "ranged.volley_release_interval_seconds": "elite_chu_ko_nu_chinese_vs_arbalester run_001 frames.bin: source-attributed arrows release in groups of one or two at roughly 0.28 s intervals; 91 of 269 complete-volley release groups contain two arrows",
+      "ranged.volley_release_size": "elite_chu_ko_nu_chinese_vs_arbalester run_001 frames.bin: source-attributed arrows release in groups of one or two at roughly 0.28 s intervals; 91 of 269 complete-volley release groups contain two arrows",
+      "ranged.weapon_mode": "concrete scenario/DAT weapon form",
+      "reload_seconds": "ref_units.final_reload_time * matching civilization tech-tree effect type 5 on reload attribute 10",
+      "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
+      "unit_master": "unit.id",
+      "walk_animation": "graphics[unit.dead_fish.walking_graphic]"
+    },
+    "reference_db_sha256": "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087",
+    "reference_selector": "ref_units WHERE unit_slug='elite_chu_ko_nu_chinese' AND civ_name='Chinese' AND age='Imperial'",
+    "reload_base_seconds": 2.4,
+    "reload_multiplier": 1.0
+  },
+  "ranged": {
+    "accuracy_dispersion_tiles": 0.33000001311302185,
+    "accuracy_percent": 100.0,
+    "base_accuracy_percent": 85.0,
+    "extra_projectile_attacks": {
+      "3": 3
+    },
+    "extra_projectile_count": 4,
+    "first_attack_extra_projectiles": 0,
+    "impact_splash_damage_fraction": 1.0,
+    "impact_splash_friendly_fire_fraction": 1.0,
+    "impact_splash_radius_tiles": 0.0,
+    "min_range_tiles": 0.0,
+    "pass_through": false,
+    "pass_through_count": 0,
+    "pass_through_damage_fraction": 0.0,
+    "projectile_arc": -0.05999999865889549,
+    "projectile_half_width_tiles": 0.1,
+    "projectile_spawning_area": [
+      1.0,
+      1.0
+    ],
+    "projectile_speed_tiles_per_second": 7.0,
+    "projectile_unit": 510,
+    "reload_after_final_projectile": true,
+    "secondary_projectile_count": 0,
+    "secondary_projectile_half_width_tiles": 0.1,
+    "secondary_projectile_unit": 510,
+    "smart_mode": 1,
+    "volley_double_release_percent": 34.0,
+    "volley_release_interval_seconds": 0.27,
+    "volley_release_size": 1,
+    "weapon_mode": "repeating_volley"
+  },
+  "reload_seconds": 2.4,
+  "speed_tiles_per_second": 0.96,
+  "unit_master": 559,
+  "walk_animation": {
+    "frame_duration_seconds": 0.03487500175833702,
+    "frames": 30,
+    "graphic": 1556,
+    "seconds": 1.0462500527501106
+  }
+}

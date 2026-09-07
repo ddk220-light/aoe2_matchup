@@ -49,6 +49,20 @@ def derive_army(es):
     return army
 
 
+def refresh_army_membership(es, army):
+    """Admit combat entities created after the opening snapshot.
+
+    Spawn-on-death and other replacement mechanics create a new entity id.  A
+    start-only membership set silently lost those bodies (and their HP) even
+    though the same owner/type filters still identify them unambiguously.
+    Membership is monotonic; dead ids remain harmless because totals() already
+    requires a present entity with positive HP.
+    """
+    current = derive_army(es)
+    for owner in (2, 3):
+        army[owner].update(current[owner])
+
+
 def totals(es, army):
     out = {}
     for o in (2, 3):
@@ -127,6 +141,7 @@ def main():
                     continue             # nothing decodable until the first snapshot
                 if p:
                     D.apply_patch(doc, p, es, world_id)
+                    refresh_army_membership(es, army)
                 sec = fr.time // 1000
                 if last_sec is not None and sec < last_sec - 2:
                     # clock went backwards: new game instance without a snapshot yet —
@@ -155,8 +170,18 @@ def main():
     with open(PFX + ".hp_log.jsonl", "w") as o:
         for r in rows:
             o.write(json.dumps(r) + "\n")
-    end_s = next((r["game_s"] for r in rows
-                  if min(r["side1"]["count"], r["side2"]["count"]) == 0), None)
+    # A delayed replacement may legitimately leave an owner at zero for a few
+    # seconds.  The real elimination is the beginning of the final zero run,
+    # not the first transient zero observed anywhere in the fight.
+    end_s = None
+    final_zero_key = next((key for key in ("side1", "side2")
+                           if rows[-1][key]["count"] == 0), None)
+    if final_zero_key is not None:
+        final_zero_start = len(rows) - 1
+        while (final_zero_start > 0
+               and rows[final_zero_start - 1][final_zero_key]["count"] == 0):
+            final_zero_start -= 1
+        end_s = rows[final_zero_start]["game_s"]
     # fight summary for the sidecar anchoring layer: on a CONTINUOUS stream (the Test
     # ran in the same instance — no clock reset) game_s 0 is the RECORDER start, not
     # the game start, so the consumer must anchor on the fight END instead of V0.

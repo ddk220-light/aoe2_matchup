@@ -18,17 +18,18 @@ import os
 import sqlite3
 from pathlib import Path
 
-# repo-root-relative paths
+# repo-root-relative paths.  This module lives at apps/video/overlay/, so the
+# repository root is three parents above the containing directory.
 _HERE = Path(__file__).resolve()
-_REPO = _HERE.parents[2]  # scenario_builder/overlay/ -> repo root
+_REPO = _HERE.parents[3]
 REF_DB = _REPO / "data" / "golden" / "aoe2_reference.db"
-ICON_DIR = _REPO / "webapp" / "static" / "img" / "units"
+ICON_DIR = _REPO / "apps" / "website" / "static" / "img" / "units"
 
 # class ids that represent the *base* attack, not a bonus
 _BASE_ATTACK_CLASSES = {3, 4}  # Base Pierce, Base Melee
 
 # Resource weights for collapsing (food, wood, gold) into one scalar — MUST match
-# webapp/simulation_real.py COST_WEIGHT_* (the website's position-aware sim is the
+# aoe2x/sim/simulation_real.py COST_WEIGHT_* (the position-aware sim is the
 # reference for what "equal resources" means). tests/test_pure.py parses that file
 # and fails if these drift.
 COST_WEIGHT_FOOD = 1.0

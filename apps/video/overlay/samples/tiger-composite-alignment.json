@@ -1,0 +1,21 @@
+{
+  "videoSha256": "fcbaabd8fbc5df0f52984c4ae08c5959e52f732264b94865005fd3904b4aa9bf",
+  "gameSpeed": 2.0,
+  "videoOffsetSeconds": -0.7333333333333333,
+  "method": "Match distinctive HP transitions of last Tiger entity 2066 against its visible stationary health bar at x1319,y851 in battle.mp4. Verify early death independently.",
+  "anchors": [
+    {
+      "gameMs": 31272,
+      "videoFrame": 894,
+      "event": "2066 HP 88 to 80; blue bar drops to 34 pixels"
+    },
+    {
+      "gameMs": 32328,
+      "videoFrame": 926,
+      "event": "2066 HP 34 to 26; blue bar drops to 9 pixels"
+    }
+  ],
+  "videoFps": 60,
+  "anchorResidualSeconds": 0.003,
+  "note": "Legacy metadata assumes 1.7x. Visible HP transition spacing establishes approximately 2x in this recording. Use 2x and the measured video offset, not the wall-clock start estimate. Pixel quantization and capture sampling limit alignment precision to approximately one video frame."
+}

@@ -2,6 +2,8 @@
 
 This is the user-approved YouTube overlay for `codex/video-recorder-v3`: the revised static stats panels plus the live portrait/HP queues. Approval followed review of the exported video on September 7, 2026.
 
+The approved design going forward uses each civilization's native HUD border and colored shield. Center the shield on the unit portrait frame's bottom-right corner, extending partly outside like a subscript badge. Preserve name padding, green parenthesized bonus damage, concise effect notes, and the live survivor/HP grids. Use this layout as the baseline for future matchup overlays; the current renderer's pilot-only and verified-alignment requirements still apply.
+
 The Tiger Cavalry / Armenian Composite Bowman export now combines the approved static panels with vertical portrait grids. Each grid fills down a column, then right, with three columns and nine rows. The header shows survivors and total current HP. Portrait bars use each entity's current HP, including healing; casualties turn gray and move behind the stable sequence of survivors. Player 4's golden-scenario frontline is excluded from both matchup grids.
 
 The archived `frames.bin` already contains all necessary per-entity HP updates. No recording restart is needed. `overlay.unit_timeline` decodes each complete FrameSequence with the existing entity decoder, retaining entity ID, unit master ID, current HP and millisecond game timestamp. It reads per-entity own-master maximum HP when available, including growth effects; otherwise initial observed full health provides the denominator. Current HP is never inferred from aggregate army health or spread evenly across portraits.

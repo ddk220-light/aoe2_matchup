@@ -40,3 +40,9 @@ The `static-stats-overlay` subfolder holds `panels.png`, provenance and calculat
 Validation: source and export both contain 1,488 frames at 2560×1440, 60 fps, with a 24.957-second container duration. Copied AAC audio has the same SHA-256 digest. Exported first, middle and last frames decode successfully; the rendered middle frame was visually checked for text fit and placement. Numeric regression checks cover bonus damage, armor-class offsets and separation from ordinary attack and armor.
 
 Revision: titles have increased top and side padding. The Starting stats label is omitted. Tiger notes retain only per-kill growth and maximum growth.
+
+Civilization styling now comes from the installed game's `resources/_common/dat/civilizations.json`, through `overlay.civ_theme`. Its `hud_style` selects the regional selection-panel artwork (Wei: `CivAsia`; Armenians: `CivMedi`). The tech-tree artwork key identifies the matching colored shield in `widgetui/textures/menu/civs/`. The separate `emblem_image_path` in the registry points to a monochrome watermark, so it is not used for the colored shield.
+
+Borders use nine-slice resizing to preserve corner detail and border thickness. The decorative dragon/lion strip is retained without the collapse button. Each shield is centered on the unit portrait frame's bottom-right corner, extending outside it like a subscript badge. `stats.json` records the civilization, HUD style and source asset paths. Native artwork stays in the game installation.
+
+Use `--panels-only` to refresh the PNG and metadata without encoding a separate static video, then render `overlay.unit_hp` to combine the new artwork with the existing live HP timeline.

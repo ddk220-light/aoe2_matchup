@@ -16,6 +16,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from overlay.ffutil import find_ffmpeg
+from overlay.civ_theme import panel_art, theme_for
 
 REPO = Path(__file__).resolve().parents[3]
 GAME = Path("C:/Program Files (x86)/Steam/steamapps/common/AoE2DE")
@@ -84,12 +85,10 @@ def modifiers(unit, enemy):
 
 def panel(unit, enemy, font, game, color):
     width, height = 590, 344
-    texture = Image.open(game / 'widgetui/textures/ingame/panels/single-selection-panel_full.png').convert('RGBA')
-    # Exclude the native expand/collapse control strip at the right edge.
-    texture = texture.crop((0, 0, 755, 376)).resize((width, height), Image.Resampling.LANCZOS)
-    image = texture.copy()
+    theme = theme_for(game, unit['civ_name'])
+    image = panel_art(theme, (width, height))
     draw = ImageDraw.Draw(image)
-    title_size = min(37, 496 / font.width(unit['unit_name'], 1))
+    title_size = min(37, 480 / font.width(unit['unit_name'], 1))
     font.draw(image, (43, 47), unit['unit_name'], title_size)
     portrait = Image.open(REPO / 'apps/website/static/img/units' / (unit['unit_name'].replace(' ', '_') + '.png')).convert('RGBA')
     portrait = portrait.resize((132, 132), Image.Resampling.LANCZOS)
@@ -97,6 +96,11 @@ def panel(unit, enemy, font, game, color):
     image.alpha_composite(portrait, (31, 77))
     draw.rectangle((29, 214, 164, 225), fill=color, outline=INK, width=2)
     font.draw(image, (30, 234), f"{number(unit['final_hp'])}/{number(unit['final_hp'])}", 28)
+    emblem = Image.open(theme['emblemPath']).convert('RGBA')
+    emblem = emblem.crop(emblem.getbbox())
+    emblem.thumbnail((44, 48), Image.Resampling.LANCZOS)
+    # Center the badge on the portrait frame corner, like a subscript.
+    image.alpha_composite(emblem, (165 - emblem.width // 2, 211 - emblem.height // 2))
     mod = modifiers(unit, enemy)
     pierce = json.loads(unit['final_attacks_json']).get('3', 0) > json.loads(unit['final_attacks_json']).get('4', 0)
     attack_icon = 'pierceAttackBypass' if pierce and unit['ignores_pierce_armor'] else 'pierceAttack' if pierce else 'damage'
@@ -114,9 +118,9 @@ def panel(unit, enemy, font, game, color):
         end = font.draw(image, (239, y), value, 29)
         if delta:
             label = f'({number(delta)} bonus damage)'
-            size = min(24, (550 - end - 12) / font.width(label, 1))
+            size = min(24, (526 - end - 12) / font.width(label, 1))
             font.draw(image, (end + 12, y + 3), label, size, GREEN)
-    draw.line((190, 251, 555, 251), fill=(133, 95, 57), width=1)
+    draw.line((190, 251, 526, 251), fill=(133, 95, 57), width=1)
     notes = (['Per kill: +10 HP, +1 attack', 'Maximum: +40 HP, +4 attack']
              if unit['unit_slug'] == 'elite_tiger_cavalry_wei' else
              ['Arrows ignore pierce armor.'])
@@ -129,6 +133,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('run_directory', type=Path)
     parser.add_argument('--game', type=Path, default=GAME)
+    parser.add_argument('--panels-only', action='store_true', help='Build panel assets without encoding a static video')
     args = parser.parse_args()
     run = args.run_directory.resolve()
     plan = json.loads((run.parent.parent / 'plan.json').read_text())
@@ -148,11 +153,15 @@ def main():
     for index, unit in enumerate(units):
         card, mod = panel(unit, units[1-index], font, args.game, (46, 92, 226) if index == 0 else (204, 42, 37))
         overlay.alpha_composite(card, (24 if index == 0 else 2560-24-card.width, 1440-18-card.height))
-        metadata.append({'unit': unit['unit_name'], 'stats': unit, 'matchupModifiers': mod})
+        metadata.append({'unit': unit['unit_name'], 'stats': unit, 'matchupModifiers': mod,
+                         'theme': theme_for(args.game, unit['civ_name'])})
     overlay.save(out / 'panels.png')
     (out / 'stats.json').write_text(json.dumps({'static': True, 'font': 'installed game combined MSDF atlas',
         'source': 'data/golden/aoe2_reference.db', 'units': metadata,
         'modifierMeaning': 'Green parentheses: outgoing bonus damage after matching bonus armor, separate from base attack and upgrades. No armor penalties are displayed.'}, indent=2)+'\n')
+    if args.panels_only:
+        print(out / 'panels.png')
+        return
     ffmpeg = find_ffmpeg()
     if not ffmpeg:
         raise RuntimeError('FFmpeg is required; put the installed executable on PATH.')

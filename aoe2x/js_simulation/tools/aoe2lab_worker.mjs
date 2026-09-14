@@ -17,6 +17,7 @@ import {
 import { resolveFamily } from "../src/placement.js";
 import { unitBySlug } from "../src/unit-registry.js";
 import { recordingUnitBySlug } from "../src/recording-unit-registry.js";
+import { resolvePurchaseCost, COST_BASIS, COST_CATALOG_SHA256 } from "../src/recording-costs.js";
 
 
 const SIM_ROOT = new URL("../", import.meta.url);
@@ -55,7 +56,7 @@ function requireWeight(value, name) {
 
 
 function weightedCost(unit, weights) {
-  return Object.entries(unit.baseCost).reduce(
+  return Object.entries(unit.effectiveCost).reduce(
     (total, [resource, amount]) => total + amount * weights[resource], 0,
   );
 }
@@ -71,6 +72,10 @@ function deriveCounts(side2, side3, balance) {
   });
   const cost2 = weightedCost(side2, weights);
   const cost3 = weightedCost(side3, weights);
+  const budget = balance?.maxResources ?? Infinity;
+  if (budget !== Infinity && (!Number.isFinite(budget) || budget <= 0)) {
+    throw new RangeError("maxResources must be positive and finite");
+  }
   if (!(cost2 > 0) || !(cost3 > 0)) throw new RangeError("weighted unit costs must be positive");
   let n2;
   let n3;
@@ -81,14 +86,19 @@ function deriveCounts(side2, side3, balance) {
     n2 = n3 = requireInteger(balance.count ?? cap, "equal count", 1, cap);
   } else if (mode === "equal_resources") {
     if (cost2 <= cost3) {
-      n2 = cap;
-      n3 = Math.max(1, Math.floor(cap * cost2 / cost3));
+      n2 = Math.min(cap, Math.floor(budget / cost2));
+      n3 = Math.floor(n2 * cost2 / cost3);
     } else {
-      n2 = Math.max(1, Math.floor(cap * cost3 / cost2));
-      n3 = cap;
+      n3 = Math.min(cap, Math.floor(budget / cost3));
+      n2 = Math.floor(n3 * cost3 / cost2);
     }
   } else {
     throw new RangeError("balance mode must be equal_resources, equal_count, or explicit");
+  }
+  // Preserve legacy minimum-one rounding when no explicit budget was requested.
+  if (budget === Infinity) { n2 = Math.max(1, n2); n3 = Math.max(1, n3); }
+  if (n2 < 1 || n3 < 1 || n2 * cost2 > budget || n3 * cost3 > budget) {
+    throw new RangeError("resource budget cannot fund both requested armies");
   }
   return Object.freeze({ mode, cap, weights, cost2, cost3, n2, n3 });
 }
@@ -96,13 +106,21 @@ function deriveCounts(side2, side3, balance) {
 
 export function createLabPlan(request) {
   if (request?.schemaVersion !== 1) throw new TypeError("request schemaVersion must be 1");
-  const side2 = recordingUnitBySlug(request.side2?.slug);
-  const side3 = recordingUnitBySlug(request.side3?.slug);
+  let side2 = recordingUnitBySlug(request.side2?.slug);
+  let side3 = recordingUnitBySlug(request.side3?.slug);
   if (!side2 || !side3) {
     throw new RangeError(`unknown unit: ${request.side2?.slug ?? "?"} or ${request.side3?.slug ?? "?"}`);
   }
+  side2 = {...side2, effectiveCost: resolvePurchaseCost(side2, request.side2.civ ?? side2.civ)};
+  side3 = {...side3, effectiveCost: resolvePurchaseCost(side3, request.side3.civ ?? side3.civ)};
   const balance = deriveCounts(side2, side3, request.balance);
-  const family = scenarioFamilyFor(side2, side3);
+  const player4Buffer = request.scenario?.player4Buffer ?? "golden";
+  if (!["golden", "none"].includes(player4Buffer)) throw new RangeError("player4Buffer must be golden or none");
+  const family = request.scenario?.goldenFamily ?? scenarioFamilyFor(side2, side3);
+  if (!Object.hasOwn(GOLDEN_SCENARIO_SHA256, family)) {
+    throw new RangeError("goldenFamily must name an existing Golden scenario family");
+  }
+  if (family === "water" && balance.cap > 15) throw new RangeError("water template has 15 slots per side");
   const matchupId = `${side2.slug}_vs_${side3.slug}`;
   const base = {
     schemaVersion: 1,
@@ -116,6 +134,7 @@ export function createLabPlan(request) {
       ranged: isRangedClass(side2.class),
       count: balance.n2,
       baseCost: side2.baseCost,
+      effectiveCost: side2.effectiveCost,
       weightedCost: balance.cost2,
       armyWeightedResources: balance.n2 * balance.cost2,
     },
@@ -128,13 +147,17 @@ export function createLabPlan(request) {
       ranged: isRangedClass(side3.class),
       count: balance.n3,
       baseCost: side3.baseCost,
+      effectiveCost: side3.effectiveCost,
       weightedCost: balance.cost3,
       armyWeightedResources: balance.n3 * balance.cost3,
     },
     balance: {
+      costBasis: COST_BASIS,
+      costCatalogSha256: COST_CATALOG_SHA256,
       mode: balance.mode,
       cap: balance.cap,
       weights: balance.weights,
+      ...(request.balance?.maxResources !== undefined ? { maxResources: request.balance.maxResources } : {}),
       rounding: balance.mode === "equal_resources"
         ? "cheaper side capped; expensive side floored" : "none",
     },
@@ -142,7 +165,8 @@ export function createLabPlan(request) {
       family,
       goldenSha256: GOLDEN_SCENARIO_SHA256[family],
       placementRule: "first_n_units_in_player_order",
-      hasPlayer4Gate: family === "ranged_vs_melee" || family === "melee_vs_ranged",
+      hasPlayer4Gate: player4Buffer !== "none" && (family === "ranged_vs_melee" || family === "melee_vs_ranged"),
+      ...(player4Buffer === "none" ? { player4Buffer: "none" } : {}),
       preserveOwnerOrientation: family !== "melee_vs_melee",
     },
     engineFamily: resolveFamily({ side2Class: side2.class, side3Class: side3.class }),
@@ -156,7 +180,15 @@ export function createLabPlan(request) {
 }
 
 
-async function runSeed(plan, seed) {
+export async function runSeed(plan, seed) {
+  if (plan?.scenario?.family === "water") throw new RangeError("water scenarios are recording-only; naval simulation is not supported");
+  // The native ranged/ranged Golden already has no P4. An explicit no-buffer
+  // request is identical there; mixed-template overrides still need fixtures.
+  if (plan?.scenario?.player4Buffer === "none"
+      && !(plan.scenario.family === "ranged_vs_ranged"
+        && scenarioFamilyFor(plan.side2, plan.side3) === "ranged_vs_ranged")) {
+    throw new RangeError("no-buffer recording plan requires a matching simulation scenario; do not compare using the default P4 screen");
+  }
   if (plan?.schemaVersion !== 1 || typeof plan.planHash !== "string") {
     throw new TypeError("a persisted AOE2 Lab plan is required");
   }

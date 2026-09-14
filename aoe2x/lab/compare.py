@@ -47,12 +47,12 @@ def compare_job(job: Job, *, threshold_points: float = 10.0) -> dict:
         "metric": "signed remaining HP percentage-point delta",
         "live": {
             "meanSignedRemainingHpPercent": live_score,
-            "winnerOwners": sorted(live_winners),
+            "winnerOwners": sorted(live_winners, key=lambda owner: owner or 0),
             "repeats": live["repeatCount"],
         },
         "simulation": {
             "meanSignedRemainingHpPercent": simulation_score,
-            "winnerOwners": sorted(simulation_winners),
+            "winnerOwners": sorted(simulation_winners, key=lambda owner: owner or 0),
             "seeds": simulation["seedCount"],
         },
         "deltaPoints": delta,

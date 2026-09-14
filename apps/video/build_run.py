@@ -266,7 +266,7 @@ def _army_centroid(um, pid, const):
 
 
 def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
-              ranged=(False, False)):
+              ranged=(False, False), remove_player4_buffer=False):
     """side1/side2 = (civ_name, unit_key, label). `counts` = (n1, n2) units per side
     (equal-count is (30, 30); resource-capped runs pass uneven counts). `ranged` = (r1, r2)
     is retained for caller compatibility. The template owns the spectator camera;
@@ -300,6 +300,9 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
         print(f"[build_run] removed {r1 + r2} P2/P3 buildings/camp props")
 
     _retarget_new_template(scn, new1, label1, n1, new2, label2, n2)
+    if remove_player4_buffer:
+        for unit in list(um.get_player_units(4)):
+            um.remove_unit(unit=unit)
     # Default 1 and all four lab goldens author the centered view at (8, 7).
     # Do not replace it with an army centroid (which changes with first-N counts).
     if _ai_configuration(scn) != source_ai_configuration:

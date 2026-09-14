@@ -135,21 +135,35 @@ def watch_until_result(t0, cap=240, min_fight=8.0, poll=2.0, logfile=None,
     log(f"[watch] for fight end (gRPC .END + banner fallback, min {min_fight}s, "
         f"poll {poll}s)...", logfile)
     watcher = vision.ResultWatcher()
-    while time.time() - t0 < min_fight:
-        time.sleep(0.5)
+    next_banner_check = t0 + min_fight
+    banner_deadline = None
     while time.time() - t0 < cap - 2:
         try:
             if end_flag and os.path.exists(end_flag):
                 log(f"[watch] gRPC live tailer reports fight end at "
                     f"+{time.time() - t0:.1f}s", logfile)
                 return True
+            if banner_deadline is not None:
+                # Keep the stream alive for its four-second stable-zero check.
+                # A visual verdict alone must not truncate the final HP patches.
+                if time.time() >= banner_deadline:
+                    return True
+                time.sleep(0.1)
+                continue
+            if time.time() < next_banner_check:
+                time.sleep(0.1 if end_flag else min(poll, 0.5))
+                continue
+            next_banner_check = time.time() + poll
             _focus_game()                 # keep the fight on screen for the recorder
             if watcher.check(vision.grab()):
                 log(f"[watch] result banner detected at +{time.time() - t0:.1f}s", logfile)
+                if end_flag:
+                    banner_deadline = time.time() + 5.0
+                    continue
                 return True
         except Exception as e:
             log(f"[watch] detect error: {e}", logfile)
-        time.sleep(poll)
+        time.sleep(0.1 if end_flag else poll)
     log("[watch] cap reached without a result — stopping anyway", logfile)
     return False
 

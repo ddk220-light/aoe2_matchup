@@ -7,6 +7,7 @@ import json
 import os
 import re
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -55,7 +56,17 @@ def write_json(path: Path, value: Any) -> None:
             target.write(payload)
             target.flush()
             os.fsync(target.fileno())
-        os.replace(temporary, path)
+        # Windows scanners/readers can briefly deny replacement even when the
+        # destination ACL permits writes. Keep the previous file intact and
+        # retry the atomic operation; permanent failures still propagate.
+        for attempt in range(6):
+            try:
+                os.replace(temporary, path)
+                break
+            except PermissionError as exc:
+                if getattr(exc, 'winerror', None) not in (5, 32, 33) or attempt == 5:
+                    raise
+                time.sleep(.1 * 2**attempt)
     finally:
         temporary.unlink(missing_ok=True)
 

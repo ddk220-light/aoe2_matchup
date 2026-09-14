@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createLabPlan } from "../tools/aoe2lab_worker.mjs";
+import { createLabPlan, runSeed } from "../tools/aoe2lab_worker.mjs";
 import { unitBySlug } from "../src/unit-registry.js";
 
 test("recording roster preserves Tiger P2 and ranged screens for melee-damage throwers", () => {
@@ -21,8 +21,8 @@ test("recording roster preserves Tiger P2 and ranged screens for melee-damage th
   }));
   assert.equal(jaguar.scenario.family, "melee_vs_melee");
   assert.equal(jaguar.side3.weightedCost, 90);
-  assert.equal(unitBySlug("elite_jaguar_warrior_aztecs"), undefined);
-  assert.equal(unitBySlug("elite_composite_bowman_armenians"), undefined);
+  assert.equal(unitBySlug("elite_jaguar_warrior_aztecs").master, 726);
+  assert.equal(unitBySlug("elite_composite_bowman_armenians").master, 1802);
 });
 
 
@@ -39,6 +39,34 @@ function request(overrides = {}) {
     ...overrides,
   };
 }
+
+test("native ranged Golden accepts explicit no buffer with identical combat outcome", async () => {
+  const input = request({ side2: {slug: "arbalester"}, side3: {slug: "elite_composite_bowman_armenians"}, balance: {mode: "explicit", n2: 1, n3: 1} });
+  const ordinary = await runSeed(createLabPlan(input), 1);
+  const explicit = await runSeed(createLabPlan({...input, scenario: {player4Buffer: "none"}}), 1);
+  for (const key of ["winnerOwner", "winnerHp", "ticks", "startingHpByOwner"]) assert.deepEqual(explicit[key], ordinary[key]);
+  await assert.rejects(runSeed(createLabPlan(request({scenario: {player4Buffer: "none"}})), 1), /matching simulation scenario/);
+  await assert.rejects(runSeed(createLabPlan(request({side2: {slug: "flaming_camel_tatars"}, scenario: {player4Buffer: "none", goldenFamily: "ranged_vs_ranged"}})), 1), /matching simulation scenario/);
+});
+
+test("Flaming Camel uses the complete ranged Golden without changing unit combat classes", () => {
+  for (const slug of ["elite_composite_bowman_armenians", "elite_jaguar_warrior_aztecs"]) {
+    const ordinary = createLabPlan(request({side2: {slug: "flaming_camel_tatars"}, side3: {slug}}));
+    const plan = createLabPlan(request({
+      side2: {slug: "flaming_camel_tatars"}, side3: {slug},
+      scenario: {goldenFamily: "ranged_vs_ranged", player4Buffer: "none"},
+    }));
+    const ranged = createLabPlan(request({side3: {slug: "arbalester"}}));
+    assert.equal(plan.scenario.family, "ranged_vs_ranged");
+    assert.equal(plan.scenario.goldenSha256, ranged.scenario.goldenSha256);
+    assert.equal(plan.scenario.hasPlayer4Gate, false);
+    assert.equal(plan.side2.ranged, false);
+    assert.deepEqual(plan.side2, ordinary.side2);
+    assert.deepEqual(plan.side3, ordinary.side3);
+    assert.notEqual(plan.planHash, ordinary.planHash);
+  }
+  assert.throws(() => createLabPlan(request({scenario: {goldenFamily: "invalid"}})), /goldenFamily/);
+});
 
 
 test("AOE2 Lab plan derives equal-resource counts and immutable provenance", () => {

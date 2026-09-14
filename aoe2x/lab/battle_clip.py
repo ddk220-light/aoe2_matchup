@@ -57,7 +57,7 @@ def prepare_battle_clip(run_directory: Path, plan: dict) -> dict:
     command = [
         ffmpeg, "-y", "-v", "error", "-i", str(source), "-map", "0:v:0",
         "-vf", f"trim=start_frame={first_frame},setpts=PTS-STARTPTS",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
+        "-c:v", "libx264", "-threads", "2", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p",
     ]
     if media["hasAudio"]:
         command += ["-map", "0:a:0", "-af", f"atrim=start={start:.9f},asetpts=PTS-STARTPTS",

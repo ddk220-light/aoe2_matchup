@@ -115,6 +115,7 @@ def _normalize_batch_row(row: dict[str, Any], defaults: dict[str, Any]) -> dict[
         "side2": side2,
         "side3": side3,
         "balance": balance,
+        **({"scenario": row["scenario"]} if row.get("scenario") else {}),
         **({"jobId": row["id"]} if row.get("id") else {}),
     }
 

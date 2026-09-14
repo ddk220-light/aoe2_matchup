@@ -116,13 +116,16 @@ def validate_retained_statistics(
     if observed_start != expected_counts:
         raise ValueError("retained HP sidecar starting counts do not match the matchup")
     end = (final["side1"]["count"], final["side2"]["count"])
-    if (end[0] == 0) == (end[1] == 0):
-        raise ValueError("retained HP sidecar does not contain exactly one defeated army")
-    winner_index = 0 if end[0] > 0 else 1
-    winner_key = f"side{winner_index + 1}"
-    winner_hp = float(final[winner_key]["hp"])
-    starting_hp = float(first[winner_key]["hp"])
-    remaining_percent = winner_hp / starting_hp * 100
+    if all(count > 0 for count in end):
+        raise ValueError("retained HP sidecar does not contain a defeated army")
+    draw = end == (0, 0)
+    if draw and any(float(final[key]["hp"]) != 0 for key in ("side1", "side2")):
+        raise ValueError("retained mutual elimination has inconsistent nonzero HP")
+    winner_index = None if draw else (0 if end[0] > 0 else 1)
+    winner_key = None if draw else f"side{winner_index + 1}"
+    winner_hp = 0.0 if draw else float(final[winner_key]["hp"])
+    starting_hp = 0.0 if draw else float(first[winner_key]["hp"])
+    remaining_percent = 0.0 if draw else winner_hp / starting_hp * 100
     if "startCounts" in capture:
         capture.setdefault("winnerStartingHp", starting_hp)
         capture.setdefault("winnerRemainingHpPercent", remaining_percent)

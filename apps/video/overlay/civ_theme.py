@@ -12,7 +12,8 @@ def civilizations(game):
 
 
 def theme_for(game, civ):
-    record = next((r for r in civilizations(game) if r['internal_name'].casefold() == civ.casefold()), None)
+    internal = {'Hindustanis':'Indians'}.get(civ,civ)
+    record = next((r for r in civilizations(game) if r['internal_name'].casefold() == internal.casefold()), None)
     if record is None:
         raise ValueError(f'No installed civilization theme for {civ}')
     style = record['hud_style']
@@ -21,6 +22,7 @@ def theme_for(game, civ):
     # The registry's emblem_image_path is a monochrome parchment watermark.
     # Its tech-tree key also identifies the colored shield used in civ menus.
     key = Path(record['tech_tree_image_path']).stem.removeprefix('menu_techtree_')
+    key = {'berber':'berbers','inca':'incas'}.get(key,key)
     emblem = Path(game) / f'widgetui/textures/menu/civs/{key}.png'
     for path in (panel, emblem):
         if not path.is_file():

@@ -1,0 +1,921 @@
+{
+  "schemaVersion": 1,
+  "title": "Approved production queue after Inca Slinger",
+  "authorization": "User explicitly requested finishing publishing Inca Slinger, then the following units in this exact order. Same full video and ten Shorts workflow with stated opponent/buffer exceptions.",
+  "uploadDefaults": {
+    "channel": "@aoe2matchup",
+    "privacyStatus": "private",
+    "preserveUserVisibilityChanges": true,
+    "requireMediaQA": true
+  },
+  "thermalPauseMustBeHonored": true,
+  "prerequisite": "Finish Inca Slinger recording, local QA, full video and Shorts uploads before starting episode 1.",
+  "episodes": [
+    {
+      "order": 1,
+      "key": "war-chariot-focus-fire",
+      "subject": {
+        "slug": "war_chariot_shu",
+        "label": "War Chariot (Focus Fire)",
+        "civ": "Shu",
+        "master": 1962,
+        "class": "siege_ranged",
+        "baseCost": {
+          "food": 0,
+          "wood": 100,
+          "gold": 55
+        },
+        "scenarioKey": "war_chariot_focus_fire",
+        "costSource": "existing_lab_registry"
+      },
+      "opponents": "all",
+      "matchups": 73,
+      "player4Buffer": "golden",
+      "manifest": "aoe2lab.recorder.war-chariot-focus-fire-all-unique.toml",
+      "status": "complete",
+      "deliverables": [
+        "raw_video_and_grpc",
+        "civilization_overlay",
+        "campaign_intro_and_narration",
+        "full_compilation",
+        "ten_shorts",
+        "youtube_uploads"
+      ],
+      "startAfter": "inca-slinger capture pass finished",
+      "startedAt": "2026-09-09T01:45:52.738494-07:00",
+      "recordingReports": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\campaigns\\war-chariot-focus-fire-all-unique",
+      "overlayReports": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\campaigns\\war-chariot-focus-fire-all-unique-overlays",
+      "recordingsCompletedAt": "2026-09-09T03:43:46.21646-07:00",
+      "verifiedRecordings": 73,
+      "uploadStartedAt": "2026-09-09T04:19:15.398436-07:00",
+      "fullVideo": "aoe2x/js_simulation/calibration/lab/compilations/war-chariot-focus-fire-unique-units/final/war-chariot-focus-fire-complete-with-intro.mp4",
+      "uploadBatch": "aoe2x/js_simulation/calibration/lab/youtube-batch-war-chariot-focus-fire/manifest.json",
+      "completedAt": "2026-09-09T05:06:08.386493-07:00",
+      "youtubeFullVideoId": "XAqclC0lWyU",
+      "verifiedYouTubeVideos": 11
+    },
+    {
+      "order": 2,
+      "key": "flaming-camel",
+      "subject": {
+        "slug": "flaming_camel_tatars",
+        "label": "Flaming Camel",
+        "civ": "Tatars",
+        "master": 1263,
+        "class": "melee",
+        "baseCost": {
+          "food": 75,
+          "wood": 0,
+          "gold": 30
+        },
+        "scenarioKey": "flaming_camel",
+        "costSource": "https://ageofempires.fandom.com/wiki/Flaming_Camel",
+        "comparisonCaveat": "Suicide damage can yield simultaneous elimination; review final frames if validation flags a draw."
+      },
+      "opponents": "all",
+      "matchups": 73,
+      "player4Buffer": "none",
+      "manifest": "aoe2lab.recorder.flaming-camel-all-unique.toml",
+      "status": "complete",
+      "deliverables": [
+        "raw_video_and_grpc",
+        "civilization_overlay",
+        "campaign_intro_and_narration",
+        "full_compilation",
+        "ten_shorts",
+        "youtube_uploads"
+      ],
+      "startAfter": "war-chariot-focus-fire capture pass finished",
+      "startedAt": "2026-09-09T05:06:08.386493-07:00",
+      "recordingReports": "aoe2x/js_simulation/calibration/lab/campaigns/flaming-camel-all-unique",
+      "overlayReports": "aoe2x/js_simulation/calibration/lab/campaigns/flaming-camel-all-unique-overlays",
+      "goldenFamily": "ranged_vs_ranged",
+      "scenarioAuthorization": "User requested the complete ranged-versus-ranged Golden for all Flaming Camel matchups; preserve that template player/diplomacy/trigger setup instead of deleting P4 units from mixed templates.",
+      "resumedAt": "2026-09-09T07:52:46.079379-07:00",
+      "verifiedRecordings": 73,
+      "recordingsCompletedAt": "2026-09-09T16:01:45.9124747Z",
+      "completedAt": "2026-09-09T12:08:50.51657-07:00",
+      "fullVideoId": "48ud0t3SVxU",
+      "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\youtube-batch-flaming-camel-v2\\verification.json",
+      "mediaCleanup": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\media-cleanup\\flaming-camel-grid-v2\\receipt.json"
+    },
+    {
+      "order": 3,
+      "key": "mounted-trebuchet",
+      "subject": {
+        "slug": "mounted_trebuchet_khitans",
+        "label": "Mounted Trebuchet",
+        "civ": "Khitans",
+        "master": 1923,
+        "class": "siege_ranged",
+        "baseCost": {
+          "food": 0,
+          "wood": 250,
+          "gold": 100
+        },
+        "scenarioKey": "mounted_trebuchet",
+        "costSource": "existing_lab_registry"
+      },
+      "opponents": "ranged_only",
+      "matchups": 33,
+      "player4Buffer": "none",
+      "manifest": "aoe2lab.recorder.mounted-trebuchet-all-unique.toml",
+      "status": "complete",
+      "deliverables": [
+        "raw_video_and_grpc",
+        "civilization_overlay",
+        "campaign_intro_and_narration",
+        "full_compilation",
+        "ten_shorts",
+        "youtube_uploads"
+      ],
+      "startAfter": "flaming-camel capture pass finished",
+      "recordingReports": "aoe2x/js_simulation/calibration/lab/campaigns/mounted-trebuchet-all-unique",
+      "startedAt": "2026-09-09T09:09:01.93511-07:00",
+      "verifiedRecordings": 33,
+      "completedAt": "2026-09-09T14:00:23.02097-07:00",
+      "fullVideoId": "akicoOTfFWw",
+      "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\youtube-batch-mounted-trebuchet\\verification.json",
+      "mediaCleanup": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\media-cleanup\\mounted-trebuchet\\receipt.json",
+      "simulationStatus": "Separate five-seed comparison worker still running; errors retained"
+    },
+    {
+      "order": 4,
+      "key": "missionary",
+      "subject": {
+        "slug": "missionary_spanish",
+        "label": "Missionary",
+        "civ": "Spanish",
+        "master": 775,
+        "class": "mobile_ranged",
+        "baseCost": {
+          "food": 0,
+          "wood": 0,
+          "gold": 100
+        },
+        "scenarioKey": "missionary",
+        "costSource": "https://liquipedia.net/ageofempires/Missionary",
+        "comparisonCaveat": "Conversion changes ownership; review capture before using elimination-only simulation comparisons."
+      },
+      "opponents": "all",
+      "matchups": 73,
+      "player4Buffer": "golden",
+      "manifest": "aoe2lab.recorder.missionary-all-unique.toml",
+      "status": "complete",
+      "deliverables": [
+        "raw_video_and_grpc",
+        "civilization_overlay",
+        "campaign_intro_and_narration",
+        "full_compilation",
+        "ten_shorts",
+        "youtube_uploads"
+      ],
+      "startAfter": "mounted-trebuchet capture pass finished",
+      "verifiedRecordings": 73,
+      "recordingReports": "aoe2x/js_simulation/calibration/lab/campaigns/missionary-all-unique",
+      "startedAt": "2026-09-09T09:49:10.585137-07:00",
+      "verifiedShorts": 10,
+      "mediaStage": "Full assembly and QA pending; Shorts uploaded and verified",
+      "completedAt": "2026-09-09T22:35:33.560075-07:00",
+      "verifiedYouTubeVideos": 11
+    },
+    {
+      "order": 5,
+      "key": "korean-war-wagon",
+      "subject": {
+        "slug": "elite_war_wagon",
+        "label": "Elite War Wagon",
+        "civ": "Koreans",
+        "master": 829,
+        "class": "mobile_ranged",
+        "baseCost": {
+          "food": 0,
+          "wood": 200,
+          "gold": 60
+        },
+        "scenarioKey": "elite_war_wagon",
+        "costSource": "existing_lab_registry"
+      },
+      "opponents": "all",
+      "matchups": 73,
+      "player4Buffer": "golden",
+      "manifest": "aoe2lab.recorder.korean-war-wagon-all-unique.toml",
+      "status": "complete",
+      "deliverables": [
+        "raw_video_and_grpc",
+        "civilization_overlay",
+        "campaign_intro_and_narration",
+        "full_compilation",
+        "ten_shorts",
+        "youtube_uploads"
+      ],
+      "startAfter": "missionary capture pass finished",
+      "verifiedRecordings": 73,
+      "completedAt": "2026-09-10T01:13:40.279564-07:00",
+      "verifiedYouTubeVideos": 11
+    },
+    {
+      "order": 6,
+      "key": "korean-fire-lancer",
+      "subject": {
+        "slug": "elite_fire_lancer_koreans",
+        "label": "Elite Fire Lancer",
+        "civ": "Koreans",
+        "master": 1903,
+        "class": "melee",
+        "baseCost": {
+          "food": 0,
+          "wood": 45,
+          "gold": 45
+        },
+        "scenarioKey": "elite_fire_lancer",
+        "costSource": "ref_units Koreans / Elite Fire Lancer / Imperial base_cost_*; existing Lab base-cost convention",
+        "websiteSlug": "elite_fire_lancer"
+      },
+      "opponents": "all",
+      "matchups": 74,
+      "player4Buffer": "golden",
+      "manifest": "aoe2lab.recorder.korean-fire-lancer-all-unique.toml",
+      "status": "complete",
+      "deliverables": [
+        "raw_video_and_grpc",
+        "civilization_overlay",
+        "campaign_intro_and_narration",
+        "full_compilation",
+        "ten_shorts",
+        "youtube_uploads"
+      ],
+      "startAfter": "korean-war-wagon capture pass finished",
+      "startedAt": "2026-09-09T12:49:22.57255-07:00",
+      "verifiedRecordings": 74,
+      "deferredRetakes": 0,
+      "recordingsCompletedAt": "2026-09-09T16:29:38.910354-07:00",
+      "completedAt": "2026-09-10T02:40:20.313667-07:00",
+      "verifiedYouTubeVideos": 11
+    },
+    {
+      "order": 7,
+      "key": "magyar-huszar",
+      "subject": {
+        "slug": "elite_magyar_huszar",
+        "label": "Elite Magyar Huszar",
+        "civ": "Magyars",
+        "master": 871,
+        "class": "melee",
+        "baseCost": {
+          "food": 35,
+          "wood": 0,
+          "gold": 45
+        },
+        "scenarioKey": "elite_magyar_huszar",
+        "costSource": "existing_lab_registry"
+      },
+      "opponents": "all",
+      "matchups": 73,
+      "player4Buffer": "golden",
+      "manifest": "aoe2lab.recorder.magyar-huszar-all-unique.toml",
+      "status": "complete",
+      "deliverables": [
+        "raw_video_and_grpc",
+        "civilization_overlay",
+        "campaign_intro_and_narration",
+        "full_compilation",
+        "ten_shorts",
+        "youtube_uploads"
+      ],
+      "startAfter": "korean-fire-lancer capture pass finished",
+      "startedAt": "2026-09-09T21:29:43Z",
+      "verifiedRecordings": 73,
+      "deferredRetakes": 0,
+      "recordingsCompletedAt": "2026-09-09T23:47:44Z",
+      "completedAt": "2026-09-10T04:52:48.079561-07:00",
+      "verifiedYouTubeVideos": 11
+    },
+    {
+      "order": 8,
+      "key": "blackwood-archer",
+      "subject": {
+        "slug": "elite_blackwood_archer_tupi",
+        "label": "Elite Blackwood Archer",
+        "civ": "Tupi",
+        "master": 2581,
+        "class": "mobile_ranged",
+        "baseCost": {
+          "food": 0,
+          "wood": 25,
+          "gold": 15
+        },
+        "scenarioKey": "elite_blackwood_archer",
+        "costSource": "existing_lab_registry"
+      },
+      "opponents": "all",
+      "matchups": 73,
+      "player4Buffer": "golden",
+      "manifest": "aoe2lab.recorder.blackwood-archer-all-unique.toml",
+      "status": "complete",
+      "startedAt": "2026-09-10T04:54:00.405006-07:00",
+      "deliverables": [
+        "raw_video_and_grpc",
+        "civilization_overlay",
+        "campaign_intro_and_narration",
+        "full_compilation",
+        "ten_shorts",
+        "youtube_uploads"
+      ],
+      "capturesVerified": 73,
+      "overlaysComplete": 73,
+      "completedAt": "2026-09-10T08:39:16.84427-07:00"
+    },
+    {
+      "order": 9,
+      "key": "kona",
+      "subject": {
+        "slug": "elite_kona_mapuche",
+        "label": "Elite Kona",
+        "civ": "Mapuche",
+        "master": 2568,
+        "class": "melee",
+        "baseCost": {
+          "food": 70,
+          "wood": 0,
+          "gold": 35
+        },
+        "scenarioKey": "elite_kona",
+        "costSource": "existing_lab_registry"
+      },
+      "opponents": "all unique units except self",
+      "matchups": 73,
+      "status": "complete",
+      "manifest": "aoe2lab.recorder.kona-all-unique.toml",
+      "player4Buffer": "golden",
+      "capturesVerified": 73,
+      "completedAt": "2026-09-10T11:45:43.506916-07:00"
+    },
+    {
+      "order": 10,
+      "key": "bolas-rider",
+      "subject": {
+        "slug": "elite_bolas_rider_mapuche",
+        "label": "Elite Bolas Rider",
+        "civ": "Mapuche",
+        "master": 2571,
+        "class": "mobile_ranged",
+        "baseCost": {
+          "food": 50,
+          "wood": 0,
+          "gold": 45
+        },
+        "scenarioKey": "elite_bolas_rider",
+        "costSource": "existing_lab_registry"
+      },
+      "opponents": "all unique units except self",
+      "matchups": 73,
+      "status": "complete",
+      "manifest": "aoe2lab.recorder.bolas-rider-all-unique.toml",
+      "player4Buffer": "golden",
+      "completedAt": "2026-09-10T14:58:47.184768-07:00"
+    },
+    {
+      "key": "champi-warrior",
+      "label": "Champi Warrior",
+      "order": 11,
+      "status": "complete",
+      "captureCompletedAt": "2026-09-10T17:48:36.88619-07:00",
+      "verifiedRecordings": 74,
+      "verifiedYouTubeVideos": 11,
+      "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\champi-warrior-unique-units\\upload-completion.json"
+    },
+    {
+      "key": "guecha-warrior",
+      "label": "Elite Guecha Warrior",
+      "order": 12,
+      "status": "complete",
+      "verifiedRecordings": 73,
+      "verifiedYouTubeVideos": 11,
+      "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\guecha-warrior-unique-units\\upload-completion.json"
+    },
+    {
+      "key": "flemish-militia",
+      "label": "Flemish Militia",
+      "civ": "Burgundians",
+      "subject": {
+        "slug": "flemish_militia_burgundians",
+        "label": "Flemish Militia",
+        "civ": "Burgundians",
+        "master": 1699,
+        "class": "melee",
+        "baseCost": {
+          "food": 30,
+          "wood": 0,
+          "gold": 25
+        },
+        "scenarioKey": "flemish_militia",
+        "costSource": "reference_database"
+      },
+      "manifest": "aoe2lab.recorder.flemish-militia-all-unique.json",
+      "opponents": "all unique units except self",
+      "total": 73,
+      "status": "complete",
+      "captureStorage": "D:/AoE2 Renders/flemish-militia/captures",
+      "authorization": "User requested: Next, run for the Flemish militia.",
+      "order": 13,
+      "capturePid": null,
+      "captureStatus": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\campaigns\\flemish-militia-all-unique\\status.json",
+      "verifiedRecordings": 73,
+      "captureCompletedAt": "2026-09-13T00:26:45.486565-07:00",
+      "captureReport": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\campaigns\\flemish-militia-all-unique\\report_073.md",
+      "uploadAuthorized": true,
+      "uploadAuthorization": "User: upload the flemish militia to yt as well.",
+      "shortsUploaded": 10,
+      "fullVideoBlocker": "ElevenLabs 10/10 voice slots; awaiting permission to replace Wei profile or increased limit.",
+      "verifiedYouTubeVideos": 11,
+      "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\flemish-militia-unique-units\\upload-completion.json"
+    },
+    {
+      "order": 14,
+      "key": "elite-monaspa",
+      "subject": {
+        "slug": "elite_monaspa_georgians",
+        "label": "Elite Monaspa",
+        "civ": "Georgians",
+        "master": 1805,
+        "class": "melee",
+        "baseCost": {
+          "food": 60,
+          "wood": 0,
+          "gold": 45
+        },
+        "scenarioKey": "elite_monaspa",
+        "costSource": "reference_database"
+      },
+      "opponents": "all_except_self",
+      "player4Buffer": "golden",
+      "status": "complete",
+      "startAfter": "flemish-militia full video uploaded and processed",
+      "deliverables": [
+        "raw_video_and_grpc",
+        "civilization_overlay",
+        "campaign_intro_and_narration",
+        "full_compilation",
+        "ten_shorts",
+        "youtube_uploads"
+      ],
+      "uploadAuthorized": true,
+      "authorization": "User: after this is done, do one for elite monaspa. Same established production workflow.",
+      "manifest": "aoe2lab.recorder.elite-monaspa-all-unique.json",
+      "matchups": 73,
+      "costPreflight": "data/local/elite-monaspa-capture-preflight.json",
+      "worker": "apps/video/finish_elite_monaspa_production.py",
+      "startedAt": 1789327807.7218578,
+      "recordingReports": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\campaigns\\elite-monaspa-all-unique",
+      "verifiedRecordings": 73,
+      "failedRecordings": 0,
+      "mediaStatus": "data/local/elite_monaspa-production-status.json",
+      "overlayReports": "aoe2x/js_simulation/calibration/lab/campaigns/elite-monaspa-final-overlays",
+      "verifiedYouTubeVideos": 11,
+      "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\elite-monaspa-unique-units\\upload-completion.json"
+    },
+    {
+      "order": 15,
+      "key": "elite-obuch",
+      "subject": {
+        "slug": "elite_obuch_poles",
+        "label": "Elite Obuch",
+        "civ": "Poles",
+        "master": 1703,
+        "class": "melee",
+        "baseCost": {
+          "food": 55,
+          "wood": 0,
+          "gold": 20
+        },
+        "scenarioKey": "elite_obuch",
+        "costSource": "existing_lab_registry"
+      },
+      "manifest": "aoe2lab.recorder.elite-obuch-all-unique.json",
+      "matchups": 73,
+      "status": "captures_complete",
+      "opponents": "all_except_self",
+      "player4Buffer": "golden",
+      "deliverables": [
+        "raw_video_and_grpc"
+      ],
+      "authorization": "User requested starting Elite Obuch captures alongside Monaspa uploads.",
+      "startedAt": 1789344141.2283566,
+      "recordingReports": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\campaigns\\elite-obuch-all-unique",
+      "verifiedRecordings": 73,
+      "failedRecordings": 0
+    }
+  ],
+  "preflight": {
+    "status": "passed",
+    "totalPlans": 472,
+    "report": "aoe2x/js_simulation/calibration/lab/production-queue-preflight/preflight.json"
+  },
+  "storagePlanning": {
+    "freeGiBAtLastCleanup": 129.4,
+    "reclaimCompletedEpisodeMediaAfterVerifiedUpload": true,
+    "lastCleanup": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\media-cleanup\\receipt.json"
+  },
+  "mediaRetention": {
+    "authorization": "User requested deleting individual matchup videos for episodes uploaded to YouTube, keeping completed full videos and frames.bin.",
+    "deleteOnlyAfter": "Full episode and ten Shorts completed, QA passed, and YouTube processing verified on target channel.",
+    "delete": "Individual raw and rendered matchup video files identified by compilation job IDs.",
+    "keep": [
+      "Completed full videos",
+      "All frames.bin and other gRPC files",
+      "Rendered Shorts",
+      "Intros and artwork",
+      "Metadata, reports, scenarios, and audit records",
+      "Unfinished or unverified episodes"
+    ],
+    "audit": "aoe2x/js_simulation/calibration/lab/media-cleanup/receipt.json",
+    "preventRegeneration": "Honor per-run media-retention.json; intentional pruning is not a failed capture."
+  },
+  "prerequisiteStatus": {
+    "episode": "inca-slinger",
+    "state": "complete",
+    "verifiedAt": "2026-09-09T01:45:52.738494-07:00",
+    "fullVideoId": "ErfTBOBO-lg",
+    "shorts": 10
+  },
+  "captureScheduling": {
+    "overlayWorkers": 1,
+    "statusDirectory": "aoe2x/js_simulation/calibration/lab/continuous-production",
+    "captureWorkers": 1,
+    "mode": "continuous",
+    "nextEpisodeAfter": "Previous capture pass releases the game lock; remaining exports run independently",
+    "authorization": "User explicitly requested keeping the game recording and processing overlays, verification and uploads in parallel; supersedes publishing prerequisites.",
+    "thermalPauseStillApplies": true
+  },
+  "mediaPolicy": {
+    "mode": "one_episode_at_a_time",
+    "order": [
+      "champi-warrior",
+      "guecha-warrior",
+      "temple-guard"
+    ],
+    "stages": [
+      "overlays",
+      "intro_and_full_video",
+      "ten_shorts",
+      "actual_visual_qa",
+      "youtube_upload_and_verification",
+      "cleanup"
+    ],
+    "captureIndependent": true,
+    "retakesBeforeFreshCaptures": true,
+    "retakePriority": "Current media episode first",
+    "retain": [
+      "full videos",
+      "shorts",
+      "intros",
+      "frames.bin",
+      "reports",
+      "metadata"
+    ],
+    "worker": "apps/video/serial_media_queue.py",
+    "currentEpisode": "flemish-militia",
+    "currentWorker": "apps/video/finish_flemish_production.py",
+    "currentStatus": "WAITING_FOR_NARRATION",
+    "legacySerialWorkerStatus": "COMPLETE through Magyar; current subject uses currentWorker/currentStatus",
+    "nextPendingEpisode": "flemish-militia"
+  },
+  "followupQueue": {
+    "authorized": true,
+    "activationGate": {
+      "requiresAllCurrentEpisodesUploadedAndVerified": true,
+      "throughEpisode": "magyar-huszar",
+      "requireFullAndTenShortsEach": true,
+      "doNotStartCapturesBeforeGate": true
+    },
+    "workflow": "Same matchup conditions and complete full-video plus ten Shorts workflow; one media episode at a time, retakes prioritized, capture independent only after activation gate.",
+    "episodes": [
+      {
+        "order": 1,
+        "key": "blackwood-archer",
+        "label": "Elite Blackwood Archer",
+        "civ": "Tupi",
+        "opponents": "all unique units except self",
+        "status": "complete",
+        "subject": {
+          "slug": "elite_blackwood_archer_tupi",
+          "label": "Elite Blackwood Archer",
+          "civ": "Tupi",
+          "master": 2581,
+          "class": "mobile_ranged",
+          "baseCost": {
+            "food": 0,
+            "wood": 25,
+            "gold": 15
+          },
+          "scenarioKey": "elite_blackwood_archer",
+          "costSource": "existing_lab_registry"
+        }
+      },
+      {
+        "order": 2,
+        "key": "kona",
+        "label": "Elite Kona",
+        "civ": "Mapuche",
+        "opponents": "all unique units except self",
+        "status": "complete",
+        "subject": {
+          "slug": "elite_kona_mapuche",
+          "label": "Elite Kona",
+          "civ": "Mapuche",
+          "master": 2568,
+          "class": "melee",
+          "baseCost": {
+            "food": 70,
+            "wood": 0,
+            "gold": 35
+          },
+          "scenarioKey": "elite_kona",
+          "costSource": "existing_lab_registry"
+        }
+      },
+      {
+        "order": 3,
+        "key": "bolas-rider",
+        "label": "Elite Bolas Rider",
+        "civ": "Mapuche",
+        "opponents": "all unique units except self",
+        "status": "complete",
+        "subject": {
+          "slug": "elite_bolas_rider_mapuche",
+          "label": "Elite Bolas Rider",
+          "civ": "Mapuche",
+          "master": 2571,
+          "class": "mobile_ranged",
+          "baseCost": {
+            "food": 50,
+            "wood": 0,
+            "gold": 45
+          },
+          "scenarioKey": "elite_bolas_rider",
+          "costSource": "existing_lab_registry"
+        }
+      },
+      {
+        "order": 4,
+        "key": "ibirapema-warrior",
+        "label": "Elite Ibirapema Warrior",
+        "civ": "Tupi",
+        "opponents": "all unique units except self",
+        "status": "complete",
+        "subject": {
+          "slug": "elite_ibirapema_warrior_tupi",
+          "label": "Elite Ibirapema Warrior",
+          "civ": "Tupi",
+          "master": 2584,
+          "class": "melee",
+          "baseCost": {
+            "food": 50,
+            "wood": 0,
+            "gold": 40
+          },
+          "scenarioKey": "elite_ibirapema_warrior",
+          "costSource": "existing_lab_registry"
+        },
+        "completedAt": "2026-09-10T17:16:05.297762-07:00"
+      },
+      {
+        "order": 5,
+        "key": "champi-warrior",
+        "label": "Champi Warrior",
+        "civ": "Incas",
+        "opponents": "all unique units except self",
+        "status": "complete",
+        "subject": {
+          "slug": "elite_champi_warrior_incas",
+          "label": "Elite Champi Warrior",
+          "civ": "Incas",
+          "master": 2554,
+          "class": "melee",
+          "baseCost": {
+            "food": 50,
+            "wood": 0,
+            "gold": 25
+          },
+          "scenarioKey": "elite_champi_warrior",
+          "costSource": "ref_units base_cost fields; same base-cost convention as existing land recording campaigns"
+        },
+        "captureStartedAt": "2026-09-10T16:42:02.774281-07:00",
+        "captureCompletedAt": "2026-09-10T17:48:36.88619-07:00",
+        "verifiedRecordings": 74,
+        "verifiedYouTubeVideos": 11,
+        "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\champi-warrior-unique-units\\upload-completion.json"
+      },
+      {
+        "order": 6,
+        "key": "guecha-warrior",
+        "label": "Elite Guecha Warrior",
+        "civ": "Muisca",
+        "opponents": "all unique units except self",
+        "status": "complete",
+        "subject": {
+          "slug": "elite_guecha_warrior_muisca",
+          "label": "Elite Guecha Warrior",
+          "civ": "Muisca",
+          "master": 2564,
+          "class": "mobile_ranged",
+          "baseCost": {
+            "food": 60,
+            "wood": 0,
+            "gold": 50
+          },
+          "scenarioKey": "elite_guecha_warrior",
+          "costSource": "existing_lab_registry"
+        },
+        "captureStartedAt": "2026-09-10T17:48:44.439458-07:00",
+        "verifiedRecordings": 73,
+        "verifiedYouTubeVideos": 11,
+        "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\guecha-warrior-unique-units\\upload-completion.json"
+      },
+      {
+        "order": 7,
+        "key": "temple-guard",
+        "label": "Elite Temple Guard",
+        "civ": "Muisca",
+        "opponents": "all unique units except self",
+        "status": "complete",
+        "subject": {
+          "slug": "elite_temple_guard_muisca",
+          "label": "Elite Temple Guard",
+          "civ": "Muisca",
+          "master": 2587,
+          "class": "melee",
+          "baseCost": {
+            "food": 70,
+            "wood": 0,
+            "gold": 45
+          },
+          "scenarioKey": "elite_temple_guard",
+          "costSource": "existing_lab_registry"
+        },
+        "verifiedRecordings": 73,
+        "verifiedYouTubeVideos": 11,
+        "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\temple-guard-unique-units\\upload-completion.json"
+      },
+      {
+        "key": "flemish-militia",
+        "label": "Flemish Militia",
+        "civ": "Burgundians",
+        "subject": {
+          "slug": "flemish_militia_burgundians",
+          "label": "Flemish Militia",
+          "civ": "Burgundians",
+          "master": 1699,
+          "class": "melee",
+          "baseCost": {
+            "food": 30,
+            "wood": 0,
+            "gold": 25
+          },
+          "scenarioKey": "flemish_militia",
+          "costSource": "reference_database"
+        },
+        "manifest": "aoe2lab.recorder.flemish-militia-all-unique.json",
+        "opponents": "all unique units except self",
+        "total": 73,
+        "status": "complete",
+        "captureStorage": "D:/AoE2 Renders/flemish-militia/captures",
+        "authorization": "User requested: Next, run for the Flemish militia.",
+        "order": 8,
+        "capturePid": null,
+        "captureStatus": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\campaigns\\flemish-militia-all-unique\\status.json",
+        "verifiedRecordings": 73,
+        "captureCompletedAt": "2026-09-13T00:26:45.486565-07:00",
+        "captureReport": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\campaigns\\flemish-militia-all-unique\\report_073.md",
+        "uploadAuthorized": true,
+        "uploadAuthorization": "User: upload the flemish militia to yt as well.",
+        "shortsUploaded": 10,
+        "fullVideoBlocker": "ElevenLabs 10/10 voice slots; awaiting permission to replace Wei profile or increased limit.",
+        "verifiedYouTubeVideos": 11,
+        "verification": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\flemish-militia-unique-units\\upload-completion.json"
+      }
+    ],
+    "state": "ACTIVE",
+    "activatedAt": "2026-09-10T04:54:00.405006-07:00"
+  },
+  "capturePause": {
+    "state": "RESUMED",
+    "scope": "remaining corrected captures"
+  },
+  "navalSpike": {
+    "state": "COMPLETE",
+    "manifest": "aoe2lab.recorder.naval-counter-spike.json",
+    "captureOnly": true,
+    "simulation": false,
+    "preserveFrames": true,
+    "landCaptureRemainsPaused": true,
+    "requestedAt": "2026-09-10T22:54:27.6218204Z",
+    "completed": 3,
+    "failed": 0,
+    "results": "aoe2x/js_simulation/calibration/lab/campaigns/naval-counter-spike/results.md"
+  },
+  "costBasisReview": {
+    "state": "REQUIRED_BEFORE_PENDING_UPLOADS",
+    "report": "data/local/production-audit/report.md",
+    "repairPlan": "data/local/production-audit/repair-plan.json",
+    "reason": "Audit: effective civ costs and production batch size corrected. 305 of1116 compiled chapters need cost retakes. Elite Mameluke HP and release acceptance remain open.",
+    "productionPaused": true
+  },
+  "costRepairCapture": {
+    "state": "COMPLETE",
+    "total": 382,
+    "manifest": "aoe2lab.recorder.cost-repairs-v2.json"
+  },
+  "correctedMedia": {
+    "authorized": "Full local video rebuilds: Inca Slinger, Korean War Wagon, Korean Fire Lancer",
+    "others": "Winner-change report after all corrected captures; no other full rebuilds authorized",
+    "uploads": "AUTHORIZED: corrected full compilations only, private; preserve old uploads",
+    "worker": "data/local/rebuild_slinger_and_report.py",
+    "sequentialRebuildQueue": [
+      "inca-slinger",
+      "korean-war-wagon",
+      "korean-fire-lancer",
+      "champi-warrior"
+    ],
+    "koreanRebuildStatus": "COMPLETE_UPLOADED",
+    "approvedUploadPreparations": [
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\inca-slinger-unique-units\\final-cost-v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\korean-war-wagon-unique-units\\final-cost-v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\korean-fire-lancer-unique-units\\final-cost-v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\champi-warrior-unique-units\\final-cost-v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\01-champi_warrior_unique_48_muisca_elite_temple_guard_muisca_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\02-champi_warrior_unique_13_burgundians_flemish_militia_burgundians_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\03-champi_warrior_unique_04_bengalis_elite_ratha_melee_bengalis_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\04-champi_warrior_unique_40_magyars_elite_magyar_huszar_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\05-champi_warrior_unique_38_koreans_elite_war_wagon_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\06-champi_warrior_unique_65_tupi_elite_blackwood_archer_tupi_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\07-champi_warrior_unique_61_spanish_missionary_spanish_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\08-champi_warrior_unique_63_tatars_flaming_camel_tatars_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\09-champi_warrior_unique_09_bohemians_houfnice_bohemians_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\champi-warrior-selected-10\\10-champi_warrior_unique_71_wei_elite_tiger_cavalry_wei_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\guecha-warrior-unique-units\\final-cost-v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\01-guecha_warrior_unique_41_malay_elite_karambit_warrior\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\02-guecha_warrior_unique_40_magyars_elite_magyar_huszar\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\03-guecha_warrior_unique_38_koreans_elite_war_wagon_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\04-guecha_warrior_unique_64_tupi_elite_blackwood_archer_tupi_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\05-guecha_warrior_unique_60_spanish_missionary_spanish_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\06-guecha_warrior_unique_62_tatars_flaming_camel_tatars_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\07-guecha_warrior_unique_09_bohemians_houfnice_bohemians\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\08-guecha_warrior_unique_70_wei_elite_tiger_cavalry_wei_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\09-guecha_warrior_unique_48_persians_elite_war_elephant_persians_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\guecha-warrior-selected-10\\10-guecha_warrior_unique_63_teutons_elite_teutonic_knight_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\temple-guard-unique-units\\final-cost-v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\01-temple_guard_unique_73_wu_jian_swordsman_wu_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\02-temple_guard_unique_41_malay_elite_karambit_warrior_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\03-temple_guard_unique_52_romans_elite_centurion_romans_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\04-temple_guard_unique_15_byzantines_elite_cataphract_byzantines_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\05-temple_guard_unique_38_koreans_elite_war_wagon_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\06-temple_guard_unique_64_tupi_elite_blackwood_archer_tupi_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\07-temple_guard_unique_60_spanish_missionary_spanish_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\08-temple_guard_unique_62_tatars_flaming_camel_tatars_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\09-temple_guard_unique_09_bohemians_houfnice_bohemians_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\temple-guard-selected-10\\10-temple_guard_unique_70_wei_elite_tiger_cavalry_wei_cost_v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\01-flemish_militia_unique_47_muisca_elite_temple_guard_muisca\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\02-flemish_militia_unique_50_poles_elite_obuch_poles\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\03-flemish_militia_unique_52_romans_elite_centurion_romans\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\04-flemish_militia_unique_14_byzantines_elite_cataphract_byzantines\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\05-flemish_militia_unique_37_koreans_elite_war_wagon\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\06-flemish_militia_unique_64_tupi_elite_blackwood_archer_tupi\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\07-flemish_militia_unique_60_spanish_missionary_spanish\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\08-flemish_militia_unique_62_tatars_flaming_camel_tatars\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\09-flemish_militia_unique_09_bohemians_houfnice_bohemians\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\flemish-militia-selected-10\\10-flemish_militia_unique_70_wei_elite_tiger_cavalry_wei\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\flemish-militia-unique-units\\final-cost-v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\elite-monaspa-unique-units\\final-cost-v2\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\01-elite_monaspa_unique_16_celts_elite_woad_raider\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\02-elite_monaspa_unique_13_burgundians_flemish_militia_burgundians\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\03-elite_monaspa_unique_52_romans_elite_centurion_romans\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\04-elite_monaspa_unique_26_hindustanis_imperial_camel_rider_hindustanis\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\05-elite_monaspa_unique_37_koreans_elite_war_wagon\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\06-elite_monaspa_unique_64_tupi_elite_blackwood_archer_tupi\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\07-elite_monaspa_unique_60_spanish_missionary_spanish\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\08-elite_monaspa_unique_62_tatars_flaming_camel_tatars\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\09-elite_monaspa_unique_09_bohemians_houfnice_bohemians\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\10-elite_monaspa_unique_70_wei_elite_tiger_cavalry_wei\\youtube\\youtube-upload-preparation.json"
+    ],
+    "pendingProduction": [],
+    "finalProductionAuthorization": "Latest user requested finishing all pending videos and uploads: these three subjects, one full video and ten Shorts each.",
+    "finalProductionCompletion": {
+      "state": "COMPLETE",
+      "verifiedYouTubeVideos": 33,
+      "subjects": [
+        "champi-warrior",
+        "guecha-warrior",
+        "temple-guard"
+      ],
+      "completedAt": 1789284765.354948,
+      "report": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\final-video-publishing-report.md"
+    }
+  },
+  "userPause": {
+    "state": "RESUMED",
+    "reason": "User requested continue and reopening AoE2",
+    "pausedAt": "2026-09-13T18:32:16.5540669Z"
+  }
+}

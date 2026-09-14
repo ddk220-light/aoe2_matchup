@@ -50,7 +50,7 @@ def parse_schema(path):
         name_to_type[name] = ty
         fields, parent = {}, None
         for fm in re.finditer(
-            r"#\[uncage\(([^\]]*)\)\]\s*pub (\w+):\s*([^,\n]+)", body
+            r"#\[uncage\(([^\]]*)\)\]\s*pub (?:r#)?(\w+):\s*([^,\n]+)", body
         ):
             attrs, _, ftype = fm.group(1), fm.group(2), fm.group(3).strip().rstrip(",")
             if "extends" in attrs:

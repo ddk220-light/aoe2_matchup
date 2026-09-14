@@ -94,8 +94,12 @@ def test_recorder_resume_needs_no_game_and_default_live_cannot_delete_it(tmp_pat
     from aoe2x.lab.artifacts import create_job
     from aoe2x.lab.io import read_json, write_json
 
-    plan = {"matchupId": "fight", "jobId": "job", "planHash": "hash",
-            "side2": {"count": 2}, "side3": {"count": 2}}
+    # Resume still enforces the audited cost catalog. Use a genuine canonical
+    # two-unit plan, rather than a pre-cost-audit stub that bypasses that contract.
+    plan = plan_matchup(load_config(), make_request(
+        side2="champion", side3="halberdier", balance="explicit",
+        n2=2, n3=2, job_id="job",
+    ))
     job = create_job(tmp_path, "job")
     job.initialize({}, plan)
     run = job.live_directory / "run_001"
@@ -108,7 +112,7 @@ def test_recorder_resume_needs_no_game_and_default_live_cannot_delete_it(tmp_pat
         {"game_s": 10, "side1": {"count": 1, "hp": 80}, "side2": {"count": 0, "hp": 0}},
     ]}
     write_json(raw / "fight.hp.json", hp)
-    (run / "fight.aoe2scenario").write_bytes(b"scenario")
+    (run / f"{plan['matchupId']}.aoe2scenario").write_bytes(b"scenario")
     capture = {"artifacts": {"video": "raw recordings/fight.mov", "sidecar": "raw recordings/fight.hp.json"},
                "startCounts": [2, 2], "winnerOwner": 2, "signedRemainingHpPercent": 40}
     monkeypatch.setattr("aoe2x.lab.recording.probe_video", lambda _: {"durationSeconds": 20})

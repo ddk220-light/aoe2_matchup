@@ -11,15 +11,17 @@
 // silently inheriting somebody else's cadence.
 //
 // baseCost is ref_units.base_cost_* from data/golden/aoe2_reference.db, the
-// same database the website serves. It is deliberately the BASE column, not
-// final_cost_*: the purchase rule buys at dat base prices, so a Berbers Hussar
-// costs 80 here even though the civ bonus makes it 64 in game. Regenerate the
-// numbers with tools/export_unit_costs.py.
+// same database the website serves. This is descriptive metadata only.
+// Lab purchase balancing resolves installed-game Imperial civilization costs
+// through recording-costs.js; never use baseCost for equal-resource captures.
 //
 // `behaviorFamily` is optional unit-line metadata for a reusable AI mechanic,
 // never a matchup switch. The Rocket Cart replacements belong to the same
 // Onager line and must use the same `onager` family when they are registered.
+import { ROSTER_UNITS } from "./roster-unit-registry.js";
+
 const ROWS = [
+  ...ROSTER_UNITS,
   { slug: "arbalester", label: "Arbalester", civ: "Chinese", master: 492,
     fixture: "arbalester_chinese_imperial.json", class: "mobile_ranged",
     baseCost: { food: 0, wood: 25, gold: 45 } },

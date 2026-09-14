@@ -12,6 +12,7 @@ import { unitBySlug } from "./unit-registry.js";
 
 
 export const GOLDEN_SCENARIO_SHA256 = Object.freeze({
+  water: "60e93202f138b3bc3d1b224fe1d35b72b4757728088bffd11c32d5cdc4fd5d1e",
   melee_vs_melee: "31f3bed38ce0512b484124d89d5aa4e97318b3ea55c398bb8dad27242c769f4e",
   ranged_vs_ranged: "f44097ef86e6b123c6dfeb4989842e548af91f0d492e69caf6de87148f040883",
   ranged_vs_melee: "13c41485a00943ef525cab848d835d1379259fc8fff38b83d4ec510bc8824783",

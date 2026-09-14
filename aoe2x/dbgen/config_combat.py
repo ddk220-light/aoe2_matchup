@@ -179,7 +179,8 @@ UNIQUE_COMBAT_PROPERTIES = {
     "bolas_rider": {"charge_projectile_count": 1, "charge_recharge_time": 30.0, "charge_slow_percent": 0.15, "charge_slow_duration": 10.0},
     "elite_bolas_rider": {"charge_projectile_count": 1, "charge_recharge_time": 30.0, "charge_slow_percent": 0.15, "charge_slow_duration": 10.0},
     # War Dog: dodge shield (charge_type=4 in dat) + hp_regen (15/min); data-driven
-    # Blackwood Archer: 0.5 pop space (trained in pairs like Karambit Warrior)
+    # Blackwood Archer: 0.5 pop space and trained in pairs. Karambits train singly;
+    # population usage must never be used as a purchase-cost divisor.
     # Poison via Curare tech modeled as CIV_COMBAT_PROPERTIES below
     "blackwood_archer": {"pop_space": 0.5},
     "elite_blackwood_archer": {"pop_space": 0.5},

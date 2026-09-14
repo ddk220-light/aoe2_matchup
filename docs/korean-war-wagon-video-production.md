@@ -1,0 +1,18 @@
+# Korean War Wagon production
+
+Capture queuedafterMissionary bycontinuouscontroller24724; manifestaoe2lab.recorder.korean-war-wagon-all-unique.toml73opponents, defaultGoldenbuffer, P2KoreansEliteWarWagon. Do notwaitforpreviousmedia/uploads.
+
+2026-09-09 18:24UTC: originalinkart apps/video/intro/assets/korean-war-wagon-campaign.png generatedfromgameunitportrait (exec-091abe97-9232-49ca-ab58-c6a1de6fa84c.png). FoundKorean-specificscenarionarrationinsteadgenericfallback: installedfcam7.json scenarioindex7 NoryangPoint, introstring209801, backgroundtextures/campaign/fcam7/forgotten_background.dds, voiceeventPLAY_XC4S8. Installedlocalization95208explicitlysaysplayasKoreans. Newscenario_civilization_overrides.json + build_campaign_catalog.apply_overrides persistthisper-scenariomappingwithoutassigningwholehistorical-battlecollectiontoKorea. Catalogrefreshed;KOREANSpreferredassociationKindscenario-localization.
+
+Noryangvoiceeventresolvesmedia607678948 inen/Base.1.pck,74secmono48k. AuthorizedcloneSasSCbtKRds4kxDDoryU metadataintro/noryang-voice-clone.json; reuseforKoreanFireLancernext. Koreanmusic491516321,koreans_themefromBase.pck,58.75secstereo48k; cachedpublicmapping.tools/civ-music-mapping.xlsxsheet8.
+
+Base/timedintroplans korean-war-wagon.json/-cloned.json. Two untitled unitoverview/abilitiespagesfrominstalled26729description, nohistoricalclaimsaboutthisspecificfictionalwagon. Narration20.81/24.80sec; pages23.2333+27.2=50.4333sec. Actualstaticpagesandlandscapethumbnailvisuallyreviewed; verticalthumbnailstilltoreview. Boththumbnailswrittenintro/thumbnails/korean-war-wagon-long.jpg/-shorts.jpg. Introbackgroundrenderlaunched18:24,inspectintro-v1/render.stdout/stderr and actualprocessbeforeduplicate. Needfullencodeddecode/audio+reveal/page1/page2reviewafterfinish.
+
+Nextcreatecompilation/10Shortselection/producer scriptsusingdefaultGoldenbufferconditions, correctunitwebsitekeyverifyref_units; followMissionary/FlamepipelinewithfullactualQAbeforeauthorizedprivateuploads@aoe2matchup. Framesandrawcapturesshouldalreadyflowcontinuously. Keepgamebusy; mediaindependent.
+
+18:54UTC:50.433sec intro full decode/audio PASSED; actual encoded reveal3s, completedpage1at22s/page2at49s and vertical thumbnail visually reviewed, encoded-validation.json and encoded-review-contact.jpg. Created build_korean_war_wagon_compilation.py, prepare_korean_war_wagon_shorts.py and produce_korean_war_wagon_videos.py; syntax checked. Website unit slug elite_war_wagon_koreans confirmed in ref_units for Koreans Imperial. Producer started hidden atBelowNormal, waits safely for overlay status to exist then complete; one encoding task/Shortworker. Correct defaultGoldenbuffer descriptions, sixcostslots plus Missionary/FlamingCamel and interesting recordedoutcomes. Actual full+ShortsQA still required before --upload; existing user authorization saved. Capture continues independently (20verifiedmilestone).
+
+
+20:46UTC: completed73rawcaptures nowhaveindependentfive-seedV3comparisonworkerstarted (simulation-only,oneNormalworker), reportcampaigns/korean-war-wagon-all-unique-simulation, logsworker.*. Runsrosterpreflightandmechanicstestsfirst; inspecterrorsbeforeclaimingcomparisonsready. No duplicateoverlaysorUIdriver. Unsupportedconversionopponentsremainexpliciterrors. Mountedcomparisoncontinuesseparately, twoNodeworkersmaximumacrossthesetwocomparisons. GPU44C20:45:43.
+
+21:09UTC: simulationRathaMeleeseed2failed becauseworld exceeded9000ticks (150gamesec); thisisanenginerunlimit/stall, notanOSwalltimeoutorwrongwinner. Failurelogpreserved; othercomparisonscontinue. No fabricatedterminalHP/winner.

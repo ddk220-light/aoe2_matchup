@@ -1,4 +1,4 @@
-"""orchestrate_matchup.py — one-command MACRO for a matchup video (Windows).
+"""orchestrate_matchup.py â€” one-command MACRO for a matchup video (Windows).
 
 Template-based pipeline. Given two `civ slug` pairs it:
 
@@ -60,7 +60,7 @@ STAGE_NAME = "Matchup Run"                       # fixed name shown in the Load 
 RESULT_HOLD = 5.0                                      # seconds to hold the result on screen
 PATROL_LEAD_WALLCLOCK = 3.5    # FALLBACK clip-start offset after the WALL-CLOCK game-start
 #   Used only when the composer can't frame-accurately detect game-start in the footage
-#   (record_until_end.detect_game_start, whose own PATROL_LEAD=1.0 then applies instead —
+#   (record_until_end.detect_game_start, whose own PATROL_LEAD=1.0 then applies instead â€”
 #   the two offsets differ because their reference points differ: the wall-clock game-start
 #   is detected by a slow OCR poll that lags the real start by a few seconds, while the
 #   footage scan pins the exact frame). At game-start the camera spends ~2s panning to the
@@ -72,6 +72,9 @@ R_MENU_BTN = (0.85, 0.0, 1.0, 0.10)      # top-right "Menu"
 R_DIALOG = (0.33, 0.38, 0.67, 0.78)      # menu-dialog buttons (Load/Test/...)
 R_SAVE = (0.30, 0.50, 0.70, 0.66)        # "No" on the save prompt
 R_LIST = (0.12, 0.33, 0.60, 0.76)        # scenario list rows
+R_TEST = (0.43, 0.55, 0.58, 0.60)
+R_LOAD_MENU = (0.40, 0.47, 0.60, 0.52)
+_ROW_REGIONS = {}  # Verified again before every reuse; never a blind cached click.
 R_LOAD_BTN = (0.38, 0.78, 0.62, 0.90)    # bottom "Load Scenario" button
 R_CONTINUE = (0.30, 0.56, 0.70, 0.76)    # "Continue" on the (legacy) defeat banner
 R_GAME_MENU = (0.28, 0.24, 0.72, 0.74)   # quit/return option in the in-game F10 menu
@@ -80,8 +83,8 @@ R_CONFIRM = (0.28, 0.48, 0.72, 0.62)     # Yes/No confirm dialog
 # Fixed click points (fraction of screen). The editor/menu UI is DETERMINISTIC at a given
 # resolution, so the fast nav clicks these directly and only falls back to OCR if a cheap
 # checkpoint says the expected screen didn't appear. Captured at 2560x1440 (the logged
-# click coords are identical every run): Menu 2447,28 · Load(menu) 1280,715 · row 503,544
-# · Load(btn) 1270,1235 · Test 1281,829.
+# click coords are identical every run): Menu 2447,28 Â· Load(menu) 1280,715 Â· row 503,544
+# Â· Load(btn) 1270,1235 Â· Test 1281,829.
 FP_MENU = (0.9559, 0.0195)               # top-right "Menu" (editor & in-game share it)
 FP_LOAD_MENU = (0.5000, 0.4965)          # "Load Scenario" row in the menu dialog
 FP_TEST = (0.5004, 0.5757)               # "Test" row in the menu dialog
@@ -101,7 +104,9 @@ def resolve_side(civ: str, slug: str):
     # Recording metadata is independent of calibrated simulation fixtures and
     # uses explicit object keys for unique upgrades and switchable attack modes.
     roster_path = Path(__file__).resolve().parents[3] / "data" / "unique-unit-roster.json"
-    if roster_path.exists():
+    for roster_path in (roster_path, roster_path.with_name('recording-subjects.json')):
+        if not roster_path.exists():
+            continue
         roster = json.loads(roster_path.read_text(encoding="utf-8"))
         match = next((row for row in roster["units"]
                       if row["civ"] == civ and row["slug"] == slug), None)
@@ -145,7 +150,7 @@ def equal_resource_counts(civ1, slug1, civ2, slug2, unit_cap=30):
     """Counts for an equal-RESOURCE fight. Per-unit costs come from the unit card,
     which already folds in civ cost bonuses (e.g. Mayan -30% archers), train
     batches (Blackwood Archers come 2 per train), and the website's resource
-    weights (food 1.0 / wood 0.7 / gold 1.5 — webapp/simulation_real.py). The
+    weights (food 1.0 / wood 0.7 / gold 1.5 â€” webapp/simulation_real.py). The
     cheaper unit takes `unit_cap`, shrunk so its army never exceeds RES_BUDGET;
     the pricier unit's count is the largest that fits the same spend.
     Returns (n1, n2)."""
@@ -176,7 +181,7 @@ def bring_game_to_front(logfile=None, timeout=8.0) -> str:
     """Activate AoE2:DE and wait until a known game screen shows. Returns the state.
 
     Editor is the overwhelmingly common state between matchups, so we check it FIRST with a
-    single cheap tabs-band OCR and return immediately — avoiding the full detect_state
+    single cheap tabs-band OCR and return immediately â€” avoiding the full detect_state
     (~5 OCR calls, ~20s on CPU rapidocr). Only non-editor screens pay the full detect_state."""
     platform_io.bring_to_front()
     t0 = time.time()
@@ -194,14 +199,13 @@ def bring_game_to_front(logfile=None, timeout=8.0) -> str:
 
 def _focus_game():
     """Re-assert AoE2:DE as the frontmost app so screenshots capture it and clicks land
-    on it — even if another app (Terminal, Claude, a notification) grabbed focus."""
+    on it â€” even if another app (Terminal, Claude, a notification) grabbed focus."""
     platform_io.activate_game()
-    time.sleep(0.4)
 
 
 def _park_cursor(logfile=None):
     """Nudge the cursor off the (centered) battle but WELL INSIDE the screen. Parking it at
-    a screen edge/corner triggers AoE2 edge-scrolling, which pans the camera off the fight —
+    a screen edge/corner triggers AoE2 edge-scrolling, which pans the camera off the fight â€”
     so aim for a lower-right INTERIOR point, away from the armies and nowhere near an edge."""
     img = vision.grab()
     x = int(0.85 * img.width / vision.SCALE)
@@ -247,25 +251,33 @@ def find_and_click(pattern, region, logfile, label=None, retries=4, dbl=False) -
     """Locate `pattern` in `region` and click it; retry briefly while the screen settles."""
     for _ in range(retries):
         _focus_game()
-        pt = vision.find_text(vision.grab(), pattern, region=region)
+        img = vision.grab()
+        cached = _ROW_REGIONS.get(pattern) if region == R_LIST else None
+        pt = vision.find_text(img, pattern, region=cached) if cached else None
+        if pt is None:
+            pt = vision.find_text(img, pattern, region=region)
+        if pt and region == R_LIST:
+            y = pt[1] * vision.SCALE / img.height
+            _ROW_REGIONS[pattern] = (region[0], max(region[1], y - 0.02),
+                                     region[2], min(region[3], y + 0.02))
         if pt:
             (ui.double_click if dbl else ui.click)(pt)
             log(f"[nav] clicked {label or pattern!r} at {int(pt[0])},{int(pt[1])}", logfile)
             return True
-        time.sleep(0.8)
+        time.sleep(0.15)
     log(f"[nav] FAILED to find {label or pattern!r} in {region}", logfile)
     return False
 
 
 def _dismiss_save_prompt(logfile, timeout=4.0) -> bool:
     """Loading a scenario over an edited one pops 'Do you want to save your changes?'.
-    It FADES IN (can take >1s, so a single check misses it) — poll for it and click 'No'
+    It FADES IN (can take >1s, so a single check misses it) â€” poll for it and click 'No'
     (discard) to proceed. Returns True if a prompt was found and dismissed."""
     t0 = time.time()
     while time.time() - t0 < timeout:
         _focus_game()
         img = vision.grab()
-        txt = vision.ocr_text(img, (0.20, 0.30, 0.80, 0.62)).replace(" ", "")
+        txt = vision.ocr_text(img, (0.28, 0.40, 0.72, 0.54)).replace(" ", "")
         if "saveyourchanges" in txt or "savechanges" in txt:
             pt = vision.find_text(img, "No", region=R_SAVE)
             if pt:
@@ -290,7 +302,7 @@ def _reach_load_page(state, logfile) -> bool:
     if state == "main_menu":
         if not find_and_click("Load Scenario", R_DIALOG, logfile, "Load Scenario (menu)"):
             return False
-        # a 'save changes?' prompt fades in over the load — poll for it and discard
+        # a 'save changes?' prompt fades in over the load â€” poll for it and discard
         _dismiss_save_prompt(logfile)
         time.sleep(0.8)
         return True
@@ -308,10 +320,10 @@ def navigate_to_test_menu(start_state, scenario_name, logfile, fast=True) -> boo
         try:
             if _navigate_fast(start_state, scenario_name, logfile):
                 return True
-            log("[nav] fast path didn't confirm — retrying via OCR", logfile)
+            log("[nav] fast path didn't confirm â€” retrying via OCR", logfile)
         except Exception as e:
-            log(f"[nav] fast path error ({e}) — falling back to OCR", logfile)
-    return _navigate_ocr(start_state, scenario_name, logfile)
+            log(f"[nav] fast path error ({e}) â€” falling back to OCR", logfile)
+    return _navigate_ocr(vision.detect_state(), scenario_name, logfile)
 
 
 def _navigate_fast(start_state, scenario_name, logfile) -> bool:
@@ -319,49 +331,42 @@ def _navigate_fast(start_state, scenario_name, logfile) -> bool:
     -> Load -> (save? No) -> editor -> Menu. OCR only as cheap per-gate verification."""
     st = start_state
     if st == "editor":
-        _click_frac(*FP_MENU, logfile=logfile, label="Menu", settle=0.9)
+        _click_frac(*FP_MENU, logfile=logfile, label="Menu")
+        if not _wait_text("Load Scenario", R_LOAD_MENU, tries=12, delay=0.15):
+            return False
         st = "main_menu"
     if st == "main_menu":
-        _click_frac(*FP_LOAD_MENU, logfile=logfile, label="Load Scenario", settle=0.5)
-        # the 'save your changes?' prompt ALWAYS appears here (leaving the edited scenario)
-        # and fades in over ~2-3s. OCR-polling for it is slow (the big region is ~5s/poll,
-        # so it samples only ~1x and often misses, stalling GATE A ~15s). Instead BLIND-CLICK
-        # 'No' at its fixed coord after the fade — deterministic + instant. If it ever misses
-        # (slow fade), GATE A below still detects the stuck dialog and OCR-recovers.
-        time.sleep(2.3)
-        _click_frac(*FP_SAVE_NO, logfile=logfile, label="save:No (discard)", settle=0.6)
+        _click_frac(*FP_LOAD_MENU, logfile=logfile, label="Load Scenario")
+        # Wait for either destination; never click an absent save dialog.
+        deadline = time.monotonic() + 10
+        save_dismissed = False
+        while time.monotonic() < deadline:
+            img = vision.grab()
+            if vision.find_text(img, "Load Scenario", region=R_LOAD_BTN):
+                break
+            txt = vision.ocr_text(img, (0.28, 0.40, 0.72, 0.54)).replace(" ", "")
+            if not save_dismissed and ("saveyourchanges" in txt or "savechanges" in txt):
+                pt = vision.find_text(img, "No", region=R_SAVE)
+                if pt:
+                    ui.click(pt)
+                    save_dismissed = True
+                    # Slow OCR can consume the original deadline before No is
+                    # clicked. Give the new page its own bounded paint interval.
+                    deadline = time.monotonic() + 5
+                    log("[nav] dismissed save prompt", logfile)
+            time.sleep(0.15)
+        else:
+            return False
     elif st != "load_dialog":
-        return False                                     # unknown start -> let OCR handle it
-    # GATE A: the Load page must be up (its bottom 'Load Scenario' button is visible)
-    if not _wait_text("Load Scenario", R_LOAD_BTN, tries=3):
-        log("[nav] load page not confirmed — OCR recover", logfile)
-        _dismiss_save_prompt(logfile, timeout=6.0)       # blind No may have missed a slow fade
-        if not _reach_load_page(start_state, logfile):
-            return False
-    # Select the staged row BY NAME, not by a blind top-row click: the user's scenario
-    # folder holds other files (default1/default3/The Siege/…), so the staged "Matchup
-    # Run" is NOT reliably the top row — a blind FP_ROW1 click silently test-played the
-    # WRONG scenario (observed: default3's 30v30 Genitours instead of the staged
-    # matchup; the gRPC gate caught it). OCR-find the row; FP_ROW1 is only the fallback.
+        return False
+    # A different scenario must never be selected as a blind fallback.
     if not find_and_click(scenario_name, R_LIST, logfile, f"row {scenario_name!r}"):
-        if not find_and_click(scenario_name.split()[0], R_LIST, logfile, "row (first word)"):
-            log("[nav] scenario row not found by name — blind top-row fallback", logfile)
-            _click_frac(*FP_ROW1, logfile=logfile, label="row (blind)", settle=0.4)
-    _click_frac(*FP_LOAD_BTN, logfile=logfile, label="Load Scenario (button)", settle=0.3)
-    # loading the file doesn't re-prompt (we already discarded), so no second save-poll.
-    # the small scenario loads in ~2s; a fixed wait beats an OCR poll here (each editor
-    # check is a ~5s OCR). GATE C below catches the rare case where it wasn't ready.
-    time.sleep(2.5)
-    # A double-click is not idempotent here: on current AoE2 builds the first
-    # click opens the editor menu and the second can immediately close it again.
-    # Use one click, then let the Test gate below verify the resulting dialog.
-    _click_frac(*FP_MENU, logfile=logfile, label="Menu", settle=0.7)
-    # GATE C: the menu dialog (with 'Test') must be up; else OCR-find Menu (self-correcting)
-    if not _wait_text("Test", R_DIALOG, tries=3):
-        if not find_and_click("Menu", R_MENU_BTN, logfile, "Menu"):
-            return False
-        time.sleep(0.6)
-    return True
+        return False
+    _click_frac(*FP_LOAD_BTN, logfile=logfile, label="Load Scenario (button)")
+    if not _wait_editor(tries=30, delay=0.15):
+        return False
+    _click_frac(*FP_MENU, logfile=logfile, label="Menu")
+    return _wait_text("Test", R_TEST, tries=12, delay=0.15)
 
 
 def _navigate_ocr(start_state, scenario_name, logfile) -> bool:
@@ -371,7 +376,7 @@ def _navigate_ocr(start_state, scenario_name, logfile) -> bool:
         return False
     time.sleep(1.0)
     if not find_and_click(scenario_name, R_LIST, logfile, f"row {scenario_name!r}"):
-        # the staged file is named "Matchup Run" — try the first word as a fallback
+        # the staged file is named "Matchup Run" â€” try the first word as a fallback
         if not find_and_click(scenario_name.split()[0], R_LIST, logfile, "row (first word)"):
             return False
     time.sleep(0.5)
@@ -388,7 +393,7 @@ def _navigate_ocr(start_state, scenario_name, logfile) -> bool:
 def wait_for_game_start(t0, timeout=20.0, logfile=None) -> float:
     """After clicking Test, wait until the scenario actually starts. PRIMARY signal:
     the dark-load-screen -> bright-arena luma jump (the same deterministic transition
-    the footage anchor uses) — no OCR, ~instant, and it works even when the on-screen
+    the footage anchor uses) â€” no OCR, ~instant, and it works even when the on-screen
     readout triggers are removed (AOE2_NO_READOUT). Returns the wall timestamp, or a
     fixed fallback offset if no transition shows."""
     seen_dark = False
@@ -402,7 +407,7 @@ def wait_for_game_start(t0, timeout=20.0, logfile=None) -> float:
             log(f"[watch] game started at +{t - t0:.1f}s (luma {lum:.0f})", logfile)
             return t
         time.sleep(0.25)
-    log("[watch] game-start not detected — using fallback offset", logfile)
+    log("[watch] game-start not detected â€” using fallback offset", logfile)
     return t0 + 5.0
 
 
@@ -412,31 +417,48 @@ def _in_editor(img=None) -> bool:
     return any(k in tabs for k in ("terrain", "diplomacy", "triggers", "cinematics"))
 
 
-def return_to_editor(logfile, retries=4) -> bool:
+def return_to_editor(logfile, retries=4, *, completed_test=False) -> bool:
     """Quit the running test back to the Scenario Editor so the game is clean for the
     NEXT run. The no-lose scenario holds the result on screen WITHOUT ending the game
     (no banner), so the path is: open the in-game Menu (F10) -> 'Quit Current Game' ->
     'Yes'. A leftover defeat banner ('Continue') is handled too, for safety. Idempotent:
     returns True once the editor tabs are visible. Uses the cheap editor check + warm OCR
     + tightened waits; Quit is tried before the (legacy) banner to save an OCR/iter."""
+    if completed_test:
+        # The successful test lifecycle supplies our starting state. Ask for the
+        # menu once and gate every subsequent action on its actual label.
+        if _in_editor():
+            return True
+        if vision.detect_end():
+            # A victory/defeat screen has Continue rather than the live-test menu.
+            return return_to_editor(logfile, retries=retries, completed_test=False)
+        platform_io.key("f10")
+        log("[end] opened completed test menu (F10)", logfile)
+        if not find_and_click("Quit", R_GAME_MENU, logfile, retries=12):
+            return False
+        if not find_and_click("Yes", R_CONFIRM, logfile, retries=12):
+            return False
+        ok = _wait_editor(tries=30, delay=0.15)
+        log(f"[end] {'back in the Scenario Editor' if ok else 'editor not confirmed'}", logfile)
+        return ok
     menu_request_sent = False
     for _ in range(retries):
         _focus_game()
         img = vision.grab()
         if _in_editor(img):
-            log("[end] back in the Scenario Editor — clean for the next run", logfile)
+            log("[end] back in the Scenario Editor â€” clean for the next run", logfile)
             return True
         # in-game menu open -> quit back to the editor -> Yes
         q = (vision.find_text(img, "Quit Current Game", region=R_GAME_MENU)
              or vision.find_text(img, "Quit", region=R_GAME_MENU))
         if q:
             ui.click(q)
-            time.sleep(1.0)
-            y = vision.find_text(vision.grab(), "Yes", region=R_CONFIRM)
-            if y:
-                ui.click(y)
+            if not find_and_click("Yes", R_CONFIRM, logfile, retries=12):
+                return False
             log("[end] Quit -> Yes", logfile)
-            time.sleep(2.0)
+            if _wait_editor(tries=30, delay=0.15):
+                log("[end] back in the Scenario Editor", logfile)
+                return True
             menu_request_sent = False
             continue
         # legacy defeat banner (shouldn't occur with no-lose triggers)
@@ -460,14 +482,14 @@ def return_to_editor(logfile, retries=4) -> bool:
         platform_io.key("f10")
         log("[end] opened in-game menu (F10)", logfile)
         menu_request_sent = True
-        time.sleep(1.0)
+        _wait_text("Quit", R_GAME_MENU, tries=12, delay=0.15)
     ok = _in_editor()
     log(f"[end] {'in editor' if ok else 'WARNING: editor not confirmed'}", logfile)
     return ok
 
 
 def _flag_no_result(final_path, got_result: bool, logfile=None):
-    """The watch loop hit the cap without seeing the 'WINS' banner — the recording is
+    """The watch loop hit the cap without seeing the 'WINS' banner â€” the recording is
     probably truncated mid-battle. Don't fail the run (the footage may still be usable);
     flag it loudly with a marker file next to the output so a sweep can't silently ship
     a clip that ends before the fight does."""
@@ -478,9 +500,9 @@ def _flag_no_result(final_path, got_result: bool, logfile=None):
     try:
         marker.write_text(
             "The watch loop hit the recording cap without detecting the WINS result\n"
-            "banner — this clip may end mid-battle. Re-run with a higher --cap, or\n"
+            "banner â€” this clip may end mid-battle. Re-run with a higher --cap, or\n"
             "verify the clip manually and delete this marker.\n")
-        log(f"[watch] WARNING: no result before cap — flagged {marker.name}", logfile)
+        log(f"[watch] WARNING: no result before cap â€” flagged {marker.name}", logfile)
     except OSError as e:
         log(f"[watch] WARNING: no result before cap (marker write failed: {e})", logfile)
 
@@ -491,7 +513,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
                 final=os.path.join(TMP, "auto_matchup_FINAL.mp4"),
                 dismiss_after=True, logfile=None, template=None,
                 counts_override=None, ranged_override=None,
-                scenario_validator=None, require_grpc=False) -> Path:
+                scenario_validator=None, require_grpc=False, remove_player4_buffer=False) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
 
@@ -525,7 +547,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     if len(ranged) != 2 or not all(isinstance(value, bool) for value in ranged):
         raise ValueError("ranged_override must be a pair of booleans")
     build_kwargs = {} if template is None else {"template": Path(template)}
-    build_run(side1, side2, run_path, counts=counts, ranged=ranged, **build_kwargs)
+    build_run(side1, side2, run_path, counts=counts, ranged=ranged,
+              remove_player4_buffer=remove_player4_buffer, **build_kwargs)
     if scenario_validator is not None:
         scenario_validator(run_path)
     log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "
@@ -560,7 +583,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
             raise RuntimeError("required gRPC logger could not start")
         rec = start_recorder(out_mov, cap, logfile=logfile)
         t_rec = time.time()
-        if not find_and_click("Test", R_DIALOG, logfile, "Test"):
+        if not find_and_click("Test", R_TEST, logfile, "Test"):
             raise RuntimeError("could not click Test")
         t_test = time.time()
         _park_cursor(logfile)                                 # cursor out of the captured frame
@@ -573,12 +596,12 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
             )
         # End-detection: the in-game "WINS" banner is the GAME'S OWN verdict, so OCR reads
         # it correctly every run. The gRPC recorder's LIVE TAILER (fixed decoder) writes
-        # <prefix>.END the moment one army hits 0 — the exact battle end; the WINS-banner
+        # <prefix>.END the moment one army hits 0 â€” the exact battle end; the WINS-banner
         # screen watcher remains the fallback when the tailer disabled itself.
         got_result = watch_until_result(
             t_test, cap, logfile=logfile,
             end_flag=(grpc_prefix + ".END") if grpc_proc else None)
-        time.sleep(RESULT_HOLD)            # keep recording the on-screen result hold
+        time.sleep(RESULT_HOLD if compose else 0.5)
     finally:
         try:
             if rec is not None:
@@ -586,7 +609,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
         finally:
             grpc_capture.stop_logger(grpc_proc, logfile=logfile)
             if dismiss_after:
-                cleanup_ok = return_to_editor(logfile)
+                cleanup_ok = return_to_editor(logfile, completed_test=got_result and require_grpc)
 
     if dismiss_after and not cleanup_ok:
         raise RuntimeError(
@@ -594,11 +617,11 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
         )
 
     # recording sanity: an empty/tiny .mov means the capture failed (Screen Recording
-    # grant missing, or the recorder never started) — fail loudly, don't compose black.
+    # grant missing, or the recorder never started) â€” fail loudly, don't compose black.
     sz = os.path.getsize(out_mov) if os.path.exists(out_mov) else 0
     if sz < 1_000_000:
         raise RuntimeError(
-            f"recording looks empty ({sz} bytes) — check the recorder log "
+            f"recording looks empty ({sz} bytes) â€” check the recorder log "
             f"({out_mov}.ffmpeg.log)")
 
     # build the gRPC HP sidecar (overlay data + video-sync offset) BEFORE compose, so the
@@ -606,7 +629,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     hp_sidecar = grpc_capture.write_sidecar(grpc_prefix, t_rec, logfile=logfile)
 
     # RECORD-ONLY mode: archive the raw + its gRPC sidecar and stop here; the (CPU-bound)
-    # compose runs later via auto.recompose_from_raws — in parallel, with no game needed.
+    # compose runs later via auto.recompose_from_raws â€” in parallel, with no game needed.
     if not compose:
         raw_dest = archive_raw(out_mov, raw_copy_to or copy_to,
                                name or Path(final).name, logfile)
@@ -620,7 +643,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
 
     # 8-9. COMPOSE (recap, no OCR) -> COPY. Start the clip when the armies patrol in
     # (measured from the detected game-start), and the compose drops the idle tail.
-    # This wall-clock lead_in is only the FALLBACK — the composer overrides it with the
+    # This wall-clock lead_in is only the FALLBACK â€” the composer overrides it with the
     # frame-accurate game-start it detects in the footage itself.
     base = t_gs if t_gs is not None else t_rec
     lead_in = max(0.0, (base - t_rec) + PATROL_LEAD_WALLCLOCK)
@@ -658,7 +681,7 @@ def main():
     log(f"=== orchestrate {a.slug1} vs {a.slug2} (template-based, no OCR) ===", a.log)
 
     if not ui.accessibility_ok():
-        log("ERROR: Accessibility not granted to this terminal — scripted clicks will "
+        log("ERROR: Accessibility not granted to this terminal â€” scripted clicks will "
             "fail. System Settings -> Privacy & Security -> Accessibility.", a.log)
         sys.exit(2)
     try:

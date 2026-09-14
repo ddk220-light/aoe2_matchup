@@ -169,6 +169,7 @@ export function isWithinStopRange(actor, target, options = {}) {
 
 export function calculateDamage(actor, target, options = {}) {
   const actorEffects = actor?.mechanics?.effects ?? {};
+  if (actorEffects.non_attacking && options.attackClasses === undefined) return 0;
   const targetEffects = target?.mechanics?.effects ?? {};
   const attacks = options.attackClasses
     ?? (actor?.specialState?.transformed && actorEffects.transform_attacks
@@ -220,7 +221,8 @@ export function calculateDamage(actor, target, options = {}) {
     const armor = classValue(armors, classId, "armor");
     if (armor === undefined) continue;
     damage += Math.max(0, requireFinite(attack, `attack class ${classId}`)
-      - (options.ignoreArmor === true ? 0 : armor));
+      - (options.ignoreArmor === true ? 0 : armor))
+      * (1 - Math.max(0, Math.min(1, targetEffects.bonus_damage_reduction ?? 0)));
   }
   const executeDamage = requireFinite(actorEffects.execute_damage_per_step ?? 0,
     "execute damage per step");
@@ -307,6 +309,13 @@ export function trampleSpec(mechanics) {
   // 100%-damage cone.  Keep the authored one-tile width: unlike elephant
   // trample, this is neither centred on the attacker nor radial.
   const blast = mechanics?.blast;
+  if (blast?.attack_level === 66 && mechanics?.effects?.suicide_attack) {
+    return { shape: 'radial', widthTiles: blast.width_tiles, damageFraction: blast.damage_fraction };
+  }
+  if (blast?.attack_level === 130) {
+    return { shape: 'forward-line', widthTiles: blast.width_tiles,
+      halfWidthTiles: mechanics.collision_size_tiles.x, damageFraction: blast.damage_fraction };
+  }
   if (blast?.attack_level === 162) {
     const width = requireFinite(blast.width_tiles, "blast width");
     const fraction = requireFinite(blast.damage_fraction, "blast damage fraction");
@@ -320,6 +329,11 @@ export function trampleSpec(mechanics) {
     }
   }
   const effectRadius = mechanics?.effects?.trample_radius;
+  const flatDamage = mechanics?.effects?.trample_flat_damage;
+  if (Number.isFinite(effectRadius) && effectRadius > 0
+      && Number.isFinite(flatDamage) && flatDamage > 0) {
+    return { shape: "radial", widthTiles: effectRadius, damageFraction: 0, flatDamage };
+  }
   const effectFraction = mechanics?.effects?.trample_percent;
   if (Number.isFinite(effectRadius) && effectRadius > 0
       && Number.isFinite(effectFraction) && effectFraction > 0) {
@@ -336,6 +350,38 @@ export function trampleSpec(mechanics) {
     return null;
   }
   return { shape: "radial", widthTiles: width, damageFraction: fraction };
+}
+
+// Mode 130 uses a narrow directional strip, bounded by the ordinary blast
+// distance to the victim's collision box. Do not widen that strip by the
+// victim radius: the archived Ghulam hits/misses reject that extra padding.
+export function forwardLineBlastHits(actor, target, victim, blast) {
+  const dx = target.x - actor.x;
+  const dy = target.y - actor.y;
+  const length = Math.hypot(dx, dy);
+  if (length <= 1e-12) return false;
+  const vx = victim.x - actor.x;
+  const vy = victim.y - actor.y;
+  const forward = (vx * dx + vy * dy) / length;
+  const lateral = Math.abs(vx * -dy + vy * dx) / length;
+  const size = victim.mechanics.collision_size_tiles;
+  const reach = Math.hypot(
+    Math.max(0, Math.abs(vx) - size.x),
+    Math.max(0, Math.abs(vy) - size.y),
+  );
+  return forward > 0 && reach <= blast.widthTiles + 1e-12
+    && lateral <= blast.halfWidthTiles + 1e-12;
+}
+
+export function suicideExplosionDamage(actor, victim) {
+  const radius = actor.mechanics.blast.width_tiles;
+  const size = victim.mechanics.collision_size_tiles;
+  const reach = Math.hypot(
+    Math.max(0, Math.abs(victim.x - actor.x) - size.x),
+    Math.max(0, Math.abs(victim.y - actor.y) - size.y),
+  );
+  if (radius <= 0 || reach >= radius) return 0;
+  return Math.max(1, calculateDamage(actor, victim) * (1 - reach / radius));
 }
 
 

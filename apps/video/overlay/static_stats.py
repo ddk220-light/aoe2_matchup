@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sqlite3
 import subprocess
@@ -19,7 +20,8 @@ from overlay.ffutil import find_ffmpeg
 from overlay.civ_theme import panel_art, theme_for
 
 REPO = Path(__file__).resolve().parents[3]
-GAME = Path("C:/Program Files (x86)/Steam/steamapps/common/AoE2DE")
+# Offline art/intro tools share this override; capture paths remain in aoe2lab.toml.
+GAME = Path(os.environ.get("AOE2_GAME_DIR", "C:/Program Files (x86)/Steam/steamapps/common/AoE2DE"))
 INK = (57, 28, 27, 255)
 GREEN = (24, 112, 35, 255)
 
@@ -72,11 +74,40 @@ def upgraded(unit, key):
     return number(base) + (f"{delta:+g}" if delta else "")
 
 
+def portrait_path(name):
+    if name == 'Missionary':
+        stats = json.loads(Path(__file__).with_name('supplemental-stats.json').read_text())['missionary_spanish']
+        return GAME / f"resources/_common/wpfg/resources/uniticons/{stats['icon_id']}_50730.png"
+    aliases = {'Elite Ratha (Melee)': 'Elite Ratha', 'Elite Ratha (Ranged)': 'Elite Ratha',
+               'Elite White Feather Guard': 'Elite White Feather Crossbowman',
+               'War Chariot (Focus Fire)': 'War Chariot', 'War Chariot (Barrage)': 'War Chariot'}
+    return REPO / 'apps/website/static/img/units' / (aliases.get(name, name).replace(' ', '_') + '.png')
+
+
+def resolve_stats(connection, side):
+    supplemental = Path(__file__).with_name('supplemental-stats.json')
+    if supplemental.exists():
+        row = json.loads(supplemental.read_text()).get(side['slug'])
+        if row: return row
+    name = 'War Chariot' if side['label'].startswith('War Chariot (') else side['label']
+    rows = connection.execute('SELECT * FROM ref_units WHERE unit_name=? AND civ_name=? AND age=?',
+                              (name, side['civ'], 'Imperial')).fetchall()
+    if len(rows) != 1:
+        raise ValueError(f"No unambiguous reference stats for {side['label']} / {side['civ']}")
+    result = dict(rows[0]); result['unit_name'] = side['label']
+    if name != side['label']:
+        profile = json.loads((REPO / 'aoe2x/js_simulation/fixtures/unit_stats' / (side['slug']+'_imperial.json')).read_text())
+        result.update(final_attacks_json=json.dumps(profile['attack_classes']),
+                      final_attack=max(profile['attack_classes'].get('3',0),profile['attack_classes'].get('4',0)),
+                      final_range=profile['attack_range_tiles'],final_reload_time=profile['reload_seconds'])
+    return result
+
+
 def bonus_damage(attacker, defender):
     attacks = {int(k): v for k, v in json.loads(attacker['final_attacks_json']).items()}
     armors = {int(k): v for k, v in json.loads(defender['final_armors_json']).items()}
     return sum(max(0, amount - armors[c]) for c, amount in attacks.items()
-               if c not in (3, 4) and c in armors and amount > 0)
+               if c not in (3, 4) and c in armors and amount > 0) * (1-(defender.get('bonus_damage_reduction') or 0))
 
 
 def modifiers(unit, enemy):
@@ -90,7 +121,7 @@ def panel(unit, enemy, font, game, color):
     draw = ImageDraw.Draw(image)
     title_size = min(37, 480 / font.width(unit['unit_name'], 1))
     font.draw(image, (43, 47), unit['unit_name'], title_size)
-    portrait = Image.open(REPO / 'apps/website/static/img/units' / (unit['unit_name'].replace(' ', '_') + '.png')).convert('RGBA')
+    portrait = Image.open(portrait_path(unit['unit_name'])).convert('RGBA')
     portrait = portrait.resize((132, 132), Image.Resampling.LANCZOS)
     draw.rectangle((28, 74, 165, 211), fill=(25, 23, 23), outline=(97, 77, 52), width=3)
     image.alpha_composite(portrait, (31, 77))
@@ -123,7 +154,8 @@ def panel(unit, enemy, font, game, color):
     draw.line((190, 251, 526, 251), fill=(133, 95, 57), width=1)
     notes = (['Per kill: +10 HP, +1 attack', 'Maximum: +40 HP, +4 attack']
              if unit['unit_slug'] == 'elite_tiger_cavalry_wei' else
-             ['Arrows ignore pierce armor.'])
+             ['Arrows ignore pierce armor.'] if unit['ignores_pierce_armor'] else
+             ['Attacks ignore melee armor.'] if unit['ignores_melee_armor'] else [])
     for i, line in enumerate(notes):
         font.draw(image, (192, 258 + i * 18), line, 20)
     return image, mod
@@ -137,13 +169,9 @@ def main():
     args = parser.parse_args()
     run = args.run_directory.resolve()
     plan = json.loads((run.parent.parent / 'plan.json').read_text())
-    expected = ('elite_tiger_cavalry_wei', 'elite_composite_bowman_armenians')
-    if (plan['side2']['slug'], plan['side3']['slug']) != expected:
-        raise ValueError('This first overlay design supports the approved Tiger/Composite pilot only.')
     connection = sqlite3.connect(f'file:{REPO / "data/golden/aoe2_reference.db"}?mode=ro', uri=True)
     connection.row_factory = sqlite3.Row
-    units = [dict(connection.execute('SELECT * FROM ref_units WHERE unit_slug=? AND civ_name=? AND age=?',
-             (plan[key]['slug'], plan[key]['civ'], 'Imperial')).fetchone()) for key in ('side2', 'side3')]
+    units = [resolve_stats(connection, plan[key]) for key in ('side2', 'side3')]
     connection.close()
     out = run / 'static-stats-overlay'
     out.mkdir(exist_ok=True)

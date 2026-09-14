@@ -11,7 +11,7 @@ import cv2
 from PIL import Image, ImageDraw, ImageEnhance, ImageOps
 
 from overlay.ffutil import find_ffmpeg
-from overlay.static_stats import GAME, REPO, GameFont
+from overlay.static_stats import GAME, REPO, GameFont, portrait_path
 from overlay.unit_timeline import decode, ordered_units, sample_at
 
 GRID_W, GRID_H = 256, 800
@@ -25,7 +25,7 @@ WHITE = (250, 239, 214, 255)
 class UnitGrid:
     def __init__(self, name, color, font):
         self.color, self.font = color, font
-        self.portrait = Image.open(REPO / 'apps/website/static/img/units' / (name.replace(' ', '_') + '.png')).convert('RGBA').resize((TILE - 4, TILE - 4), Image.Resampling.LANCZOS)
+        self.portrait = Image.open(portrait_path(name)).convert('RGBA').resize((TILE - 4, TILE - 4), Image.Resampling.LANCZOS)
         self.dead = ImageEnhance.Brightness(ImageOps.grayscale(self.portrait).convert('RGBA')).enhance(.35)
 
     @lru_cache(maxsize=512)
@@ -42,8 +42,8 @@ class UnitGrid:
         return im
 
     def render(self, units):
-        if len(units) > COLS * ROWS:
-            raise ValueError('Portrait grid capacity exceeded; choose a larger layout.')
+        columns = max(COLS, (sum(u['hp'] > 0 for u in units) + ROWS - 1) // ROWS)
+        step_x = min(STEP_X, 240 // columns)
         im = Image.new('RGBA', (GRID_W, GRID_H))
         count = sum(u['hp'] > 0 for u in units)
         total = sum(u['hp'] for u in units)
@@ -52,10 +52,16 @@ class UnitGrid:
         d.rounded_rectangle((0, 0, 239, 55), radius=6, fill=(20, 17, 13, 210))
         self.font.draw(im, (12, 17), str(count), 42, WHITE)
         self.font.draw(im, (86, 25), f'{total:g} HP', 25, WHITE)
-        for index, unit in enumerate(ordered_units(units)):
+        # Replacement bodies can accumulate more historical ids than opening
+        # slots. Keep every survivor and only as many dimmed deaths as fit.
+        for index, unit in enumerate(ordered_units(units)[:columns * ROWS]):
             # Fill down each column, then advance right: a vertical queue.
             col, row = divmod(index, ROWS)
-            im.alpha_composite(self.tile(unit['hp'], unit['maxHp']), (col * STEP_X, 64 + row * STEP_Y))
+            renderer = getattr(self, 'entity_renderers', {}).get(unit['id'], self)
+            tile = renderer.tile(unit['hp'], unit['maxHp'])
+            if step_x < STEP_X:
+                tile = tile.resize((step_x - 8, round(tile.height * (step_x - 8) / TILE)), Image.Resampling.LANCZOS)
+            im.alpha_composite(tile, (col * step_x, 64 + row * STEP_Y))
         return im
 
 
@@ -77,6 +83,9 @@ def main():
     times = [r['videoSeconds'] for r in rows]
     font = GameFont(GAME)
     grids = [UnitGrid(u['unit'], color, font) for u, color in zip(stats['units'], [(46, 92, 226, 255), (204, 42, 37, 255)])]
+    for grid in grids:
+        variants = [UnitGrid(u['unit'], grid.color, font) for u in stats['units']]
+        grid.entity_renderers = {u['id']: variants[i] for i, owner in enumerate(('2','3')) for u in rows[0]['sides'][owner]}
     capture = cv2.VideoCapture(str(run / 'battle.mp4'))
     fps = capture.get(cv2.CAP_PROP_FPS)
     frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -92,7 +101,7 @@ def main():
             strip.alpha_composite(grids[i].render(row['sides'][owner]), (GRID_W * i, 0))
         return strip
 
-    for t in (0, 8, 15, 18):
+    for t in sorted({0, min(8, (frames-1)/fps), min(15, (frames-1)/fps), min(18, (frames-1)/fps)}):
         capture.set(cv2.CAP_PROP_POS_MSEC, t * 1000)
         ok, frame = capture.read()
         if not ok:
@@ -102,7 +111,7 @@ def main():
         strip = dynamic(t)
         preview.alpha_composite(strip.crop((0, 0, GRID_W, GRID_H)), (24, GRID_Y))
         preview.alpha_composite(strip.crop((GRID_W, 0, GRID_W * 2, GRID_H)), (width - 24 - 240, GRID_Y))
-        preview.convert('RGB').save(out / f'preview-{t:02}.jpg')
+        preview.convert('RGB').save(out / f'preview-{t:05.2f}.jpg')
     capture.release()
     if args.preview_only:
         print(out)
@@ -123,7 +132,7 @@ def main():
                '-filter_complex_threads', '1', '-filter_complex', filters,
                '-map', '[v]', '-map', '0:a?', '-c:v', 'libx264', '-threads', '2',
                '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p',
-               '-c:a', 'copy', '-movflags', '+faststart', str(out / 'battle-with-unit-hp.mp4')]
+               '-c:a', 'copy', '-movflags', '+faststart', str(out / 'battle-with-unit-hp.partial.mp4')]
     with (out / 'render.log').open('w') as log:
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=log, stderr=log)
         try:
@@ -136,6 +145,7 @@ def main():
             process.kill()
             process.wait()
             raise
+    (out / 'battle-with-unit-hp.partial.mp4').replace(out / 'battle-with-unit-hp.mp4')
     print(out / 'battle-with-unit-hp.mp4')
 
 

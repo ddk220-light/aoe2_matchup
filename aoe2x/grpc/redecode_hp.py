@@ -32,18 +32,26 @@ PFX = sys.argv[1] if len(sys.argv) > 1 else r"C:\dev\aoe2\aoe2grpc\run1"
 F_MASTER, F_OWNER, F_HP = 1, 2, 12
 ARMY_MT = {9, 11, 12}
 SCOUT = 448
+# Installed DAT: 1927 (Mounted Trebuchet projectile) dies into 1880
+# PROJMTREB_D (10-HP lingering fire); 2565 GUECHA_D0 is a 5-HP class-11
+# death projectile. Both use combat entity models but are not army bodies.
+NON_ARMY_MASTERS = frozenset({1880, 2565})
 SNAP_RESEED = 400_000                # mid-stream patches above this are full snapshots
-MIN_ARMY, MAX_ARMY = 3, 80           # plausible per-side army size
+# Equal-resource battles can legitimately field only one or two expensive siege
+# units (e.g. 27 Blackwood Archers vs 2 Houfnice). Empty editor sides remain invalid;
+# the recording validator separately checks starting counts against the plan.
+MIN_ARMY, MAX_ARMY = 1, 80           # plausible per-side army size
 
 
 def derive_army(es):
     # hp > 0 (not a higher floor): the Elite Blackwood Archer has 25 HP and a 30-HP
-    # "decoration filter" silently dropped that whole army. Our scenarios strip camp
-    # props, so owner+type+not-scout is already a tight filter.
+    # "decoration filter" silently dropped that whole army. Exclude identified
+    # effect masters explicitly rather than imposing an HP floor on real units.
     army = {2: set(), 3: set()}
     for k, e in es.items():
         if (e.get("__type__") in ARMY_MT and e.get(F_OWNER) in (2, 3)
                 and e.get(F_MASTER) != SCOUT
+                and e.get(F_MASTER) not in NON_ARMY_MASTERS
                 and isinstance(e.get(F_HP), (int, float)) and e.get(F_HP) > 0):
             army[e.get(F_OWNER)].add(k)
     return army
@@ -55,11 +63,13 @@ def refresh_army_membership(es, army):
     Spawn-on-death and other replacement mechanics create a new entity id.  A
     start-only membership set silently lost those bodies (and their HP) even
     though the same owner/type filters still identify them unambiguously.
-    Membership is monotonic; dead ids remain harmless because totals() already
-    requires a present entity with positive HP.
+    Dead ids remain for casualty displays; converted ids move to their current
+    owner so they cannot keep their former army alive.
     """
     current = derive_army(es)
     for owner in (2, 3):
+        army[owner].difference_update({k for k in army[owner]
+            if k in es and es[k].get(F_OWNER, owner) != owner})
         army[owner].update(current[owner])
 
 
@@ -70,7 +80,7 @@ def totals(es, army):
         for k in army[o]:
             e = es.get(k)
             v = e.get(F_HP) if e else None
-            if isinstance(v, (int, float)) and v > 0:
+            if isinstance(v, (int, float)) and v > 0 and e.get(F_OWNER) == o:
                 cnt += 1
                 hp += v
     # noqa: E501 — count/hp per side
@@ -174,12 +184,12 @@ def main():
     # seconds.  The real elimination is the beginning of the final zero run,
     # not the first transient zero observed anywhere in the fight.
     end_s = None
-    final_zero_key = next((key for key in ("side1", "side2")
-                           if rows[-1][key]["count"] == 0), None)
-    if final_zero_key is not None:
+    final_zero_keys = [key for key in ("side1", "side2")
+                       if rows[-1][key]["count"] == 0]
+    if final_zero_keys:
         final_zero_start = len(rows) - 1
         while (final_zero_start > 0
-               and rows[final_zero_start - 1][final_zero_key]["count"] == 0):
+               and all(rows[final_zero_start - 1][key]["count"] == 0 for key in final_zero_keys)):
             final_zero_start -= 1
         end_s = rows[final_zero_start]["game_s"]
     # fight summary for the sidecar anchoring layer: on a CONTINUOUS stream (the Test

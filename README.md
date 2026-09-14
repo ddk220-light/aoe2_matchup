@@ -5,6 +5,8 @@ and the **replay visualizer** — organized as five independently-improvable
 layers. Each layer can be consumed on its own; downstream layers only *refer*
 to upstream ones.
 
+**Producing a new matchup video? Start with the [complete video production runbook](docs/VIDEO_PRODUCTION_RUNBOOK.md).** It covers workstation setup, audited army costs, captures, recovery, live HP overlays, campaign intros, Shorts, review, and resumable YouTube uploads, with links to every supporting workflow document.
+
 ```
 ┌ L1  data/inputs/      external inputs (game .dat, replays, captures, scraped art)
 │                       → gitignored content; data/inputs/MANIFEST.md says how to fetch

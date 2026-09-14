@@ -76,6 +76,8 @@ import {
   orderReadyAttacks,
   rangedSpec,
   trampleSpec,
+  forwardLineBlastHits,
+  suicideExplosionDamage,
 } from "./attacks.js";
 import { collisionRadius } from "./targeting.js";
 import {
@@ -509,6 +511,14 @@ function refreshNearbyAuras(units) {
     unit.specialState.nearbyAttackBonus = attackPerAlly > 0
       ? attackPerAlly * Math.min(allies.length, effects.nearby_bonus_count ?? allies.length)
       : 0;
+    if (effects.attack_aura_group_size > 0) {
+      const masters = new Set(effects.attack_aura_masters);
+      const count = units.filter(candidate => candidate.alive && candidate.owner === unit.owner
+        && masters.has(candidate.unitMaster)
+        && Math.hypot(candidate.x-unit.x,candidate.y-unit.y) <= effects.attack_aura_radius).length;
+      unit.specialState.nearbyAttackBonus = Math.min(effects.attack_aura_max,
+        Math.floor(count / effects.attack_aura_group_size));
+    }
     const hpPercent = effects.hp_nearby_percent_per_unit ?? 0;
     if (hpPercent <= 0) continue;
     const qualifyingAllies = nearbyAllies(
@@ -642,6 +652,13 @@ function advanceSpecialEffects(units, tick, events) {
     if (!unit.alive || !unit.specialState) continue;
     const effects = unitEffects(unit);
     const maxHp = unit.maxHp ?? unit.specialState.baseMaxHp;
+    for (const kind of ['melee_block', 'projectile_dodge']) {
+      if (effects[kind + '_max'] > 0) {
+        unit.specialState[kind] = Math.min(effects[kind + '_max'],
+          (unit.specialState[kind] ?? effects[kind + '_max'])
+          + (effects[kind + '_recharge_per_second'] ?? 0) / TICKS_PER_SECOND);
+      }
+    }
     const passiveRegen = effects.hp_regen ?? 0;
     const combatRegen = effects.hp_regen_in_combat ?? 0;
     const recentlyAttacked = tick - (unit.specialState.lastAttackTick ?? -Infinity)
@@ -1690,17 +1707,22 @@ function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = 
     if (!Number.isSafeInteger(invalidTargetId)) {
       throw new Error(`attacking unit ${unit.referenceId} has no captured attack target`);
     }
-    // A swing that has already released its hit runs to the end of its animation
-    // even though the target is gone -- that is what makes a killer slower to
-    // pick a new target than the bystanders swinging at the same corpse. Only an
-    // unreleased swing is abandoned on the spot. A charge cycle releases on its
-    // own (later) frame; an abandoned unreleased charge keeps its charge.
+    // The killer finishes its recovery, but other melee attackers abandon the
+    // corpse even if their own hit already landed. Recorded Shotel bystanders
+    // leave the attack graphic in 14-18 ms, with .1-.6 s of recovery remaining;
+    // the killing unit retains roughly .75 s. A released bystander's weapon
+    // reload is still owed. Keep charge/projectile recovery unchanged.
     const releaseTicks = unit.attackKind === "charge"
       ? chargeSpec(unit.mechanics).windupTicks
       : unit.attackKind === "melee-charge"
         ? meleeChargeSpec(unit.mechanics).windupTicks
         : attackDelayTicksForUnit(unit);
-    if (unit.actionTimers.swing >= releaseTicks) continue;
+    const released = unit.actionTimers.swing >= releaseTicks;
+    const releasedMeleeBystander = unit.attackKind !== "charge"
+      && rangedSpec(unit.mechanics) === null
+      && Number.isSafeInteger(target?.killedById)
+      && target.killedById !== unit.referenceId;
+    if (released && !releasedMeleeBystander) continue;
     if (unit.owner === rangedWindupRetargetOwner
         && rangedSpec(unit.mechanics) !== null
         && unit.attackKind !== "charge") {
@@ -1750,7 +1772,7 @@ function validateAttackTargets(units, tick, events, rangedWindupRetargetOwner = 
     // 0.02-0.07 s; they do not enter the weapon's full reload state. Refunding
     // an unreleased ordinary swing lets the unit acquire and aim again while
     // preserving a charge weapon's separately accumulated charge.
-    if (!abandonedCharge) unit.actionTimers.reload = 0;
+    if (!abandonedCharge && !released) unit.actionTimers.reload = 0;
     unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
   }
 }
@@ -4800,6 +4822,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
   const ready = [];
   for (const unit of units) {
     if (!unit.alive) continue;
+    if (unitEffects(unit).non_attacking) continue;
     if (unit.actionTimers.reload > 0) unit.actionTimers.reload -= 1;
     progressPendingRangedVolley(unit, units, byReference, tick, events,
       projectiles, velocities, shotRng);
@@ -4834,7 +4857,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
       // their authored duration.
       const animation = charge || areaCharge
         ? rawAnimation
-        : Math.max(delay, Math.min(rawAnimation, reloadTicksForUnit(unit, tick)));
+        : Math.max(delay + 1, Math.min(rawAnimation, reloadTicksForUnit(unit, tick)));
       unit.actionTimers.swing += 1;
       unit.actionTimers.windup = Math.max(0, delay - unit.actionTimers.swing);
       if (unit.actionTimers.swing === delay) {
@@ -5044,6 +5067,12 @@ function commitReadyAttacks(units, ready, tick, events) {
       continue;
     }
 
+    if (unitEffects(actor).suicide_attack) {
+      // Petard-class weapons deliver their damage once, at the death boundary.
+      applyCommittedDamage(units, actor.referenceId, actor, actor.hp,
+        attack.readyTick, tick, events, {kind: 'self-destruct'});
+      continue;
+    }
     // The hit lands mid-animation; the actor stays committed to the rest of its
     // swing. Its reload was started at swing start, so the cadence is unaffected.
     applyCommittedDamage(units, attack.actorId, target, attack.amount,
@@ -5077,7 +5106,9 @@ function commitReadyAttacks(units, ready, tick, events) {
         const victimRadius = collisionRadius(victim);
         const dx = victim.x - actor.x;
         const dy = victim.y - actor.y;
-        if (blast.shape === "forward-cone") {
+        if (blast.shape === "forward-line") {
+          if (!forwardLineBlastHits(actor, target, victim, blast)) continue;
+        } else if (blast.shape === "forward-cone") {
           // AoE2 blast mode 162 is a one-tile, 90-degree cone in the attack
           // direction. Unlike radial blast, the directional flag tests the
           // victim's position in the forward wedge; collision size does not
@@ -5099,7 +5130,7 @@ function commitReadyAttacks(units, ready, tick, events) {
         const splashBaseDamage = calculateDamage(actor, victim)
           + (attack.charged ? (attack.chargeDamage ?? 0) : 0);
         applyCommittedDamage(units, attack.actorId, victim,
-          blast.damageFraction * splashBaseDamage,
+          blast.flatDamage ?? blast.damageFraction * splashBaseDamage,
           attack.readyTick, tick, events, { kind: "trample" });
       }
     }
@@ -5532,6 +5563,26 @@ function processImpactHazards(units, hazards, tick, events) {
 
 function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, events, extra) {
   const actor = units.find((unit) => unit.referenceId === actorId);
+  const directMelee = extra?.triggersOnHit && !extra?.kind && actor
+    && !rangedSpec(actor.mechanics);
+  const defense = unitEffects(target);
+  const shieldKind = directMelee ? 'melee_block'
+    : extra?.kind?.includes('projectile') ? 'projectile_dodge' : null;
+  if (amount > 0 && shieldKind && defense[shieldKind + '_max'] > 0) {
+    const state = ensureSpecialState(target);
+    const charge = state[shieldKind] ?? defense[shieldKind + '_max'];
+    if (charge >= 1 - 1e-9) {
+      state[shieldKind] = Math.max(0, charge - 1);
+      events.push(event(tick, directMelee ? 'melee-blocked' : 'projectile-dodged', target.referenceId, actorId));
+      return;
+    }
+  }
+  if (amount > 0 && directMelee && unitEffects(target).block_first_melee
+      && !target.specialState?.firstMeleeBlocked) {
+    ensureSpecialState(target).firstMeleeBlocked = true;
+    events.push(event(tick, "melee-blocked", target.referenceId, actorId));
+    return;
+  }
   const hpBefore = target.hp;
   const hpAfter = Math.max(0, hpBefore - amount);
   target.hp = hpAfter;
@@ -5628,6 +5679,7 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
   }
 
   target.alive = false;
+  target.killedById = actorId;
   target.pursuitTargetId = null;
   target.engagedTargetId = null;
   target.attackTargetId = null;
@@ -5642,6 +5694,21 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
     readyTick,
   }));
   const deathEffects = unitEffects(target);
+  if (deathEffects.suicide_attack) {
+    for (const victim of units) {
+      if (!victim.alive || !isHostile(target, victim)) continue;
+      // Blast mode 66 tapers from the explosion centre to the nearest point
+      // of the victim's axis-aligned collision box. The recorded first
+      // Flaming Camel explosion reproduces all seven HP drops with this
+      // distance (including 52.5368 and 1.8554), rather than full damage
+      // throughout the radius or a centre-distance-minus-radius circle.
+      const amount = suicideExplosionDamage(target, victim);
+      if (amount <= 0) continue;
+      applyCommittedDamage(units, target.referenceId, victim,
+        amount,
+        tick, tick, events, {kind: 'suicide-explosion'});
+    }
+  }
   const deathExplosionAttack = deathEffects.death_explosion_melee_attack ?? 0;
   const deathExplosionRadius = deathEffects.death_explosion_radius_tiles ?? 0;
   if (deathExplosionAttack > 0 && deathExplosionRadius > 0) {

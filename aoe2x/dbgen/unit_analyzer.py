@@ -667,7 +667,13 @@ class UnitAnalyzer:
         return armor_class, amount
 
     def _set_attribute(self, stats: UnitStats, attr: int, value: float):
-        if attr == ATTR_HP:
+        if attr == ATTR_FOOD_COST:
+            stats.cost_food = value
+        elif attr == ATTR_WOOD_COST:
+            stats.cost_wood = value
+        elif attr == ATTR_GOLD_COST:
+            stats.cost_gold = value
+        elif attr == ATTR_HP:
             stats.hp = value
         elif attr == ATTR_SPEED:
             stats.speed = value
@@ -746,13 +752,15 @@ class UnitAnalyzer:
             stats.cost_wood *= value
         elif attr == ATTR_ATTACK:
             # Encoded as class * 256 + percent (e.g., Siege Engineers: class 11, 120 = 1.2x)
-            atk_class, percent = self._decode_armor_attack_value(value)
+            # Multipliers encode an unsigned percentage, unlike additive
+            # signed-byte damage. 140% must not become -116%.
+            atk_class, percent = divmod(int(value), 256)
             if atk_class in stats.attacks:
                 stats.attacks[atk_class] = round(stats.attacks[atk_class] * percent / 100)
             if atk_class == 4:
                 stats.attack = round(stats.attack * percent / 100)
         elif attr == ATTR_ARMOR:
-            arm_class, percent = self._decode_armor_attack_value(value)
+            arm_class, percent = divmod(int(value), 256)
             if arm_class in stats.armors:
                 stats.armors[arm_class] = round(stats.armors[arm_class] * percent / 100)
             if arm_class == 4:

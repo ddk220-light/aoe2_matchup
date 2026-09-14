@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "name": "campaign-intro-parchment",
+  "approved": true,
+  "approvedExample": "aoe2x\\js_simulation\\calibration\\lab\\compilations\\tiger-unique-units\\thumbnails\\options-v1\\02-original-intro.png",
+  "layout": "Use the same civilization campaign background as the intro. Center the approved unit sketch on the parchment, with the unit name and Matchup below it.",
+  "backgroundRule": "Resolve through apps/video/intro/campaign_catalog.json; Wei uses the Art of War fallback. Reuse actual installed background assets and the approved intro unit art.",
+  "typography": "Dark brown bold historical/game serif; title below art; generous parchment margins.",
+  "avoid": [
+    "flashy effects",
+    "stats panels",
+    "battle counters",
+    "extra taglines",
+    "unrelated new backgrounds"
+  ],
+  "export": {
+    "width": 1280,
+    "height": 720,
+    "format": "JPEG",
+    "maxBytes": 2097152
+  },
+  "selection": "User chose option 2 as the default for this and future unit videos.",
+  "shorts": {
+    "layout": "Same campaign parchment concept, portrait 9:16; one reusable cover per subject unit for all its matchups.",
+    "export": {
+      "width": 1080,
+      "height": 1920,
+      "format": "JPEG",
+      "maxBytes": 2097152
+    },
+    "tiger": "apps/video/intro/thumbnails/tiger-shorts.jpg",
+    "xianbei": "apps/video/intro/thumbnails/xianbei-shorts.jpg",
+    "liao": "apps/video/intro/thumbnails/liao-shorts.jpg",
+    "grenadier": "apps/video/intro/thumbnails/grenadier-shorts.jpg"
+  },
+  "xianbeiFull": "apps/video/intro/thumbnails/xianbei-long.jpg",
+  "liaoFull": "apps/video/intro/thumbnails/liao-long.jpg",
+  "grenadierFull": "apps/video/intro/thumbnails/grenadier-long.jpg"
+}

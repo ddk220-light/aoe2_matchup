@@ -2,6 +2,8 @@
 
 Recorded September 8, 2026, on `codex/video-recorder-v3`.
 
+This is a historical approval/release snapshot. Statements about pending stages or no upload describe that date, not current channel state. For a new unit use the [complete production runbook](VIDEO_PRODUCTION_RUNBOOK.md), including the later corrected cost basis and OAuth upload workflow.
+
 ## Delivered and approved
 
 The delivered video combines the approved Wei campaign-style introduction with 59 validated matchup overlay videos. The user reviewed the overlay videos and intro through local previews and iPhone Taildrop transfers, approved the final cloned-voice intro, requested assembly, and then accepted the completed compilation and requested this documentation and commit.

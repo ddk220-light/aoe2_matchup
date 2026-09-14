@@ -45,12 +45,22 @@
     "z": 2.0
   },
   "damage_reduction_by_attacker_category": null,
+  "death_animation": {
+    "frame_duration_seconds": 0.041111111640930176,
+    "frames": 45,
+    "graphic": 2923,
+    "seconds": 1.850000023841858
+  },
   "derived": {
     "damage_vs_self": 10
   },
   "effects": {
     "base_accuracy": 100.0,
+    "dodge_shield_max": 7,
+    "dodge_shield_recharge": 20.0,
     "pass_through_count": 1,
+    "projectile_dodge_max": 7.0,
+    "projectile_dodge_recharge_per_second": 0.3499999940395355,
     "splash_on_hit_fraction": 1.0
   },
   "frame_delay": 0,
@@ -62,6 +72,7 @@
     "seconds": 2.5000000186264515
   },
   "line_of_sight_tiles": 6.0,
+  "melee_charge": null,
   "min_collision_size_multiplier": 0.5,
   "movement_blocks": {
     "fly_mode": 0,
@@ -84,10 +95,10 @@
     "fields": {
       "age": "ref_units.age",
       "armor_classes": "ref_units.final_armors_json",
-      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration",
+      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration, or longest usable direct delta graphic for a zero-duration composite",
       "attack_animation.frames": "graphics[attack_graphic].frame_count",
       "attack_animation.graphic": "unit.type_50.attack_graphic",
-      "attack_animation.seconds": "frames * frame_duration",
+      "attack_animation.seconds": "frames * frame_duration from the graphic or its longest usable direct delta",
       "attack_classes": "ref_units.final_attacks_json",
       "attack_delay_seconds": "frame_delay unset (0): hit at the attack-animation midpoint",
       "attack_graphic": "unit.type_50.attack_graphic",
@@ -103,7 +114,9 @@
       "collision_size_tiles.x": "unit.collision_size_x",
       "collision_size_tiles.y": "unit.collision_size_y",
       "collision_size_tiles.z": "unit.collision_size_z",
+      "death_animation": "graphics[unit.dying_graphic]",
       "derived.damage_vs_self": "AoE class rule(ref_units.final_attacks_json, ref_units.final_armors_json)",
+      "effects.projectile_dodge": "unit.creatable charge_type, max_charge, recharge_rate",
       "frame_delay": "unit.type_50.frame_delay",
       "hp": "ref_units.final_hp",
       "idle_animation": "graphics[unit.standing_graphic[0]]",

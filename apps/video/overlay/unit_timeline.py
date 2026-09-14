@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import bisect
+import copy
 import json
 import struct
 import sys
@@ -26,7 +27,20 @@ def ordered_units(units):
     return sorted(units, key=lambda u: (u['hp'] <= 0, u['id']))
 
 
-def decode(run):
+def combat_snapshot(entity_model, models):
+    """Detach animation/action state from the document's mutable patch models."""
+    return {
+        'x': entity_model.get(3), 'y': entity_model.get(4),
+        'sprite': entity_model.get(15), 'facet': entity_model.get(16),
+        'formation': entity_model.get(35), 'stance': entity_model.get(36),
+        'action': copy.deepcopy(models.get(entity_model.get(20), {})),
+        'spriteModels': copy.deepcopy([
+            models.get(ref, {}) for ref in entity_model.get(17, {}).values()
+        ]),
+    }
+
+
+def decode(run, *, include_combat=False):
     run = Path(run)
     recording = json.loads((run / 'recording.json').read_text())
     source = run / recording['files']['frames']['path']
@@ -101,6 +115,8 @@ def decode(run):
                             units.append({'id': entity_id, 'masterId': master,
                                           'hp': hp, 'maxHp': max_hp,
                                           'maxHpObserved': entity_id in maxima})
+                            if include_combat:
+                                units[-1].update(combat_snapshot(entity_model, doc.models))
                         sides[str(owner)] = units
                     row = {'gameMs': frame.time, 'sides': sides}
                     if rows and rows[-1]['gameMs'] == frame.time:

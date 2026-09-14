@@ -1,0 +1,147 @@
+{
+  "age": "Imperial",
+  "armor_classes": {
+    "1": 0,
+    "19": 0,
+    "3": 6,
+    "31": 0,
+    "4": 5
+  },
+  "attack_animation": {
+    "frame_duration_seconds": 0.01666666753590107,
+    "frames": 60,
+    "graphic": 1837,
+    "seconds": 1.0000000521540642
+  },
+  "attack_classes": {
+    "15": 0,
+    "21": 2,
+    "30": 10,
+    "4": 12,
+    "5": 20,
+    "8": 12
+  },
+  "attack_delay_seconds": 0.40000002086162567,
+  "attack_graphic": 1837,
+  "attack_range_tiles": 1.0,
+  "blast": {
+    "attack_level": 2,
+    "damage_fraction": -5.0,
+    "defense_level": 3,
+    "friendly_fire_damage": 1.0,
+    "width_tiles": 0.0
+  },
+  "charge": null,
+  "civilization": "Incas",
+  "clearance_size_tiles": {
+    "x": 0.2,
+    "y": 0.2
+  },
+  "collision_size_tiles": {
+    "x": 0.2,
+    "y": 0.2,
+    "z": 2.0
+  },
+  "damage_reduction_by_attacker_category": null,
+  "death_animation": {
+    "frame_duration_seconds": 0.019166667014360428,
+    "frames": 60,
+    "graphic": 1838,
+    "seconds": 1.1500000208616257
+  },
+  "derived": {
+    "damage_vs_self": 7
+  },
+  "effects": {
+    "base_accuracy": 100.0,
+    "pass_through_count": 1,
+    "splash_on_hit_fraction": 1.0
+  },
+  "frame_delay": 24,
+  "hp": 80,
+  "idle_animation": {
+    "frame_duration_seconds": 0.03333333507180214,
+    "frames": 60,
+    "graphic": 1840,
+    "seconds": 2.0000001043081284
+  },
+  "line_of_sight_tiles": 5.0,
+  "melee_charge": null,
+  "min_collision_size_multiplier": 1.0,
+  "movement_blocks": {
+    "fly_mode": 0,
+    "hill_mode": 0,
+    "terrain_restriction": 7
+  },
+  "obstruction": {
+    "class": 2,
+    "type": 5
+  },
+  "outline_size_tiles": {
+    "x": 0.2,
+    "y": 0.2,
+    "z": 2.0
+  },
+  "population_space": 1.0,
+  "provenance": {
+    "dat_selector": "dat.civs[name='Incas'].units[881]",
+    "dat_sha256": "CE3530DF36CF0B333A9751CB0FF94460FE904F811FEECEC8AE9794701622B4CF",
+    "fields": {
+      "age": "ref_units.age",
+      "armor_classes": "ref_units.final_armors_json",
+      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration, or longest usable direct delta graphic for a zero-duration composite",
+      "attack_animation.frames": "graphics[attack_graphic].frame_count",
+      "attack_animation.graphic": "unit.type_50.attack_graphic",
+      "attack_animation.seconds": "frames * frame_duration from the graphic or its longest usable direct delta",
+      "attack_classes": "ref_units.final_attacks_json",
+      "attack_delay_seconds": "hit on animation frame frame_delay: attack animation seconds * frame_delay / frames",
+      "attack_graphic": "unit.type_50.attack_graphic",
+      "attack_range_tiles": "ref_units.final_range",
+      "blast.attack_level": "unit.type_50.blast_attack_level",
+      "blast.damage_fraction": "unit.type_50.blast_damage",
+      "blast.defense_level": "unit.blast_defense_level",
+      "blast.friendly_fire_damage": "unit.type_50.friendly_fire_damage",
+      "blast.width_tiles": "unit.type_50.blast_width",
+      "civilization": "ref_units.civ_name",
+      "clearance_size_tiles.x": "unit.clearance_size[0]",
+      "clearance_size_tiles.y": "unit.clearance_size[1]",
+      "collision_size_tiles.x": "unit.collision_size_x",
+      "collision_size_tiles.y": "unit.collision_size_y",
+      "collision_size_tiles.z": "unit.collision_size_z",
+      "death_animation": "graphics[unit.dying_graphic]",
+      "derived.damage_vs_self": "AoE class rule(ref_units.final_attacks_json, ref_units.final_armors_json)",
+      "frame_delay": "unit.type_50.frame_delay",
+      "hp": "ref_units.final_hp",
+      "idle_animation": "graphics[unit.standing_graphic[0]]",
+      "line_of_sight_tiles": "ref_units.final_los",
+      "min_collision_size_multiplier": "unit.dead_fish.min_collision_size_multiplier",
+      "movement_blocks.fly_mode": "unit.fly_mode",
+      "movement_blocks.hill_mode": "unit.hill_mode",
+      "movement_blocks.terrain_restriction": "unit.terrain_restriction",
+      "obstruction.class": "unit.obstruction_class",
+      "obstruction.type": "unit.obstruction_type",
+      "outline_size_tiles.x": "unit.outline_size_x",
+      "outline_size_tiles.y": "unit.outline_size_y",
+      "outline_size_tiles.z": "unit.outline_size_z",
+      "population_space": "ref_units.pop_space",
+      "reload_seconds": "ref_units.final_reload_time * matching civilization tech-tree effect type 5 on reload attribute 10",
+      "speed_tiles_per_second": "ref_stat_chain.speed (final step; ref_units.final_speed is rounded)",
+      "unit_master": "unit.id",
+      "walk_animation": "graphics[unit.dead_fish.walking_graphic]"
+    },
+    "reference_db_sha256": "51D602640E4C1A75F35286AA499821338B0EEE5DBA97E12A12D39E058CB11087",
+    "reference_selector": "ref_units WHERE unit_slug='elite_kamayuk_incas' AND civ_name='Incas' AND age='Imperial'",
+    "reload_base_seconds": 2.0,
+    "reload_multiplier": 1.0
+  },
+  "ranged": null,
+  "reload_seconds": 2.0,
+  "speed_tiles_per_second": 1.100000023841858,
+  "unit_master": 881,
+  "walk_animation": {
+    "frame_duration_seconds": 0.01743750087916851,
+    "frames": 60,
+    "graphic": 1842,
+    "seconds": 1.0462500527501106
+  }
+}

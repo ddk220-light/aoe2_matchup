@@ -34,6 +34,8 @@ UNIT_CLASSES = {
 
 # Unit IDs to extract and their display names
 UNIT_NAMES = {
+    775: "Missionary",
+    1263: "Flaming Camel",
     # ===== Core Infantry =====
     # Militia line: 77 → 74(MaA) → 75(LS) → 76(LS) → 473(2HS) → 567(Champ) → 360(Champ)
     77: "Militia",

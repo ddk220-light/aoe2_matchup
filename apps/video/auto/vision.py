@@ -24,7 +24,11 @@ from auto import platform_io
 @lru_cache(maxsize=1)
 def _ocr():
     from rapidocr_onnxruntime import RapidOCR
-    return RapidOCR()
+    # UI labels are upright and already legible at native resolution. The default
+    # detector enlarges a narrow menu strip to 736 pixels HIGH, and unrestricted
+    # ONNX threads compete with capture/simulation for the entire CPU.
+    return RapidOCR(det_limit_type="max", det_limit_side_len=960,
+                    use_cls=False, intra_op_num_threads=2, inter_op_num_threads=1)
 
 
 def warmup() -> None:
@@ -99,9 +103,10 @@ def screen_luma(img: Image.Image | None = None) -> float:
 
 
 def detect_end(img: Image.Image | None = None) -> bool:
-    """True if the end-of-game banner is showing. Our spectator (P1) is allied to
-    the victor but not the declared winner, so it always reads 'You have been
-    defeated!' at the real end of the fight."""
+    """True if the spectator's victory or defeat screen is showing.
+
+    This identifies an ended game, not which main army won.
+    """
     if img is None:
         img = grab()
     txt = ocr_text(img, (0.08, 0.36, 0.92, 0.56))
@@ -109,13 +114,17 @@ def detect_end(img: Image.Image | None = None) -> bool:
 
 
 def detect_result(img: Image.Image | None = None) -> bool:
-    """True when the scenario's win trigger is holding '<unit> WINS!' on the center
-    panel. This is how the automation knows the fight is over WITHOUT the game ending
-    (the win trigger shows this instead of declare_victory, so there's no banner)."""
+    """Recognize either the scenario's WINS panel or a game-end screen.
+
+    A visual end stops recording; gRPC elimination validation remains separate.
+    Do not infer a main-army winner from the spectator's victory message.
+    """
     if img is None:
         img = grab()
-    txt = ocr_text(img, (0.10, 0.18, 0.90, 0.52))
-    return "wins" in txt
+    txt = ocr_text(img, (0.10, 0.18, 0.90, 0.56))
+    return any(cue in txt for cue in (
+        "wins", "you are victorious", "you have been defeated", "you are defeated",
+    ))
 
 
 class ResultWatcher:
@@ -126,7 +135,7 @@ class ResultWatcher:
     always OCRs). A force-OCR after `force_every` consecutive skips bounds the
     worst-case detection latency to (force_every+1) * poll even if a change slips
     under the threshold."""
-    BAND = (0.10, 0.18, 0.90, 0.52)        # same band detect_result reads
+    BAND = (0.10, 0.18, 0.90, 0.56)        # same band detect_result reads
 
     def __init__(self, thresh=3.0, force_every=3):
         self.thresh, self.force_every = thresh, force_every

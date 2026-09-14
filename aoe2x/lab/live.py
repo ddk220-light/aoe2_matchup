@@ -23,6 +23,10 @@ from .battle_clip import prepare_battle_clip
 
 
 GOLDENS = {
+    "water": (
+        "apps/video/templates/lab_goldens/water_map.aoe2scenario",
+        "60e93202f138b3bc3d1b224fe1d35b72b4757728088bffd11c32d5cdc4fd5d1e",
+    ),
     "melee_vs_melee": (
         "apps/video/templates/lab_goldens/melee_vs_melee.aoe2scenario",
         "31f3bed38ce0512b484124d89d5aa4e97318b3ea55c398bb8dad27242c769f4e",
@@ -87,11 +91,11 @@ def _load_stack(config: LabConfig):
     }
 
 
-def _source_positions(scenario, player_id: int) -> list[tuple[float, float]]:
+def _source_positions(scenario, player_id: int, slots: int = 27) -> list[tuple[float, float]]:
     units = list(scenario.unit_manager.get_player_units(player_id))
-    if len(units) != 27:
+    if len(units) != slots:
         raise LiveCaptureError(
-            f"golden Player {player_id} exposes {len(units)} slots instead of 27"
+            f"golden Player {player_id} exposes {len(units)} slots instead of {slots}"
         )
     return [(round(float(unit.x), 6), round(float(unit.y), 6)) for unit in units]
 
@@ -173,6 +177,10 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
     }
     if civilizations[1] != civilizations[3]:
         raise LiveCaptureError("generated Player 1 civilization must match Player 3 for music")
+    from AoE2ScenarioParser.datasets.object_support import Civilization
+    for owner, side in ((2, 'side2'), (3, 'side3')):
+        if civilizations[owner] != Civilization[plan[side]['civ'].upper()]:
+            raise LiveCaptureError(f"generated Player {owner} civilization differs from planned civilization")
     cameras = _camera_configuration(source)
     # User's corrected Default 1 (2026-09-07), shared by all four 16x16 goldens.
     if cameras != ((0, 1, 8, 7, -1, 1),):
@@ -186,7 +194,7 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
     masters = [stack["unit_const"](side[1]) for side in resolved]
     counts = [plan["side2"]["count"], plan["side3"]["count"]]
     for player_id, count, master in zip((2, 3), counts, masters):
-        expected = _source_positions(source, player_id)[:count]
+        expected = _source_positions(source, player_id, 15 if family == "water" else 27)[:count]
         actual = [
             (round(float(unit.x), 6), round(float(unit.y), 6))
             for unit in target.unit_manager.get_player_units(player_id)
@@ -200,7 +208,8 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
         (round(float(unit.x), 6), round(float(unit.y), 6), int(unit.unit_const))
         for unit in scenario.unit_manager.get_player_units(4)
     ]
-    if p4(target) != p4(source):
+    no_buffer = plan['scenario'].get('player4Buffer') == 'none'
+    if p4(target) != ([] if no_buffer else p4(source)):
         raise LiveCaptureError("generated Player 4 roster or positions changed")
     if stack["ai_configuration"](target) != stack["ai_configuration"](source):
         raise LiveCaptureError("generated AI configuration differs from the golden")
@@ -216,7 +225,9 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
         "sourceGoldenSha256": plan["scenario"]["goldenSha256"],
         "positionRule": "first_n_units_in_player_order",
         "positionsMatchGolden": True,
-        "player4Unchanged": True,
+        "player4Unchanged": not no_buffer,
+        "player4Buffer": "none" if no_buffer else "golden",
+        "player4Count": len(p4(target)),
         "aiConfigurationMatchesGolden": True,
         "playerRuntimeConfigurationMatchesGolden": True,
         "triggerStructureMatchesGolden": True,
@@ -288,30 +299,36 @@ def _validate_capture(run_directory: Path, plan: dict) -> dict[str, Any]:
             f"gRPC starting counts are {start_counts}; expected {expected_counts}"
         )
     end_counts = (final["side1"]["count"], final["side2"]["count"])
-    if (end_counts[0] == 0) == (end_counts[1] == 0):
-        raise LiveCaptureError(f"gRPC did not contain one defeated army: {end_counts}")
-    winner_index = 0 if end_counts[0] > 0 else 1
-    winner_owner = winner_index + 2
-    winner_key = f"side{winner_index + 1}"
-    loser_key = "side2" if winner_index == 0 else "side1"
-    winner_hp = float(final[winner_key]["hp"])
-    starting_hp = float(first[winner_key]["hp"])
-    signed = (1 if winner_owner == 2 else -1) * winner_hp / starting_hp * 100
+    if all(count > 0 for count in end_counts):
+        raise LiveCaptureError(f"gRPC did not contain a defeated army: {end_counts}")
+    # Explosions can eliminate both armies, including the attacking suicide unit.
+    # This requires observed terminal telemetry, never a timeout or visual guess.
+    draw = end_counts == (0, 0)
+    if draw and any(float(final[key]["hp"]) != 0 for key in ("side1", "side2")):
+        raise LiveCaptureError("gRPC mutual elimination has inconsistent nonzero HP")
+    winner_index = None if draw else (0 if end_counts[0] > 0 else 1)
+    winner_owner = None if draw else winner_index + 2
+    winner_key = None if draw else f"side{winner_index + 1}"
+    loser_keys = ("side1", "side2") if draw else (("side2",) if winner_index == 0 else ("side1",))
+    winner_hp = 0.0 if draw else float(final[winner_key]["hp"])
+    starting_hp = 0.0 if draw else float(first[winner_key]["hp"])
+    signed = 0.0 if draw else (1 if winner_owner == 2 else -1) * winner_hp / starting_hp * 100
     # Spawn-on-death units can create a temporary zero-count interval.  Report
     # the beginning of the final, stable defeated run rather than that gap.
     final_zero_start = len(rows) - 1
     while (final_zero_start > 0
-           and rows[final_zero_start - 1][loser_key]["count"] == 0):
+           and all(rows[final_zero_start - 1][key]["count"] == 0 for key in loser_keys)):
         final_zero_start -= 1
     elimination = rows[final_zero_start]
     return {
         "gameVersion": sidecar.get("game_version"),
         "startCounts": list(start_counts),
         "winnerOwner": winner_owner,
+        "outcome": "mutual_elimination" if draw else "victory",
         "winnerSlug": (
-            plan["side2"]["slug"] if winner_owner == 2 else plan["side3"]["slug"]
+            None if draw else plan["side2"]["slug"] if winner_owner == 2 else plan["side3"]["slug"]
         ),
-        "survivors": end_counts[winner_index],
+        "survivors": 0 if draw else end_counts[winner_index],
         "winnerHp": winner_hp,
         "winnerStartingHp": starting_hp,
         "winnerRemainingHpPercent": abs(signed),
@@ -452,7 +469,7 @@ def _summarize_live(job: Job, repeats: int) -> dict:
             ),
         })
     scores = [row["signedRemainingHpPercent"] for row in rows]
-    owners = sorted({row["winnerOwner"] for row in rows})
+    owners = sorted({row["winnerOwner"] for row in rows}, key=lambda owner: owner or 0)
     summary = {
         "schemaVersion": 1,
         "jobId": job.job_id,
@@ -482,11 +499,14 @@ def run_live(
     retries: int = 1,
     retention: str | None = None,
     mode: str = "statistics",
+    defer_clip: bool = False,
 ) -> dict:
     if repeats < 1 or retries < 0:
         raise LiveCaptureError("repeats must be positive and retries non-negative")
     selected_retention = normalize_retention(recorder_retention(mode, retention), config.live_retention)
     plan = read_json(job.plan_path)
+    from .costs import validate_plan_costs
+    validate_plan_costs(plan)
     stack = _load_stack(config)
     # A completed recording can be verified/resumed without touching the game.
     preflight = None
@@ -511,7 +531,8 @@ def run_live(
                 if not (run_directory / "recording.json").exists():
                     write_recording_bundle(run_directory, plan, _validate_capture(run_directory, plan))
                 validate_recording_bundle(run_directory, plan)
-                existing["battleVideo"] = prepare_battle_clip(run_directory, plan)["video"]
+                if not defer_clip:
+                    existing["battleVideo"] = prepare_battle_clip(run_directory, plan)["video"]
                 existing["mode"] = "recorder"
                 existing["recording"] = "recording.json"
             existing["capture"] = validate_retained_statistics(
@@ -573,6 +594,7 @@ def run_live(
                     logfile=str(log_path),
                     template=golden_path(config, plan["scenario"]["family"]),
                     ranged_override=(plan["side2"]["ranged"], plan["side3"]["ranged"]),
+                    remove_player4_buffer=plan['scenario'].get('player4Buffer') == 'none',
                     scenario_validator=lambda generated: _validate_scenario(
                         config, plan, generated, stack
                     ),
@@ -645,7 +667,7 @@ def run_live(
             raise LiveCaptureError(
                 f"live repeat {repeat} failed after {retries + 1} attempts: {error}"
             ) from error
-        if mode == "recorder":
+        if mode == "recorder" and not defer_clip:
             # The capture checkpoint is already durable. A clip failure can be
             # resumed offline and must never trigger another live recording.
             clip = prepare_battle_clip(run_directory, plan)

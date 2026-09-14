@@ -46,11 +46,18 @@
     "z": 2.0
   },
   "damage_reduction_by_attacker_category": null,
+  "death_animation": {
+    "frame_duration_seconds": 0.04000000283122063,
+    "frames": 60,
+    "graphic": 2749,
+    "seconds": 2.4000001698732376
+  },
   "derived": {
     "damage_vs_self": 3
   },
   "effects": {
     "base_accuracy": 90.0,
+    "bonus_damage_reduction": 0.25,
     "pass_through_count": 1,
     "splash_on_hit_fraction": 1.0
   },
@@ -63,6 +70,7 @@
     "seconds": 3.0000000447034836
   },
   "line_of_sight_tiles": 9.0,
+  "melee_charge": null,
   "min_collision_size_multiplier": 1.0,
   "movement_blocks": {
     "fly_mode": 0,
@@ -85,10 +93,10 @@
     "fields": {
       "age": "ref_units.age",
       "armor_classes": "ref_units.final_armors_json",
-      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration",
+      "attack_animation.frame_duration_seconds": "graphics[attack_graphic].frame_duration, or longest usable direct delta graphic for a zero-duration composite",
       "attack_animation.frames": "graphics[attack_graphic].frame_count",
       "attack_animation.graphic": "unit.type_50.attack_graphic",
-      "attack_animation.seconds": "frames * frame_duration",
+      "attack_animation.seconds": "frames * frame_duration from the graphic or its longest usable direct delta",
       "attack_classes": "ref_units.final_attacks_json",
       "attack_delay_seconds": "hit on animation frame frame_delay: attack animation seconds * frame_delay / frames",
       "attack_graphic": "unit.type_50.attack_graphic",
@@ -104,6 +112,7 @@
       "collision_size_tiles.x": "unit.collision_size_x",
       "collision_size_tiles.y": "unit.collision_size_y",
       "collision_size_tiles.z": "unit.collision_size_z",
+      "death_animation": "graphics[unit.dying_graphic]",
       "derived.damage_vs_self": "AoE class rule(ref_units.final_attacks_json, ref_units.final_armors_json)",
       "frame_delay": "unit.type_50.frame_delay",
       "hp": "ref_units.final_hp",
@@ -129,7 +138,7 @@
       "ranged.impact_splash_friendly_fire_fraction": "unit.type_50.friendly_fire_damage",
       "ranged.impact_splash_radius_tiles": "ref_units.splash_on_hit_radius",
       "ranged.min_range_tiles": "ref_units.min_range",
-      "ranged.pass_through": "dat.civs[0].units[364].projectile.vanish_mode",
+      "ranged.pass_through": "dat.civs[0].units[364].projectile.vanish_mode OR positive ref_units.pass_through_percent from researched civilization technology",
       "ranged.pass_through_count": "ref_units.pass_through_count",
       "ranged.pass_through_damage_fraction": "ref_units.pass_through_percent; dat pass-through defaults to 0.5",
       "ranged.projectile_arc": "dat.civs[0].units[364].projectile.projectile_arc",

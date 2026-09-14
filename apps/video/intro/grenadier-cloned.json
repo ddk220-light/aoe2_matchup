@@ -1,0 +1,52 @@
+{
+  "civilization": "JURCHENS",
+  "unit": "Grenadier",
+  "art": "assets/grenadier-campaign.png",
+  "artGeneration": "Built-in image generation; original monochrome campaign illustration using the installed Grenadier unit portrait as costume reference. Prompt: full-body Jurchen Grenadier, conical helmet, studded coat, spiked grenade, historical ink crosshatching on pure white.",
+  "sources": [
+    "https://www.ageofempires.com/games/aoeiide/civilizations/jurchens/",
+    "Installed DAT-derived grenadier_jurchens_imperial.json"
+  ],
+  "slides": [
+    {
+      "duration": 24.0,
+      "paragraphs": [
+        "The Grenadier is a Jurchen gunpowder soldier who hurls explosive bombs into enemy formations.",
+        "From the forests of northeast Asia, the Jurchens founded the Jin dynasty and conquered much of northern China. Their armies combined armored cavalry with powerful early gunpowder weapons."
+      ],
+      "narrationAlignment": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\grenadier-unique-units\\intro-v1\\narration\\narration-01.json",
+      "narrationLeadSeconds": 0.4
+    },
+    {
+      "duration": 24.833333333333332,
+      "paragraphs": [
+        "Grenades burst across an area, threatening tightly packed enemies rather than just a single target.",
+        "With Thunderclap Bombs, explosions leave further blasts behind, and fallen Grenadiers can still harm nearby enemies. Even after the first impact, a crowded battlefield remains dangerous."
+      ],
+      "narrationAlignment": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\grenadier-unique-units\\intro-v1\\narration\\narration-02.json",
+      "narrationLeadSeconds": 0.4
+    }
+  ],
+  "music": {
+    "file": "assets/chinese-theme.wav",
+    "source": "Installed wwise/Base.pck, WEM 784299781",
+    "identity": "Chinese civilization theme fallback",
+    "selection": "No Jurchen campaign background mapped in installed catalog; established Art of War and Chinese-theme fallback."
+  },
+  "voiceSelection": "Reuse the previously user-authorized campaign narrator clone as fallback.",
+  "videoFilename": "grenadier-intro.mp4",
+  "narration": {
+    "file": "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\compilations\\grenadier-unique-units\\intro-v1\\narration\\narration.wav",
+    "voiceId": "MlW5cFazoi1gP2ifK2iW",
+    "provider": "ElevenLabs",
+    "model": "eleven_multilingual_v2",
+    "settings": {
+      "stability": 0.65,
+      "similarity_boost": 0.75,
+      "style": 0.15,
+      "use_speaker_boost": true,
+      "speed": 0.9
+    },
+    "identity": "instant voice clone from Wei campaign reference; user confirmed permission"
+  }
+}

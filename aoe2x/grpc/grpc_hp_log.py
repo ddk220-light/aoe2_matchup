@@ -53,7 +53,7 @@ ZERO_ARMY_GRACE_SECONDS = 4.0
 
 class LiveEnd:
     """Incremental decode of the stream for ONE purpose: write <out>.END the moment
-    exactly one army reaches 0 alive. Mirrors redecode_hp's army rules (owner 2/3,
+    either army reaches 0 alive, including mutual elimination. Mirrors redecode_hp's army rules (owner 2/3,
     model type 9/11/12, master != scout, positive HP; clock reset = new instance).
     A four-second stable-zero grace rejects both corrupt frames and temporary
     spawn-replacement gaps."""
@@ -68,29 +68,23 @@ class LiveEnd:
         self.done = False
 
     def _derive_army(self):
-        # hp > 0 (not a higher floor): the Elite Blackwood Archer has 25 HP and a
-        # 30-HP "decoration filter" silently dropped that whole army. Our scenarios
-        # strip camp props, so owner+type+not-scout is already a tight filter.
-        a = {2: set(), 3: set()}
-        for k, e in self.es.items():
-            if (e.get("__type__") in ARMY_MT and e.get(F_OWNER) in (2, 3)
-                    and e.get(F_MASTER) != SCOUT
-                    and isinstance(e.get(F_HP), (int, float)) and e.get(F_HP) > 0):
-                a[e.get(F_OWNER)].add(k)
-        return a
+        from redecode_hp import derive_army
+        return derive_army(self.es)
 
     def _alive(self, owner):
         n = 0
         for k in self.army[owner]:
             e = self.es.get(k)
             v = e.get(F_HP) if e else None
-            if isinstance(v, (int, float)) and v > 0:
+            if isinstance(v, (int, float)) and v > 0 and e.get(F_OWNER) == owner:
                 n += 1
         return n
 
     def _refresh_army(self):
         current = self._derive_army()
         for owner in (2, 3):
+            self.army[owner].difference_update({k for k in self.army[owner]
+                if k in self.es and self.es[k].get(F_OWNER, owner) != owner})
             self.army[owner].update(current[owner])
 
     def feed(self, fr):
@@ -122,14 +116,14 @@ class LiveEnd:
                 return
             self._refresh_army()
             a1, a2 = self._alive(2), self._alive(3)
-            if (a1 == 0) != (a2 == 0):
+            if a1 == 0 or a2 == 0:
                 if self.zero_since is None:
                     self.zero_since = t
                 if t - self.zero_since >= ZERO_ARMY_GRACE_SECONDS:
                     self.done = True
                     with open(self.out + ".END", "w") as f:
                         json.dump({"end_stream_s": round(t, 2), "side1": a1,
-                                   "side2": a2, "winner": 1 if a2 == 0 else 2,
+                                   "side2": a2, "winner": None if a1 == a2 == 0 else (1 if a2 == 0 else 2),
                                    "wall_epoch": time.time()}, f)
                     print(f"[live] FIGHT END at stream {t:.1f}s  "
                           f"s1={a1} s2={a2} -> {self.out}.END", flush=True)

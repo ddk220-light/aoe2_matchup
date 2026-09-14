@@ -1,5 +1,7 @@
 # Flemish Militia video production
 
+Current status: the earlier voice-slot issue below was resolved and all eleven Flemish videos completed upload/processing. Its Burgundian cloud voice was subsequently retired after preserving narration and videos. The owner now permits replacing completed campaign clones under the [standing voice policy](../apps/video/intro/voice-profile-policy.json). The dated progress notes below describe the earlier production stage, not an outstanding approval requirement.
+
 The user authorized uploading the Flemish Militia package on 2026-09-13, following the established full-video and ten-Shorts workflow. All 73 captures are complete and validated, with no failures. The subject is Burgundian Flemish Militia, at the audited purchase cost of 30 food and 25 gold per physical unit. The approved roster excludes the subject itself; equal-resource armies have a 27-unit cap and the existing Hussar screen for melee versus ranged fights.
 
 Raw captures, frame streams and generated media are retained under `D:/AoE2 Renders/flemish-militia`, with workspace junctions preserving the existing lab paths. The capture completion receipt is `data/local/flemish-militia-capture-completion.json`.

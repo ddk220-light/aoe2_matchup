@@ -91,6 +91,9 @@ Default package is `$env:AOE2_GAME_DIR/wwise/Base.pck`; override with `--package
 | Magyars | 260189988 | `magyars-theme` |
 | Burgundians | 487359100 | `burgundians-theme` |
 | Georgians | 700657755 | `georgians-theme` |
+| Poles | 841251286 (embedded in bank 1638387902) | `poles-theme` |
+
+The Poles theme is embedded in a bank's `DIDX`/`DATA` chunks rather than the package's streamed-media table. [extract_intro_music.py](../../apps/video/extract_intro_music.py) checks both representations, validates offsets and the RIFF header, and extracts the exact requested media ID. A missing stream entry is not evidence that the civilization has no music. The verified Polish WAV is 12 seconds, stereo, 48 kHz; the Obuch plan records its hash.
 
 Mapuche, Tupi, and Muisca episode plans contain the historical theme-source URLs/asset provenance rather than a verified Base.pck ID. For those, obtain the documented source through the authorized asset workflow, verify any recorded source hash, and decode the local OGG into the plan's WAV with `ffmpeg -i <source.ogg> <theme.wav>`. Do not silently label the Chinese fallback as one of these civs. A future civ may need a newly researched/verified music mapping; record that choice in its plan.
 
@@ -110,7 +113,7 @@ $VoiceDir = Join-Path $Repo '.tools\intro-voice\new-campaign'
     --output $VoiceDir --decoder .tools/vgmstream/vgmstream-cli.exe
 ```
 
-This event is a **Georgian example**, not a default for every unit. Past verified events include Wei `PLAY_WEI1S1`, Art of War fallback `PLAY_CM_01`, Tamar `PLAY_GEO1S1`, and Burgundian `PLAY_BRG1_INTRO`. Other civs' voice metadata/plans retain their exact events. The extractor writes WEM, WAV, and JSON mapping evidence. Listen for the expected language/speaker, clean speech, and correct clip.
+This event is a **Georgian example**, not a default for every unit. Past verified events include Wei `PLAY_WEI1S1`, Art of War fallback `PLAY_CM_01`, Tamar `PLAY_GEO1S1`, Burgundian `PLAY_BRG1_INTRO`, and Jadwiga `PLAY_POL1_INTRO` (English DLC2.pck media 743418006). Other civs' voice metadata/plans retain their exact events. The extractor writes WEM, WAV, and JSON mapping evidence. Listen for the expected language/speaker, clean speech, and correct clip.
 
 Prepare a clean bounded sample without other audio layered in:
 
@@ -141,7 +144,7 @@ If a new authorized clone is necessary:
     --campaign 'Actual campaign name' --source-event ACTUAL_EVENT --source-media-id 123456789
 ```
 
-Replace the illustrative event/media ID with the **extracted JSON evidence**, not a guessed ID. This command uploads the sample to ElevenLabs and can consume account capacity. Reuse an existing active authorized voice when appropriate. The account previously had ten voice slots; the owner authorized specific Wei→Burgundian and Burgundian→Georgian replacements. Those do not authorize deleting an arbitrary future profile. If full, show the actual replaceable profile and preserve its saved narration before requesting a specific replacement/increased capacity.
+Replace the illustrative event/media ID with the **extracted JSON evidence**, not a guessed ID. This command uploads the sample to ElevenLabs and can consume account capacity. Reuse an existing active authorized voice when appropriate. The owner has now given standing authorization to **"always replace the old voices"** when campaign slots are full; see [voice-profile-policy.json](../../apps/video/intro/voice-profile-policy.json). Retire a campaign clone from a completed episode after verifying its saved narration and completion receipt, then mark its metadata `retired: true`. Preserve all generated audio, timings, source samples and videos. Do not ask again for a replacement covered by this policy, and do not delete unrelated personal/professional voices. This replaces the earlier case-by-case Wei→Burgundian→Georgian slot policy.
 
 ### Generate narration and timings
 

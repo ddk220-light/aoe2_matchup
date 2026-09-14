@@ -266,7 +266,7 @@ def _army_centroid(um, pid, const):
 
 
 def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
-              ranged=(False, False), remove_player4_buffer=False):
+              ranged=(False, False), remove_player4_buffer=False, player4_count=None):
     """side1/side2 = (civ_name, unit_key, label). `counts` = (n1, n2) units per side
     (equal-count is (30, 30); resource-capped runs pass uneven counts). `ranged` = (r1, r2)
     is retained for caller compatibility. The template owns the spectator camera;
@@ -279,6 +279,11 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
 
     scn = AoE2DEScenario.from_file(str(template))
     pm, um = scn.player_manager, scn.unit_manager
+    screen = list(um.get_player_units(4))
+    if player4_count is not None:
+        if (remove_player4_buffer or type(player4_count) is not int
+                or not 1 <= player4_count <= len(screen)):
+            raise ValueError("player4_count must retain 1..N authored P4 units with the buffer enabled")
     source_ai_configuration = _ai_configuration(scn)
 
     def player(pid):
@@ -302,6 +307,11 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
     _retarget_new_template(scn, new1, label1, n1, new2, label2, n2)
     if remove_player4_buffer:
         for unit in list(um.get_player_units(4)):
+            um.remove_unit(unit=unit)
+    elif player4_count is not None:
+        # Preserve the surviving records, references, first-N positions, AI,
+        # diplomacy and gate triggers. Never edit the shared Golden itself.
+        for unit in screen[player4_count:]:
             um.remove_unit(unit=unit)
     # Default 1 and all four lab goldens author the centered view at (8, 7).
     # Do not replace it with an army centroid (which changes with first-N counts).

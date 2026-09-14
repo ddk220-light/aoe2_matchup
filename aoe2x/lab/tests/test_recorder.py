@@ -14,6 +14,38 @@ from aoe2x.lab.planner import make_request, plan_matchup
 from aoe2x.lab.recording import recorder_retention, validate_recording_bundle, write_recording_bundle
 
 
+def test_five_hussars_preserve_first_slots_and_golden_runtime(tmp_path):
+    import hashlib
+    config = load_config()
+    request = make_request(side2="elite_blackwood_archer_tupi", side3="elite_jaguar_warrior_aztecs")
+    request["scenario"] = {"player4Count": 5}
+    plan = plan_matchup(config, request)
+    stack = _load_stack(config)
+    golden = golden_path(config, plan["scenario"]["family"])
+    original_hash = hashlib.sha256(golden.read_bytes()).hexdigest()
+    generated = tmp_path / "five.aoe2scenario"
+    sides = [stack["resolve_side"](plan[s]["civ"], plan[s]["slug"]) for s in ("side2", "side3")]
+    with contextlib.redirect_stdout(io.StringIO()):
+        stack["build_run"](*sides, generated, counts=(plan["side2"]["count"], plan["side3"]["count"]),
+                           template=golden, player4_count=5)
+        report = _validate_scenario(config, plan, generated, stack)
+        assert report["player4Count"] == 5
+        assert not report["player4Unchanged"]
+        assert report["player4MatchesPlannedCount"]
+        assert report["triggerStructureMatchesGolden"]
+        assert report["playerRuntimeConfigurationMatchesGolden"]
+        assert report["spectatorCivilizationMatchesPlayer3"]
+        assert report["cameraMatchesGolden"]
+        ordinary = tmp_path / "nine.aoe2scenario"
+        stack["build_run"](*sides, ordinary, counts=(plan["side2"]["count"], plan["side3"]["count"]), template=golden)
+        with pytest.raises(LiveCaptureError, match="Player 4 roster"):
+            _validate_scenario(config, plan, ordinary, stack)
+        for count in (0, 10, 5.5, True):
+            with pytest.raises(ValueError, match="player4_count"):
+                stack["build_run"](*sides, generated, template=golden, player4_count=count)
+    assert hashlib.sha256(golden.read_bytes()).hexdigest() == original_hash
+
+
 def test_recorder_cli_keeps_raw_and_rejects_destructive_policy():
     args = build_parser().parse_args(["record", "--side2", "champion", "--side3", "paladin"])
     assert recorder_retention(args.mode, args.retention) == "raw"

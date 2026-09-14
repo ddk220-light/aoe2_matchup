@@ -1,0 +1,13 @@
+{
+  "authorizedBy": "Channel owner in this production conversation",
+  "authorizedAt": "2026-09-13",
+  "instruction": "always replace the old voices",
+  "scope": "Replace campaign narrator clones used by completed episodes when a voice slot is needed for another authorized campaign narrator.",
+  "requirements": [
+    "Verify the retiring episode is complete and its generated narration is saved before deleting the cloud profile.",
+    "Preserve narration, timing, videos, source samples and clone provenance.",
+    "Mark retired clone metadata so it cannot be mistaken for an active voice.",
+    "Reuse an appropriate active campaign clone before consuming a new slot.",
+    "Do not remove unrelated personal, professional or library voices."
+  ]
+}

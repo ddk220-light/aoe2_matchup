@@ -121,6 +121,15 @@ export function createLabPlan(request) {
     throw new RangeError("goldenFamily must name an existing Golden scenario family");
   }
   if (family === "water" && balance.cap > 15) throw new RangeError("water template has 15 slots per side");
+  // A screen experiment keeps the Golden's diplomacy/gate and only trims its
+  // authored P4 roster. Persist this in the hash so it cannot reuse a nine-screen run.
+  const player4Count = request.scenario?.player4Count;
+  if (player4Count !== undefined) {
+    if (player4Buffer !== "golden" || !["ranged_vs_melee", "melee_vs_ranged"].includes(family)) {
+      throw new RangeError("player4Count requires a mixed Golden with its P4 buffer enabled");
+    }
+    requireInteger(player4Count, "player4Count", 1, 9);
+  }
   const matchupId = `${side2.slug}_vs_${side3.slug}`;
   const base = {
     schemaVersion: 1,
@@ -167,6 +176,7 @@ export function createLabPlan(request) {
       placementRule: "first_n_units_in_player_order",
       hasPlayer4Gate: player4Buffer !== "none" && (family === "ranged_vs_melee" || family === "melee_vs_ranged"),
       ...(player4Buffer === "none" ? { player4Buffer: "none" } : {}),
+      ...(player4Count !== undefined ? { player4Count } : {}),
       preserveOwnerOrientation: family !== "melee_vs_melee",
     },
     engineFamily: resolveFamily({ side2Class: side2.class, side3Class: side3.class }),
@@ -182,6 +192,9 @@ export function createLabPlan(request) {
 
 export async function runSeed(plan, seed) {
   if (plan?.scenario?.family === "water") throw new RangeError("water scenarios are recording-only; naval simulation is not supported");
+  if (plan?.scenario?.player4Count !== undefined && plan.scenario.player4Count !== 9) {
+    throw new RangeError("custom P4 count is recording-only until a matching simulation screen is supplied");
+  }
   // The native ranged/ranged Golden already has no P4. An explicit no-buffer
   // request is identical there; mixed-template overrides still need fixtures.
   if (plan?.scenario?.player4Buffer === "none"

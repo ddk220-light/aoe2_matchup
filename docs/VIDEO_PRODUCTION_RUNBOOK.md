@@ -77,6 +77,7 @@ The detailed regeneration procedure and the previous cost incident are in [Setup
 - Preserve authored unit-slot ordering, triggers, `NoneAI`, diplomacy, and P4 behavior. The normal mixed ranged/melee Golden has **nine** Spanish screen slots. Starting scenario units are Scout Cavalry and the tested upgraded entities are Hussars. Do not change the count to the earlier recalled “ten Huskarls.”
 - The screen is free and excluded from main-army cost, counts, chapter results, and overlay queues. Public copy says: **“Ranged units get a small front line of hussars when fighting melee units.”**
 - For an explicit no-buffer experiment, use the native ranged-versus-ranged Golden with `player4Buffer: "none"`. Removing only P4 units from a mixed Golden leaves incompatible diplomacy/triggers and previously caused a crash.
+- An explicitly requested smaller screen can retain the mixed Golden with `scenario: {"player4Count": 5}`. This trims its authored P4 roster while preserving the gate, AI and diplomacy; it does not change the nine-slot default. See the [Blackwood five-Hussar experiment](blackwood-five-hussars-experiment.md) for partial recapture, recorded-screen verification, reuse, and winner comparison. Custom counts are recording-only until the simulation has a matching screen fixture.
 
 Special cases, outside the normal scaffold:
 
@@ -451,7 +452,7 @@ These explain decisions and retain past evidence; dated claims about completion 
 - [Liao Dao](liao-dao-video-production.md), [Grenadier](grenadier-video-production.md), [Inca Slinger](inca-slinger-video-production.md).
 - [War Chariot](war-chariot-video-production.md), [Flaming Camel](flaming-camel-video-production.md), [Mounted Trebuchet](mounted-trebuchet-video-production.md), [Missionary](missionary-video-production.md).
 - [Korean War Wagon](korean-war-wagon-video-production.md), [Korean Fire Lancer](korean-fire-lancer-video-production.md), [Magyar Huszar](magyar-huszar-video-production.md).
-- [Flemish Militia](flemish-militia-video-production.md), [Elite Monaspa](elite-monaspa-video-production.md), [naval spike](naval-counter-spike.md).
+- [Flemish Militia](flemish-militia-video-production.md), [Elite Monaspa](elite-monaspa-video-production.md), [Elite Obuch](elite-obuch-video-production.md), [naval spike](naval-counter-spike.md).
 - [Original narration options/history](../apps/video/intro/NARRATION-OPTIONS.md), [alternative unit-art workflow](flux2-unit-art-workflow.md), [patch workflow](patch-workflow.md), [data artifact producers](../data/golden/README.md).
 
 The implementation inventory, focused verification commands, current limitations, and private/local asset boundaries are in [Maintenance and validation](video-production/MAINTENANCE_AND_VALIDATION.md). Start a future handoff by checking that file and the latest actual status receipts; do not infer a running process from this static document.

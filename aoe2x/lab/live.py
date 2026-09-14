@@ -209,7 +209,12 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
         for unit in scenario.unit_manager.get_player_units(4)
     ]
     no_buffer = plan['scenario'].get('player4Buffer') == 'none'
-    if p4(target) != ([] if no_buffer else p4(source)):
+    screen_count = plan['scenario'].get('player4Count')
+    if screen_count is not None and (no_buffer or type(screen_count) is not int
+                                    or not 1 <= screen_count <= len(p4(source))):
+        raise LiveCaptureError("invalid planned Player 4 count")
+    expected_screen = [] if no_buffer else p4(source)[:screen_count]
+    if p4(target) != expected_screen:
         raise LiveCaptureError("generated Player 4 roster or positions changed")
     if stack["ai_configuration"](target) != stack["ai_configuration"](source):
         raise LiveCaptureError("generated AI configuration differs from the golden")
@@ -225,9 +230,10 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
         "sourceGoldenSha256": plan["scenario"]["goldenSha256"],
         "positionRule": "first_n_units_in_player_order",
         "positionsMatchGolden": True,
-        "player4Unchanged": not no_buffer,
+        "player4Unchanged": p4(target) == p4(source),
         "player4Buffer": "none" if no_buffer else "golden",
         "player4Count": len(p4(target)),
+        "player4MatchesPlannedCount": True,
         "aiConfigurationMatchesGolden": True,
         "playerRuntimeConfigurationMatchesGolden": True,
         "triggerStructureMatchesGolden": True,
@@ -595,6 +601,7 @@ def run_live(
                     template=golden_path(config, plan["scenario"]["family"]),
                     ranged_override=(plan["side2"]["ranged"], plan["side3"]["ranged"]),
                     remove_player4_buffer=plan['scenario'].get('player4Buffer') == 'none',
+                    player4_count=plan['scenario'].get('player4Count'),
                     scenario_validator=lambda generated: _validate_scenario(
                         config, plan, generated, stack
                     ),

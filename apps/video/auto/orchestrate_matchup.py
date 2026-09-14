@@ -513,7 +513,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
                 final=os.path.join(TMP, "auto_matchup_FINAL.mp4"),
                 dismiss_after=True, logfile=None, template=None,
                 counts_override=None, ranged_override=None,
-                scenario_validator=None, require_grpc=False, remove_player4_buffer=False) -> Path:
+                scenario_validator=None, require_grpc=False, remove_player4_buffer=False,
+                player4_count=None) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
 
@@ -548,7 +549,7 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
         raise ValueError("ranged_override must be a pair of booleans")
     build_kwargs = {} if template is None else {"template": Path(template)}
     build_run(side1, side2, run_path, counts=counts, ranged=ranged,
-              remove_player4_buffer=remove_player4_buffer, **build_kwargs)
+              remove_player4_buffer=remove_player4_buffer, player4_count=player4_count, **build_kwargs)
     if scenario_validator is not None:
         scenario_validator(run_path)
     log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "

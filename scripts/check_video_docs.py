@@ -27,6 +27,8 @@ def headings(path):
 
 def check():
     documents = [ROOT / 'docs/VIDEO_PRODUCTION_RUNBOOK.md',
+                 ROOT / 'docs/blackwood-five-hussars-experiment.md',
+                 ROOT / 'docs/elite-obuch-video-production.md',
                  *sorted((ROOT / 'docs/video-production').glob('*.md'))]
     errors, count = [], 0
     for source in documents:

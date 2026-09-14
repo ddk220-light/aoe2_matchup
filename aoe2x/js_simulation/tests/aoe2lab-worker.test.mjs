@@ -4,6 +4,28 @@ import test from "node:test";
 import { createLabPlan, runSeed } from "../tools/aoe2lab_worker.mjs";
 import { unitBySlug } from "../src/unit-registry.js";
 
+test("five-Hussar experiment changes only the screen and cannot run default-screen simulation", async () => {
+  const base = {schemaVersion: 1, side2: {slug: "elite_blackwood_archer_tupi"},
+    side3: {slug: "elite_jaguar_warrior_aztecs"},
+    balance: {mode: "equal_resources", cap: 27, maxResources: 5000}};
+  const ordinary = createLabPlan(base);
+  const reduced = createLabPlan({...base, scenario: {player4Count: 5}});
+  assert.equal(ordinary.scenario.player4Count, undefined);
+  assert.equal(reduced.scenario.player4Count, 5);
+  assert.equal(reduced.scenario.hasPlayer4Gate, true);
+  assert.equal(reduced.scenario.goldenSha256, ordinary.scenario.goldenSha256);
+  assert.deepEqual(reduced.side2, ordinary.side2);
+  assert.deepEqual(reduced.side3, ordinary.side3);
+  assert.notEqual(reduced.planHash, ordinary.planHash);
+  for (const count of [0, -1, 10, 5.5, "5", null]) {
+    assert.throws(() => createLabPlan({...base, scenario: {player4Count: count}}), /player4Count/);
+  }
+  assert.throws(() => createLabPlan({...base, scenario: {player4Count: 5, player4Buffer: "none"}}), /player4Count/);
+  assert.throws(() => createLabPlan({...base, side3: {slug: "elite_mameluke_saracens"},
+    scenario: {player4Count: 5}}), /player4Count/);
+  await assert.rejects(runSeed(reduced, 1), /custom P4 count is recording-only/);
+});
+
 test("recording roster preserves Tiger P2 and ranged screens for melee-damage throwers", () => {
   for (const slug of ["elite_composite_bowman_armenians", "elite_throwing_axeman",
     "elite_gbeto", "elite_mameluke_saracens", "elite_ratha_(ranged)_bengalis"]) {

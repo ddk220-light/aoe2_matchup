@@ -18,6 +18,7 @@ from .io import read_json
 from .live import run_live
 from .recording import recorder_retention
 from .planner import load_matchup_file, make_request, plan_matchup
+from .balance import DEFAULT_BALANCE
 from .serve import serve
 from .simulation import run_simulation, run_simulation_batch
 
@@ -30,8 +31,8 @@ def _matchup_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--civ3", help="Player 3 live/display civilization")
     parser.add_argument(
         "--balance",
-        choices=("equal_resources", "equal_count", "explicit"),
-        default="equal_resources",
+        choices=("equal_resources", "equal_count", "explicit", "geometric_shared_discount"),
+        default=DEFAULT_BALANCE,
     )
     parser.add_argument("--count", type=int, default=27)
     parser.add_argument("--n2", type=int)
@@ -101,7 +102,7 @@ def _normalize_batch_row(row: dict[str, Any], defaults: dict[str, Any]) -> dict[
         side2 = {"slug": side2, **({"civ": row["civ2"]} if row.get("civ2") else {})}
     if isinstance(side3, str):
         side3 = {"slug": side3, **({"civ": row["civ3"]} if row.get("civ3") else {})}
-    balance = row.get("balance", defaults.get("balance", {"mode": "equal_resources"}))
+    balance = row.get("balance", defaults.get("balance", {"mode": DEFAULT_BALANCE}))
     if isinstance(balance, str):
         balance = {"mode": balance}
     balance = {

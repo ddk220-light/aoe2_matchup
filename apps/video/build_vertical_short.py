@@ -11,6 +11,7 @@ from overlay.static_stats import GAME,GameFont,portrait_path
 from overlay.unit_timeline import sample_at,ordered_units
 from overlay.ffutil import find_ffmpeg
 from overlay.battle_end import terminal_row
+from aoe2x.lab.balance import balance_caption
 
 W,H=1080,1920
 GAME_Y=330
@@ -41,7 +42,7 @@ def build(run,out,start=.2,crop_x=640):
   base.alpha_composite(card,(20+i*530,1435))
  plan=json.loads((run.parent.parent/'plan.json').read_text())
  mixed=plan['scenario']['family'] in ('melee_vs_ranged','ranged_vs_melee')
- put(base,'Equal resources  |  27-unit cap',(540,1790 if mixed else 1812),29,center=True)
+ put(base,balance_caption(plan),(540,1790 if mixed else 1812),29,center=True)
  if mixed:
   rule='No extra frontline buffer' if plan['scenario'].get('player4Buffer')=='none' else 'Ranged units get a small front line of Hussars'
   put(base,rule,(540,1830),27,center=True)

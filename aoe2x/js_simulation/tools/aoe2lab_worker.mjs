@@ -18,6 +18,7 @@ import { resolveFamily } from "../src/placement.js";
 import { unitBySlug } from "../src/unit-registry.js";
 import { recordingUnitBySlug } from "../src/recording-unit-registry.js";
 import { resolvePurchaseCost, COST_BASIS, COST_CATALOG_SHA256 } from "../src/recording-costs.js";
+import { geometricEvidence, geometricCounts } from "../src/recording-balance.js";
 
 
 const SIM_ROOT = new URL("../", import.meta.url);
@@ -63,7 +64,7 @@ function weightedCost(unit, weights) {
 
 
 function deriveCounts(side2, side3, balance) {
-  const mode = balance?.mode ?? "equal_resources";
+  const mode = balance?.mode ?? "geometric_shared_discount";
   const cap = requireInteger(balance?.cap ?? 27, "balance cap");
   const weights = Object.freeze({
     food: requireWeight(balance?.weights?.food ?? 1, "food"),
@@ -79,6 +80,7 @@ function deriveCounts(side2, side3, balance) {
   if (!(cost2 > 0) || !(cost3 > 0)) throw new RangeError("weighted unit costs must be positive");
   let n2;
   let n3;
+  let geometric;
   if (mode === "explicit") {
     n2 = requireInteger(balance.n2, "n2", 1, cap);
     n3 = requireInteger(balance.n3, "n3", 1, cap);
@@ -92,15 +94,18 @@ function deriveCounts(side2, side3, balance) {
       n3 = Math.min(cap, Math.floor(budget / cost3));
       n2 = Math.floor(n3 * cost3 / cost2);
     }
+  } else if (mode === "geometric_shared_discount") {
+    geometric = [side2, side3].map(side => geometricEvidence(side, side.captureCiv, weights));
+    [n2, n3] = geometricCounts(geometric[0].score, geometric[1].score, cap);
   } else {
-    throw new RangeError("balance mode must be equal_resources, equal_count, or explicit");
+    throw new RangeError("balance mode must be geometric_shared_discount, equal_resources, equal_count, or explicit");
   }
   // Preserve legacy minimum-one rounding when no explicit budget was requested.
   if (budget === Infinity) { n2 = Math.max(1, n2); n3 = Math.max(1, n3); }
   if (n2 < 1 || n3 < 1 || n2 * cost2 > budget || n3 * cost3 > budget) {
     throw new RangeError("resource budget cannot fund both requested armies");
   }
-  return Object.freeze({ mode, cap, weights, cost2, cost3, n2, n3 });
+  return Object.freeze({ mode, cap, weights, cost2, cost3, n2, n3, geometric });
 }
 
 
@@ -111,8 +116,10 @@ export function createLabPlan(request) {
   if (!side2 || !side3) {
     throw new RangeError(`unknown unit: ${request.side2?.slug ?? "?"} or ${request.side3?.slug ?? "?"}`);
   }
-  side2 = {...side2, effectiveCost: resolvePurchaseCost(side2, request.side2.civ ?? side2.civ)};
-  side3 = {...side3, effectiveCost: resolvePurchaseCost(side3, request.side3.civ ?? side3.civ)};
+  side2 = { ...side2, captureCiv: request.side2.civ ?? side2.civ,
+    effectiveCost: resolvePurchaseCost(side2, request.side2.civ ?? side2.civ) };
+  side3 = { ...side3, captureCiv: request.side3.civ ?? side3.civ,
+    effectiveCost: resolvePurchaseCost(side3, request.side3.civ ?? side3.civ) };
   const balance = deriveCounts(side2, side3, request.balance);
   const player4Buffer = request.scenario?.player4Buffer ?? "golden";
   if (!["golden", "none"].includes(player4Buffer)) throw new RangeError("player4Buffer must be golden or none");
@@ -146,6 +153,7 @@ export function createLabPlan(request) {
       effectiveCost: side2.effectiveCost,
       weightedCost: balance.cost2,
       armyWeightedResources: balance.n2 * balance.cost2,
+      ...(balance.geometric ? { comparison: balance.geometric[0] } : {}),
     },
     side3: {
       slug: side3.slug,
@@ -159,6 +167,7 @@ export function createLabPlan(request) {
       effectiveCost: side3.effectiveCost,
       weightedCost: balance.cost3,
       armyWeightedResources: balance.n3 * balance.cost3,
+      ...(balance.geometric ? { comparison: balance.geometric[1] } : {}),
     },
     balance: {
       costBasis: COST_BASIS,
@@ -168,7 +177,12 @@ export function createLabPlan(request) {
       weights: balance.weights,
       ...(request.balance?.maxResources !== undefined ? { maxResources: request.balance.maxResources } : {}),
       rounding: balance.mode === "equal_resources"
-        ? "cheaper side capped; expensive side floored" : "none",
+        ? "cheaper side capped; expensive side floored" : balance.geometric
+          ? "lower comparison-cost times population capped; other side nearest integer, halves up; minimum one" : "none",
+      ...(balance.geometric ? {
+        comparisonPolicy: balance.geometric[0].policy,
+        comparisonCatalogSha256: balance.geometric[0].catalogSha256,
+      } : {}),
     },
     scenario: {
       family,

@@ -1,6 +1,7 @@
 """Resume the three final episodes, serially, with durable stage and upload receipts."""
 import json, os, subprocess, sys, time, traceback
 from pathlib import Path
+from aoe2x.lab.balance import balance_description
 
 ROOT = Path(__file__).resolve().parents[2]
 os.chdir(ROOT)
@@ -112,7 +113,8 @@ def main():
         items=[prepare(key,label,civ,slug,Path(read(out/'manifest.json')['output']),out/'youtube-description.txt',ROOT/f'apps/video/intro/thumbnails/{key}-long.jpg',out/'youtube',key+'-full-cost-v2',f'{label} vs {read(out/"manifest.json")["matchups"]} Unique Units | AoE2 DE',True)]
         for x in read(shorts/'selection.json')['items']:
             target=Path(x['output']);desc=target/'youtube-description.txt'
-            desc.write_text(f'{label} vs {x["unit"]} ({x["civ"]}) in Age of Empires II: Definitive Edition.\n\nEqual resources using civilization-specific Imperial costs per unit, with a 27-unit cap. Ranged units get a small front line of hussars against melee units.\n\nTry your own matchup: https://aoe2matchup.com/?civ1={civ}&unit1={slug}&age1=Imperial\n\n#Shorts #AoE2 #AoE2DE #RTS #BattleSimulation #UnitCounters\n',encoding='utf-8')
+            rules=balance_description(read(Path(x['run']).parent.parent/'plan.json'))
+            desc.write_text(f'{label} vs {x["unit"]} ({x["civ"]}) in Age of Empires II: Definitive Edition.\n\n{rules} Ranged units get a small front line of hussars against melee units.\n\nTry your own matchup: https://aoe2matchup.com/?civ1={civ}&unit1={slug}&age1=Imperial\n\n#Shorts #AoE2 #AoE2DE #RTS #BattleSimulation #UnitCounters\n',encoding='utf-8')
             title=f'{label} vs {x["unit"]} | AoE2 DE #Shorts'
             assert len(title)<=100
             items.append(prepare(key,label,civ,slug,target/'short.mp4',desc,ROOT/f'apps/video/intro/thumbnails/{key}-shorts.jpg',target/'youtube',f'{key}-short-{x["number"]:02}-cost-v2',title,False))

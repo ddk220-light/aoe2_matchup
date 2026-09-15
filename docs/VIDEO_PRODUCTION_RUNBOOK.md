@@ -2,7 +2,7 @@
 
 This is the handoff entry point for a person or agent producing an entirely new unit episode. Read it in order the first time. It connects the executable workflow, its evidence, the review gates, and the recovery procedures. The companion documents below are part of the handoff; send this file's GitHub link so its relative links travel with it.
 
-**Current procedure, audited September 13, 2026, on `codex/video-recorder-v3`.** Historical episode notes describe what happened at that time. This runbook describes how to operate the current branch. Do not use an old episode's “pending,” roster size, base costs, or upload authorization as current instructions.
+**Current procedure, updated September 15, 2026, on `codex/video-recorder-v3`.** Historical episode notes describe what happened at that time. This runbook describes how to operate the current branch. Do not use an old episode's “pending,” roster size, base costs, or upload authorization as current instructions.
 
 ## Contents
 
@@ -22,6 +22,8 @@ This is the handoff entry point for a person or agent producing an entirely new 
 14. [Documentation and implementation index](#14-documentation-and-implementation-index)
 
 Companion references:
+
+- [Approved army-size formula](video-production/BALANCE_POLICY.md) — geometric mean of resource cost and population, with half-strength food/wood discounts for shared units; default for new episodes.
 
 - [Champi completion and next overlay discussion](video-production/CHAMPI_HANDOFF.md) — current handoff; all 296 standard-template captures are complete.
 - [Compact media storage](video-production/COMPACT_STORAGE.md) — current retention policy.
@@ -58,16 +60,17 @@ A concrete recent example is [Elite Monaspa](elite-monaspa-video-production.md):
 
 ### Costs and army sizes
 
-Use civilization-specific **fully upgraded Imperial purchase cost per physical unit** from [recording-costs.json](../data/recording-costs.json). The legacy `baseCost` fields in registries are descriptive and must not determine counts.
+Use civilization-specific **fully upgraded Imperial purchase cost per physical unit** from [recording-costs.json](../data/recording-costs.json), then calculate the synthetic comparison cost using the [approved balance policy](video-production/BALANCE_POLICY.md). Do not substitute legacy registry prices for audited cost evidence.
 
 - Food, wood, and gold each weigh 1 for this series.
 - Standard main-army cap: 27 units per side. Maximum resources per main army: 5,000.
-- Let `cheap` and `expensive` be the two effective per-unit totals. The cheaper army receives `n = min(27, floor(5000 / cheap))`; the expensive army receives `floor(n * cheap / expensive)`. Never exceed either cap or budget. Ties give equal counts.
-- This is resource balancing with integer rounding, not a guarantee that both sides spend exactly the same number of resources or that either spends all 5,000.
+- For shared units, halve the effectiveness of positive food/wood discounts; retain full gold discounts. Exclusive units use actual final costs. Use audited per-unit base costs from the cost catalog only to calculate the shared-unit discount adjustment.
+- Let `score = comparisonCost * militaryPopulation`. Give the lower-score army 27 units and the other `max(1, round_half_up(27 * sqrt(lowerScore / higherScore)))`. Ties give equal counts. Reject plans over the actual-resource ceiling; never silently change the formula.
+- This balances resource and population efficiency. It does not produce equal spending. Public descriptions and Shorts must use the saved plan's policy, not say “equal resources” for geometric captures.
 - Apply civilization bonuses and researched technology discounts before per-resource purchase rounding. Divide by actual units delivered per purchase afterward.
 - Blackwood Archers are trained in pairs: divide purchase cost by 2. Karambit Warriors' half population does **not** divide their price.
 - Verify Goth infantry, Korean units, Inca units, Italian/Portuguese gold discounts, Mayan Plumed Archers, and all other cost effects using the installed data. Do not maintain an informal discount list instead of the audit.
-- Save the catalog hash in each plan. A changed catalog creates a new plan/version; never rewrite an old captured plan to look corrected.
+- Save both catalog hashes in each plan. A changed catalog creates a new plan/version; never rewrite an old captured plan to look corrected. Preserve explicit historical balance modes.
 
 The detailed regeneration procedure and the previous cost incident are in [Setup and data](video-production/SETUP_AND_DATA.md#cost-audit-and-patch-provenance) and [Production correctness audit](production-correctness-audit.md).
 

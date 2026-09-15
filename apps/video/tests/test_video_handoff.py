@@ -17,6 +17,9 @@ def test_new_episode_has_correct_identities_counts_and_compilable_adapters():
     rows = manifest['matchups']
     assert len(rows) == 73
     assert len({r['id'] for r in rows}) == 73
+    assert all(r['balance']['mode'] == 'geometric_shared_discount' for r in rows)
+    assert 'Equal resources' not in files[Path('apps/video/build_handoff_kamayuk_final.py')]
+    assert 'geometric mean' in files[Path('apps/video/build_handoff_kamayuk_final.py')]
     assert all(r['side2'] == 'elite_kamayuk_incas' and r['civ2'] == 'Incas' for r in rows)
     assert all(r['side3'] != r['side2'] for r in rows)
     assert [r['civ3'].casefold() for r in rows] == sorted(r['civ3'].casefold() for r in rows)

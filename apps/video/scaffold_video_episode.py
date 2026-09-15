@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 
 from aoe2x.lab.config import load_config
+from aoe2x.lab.balance import DEFAULT_BALANCE, balance_description
 from aoe2x.lab.costs import validate_plan_costs
 from aoe2x.lab.io import safe_slug, write_json
 from aoe2x.lab.planner import plan_matchup
@@ -48,7 +49,7 @@ def episode_files(root: Path, key: str, slug: str) -> tuple[dict, dict[Path, str
     ident = key.replace('-', '_')
     rows = [dict(id=f'{ident}_unique_{i:02}_{safe_slug(u["civ"])}_{safe_slug(u["slug"])}',
                  side2=slug, civ2=civ, side3=u['slug'], civ3=u['civ'],
-                 balance=dict(mode='equal_resources', cap=27, maxResources=5000))
+                 balance=dict(mode=DEFAULT_BALANCE, cap=27, maxResources=5000))
             for i, u in enumerate(opponents, 1)]
     manifest = dict(schemaVersion=1, matchups=rows)
     encoded = json.dumps(manifest, indent=2) + '\n'
@@ -65,6 +66,11 @@ def episode_files(root: Path, key: str, slug: str) -> tuple[dict, dict[Path, str
         text = (root / 'apps/video' / source).read_text(encoding='utf-8')
         for old, new in replacements:
             text = text.replace(old, new)
+        # Historical assembly adapters describe their original equal-resource
+        # captures. New episodes must describe the benchmark they actually use.
+        text = text.replace(
+            'Equal resources using civilization-specific Imperial costs per individual unit, maximum 27 units per main army.',
+            balance_description({'balance': {'mode': DEFAULT_BALANCE, 'cap': 27}}))
         # The roster may have 74 opponents when the subject is outside it.
         text = text.replace('==73', f'=={len(rows)}').replace("'matchups':73", f"'matchups':{len(rows)}")
         text = text.replace('vs 73 Unique', f'vs {len(rows)} Unique')

@@ -10,6 +10,7 @@ from typing import Any
 from .config import LabConfig
 from .errors import PlanError
 from .io import safe_slug
+from .balance import DEFAULT_BALANCE
 
 
 def make_request(
@@ -18,7 +19,7 @@ def make_request(
     side3: str,
     civ2: str | None = None,
     civ3: str | None = None,
-    balance: str = "equal_resources",
+    balance: str = DEFAULT_BALANCE,
     count: int = 27,
     n2: int | None = None,
     n3: int | None = None,

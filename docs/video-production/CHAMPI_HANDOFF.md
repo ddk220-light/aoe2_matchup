@@ -1,5 +1,11 @@
 # Champi handoff — 2026-09-14
 
+**Update September 15:** The separately authorized 296 geometric-count reruns
+are complete and archived. See [CHAMPI_GEOMETRIC.md](CHAMPI_GEOMETRIC.md) and the
+approved default [balance policy](BALANCE_POLICY.md). The 296 standard recordings below
+remain the immutable baseline. The no-further-capture note below describes the
+earlier paused state, superseded only for the new geometric campaign.
+
 ## Current state
 
 - All 296 single-arena captures verified: 74 opponents each for Incas, Mapuche,

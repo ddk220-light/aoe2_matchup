@@ -23,6 +23,9 @@ This is the handoff entry point for a person or agent producing an entirely new 
 
 Companion references:
 
+- [Champi completion and next overlay discussion](video-production/CHAMPI_HANDOFF.md) — current handoff; all 296 standard-template captures are complete.
+- [Compact media storage](video-production/COMPACT_STORAGE.md) — current retention policy.
+- [Retired four-arena experiment](comp4-champi-campaign.md) — historical only; the owner abandoned this map in favor of separate standard-template captures.
 - [Workstation, game data, unit registration, and cost audit](video-production/SETUP_AND_DATA.md)
 - [Status, pause/resume, retakes, thermal monitoring, and storage](video-production/OPERATIONS_AND_RECOVERY.md)
 - [Intro, narration, media validation, and OAuth publication](video-production/MEDIA_AND_PUBLICATION.md)

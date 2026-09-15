@@ -253,9 +253,10 @@ def find_and_click(pattern, region, logfile, label=None, retries=4, dbl=False) -
         _focus_game()
         img = vision.grab()
         cached = _ROW_REGIONS.get(pattern) if region == R_LIST else None
-        pt = vision.find_text(img, pattern, region=cached) if cached else None
+        exact = region == R_LIST
+        pt = vision.find_text(img, pattern, region=cached, exact=exact) if cached else None
         if pt is None:
-            pt = vision.find_text(img, pattern, region=region)
+            pt = vision.find_text(img, pattern, region=region, exact=exact)
         if pt and region == R_LIST:
             y = pt[1] * vision.SCALE / img.height
             _ROW_REGIONS[pattern] = (region[0], max(region[1], y - 0.02),
@@ -376,9 +377,7 @@ def _navigate_ocr(start_state, scenario_name, logfile) -> bool:
         return False
     time.sleep(1.0)
     if not find_and_click(scenario_name, R_LIST, logfile, f"row {scenario_name!r}"):
-        # the staged file is named "Matchup Run" â€” try the first word as a fallback
-        if not find_and_click(scenario_name.split()[0], R_LIST, logfile, "row (first word)"):
-            return False
+        return False
     time.sleep(0.5)
     if not find_and_click("Load Scenario", R_LOAD_BTN, logfile, "Load Scenario (button)"):
         return False

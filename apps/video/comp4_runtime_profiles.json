@@ -1,0 +1,19 @@
+{
+  "gameVersion": "180059",
+  "scope": "Comp4 Golden c38252f1f99a156ae97247b685268e804c9b7e4395491b06b84b1f34b4723753; observed opening HP corrections, not simulation mechanics overrides",
+  "units": {
+    "elite_mameluke_saracens": {
+      "scenarioVersion": 2,
+      "hp": 120,
+      "referenceHp": 125,
+      "evidence": "data/local/comp4-champi-all-unique/jobs/54_elite_mameluke_saracens/capture-01/timeline.jsonl: all P5-P8 units are 120 HP before the starting trigger. Installed DAT base HP is 80, tech 312 multiplies by 1.25 and tech 435 adds 20. The reference analyzer applies the addition first; observed Post-Imperial HP is 120. Do not infer another mode's research-order behavior from this capture."
+    },
+    "elite_white_feather_guard_shu": {
+      "scenarioVersion": 2,
+      "injuryCompensation": 3,
+      "injuredArmyCount": 7,
+      "referenceHp": 100,
+      "evidence": "data/local/comp4-champi-all-unique/jobs/55_elite_white_feather_guard_shu/capture-01/timeline.jsonl: selected P5 unit starts at 100; damage_object(60) gives 43 instead of 40 before combat. Use damage_object(63) for this specific seven-unit opening, then require observed 40 HP. Preserve all Shu technologies and maximum HP. This is an empirical startup compensation; it does not establish a general flat-damage-reduction mechanic."
+    }
+  }
+}

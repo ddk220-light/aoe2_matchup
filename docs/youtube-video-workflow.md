@@ -1,5 +1,8 @@
 # YouTube video and thumbnail defaults
 
+Storage policy: follow [Compact storage](video-production/COMPACT_STORAGE.md).
+Its minimal retained media layout supersedes older keep-all-preview guidance.
+
 The user selected thumbnail option 2, the campaign intro parchment, as the default for Tiger Cavalry and future unit videos. The style is recorded in `apps/video/thumbnail-style.json`.
 
 ## Thumbnail

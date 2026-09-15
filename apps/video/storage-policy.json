@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "adoptedAt": "2026-09-14",
+  "archiveRoot": "D:/AoE2 Renders",
+  "layout": "flat-folder-per-campaign-variant",
+  "matchupVideoName": "{subjectCiv}_{subjectUnit}_vs_{opponentCiv}_{opponentUnit}.mp4",
+  "matchupFramesName": "{subjectCiv}_{subjectUnit}_vs_{opponentCiv}_{opponentUnit}.frames.bin",
+  "indexName": "run.json",
+  "retain": ["final stitched video", "unoverlaid matchup video with audio", "complete gRPC frames", "clock alignment and provenance index"],
+  "regenerable": ["overlay renders", "Shorts renders", "previews", "decoded HP rows", "duplicate snapshots", "pre-trim MOV when complete battle clip verified"],
+  "migrationRules": ["verify copies before deleting originals", "preserve incomplete legacy captures for review", "never prune an active recording", "keep authored artwork and narration in the shared source library"],
+  "implementationStatus": "compact exporter verified; legacy reader migration and cleanup in progress"
+}

@@ -7,6 +7,22 @@ from unittest.mock import Mock
 
 
 class SaveTransition(unittest.TestCase):
+    def test_scenario_name_does_not_select_a_containing_label(self):
+        source = Path(__file__).parents[1] / 'auto/vision.py'
+        tree = ast.parse(source.read_text(encoding='utf-8'))
+        function = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
+                        and n.name == 'find_text')
+        function.args.args[0].annotation = None
+        box1 = [[0, 0], [100, 0], [100, 10], [0, 10]]
+        box2 = [[0, 20], [100, 20], [100, 30], [0, 30]]
+        ocr = lambda _: ([(box1, 'Comp4 Matchup Run', 1),
+                           (box2, 'Matchup Run', 1)], None)
+        env = dict(_ocr=lambda: ocr, np=SimpleNamespace(array=lambda x: x), SCALE=1)
+        exec(compile(ast.Module(body=[function], type_ignores=[]), str(source), 'exec'), env)
+        image = SimpleNamespace(size=(100, 100), crop=lambda _: None)
+        self.assertEqual(env['find_text'](image, 'Matchup Run', exact=True), (50, 25))
+        self.assertIsNone(env['find_text'](image, 'Missing Matchup', exact=True))
+
     def test_slow_save_prompt_gets_a_fresh_bounded_load_wait(self):
         source = Path(__file__).parents[1] / 'auto/orchestrate_matchup.py'
         tree = ast.parse(source.read_text(encoding='utf-8'))

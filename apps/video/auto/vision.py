@@ -59,10 +59,11 @@ def ocr_text(img: Image.Image, box=(0.0, 0.0, 1.0, 1.0)) -> str:
 SCALE = platform_io.SCALE  # screenshot pixels per click-point (Retina Mac=2, Windows~1)
 
 
-def find_text(img: Image.Image, pattern: str, region=(0.0, 0.0, 1.0, 1.0)):
+def find_text(img: Image.Image, pattern: str, region=(0.0, 0.0, 1.0, 1.0), *, exact=False):
     """Locate a UI label by text; return its center as a LOGICAL POINT (x, y) for
     input injection (cliclick), or None. `pattern` is matched case-insensitively as
-    a substring of each OCR line (spaces ignored). `region` narrows the search."""
+    a substring of each OCR line (spaces ignored). With exact=True, require the
+    whole label, so 'Matchup Run' cannot select 'Comp4 Matchup Run'."""
     w, h = img.size
     x0, y0, x1, y1 = region
     ox, oy = int(x0 * w), int(y0 * h)
@@ -72,7 +73,8 @@ def find_text(img: Image.Image, pattern: str, region=(0.0, 0.0, 1.0, 1.0)):
         return None
     want = pattern.lower().replace(" ", "")
     for box, text, _conf in res:
-        if want in text.lower().replace(" ", ""):
+        found = text.lower().replace(" ", "")
+        if (want == found) if exact else (want in found):
             xs = [p[0] for p in box]
             ys = [p[1] for p in box]
             cx = (ox + sum(xs) / len(xs)) / SCALE

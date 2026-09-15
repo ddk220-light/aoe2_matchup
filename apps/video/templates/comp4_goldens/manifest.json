@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "file": "comp_4_no_buffer.aoe2scenario",
+  "sha256": "c38252f1f99a156ae97247b685268e804c9b7e4395491b06b84b1f34b4723753",
+  "sourceFilename": "comp_4_no_buffer.aoe2scenario",
+  "sourceSavedLocal": "2026-09-13T23:07:57-07:00",
+  "purpose": "Owner-approved four simultaneous civilization-variant comparisons. Keep this template byte-for-byte unchanged.",
+  "maximumMainUnitsPerPlayer": 8,
+  "pairs": [[1,5],[2,6],[3,7],[4,8]],
+  "subjectCivilizations": ["Incas","Mapuche","Muisca","Tupi"],
+  "opponentCivilizations": ["Armenians","Armenians","Armenians","Armenians"],
+  "subjectMaster": 2554,
+  "placedOpponentMaster": 1800,
+  "playerColorIds": [0,2,3,5,1,1,1,1],
+  "camera": {"player":1,"x":8,"y":7},
+  "invariants": [
+    "Preserve terrain, authored slot positions, rotations, reference IDs, player setup, diplomacy, embedded AI and patrol orders.",
+    "Players 1-4 are the four subject variants. Players 5-8 have the same civilization, unit and red color.",
+    "There is no buffer army; player 4 is a main fighter.",
+    "Generated tests may remove trailing main-unit slots and prepend per-object damage to represent a fractional opponent HP pool.",
+    "Do not register this in the existing P2-versus-P3 production Golden contract."
+  ]
+}

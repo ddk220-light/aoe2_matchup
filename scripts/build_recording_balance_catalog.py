@@ -84,7 +84,8 @@ def main():
         )
     out = dict(
         schemaVersion=1,
-        policy="geometric_shared_discount_v1",
+        policy="geometric_shared_discount_unit_count_v2",
+        populationMode="one_per_unit",
         foodDiscountEffectiveness=0.5,
         woodDiscountEffectiveness=0.5,
         goldDiscountEffectiveness=1.0,

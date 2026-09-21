@@ -73,7 +73,8 @@ def validate_plan_costs(plan):
         policy = json.loads(policy_bytes)
         if (
             policy.get("schemaVersion") != 1
-            or policy.get("policy") != "geometric_shared_discount_v1"
+            or policy.get("policy") != "geometric_shared_discount_unit_count_v2"
+            or policy.get("populationMode") != "one_per_unit"
             or [
                 policy.get(k + "DiscountEffectiveness")
                 for k in ("food", "wood", "gold")
@@ -115,9 +116,10 @@ def validate_plan_costs(plan):
                 basePerUnit=base,
                 comparisonResources=comparison,
                 comparisonCost=cost,
-                population=entry["population"],
+                population=1,
+                catalogPopulation=entry["population"],
                 sharedAcrossCivilizations=entry["sharedAcrossCivilizations"],
-                score=cost * entry["population"],
+                score=cost,
             )
             if (
                 side.get("comparison") != expected

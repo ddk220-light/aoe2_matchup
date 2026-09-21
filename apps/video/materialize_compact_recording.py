@@ -43,6 +43,13 @@ def materialize(index, job_id, workspace):
                           (run / 'manifest.json', row['capture']),
                           (run / 'compact-source.json', dict(index=str(index), jobId=job_id))]:
         target.write_text(json.dumps(value, indent=2), encoding='utf-8')
+    alignment = recording.get('verifiedAlignment')
+    if alignment:
+        if alignment['videoSha256'] != recording['files']['battleVideo']['sha256']:
+            raise ValueError('Saved alignment belongs to another video')
+        folder = run / 'unit-hp-overlay'
+        folder.mkdir(exist_ok=True)
+        (folder / 'alignment.json').write_text(json.dumps(alignment, indent=2))
     return run
 
 

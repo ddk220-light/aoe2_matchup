@@ -1,6 +1,7 @@
 """Assemble all archived Elite Obuch overlays with the reviewed-format intro."""
 import json,math,subprocess
 from pathlib import Path
+from PIL import Image
 from overlay.ffutil import find_ffmpeg,find_ffprobe
 from overlay.battle_end import terminal_row
 LAB=Path('aoe2x/js_simulation/calibration/lab').resolve()
@@ -39,7 +40,16 @@ def main(include_intro=True):
   for c in clips:meta+=f"[CHAPTER]\nTIMEBASE=1/1000\nSTART={round(c['startSeconds']*1000)}\nEND={round((c['startSeconds']+c['durationSeconds'])*1000)}\ntitle={c['title']}\n"
   (OUT/'chapters.ffmeta').write_text(meta,encoding='utf-8')
   video=OUT/('elite-obuch-complete-corrected-costs.mp4' if include_intro else 'elite-obuch-battles-only.mp4')
-  call(['-f','concat','-safe','0','-i',str(OUT/'concat.txt'),'-i',str(OUT/'chapters.ffmeta'),'-map','0:v:0','-map','0:a:0','-map_metadata','1','-map_chapters','1','-c:v','copy','-c:a','aac','-ar','48000','-b:a','192k','-af','aresample=async=1','-movflags','+faststart',str(video)])
+  # Existing captures/overlays remain provenance. Correct only the Polish HP
+  # label's inset in the delivery master, using the freshly rendered panel.
+  # This narrow, opaque patch leaves matchup bonuses and live queues untouched.
+  panel_source=LAB/'runs'/state['jobs'][0]['jobId']/'live/run_001/static-stats-overlay/panels.png'
+  patch=Image.new('RGBA',(2560,1440))
+  box=(24+25,1440-18-344+229,24+155,1440-18-344+267)
+  with Image.open(panel_source) as panels:patch.paste(panels.crop(box),box)
+  patch_path=OUT/'polish-hp-label-inset.png';patch.save(patch_path)
+  intro_seconds=clips[0]['durationSeconds'] if include_intro else 0
+  call(['-f','concat','-safe','0','-i',str(OUT/'concat.txt'),'-i',str(OUT/'chapters.ffmeta'),'-i',str(patch_path),'-filter_complex_threads','1','-filter_complex',f"[0:v][2:v]overlay=0:0:enable='gte(t,{intro_seconds})'[v]",'-map','[v]','-map','0:a:0','-map_metadata','1','-map_chapters','1','-c:v','h264_nvenc','-preset','p4','-cq','18','-pix_fmt','yuv420p','-r','60','-c:a','aac','-ar','48000','-b:a','192k','-af','aresample=async=1','-movflags','+faststart',str(video)])
   info=probe(video);assert abs(float(info['format']['duration'])-cursor)<2;assert len(info['chapters'])==len(clips)
   call(['-xerror','-threads','8','-i',str(video),'-f','null','-'])
   (OUT/('manifest.json' if include_intro else 'battles-manifest.json')).write_text(json.dumps({'output':str(video),'matchups':73,'chapters':len(clips),'expectedSeconds':cursor,'media':info,'fullDecode':'passed','reviewStatus':'Automated media checks passed; template reviewed','results':results},indent=2))

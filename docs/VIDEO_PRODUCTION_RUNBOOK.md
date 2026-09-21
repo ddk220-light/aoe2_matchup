@@ -2,7 +2,15 @@
 
 This is the handoff entry point for a person or agent producing an entirely new unit episode. Read it in order the first time. It connects the executable workflow, its evidence, the review gates, and the recovery procedures. The companion documents below are part of the handoff; send this file's GitHub link so its relative links travel with it.
 
-**Current procedure, updated September 15, 2026, on `codex/video-recorder-v3`.** Historical episode notes describe what happened at that time. This runbook describes how to operate the current branch. Do not use an old episode's “pending,” roster size, base costs, or upload authorization as current instructions.
+**Current procedure, updated September 21, 2026, on `codex/video-recorder-v3`.** Historical episode notes describe what happened at that time. This runbook describes how to operate the current branch. Do not use an old episode's “pending,” roster size, base costs, or upload authorization as current instructions.
+
+The latest comparison-video workflow is documented in these companion guides:
+
+- [Four-column comparison overlays](video-production/CHAMPI_COMPARISON_OVERLAY.md), [approved UI refinements](video-production/CHAMPI_UI_REFRESH.md), and [narrated intros and endings](video-production/CHAMPI_COMPARISON_BOOKENDS.md).
+- [Paladin production](video-production/PALADIN_COMPARISON.md), [Cavalier production](video-production/CAVALIER_COMPARISON.md), and [intro text](video-production/KNIGHT_LINE_INTRO_DRAFTS.md).
+- [Camel captures and baseline](video-production/CAMEL_COMPARISON_CAPTURE.md) and [additional knight-line captures](video-production/KNIGHT_EXPANSION_CAPTURE.md).
+- [Lithuanian relic corrections](video-production/LEITIS_RELIC_RETAKES.md) and [recovering frozen end-of-battle captures](video-production/FROZEN_END_CAPTURE_RECOVERY.md).
+- [Compact, rebuildable recording retention and external-disk transfers](video-production/RECORDING_RETENTION.md). Never format or repartition the owner's disks, or suggest doing so; the owner handles disk preparation personally.
 
 ## Contents
 
@@ -23,7 +31,7 @@ This is the handoff entry point for a person or agent producing an entirely new 
 
 Companion references:
 
-- [Approved army-size formula](video-production/BALANCE_POLICY.md) — geometric mean of resource cost and population, with half-strength food/wood discounts for shared units; default for new episodes.
+- [Approved army-size formula](video-production/BALANCE_POLICY.md) — square root of the comparison-cost ratio, with population fixed at one per unit and half-strength food/wood discounts for shared units; default for new episodes.
 
 - [Champi completion and next overlay discussion](video-production/CHAMPI_HANDOFF.md) — current handoff; all 296 standard-template captures are complete.
 - [Compact media storage](video-production/COMPACT_STORAGE.md) — current retention policy.
@@ -63,10 +71,10 @@ A concrete recent example is [Elite Monaspa](elite-monaspa-video-production.md):
 Use civilization-specific **fully upgraded Imperial purchase cost per physical unit** from [recording-costs.json](../data/recording-costs.json), then calculate the synthetic comparison cost using the [approved balance policy](video-production/BALANCE_POLICY.md). Do not substitute legacy registry prices for audited cost evidence.
 
 - Food, wood, and gold each weigh 1 for this series.
-- Standard main-army cap: 27 units per side. Maximum resources per main army: 5,000.
+- Standard main-army cap: 27 units per side. The approved geometric formula has no resource ceiling (updated September 15, 2026).
 - For shared units, halve the effectiveness of positive food/wood discounts; retain full gold discounts. Exclusive units use actual final costs. Use audited per-unit base costs from the cost catalog only to calculate the shared-unit discount adjustment.
-- Let `score = comparisonCost * militaryPopulation`. Give the lower-score army 27 units and the other `max(1, round_half_up(27 * sqrt(lowerScore / higherScore)))`. Ties give equal counts. Reject plans over the actual-resource ceiling; never silently change the formula.
-- This balances resource and population efficiency. It does not produce equal spending. Public descriptions and Shorts must use the saved plan's policy, not say “equal resources” for geometric captures.
+- Let `score = comparisonCost`. Give the lower-score army 27 units and the other `max(1, round_half_up(27 * sqrt(lowerScore / higherScore)))`. Population is fixed at one for all physical units, including Blackwood Archers, Karambits and Georgian cavalry. Ties give equal counts. If a custom request specifies an actual-resource ceiling, reject plans over it; never silently change the formula.
+- New comparisons use geometric cost balance. They do not produce equal spending. Historical v1 captures retain their population weighting. Public descriptions and Shorts must use the saved plan's policy, not say “equal resources” for geometric captures.
 - Apply civilization bonuses and researched technology discounts before per-resource purchase rounding. Divide by actual units delivered per purchase afterward.
 - Blackwood Archers are trained in pairs: divide purchase cost by 2. Karambit Warriors' half population does **not** divide their price.
 - Verify Goth infantry, Korean units, Inca units, Italian/Portuguese gold discounts, Mayan Plumed Archers, and all other cost effects using the installed data. Do not maintain an informal discount list instead of the audit.

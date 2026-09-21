@@ -83,9 +83,22 @@ def run(manifest: Path, directory: Path, *, release_capture=None) -> int:
     with ThreadPoolExecutor(max_workers=1, thread_name_prefix="recorder-finalize") as pool:
         for job in jobs:
             collect()
+            guard_path = os.environ.get('AOE2_RESOURCE_GUARD_STATUS')
+            # An opt-in external load guard yields only between battles. Stale
+            # telemetry must not silently stall a campaign indefinitely.
+            while guard_path and Path(guard_path).exists():
+                guard = read_json(Path(guard_path))
+                if time.time()-guard.get('updatedAt',0)>30 or not guard.get('waitForCaptureBoundary'):
+                    break
+                if (directory / 'STOP').exists():
+                    break
+                state['state'] = 'WAITING_FOR_SYSTEM_LOAD'
+                checkpoint(directory,state)
+                time.sleep(5)
             if (directory / "STOP").exists():
                 state["state"] = "STOPPED"
                 break
+            state['state'] = 'RUNNING'
             state["currentJob"] = job.job_id
             checkpoint(directory, state)
             started = time.monotonic()

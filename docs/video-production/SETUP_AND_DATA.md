@@ -125,7 +125,10 @@ Example plan via CLI (for identity/count inspection):
     --side3 elite_huskarl --civ3 Goths --cap 27
 ```
 
-The manifest carries `maxResources: 5000`; a hand-written one-off command must not silently become the authoritative batch without the same budget. The generated manifest and stored preflight are the canonical specification.
+New standard manifests use the approved geometric formula and a 27-unit cap,
+with no resource ceiling (owner update, September 15, 2026). Historical or
+explicitly budgeted experiments retain their recorded limits. The generated
+manifest and stored preflight are the canonical specification.
 
 ## Cost audit and patch provenance
 

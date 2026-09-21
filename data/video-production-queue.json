@@ -897,7 +897,10 @@
       "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\07-elite_monaspa_unique_60_spanish_missionary_spanish\\youtube\\youtube-upload-preparation.json",
       "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\08-elite_monaspa_unique_62_tatars_flaming_camel_tatars\\youtube\\youtube-upload-preparation.json",
       "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\09-elite_monaspa_unique_09_bohemians_houfnice_bohemians\\youtube\\youtube-upload-preparation.json",
-      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\10-elite_monaspa_unique_70_wei_elite_tiger_cavalry_wei\\youtube\\youtube-upload-preparation.json"
+      "C:\\dev\\aoe2\\aoe2_matchup\\aoe2x\\js_simulation\\calibration\\lab\\shorts\\elite-monaspa-selected-10\\10-elite_monaspa_unique_70_wei_elite_tiger_cavalry_wei\\youtube\\youtube-upload-preparation.json",
+      "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\champi-overlay-v3\\youtube\\youtube-preparation.json",
+      "data/local/paladin-comparison-full/youtube/youtube-preparation.json",
+      "data/local/cavalier-comparison-full/youtube/youtube-preparation.json"
     ],
     "pendingProduction": [],
     "finalProductionAuthorization": "Latest user requested finishing all pending videos and uploads: these three subjects, one full video and ten Shorts each.",
@@ -917,5 +920,136 @@
     "state": "RESUMED",
     "reason": "User requested continue and reopening AoE2",
     "pausedAt": "2026-09-13T18:32:16.5540669Z"
+  },
+  "camelComparison": {
+    "state": "CAPTURE_COMPLETE",
+    "authorization": "User requested raw captures and frames for all eight camels against the approved unique-unit list; no overlays or uploads yet.",
+    "subjects": [
+      "Hindustanis",
+      "Gurjaras",
+      "Berbers",
+      "Byzantines",
+      "Ethiopians",
+      "Saracens",
+      "Khitans",
+      "Malians"
+    ],
+    "total": 591,
+    "manifest": "data/local/camel-comparison/manifest.json",
+    "reports": "data/local/camel-comparison/capture",
+    "results": "data/local/camel-comparison/RESULTS.md",
+    "balancePolicy": "geometric_shared_discount_unit_count_v2",
+    "storage": "Local PC; external archive nearly full",
+    "order": "Opponent civilization/name, interleaved eight subjects; omit exact self-match",
+    "pilotVerified": 8,
+    "hpCorrection": "Saracen opening HP 170, confirmed against installed DAT effects and per-unit gRPC; original reference was 175.",
+    "verified": 591,
+    "failed": 0,
+    "remaining": 0
+  },
+  "camelBaseline": {
+    "state": "CAPTURE_COMPLETE",
+    "civilization": "Turks",
+    "unit": "heavy_camel_turks",
+    "total": 74,
+    "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\camel-baseline",
+    "authorization": "Capture raw video and frames for the same opponents; preserve the original eight sets.",
+    "comparisonRules": {
+      "better": "Variant wins and Turks loses",
+      "worse": "Variant loses and Turks wins",
+      "baselineAlreadyWins": "No special win highlight",
+      "draws": "Report separately; never treat as loss"
+    },
+    "baselineStats": {
+      "hp": 140,
+      "attack": 11,
+      "meleeArmor": 3,
+      "pierceArmor": 4
+    },
+    "comparisonReport": "data/local/camel-baseline/BASELINE_COMPARISON.md",
+    "verified": 74,
+    "failed": 0
+  },
+  "knightBaselineExpansion": {
+    "state": "CAPTURING",
+    "automaticStart": true,
+    "queue": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\queue.json",
+    "total": 666,
+    "subjects": [
+      {
+        "key": "paladin-spanish",
+        "civilization": "Spanish",
+        "unit": "Paladin",
+        "slug": "paladin_spanish",
+        "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\paladin-spanish",
+        "total": 74
+      },
+      {
+        "key": "paladin-burgundians",
+        "civilization": "Burgundians",
+        "unit": "Paladin",
+        "slug": "paladin_burgundians",
+        "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\paladin-burgundians",
+        "total": 74
+      },
+      {
+        "key": "paladin-celts",
+        "civilization": "Celts",
+        "unit": "Paladin",
+        "slug": "paladin_celts",
+        "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\paladin-celts",
+        "total": 74
+      },
+      {
+        "key": "cavalier-khmer",
+        "civilization": "Khmer",
+        "unit": "Cavalier",
+        "slug": "cavalier_khmer",
+        "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\cavalier-khmer",
+        "total": 74
+      },
+      {
+        "key": "cavalier-berbers",
+        "civilization": "Berbers",
+        "unit": "Cavalier",
+        "slug": "cavalier_berbers",
+        "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\cavalier-berbers",
+        "total": 74
+      },
+      {
+        "key": "cavalier-malay",
+        "civilization": "Malay",
+        "unit": "Cavalier",
+        "slug": "cavalier_malay",
+        "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\cavalier-malay",
+        "total": 74
+      },
+      {
+        "key": "heavy-hei-guang-cavalry-wei",
+        "civilization": "Wei",
+        "unit": "Heavy Hei Guang Cavalry",
+        "slug": "heavy_hei_guang_cavalry_wei",
+        "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\heavy-hei-guang-cavalry-wei",
+        "total": 74
+      },
+      {
+        "key": "heavy-hei-guang-cavalry-wu",
+        "civilization": "Wu",
+        "unit": "Heavy Hei Guang Cavalry",
+        "slug": "heavy_hei_guang_cavalry_wu",
+        "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\heavy-hei-guang-cavalry-wu",
+        "total": 74
+      },
+      {
+        "key": "heavy-hei-guang-cavalry-shu",
+        "civilization": "Shu",
+        "unit": "Heavy Hei Guang Cavalry",
+        "slug": "heavy_hei_guang_cavalry_shu",
+        "workDirectory": "C:\\dev\\aoe2\\aoe2_matchup\\data\\local\\knight-expansion\\heavy-hei-guang-cavalry-shu",
+        "total": 74
+      }
+    ],
+    "status": "data/local/knight-expansion/status.json",
+    "archiveRoot": "D:/AoE2 Renders"
   }
 }

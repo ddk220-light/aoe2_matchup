@@ -126,7 +126,9 @@ def panel(unit, enemy, font, game, color):
     draw.rectangle((28, 74, 165, 211), fill=(25, 23, 23), outline=(97, 77, 52), width=3)
     image.alpha_composite(portrait, (31, 77))
     draw.rectangle((29, 214, 164, 225), fill=color, outline=INK, width=2)
-    font.draw(image, (30, 234), f"{number(unit['final_hp'])}/{number(unit['final_hp'])}", 28)
+    # The Polish frame's embroidered inner edge is wider than the other themes.
+    hp_x = 43 if unit['civ_name'] == 'Poles' else 30
+    font.draw(image, (hp_x, 234), f"{number(unit['final_hp'])}/{number(unit['final_hp'])}", 28)
     emblem = Image.open(theme['emblemPath']).convert('RGBA')
     emblem = emblem.crop(emblem.getbbox())
     emblem.thumbnail((44, 48), Image.Resampling.LANCZOS)

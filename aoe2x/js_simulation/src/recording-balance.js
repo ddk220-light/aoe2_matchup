@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
-const POLICY = 'geometric_shared_discount_v1';
+const POLICY = 'geometric_shared_discount_unit_count_v2';
 const RESOURCES = ['food', 'wood', 'gold'];
 
 function positive(value, name) {
@@ -37,7 +37,7 @@ export function comparisonResourcesFor(purchase, shared) {
 export function geometricEvidence(unit, civ, weights) {
   const bytes = readFileSync(new URL('../../../data/recording-balance.json', import.meta.url));
   const catalog = JSON.parse(bytes);
-  if (catalog.schemaVersion !== 1 || catalog.policy !== POLICY
+  if (catalog.schemaVersion !== 1 || catalog.policy !== POLICY || catalog.populationMode !== 'one_per_unit'
       || catalog.foodDiscountEffectiveness !== 0.5 || catalog.woodDiscountEffectiveness !== 0.5
       || catalog.goldDiscountEffectiveness !== 1) {
     throw new RangeError('Unsupported geometric benchmark policy');
@@ -62,9 +62,12 @@ export function geometricEvidence(unit, civ, weights) {
     basePerUnit,
     comparisonResources,
     comparisonCost,
-    population: entry.population,
+    // This benchmark gives every physical unit equal population weight. Keep
+    // game population as provenance, never as a multiplier for new counts.
+    population: 1,
+    catalogPopulation: entry.population,
     sharedAcrossCivilizations: entry.sharedAcrossCivilizations,
-    score: comparisonCost * entry.population,
+    score: comparisonCost,
   };
 }
 

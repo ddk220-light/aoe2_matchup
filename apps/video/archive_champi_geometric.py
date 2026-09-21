@@ -12,6 +12,11 @@ from report_champi_geometric import ROOT, OUT, read, save
 
 DEST = Path("D:/AoE2 Renders")
 RUNS = (ROOT / "aoe2x/js_simulation/calibration/lab/runs").resolve()
+JOB_PREFIX = "champi_geometric_"
+ARCHIVE_PREFIX = "champi-geometric"
+CIVS = ("incas", "mapuche", "muisca", "tupi")
+TITLE_PREFIX = "Champi Geometric"
+PRESERVE_BASELINE = True
 
 
 def main():
@@ -52,7 +57,7 @@ def archive_verified():
             or state["completed"].get(job, {}).get("phase") == "complete"
         ):
             continue
-        if job not in allowed or not job.startswith("champi_geometric_"):
+        if job not in allowed or not job.startswith(JOB_PREFIX):
             raise ValueError("Foreign archive job")
         source = Path(result["runDirectory"]).resolve()
         expected = (RUNS / job / "live/run_001").resolve()
@@ -62,8 +67,8 @@ def archive_verified():
         if pending:
             recovery_index = Path(pending["index"]).resolve()
             if recovery_index not in {
-                (DEST / f"champi-geometric-{civ}" / "run.json").resolve()
-                for civ in ("incas", "mapuche", "muisca", "tupi")
+                (DEST / f"{ARCHIVE_PREFIX}-{civ}" / "run.json").resolve()
+                for civ in CIVS
             }:
                 raise ValueError("Escaped archive recovery index")
             saved_index = read(recovery_index)
@@ -73,9 +78,9 @@ def archive_verified():
         if row["jobId"] != job:
             raise ValueError("Bundle job mismatch")
         civ = row["plan"]["side2"]["civ"].lower()
-        if civ not in ("incas", "mapuche", "muisca", "tupi"):
+        if civ not in CIVS:
             raise ValueError("Unexpected civilization")
-        destination = (DEST / f"champi-geometric-{civ}").resolve()
+        destination = (DEST / f"{ARCHIVE_PREFIX}-{civ}").resolve()
         if destination.parent != DEST.resolve():
             raise ValueError("Escaped archive destination")
         destination.mkdir(parents=True, exist_ok=True)
@@ -86,12 +91,12 @@ def archive_verified():
             else dict(
                 schemaVersion=1,
                 kind="aoe2lab.compact-archive",
-                title=f"Champi Geometric {civ.title()}",
+                title=f"{TITLE_PREFIX} {civ.title()}",
                 matchups=[],
                 finalVideo=None,
             )
         )
-        if index["title"] != f"Champi Geometric {civ.title()}":
+        if index["title"] != f"{TITLE_PREFIX} {civ.title()}":
             raise ValueError("Archive variant conflict")
         if any(
             r["jobId"] != job and r["name"].casefold() == row["name"].casefold()
@@ -126,13 +131,13 @@ def archive_verified():
         save(index_path, index)
         # Preserve the frozen baseline beside each new campaign for comparison.
         baseline_target = destination / "baseline.json"
-        if not baseline_target.exists():
+        if PRESERVE_BASELINE and not baseline_target.exists():
             baseline_partial = destination / "baseline.partial.json"
             shutil.copyfile(OUT / "baseline.json", baseline_partial)
             if digest(baseline_partial) != digest(OUT / "baseline.json"):
                 raise ValueError("Baseline copy checksum failure")
             baseline_partial.replace(baseline_target)
-        if digest(baseline_target) != digest(OUT / "baseline.json"):
+        if PRESERVE_BASELINE and digest(baseline_target) != digest(OUT / "baseline.json"):
             raise ValueError("Baseline archive conflict")
         # Verify all disposable inputs before deleting any; no recursive removal.
         disposable = {}

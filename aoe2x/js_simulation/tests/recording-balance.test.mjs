@@ -3,9 +3,19 @@ import test from 'node:test';
 import {createLabPlan} from '../tools/aoe2lab_worker.mjs';
 import {geometricCounts,comparisonResourcesFor} from '../src/recording-balance.js';
 function plan(a,b='paladin') {return createLabPlan({schemaVersion:1,side2:{slug:a},side3:{slug:b,civ:b==='paladin'?'Spanish':undefined},balance:{mode:'geometric_shared_discount',cap:27,maxResources:5000}});}
-test('agreed Champi and half-population Blackwood examples',()=>{
-  for(const [slug,count,cost] of [['elite_champi_warrior_incas',19,67.5],['elite_champi_warrior_mapuche',20,75],['elite_blackwood_archer_tupi',10,40]]) {
+test('Champi is unchanged and Blackwood no longer gets a population multiplier',()=>{
+  for(const [slug,count,cost] of [['elite_champi_warrior_incas',19,67.5],['elite_champi_warrior_mapuche',20,75],['elite_blackwood_archer_tupi',15,40]]) {
     const p=plan(slug);assert.deepEqual([p.side2.count,p.side3.count],[27,count]);assert.equal(p.side2.comparison.comparisonCost,cost);
+  }
+});
+test('half-population and one-population units use the same comparison weight',()=>{
+  for(const slug of ['elite_blackwood_archer_tupi','elite_karambit_warrior']) {
+    const p=plan(slug);
+    assert.equal(p.side2.comparison.population,1);
+    assert.equal(p.side2.comparison.catalogPopulation,0.5);
+    assert.equal(p.side2.comparison.score,p.side2.comparison.comparisonCost);
+    assert.equal(p.balance.comparisonPolicy,'geometric_shared_discount_unit_count_v2');
+    assert.deepEqual([p.side2.count,p.side3.count],geometricCounts(p.side2.comparison.comparisonCost,p.side3.comparison.comparisonCost,27));
   }
 });
 test('unique discounts stay fully effective and actual prices remain intact',()=>{

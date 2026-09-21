@@ -121,7 +121,17 @@ export function createLabPlan(request) {
   side3 = { ...side3, captureCiv: request.side3.civ ?? side3.civ,
     effectiveCost: resolvePurchaseCost(side3, request.side3.civ ?? side3.civ) };
   const balance = deriveCounts(side2, side3, request.balance);
+  const lithuanianRelics = request.scenario?.lithuanianRelics;
+  if (lithuanianRelics !== undefined && (lithuanianRelics !== 4
+      || side2.captureCiv !== "Lithuanians" || side2.master !== 569)) {
+    throw new RangeError("lithuanianRelics currently requires four relics and a Lithuanian P2 Paladin");
+  }
   const player4Buffer = request.scenario?.player4Buffer ?? "golden";
+  const opponentLithuanianRelics = request.scenario?.opponentLithuanianRelics;
+  if (opponentLithuanianRelics !== undefined && (opponentLithuanianRelics !== 4
+      || side3.captureCiv !== "Lithuanians" || side3.master !== 1236)) {
+    throw new RangeError("opponentLithuanianRelics requires four relics and a Lithuanian P3 Elite Leitis");
+  }
   if (!["golden", "none"].includes(player4Buffer)) throw new RangeError("player4Buffer must be golden or none");
   const family = request.scenario?.goldenFamily ?? scenarioFamilyFor(side2, side3);
   if (!Object.hasOwn(GOLDEN_SCENARIO_SHA256, family)) {
@@ -178,7 +188,7 @@ export function createLabPlan(request) {
       ...(request.balance?.maxResources !== undefined ? { maxResources: request.balance.maxResources } : {}),
       rounding: balance.mode === "equal_resources"
         ? "cheaper side capped; expensive side floored" : balance.geometric
-          ? "lower comparison-cost times population capped; other side nearest integer, halves up; minimum one" : "none",
+          ? "lower comparison-cost capped; population fixed at one per unit; other side nearest integer, halves up; minimum one" : "none",
       ...(balance.geometric ? {
         comparisonPolicy: balance.geometric[0].policy,
         comparisonCatalogSha256: balance.geometric[0].catalogSha256,
@@ -191,6 +201,8 @@ export function createLabPlan(request) {
       hasPlayer4Gate: player4Buffer !== "none" && (family === "ranged_vs_melee" || family === "melee_vs_ranged"),
       ...(player4Buffer === "none" ? { player4Buffer: "none" } : {}),
       ...(player4Count !== undefined ? { player4Count } : {}),
+      ...(lithuanianRelics !== undefined ? { lithuanianRelics, lithuanianRelicMode: "attack_trigger_v1" } : {}),
+      ...(opponentLithuanianRelics !== undefined ? { opponentLithuanianRelics, opponentLithuanianRelicMode: "attack_trigger_v1" } : {}),
       preserveOwnerOrientation: family !== "melee_vs_melee",
     },
     engineFamily: resolveFamily({ side2Class: side2.class, side3Class: side3.class }),
@@ -205,6 +217,9 @@ export function createLabPlan(request) {
 
 
 export async function runSeed(plan, seed) {
+  if (plan?.scenario?.lithuanianRelics !== undefined || plan?.scenario?.opponentLithuanianRelics !== undefined) {
+    throw new RangeError("Lithuanian relic scenarios are recording-only until a matching simulation fixture is supplied");
+  }
   if (plan?.scenario?.family === "water") throw new RangeError("water scenarios are recording-only; naval simulation is not supported");
   if (plan?.scenario?.player4Count !== undefined && plan.scenario.player4Count !== 9) {
     throw new RangeError("custom P4 count is recording-only until a matching simulation screen is supplied");

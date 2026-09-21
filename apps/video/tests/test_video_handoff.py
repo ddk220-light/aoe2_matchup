@@ -19,7 +19,8 @@ def test_new_episode_has_correct_identities_counts_and_compilable_adapters():
     assert len({r['id'] for r in rows}) == 73
     assert all(r['balance']['mode'] == 'geometric_shared_discount' for r in rows)
     assert 'Equal resources' not in files[Path('apps/video/build_handoff_kamayuk_final.py')]
-    assert 'geometric mean' in files[Path('apps/video/build_handoff_kamayuk_final.py')]
+    assert 'square root of the comparison-cost ratio' in files[Path('apps/video/build_handoff_kamayuk_final.py')]
+    assert 'every physical unit as one population' in files[Path('apps/video/build_handoff_kamayuk_final.py')]
     assert all(r['side2'] == 'elite_kamayuk_incas' and r['civ2'] == 'Incas' for r in rows)
     assert all(r['side3'] != r['side2'] for r in rows)
     assert [r['civ3'].casefold() for r in rows] == sorted(r['civ3'].casefold() for r in rows)
@@ -85,7 +86,7 @@ def test_scaffold_write_plans_the_whole_episode_in_isolation_and_refuses_overwri
     report = json.loads((tmp_path / 'data/local/integration-kamayuk-capture-preflight.json').read_text())
     assert report['passed'] and len(report['plans']) == 73
     assert all(p['side2']['count'] <= 27 and p['side3']['count'] <= 27 for p in report['plans'])
-    assert all(p['balance']['maxResources'] == 5000 for p in report['plans'])
+    assert all('maxResources' not in p['balance'] for p in report['plans'])
     queue_file = tmp_path / 'data/video-production-queue.json'
     before = queue_file.read_bytes()
     with pytest.raises(SystemExit) as error:

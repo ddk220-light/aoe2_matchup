@@ -266,7 +266,8 @@ def _army_centroid(um, pid, const):
 
 
 def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
-              ranged=(False, False), remove_player4_buffer=False, player4_count=None):
+              ranged=(False, False), remove_player4_buffer=False, player4_count=None,
+              lithuanian_relics=None, opponent_lithuanian_relics=None):
     """side1/side2 = (civ_name, unit_key, label). `counts` = (n1, n2) units per side
     (equal-count is (30, 30); resource-capped runs pass uneven counts). `ranged` = (r1, r2)
     is retained for caller compatibility. The template owns the spectator camera;
@@ -305,6 +306,10 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
         print(f"[build_run] removed {r1 + r2} P2/P3 buildings/camp props")
 
     _retarget_new_template(scn, new1, label1, n1, new2, label2, n2)
+    if lithuanian_relics is not None:
+        apply_lithuanian_relics(scn, civ1, new1, lithuanian_relics)
+    if opponent_lithuanian_relics is not None:
+        apply_lithuanian_relics(scn, civ2, new2, opponent_lithuanian_relics, owner=3)
     if remove_player4_buffer:
         for unit in list(um.get_player_units(4)):
             um.remove_unit(unit=unit)
@@ -330,6 +335,29 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
     print(f"[build_run] P1 spectator civ = {civ2} (plays its music)")
     print(f"[build_run] wrote {out_path}")
     return out_path
+
+
+def apply_lithuanian_relics(scenario, civ, master, count, *, owner=2):
+    """Represent four held relics with one +4 melee-attack definition effect.
+
+    The resource-only pilot did not activate the native bonus. The owner approved
+    this attack-only equivalent. No actual relic resource or research effects are
+    also applied, so the bonus cannot stack with those mechanisms in this arena.
+    """
+    if (civ != "Lithuanians" or type(count) is not int or count != 4
+            or (owner, master) not in ((2, 569), (3, 1236))):
+        raise ValueError("Four relics require a Lithuanian P2 Paladin or P3 Elite Leitis")
+    from AoE2ScenarioParser.datasets.trigger_lists import ObjectAttribute, Operation
+    name = ("Lab: Lithuanian four relics (+4 melee attack)" if owner == 2
+            else "Lab: P3 Elite Leitis four relics (+4 melee attack)")
+    if any(t.name == name for t in scenario.trigger_manager.triggers):
+        raise ValueError("Lithuanian relic attack trigger already exists")
+    trigger = scenario.trigger_manager.add_trigger(name)
+    trigger.looping = False
+    trigger.new_effect.modify_attribute(
+        source_player=owner, object_list_unit_id=master, object_attributes=ObjectAttribute.ATTACK,
+        operation=Operation.ADD, armour_attack_class=4, armour_attack_quantity=count,
+    )
 
 
 def _parse_side(s: str):

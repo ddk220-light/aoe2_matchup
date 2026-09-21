@@ -57,12 +57,18 @@ def generate(plan_path, output, voice_id, voice_kind='library'):
             raise ValueError('Alignment text differs from requested script; review before rendering')
         seconds = float(subprocess.check_output([probe, '-v', 'error', '-show_entries',
                         'format=duration', '-of', 'default=nw=1:nk=1', str(audio_path)]))
-        slide['duration'] = math.ceil((seconds + .4 + 2) * 30) / 30
+        lead = float(slide.get('narrationLeadSeconds', .4))
+        hold = float(slide.get('narrationHoldSeconds', 2))
+        if lead < 0 or hold < 0:
+            raise ValueError('Narration lead and hold must be nonnegative')
+        slide['duration'] = math.ceil((seconds + lead + hold) * 30) / 30
         slide['narrationAlignment'] = str(timing_path)
-        slide['narrationLeadSeconds'] = .4
+        slide['narrationLeadSeconds'] = lead
+        slide['narrationHoldSeconds'] = hold
+        slide['speechDurationSeconds'] = seconds
         padded = output / f'narration-{i:02}-padded.wav'
         subprocess.run([ff, '-y', '-v', 'error', '-i', str(audio_path),
-                        '-af', 'adelay=400:all=1,apad', '-t', str(slide['duration']),
+                        '-af', f'adelay={round(lead*1000)}:all=1,apad', '-t', str(slide['duration']),
                         '-ar', '48000', '-ac', '2', str(padded)], check=True)
         clips.append(padded)
         print(f'Page {i}: {seconds:.2f}s speech; {slide["duration"]:.2f}s page', flush=True)

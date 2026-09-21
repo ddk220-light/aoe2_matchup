@@ -1,6 +1,7 @@
 """Default policy and presentation labels; always describe the persisted plan."""
 
 DEFAULT_BALANCE = "geometric_shared_discount"
+DEFAULT_COMPARISON_POLICY = "geometric_shared_discount_unit_count_v2"
 
 
 def balance_caption(plan):
@@ -11,6 +12,8 @@ def balance_caption(plan):
         "equal_count": "Equal unit count",
         "explicit": "Custom army counts",
     }
+    if balance.get('comparisonPolicy') == DEFAULT_COMPARISON_POLICY:
+        labels['geometric_shared_discount'] = 'Geometric cost balance'
     return f"{labels[balance['mode']]}  |  {balance['cap']}-unit cap"
 
 
@@ -18,7 +21,9 @@ def balance_description(plan):
     balance = plan["balance"]
     if balance["mode"] == DEFAULT_BALANCE:
         rule = (
-            "Army sizes balance resource cost and population efficiency using their geometric mean. "
+            ("Army sizes use the square root of the comparison-cost ratio, treating every physical unit as one population. "
+             if balance.get('comparisonPolicy') == DEFAULT_COMPARISON_POLICY else
+             "Army sizes balance resource cost and population efficiency using their geometric mean. ") +
             "For units shared across civilizations, food and wood discounts count at half strength; "
             "gold discounts count in full. Civilization-exclusive units use their actual discounted costs."
         )

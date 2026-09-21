@@ -1,6 +1,6 @@
 """The approved default must reach every new-plan entry point and public copy."""
 
-from aoe2x.lab.balance import DEFAULT_BALANCE, balance_caption, balance_description
+from aoe2x.lab.balance import DEFAULT_BALANCE, DEFAULT_COMPARISON_POLICY, balance_caption, balance_description
 from aoe2x.lab.cli import _normalize_batch_row, build_parser
 from aoe2x.lab.planner import make_request
 
@@ -26,3 +26,13 @@ def test_public_copy_follows_saved_policy_not_current_default():
     assert "geometric mean" in balance_description(new)
     assert "half strength" in balance_description(new)
     assert "gold discounts count in full" in balance_description(new)
+
+
+def test_unit_population_policy_copy_preserves_historical_descriptions():
+    historical = {'balance': {'mode': DEFAULT_BALANCE, 'cap': 27, 'comparisonPolicy': 'geometric_shared_discount_v1'}}
+    current = {'balance': {'mode': DEFAULT_BALANCE, 'cap': 27, 'comparisonPolicy': DEFAULT_COMPARISON_POLICY}}
+    assert 'Cost + population' in balance_caption(historical)
+    assert 'population efficiency' in balance_description(historical)
+    assert 'Geometric cost balance' in balance_caption(current)
+    assert 'every physical unit as one population' in balance_description(current)
+    assert 'population efficiency' not in balance_description(current)

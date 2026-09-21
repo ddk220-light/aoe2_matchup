@@ -31,6 +31,27 @@ def test_ten_match_report_and_final_remainder(monkeypatch, tmp_path):
     assert read_json(tmp_path / "status.json")["completed"] == 13
 
 
+def test_resource_guard_yields_before_capture_then_continues(monkeypatch, tmp_path):
+    setup_queue(monkeypatch,tmp_path,1)
+    guard=tmp_path/'guard.json';guard.write_text('{}')
+    monkeypatch.setenv('AOE2_RESOURCE_GUARD_STATUS',str(guard))
+    observations=iter([{'updatedAt':campaign.time.time(),'waitForCaptureBoundary':True},
+                       {'updatedAt':campaign.time.time(),'waitForCaptureBoundary':False}])
+    monkeypatch.setattr(campaign,'read_json',lambda _:next(observations))
+    waits=[];monkeypatch.setattr(campaign.time,'sleep',lambda seconds:waits.append(seconds))
+    assert campaign.run(Path('queue'),tmp_path)==0
+    assert 5 in waits
+    assert read_json(tmp_path/'status.json')['completed']==1
+
+
+def test_stale_resource_guard_does_not_stall_capture(monkeypatch,tmp_path):
+    setup_queue(monkeypatch,tmp_path,1)
+    guard=tmp_path/'guard.json';guard.write_text('{}')
+    monkeypatch.setenv('AOE2_RESOURCE_GUARD_STATUS',str(guard))
+    monkeypatch.setattr(campaign,'read_json',lambda _:{'updatedAt':0,'waitForCaptureBoundary':True})
+    assert campaign.run(Path('queue'),tmp_path)==0
+
+
 def test_repeated_failure_stops_and_reports_without_false_success(monkeypatch, tmp_path):
     setup_queue(monkeypatch, tmp_path, 13, fail=True)
     assert campaign.run(Path("queue"), tmp_path) == 2

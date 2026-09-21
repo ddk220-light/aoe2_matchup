@@ -34,14 +34,16 @@ def main():
 
     os.chdir(ROOT)
     manifest = read(OUT / "manifest.json")
+    allowed_jobs = {row['id'] for row in manifest['matchups']}
     report = OUT / "capture"
     previous = read(report / "status.json") if (report / "status.json").exists() else {}
     verified = {
-        r["jobId"]: r for r in previous.get("results", []) if r["status"] == "verified"
+        r["jobId"]: r for r in previous.get("results", [])
+        if r["status"] == "verified" and r['jobId'] in allowed_jobs
     }
     for path in report.glob("pass-*/status.json"):
         for row in read(path).get("results", []):
-            if row["status"] == "verified":
+            if row["status"] == "verified" and row['jobId'] in allowed_jobs:
                 verified[row["jobId"]] = row
     pending = [r for r in manifest["matchups"] if r["id"] not in verified]
     if not pending:
@@ -96,13 +98,17 @@ def main():
             state["total"] = len(manifest["matchups"])
             state["manifest"] = str(OUT / "manifest.json")
             checkpoint(report, state, report=code is not None)
-            if OUT.name == "champi-geometric-comparison" and (
+            maintenance = {
+                "champi-geometric-comparison": ("report_champi_geometric.py", "archive_champi_geometric.py"),
+                "paladin-line-comparison": ("archive_paladin_comparison.py",),
+                "cavalier-comparison": ("archive_cavalier_comparison.py",),
+                "camel-comparison": ("report_camel_comparison.py",),
+                "camel-baseline": ("report_camel_baseline.py",),
+            }.get(OUT.name, ())
+            if maintenance and (
                 code is not None or time.time() - last_maintenance >= 60
             ):
-                for script in (
-                    "report_champi_geometric.py",
-                    "archive_champi_geometric.py",
-                ):
+                for script in maintenance:
                     result = subprocess.run(
                         [sys.executable, str(ROOT / "apps/video" / script)], cwd=ROOT
                     )

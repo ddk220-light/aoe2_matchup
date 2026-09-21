@@ -222,6 +222,26 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
         raise LiveCaptureError(
             "generated colors, starting ages, or diplomacy differ from the golden"
         )
+    for owner, key, mode_key in (
+        (2, 'lithuanianRelics', 'lithuanianRelicMode'),
+        (3, 'opponentLithuanianRelics', 'opponentLithuanianRelicMode'),
+    ):
+        relics = plan['scenario'].get(key)
+        if relics is None:
+            continue
+        from build_run import apply_lithuanian_relics
+        trigger_index = len(source.trigger_manager.triggers)
+        apply_lithuanian_relics(source, plan[f'side{owner}']['civ'], masters[owner-2], relics, owner=owner)
+        expected_effect = source.trigger_manager.triggers[-1].effects[0]
+        if len(target.trigger_manager.triggers) <= trigger_index or not target.trigger_manager.triggers[trigger_index].effects:
+            raise LiveCaptureError("Generated Lithuanian relic condition is missing")
+        actual_effect = target.trigger_manager.triggers[trigger_index].effects[0]
+        if plan['scenario'].get(mode_key) != 'attack_trigger_v1':
+            raise LiveCaptureError("Lithuanian relic plan predates the verified attack-trigger method")
+        for field in ('armour_attack_quantity', 'armour_attack_class', 'object_list_unit_id',
+                      'object_attributes', 'operation', 'source_player'):
+            if getattr(actual_effect, field) != getattr(expected_effect, field):
+                raise LiveCaptureError("Generated Lithuanian relic condition differs from plan")
     if _trigger_structure(target) != _trigger_structure(source):
         raise LiveCaptureError("generated trigger structure differs from the golden")
     return {
@@ -288,6 +308,12 @@ def _validate_capture(run_directory: Path, plan: dict) -> dict[str, Any]:
         Path(f"{prefix}.hp.json"),
     ]
     missing = [str(path) for path in required if not path.exists()]
+    if missing == [str(Path(f"{prefix}.END"))]:
+        # The game can freeze at its end dialog before the live decoder's
+        # four-second game-time grace expires. Inspect saved evidence first.
+        from .capture_recovery import recover_mutual_elimination
+        recover_mutual_elimination(run_directory, plan)
+        missing = [str(path) for path in required if not path.exists()]
     if missing:
         raise LiveCaptureError(f"capture is incomplete; missing: {', '.join(missing)}")
     frames = Path(f"{prefix}.frames.bin")
@@ -602,6 +628,8 @@ def run_live(
                     ranged_override=(plan["side2"]["ranged"], plan["side3"]["ranged"]),
                     remove_player4_buffer=plan['scenario'].get('player4Buffer') == 'none',
                     player4_count=plan['scenario'].get('player4Count'),
+                    lithuanian_relics=plan['scenario'].get('lithuanianRelics'),
+                    opponent_lithuanian_relics=plan['scenario'].get('opponentLithuanianRelics'),
                     scenario_validator=lambda generated: _validate_scenario(
                         config, plan, generated, stack
                     ),

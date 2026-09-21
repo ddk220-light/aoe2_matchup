@@ -17,6 +17,7 @@ ARCHIVE_PREFIX = "champi-geometric"
 CIVS = ("incas", "mapuche", "muisca", "tupi")
 TITLE_PREFIX = "Champi Geometric"
 PRESERVE_BASELINE = True
+MIN_FREE_GIB = 2
 
 
 def main():
@@ -104,7 +105,7 @@ def archive_verified():
         ):
             raise ValueError("Another job already owns this archive filename")
         need = sum(f["bytes"] for f in row["files"].values())
-        if shutil.disk_usage(destination).free < need + 2 * 2**30:
+        if shutil.disk_usage(destination).free < need + MIN_FREE_GIB * 2**30:
             raise RuntimeError("Archive reserve reached; sources retained")
         for f in row["files"].values():
             if not Path(f["source"]).resolve().is_relative_to(source):

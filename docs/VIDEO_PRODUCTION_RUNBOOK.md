@@ -9,6 +9,7 @@ The latest comparison-video workflow is documented in these companion guides:
 - [Four-column comparison overlays](video-production/CHAMPI_COMPARISON_OVERLAY.md), [approved UI refinements](video-production/CHAMPI_UI_REFRESH.md), and [narrated intros and endings](video-production/CHAMPI_COMPARISON_BOOKENDS.md).
 - [Paladin production](video-production/PALADIN_COMPARISON.md), [Cavalier production](video-production/CAVALIER_COMPARISON.md), and [intro text](video-production/KNIGHT_LINE_INTRO_DRAFTS.md).
 - [Camel captures and baseline](video-production/CAMEL_COMPARISON_CAPTURE.md) and [additional knight-line captures](video-production/KNIGHT_EXPANSION_CAPTURE.md).
+- [Recorded rankings and three top-25 lists](video-production/RECORDED_RANKING.md): exact formulas, inputs, review decisions, and commands to recreate the analysis; [current-policy knight recaptures](video-production/KNIGHT_V2_RECAPTURE.md).
 - [Lithuanian relic corrections](video-production/LEITIS_RELIC_RETAKES.md) and [recovering frozen end-of-battle captures](video-production/FROZEN_END_CAPTURE_RECOVERY.md).
 - [Compact, rebuildable recording retention and external-disk transfers](video-production/RECORDING_RETENTION.md). Never format or repartition the owner's disks, or suggest doing so; the owner handles disk preparation personally.
 

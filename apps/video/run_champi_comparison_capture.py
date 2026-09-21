@@ -9,6 +9,8 @@ import subprocess
 import sys
 import time
 
+from capture_storage_guard import archive_storage_error
+
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "data/local/champi-standard-comparison"
 
@@ -34,6 +36,8 @@ def main():
 
     os.chdir(ROOT)
     manifest = read(OUT / "manifest.json")
+    guard_path = OUT / 'archive-guard.json'
+    archive_guard = read(guard_path) if guard_path.exists() else None
     allowed_jobs = {row['id'] for row in manifest['matchups']}
     report = OUT / "capture"
     previous = read(report / "status.json") if (report / "status.json").exists() else {}
@@ -51,6 +55,9 @@ def main():
         return
     if (OUT / "PAUSE").exists() or (ROOT / "data/local/thermal/PAUSED.json").exists():
         raise RuntimeError("User or thermal pause must be resolved before starting")
+    storage_error = archive_storage_error(archive_guard)
+    if storage_error:
+        raise RuntimeError(storage_error)
     if shutil.disk_usage(ROOT).free < 8 * 2**30:
         raise RuntimeError("Less than 8 GiB free; archive completed packages first")
     active = report / f"pass-{int(time.time())}"
@@ -90,6 +97,7 @@ def main():
             (OUT / "PAUSE").exists()
             or shutil.disk_usage(ROOT).free < 8 * 2**30
             or (ROOT / "data/local/thermal/PAUSED.json").exists()
+            or archive_storage_error(archive_guard)
         ):
             (active / "STOP").touch()
         if (active / "status.json").exists():

@@ -3,6 +3,7 @@
 Each campaign uses the existing pilot HP/count gate, ten-match checkpoints,
 capture mutex, and 15-minute thermal/disk checks. No renders or uploads run.
 """
+import argparse
 import subprocess
 import sys
 import traceback
@@ -10,6 +11,7 @@ from pathlib import Path
 
 from prepare_knight_expansion import ROOT, WORK
 from run_champi_comparison_capture import read, save
+from capture_storage_guard import archive_storage_error
 
 
 def status(state, **fields):
@@ -17,17 +19,18 @@ def status(state, **fields):
 
 
 def compact(campaign, archive_root):
-    # Reuse the established copy/checksum/receipt/delete workflow on local disk.
+    # Reuse the established copy/checksum/receipt/delete workflow.
     # Source metadata stays available; raw imagery and frames live in run.json's
     # named pair. This avoids retaining both untrimmed MOV and battle MP4.
     import archive_champi_geometric as archive
     archive.OUT=Path(campaign['workDirectory'])
     archive.DEST=archive_root
-    archive.JOB_PREFIX='knight_expansion_'+campaign['slug']+'_'
-    archive.ARCHIVE_PREFIX='knight-expansion-'+campaign['slug'].removesuffix('_'+campaign['civilization'].lower()).replace('_','-')
-    archive.CIVS=(campaign['civilization'].lower(),)
+    archive.JOB_PREFIX=campaign.get('jobPrefix', 'knight_expansion_'+campaign['slug']+'_')
+    archive.ARCHIVE_PREFIX=campaign.get('archivePrefix', 'knight-expansion-'+campaign['slug'].removesuffix('_'+campaign['civilization'].lower()).replace('_','-'))
+    archive.CIVS=tuple(campaign.get('archiveCivilizations', [campaign['civilization'].lower()]))
     archive.TITLE_PREFIX=campaign['unit']
     archive.PRESERVE_BASELINE=False
+    archive.MIN_FREE_GIB=4
     archive.main()
 
 
@@ -45,6 +48,9 @@ def main():
             if (WORK/'PAUSE').exists() or (ROOT/'data/local/thermal/PAUSED.json').exists():
                 status('PAUSED',completed=completed,failures=failures)
                 return
+            storage_error=archive_storage_error(queue.get('archiveGuard'))
+            if storage_error:
+                raise RuntimeError(storage_error)
             work=Path(campaign['workDirectory'])
             old=read(work/'capture/status.json') if (work/'capture/status.json').exists() else {}
             already_complete=old.get('completed')==campaign['total'] and not old.get('failed') and not old.get('pendingExports')
@@ -65,6 +71,9 @@ def main():
                         status('NEEDS_ATTENTION',current=campaign,completed=completed,failures=failures)
                         return
             status('COMPACTING',current=campaign,completed=completed,failures=failures)
+            storage_error=archive_storage_error(queue.get('archiveGuard'))
+            if storage_error:
+                raise RuntimeError(storage_error)
             compact(campaign,Path(queue['archiveRoot']))
             current=read(work/'capture/status.json')
             completed.append(dict(key=campaign['key'],verified=current['completed'],total=campaign['total']))
@@ -74,6 +83,9 @@ def main():
 
 
 if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--work',type=Path,default=WORK,help='Prepared isolated queue to start or resume')
+    WORK=parser.parse_args().work.resolve()
     try:
         main()
     except Exception:

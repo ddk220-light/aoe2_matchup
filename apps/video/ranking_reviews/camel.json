@@ -1,0 +1,4098 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-21T22:08:53.797933+00:00",
+  "referenceDatabaseSha256": "51d602640e4c1a75f35286aa499821338b0eee5dba97e12a12d39e058cb11087",
+  "policy": "Conservative anomaly review: retain unexpected results and unique-ability tradeoffs by default. Dismiss only specific obvious anomalies with no relevant lower-ranked advantage, never merely because the mechanism is uncertain. Raw results, points and rarity bonuses remain unchanged.",
+  "decisions": {
+    "elite_bolas_rider_mapuche|turks|berbers": {
+      "status": "dismiss_obvious",
+      "rationale": "Turks have identical basic combat stats, two fewer camels (25 versus 27), and no Berber regeneration. No matchup-specific Turkish advantage is established; dismiss this one-off reversal from strategic highlights.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-turks/run.json",
+          "camel-comparison-berbers/run.json",
+          "data/local/camel-line-ranking/bolas-diagnostic/findings.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              25,
+              27
+            ],
+            "higher": [
+              27,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            26,
+            26
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            8
+          ],
+          "hitsToKillOpponent": [
+            3,
+            3
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            18
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            65.0,
+            65.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "1f72a71d0b3311dd09a60159c833c3a10ae57d0464577be0cd4bd7de8dbee6f3"
+    },
+    "elite_bolas_rider_mapuche|turks|malians": {
+      "status": "dismiss_obvious",
+      "rationale": "Identical 25-unit starting formations and 140 HP per camel; Malians deal 29 versus 26 damage and both need three hits per full-health Bolas Rider. The frames show different engagement timing, not a Turkish stat advantage. Dismiss the one-off reversal.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-turks/run.json",
+          "camel-comparison-malians/run.json",
+          "data/local/camel-line-ranking/bolas-diagnostic/findings.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              25,
+              27
+            ],
+            "higher": [
+              25,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            26,
+            29
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            8
+          ],
+          "hitsToKillOpponent": [
+            3,
+            3
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            18
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            65.0,
+            65.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "c9884ac72d6747c244cb5212bbe04fcfc88b25150a79e0b4e95d7fa370d3d417"
+    },
+    "elite_bolas_rider_mapuche|turks|gurjaras": {
+      "status": "dismiss_obvious",
+      "rationale": "Same counts, HP and incoming Bolas damage; Gurjaras have greater anti-mounted damage and better melee armor against the Hussar screen. No Turkish stat or ability advantage explains this reversal.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-turks/run.json",
+          "camel-comparison-gurjaras/run.json",
+          "data/local/camel-line-ranking/bolas-diagnostic/findings.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              25,
+              27
+            ],
+            "higher": [
+              25,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            7.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            26,
+            31
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            8
+          ],
+          "hitsToKillOpponent": [
+            3,
+            3
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            18
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            65.0,
+            65.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "ae90b564c22f92f36ed30ae082a693fc6c416dd397ba3bbf05bef03f6b5e9856"
+    },
+    "elite_bolas_rider_mapuche|turks|khitans": {
+      "status": "retain",
+      "rationale": "The frames confirm 140 starting HP per Turkish camel versus 120 for Khitans, with identical counts and ordinary damage. More starting HP is a plausible benefit during the ranged approach before combat regeneration can compensate; it does not validate superiority over the other camel civilizations.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-turks/run.json",
+          "camel-comparison-khitans/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              25,
+              27
+            ],
+            "higher": [
+              25,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            120.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            26,
+            26
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            8
+          ],
+          "hitsToKillOpponent": [
+            3,
+            3
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            15
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            65.0,
+            65.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            180.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "ccc33abf106bd11eac553d0bad18c84d28f2f9406d791d40a9848b731a57565f"
+    },
+    "elite_boyar|gurjaras|hindustanis": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 15 to 11; the mounted bonus increases outgoing damage from 19 to 25. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-hindustanis/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              25
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            160.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            25,
+            19
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            15
+          ],
+          "hitsToKillOpponent": [
+            6,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            13,
+            11
+          ],
+          "reloadSeconds": [
+            2.0,
+            1.667
+          ],
+          "opponentHp": [
+            150.0,
+            150.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "5bf1fb5777dcc343fa7323a777c2d8e72bb4ede5485d7dd16dfccd668373d270"
+    },
+    "elite_boyar|gurjaras|saracens": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 15 to 11; the mounted bonus increases outgoing damage from 18 to 25. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              25
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            25,
+            18
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            15
+          ],
+          "hitsToKillOpponent": [
+            6,
+            9
+          ],
+          "incomingHitsToKillCamel": [
+            13,
+            12
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            150.0,
+            150.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "120d304674d28c1dc3ecd95014107defe68ac0fc446bd60d7eb5beb3836c449d"
+    },
+    "elite_boyar|gurjaras|berbers": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 15 to 11; the mounted bonus increases outgoing damage from 18 to 25. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              25
+            ],
+            "higher": [
+              27,
+              23
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            25,
+            18
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            15
+          ],
+          "hitsToKillOpponent": [
+            6,
+            9
+          ],
+          "incomingHitsToKillCamel": [
+            13,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            150.0,
+            150.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "1628d21291fc78b1aeca77d9286bd9362dc3281e3496563b58ec6c5786bf73a9"
+    },
+    "elite_boyar|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 15 to 11; the mounted bonus increases outgoing damage from 21 to 25. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              25
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            25,
+            21
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            15
+          ],
+          "hitsToKillOpponent": [
+            6,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            13,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            150.0,
+            150.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "a7756485e9f35e96d5ded952a5d803929830ad92ff57ae0269766bac428e0842"
+    },
+    "elite_cataphract_byzantines|gurjaras|hindustanis": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 11 to 7; the mounted bonus increases outgoing damage from 9 to 13. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-hindustanis/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              23
+            ],
+            "higher": [
+              27,
+              24
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            160.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            13,
+            9
+          ],
+          "regularDamageFromOpponent": [
+            7,
+            11
+          ],
+          "hitsToKillOpponent": [
+            12,
+            17
+          ],
+          "incomingHitsToKillCamel": [
+            20,
+            15
+          ],
+          "reloadSeconds": [
+            2.0,
+            1.667
+          ],
+          "opponentHp": [
+            150.0,
+            150.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "3e317965f08f147a8828bbe384a56ab88a22b13ba38a53d2759b2e8f889cc218"
+    },
+    "elite_cataphract_byzantines|gurjaras|saracens": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 11 to 7; the mounted bonus increases outgoing damage from 8 to 13. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              23
+            ],
+            "higher": [
+              27,
+              24
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            13,
+            8
+          ],
+          "regularDamageFromOpponent": [
+            7,
+            11
+          ],
+          "hitsToKillOpponent": [
+            12,
+            19
+          ],
+          "incomingHitsToKillCamel": [
+            20,
+            16
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            150.0,
+            150.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "93402eae73d9da75226d986f4aea339580406ef59a648a588d1684e9b9b835b5"
+    },
+    "elite_cataphract_byzantines|gurjaras|berbers": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 11 to 7; the mounted bonus increases outgoing damage from 8 to 13. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              23
+            ],
+            "higher": [
+              27,
+              22
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            13,
+            8
+          ],
+          "regularDamageFromOpponent": [
+            7,
+            11
+          ],
+          "hitsToKillOpponent": [
+            12,
+            19
+          ],
+          "incomingHitsToKillCamel": [
+            20,
+            13
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            150.0,
+            150.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "59e1fa98b895aa3a44ac8b32f7e383e6e89163c0111bf9b6ae481567888c0724"
+    },
+    "elite_cataphract_byzantines|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 11 to 7; the mounted bonus increases outgoing damage from 11 to 13. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              23
+            ],
+            "higher": [
+              27,
+              24
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            13,
+            11
+          ],
+          "regularDamageFromOpponent": [
+            7,
+            11
+          ],
+          "hitsToKillOpponent": [
+            12,
+            14
+          ],
+          "incomingHitsToKillCamel": [
+            20,
+            13
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            150.0,
+            150.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "526895bc6a8c766b6193b8229549b3d9682edf564bcd403a3f81ace595c919cf"
+    },
+    "elite_centurion_romans|gurjaras|saracens": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 16 to 12; the mounted bonus increases outgoing damage from 23 to 28. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              22
+            ],
+            "higher": [
+              27,
+              23
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            28,
+            23
+          ],
+          "regularDamageFromOpponent": [
+            12,
+            16
+          ],
+          "hitsToKillOpponent": [
+            7,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            12,
+            11
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            175.0,
+            175.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "830a98cdb3f15e921f807aba5c4c1d31fbf079e3fbde1ba76af4abb5b1a5d3dd"
+    },
+    "elite_centurion_romans|gurjaras|berbers": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 16 to 12; the mounted bonus increases outgoing damage from 23 to 28. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              22
+            ],
+            "higher": [
+              27,
+              21
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            28,
+            23
+          ],
+          "regularDamageFromOpponent": [
+            12,
+            16
+          ],
+          "hitsToKillOpponent": [
+            7,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            12,
+            9
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            175.0,
+            175.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "285581f7c39cbce09b810db0aa9770bde40ffa9eca7e86cb3c9a663912393e8b"
+    },
+    "elite_chakram_thrower_gurjaras|gurjaras|hindustanis": {
+      "status": "retain",
+      "rationale": "Frontier Guards adds four melee armor against the Chakram Thrower's melee-type projectiles; the reference primary hit falls from three damage to the one-damage floor. This is a matchup-specific defensive advantage despite lower ordinary attack.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-hindustanis/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              23,
+              27
+            ],
+            "higher": [
+              22,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            160.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            5,
+            8
+          ],
+          "regularDamageFromOpponent": [
+            1,
+            3
+          ],
+          "hitsToKillOpponent": [
+            10,
+            7
+          ],
+          "incomingHitsToKillCamel": [
+            140,
+            54
+          ],
+          "reloadSeconds": [
+            2.0,
+            1.667
+          ],
+          "opponentHp": [
+            50.0,
+            50.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "20ba6b437f2f9f17948561eae98c7e679e0ccc6cc22b249f3671d493469b6f70"
+    },
+    "elite_chakram_thrower_gurjaras|gurjaras|saracens": {
+      "status": "retain",
+      "rationale": "Frontier Guards adds four melee armor against the Chakram Thrower's melee-type projectiles; the reference primary hit falls from three damage to the one-damage floor. This is a matchup-specific defensive advantage despite lower ordinary attack.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              23,
+              27
+            ],
+            "higher": [
+              22,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            5,
+            7
+          ],
+          "regularDamageFromOpponent": [
+            1,
+            3
+          ],
+          "hitsToKillOpponent": [
+            10,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            140,
+            57
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            50.0,
+            50.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "9571a7608fb17b07acabf6a814c30929777a1bd421efb2d2da8df55ed6843c2a"
+    },
+    "elite_chakram_thrower_gurjaras|gurjaras|berbers": {
+      "status": "retain",
+      "rationale": "Frontier Guards adds four melee armor against the Chakram Thrower's melee-type projectiles; the reference primary hit falls from three damage to the one-damage floor. This is a matchup-specific defensive advantage despite lower ordinary attack.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              23,
+              27
+            ],
+            "higher": [
+              24,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            5,
+            7
+          ],
+          "regularDamageFromOpponent": [
+            1,
+            3
+          ],
+          "hitsToKillOpponent": [
+            10,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            140,
+            47
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            50.0,
+            50.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "98d6a83db91b357d2b11c3c512faa6da8a163082d9448b4aaccf4528556153e2"
+    },
+    "elite_chakram_thrower_gurjaras|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards adds four melee armor against the Chakram Thrower's melee-type projectiles; the reference primary hit falls from three damage to the one-damage floor. This is a matchup-specific defensive advantage despite lower ordinary attack.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              23,
+              27
+            ],
+            "higher": [
+              22,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            5,
+            10
+          ],
+          "regularDamageFromOpponent": [
+            1,
+            3
+          ],
+          "hitsToKillOpponent": [
+            10,
+            5
+          ],
+          "incomingHitsToKillCamel": [
+            140,
+            47
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            50.0,
+            50.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "15a6910803369844418ea49a0fcd9aa3ce95630f3c72357cd9b7bb7bc496b621"
+    },
+    "elite_conquistador|khitans|gurjaras": {
+      "status": "retain",
+      "rationale": "Ordo Cavalry replenishes HP during combat, giving this variant a sustained-fighting ability absent from the compared civilization. That is a plausible mechanic for preserving more HP once engaged; the recordings do not isolate the healing contribution or prove the observed margin is repeatable.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-khitans/run.json",
+          "camel-comparison-gurjaras/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              25
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            7.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            24,
+            29
+          ],
+          "regularDamageFromOpponent": [
+            15,
+            15
+          ],
+          "hitsToKillOpponent": [
+            4,
+            4
+          ],
+          "incomingHitsToKillCamel": [
+            8,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            90.0,
+            90.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            180.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175.",
+        "officialAbilityReference": "https://www.ageofempires.com/games/aoeiide/civilizations/khitan/"
+      },
+      "fingerprint": "d6ff01c19e813c7c275eb9494c072b8c52375b3d08a57fc62f66267026200cb6"
+    },
+    "elite_conquistador|turks|gurjaras": {
+      "status": "dismiss_obvious",
+      "rationale": "Same counts and HP as Gurjaras, equal incoming Conquistador damage, weaker outgoing damage and no special combat ability. No matchup-specific Turkish advantage is established.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-turks/run.json",
+          "camel-comparison-gurjaras/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              25
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            7.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            24,
+            29
+          ],
+          "regularDamageFromOpponent": [
+            15,
+            15
+          ],
+          "hitsToKillOpponent": [
+            4,
+            4
+          ],
+          "incomingHitsToKillCamel": [
+            10,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            90.0,
+            90.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "2001998402a6218034f4ca52304f4d5ee6a9c6aee916684aea8a30aeb9e5565a"
+    },
+    "elite_conquistador|ethiopians|gurjaras": {
+      "status": "retain",
+      "rationale": "Royal Heirs is a relevant mounted-damage reduction ability. Retain this as a real defensive tradeoff against Gurjaras despite lower HP and armor; primary-hit arithmetic alone does not establish the full engagement result or justify filtering it out.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-ethiopians/run.json",
+          "camel-comparison-gurjaras/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              25
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            140.0
+          ],
+          "meleeArmor": [
+            2.0,
+            7.0
+          ],
+          "pierceArmor": [
+            2.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            24,
+            29
+          ],
+          "regularDamageFromOpponent": [
+            14,
+            15
+          ],
+          "hitsToKillOpponent": [
+            4,
+            4
+          ],
+          "incomingHitsToKillCamel": [
+            9,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            90.0,
+            90.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175.",
+        "officialAbilityReference": "https://www.ageofempires.com/news/age-of-empires-ii-definitive-edition-update-81058/"
+      },
+      "fingerprint": "22aacfc304b1b67e311564a776f0456826e20c53d63fb21b2649882cf694e1af"
+    },
+    "elite_conquistador|byzantines|gurjaras": {
+      "status": "retain",
+      "rationale": "The discount changes the matchup to 27 camels against 23 Conquistadors instead of 25. This genuine numerical advantage is a plausible reason for the narrow win despite weaker individual camels; it does not establish repeatability.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-byzantines/run.json",
+          "camel-comparison-gurjaras/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              23
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            7.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            22,
+            29
+          ],
+          "regularDamageFromOpponent": [
+            15,
+            15
+          ],
+          "hitsToKillOpponent": [
+            5,
+            4
+          ],
+          "incomingHitsToKillCamel": [
+            8,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            90.0,
+            90.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "0553a0046a446792bd613824ccef2ae8068cc3b4945d57000d259570b4f8f5de"
+    },
+    "elite_coustillier_burgundians|gurjaras|saracens": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 12 to 8; the mounted bonus increases outgoing damage from 24 to 29. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              27
+            ],
+            "higher": [
+              26,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            29,
+            24
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            12
+          ],
+          "hitsToKillOpponent": [
+            5,
+            7
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            15
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            145.0,
+            145.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "df3e580e60126611c5631f3cb2e92f485ec66b1cb545808258057bf5555fd867"
+    },
+    "elite_coustillier_burgundians|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 12 to 8; the mounted bonus increases outgoing damage from 27 to 29. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              27
+            ],
+            "higher": [
+              26,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            29,
+            27
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            12
+          ],
+          "hitsToKillOpponent": [
+            5,
+            6
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            12
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            145.0,
+            145.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "94bb6676d8940ce154b3e3e29c3699596d7485ad68bbf34f67c48fe2e995c8f4"
+    },
+    "elite_coustillier_burgundians|ethiopians|turks": {
+      "status": "retain",
+      "rationale": "Royal Heirs applies to this mounted opponent: reference regular incoming damage is 10 versus 12. This is a relevant defensive tradeoff despite lower HP and armor; charge and engagement details are not resolved by the ordinary-hit calculation.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-ethiopians/run.json",
+          "camel-comparison-turks/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              26,
+              27
+            ],
+            "higher": [
+              26,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            140.0
+          ],
+          "meleeArmor": [
+            2.0,
+            3.0
+          ],
+          "pierceArmor": [
+            2.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            24,
+            24
+          ],
+          "regularDamageFromOpponent": [
+            10,
+            12
+          ],
+          "hitsToKillOpponent": [
+            7,
+            7
+          ],
+          "incomingHitsToKillCamel": [
+            12,
+            12
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            145.0,
+            145.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175.",
+        "officialAbilityReference": "https://www.ageofempires.com/news/age-of-empires-ii-definitive-edition-update-81058/"
+      },
+      "fingerprint": "15396a0fe8b0d2346695ecade2ad837f03beb3520f3d364b438bb00f2380d640"
+    },
+    "elite_ghulam_hindustanis|berbers|saracens": {
+      "status": "retain",
+      "rationale": "The cost discount changes the recorded army to 24 camels versus 22, both facing 27 opponents. More attacking bodies and Maghrebi Camels regeneration provide relevant advantages, despite lower per-unit HP than Saracens.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-berbers/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              24,
+              27
+            ],
+            "higher": [
+              22,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            9,
+            9
+          ],
+          "regularDamageFromOpponent": [
+            12,
+            12
+          ],
+          "hitsToKillOpponent": [
+            8,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            12,
+            15
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            70.0,
+            70.0
+          ],
+          "regenerationPerMinute": [
+            15.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "5f343738f64abd84426827c903d8de4f701002c1b960c3fc21cf6fda63cb4f4d"
+    },
+    "elite_ghulam_hindustanis|malians|saracens": {
+      "status": "retain",
+      "rationale": "Farimba provides greater ordinary damage: 12 versus 9 per reference primary hit, reducing full-health hits to kill from 8 to 6. This is a concrete damage breakpoint advantage, with the recorded count and HP tradeoffs preserved.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-malians/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              22,
+              27
+            ],
+            "higher": [
+              22,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            12,
+            9
+          ],
+          "regularDamageFromOpponent": [
+            12,
+            12
+          ],
+          "hitsToKillOpponent": [
+            6,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            12,
+            15
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            70.0,
+            70.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "9b6c14aeed5de559fe3476e39b7084b714045a812163dee864b07517fb073d59"
+    },
+    "elite_ghulam_hindustanis|gurjaras|saracens": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the Ghulam's ordinary melee hit from 12 to 8, and the recorded army has 23 camels versus 22 for Saracens. These directly relevant defensive and count advantages support retaining the comparison.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              23,
+              27
+            ],
+            "higher": [
+              22,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            7,
+            9
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            12
+          ],
+          "hitsToKillOpponent": [
+            10,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            15
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            70.0,
+            70.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "32049f8d6848261f64486437fb6aa5aa6fa400e08bedbfcc83a7a33944f826f3"
+    },
+    "elite_guecha_warrior_muisca|khitans|gurjaras": {
+      "status": "retain",
+      "rationale": "The extra ordinary attack reduces reference full-health hits to kill from 15 to 10; Ordo Cavalry can replenish HP during combat. These are relevant advantages, balanced against lower starting HP and the peer's other bonuses.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-khitans/run.json",
+          "camel-comparison-gurjaras/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              26,
+              27
+            ],
+            "higher": [
+              27,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            7.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            6,
+            4
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            8
+          ],
+          "hitsToKillOpponent": [
+            10,
+            15
+          ],
+          "incomingHitsToKillCamel": [
+            15,
+            18
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            60.0,
+            60.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            180.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175.",
+        "officialAbilityReference": "https://www.ageofempires.com/games/aoeiide/civilizations/khitan/"
+      },
+      "fingerprint": "7cd008665b3cf41dc18f0d9e5025d4e14e9e71c97b74acf0dcea76099620b0e0"
+    },
+    "elite_guecha_warrior_muisca|byzantines|ethiopians": {
+      "status": "retain",
+      "rationale": "Plate Barding Armor reduces ordinary incoming pierce damage to 8 versus 10 for Ethiopians. The discount also improves the recorded ratio from 26 versus 27 to 27 versus 25. Royal Heirs does not apply to this unmounted opponent.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-byzantines/run.json",
+          "camel-comparison-ethiopians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              25
+            ],
+            "higher": [
+              26,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            120.0
+          ],
+          "meleeArmor": [
+            3.0,
+            2.0
+          ],
+          "pierceArmor": [
+            4.0,
+            2.0
+          ],
+          "regularDamageToOpponent": [
+            4,
+            6
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            10
+          ],
+          "hitsToKillOpponent": [
+            15,
+            10
+          ],
+          "incomingHitsToKillCamel": [
+            15,
+            12
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            60.0,
+            60.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "ec44efaef765a73eed089fbc92cca7eced96ce82e73dfbaf2d9e3e0a20f399ee"
+    },
+    "elite_iron_pagoda_jurchens|gurjaras|berbers": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 14 to 10; the mounted bonus increases outgoing damage from 24 to 29. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              24
+            ],
+            "higher": [
+              27,
+              23
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            29,
+            24
+          ],
+          "regularDamageFromOpponent": [
+            10,
+            14
+          ],
+          "hitsToKillOpponent": [
+            6,
+            7
+          ],
+          "incomingHitsToKillCamel": [
+            14,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            160.0,
+            160.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "51bb9c571cafefa909c7aa0e0457a7f1a2ce44e8acc9e8b9d739992a61074226"
+    },
+    "elite_iron_pagoda_jurchens|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 14 to 10; the mounted bonus increases outgoing damage from 27 to 29. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              24
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            29,
+            27
+          ],
+          "regularDamageFromOpponent": [
+            10,
+            14
+          ],
+          "hitsToKillOpponent": [
+            6,
+            6
+          ],
+          "incomingHitsToKillCamel": [
+            14,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            160.0,
+            160.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "d50da7b6ee46d641d9847c7462df4ce5705997146a9bf7cb8e523dea65f524b0"
+    },
+    "elite_karambit_warrior|malians|berbers": {
+      "status": "retain",
+      "rationale": "Farimba provides greater ordinary damage: 10 versus 7 per reference primary hit, reducing full-health hits to kill from 6 to 4. This is a concrete damage breakpoint advantage, with the recorded count and HP tradeoffs preserved.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-malians/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              16,
+              27
+            ],
+            "higher": [
+              17,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            10,
+            7
+          ],
+          "regularDamageFromOpponent": [
+            9,
+            9
+          ],
+          "hitsToKillOpponent": [
+            4,
+            6
+          ],
+          "incomingHitsToKillCamel": [
+            16,
+            16
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            40.0,
+            40.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "2103f0583558bbb43d5daff2c85e01003d47078bf149c2558d5b1ec4bf92a0f7"
+    },
+    "elite_keshik|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 12 to 8; the mounted bonus increases outgoing damage from 28 to 30. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              26,
+              27
+            ],
+            "higher": [
+              25,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            30,
+            28
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            12
+          ],
+          "hitsToKillOpponent": [
+            6,
+            6
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            12
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            165.0,
+            165.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "d10f4cb1434424b30becc2e48d8517529186b59d7e8c012e3e2ca7def85d3f03"
+    },
+    "elite_longbowman|khitans|gurjaras": {
+      "status": "retain",
+      "rationale": "The extra ordinary attack reduces reference full-health hits to kill from 7 to 5; Ordo Cavalry can replenish HP during combat. These are relevant advantages, balanced against lower starting HP and the peer's other bonuses.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-khitans/run.json",
+          "camel-comparison-gurjaras/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              22,
+              27
+            ],
+            "higher": [
+              23,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            7.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            8,
+            6
+          ],
+          "regularDamageFromOpponent": [
+            7,
+            7
+          ],
+          "hitsToKillOpponent": [
+            5,
+            7
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            20
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            40.0,
+            40.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            180.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175.",
+        "officialAbilityReference": "https://www.ageofempires.com/games/aoeiide/civilizations/khitan/"
+      },
+      "fingerprint": "26418a25faab959229695e2e71b133829f8f8b17e199d00ec2cc514da7c42ac9"
+    },
+    "elite_longbowman|turks|gurjaras": {
+      "status": "retain",
+      "rationale": "Blast Furnace gives eight versus six damage after Longbowman melee armor, reducing full-health hits to kill from seven to five. Gurjaras' mounted bonus and extra melee armor do not directly counter Longbowmen's arrows.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-turks/run.json",
+          "camel-comparison-gurjaras/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              22,
+              27
+            ],
+            "higher": [
+              23,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            7.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            8,
+            6
+          ],
+          "regularDamageFromOpponent": [
+            7,
+            7
+          ],
+          "hitsToKillOpponent": [
+            5,
+            7
+          ],
+          "incomingHitsToKillCamel": [
+            20,
+            20
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            40.0,
+            40.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "0881b9213e2bfbc45ab717b0088b8d2c3676a9250619cb7c7d743e39ce7a9469"
+    },
+    "elite_magyar_huszar|gurjaras|berbers": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 12 to 8; the mounted bonus increases outgoing damage from 26 to 31. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              23,
+              27
+            ],
+            "higher": [
+              24,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            31,
+            26
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            12
+          ],
+          "hitsToKillOpponent": [
+            4,
+            5
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            12
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            110.0,
+            110.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "3ae331799c8f68e05a5fe14342a1e5f5acbe70739c784c9b72e561ed800c64bc"
+    },
+    "elite_mameluke_saracens|gurjaras|berbers": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 11 to 7; the mounted bonus increases outgoing damage from 23 to 27. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              24
+            ],
+            "higher": [
+              27,
+              23
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            27,
+            23
+          ],
+          "regularDamageFromOpponent": [
+            7,
+            11
+          ],
+          "hitsToKillOpponent": [
+            5,
+            6
+          ],
+          "incomingHitsToKillCamel": [
+            20,
+            13
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            125.0,
+            125.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "c9896ac4d41b32b40ca253b1e11c59cd60c9d16112840107dc09882408cb11e7"
+    },
+    "elite_mameluke_saracens|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 11 to 7; the mounted bonus increases outgoing damage from 26 to 27. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              24
+            ],
+            "higher": [
+              27,
+              24
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            27,
+            26
+          ],
+          "regularDamageFromOpponent": [
+            7,
+            11
+          ],
+          "hitsToKillOpponent": [
+            5,
+            5
+          ],
+          "incomingHitsToKillCamel": [
+            20,
+            13
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            125.0,
+            125.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "2204f43f763c0acb619722c973fb5d3dd5645cbd3307f0da26006922009e1bc6"
+    },
+    "elite_mangudai|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "The mounted bonus gives 30 versus 28 damage to a Mangudai, and Frontier Guards also protects camels while fighting the nine-Hussar screen. These are plausible relevant advantages, not proof that they caused the observed reversal.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              26
+            ],
+            "higher": [
+              27,
+              26
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            30,
+            28
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            8
+          ],
+          "hitsToKillOpponent": [
+            3,
+            3
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            18
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            80.0,
+            80.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "f2e3b64118c3596ff34eff8a08609420359ebf9ed705c049f11d8c39623da805"
+    },
+    "elite_plumed_archer|malians|saracens": {
+      "status": "retain",
+      "rationale": "Farimba provides greater ordinary damage: 11 versus 8 per reference primary hit, reducing full-health hits to kill from 9 to 6. This is a concrete damage breakpoint advantage, with the recorded count and HP tradeoffs preserved.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-malians/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              23,
+              27
+            ],
+            "higher": [
+              23,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            11,
+            8
+          ],
+          "regularDamageFromOpponent": [
+            5,
+            5
+          ],
+          "hitsToKillOpponent": [
+            6,
+            9
+          ],
+          "incomingHitsToKillCamel": [
+            28,
+            34
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            65.0,
+            65.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "178a04533801db78cc9a9f367e68bca78ea03f72543e6f8580b9cf01f0554cdf"
+    },
+    "elite_plumed_archer|malians|berbers": {
+      "status": "retain",
+      "rationale": "Farimba provides greater ordinary damage: 11 versus 8 per reference primary hit, reducing full-health hits to kill from 9 to 6. This is a concrete damage breakpoint advantage, with the recorded count and HP tradeoffs preserved.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-malians/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              23,
+              27
+            ],
+            "higher": [
+              25,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            11,
+            8
+          ],
+          "regularDamageFromOpponent": [
+            5,
+            5
+          ],
+          "hitsToKillOpponent": [
+            6,
+            9
+          ],
+          "incomingHitsToKillCamel": [
+            28,
+            28
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            65.0,
+            65.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "866c8659f69154d6dc7eafd2ddcc992788a5c57f4d107d39af10969b89bcf121"
+    },
+    "elite_ratha_(melee)_bengalis|gurjaras|saracens": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 13 to 9; the mounted bonus increases outgoing damage from 23 to 28. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              26
+            ],
+            "higher": [
+              27,
+              26
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            28,
+            23
+          ],
+          "regularDamageFromOpponent": [
+            9,
+            13
+          ],
+          "hitsToKillOpponent": [
+            5,
+            6
+          ],
+          "incomingHitsToKillCamel": [
+            16,
+            14
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            135.0,
+            135.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "809288e1e371ea5aa33931c65c04a8d7be90c6120bdcc3bd3bcb00c8eda49d26"
+    },
+    "elite_ratha_(melee)_bengalis|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 13 to 9; the mounted bonus increases outgoing damage from 26 to 28. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              26
+            ],
+            "higher": [
+              27,
+              26
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            28,
+            26
+          ],
+          "regularDamageFromOpponent": [
+            9,
+            13
+          ],
+          "hitsToKillOpponent": [
+            5,
+            6
+          ],
+          "incomingHitsToKillCamel": [
+            16,
+            11
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            135.0,
+            135.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "2d3db1c8252867932b494bede9bc587f53d82fa0fd2cbdaeeb1dd91455e7267d"
+    },
+    "elite_shrivamsha_rider_gurjaras|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 10 to 6; the mounted bonus increases outgoing damage from 29 to 31. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              24,
+              27
+            ],
+            "higher": [
+              23,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            31,
+            29
+          ],
+          "regularDamageFromOpponent": [
+            6,
+            10
+          ],
+          "hitsToKillOpponent": [
+            3,
+            4
+          ],
+          "incomingHitsToKillCamel": [
+            24,
+            14
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            90.0,
+            90.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "9b5ff3dcd705fb105c9b96b66ad4f928f33eddbb5810dbcbbe91f922951afde6"
+    },
+    "elite_shrivamsha_rider_gurjaras|khitans|malians": {
+      "status": "retain",
+      "rationale": "Ordo Cavalry replenishes HP during combat, giving this variant a sustained-fighting ability absent from the compared civilization. That is a plausible mechanic for preserving more HP once engaged; the recordings do not isolate the healing contribution or prove the observed margin is repeatable.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-khitans/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              23,
+              27
+            ],
+            "higher": [
+              23,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            26,
+            29
+          ],
+          "regularDamageFromOpponent": [
+            10,
+            10
+          ],
+          "hitsToKillOpponent": [
+            4,
+            4
+          ],
+          "incomingHitsToKillCamel": [
+            12,
+            14
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            90.0,
+            90.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            180.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175.",
+        "officialAbilityReference": "https://www.ageofempires.com/games/aoeiide/civilizations/khitan/"
+      },
+      "fingerprint": "660b3c8a451e39483edaeb8b4609d6a98bea167cd7ec8ad507f08137c6a1342e"
+    },
+    "elite_tarkan|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 12 to 8; the mounted bonus increases outgoing damage from 28 to 30. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              26
+            ],
+            "higher": [
+              27,
+              26
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            30,
+            28
+          ],
+          "regularDamageFromOpponent": [
+            8,
+            12
+          ],
+          "hitsToKillOpponent": [
+            6,
+            7
+          ],
+          "incomingHitsToKillCamel": [
+            18,
+            12
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            170.0,
+            170.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "754269a55c820bebde4a7b201ca2e0fb1ca9262c3e873e7e919300b731e422cb"
+    },
+    "elite_war_wagon|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "The stronger mounted bonus deals 31 versus 29 damage, and the frozen counts place 27 Gurjara camels against 22 War Wagons versus 23 for Malians. Fewer opponents and the melee-armor advantage against the screen provide a matchup-specific rationale.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              22
+            ],
+            "higher": [
+              27,
+              23
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            31,
+            29
+          ],
+          "regularDamageFromOpponent": [
+            9,
+            9
+          ],
+          "hitsToKillOpponent": [
+            7,
+            7
+          ],
+          "incomingHitsToKillCamel": [
+            16,
+            16
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            200.0,
+            200.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "db1ee59bb9606d2a1177ef025415051d0df018fdbac03f261b86a1e78a0dc74d"
+    },
+    "imperial_skirmisher_vietnamese|byzantines|ethiopians": {
+      "status": "retain",
+      "rationale": "Plate Barding Armor reduces ordinary incoming pierce damage to 4 versus 6 for Ethiopians. The discount also improves the recorded ratio from 20 versus 27 to 22 versus 27. Royal Heirs does not apply to this unmounted opponent.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-byzantines/run.json",
+          "camel-comparison-ethiopians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              22,
+              27
+            ],
+            "higher": [
+              20,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            120.0
+          ],
+          "meleeArmor": [
+            3.0,
+            2.0
+          ],
+          "pierceArmor": [
+            4.0,
+            2.0
+          ],
+          "regularDamageToOpponent": [
+            6,
+            8
+          ],
+          "regularDamageFromOpponent": [
+            4,
+            6
+          ],
+          "hitsToKillOpponent": [
+            7,
+            6
+          ],
+          "incomingHitsToKillCamel": [
+            30,
+            20
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            42.0,
+            42.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "e264fc15fe9715b86b33e65149f0d8c55a4eeddd48a428f769ceac837a05675a"
+    },
+    "jian_swordsman_wu|berbers|saracens": {
+      "status": "retain",
+      "rationale": "The cost discount changes the recorded army to 27 camels versus 25, both facing 27 opponents. More attacking bodies and Maghrebi Camels regeneration provide relevant advantages, despite lower per-unit HP than Saracens.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-berbers/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              27
+            ],
+            "higher": [
+              25,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            8,
+            8
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            11
+          ],
+          "hitsToKillOpponent": [
+            9,
+            9
+          ],
+          "incomingHitsToKillCamel": [
+            13,
+            16
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            70.0,
+            70.0
+          ],
+          "regenerationPerMinute": [
+            15.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "b6647db43af2f009611e0e52cbf54ccd94810d0237afbecab15df295e62674d8"
+    },
+    "jian_swordsman_wu|malians|saracens": {
+      "status": "retain",
+      "rationale": "Farimba provides greater ordinary damage: 11 versus 8 per reference primary hit, reducing full-health hits to kill from 9 to 7. This is a concrete damage breakpoint advantage, with the recorded count and HP tradeoffs preserved.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-malians/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              25,
+              27
+            ],
+            "higher": [
+              25,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            11,
+            8
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            11
+          ],
+          "hitsToKillOpponent": [
+            7,
+            9
+          ],
+          "incomingHitsToKillCamel": [
+            13,
+            16
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            70.0,
+            70.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "f757d897b04eb6d34f7f7671bec877783c38b99a59229075808e865763b7e10f"
+    },
+    "jian_swordsman_wu|khitans|gurjaras": {
+      "status": "retain",
+      "rationale": "The extra ordinary attack reduces reference full-health hits to kill from 12 to 9; Ordo Cavalry can replenish HP during combat. These are relevant advantages, balanced against lower starting HP and the peer's other bonuses.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-khitans/run.json",
+          "camel-comparison-gurjaras/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              25,
+              27
+            ],
+            "higher": [
+              25,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            140.0
+          ],
+          "meleeArmor": [
+            3.0,
+            7.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            8,
+            6
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            7
+          ],
+          "hitsToKillOpponent": [
+            9,
+            12
+          ],
+          "incomingHitsToKillCamel": [
+            11,
+            20
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            70.0,
+            70.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            180.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175.",
+        "officialAbilityReference": "https://www.ageofempires.com/games/aoeiide/civilizations/khitan/"
+      },
+      "fingerprint": "5d1cd6393883e2b0ba33e1382b6f5057c180a63d6ff1383ef452aa820d61fa2a"
+    },
+    "mounted_trebuchet_khitans|saracens|hindustanis": {
+      "status": "retain",
+      "rationale": "Recorded Saracen camels start at 170 HP versus 160 for Hindustanis. Against the reference 28-damage Mounted Trebuchet hit, that crosses a full-health survival breakpoint from six hits to seven. This is a concrete defensive benefit, traded against the faster Imperial Camel attack.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-saracens/run.json",
+          "camel-comparison-hindustanis/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              15
+            ],
+            "higher": [
+              27,
+              15
+            ]
+          },
+          "hpPerUnit": [
+            170.0,
+            160.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            15,
+            16
+          ],
+          "regularDamageFromOpponent": [
+            28,
+            28
+          ],
+          "hitsToKillOpponent": [
+            5,
+            5
+          ],
+          "incomingHitsToKillCamel": [
+            7,
+            6
+          ],
+          "reloadSeconds": [
+            2.0,
+            1.667
+          ],
+          "opponentHp": [
+            75.0,
+            75.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "ef05162cb1865eb044ac8e4faaf7c1ede24be8121f840a8ca8c98ab8ac9384d3"
+    },
+    "savar_persians|gurjaras|saracens": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 15 to 11; the mounted bonus increases outgoing damage from 23 to 28. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              24
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            170.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            28,
+            23
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            15
+          ],
+          "hitsToKillOpponent": [
+            6,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            13,
+            12
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            165.0,
+            165.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "b27d8b75cabcbebfeef6369794e1a07f890cdeda4ed6bbfb8c341f3dd3882413"
+    },
+    "savar_persians|gurjaras|berbers": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 15 to 11; the mounted bonus increases outgoing damage from 23 to 28. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              24
+            ],
+            "higher": [
+              27,
+              23
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            28,
+            23
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            15
+          ],
+          "hitsToKillOpponent": [
+            6,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            13,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            165.0,
+            165.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            15.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "05a5c1d05177649692356b0fe2dd6c9eb3f1538d0d37eaeea5662f4f08a3abae"
+    },
+    "savar_persians|gurjaras|malians": {
+      "status": "retain",
+      "rationale": "Frontier Guards reduces the opponent's ordinary melee hit from 15 to 11; the mounted bonus increases outgoing damage from 26 to 28. These directly applicable combat differences support the highlight; splash, charge and engagement order can still affect the measured margin.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-gurjaras/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              24
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            140.0,
+            140.0
+          ],
+          "meleeArmor": [
+            7.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            28,
+            26
+          ],
+          "regularDamageFromOpponent": [
+            11,
+            15
+          ],
+          "hitsToKillOpponent": [
+            6,
+            7
+          ],
+          "incomingHitsToKillCamel": [
+            13,
+            10
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            165.0,
+            165.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175."
+      },
+      "fingerprint": "bfd30fd379d64f38e3eb03f2b53323a778652611ec74d762a0c6f340f0f72b66"
+    },
+    "savar_persians|khitans|saracens": {
+      "status": "retain",
+      "rationale": "Ordo Cavalry replenishes HP during combat, giving this variant a sustained-fighting ability absent from the compared civilization. That is a plausible mechanic for preserving more HP once engaged; the recordings do not isolate the healing contribution or prove the observed margin is repeatable.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-khitans/run.json",
+          "camel-comparison-saracens/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              27,
+              25
+            ],
+            "higher": [
+              27,
+              25
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            170.0
+          ],
+          "meleeArmor": [
+            3.0,
+            3.0
+          ],
+          "pierceArmor": [
+            4.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            23,
+            23
+          ],
+          "regularDamageFromOpponent": [
+            15,
+            15
+          ],
+          "hitsToKillOpponent": [
+            8,
+            8
+          ],
+          "incomingHitsToKillCamel": [
+            8,
+            12
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            165.0,
+            165.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            180.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175.",
+        "officialAbilityReference": "https://www.ageofempires.com/games/aoeiide/civilizations/khitan/"
+      },
+      "fingerprint": "2f235c47f6171b7cc7c1de2d0a20eeb57f57156fb68af183f6ca267200d2674b"
+    },
+    "xianbei_raider_wei|ethiopians|malians": {
+      "status": "retain",
+      "rationale": "Royal Heirs applies to this mounted opponent: reference regular incoming damage is 4 versus 5. This is a relevant defensive tradeoff despite lower HP and armor; charge and engagement details are not resolved by the ordinary-hit calculation.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-ethiopians/run.json",
+          "camel-comparison-malians/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "lower": [
+              24,
+              27
+            ],
+            "higher": [
+              24,
+              27
+            ]
+          },
+          "hpPerUnit": [
+            120.0,
+            140.0
+          ],
+          "meleeArmor": [
+            2.0,
+            3.0
+          ],
+          "pierceArmor": [
+            2.0,
+            4.0
+          ],
+          "regularDamageToOpponent": [
+            21,
+            24
+          ],
+          "regularDamageFromOpponent": [
+            4,
+            5
+          ],
+          "hitsToKillOpponent": [
+            3,
+            3
+          ],
+          "incomingHitsToKillCamel": [
+            30,
+            28
+          ],
+          "reloadSeconds": [
+            2.0,
+            2.0
+          ],
+          "opponentHp": [
+            60.0,
+            60.0
+          ],
+          "regenerationPerMinute": [
+            0.0,
+            0.0
+          ],
+          "inCombatRegenerationPerMinute": [
+            0.0,
+            0.0
+          ]
+        },
+        "limits": "Primary-hit calculations omit splash, secondary targets, charge damage, regeneration timing and pathing. A relevant advantage is a plausible explanation, not causal proof. Saracen 170 HP uses the verified capture correction rather than the reference DB's 175.",
+        "officialAbilityReference": "https://www.ageofempires.com/news/age-of-empires-ii-definitive-edition-update-81058/"
+      },
+      "fingerprint": "2b3823f26eb2b6653ae3924f5716b6e0fd4646e0eb55a8dac224f8ea0db04393"
+    },
+    "flemish_militia_burgundians|turks|berbers": {
+      "status": "dismiss_obvious",
+      "rationale": "Both have the same basic camel combat stats, while Berbers also regenerate. Turks field 19 camels versus the Berbers' 20 against the same 27 Flemish Militia; there is no relevant Turkish advantage. Omit this isolated anomaly from strategic highlights without altering the recorded loss or proving randomness.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-turks/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "turks": [
+              19,
+              27
+            ],
+            "berbers": [
+              20,
+              27
+            ]
+          },
+          "basicCombatStats": {
+            "hp": 140,
+            "attack": 11,
+            "meleeArmor": 3,
+            "pierceArmor": 4,
+            "reloadSeconds": 2
+          },
+          "regenerationPerMinute": {
+            "turks": 0,
+            "berbers": 15
+          },
+          "lowerEnemyHpPercent": 51.2962962962963,
+          "higherEnemyHpPercent": 65.06172839506172
+        },
+        "limits": "One battle per cell. Different engagement sequences can affect results; no causal randomness claim."
+      },
+      "fingerprint": "159a903aeaa757bec55e6d7368bbbee54e344ec17831f3610e7ae1d01be7f0f4"
+    },
+    "war_chariot_shu|turks|berbers": {
+      "status": "dismiss_obvious",
+      "rationale": "Both field 27 camels with the same basic combat stats, while Berbers also regenerate and face only 21 War Chariots versus the Turks' 23. There is no relevant Turkish advantage. Omit this isolated anomaly from strategic highlights without altering the recorded loss or proving randomness.",
+      "evidence": {
+        "referenceDatabase": "data/golden/aoe2_reference.db",
+        "sources": [
+          "camel-comparison-turks/run.json",
+          "camel-comparison-berbers/run.json"
+        ],
+        "comparisonFacts": {
+          "counts": {
+            "turks": [
+              27,
+              23
+            ],
+            "berbers": [
+              27,
+              21
+            ]
+          },
+          "basicCombatStats": {
+            "hp": 140,
+            "attack": 11,
+            "meleeArmor": 3,
+            "pierceArmor": 4,
+            "reloadSeconds": 2
+          },
+          "regenerationPerMinute": {
+            "turks": 0,
+            "berbers": 15
+          },
+          "lowerEnemyHpPercent": 73.91304347826086,
+          "higherEnemyHpPercent": 85.71428571428571
+        },
+        "limits": "One battle per cell. Different engagement sequences can affect results; no causal randomness claim."
+      },
+      "fingerprint": "898621f12c20518fd93eacecf2975cab6a94bf29a3fa326f118e4cb05572154d"
+    }
+  }
+}

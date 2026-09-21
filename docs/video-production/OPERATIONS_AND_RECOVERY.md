@@ -96,6 +96,14 @@ The recorder's Windows file lock prevents two campaigns controlling the game sim
 
 ## Retakes before ordinary backlog
 
+Long matchup IDs can leave a `.mov` path under Windows' legacy 260-character
+limit while `.frames.bin` or `.meta.json` exceeds it. The recorder uses
+`aoe2x.lab.capture_paths.capture_prefix` to choose the internal stem `capture`
+for such runs; frozen job IDs, matchup plans, and descriptive compact-archive
+filenames remain unchanged. Capture validation and terminal recovery use the
+same path helper. A pre-fix failed attempt must be preserved before recapturing
+when its original HP sidecar/alignment was not retained.
+
 Retakes needed by a pending publication take priority over new units. Separate capture validity from offline rendering validity:
 
 | Failure | Correct response |

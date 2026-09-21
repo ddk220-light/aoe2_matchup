@@ -50,7 +50,8 @@ def recover_mutual_elimination(run_directory: Path, plan: dict) -> dict:
     from auto.vision import detect_end
     from overlay.unit_timeline import decode
 
-    prefix = run_directory / 'raw recordings' / plan['matchupId']
+    from .capture_paths import capture_prefix
+    prefix = capture_prefix(run_directory, plan['matchupId'])
     video, frames = prefix.with_suffix('.mov'), Path(f'{prefix}.frames.bin')
     hp_path, end_path = Path(f'{prefix}.hp.json'), Path(f'{prefix}.END')
     if end_path.exists():

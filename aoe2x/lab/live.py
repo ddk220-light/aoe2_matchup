@@ -264,7 +264,8 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
 
 
 def _capture_prefix(run_directory: Path, stem: str) -> Path:
-    return run_directory / "raw recordings" / stem
+    from .capture_paths import capture_prefix
+    return capture_prefix(run_directory, stem)
 
 
 def _temporary_grpc_prefix(video: Path) -> Path:
@@ -612,7 +613,7 @@ def run_live(
                     plan["side2"]["slug"],
                     plan["side3"]["civ"],
                     plan["side3"]["slug"],
-                    name=f"{plan['matchupId']}.mov",
+                    name=f"{_capture_prefix(run_directory, plan['matchupId']).name}.mov",
                     copy_to=run_directory,
                     raw_copy_to=run_directory,
                     cap=config.live_cap_seconds,

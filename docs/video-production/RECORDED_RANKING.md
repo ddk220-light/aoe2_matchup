@@ -56,11 +56,12 @@ $env:PYTHONPATH='apps/video;.'
 apps/video/.venv/Scripts/python.exe apps/video/report_knight_line_rankings.py --line camel --archive-root 'D:/AoE2 Renders' --require-current-all
 ```
 
-After all knight recaptures and Leitis corrections are archived:
+After the [minimal knight corrections](KNIGHT_MINIMAL_RETAKE_AUDIT.md) are archived
+and the retained Cavalier result indexes are built:
 
 ```powershell
 $env:PYTHONPATH='apps/video;.'
-apps/video/.venv/Scripts/python.exe apps/video/report_knight_line_rankings.py --line knight --archive-root 'D:/AoE2 Renders' --require-current-all
+apps/video/.venv/Scripts/python.exe apps/video/report_knight_line_rankings.py --line knight --archive-root 'D:/AoE2 Renders' --archive-root data/local/knight-reused-indexes --require-current-all
 ```
 
 On another machine, substitute its Python executable and actual archive path.
@@ -109,7 +110,8 @@ roster from whatever folders happen to be connected.
 |---|---|---|---:|
 | Camels | Hindustanis, Gurjaras, Berbers, Byzantines, Ethiopians, Saracens, Khitans, Malians, Turks | Nine `camel-comparison-*` folders; Hindustanis use Imperial Camel Rider, the others Heavy Camel Rider | 70 |
 | Knights: expansion | Spanish, Burgundian, Celtic Paladins; Khmer, Berber, Malay Cavaliers; Wei, Wu, Shu Heavy Hei Guang Cavalry | Nine `knight-expansion-*` folders, each followed by its `knight-v2-leitis4-*` correction | 70 |
-| Knights: recaptured originals | Frank, Teutonic, four-relic Lithuanian Paladins; Persian Savar; Bulgarian, Polish, Burmese, Sicilian Cavaliers | Eight `knight-v2-*` folders | 70 |
+| Knights: completed replacements | Frank, Teutonic, four-relic Lithuanian Paladins; Persian Savar; Bulgarian Cavalier | Five completed `knight-v2-*` folders | 70 |
+| Knights: reused originals | Polish, Burmese, Sicilian Cavaliers | Three `knight-reused-cavalier-*` result indexes, each followed by its two-cell `knight-count-fix-cavalier-*` archive | 70 |
 
 The knight ranking combines all **17** variants. A compatibility key remains
 `paladin-persians`; its label is Persian Savar and its archive is
@@ -147,6 +149,14 @@ battle MP4 and frames. The reporting script trusts the archive's captured result
 after the metadata checks below; it does not independently rediscover the winner
 from the video or hash every large media file on each invocation. Copy and
 media-integrity verification are separate steps in the retention workflow.
+
+The three reused Cavalier indexes are explicitly metadata-only: original plans,
+capture results and metadata hashes were recovered from `retained-source-versions`,
+including their existing four-relic Leitis fixes. Their original MP4/frame files
+were not located on the connected disks. This does not require another battle
+for ranking, but it does limit replay and overlay rebuilding. Each affected row
+keeps `metadataOnly: true`; the report states this limitation. See the
+[recovery command and audit](KNIGHT_MINIMAL_RETAKE_AUDIT.md).
 
 ### Counts and comparability
 
@@ -188,10 +198,16 @@ HP arithmetic, or inconsistent signed HP. Its arithmetic check is
 `1e-9`. A recorded draw's expected normalized and signed HP is zero.
 
 It then builds the union of available opponent slugs and includes a slug only
-when every included variant has that opponent, v2 policy, actual counts matching
+when every included variant has that opponent, a recognized v1/v2 policy, actual counts matching
 the formula, and matching `gameVersion`, opponent relic setting, Golden hash,
 and buffer count across variants. Expected unit stats can differ by civilization;
 these checks do not establish that every possible in-game mechanic was measured.
+
+V1 and v2 share comparison-price rules in these captures. An old policy label
+alone is not a reason to recapture: reuse it when its actual starting counts
+match the current formula. Preserve its original policy label. The audited older
+eight knight variants differed in only 16 of 591 count pairs, against Blackwood
+Archers and Karambit Warriors; the other 575 did not need a count-driven rerun.
 
 Exclude these three opponents from **all ranking metrics and all three lists**:
 

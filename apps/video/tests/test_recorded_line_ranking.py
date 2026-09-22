@@ -31,6 +31,17 @@ def test_rosters_reproduce_without_machine_local_queues_or_intro_profiles(monkey
     assert camels == manifest["camel"] and knights == manifest["knight"]
 
 
+@pytest.mark.parametrize("policy,captured,expected,eligible", [
+    ("geometric_shared_discount_v1", [21, 27], [21, 27], True),
+    ("geometric_shared_discount_unit_count_v2", [21, 27], [21, 27], True),
+    ("geometric_shared_discount_v1", [10, 27], [15, 27], False),
+    ("geometric_shared_discount_v1", [13, 27], [18, 27], False),
+    ("unknown", [21, 27], [21, 27], False),
+])
+def test_capture_equivalence_uses_actual_counts_not_only_policy_label(policy, captured, expected, eligible):
+    assert reporting.counts_match_current_policy(policy, captured, expected) is eligible
+
+
 @pytest.mark.parametrize("owner", [2, 3])
 @pytest.mark.parametrize("hp", [0, 0.01, 9.999999])
 def test_under_ten_percent_is_a_draw_whichever_side_survives(owner, hp):

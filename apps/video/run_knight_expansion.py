@@ -36,6 +36,10 @@ def compact(campaign, archive_root):
 
 def main():
     import msvcrt
+    if (WORK/'SUPERSEDED.json').exists():
+        replacement=read(WORK/'SUPERSEDED.json')
+        status('SUPERSEDED', **replacement)
+        return
     queue=read(WORK/'queue.json')
     completed=[]; failures=[]
     # Prevent duplicate queue supervisors, in addition to the recorder mutex.

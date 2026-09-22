@@ -28,6 +28,7 @@ DRAW_POINTS = 0.5
 UNEXPECTED_WIN_HP_GAP_PP = 10.0
 HIGHLIGHT_LIMIT = 25
 EXCEPTION_FIELDS = ("higherRankedNonWinners", "higherRankedHpWins", "higherRankedHpLosses")
+COUNT_POLICIES = {"geometric_shared_discount_v1", "geometric_shared_discount_unit_count_v2"}
 
 
 def read(path):
@@ -68,6 +69,16 @@ def expected_counts(plan):
     cap = plan["balance"]["cap"]
     rounded = lambda x: max(1, math.floor(x + .5))
     return [cap, rounded(cap * math.sqrt(a / b))] if a <= b else [rounded(cap * math.sqrt(b / a)), cap]
+
+
+def counts_match_current_policy(policy, captured, expected):
+    """Reuse equivalent battles; an old policy label alone does not require a rerun.
+
+    V1 and v2 share comparison-price rules. V1 can differ only through population
+    weighting/counts here; require the actual army counts to match the v2 formula.
+    Golden, game version, relics, and buffer checks remain separate and mandatory.
+    """
+    return policy in COUNT_POLICIES and captured == expected
 
 
 def source_specs(line):
@@ -357,6 +368,8 @@ def main(roots, require_current_all=False, line="knight"):
                 # Later explicit correction sources replace only matching slugs.
                 # Keep the authoritative per-cell path, as well as all source hashes.
                 rows[slug] = dict(jobId=raw["jobId"], archive=str(path),
+                    sourceKind=raw.get("sourceKind", "compact_recording_archive"),
+                    metadataOnly=raw.get("metadataOnly", False),
                     opponent=plan["side3"]["label"], opponentCivilization=plan["side3"]["civ"],
                     recordedOutcome="W" if owner == 2 else "L" if owner == 3 else "D",
                     outcome=ranking_outcome(owner, hp),
@@ -381,10 +394,8 @@ def main(roots, require_current_all=False, line="knight"):
         if any(r is None for r in rows):
             reasons.append("Not recorded for every included variant (including omitted self-match)")
         else:
-            if any(r["policy"] != "geometric_shared_discount_unit_count_v2" for r in rows):
-                reasons.append("Different count policy")
-            if any(r["counts"] != r["currentPolicyCounts"] for r in rows):
-                reasons.append("Recorded counts differ from current one-pop-per-unit policy")
+            if any(not counts_match_current_policy(r["policy"], r["counts"], r["currentPolicyCounts"]) for r in rows):
+                reasons.append("Recorded policy or counts are incompatible with the current one-pop-per-unit benchmark")
             for field in ("gameVersion", "opponentRelics", "golden", "bufferCount"):
                 if len({r[field] for r in rows}) > 1:
                     reasons.append("Different " + field)
@@ -468,6 +479,8 @@ def main(roots, require_current_all=False, line="knight"):
         rankingExceptionRule=f"Compare a lower-ranked variant with every strictly higher-ranked variant against the same opponent. Include a clear win versus a loss or draw; two clear wins with strictly more than {UNEXPECTED_WIN_HP_GAP_PP:g} percentage points extra own HP; or two clear losses with strictly more than {UNEXPECTED_WIN_HP_GAP_PP:g} percentage points less opponent HP remaining. Normalize each HP pool to its own starting HP. Exactly {UNEXPECTED_WIN_HP_GAP_PP:g} points does not qualify. Lower-ranked draws do not qualify. These descriptive comparisons never change ranking scores or rarity bonuses.",
         rankingExceptionHpGapThresholdPercentagePoints=UNEXPECTED_WIN_HP_GAP_PP,
         rankExceptions=ranking_exceptions(ranking, series, included))
+    if any(row["metadataOnly"] for variant in series.values() for row in variant["rows"].values()):
+        result["caveats"].append("Some unchanged Cavalier results are recovered from retained capture metadata. Their outcomes and count checks are available, but the original video/frame files have not been located on the connected disks; no replacement battle is inferred or required for ranking.")
     review_path = REPO / f"apps/video/ranking_reviews/{line}.json"
     mechanics_review = read(review_path) if review_path.exists() else None
     result["reproduction"]["reviewManifestSha256"] = (

@@ -3,6 +3,15 @@ from types import SimpleNamespace
 
 import capture_storage_guard as storage
 import prepare_knight_v2_recapture as preparation
+from prepare_knight_required_retakes import different_counts
+
+
+def test_retake_selection_does_not_treat_policy_label_change_as_count_change():
+    before = dict(side2=dict(count=21), side3=dict(count=27), policy="v1")
+    after = dict(side2=dict(count=21), side3=dict(count=27), policy="v2")
+    assert not different_counts(before, after)
+    after["side2"]["count"] = 15
+    assert different_counts(before, after)
 
 
 def test_fresh_requests_preserve_roster_and_apply_relics_without_mutating_baseline():

@@ -1,4 +1,14 @@
-# Comparable knight-line re-recording
+# Knight recapture: superseded blanket queue
+
+**Do not resume the original 600-battle queue.** The count audit established
+that only 16 old battles need count corrections. Ten were already done when
+the blanket queue stopped. The older eight Leitis fixes were also already done.
+The replacement queue contains six count fixes and nine expansion Leitis fixes.
+See [the minimal retake audit](KNIGHT_MINIMAL_RETAKE_AUDIT.md) for evidence and
+the current instructions. `SUPERSEDED.json` prevents the old queue restarting.
+
+The remaining description records the historical plan; it is not authorization
+to rerun those 600 battles or to discard equivalent old results.
 
 Final reporting is specified in [Recorded rankings and the three top-25 lists](RECORDED_RANKING.md),
 including exact scoring, HP thresholds, review decisions, and reproduction commands.
@@ -26,12 +36,12 @@ Total queue: **600 new recordings**, no rendering or publishing.
 Preparation: `apps/video/prepare_knight_v2_recapture.py`. It checks installed DAT
 and cost-extraction hashes, uses existing audited identities without rewriting
 catalogs, freezes all plans and catalogs, and refuses existing destinations.
-Work: `data/local/knight-v2-recapture`. After preparation, start or resume with:
+Historical work: `data/local/knight-v2-recapture`. Resume only its replacement:
 
 ```powershell
 $env:PYTHONPATH='apps/video;.'
 $env:PYTHONUTF8='1'
-apps/video/.venv/Scripts/python.exe -u apps/video/run_knight_expansion.py --work data/local/knight-v2-recapture
+apps/video/.venv/Scripts/python.exe -u apps/video/run_knight_expansion.py --work data/local/knight-required-retakes
 ```
 
 Each full variant passes its first capture's HP/count pilot. The existing
@@ -46,8 +56,9 @@ named battle videos, binary frames and `run.json` reconstruction metadata.
 Local media is retired only after verified copies and durable receipts. Existing
 external files and the historical archives must never be overwritten or removed.
 
-After all captures and archives finish, combine the eight new archives with the
-nine expansion archives, applying `knight-v2-leitis4-*` as explicit overrides.
+After the necessary corrections finish, combine the five completed replacement
+sets, three reused original sets and nine expansion sets, applying isolated
+count/Leitis corrections as explicit overrides in `ranking_sources.json`.
 Rank all 17 variants on the 70 shared opponents (Savar self-match, Flaming Camel,
 Missionary and War Chariot barrage mode excluded for everyone). War Chariot
 focused-fire mode remains included. The user requested these ranking exclusions
@@ -88,7 +99,7 @@ The September 21 editorial update also includes losses with strictly over
 overall ranking; deliver `HIGHLIGHTS.md` with top-25 upward surprises, top-25
 downward surprises and top-25 rare wins as defined in the ranking review policy.
 
-The old-policy ranking sources are on the disconnected older archive disk.
-They are unnecessary for this new capture queue and must not be substituted
-for current-policy outcomes. Existing preliminary analysis lives in
-`data/local/knight-line-ranking`; rebuild it once all 17 current-policy sets exist.
+The older disk has been reconnected and original metadata audited. Equivalent
+old counts are reusable; an old policy label alone does not invalidate them.
+The reused Cavalier results are recovered as explicitly metadata-only indexes;
+their original replay files have not been located. See the minimal retake audit.

@@ -6,7 +6,7 @@ The owner approved the complete existing per-unit reusable asset library, not on
 
 This records approval to **retain the library in Git**. It is not a new claim that every image was individually visually reviewed. The source workflow's finalized outputs are documented in [finalize_units.py](../graphics/units/finalize_units.py), with blue-team outputs in [build_blue_sprites.py](../graphics/units/build_blue_sprites.py). Do not run the finalizer for Git cleanup: it regenerates images and deletes other files.
 
-The selected snapshot is `563825f43b3e7d1d71155b3b90be7d2574f106ec`: **1548 files across 223 unit folders, 1,102,507,305 bytes (1051.43 MiB)**. Every selected path is enumerated below and as an exact exception in the root `.gitignore`. New files are not approved solely because their names resemble these files.
+The original selected snapshot is `563825f43b3e7d1d71155b3b90be7d2574f106ec`: **1548 files across 223 unit folders, 1,102,507,305 bytes (1051.43 MiB)**. The table immediately below describes that original snapshot. The exact register and `.gitignore` exceptions now also include the owner's subsequent unit-completion selection described below. New files are not approved solely because their names resemble these files.
 
 | Asset family | Files | MiB | Variant and reuse purpose |
 | --- | ---: | ---: | --- |
@@ -19,7 +19,15 @@ The selected snapshot is `563825f43b3e7d1d71155b3b90be7d2574f106ec`: **1548 file
 | Attack animation | 193 | 634.78 | Direction 06, red, DAT 4x; reusable transparent attack animation |
 | HD unit illustration | 17 | 15.09 | FLUX HD; angle not inferred; reusable per-unit final illustration |
 
-There are no standalone idle-animation GIFs or WebPs in the current `graphics/units/` library. Idle assets here are still PNG poses. Thirty unit folders have no attack GIF. Preserve the available files and report gaps; this cleanup does not authorize regeneration or claim every unit has every asset type.
+There were no standalone idle-animation GIFs or WebPs in the original `graphics/units/` snapshot. Idle assets here are still PNG poses. Thirty original unit folders had no attack GIF. The later completion batch fills selected gaps, not every possible unit asset. Git publication does not authorize regeneration or claim every unit has every asset type.
+
+## Subsequent unit-completion selection — 2026-09-22
+
+After publication of `3919b3158d37c606ba784f52eed78a9278c284a6`, the owner requested publication of the new-unit and gap-filling assets. This adds **100 standard unit files and 63 FLUX.2 artwork files**, and updates the **two Flemish Militia icons** to the current DAT-derived versions: 165 changed media paths, 116,540,919 bytes of selected working content. The exact register below now contains **1711 unique retained paths** and records the updated icon blobs.
+
+The ten new unit entries are Mounted Crossbowman, Heavy Mounted Crossbowman, Varangian Guard, Elite Varangian Guard, Hearth Troop, Elite Hearth Troop, Jarl, Elite Jarl, Jomsviking and Elite Jomsviking. Standard-file additions also fill gaps for Elite Hussite Wagon, Elite War Wagon, Flaming Camel, Missionary and both War Chariot modes. The 21 new artwork sets each retain their background render, full-resolution transparent cutout and transparent icon in `graphics/art/flux2_hybrid/`.
+
+The associated source scripts, generation records, inventory and text/JSON validation notes in `graphics/asset_completion_2026-09-22/` are retained for reuse and provenance. Its `review/` comparison images and all scratch/superseded renders stay local and ignored. Retention authorization is not visual golden approval: Savar and Heavy Mounted Crossbowman remain flagged for owner review, as recorded in the completion notes. No images are regenerated or promoted to golden by this publication.
 
 ## What belongs in Git
 
@@ -57,17 +65,17 @@ Use explicit staging paths and an explicit publication target. Never publish rec
 
 The cleanup is based on remote tip `251f6befa2986d04fafe8556ace4682ad253ae2a`. The original six commits remain recoverable through local-only branch `backup/local-video-recorder-v3-20260922`. All selected and excluded media stay on disk. The replacement commit retains the 38 previously reviewed source paths, this policy, the approved plan, repository instructions, and the exact asset register below.
 
-The separate untracked `graphics/ASSET_INVENTORY_2026-09-22.md` was present when implementation began. It is left unchanged and unstaged, not silently bundled into this commit. Its baseline raw Git blob hash is `041ba88dcfb5ac48a550ca4ef9b8728681c44cbd`.
+The separate untracked `graphics/ASSET_INVENTORY_2026-09-22.md` was present when reconstruction began and was deliberately excluded from that first commit. Its initial raw Git blob hash was `041ba88dcfb5ac48a550ca4ef9b8728681c44cbd`. The completed inventory is included only under the owner's subsequent unit-completion request above.
 
-During validation, other work changed `graphics/units/flemish_militia/icon.png` and `graphics/units/flemish_militia/icon_transparent.png`. Preserve those working-tree edits and leave them uncommitted. This reconstruction retains their pinned snapshot versions in the index/commit, consistent with the register below; it does not overwrite the newer files or silently adopt their changes.
+During reconstruction validation, other work changed `graphics/units/flemish_militia/icon.png` and `graphics/units/flemish_militia/icon_transparent.png`. That first commit retained the pinned snapshot versions without overwriting the newer working files. The owner's subsequent unit-completion request now selects those two corrections, whose current blobs are recorded below.
 
-Other work is also creating `graphics/asset_completion_2026-09-22/`. Its source scripts, manifests and notes are left untouched and unstaged for that task to finish; they are not blanket-ignored or silently bundled into this snapshot. Concurrent generation does not broaden this commit's exact approved path/content set.
+The concurrent `graphics/asset_completion_2026-09-22/` work was likewise excluded from the reconstruction. Its completed source, manifests and notes are included only in the subsequent scoped publication; comparison images remain local. Unrelated concurrent landscape-video work is not included. Concurrent generation alone never broadens a commit's approved path/content set.
 
-This operation does not push, deploy, rewrite remote history, shrink the local object store, relocate assets, add Git LFS, or implement older storage/CDN proposals.
+The original local reconstruction did not push or deploy. Subsequent owner-authorized pushes target only `codex/video-recorder-v3`; they do not authorize deployment, remote-history rewriting, local-object cleanup, asset relocation, Git LFS migration or older storage/CDN proposals.
 
 ## Exact retained-asset register
 
-Paths are repository-relative. Each path's variant/purpose is specified by its family above. Bytes and Git blob IDs identify the existing pinned content and support verification without regenerating media.
+Paths are repository-relative. Each path's variant/purpose is specified by its family above; FLUX2 entries distinguish background source, transparent full-resolution artwork and transparent artwork icon. Bytes and Git blob IDs identify the current selected content, including the subsequent additions and two icon corrections, and support verification without regenerating media.
 
 | Path | Family | Bytes | Git blob ID |
 | --- | --- | ---: | --- |
@@ -897,8 +905,8 @@ Paths are repository-relative. Each path's variant/purpose is specified by its f
 | `graphics/units/flemish_militia/flemish_militia_idle_dir06_dat4x.png` | DAT idle pose | 192669 | `b056368d649d93c4aae855825962063dfb346175` |
 | `graphics/units/flemish_militia/flemish_militia_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 191573 | `bf27ded02b75d7719fc4fe7c97fe369a920096c3` |
 | `graphics/units/flemish_militia/flemish_militia_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 189272 | `4d161220c5deb4cfa936c06dc6dec376cfe8d33d` |
-| `graphics/units/flemish_militia/icon.png` | Game icon | 65237 | `dcf48021714f9c82f6b9de07ea8c67b9837cdb0d` |
-| `graphics/units/flemish_militia/icon_transparent.png` | Transparent icon | 69027 | `e348a6824f384ab594d9519f5daa7e43d9f65941` |
+| `graphics/units/flemish_militia/icon.png` | Game icon | 68033 | `9294ff156d39b47c492221fa972f00824c7ba4a9` |
+| `graphics/units/flemish_militia/icon_transparent.png` | Transparent icon | 70936 | `a7338a51d6fa7c9509d159771fcacff8227f39eb` |
 | `graphics/units/galleon/galleon_idle_dir06.png` | Native idle pose | 61644 | `c2ad4d9fe426fcc19b0c945e81af16159a6e2dea` |
 | `graphics/units/galleon/galleon_idle_dir06_dat4x.png` | DAT idle pose | 1500109 | `e5a85e9d52f084e422f20c97f521088a56ce06f4` |
 | `graphics/units/galleon/galleon_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 1500109 | `e5a85e9d52f084e422f20c97f521088a56ce06f4` |
@@ -1619,3 +1627,166 @@ Paths are repository-relative. Each path's variant/purpose is specified by its f
 | `graphics/units/xianbei_raider/xianbei_raider_idle_dir06_dat4x.png` | DAT idle pose | 351029 | `f1699e72f1013e86658636cb46cd2b2ddad4ce7a` |
 | `graphics/units/xianbei_raider/xianbei_raider_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 351703 | `1af4fe668a3315976f98c5fb36a7c7d3af085935` |
 | `graphics/units/xianbei_raider/xianbei_raider_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 364159 | `0f8543d5f8c76f9b14655d5a505d62f5fa1c0289` |
+| `graphics/art/flux2_hybrid/condottiero_idle_dir05_bg.png` | FLUX2 background render | 963676 | `5afc55c04d4863de65148f5da9f0bdc416cebff3` |
+| `graphics/art/flux2_hybrid/condottiero_idle_dir05_icon.png` | FLUX2 artwork icon | 39282 | `506c97fb1ad537bd84130c39d538268968d1c7d6` |
+| `graphics/art/flux2_hybrid/condottiero_idle_dir05_nobg.png` | FLUX2 transparent artwork | 441046 | `9158f8c30947cc7f6ffb174852e45bab0d11e527` |
+| `graphics/art/flux2_hybrid/elite_hearth_troop_idle_dir05_bg.png` | FLUX2 background render | 821367 | `52d99e5919fc7722f9eb486224bd0093fa7d5db6` |
+| `graphics/art/flux2_hybrid/elite_hearth_troop_idle_dir05_icon.png` | FLUX2 artwork icon | 53017 | `4ca6f08132b6b16cb6252949d3fa8cef26ba6eb9` |
+| `graphics/art/flux2_hybrid/elite_hearth_troop_idle_dir05_nobg.png` | FLUX2 transparent artwork | 641772 | `4d92f916fa4c4c46feb6c876299e0b4f2dae5920` |
+| `graphics/art/flux2_hybrid/elite_jarl_idle_dir05_bg.png` | FLUX2 background render | 735316 | `c23aaf0e6131141d6fc9c62ea5eb5e7fa2573635` |
+| `graphics/art/flux2_hybrid/elite_jarl_idle_dir05_icon.png` | FLUX2 artwork icon | 53526 | `b8699423afb6f536172fd3f03675abfa60c57161` |
+| `graphics/art/flux2_hybrid/elite_jarl_idle_dir05_nobg.png` | FLUX2 transparent artwork | 520323 | `68d5e22f68733f3717594a9285fa70adb39c724b` |
+| `graphics/art/flux2_hybrid/elite_jomsviking_idle_dir05_bg.png` | FLUX2 background render | 640683 | `41eeab655a47450ecb40686bd9aa42dbf8f473ce` |
+| `graphics/art/flux2_hybrid/elite_jomsviking_idle_dir05_icon.png` | FLUX2 artwork icon | 38164 | `10b9e42c43cb6838bcaba18b2e6bd87937312224` |
+| `graphics/art/flux2_hybrid/elite_jomsviking_idle_dir05_nobg.png` | FLUX2 transparent artwork | 474034 | `fe713a647ef45bde052c8516c574556b048e3051` |
+| `graphics/art/flux2_hybrid/elite_varangian_guard_idle_dir05_bg.png` | FLUX2 background render | 673774 | `d4e8a175cba3ac0ff3a1e723ad255cae3d0916da` |
+| `graphics/art/flux2_hybrid/elite_varangian_guard_idle_dir05_icon.png` | FLUX2 artwork icon | 47842 | `761e1884c2df8d1e6e42b11f299af3e27568606a` |
+| `graphics/art/flux2_hybrid/elite_varangian_guard_idle_dir05_nobg.png` | FLUX2 transparent artwork | 506313 | `ebcc62e1ec429b6765ee1f295f019444260052a3` |
+| `graphics/art/flux2_hybrid/flaming_camel_idle_dir05_bg.png` | FLUX2 background render | 1046888 | `811b778376d3b952271ce3a7677c9a5bc1559b3d` |
+| `graphics/art/flux2_hybrid/flaming_camel_idle_dir05_icon.png` | FLUX2 artwork icon | 75774 | `6ce49dc23f85026d5115150ed0e8bc52a6b3aca8` |
+| `graphics/art/flux2_hybrid/flaming_camel_idle_dir05_nobg.png` | FLUX2 transparent artwork | 967621 | `4f86db7402d6caaa4f84eea76718871035495288` |
+| `graphics/art/flux2_hybrid/flemish_militia_idle_dir05_bg.png` | FLUX2 background render | 969984 | `1a15948d7ec301ce0ea5bebd92bea10714b0e96d` |
+| `graphics/art/flux2_hybrid/flemish_militia_idle_dir05_icon.png` | FLUX2 artwork icon | 50919 | `48b43178fc5122161dae457118035428c3b8d064` |
+| `graphics/art/flux2_hybrid/flemish_militia_idle_dir05_nobg.png` | FLUX2 transparent artwork | 653722 | `ca1d1761e5b4d23df0834b207db9571abcbc7d21` |
+| `graphics/art/flux2_hybrid/grenadier_idle_dir05_bg.png` | FLUX2 background render | 680105 | `cdedb0b53392b21583ff1f3314ad763db2ce6074` |
+| `graphics/art/flux2_hybrid/grenadier_idle_dir05_icon.png` | FLUX2 artwork icon | 50838 | `6eca22a68ca95aae378acee0a83ba45487f7c7c3` |
+| `graphics/art/flux2_hybrid/grenadier_idle_dir05_nobg.png` | FLUX2 transparent artwork | 539885 | `b2af7d9df94a58bce4aabbc326c2cc1c52bb7241` |
+| `graphics/art/flux2_hybrid/hearth_troop_idle_dir05_bg.png` | FLUX2 background render | 883835 | `5f6bcae979e29acb2fed42b691550c94b3de513b` |
+| `graphics/art/flux2_hybrid/hearth_troop_idle_dir05_icon.png` | FLUX2 artwork icon | 60896 | `4ed086566910730794296c9b1c3ab067e552a821` |
+| `graphics/art/flux2_hybrid/hearth_troop_idle_dir05_nobg.png` | FLUX2 transparent artwork | 789081 | `382c6a6f27d2cf05fca8dfbe9114e936afba786a` |
+| `graphics/art/flux2_hybrid/heavy_mounted_crossbowman_idle_dir05_bg.png` | FLUX2 background render | 897809 | `5bb994b147b7c5dc3d0442c96b4832f5c44b3c05` |
+| `graphics/art/flux2_hybrid/heavy_mounted_crossbowman_idle_dir05_icon.png` | FLUX2 artwork icon | 59342 | `cc4fc52367b3a54f45cbf805d190586c93cc152d` |
+| `graphics/art/flux2_hybrid/heavy_mounted_crossbowman_idle_dir05_nobg.png` | FLUX2 transparent artwork | 698233 | `331e16a0b925e4204388b988e040ec59d0b85d98` |
+| `graphics/art/flux2_hybrid/houfnice_idle_dir05_bg.png` | FLUX2 background render | 866680 | `c51fe5f30b9cb93eb5dd38441ce190db97596a71` |
+| `graphics/art/flux2_hybrid/houfnice_idle_dir05_icon.png` | FLUX2 artwork icon | 93837 | `22d28e3023174ecf10cf732de5332ff3f7b5a364` |
+| `graphics/art/flux2_hybrid/houfnice_idle_dir05_nobg.png` | FLUX2 transparent artwork | 570017 | `213de2e6f88632cc85874a8f2c32c99b139afb35` |
+| `graphics/art/flux2_hybrid/imperial_camel_rider_idle_dir05_bg.png` | FLUX2 background render | 899600 | `84dc51b9871b66f42a33bee1a9f3fedc0f8bc06b` |
+| `graphics/art/flux2_hybrid/imperial_camel_rider_idle_dir05_icon.png` | FLUX2 artwork icon | 42965 | `4c5e2f59d911043b8f3d5faa9603451a4321498b` |
+| `graphics/art/flux2_hybrid/imperial_camel_rider_idle_dir05_nobg.png` | FLUX2 transparent artwork | 478023 | `a057ee47d4c4193b37458bfa2b6621b315e6015d` |
+| `graphics/art/flux2_hybrid/imperial_skirmisher_idle_dir05_bg.png` | FLUX2 background render | 709187 | `003b32861d168753aecaa41493e88d3d0101e827` |
+| `graphics/art/flux2_hybrid/imperial_skirmisher_idle_dir05_icon.png` | FLUX2 artwork icon | 36619 | `592cfe1ed68189100ae569372315f202abc75fa5` |
+| `graphics/art/flux2_hybrid/imperial_skirmisher_idle_dir05_nobg.png` | FLUX2 transparent artwork | 410082 | `6d39709f8472c8e9e8328bdf7c11c6181d53d67a` |
+| `graphics/art/flux2_hybrid/jarl_idle_dir05_bg.png` | FLUX2 background render | 705653 | `44c7a15f477236f74743c08bc06fa2e07fa8c36b` |
+| `graphics/art/flux2_hybrid/jarl_idle_dir05_icon.png` | FLUX2 artwork icon | 46927 | `55159675afe259a856541f22527ce058014568aa` |
+| `graphics/art/flux2_hybrid/jarl_idle_dir05_nobg.png` | FLUX2 transparent artwork | 489086 | `5afe3f28ad88365fa03d216766a9dd0234a4caa2` |
+| `graphics/art/flux2_hybrid/jomsviking_idle_dir05_bg.png` | FLUX2 background render | 645220 | `c5216c1e84114b28e09f0a0822634f29fad000e8` |
+| `graphics/art/flux2_hybrid/jomsviking_idle_dir05_icon.png` | FLUX2 artwork icon | 37118 | `24b0e9b8603933174e29246f1a7c07fe8f889de5` |
+| `graphics/art/flux2_hybrid/jomsviking_idle_dir05_nobg.png` | FLUX2 transparent artwork | 458742 | `677d4dac9d15de4012c5e47dfdfe7368b81b13ae` |
+| `graphics/art/flux2_hybrid/missionary_idle_dir05_bg.png` | FLUX2 background render | 601104 | `5bea566a7d37e33bfd3f60937886e8c756f4c9fc` |
+| `graphics/art/flux2_hybrid/missionary_idle_dir05_icon.png` | FLUX2 artwork icon | 55319 | `55bf47b10290059275ce8f3fb8c0d0ae5ea87b7e` |
+| `graphics/art/flux2_hybrid/missionary_idle_dir05_nobg.png` | FLUX2 transparent artwork | 475738 | `00da80ed37b81f8f439257538948e89efafb3f6d` |
+| `graphics/art/flux2_hybrid/mounted_crossbowman_idle_dir05_bg.png` | FLUX2 background render | 782682 | `e3ba9138d4d2d67df9a4f21166acb4ccb179185b` |
+| `graphics/art/flux2_hybrid/mounted_crossbowman_idle_dir05_icon.png` | FLUX2 artwork icon | 48374 | `32b24530c441b7766810d1f6c213e0d1b0402d5d` |
+| `graphics/art/flux2_hybrid/mounted_crossbowman_idle_dir05_nobg.png` | FLUX2 transparent artwork | 578026 | `e48a8d9f0bbd0c08466ccc8b5ffd611933892bac` |
+| `graphics/art/flux2_hybrid/mounted_trebuchet_idle_dir05_bg.png` | FLUX2 background render | 1287880 | `76eeb3169ae3e7295ce822971c8e83377ba9ab1e` |
+| `graphics/art/flux2_hybrid/mounted_trebuchet_idle_dir05_icon.png` | FLUX2 artwork icon | 82799 | `605b5baa433d329691b1d4e96e98a1986c48ff06` |
+| `graphics/art/flux2_hybrid/mounted_trebuchet_idle_dir05_nobg.png` | FLUX2 transparent artwork | 1017579 | `07a88e9255460158f89b0de5f013e26033c62832` |
+| `graphics/art/flux2_hybrid/savar_idle_dir05_bg.png` | FLUX2 background render | 861945 | `0d9287c664ceae3a2df6c6d7429808f8a7e514d7` |
+| `graphics/art/flux2_hybrid/savar_idle_dir05_icon.png` | FLUX2 artwork icon | 52582 | `d5086314129c662ca63fd229ed4c8c3197c8ddb9` |
+| `graphics/art/flux2_hybrid/savar_idle_dir05_nobg.png` | FLUX2 transparent artwork | 671092 | `eb015a9f659a134bbe2b02b90870ee4239704bc4` |
+| `graphics/art/flux2_hybrid/varangian_guard_idle_dir05_bg.png` | FLUX2 background render | 786164 | `63783ac9bc1b03311ca36027283059d5db99f036` |
+| `graphics/art/flux2_hybrid/varangian_guard_idle_dir05_icon.png` | FLUX2 artwork icon | 53334 | `c8e87447e756b88347be6a2a1a260b1fb2e90730` |
+| `graphics/art/flux2_hybrid/varangian_guard_idle_dir05_nobg.png` | FLUX2 transparent artwork | 651971 | `da47cf29455a4c02ffe3bd1fc1ac4dc8f285736a` |
+| `graphics/art/flux2_hybrid/war_chariot_focus_fire_idle_dir05_bg.png` | FLUX2 background render | 689231 | `cbb5ce10439344100d75fe673c1acad490b83173` |
+| `graphics/art/flux2_hybrid/war_chariot_focus_fire_idle_dir05_icon.png` | FLUX2 artwork icon | 46311 | `3ad15bc9a11a585516051e0676de25b6467bae65` |
+| `graphics/art/flux2_hybrid/war_chariot_focus_fire_idle_dir05_nobg.png` | FLUX2 transparent artwork | 497438 | `13c3244a371e9066aca61cb39839fced46b3d896` |
+| `graphics/units/elite_hearth_troop/elite_hearth_troop_attack_dir06_dat4x.gif` | Attack animation | 1480296 | `b6fd22c6a3dd91753b64d54c5eea1a63f9d9f0d7` |
+| `graphics/units/elite_hearth_troop/elite_hearth_troop_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 193205 | `a1e834822aa7ab3f24e00fc70424494bab2b32d9` |
+| `graphics/units/elite_hearth_troop/elite_hearth_troop_idle_dir06_dat4x.png` | DAT idle pose | 192518 | `eac3da76d055a6736c96a13e779ec10442c85f34` |
+| `graphics/units/elite_hearth_troop/elite_hearth_troop_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 195634 | `c6f937f977fb80175a8798d252717e3b0baaf3a2` |
+| `graphics/units/elite_hearth_troop/elite_hearth_troop_idle_dir06.png` | Native idle pose | 5659 | `6907132547e8f85ce46cafb60580c3534871c05f` |
+| `graphics/units/elite_hearth_troop/icon_transparent.png` | Transparent icon | 71485 | `0db31e83bd4c06a1559e3a42719805f6442065fa` |
+| `graphics/units/elite_hearth_troop/icon.png` | Game icon | 68337 | `6c6350633c3ce8ca8d3a4289ee8b6c26fc380428` |
+| `graphics/units/elite_hussite_wagon/elite_hussite_wagon_attack_dir06_dat4x.gif` | Attack animation | 13959070 | `371d388679e9f838c48de94c227ae78603c7f442` |
+| `graphics/units/elite_jarl/elite_jarl_attack_dir06_dat4x.gif` | Attack animation | 1788921 | `f2636b95a94034adb18127fe8dc8daf406aabe36` |
+| `graphics/units/elite_jarl/elite_jarl_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 332938 | `4b822f698b3cfa70b11d26d9c6f60d4927c71ae8` |
+| `graphics/units/elite_jarl/elite_jarl_idle_dir06_dat4x.png` | DAT idle pose | 332787 | `590cdfa2bff16c99741a1ffd43f4f712de212fb6` |
+| `graphics/units/elite_jarl/elite_jarl_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 325672 | `6ed089bcfda0be4856da2653b1a57eb88bb40a81` |
+| `graphics/units/elite_jarl/elite_jarl_idle_dir06.png` | Native idle pose | 11275 | `c06101a7bc750a779df22adc64611c60ebb057d2` |
+| `graphics/units/elite_jarl/icon_transparent.png` | Transparent icon | 88534 | `a3b8a9f9d20bfcf43d1c14494567ae0924787dcd` |
+| `graphics/units/elite_jarl/icon.png` | Game icon | 82465 | `85e8f574bee0b597dbcc2861ff1a36489abb98a7` |
+| `graphics/units/elite_jomsviking/elite_jomsviking_attack_dir06_dat4x.gif` | Attack animation | 1379483 | `d0454c6eff8c3ebbb4b1b838ab0e149d6a7656fb` |
+| `graphics/units/elite_jomsviking/elite_jomsviking_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 205067 | `7c5d72ea6050b537b3b0ec66551978271daf6385` |
+| `graphics/units/elite_jomsviking/elite_jomsviking_idle_dir06_dat4x.png` | DAT idle pose | 205122 | `df109d0ae3661e91349fbf7560fa20dbee12ba2c` |
+| `graphics/units/elite_jomsviking/elite_jomsviking_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 206854 | `86e5158a3de3647d5d58ddb932994e4c0bffda12` |
+| `graphics/units/elite_jomsviking/elite_jomsviking_idle_dir06.png` | Native idle pose | 5371 | `cde2913a43de84efd7590a5a9d73e2eb78fd81a7` |
+| `graphics/units/elite_jomsviking/icon_transparent.png` | Transparent icon | 74747 | `4262f50d76662ba6359bb0d3f1b804b9f37e08c1` |
+| `graphics/units/elite_jomsviking/icon.png` | Game icon | 71039 | `c8068be73762e33ce82e39860df7a8734db7f951` |
+| `graphics/units/elite_varangian_guard/elite_varangian_guard_attack_dir06_dat4x.gif` | Attack animation | 1306281 | `579548e9c53b4c0a382a2edbd04eb90aa2b491b2` |
+| `graphics/units/elite_varangian_guard/elite_varangian_guard_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 153449 | `6447ec6d5296d6d9a479a88aa18adb70d0af7513` |
+| `graphics/units/elite_varangian_guard/elite_varangian_guard_idle_dir06_dat4x.png` | DAT idle pose | 152597 | `9f8cdb9a18ed9f5e95b421204692b16d34c804a4` |
+| `graphics/units/elite_varangian_guard/elite_varangian_guard_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 153367 | `787e34ba2c42a8bb4301e3320e59e247e8ccfaba` |
+| `graphics/units/elite_varangian_guard/elite_varangian_guard_idle_dir06.png` | Native idle pose | 4726 | `0327b3577d50b80e5a5f91aa64be20c1015842a5` |
+| `graphics/units/elite_varangian_guard/icon_transparent.png` | Transparent icon | 76842 | `db031a4ccaf7c94d743566459cd0ca5d4da8cb1a` |
+| `graphics/units/elite_varangian_guard/icon.png` | Game icon | 72553 | `4dafe7c7368368a77a587750b9bf860ffc7ae042` |
+| `graphics/units/elite_war_wagon/elite_war_wagon_attack_dir06_dat4x.gif` | Attack animation | 16545202 | `df1e76f733e0a378a9669c0ba026d485600fbb58` |
+| `graphics/units/flaming_camel/flaming_camel_attack_dir06_dat4x.gif` | Attack animation | 8623299 | `f5ed4f1c9b9c02ae0b7c645e6eab2a250df979da` |
+| `graphics/units/flaming_camel/flaming_camel_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 551583 | `f597bfbdfc63d87101bb9b3c049418b51fda77c2` |
+| `graphics/units/flaming_camel/flaming_camel_idle_dir06_dat4x.png` | DAT idle pose | 562346 | `70057fa5ebdd3c6f690cad9b48c46d9f2528b3fb` |
+| `graphics/units/flaming_camel/flaming_camel_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 584128 | `f4b220a3bc351c39da26c33ce243b06517b08cf7` |
+| `graphics/units/flaming_camel/flaming_camel_idle_dir06.png` | Native idle pose | 22120 | `e070b5af0dc752686cc41952a6a395c3ce088ce5` |
+| `graphics/units/flaming_camel/icon_transparent.png` | Transparent icon | 107195 | `3ecf1924efc7d44ea17a8738cc6d9c32b8ce40ac` |
+| `graphics/units/flaming_camel/icon.png` | Game icon | 103553 | `2c948b7f6bf13e9465821523cae589fd248029e2` |
+| `graphics/units/hearth_troop/hearth_troop_attack_dir06_dat4x.gif` | Attack animation | 1479404 | `8caff9ac516533f73d47ef6da310e0ab668e146f` |
+| `graphics/units/hearth_troop/hearth_troop_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 192028 | `084a0d8a2f7249f1cab88471bf1ae5e32f174fa5` |
+| `graphics/units/hearth_troop/hearth_troop_idle_dir06_dat4x.png` | DAT idle pose | 189667 | `0c873f6720b5596ba75da459cdcf7551325ab041` |
+| `graphics/units/hearth_troop/hearth_troop_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 197810 | `de9f107020b00802491361b0ec936a6b86aa7f5c` |
+| `graphics/units/hearth_troop/hearth_troop_idle_dir06.png` | Native idle pose | 5447 | `7d2ee9eb15836f9fd629829d5aa8b00601deeebe` |
+| `graphics/units/hearth_troop/icon_transparent.png` | Transparent icon | 71042 | `8278a92f7e4eee4c1f04d68cbb557e0b93c3a7ca` |
+| `graphics/units/hearth_troop/icon.png` | Game icon | 67825 | `0e599998b636897cb332a4fb56d6326c0da95ad3` |
+| `graphics/units/heavy_mounted_crossbowman/heavy_mounted_crossbowman_attack_dir06_dat4x.gif` | Attack animation | 2227382 | `b8353248d5786aab5685abe3b77f3d4771ebd629` |
+| `graphics/units/heavy_mounted_crossbowman/heavy_mounted_crossbowman_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 419091 | `87f56a4950d150fb7e269f04f47fca673ba12b97` |
+| `graphics/units/heavy_mounted_crossbowman/heavy_mounted_crossbowman_idle_dir06_dat4x.png` | DAT idle pose | 420912 | `6a898fe53e6c7dfaa71e2feedb8139a8231e5edc` |
+| `graphics/units/heavy_mounted_crossbowman/heavy_mounted_crossbowman_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 406659 | `195865fae5fa471123147cbbc34b8d36527b2abe` |
+| `graphics/units/heavy_mounted_crossbowman/heavy_mounted_crossbowman_idle_dir06.png` | Native idle pose | 12758 | `2a542aedf23dcb38600a4fa41ee7bf6905743547` |
+| `graphics/units/heavy_mounted_crossbowman/icon_transparent.png` | Transparent icon | 80191 | `060319bcc5a12040ba7e94c6c3955e22b627bed5` |
+| `graphics/units/heavy_mounted_crossbowman/icon.png` | Game icon | 73790 | `5c97fa8d11ef3d197164ab250ec1163dd022adb2` |
+| `graphics/units/jarl/icon_transparent.png` | Transparent icon | 83770 | `28c4cb7b972405ac6f614a5085073391f560e2b4` |
+| `graphics/units/jarl/icon.png` | Game icon | 79932 | `277d162a84efc6ae5953ec51888636d1c9683607` |
+| `graphics/units/jarl/jarl_attack_dir06_dat4x.gif` | Attack animation | 1749495 | `55019b1136b6a20ba108deca29e55b0254631cea` |
+| `graphics/units/jarl/jarl_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 313182 | `c3d490887005f8ac9aeda0a4c472a71858622bec` |
+| `graphics/units/jarl/jarl_idle_dir06_dat4x.png` | DAT idle pose | 312685 | `807d400de05a637c5be5dc2a1b5ba85983013a8d` |
+| `graphics/units/jarl/jarl_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 312805 | `889f4b7e3e986958227e56da07481705e59d440d` |
+| `graphics/units/jarl/jarl_idle_dir06.png` | Native idle pose | 10848 | `d80236d37689540982256877813380a1cbe9687c` |
+| `graphics/units/jomsviking/icon_transparent.png` | Transparent icon | 77051 | `4c33aabe48a32a9d28d88b9d3503283755dea2a2` |
+| `graphics/units/jomsviking/icon.png` | Game icon | 74073 | `62965414951a0fbd27fc5c5f9a22614a54db05f0` |
+| `graphics/units/jomsviking/jomsviking_attack_dir06_dat4x.gif` | Attack animation | 1382258 | `d73a776b9820e0a2f8d5f18b231db1c889152a84` |
+| `graphics/units/jomsviking/jomsviking_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 200597 | `ef7f6512dfa797fe505761f66d354cac89089cea` |
+| `graphics/units/jomsviking/jomsviking_idle_dir06_dat4x.png` | DAT idle pose | 199917 | `a6d94422c826d4527dd3d6369b270ecd98818b06` |
+| `graphics/units/jomsviking/jomsviking_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 206412 | `27ec5c1cdb74c4a45dc0950b6d6a75eca0c58048` |
+| `graphics/units/jomsviking/jomsviking_idle_dir06.png` | Native idle pose | 5417 | `53ace725d631277fd42bc33c1783b91228b9a3c4` |
+| `graphics/units/missionary/icon_transparent.png` | Transparent icon | 117665 | `0d34cf76e001a3d0fc9bdfa9f8ddd41101db5308` |
+| `graphics/units/missionary/icon.png` | Game icon | 114978 | `f2fac61c7493da18bb5436ee0ec99116809fb574` |
+| `graphics/units/missionary/missionary_attack_dir06_dat4x.gif` | Attack animation | 1486404 | `e7a17d352e8e33811f07233f9ae6c37a980d3dd7` |
+| `graphics/units/missionary/missionary_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 287399 | `61f907cbab410391e027ea1d54531e6122d98f88` |
+| `graphics/units/missionary/missionary_idle_dir06_dat4x.png` | DAT idle pose | 287564 | `1101f4b438ca7afc4828e9097d767822dda6ad19` |
+| `graphics/units/missionary/missionary_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 292283 | `9e1e475cb470cd7f394cb717e44c429b31a17a67` |
+| `graphics/units/missionary/missionary_idle_dir06.png` | Native idle pose | 8662 | `650a419717092cd2d43071e761bcfdad7785ec58` |
+| `graphics/units/mounted_crossbowman/icon_transparent.png` | Transparent icon | 74289 | `a6b6af569fea790ede206e45bfa44a3511166d25` |
+| `graphics/units/mounted_crossbowman/icon.png` | Game icon | 68863 | `557cea5c38e42bb96ca874acc1ee248e9eaffdd5` |
+| `graphics/units/mounted_crossbowman/mounted_crossbowman_attack_dir06_dat4x.gif` | Attack animation | 2150766 | `d5fce4276cf79b8e6d34c4c251dba09d94ff4825` |
+| `graphics/units/mounted_crossbowman/mounted_crossbowman_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 394161 | `0e1258859457c720a8adf45175ed40243ededc11` |
+| `graphics/units/mounted_crossbowman/mounted_crossbowman_idle_dir06_dat4x.png` | DAT idle pose | 395587 | `3e340d81e2f95ed20804683dd5453d0fe8e1595b` |
+| `graphics/units/mounted_crossbowman/mounted_crossbowman_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 384575 | `385431bdf7cabc8d6ca8753afd86d1657710c6a6` |
+| `graphics/units/mounted_crossbowman/mounted_crossbowman_idle_dir06.png` | Native idle pose | 11739 | `ce634f436f97fc869e2d1f4775431bd95d66f909` |
+| `graphics/units/varangian_guard/icon_transparent.png` | Transparent icon | 75071 | `450197cf2e176edefd915ba460bb7ceae764a5f8` |
+| `graphics/units/varangian_guard/icon.png` | Game icon | 71064 | `1caf4317a217d2214da7befa2e74d929de75b1e6` |
+| `graphics/units/varangian_guard/varangian_guard_attack_dir06_dat4x.gif` | Attack animation | 1235728 | `46a562113db79081dbd2f3336254e70d4a81fcbd` |
+| `graphics/units/varangian_guard/varangian_guard_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 149042 | `e68a2e4dae699215937a6be881d23fd76dae8b62` |
+| `graphics/units/varangian_guard/varangian_guard_idle_dir06_dat4x.png` | DAT idle pose | 148401 | `afc31f1508409aa6332ac74b5f91979dae844d7d` |
+| `graphics/units/varangian_guard/varangian_guard_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 148112 | `a0a7448ef98e51183312bd5a093fde2c703ec7ae` |
+| `graphics/units/varangian_guard/varangian_guard_idle_dir06.png` | Native idle pose | 4473 | `123322a098a3177af2d62584e4b74bef0187110f` |
+| `graphics/units/war_chariot_barrage/icon_transparent.png` | Transparent icon | 80590 | `540e93c21eb6ad01f8ec48b0229aa73d27b3b499` |
+| `graphics/units/war_chariot_barrage/icon.png` | Game icon | 77482 | `0bb7879b230af7609929f6e0a3fdb75d55eadc4b` |
+| `graphics/units/war_chariot_barrage/war_chariot_barrage_attack_dir06_dat4x.gif` | Attack animation | 4954329 | `20216e612e34cfe0e65ddbc5e44e940342115818` |
+| `graphics/units/war_chariot_barrage/war_chariot_barrage_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 1040002 | `dd77e7d751b31a38030e79a79440221b984a102b` |
+| `graphics/units/war_chariot_barrage/war_chariot_barrage_idle_dir06_dat4x.png` | DAT idle pose | 1043654 | `b8e51001728ca6d98d973428a884972819e64de5` |
+| `graphics/units/war_chariot_barrage/war_chariot_barrage_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 1039537 | `e28ce5112fa34cf19fa561f3490b1ddca14c9269` |
+| `graphics/units/war_chariot_barrage/war_chariot_barrage_idle_dir06.png` | Native idle pose | 35688 | `53d07eb9ce8591ee61fda108f2a193abf60c20c1` |
+| `graphics/units/war_chariot_focus_fire/icon_transparent.png` | Transparent icon | 80590 | `540e93c21eb6ad01f8ec48b0229aa73d27b3b499` |
+| `graphics/units/war_chariot_focus_fire/icon.png` | Game icon | 77482 | `0bb7879b230af7609929f6e0a3fdb75d55eadc4b` |
+| `graphics/units/war_chariot_focus_fire/war_chariot_focus_fire_attack_dir06_dat4x.gif` | Attack animation | 4954329 | `20216e612e34cfe0e65ddbc5e44e940342115818` |
+| `graphics/units/war_chariot_focus_fire/war_chariot_focus_fire_idle_dir06_dat4x_blue.png` | Blue DAT idle pose | 1040002 | `dd77e7d751b31a38030e79a79440221b984a102b` |
+| `graphics/units/war_chariot_focus_fire/war_chariot_focus_fire_idle_dir06_dat4x.png` | DAT idle pose | 1043654 | `b8e51001728ca6d98d973428a884972819e64de5` |
+| `graphics/units/war_chariot_focus_fire/war_chariot_focus_fire_idle_dir06_ultrasharp4x.png` | UltraSharp idle pose | 1039537 | `e28ce5112fa34cf19fa561f3490b1ddca14c9269` |
+| `graphics/units/war_chariot_focus_fire/war_chariot_focus_fire_idle_dir06.png` | Native idle pose | 35688 | `53d07eb9ce8591ee61fda108f2a193abf60c20c1` |

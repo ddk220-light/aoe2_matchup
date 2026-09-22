@@ -19,7 +19,7 @@ INK=(246,230,191,255)
 BLUE=(88,140,255,255)
 RED=(244,101,89,255)
 
-def build(run,out,start=.2,crop_x=640):
+def build(run,out,start=.2,crop_x=640,camera='fixed',enhance_model=None):
  out.mkdir(parents=True,exist_ok=True)
  data=json.loads((run/'unit-hp-overlay/units.json').read_text())
  if not data['mapping'].get('alignment'): raise ValueError('Verified HP alignment required')
@@ -91,12 +91,52 @@ def build(run,out,start=.2,crop_x=640):
  end=terminal_row(rows)
  if end['videoSeconds']>=start:
   frames=min(frames,max(1,math.ceil((end['videoSeconds']-start)*fps)+1))
+ battle_camera=None
+ if camera in ('action','telemetry'):
+  from overlay.battle_camera import analyze
+  battle_camera=analyze(run/'battle.mp4',out/'camera.json',start,frames/fps,telemetry_run=run if camera=='telemetry' else None)
+ enhancer=None
+ if enhance_model:
+  from overlay.video_enhance import LocalUpscaler
+  enhancer=LocalUpscaler(enhance_model)
+  (out/'enhancement.json').write_text(json.dumps(enhancer.metadata,indent=2))
+ def gameplay(frame,seconds):
+  if battle_camera:result=battle_camera.crop(frame,seconds)
+  else:result=cv2.resize(frame[:,crop_x:crop_x+1440],(1080,1080),interpolation=cv2.INTER_LANCZOS4)
+  if enhancer:result=enhancer(result)
+  return Image.fromarray(cv2.cvtColor(result,cv2.COLOR_BGR2RGB))
  for sec in sorted({min(t,(frames-1)/fps) for t in [0,4,10,15,(frames-1)/fps]}):
   cap.set(cv2.CAP_PROP_POS_MSEC,(sec+start)*1000);ok,frame=cap.read();assert ok
-  im=base.copy();crop=Image.fromarray(cv2.cvtColor(frame[:,crop_x:crop_x+1440],cv2.COLOR_BGR2RGB)).resize((1080,1080),Image.Resampling.LANCZOS)
+  im=base.copy()
+  if battle_camera or enhancer:crop=gameplay(frame,sec+start)
+  else:crop=Image.fromarray(cv2.cvtColor(frame[:,crop_x:crop_x+1440],cv2.COLOR_BGR2RGB)).resize((1080,1080),Image.Resampling.LANCZOS)
   im.paste(crop,(0,GAME_Y));im.alpha_composite(dynamic(sec),(0,0));im.convert('RGB').save(out/f'preview-{sec:05.2f}.jpg',quality=90)
  cap.release()
  ff=find_ffmpeg();video=out/'short.mp4'
+ if battle_camera or enhancer:
+  # Render the moving gameplay crop below the original fixed overlays. A single
+  # final encode avoids baking another lossy generation into the zoomed picture.
+  cmd=[ff,'-y','-v','error','-f','rawvideo','-pixel_format','rgb24','-video_size',f'{W}x{H}','-framerate',str(fps),'-i','pipe:0','-ss',str(start),'-i',str(run/'battle.mp4'),'-map','0:v:0','-map','1:a?','-t',str(frames/fps),'-c:v','libx264','-threads','2','-preset','veryfast','-crf','18','-pix_fmt','yuv420p','-c:a','aac','-ar','48000','-b:a','192k','-movflags','+faststart',str(video)]
+  cap=cv2.VideoCapture(str(run/'battle.mp4'));cap.set(cv2.CAP_PROP_POS_FRAMES,round(start*fps))
+  with (out/'render.log').open('w') as log:
+   proc=subprocess.Popen(cmd,stdin=subprocess.PIPE,stdout=log,stderr=log)
+   try:
+    for f in range(frames):
+     ok,frame=cap.read()
+     if not ok:raise RuntimeError('Source footage ended before the planned Short')
+     im=base.copy();im.paste(gameplay(frame,start+f/fps),(0,GAME_Y));im.alpha_composite(dynamic(f/fps),(0,0))
+     proc.stdin.write(im.convert('RGB').tobytes())
+     if f%120==0:print(f'Rendered {f+1}/{frames} frames',flush=True)
+    proc.stdin.close()
+    if proc.wait():raise RuntimeError('See render.log')
+   except BaseException:proc.kill();proc.wait();raise
+   finally:cap.release()
+ else:
+  render_fixed(ff,video,run,out,start,frames,fps,crop_x,dynamic)
+ (out/'manifest.json').write_text(json.dumps({'source':str(run.resolve()),'video':str(video.resolve()),'resolution':[W,H],'fps':fps,'durationSeconds':frames/fps,'trimStartSeconds':start,'crop':None if battle_camera else [crop_x,0,1440,1440],'camera':camera,'cameraPath':'camera.json' if battle_camera else None,'gameViewport':[0,GAME_Y,1080,1080],'hpTiming':'Existing verified timeline sampled at output time + trimStartSeconds','portraitColumns':columns,'audio':'Original recorded game audio, AAC 192k, no added narration','layout':'Two adaptive-column by 3-row portrait queues above gameplay, count and total HP only, per-unit HP bars, survivors packed before dimmed casualties. Two approved stat panels below. Screen units excluded from main-army counters.','status':'draft_pending_review'},indent=2))
+ print(video)
+
+def render_fixed(ff,video,run,out,start,frames,fps,crop_x,dynamic):
  graph=f'[0:v]crop=1440:1440:{crop_x}:0,scale=1080:1080,setsar=1[game];[2:v][game]overlay=0:{GAME_Y}:shortest=1[base];[base][1:v]overlay=0:0:shortest=1,format=yuv420p[v]'
  cmd=[ff,'-y','-v','error','-threads','2','-ss',str(start),'-i',str(run/'battle.mp4'),'-f','rawvideo','-pixel_format','rgba','-video_size','1080x320','-framerate',str(fps),'-i','pipe:0','-loop','1','-framerate',str(fps),'-i',str(out/'layout.png'),'-filter_complex_threads','1','-filter_complex',graph,'-map','[v]','-map','0:a?','-t',str(frames/fps),'-c:v','libx264','-threads','2','-preset','veryfast','-crf','18','-c:a','aac','-ar','48000','-b:a','192k','-movflags','+faststart',str(video)]
  with (out/'render.log').open('w') as log:
@@ -106,8 +146,6 @@ def build(run,out,start=.2,crop_x=640):
    proc.stdin.close()
    if proc.wait():raise RuntimeError('See render.log')
   except BaseException:proc.kill();proc.wait();raise
- (out/'manifest.json').write_text(json.dumps({'source':str(run.resolve()),'video':str(video.resolve()),'resolution':[W,H],'fps':fps,'durationSeconds':frames/fps,'trimStartSeconds':start,'crop':[crop_x,0,1440,1440],'gameViewport':[0,GAME_Y,1080,1080],'hpTiming':'Existing verified timeline sampled at output time + trimStartSeconds','portraitColumns':columns,'audio':'Original recorded game audio, AAC 192k, no added narration','layout':'Two adaptive-column by 3-row portrait queues above gameplay, count and total HP only, per-unit HP bars, survivors packed before dimmed casualties. Two approved stat panels below. Screen units excluded from main-army counters.','status':'draft_pending_review'},indent=2))
- print(video)
 
 if __name__=='__main__':
- p=argparse.ArgumentParser();p.add_argument('run',type=Path);p.add_argument('--output',type=Path,required=True);p.add_argument('--start',type=float,default=.2);p.add_argument('--crop-x',type=int,default=640);a=p.parse_args();build(a.run,a.output,a.start,a.crop_x)
+ p=argparse.ArgumentParser();p.add_argument('run',type=Path);p.add_argument('--output',type=Path,required=True);p.add_argument('--start',type=float,default=.2);p.add_argument('--crop-x',type=int,default=640);p.add_argument('--camera',choices=('fixed','action','telemetry'),default='fixed');p.add_argument('--enhance-model',type=Path);a=p.parse_args();build(a.run,a.output,a.start,a.crop_x,a.camera,a.enhance_model)

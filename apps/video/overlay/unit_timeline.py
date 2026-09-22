@@ -14,7 +14,8 @@ from overlay.static_stats import REPO
 sys.path.insert(0, str(REPO / 'aoe2x/grpc'))
 import cade_api_pb2 as pb
 import decode_state_v2 as D
-from redecode_hp import SNAP_RESEED, derive_army, refresh_army_membership
+from redecode_hp import (SNAP_RESEED, derive_army, refresh_army_membership,
+                        ARMY_MT, NON_ARMY_MASTERS, SCOUT)
 
 
 def sample_at(rows, times, video_s):
@@ -40,7 +41,18 @@ def combat_snapshot(entity_model, models):
     }
 
 
-def decode(run, *, include_combat=False):
+def camera_positions(entities):
+    """Living combat bodies, including P4, separate from the P2/P3 HP queues."""
+    return [{'id': entity_id, 'owner': e[2], 'x': e[3], 'y': e[4]}
+            for entity_id, e in sorted(entities.items())
+            if e.get('__type__') in ARMY_MT and e.get(2) in (2, 3, 4)
+            and e.get(1) not in NON_ARMY_MASTERS and e.get(1) != SCOUT
+            and e.get(12, 0) > 0
+            and isinstance(e.get(3), (float, int))
+            and isinstance(e.get(4), (float, int))]
+
+
+def decode(run, *, include_combat=False, include_positions=False):
     run = Path(run)
     recording = json.loads((run / 'recording.json').read_text())
     source = run / recording['files']['frames']['path']
@@ -119,6 +131,8 @@ def decode(run, *, include_combat=False):
                                 units[-1].update(combat_snapshot(entity_model, doc.models))
                         sides[str(owner)] = units
                     row = {'gameMs': frame.time, 'sides': sides}
+                    if include_positions:
+                        row['positions'] = camera_positions(es)
                     if rows and rows[-1]['gameMs'] == frame.time:
                         rows[-1] = row
                     else:

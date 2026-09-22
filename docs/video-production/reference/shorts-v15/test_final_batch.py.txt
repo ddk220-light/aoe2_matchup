@@ -1,0 +1,72 @@
+"""Narrow frame-splicing smoke for the v15 final batch compositor."""
+import importlib.util
+import subprocess
+import tempfile
+import unittest
+import numpy as np
+import run_batch
+from overlay.ffutil import find_ffmpeg
+
+
+class VoiceTimingTests(unittest.TestCase):
+    def prepare(self, number):
+        from render_final_batch import ROOT, DEST, read, previous_folder, AttackAnimation, prepare_voices, pcm
+        from pathlib import Path
+        item = next(i for i in read(ROOT/'batch.json')['items'] if i['number']==number)
+        story = read(previous_folder(item)/'story.json')
+        units = read(Path(story['cleanRun'])/'static-stats-overlay/stats.json')['units']
+        attacks = [AttackAnimation(ROOT/'attacks'/u['unit'].lower().replace(' ','_'),(580,510)) for u in units]
+        with tempfile.TemporaryDirectory(prefix='voice-timing-smoke-',dir=DEST) as temp:
+            audio, starts, seconds = prepare_voices(Path(temp),units,attacks,60)
+            evidence = read(Path(temp)/'voice-provenance.json')
+            evidence['decodedIntroSamples'] = pcm(audio)
+            return evidence, starts, seconds
+
+    def test_long_spoken_response_finishes_before_next_unit_starts(self):
+        # Xianbei speaks longer than its 1.5s attack. Never overlap or clip it.
+        evidence, starts, seconds = self.prepare(9)
+        first, second = evidence['cues']
+        self.assertAlmostEqual(starts[0],.25)
+        self.assertAlmostEqual(first['animationEndSeconds']-starts[0],1.5)
+        self.assertAlmostEqual(starts[1]-(starts[0]+first['durationSeconds']),.2)
+        self.assertAlmostEqual(seconds-second['animationEndSeconds'],1,delta=1/60)
+
+    def test_mounted_unit_uses_user_selected_civilization_speech(self):
+        evidence, _, _ = self.prepare(1)
+        voice = evidence['cues'][0]
+        self.assertEqual(voice['civilization'],'Wei')
+        self.assertEqual(voice['eventId'],3761709415)
+        self.assertTrue(voice['spoken'])
+
+    def test_long_voice_trailing_silence_does_not_add_to_handoff(self):
+        evidence, starts, _ = self.prepare(9)
+        first_turn = evidence['decodedIntroSamples'][:round(starts[1]*48000)]
+        audible_end = (np.flatnonzero(abs(first_turn)>max(abs(first_turn))*.02)[-1]+1)/48000
+        self.assertLessEqual(starts[1]-audible_end,.23)
+        self.assertGreaterEqual(starts[1]-audible_end,.2)
+
+
+class SpliceTests(unittest.TestCase):
+    def test_new_bookends_wrap_only_the_original_battle_frames(self):
+        self.assertIsNotNone(importlib.util.find_spec('render_final_batch'))
+        from render_final_batch import splice_video_filter
+        command = [find_ffmpeg(),'-v','error']
+        for graph in ('color=red:s=16x16:r=10:d=0.2,colorchannelmixer=aa=1',
+                      'color=green:s=16x16:r=10:d=0.5'):
+            command += ['-f','lavfi','-i',graph]
+        # New stream: 2 red frames; old stream: 5 green frames.
+        # Keep 1 new intro frame, old frames 1..3, then final new frame.
+        graph = splice_video_filter(1,1,3)
+        raw = subprocess.check_output(command+['-filter_complex',graph,'-map','[v]',
+            '-pix_fmt','rgb24','-f','rawvideo','pipe:1'])
+        frames = np.frombuffer(raw,np.uint8).reshape(-1,16,16,3)
+        self.assertEqual(len(frames),5)
+        self.assertGreater(frames[0,8,8,0],200)
+        self.assertGreater(frames[-1,8,8,0],200)
+        for frame in frames[1:4]:
+            self.assertGreater(frame[8,8,1],100)
+            self.assertLess(frame[8,8,0],10)
+
+
+if __name__=='__main__':
+    unittest.main(verbosity=2)

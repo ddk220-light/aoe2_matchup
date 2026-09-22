@@ -105,7 +105,7 @@ def rank_medal(rank, won):
     return medal
 
 
-def result_art(civ, winner, percent, rank):
+def result_art(civ, winner, percent, rank, *, backing=True):
     """Actual game ornaments/font over the requested translucent grey panel."""
     won = winner == '2'
     name = 'victory' if won else 'defeat'
@@ -139,7 +139,8 @@ def result_art(civ, winner, percent, rank):
     shadow = Image.new('RGBA', im.size, (0, 0, 0, 0)); shadow.putalpha(a)
     shadow.alpha_composite(im)
     result = Image.new('RGBA', im.size)
-    ImageDraw.Draw(result).rectangle((40,76,599,409), fill=(35,35,35,162))
+    if backing:
+        ImageDraw.Draw(result).rectangle((40,76,599,409), fill=(35,35,35,162))
     result.alpha_composite(shadow)
     return result
 

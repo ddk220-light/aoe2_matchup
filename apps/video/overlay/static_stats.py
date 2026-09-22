@@ -114,8 +114,39 @@ def modifiers(unit, enemy):
     return {'attackBonus': bonus_damage(unit, enemy)}
 
 
-def panel(unit, enemy, font, game, color):
-    width, height = 590, 344
+def effective_cost(side):
+    """Recorded, discounted per-unit price (already normalized for batch units)."""
+    return {resource:side['effectiveCost'][resource] for resource in ('food','wood','gold')}
+
+
+def special_effects(unit, *, relics=0):
+    notes = (['Per kill: +10 HP, +1 attack', 'Maximum: +40 HP, +4 attack']
+             if unit['unit_slug'] == 'elite_tiger_cavalry_wei' else
+             ['Arrows ignore pierce armor.'] if unit['ignores_pierce_armor'] else
+             ['Attacks ignore melee armor.'] if unit['ignores_melee_armor'] else [])
+    if unit.get('bleed_dps',0) > 0 and unit.get('bleed_duration',0) > 0:
+        notes.append('Poison damage' if 'blackwood_archer' in unit['unit_slug'] else 'Damage over time')
+    if unit.get('armor_strip_per_hit',0) > 0:
+        notes.append('Strips armor on each hit')
+    if unit.get('charge_attack_melee',0):
+        notes.append('Melee charge attack')
+    if unit.get('attack_bonus_nearby',0) > 0:
+        notes.append('Nearby cavalry boost attack')
+    if unit.get('hp_regen',0) > 0:
+        notes.append('Regenerates HP')
+    if unit.get('splash_on_hit_radius',0) > 0:
+        notes.append('Splash damage on impact')
+    if unit.get('total_projectiles',1) > 1:
+        notes.append('Fires multiple projectiles')
+    if unit.get('charge_projectile_count',0) > 0:
+        notes.append('Charged projectile volley')
+    if relics and unit['unit_slug'] == 'elite_leitis_lithuanians':
+        notes.append(f'{relics} relics (+{relics} attack)')
+    return notes
+
+
+def panel(unit, enemy, font, game, color, *, details=None):
+    width, height = 590, 390 if details is not None else 344
     theme = theme_for(game, unit['civ_name'])
     image = panel_art(theme, (width, height))
     draw = ImageDraw.Draw(image)
@@ -158,8 +189,22 @@ def panel(unit, enemy, font, game, color):
              if unit['unit_slug'] == 'elite_tiger_cavalry_wei' else
              ['Arrows ignore pierce armor.'] if unit['ignores_pierce_armor'] else
              ['Attacks ignore melee armor.'] if unit['ignores_melee_armor'] else [])
+    if details is not None:
+        notes = details['effects']
     for i, line in enumerate(notes):
-        font.draw(image, (192, 258 + i * 18), line, 20)
+        font.draw(image, (192, 258 + i * (22 if details is not None else 18)), line, 22 if details is not None else 20,
+                  GREEN if details is not None else INK)
+    if details is not None:
+        costs = [(resource,number(details['cost'][resource]))
+                 for resource in ('food','wood','gold') if details['cost'][resource] > 0]
+        row_width = sum(35+font.width(value,28) for _,value in costs)+60*(len(costs)-1)
+        x = round((width-row_width)/2)
+        for resource, value in costs:
+            symbol = Image.open(game/f'widgetui/textures/ingame/staticons/{resource}.png').convert('RGBA')
+            symbol.thumbnail((29,29), Image.Resampling.LANCZOS)
+            image.alpha_composite(symbol, (x,303))
+            font.draw(image, (x+35,305), value, 28)
+            x += round(35+font.width(value,28)+60)
     return image, mod
 
 

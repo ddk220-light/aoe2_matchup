@@ -7,6 +7,8 @@ to upstream ones.
 
 **Producing a new matchup video? Start with the [complete video production runbook](docs/VIDEO_PRODUCTION_RUNBOOK.md).** It covers workstation setup, audited army costs, captures, recovery, live HP overlays, campaign intros, Shorts, review, and resumable YouTube uploads, with links to every supporting workflow document.
 
+**Turning an existing recording into a Short? Use the [raw-to-Shorts procedure](docs/video-production/SHORTS_FROM_RAW.md)** and [approved format](docs/video-production/SHORTS_APPROVED_WORKFLOW.md) — exact preparation/render steps, dynamic spoken intro, camera/overlays, and victory ending.
+
 ```
 ┌ L1  data/inputs/      external inputs (game .dat, replays, captures, scraped art)
 │                       → gitignored content; data/inputs/MANIFEST.md says how to fetch

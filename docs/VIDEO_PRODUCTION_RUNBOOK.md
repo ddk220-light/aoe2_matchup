@@ -2,7 +2,9 @@
 
 This is the handoff entry point for a person or agent producing an entirely new unit episode. Read it in order the first time. It connects the executable workflow, its evidence, the review gates, and the recovery procedures. The companion documents below are part of the handoff; send this file's GitHub link so its relative links travel with it.
 
-**Current procedure, updated September 21, 2026, on `codex/video-recorder-v3`.** Historical episode notes describe what happened at that time. This runbook describes how to operate the current branch. Do not use an old episode's “pending,” roster size, base costs, or upload authorization as current instructions.
+**Current procedure, updated September 22, 2026, on `codex/video-recorder-v3`.** Historical episode notes describe what happened at that time. This runbook describes how to operate the current branch. Do not use an old episode's “pending,” roster size, base costs, or upload authorization as current instructions.
+
+**Creating a Short from an existing recording? Start with the [raw-to-Shorts procedure](video-production/SHORTS_FROM_RAW.md) and [approved two-unit format](video-production/SHORTS_APPROVED_WORKFLOW.md).** No new capture is needed; the procedure includes exact preparation/render steps and preserved reference scripts for the finalized v15 format.
 
 The latest comparison-video workflow is documented in these companion guides:
 
@@ -336,6 +338,8 @@ The `-cloned.json` plan is generated from actual narration; do not create one by
 
 ## 10. Compile the full video and select ten Shorts
 
+For new Shorts, follow the [final approved two-unit workflow](video-production/SHORTS_APPROVED_WORKFLOW.md): sequential native command voices, dynamic battle start, fast Compact Real-ESRGAN enhancement, protected framing, real aftermath, animated exit and 70% victory music. The commands below remain the campaign compilation/selection and legacy battle-only rendering lane; they do not automatically produce the finalized story Short. Use the approved guide's explicit preparation and story-render steps for those outputs.
+
 ```powershell
 & $Py "apps/video/build_${Ident}_final.py"
 if ($LASTEXITCODE -ne 0) { throw 'Full compilation failed' }
@@ -359,7 +363,7 @@ Ten-Short selection uses actual recorded results and corrected per-unit costs:
 
 If a win/loss category has no eligible candidate, record that fact and fill with an interesting actual result. Do not manufacture a category winner, repeat one opponent, or select an exact self-match. Special subjects may require adapting the mandatory-opponent assertions and documenting why.
 
-Each Short is 1080×1920 with the fight visible, live HP portrait queues above, unit panels below, equal-resource/27-cap text, conditional Hussar wording, and original game sound/music. Inspect crop coverage throughout movement, not only at the opening formation. Durations above three minutes fail the current QA expectation and require an editorial decision.
+Each Short is 1080×1920 with the fight visible, live HP portrait queues above, floating unit panels outside the protected action, saved-plan comparison/cap text, conditional Hussar wording, and original combat audio. Do not call geometric-cost captures equal resources. Apply the approved guide's opener and winner ending. Inspect crop coverage throughout movement, not only at the opening formation. Durations above three minutes fail the current QA expectation and require an editorial decision.
 
 ## 11. Perform visual and audio QA
 
@@ -436,7 +440,9 @@ Before cleanup, save a release report linking:
 
 Keep the final full video and original `.frames.bin` with metadata/scenario/plan. Keep narration audio and alignments: retired cloud voice profiles cannot regenerate it. Only remove individual raw/overlay/Short derivatives under the owner's existing cleanup authorization after uploads are verified and no pending retake, review, or remake depends on them. Prefer copy → verify every file by SHA-256 → remove exact source paths. A folder count or completed copy command is insufficient. See [archive safety](video-production/OPERATIONS_AND_RECOVERY.md#storage-and-archive).
 
-Commit code, source-backed data, intended generated unit art, approved templates/manifests, and documentation. Do not commit private keys, OAuth clients/tokens/sessions, raw captures, full videos, frame streams, downloaded game packages, or machine-local state. Verify the pushed remote commit matches local HEAD. This does not upload the multi-gigabyte evidence archive to GitHub.
+Commit code, source-backed data, approved templates/manifests, documentation and explicitly owner-selected reusable assets recorded in the [Git asset policy](GIT_ASSET_POLICY.md). The selected unit library includes game/transparent icons, native and enhanced idle sprites, blue-team sprites, attack animations and final unit illustrations; generation alone is not retention approval. Write new scratch/generated outputs directly into `data/local/generated/` or existing ignored output directories. Keep reusable source/helper scripts in tracked source directories.
+
+Do not commit private keys, OAuth clients/tokens/sessions, raw captures, full videos, frame streams, downloaded game packages, unselected generated media or machine-local state. Before every push, independently review the full outgoing history against the user's request, including earlier commits and binary payload. Push only with the required authorization, then verify the remote commit matches the reviewed candidate. This does not upload the multi-gigabyte evidence archive or local recovery refs to GitHub.
 
 ## 14. Documentation and implementation index
 
@@ -452,7 +458,7 @@ Commit code, source-backed data, intended generated unit art, approved templates
 | Panels and HP | [Static panels](static-stats-overlay.md), [per-unit HP](per-unit-hp-overlay.md) | [static stats](../apps/video/overlay/static_stats.py), [theme](../apps/video/overlay/civ_theme.py), [timeline](../apps/video/overlay/unit_timeline.py), [HP render](../apps/video/overlay/unit_hp.py) |
 | Timing validation | [Recovery reference](video-production/OPERATIONS_AND_RECOVERY.md) | [auto alignment](../apps/video/overlay/auto_alignment.py), [battle end](../apps/video/overlay/battle_end.py) |
 | Intro/campaign assets | [Asset findings](campaign-intro-assets.md), [intro README](../apps/video/intro/README.md) | [catalog builder](../apps/video/build_campaign_catalog.py), [renderer](../apps/video/build_campaign_intro.py), [voice clone](../apps/video/create_intro_voice_clone.py), [narration](../apps/video/generate_intro_narration.py) |
-| Shorts | [Selected matchup Shorts](selected-matchup-shorts.md) | [vertical renderer](../apps/video/build_vertical_short.py), [batch renderer](../apps/video/render_selected_shorts.py) |
+| Shorts | [Approved two-unit workflow](video-production/SHORTS_APPROVED_WORKFLOW.md), [selection](selected-matchup-shorts.md) | [story renderer](../apps/video/build_story_short.py), [battle preparation](../apps/video/build_story_batch.py), [vertical renderer](../apps/video/build_vertical_short.py) |
 | QA/publication | [YouTube workflow](youtube-video-workflow.md) | [QA sheets](../apps/video/production_qa_sheet.py), [OAuth](../apps/video/authorize_youtube.py), [uploader](../apps/video/upload_youtube.py), [supervisor](../apps/video/finish_pending_production.py) |
 | Ordering/monitoring | [Ordered production](ordered-video-production.md), [thermal monitor](thermal-monitor.md) | [capture queue](../apps/video/continue_capture_queue.py), [thermal guard](../apps/video/thermal_guard.py) |
 | Simulator | [Roster coverage](recorder-roster-simulation-coverage.md) | [preflight](../aoe2x/js_simulation/tools/preflight_recorder_roster.mjs), [mechanics export](../aoe2x/js_simulation/tools/export_roster_mechanics.py), [comparison](../aoe2x/lab/postprocess_campaign.py) |

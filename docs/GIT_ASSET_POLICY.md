@@ -25,13 +25,14 @@ There are no standalone idle-animation GIFs or WebPs in the current `graphics/un
 
 - Source code, tests, documents, workflow recipes, decisions/learnings, small manifests and reusable helper scripts.
 - The explicitly selected unit library in the register below, at its existing paths.
-- Already-published application assets, templates, databases and artwork remain tracked and unchanged. This includes `graphics/art/flux2_hybrid/` and `graphics/art/temple_guard/`, including its explicit `flux2/golden/` set. This cleanup is not a purge of existing art or a new blanket quality approval.
+- Already-published application assets, templates, databases and artwork remain tracked and unchanged, including `graphics/art/flux2_hybrid/`, except for the owner's subsequent exclusion of `graphics/art/temple_guard/` below. This cleanup is not a new blanket quality approval.
 - Additional or updated assets only when their retention/update is within the owner's request. Add exact paths and purpose to the register and `.gitignore` exceptions; do not use a whole-family exception to approve future files automatically.
 
 ## What stays local
 
 - Raw captures, final rendered videos, frame streams, audio extraction, model downloads, scratch images, alternative renders, intermediate frame directories, and unselected cover backups.
 - The 17 images under `graphics/youtube/` from the old pending backup commit are excluded from the reconstructed commit, **not deleted from disk**.
+- Following the owner's subsequent publication approval, the entire old `graphics/art/temple_guard/` collection (37 images, including its six `flux2/golden/` renders, plus the standalone HTML viewer) is removed from Git tracking and ignored, **not deleted from this machine**. Previously published copies remain recoverable from Git history. This exclusion does not affect the approved `graphics/units/temple_guard/` or `graphics/units/elite_temple_guard/` library assets.
 - New scratch/generation workflows should write directly into `data/local/generated/` or an existing ignored output directory. Keep reusable source/helper scripts outside scratch so they can be committed.
 - Existing generators may keep their current output paths: scoped image exclusions already cover new PNG/GIF/JPG/JPEG/WebP files in `graphics/units/`, `graphics/youtube/`, `graphics/art/`, `graphics/extracted/`, and video intro assets/thumbnails. Source files there are not blanket-ignored.
 

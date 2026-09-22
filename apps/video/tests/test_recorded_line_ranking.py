@@ -26,8 +26,8 @@ def test_rosters_reproduce_without_machine_local_queues_or_intro_profiles(monkey
     knights = reporting.source_specs("knight")
     assert len(camels) == len({v["key"] for v in camels}) == 9
     assert len(knights) == len({v["key"] for v in knights}) == 17
-    assert sum(bool(v.get("optionalOverrides")) for v in knights) == 9
-    assert next(v for v in knights if v["key"] == "paladin-persians")["folders"] == ["knight-v2-savar-persians"]
+    assert all(v["folders"] == [v["key"]] and not v.get("optionalOverrides") for v in knights)
+    assert next(v for v in knights if v["key"] == "paladin-persians")["folders"] == ["paladin-persians"]
     assert camels == manifest["camel"] and knights == manifest["knight"]
 
 

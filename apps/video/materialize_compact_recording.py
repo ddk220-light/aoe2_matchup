@@ -15,6 +15,8 @@ def materialize(index, job_id, workspace):
     index = index.resolve()
     data = read(index)
     row = next(r for r in data['matchups'] if r['jobId'] == job_id)
+    if row.get('metadataOnly') or row.get('mediaAvailable') is False:
+        raise FileNotFoundError(f'{job_id}: recorded results exist, but the raw video/frame pair is unavailable. Locate the originals; do not automatically recapture.')
     if Path(job_id).name != job_id or '/' in job_id or '\\' in job_id:
         raise ValueError('Invalid job ID')
     workspace = workspace.resolve()

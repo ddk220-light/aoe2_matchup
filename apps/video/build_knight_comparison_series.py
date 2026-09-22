@@ -76,9 +76,28 @@ def prepare_input(index,row,out):
     return str(run)
 
 
+def require_available_media(catalogs, order):
+    """Stop before rendering if a retained result has no reconstructible footage."""
+    missing=[]
+    for civ, rows in catalogs.items():
+        for slug in order:
+            if slug not in rows:  # Self-matches are handled by the series builder.
+                continue
+            index,row=rows[slug]
+            files=row.get('files',{})
+            if (row.get('metadataOnly') or row.get('mediaAvailable') is False
+                    or any(name not in files or not (index.parent/files[name]['path']).is_file()
+                           for name in ('battle.mp4','frames.bin'))):
+                missing.append(f'{civ} vs {slug}')
+    if missing:
+        raise FileNotFoundError(f'{len(missing)} requested battles lack raw video/frame pairs: '
+            + '; '.join(missing[:5]) + '. Locate the original files; do not automatically recapture.')
+
+
 def run(plan_path,out,count=None):
     profile=read(plan_path);out.mkdir(parents=True,exist_ok=True)
     catalogs,order=catalog(profile);order=order[:count] if count else order
+    require_available_media(catalogs,order)
     civs=[c['civ'] for c in profile['columns']]
     tally={c:[] for c in civs};outputs=[];chapters=[]
     source_hash=hashlib.sha256(b''.join((REPO/'apps/video'/p).read_bytes() for p in

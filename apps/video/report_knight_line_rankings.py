@@ -84,8 +84,8 @@ def counts_match_current_policy(policy, captured, expected):
 def source_specs(line):
     """Load the versioned roster, independent of local queues and intro edits.
 
-    Folder order is precedence order: the isolated Leitis retake replaces that
-    opponent's original cell. Strict final reports require these overrides too.
+    Knight corrections are already merged into the canonical variant indexes.
+    Historical manifests may still list correction folders in precedence order.
     """
     manifest = read(SOURCE_MANIFEST)
     if manifest["schemaVersion"] != 1:
@@ -537,6 +537,7 @@ def main(roots, require_current_all=False, line="knight"):
     lines += ["", f"Three editorial top-{HIGHLIGHT_LIMIT} lists: [Performance highlights](HIGHLIGHTS.md)."]
     (out / "RANKING.md").write_text("\n".join(lines + reproduction) + "\n", encoding="utf-8")
     (out / "HIGHLIGHTS.md").write_text("\n".join(highlight_markdown(result["highlights"], line) + reproduction) + "\n", encoding="utf-8")
+    (out / "STALE.json").unlink(missing_ok=True)
     print(json.dumps({k:result[k] for k in ("availableVariants", "plannedVariants", "opponentsPerVariant", "excludedOpponents", "ranking")}, indent=2))
 
 
@@ -546,4 +547,5 @@ if __name__ == "__main__":
     parser.add_argument("--line", choices=("knight", "camel"), default="knight")
     parser.add_argument("--require-current-all", action="store_true", help="Require every current-policy variant and the full shared opponent set; knight rankings also require four-relic Leitis corrections")
     args = parser.parse_args()
-    main(args.archive_root or [Path("D:/AoE2 Renders")], args.require_current_all, args.line)
+    default_root = Path("E:/AoE2 Renders/knight-line-canonical" if args.line == "knight" else "D:/AoE2 Renders")
+    main(args.archive_root or [default_root], args.require_current_all, args.line)

@@ -34,6 +34,17 @@ The September 16 consolidation is described in
 candidate, and execution writes per-package checksum receipts plus `status.json`.
 Preparation alone is not evidence that a transfer or deletion happened.
 
+## Canonical knight collection (September 21, 2026)
+
+The current knight collection is on the original WD Archives disk at
+`E:/AoE2 Renders/knight-line-canonical`. Read
+[KNIGHT_CANONICAL_ARCHIVE.md](KNIGHT_CANONICAL_ARCHIVE.md) for the exact layout,
+known missing raw pairs, reconstruction instructions and cleanup receipts.
+This consolidation merges the necessary corrections into one index per variant.
+The owner authorized retiring its explicitly enumerated redundant knight files
+from the PC and both disks after verification. That authorization does not extend
+to camel archives, unrelated recordings or personal files.
+
 ## SAFEHOUSE transfer (September 20, 2026)
 
 The connected archive is the Buffalo SAFEHOUSE NTFS volume, serial

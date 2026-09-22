@@ -56,12 +56,12 @@ $env:PYTHONPATH='apps/video;.'
 apps/video/.venv/Scripts/python.exe apps/video/report_knight_line_rankings.py --line camel --archive-root 'D:/AoE2 Renders' --require-current-all
 ```
 
-After the [minimal knight corrections](KNIGHT_MINIMAL_RETAKE_AUDIT.md) are archived
-and the retained Cavalier result indexes are built:
+The [canonical knight archive](KNIGHT_CANONICAL_ARCHIVE.md) contains the selected
+recordings, retained results and merged minimal corrections:
 
 ```powershell
 $env:PYTHONPATH='apps/video;.'
-apps/video/.venv/Scripts/python.exe apps/video/report_knight_line_rankings.py --line knight --archive-root 'D:/AoE2 Renders' --archive-root data/local/knight-reused-indexes --require-current-all
+apps/video/.venv/Scripts/python.exe apps/video/report_knight_line_rankings.py --line knight --archive-root 'E:/AoE2 Renders/knight-line-canonical' --require-current-all
 ```
 
 On another machine, substitute its Python executable and actual archive path.
@@ -109,22 +109,27 @@ roster from whatever folders happen to be connected.
 | Line | Variants | Sources | Final shared opponents |
 |---|---|---|---:|
 | Camels | Hindustanis, Gurjaras, Berbers, Byzantines, Ethiopians, Saracens, Khitans, Malians, Turks | Nine `camel-comparison-*` folders; Hindustanis use Imperial Camel Rider, the others Heavy Camel Rider | 70 |
-| Knights: expansion | Spanish, Burgundian, Celtic Paladins; Khmer, Berber, Malay Cavaliers; Wei, Wu, Shu Heavy Hei Guang Cavalry | Nine `knight-expansion-*` folders, each followed by its `knight-v2-leitis4-*` correction | 70 |
-| Knights: completed replacements | Frank, Teutonic, four-relic Lithuanian Paladins; Persian Savar; Bulgarian Cavalier | Five completed `knight-v2-*` folders | 70 |
-| Knights: reused originals | Polish, Burmese, Sicilian Cavaliers | Three `knight-reused-cavalier-*` result indexes, each followed by its two-cell `knight-count-fix-cavalier-*` archive | 70 |
+| Knights: expansion | Spanish, Burgundian, Celtic Paladins; Khmer, Berber, Malay Cavaliers; Wei, Wu, Shu Heavy Hei Guang Cavalry | Nine canonical variant folders, with four-relic Leitis corrections merged | 70 |
+| Knights: completed replacements | Frank, Teutonic, four-relic Lithuanian Paladins; Persian Savar; Bulgarian Cavalier | Five canonical variant folders | 70 |
+| Knights: partially available footage | Polish, Burmese, Sicilian Cavaliers | Three canonical indexes retaining every result and both count corrections; see the missing-media inventory | 70 |
 
 The knight ranking combines all **17** variants. A compatibility key remains
 `paladin-persians`; its label is Persian Savar and its archive is
-`knight-v2-savar-persians`. Stable keys, not display names, identify comparisons.
+`paladin-persians`. Stable keys, not display names, identify comparisons.
 
-An override is loaded after the base source and replaces the same opponent slug
-in memory. It does not rewrite the base archive or add another battle to the
-average. The approved nine correction archives contain the four-relic Elite
-Leitis cell only. In a final knight report, all nine overrides are mandatory even
-though the manifest field is named `optionalOverrides`. Inspect a new correction
-index before adding it; later-source precedence applies to every matching slug
-in that index. `variants[key].rows[slug].archive` identifies the authoritative
-source, and `sources` includes both original and correction index hashes.
+Each folder now has one selected cell per opponent, with corrections already
+merged. Do not add the retired correction folders again. Historical manifests
+can still load an override after its base source; it replaces the same opponent
+slug rather than adding another trial to the average.
+`variants[key].rows[slug].archive` identifies the authoritative index, and
+`sources` records its hash.
+
+The consolidated Polish set uses 33 available repeat recordings where original
+footage could not be located. Their matching outcomes replace those cells in
+the selected set; old outcomes remain in `replacedResult` and source history.
+Reports generated before this consolidation are historical and must be rebuilt
+from the selected indexes when next requested. The 183 rows without raw footage
+remain usable for result analysis, but cannot support video reconstruction.
 
 ### Fields consumed from `run.json`
 

@@ -172,8 +172,9 @@ def test_civilization_sitemap_dates_use_supplement_only_for_affected_pages(clien
     root = ET.fromstring(client.get('/sitemap.xml').data)
     dates = {node.find('{*}loc').text.rsplit('/', 1)[-1]: node.find('{*}lastmod').text
              for node in root.findall('{*}url') if node.find('{*}lastmod') is not None}
-    assert dates['danes'] == '2026-09-22'
-    assert dates['franks'] == '2026-09-22'
+    assert dates['civilizations'] == '2026-09-23'
+    for slug in ('danes', 'saxons', 'varangians', 'franks'):
+        assert dates[slug] == '2026-09-23'
     assert dates['bengalis'] == app._data_lastmod()
     assert dates['matchup-advisor'] == app._data_lastmod()
 

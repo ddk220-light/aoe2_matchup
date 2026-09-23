@@ -851,10 +851,12 @@ def _data_lastmod():
 @app.route('/sitemap.xml')
 def sitemap_xml():
     lastmod = _data_lastmod()
-    entries = [(path, lastmod) for path in ('/', '/matchup-advisor', '/units', '/civilizations', '/matchups', '/about', '/patches')]
     supplement = load_civilization_supplement()
+    civ_lastmod = max(lastmod or '', supplement['published_at'])
+    entries = [(path, civ_lastmod if path == '/civilizations' else lastmod)
+               for path in ('/', '/matchup-advisor', '/units', '/civilizations', '/matchups', '/about', '/patches')]
     entries.extend((f'/civilizations/{name.lower()}',
-                    supplement['published_at'] if name in supplement['civilizations'] else lastmod)
+                    civ_lastmod if name in supplement['civilizations'] else lastmod)
                    for name in civilization_page_names(_get_ref_civs(), supplement))
     entries.extend((f"/units/{page['url']}", lastmod) for page in _UNIT_LINE_PAGES)
     conn = get_ref_db()

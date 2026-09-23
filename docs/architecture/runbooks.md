@@ -475,6 +475,9 @@ DAT4x attack GIFs separately as `gifs/<slug>.gif`; the cards use the lossless We
 versions. The September 23 staging upload added these 53 missing objects
 (31,943,382 bytes), verified their sizes and ETags, and overwrote no objects.
 This is a media-only operation: no global catalog or database publication.
+Production has a separate bucket. The owner-authorized September 23 main release
+publishes and verifies the same 53 files there before code promotion; a successful
+staging upload alone does not make those files available in production.
 
 `civilization_page_analysis` composes the supplement onto a copy of the existing
 ranked analysis. Initial HTML and `/api/civilizations/<Name>` use that same data.
@@ -484,6 +487,9 @@ rank fields continue to render normally. No scores or tiers are fabricated, and
 no “not ranked yet” or other interim status UI is introduced.
 The builder sets `published_at` to its generation date, so rebuilding identical
 inputs on another day changes affected civilization sitemap `lastmod` dates.
+The approved September 23 presentation release advances that date to 2026-09-23.
+The civilization overview and affected detail pages use the later of this date
+and the underlying data date; unrelated pages retain their own data date.
 
 Run only the focused checks for this page release:
 

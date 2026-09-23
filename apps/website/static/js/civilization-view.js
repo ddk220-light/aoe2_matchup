@@ -90,11 +90,15 @@ function shouldNavigateCivCard(name) {
 
 function civilizationUnitMedia(unit, name) {
     var media = unit.media || {};
+    var catalogName = media.catalog_name || name;
+    var useSprite = !!media.idle || (typeof hasSprite === "function" && hasSprite(catalogName));
     return {
-        idle: media.idle || spriteFor(name) || getIconUrl(name),
-        icon: media.icon || getIconUrl(name),
+        catalogName: catalogName,
+        useSprite: useSprite,
+        idle: media.idle || (useSprite ? spriteFor(catalogName) : (media.icon || getIconUrl(catalogName))),
+        icon: media.icon || getIconUrl(catalogName),
         iconTransparent: media.icon_transparent || null,
-        attack: media.attack || (typeof animFor === "function" ? animFor(name) : null),
+        attack: media.attack || (typeof animFor === "function" ? animFor(catalogName) : null),
         hasDirectMedia: !!(media.idle || media.icon || media.icon_transparent || media.attack),
     };
 }
@@ -137,9 +141,8 @@ function renderUnitBadge(unit, colKey) {
     // units (naval) fall back to the boxed portrait. The `.sprite` class drives the CSS,
     // where a fixed box + object-fit: contain keeps every aspect ratio inside the badge.
     var media = civilizationUnitMedia(unit, name);
-    var useSprite = !!(unit.media && unit.media.idle) || (typeof hasSprite === "function" && hasSprite(name));
-    var iconUrl = unit.media && unit.media.idle ? media.idle :
-        (unit.media && unit.media.icon ? media.icon : (useSprite ? spriteFor(name) : getIconUrl(name)));
+    var useSprite = media.useSprite;
+    var iconUrl = media.idle;
     // The backend grades each unit into one of six tiers (see TIER_META). A few
     // stat-only naval/siege fallbacks carry no score and so no tier — those fall
     // back to a plain, edge-less badge.
@@ -155,7 +158,8 @@ function renderUnitBadge(unit, colKey) {
     var iconSize = (isSig ? "signature-icon" : "unit-badge-icon") + (useSprite ? " sprite" : "");
 
     var html = '<div class="' + badgeClass + '" tabindex="0" aria-label="Details for ' + escapeHtml(name) + '"'
-        + (media.hasDirectMedia ? '' : ' data-anim-name="' + escapeHtml(name) + '"') + '>';
+        + ' data-anim-name="' + escapeHtml(media.catalogName) + '"'
+        + (unit.media && unit.media.attack ? ' data-anim-src="' + escapeHtml(unit.media.attack) + '"' : '') + '>';
 
     /* Tooltip */
     html += renderTooltip(unit, name, media);
@@ -238,9 +242,8 @@ function renderTooltip(unit, name, media) {
         || missingTechs.length || unit.score != null || media.hasDirectMedia;
     if (!hasContent) return "";
 
-    var useSprite = !!(unit.media && unit.media.idle) || (typeof hasSprite === "function" && hasSprite(name));
-    var iconUrl = unit.media && unit.media.idle ? media.idle :
-        (unit.media && unit.media.icon ? media.icon : (useSprite ? spriteFor(name) : getIconUrl(name)));
+    var useSprite = media.useSprite;
+    var iconUrl = media.idle;
 
     var html = '<div class="unit-badge-tooltip">';
 

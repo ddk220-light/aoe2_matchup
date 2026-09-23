@@ -11,6 +11,20 @@ import pytest
 MODULE = 'aoe2x.assets.build_civilization_release'
 
 
+def test_idle_sprite_uses_selected_dat_image_and_shared_web_size(tmp_path):
+    from PIL import Image
+    source = tmp_path / 'selected_idle_dat4x.png'
+    frame = Image.new('RGBA', (500, 600))
+    frame.paste((210, 40, 25, 255), (100, 100, 400, 500))
+    frame.save(source)
+    target = tmp_path / 'idle.png'
+    builder().write_idle_sprite(source, target)
+    with Image.open(target) as sprite:
+        assert sprite.size == (320, 384)
+        assert sprite.getpixel((0, 0)) == (0, 0, 0, 0)
+        assert sprite.getpixel((160, 192)) == (210, 40, 25, 255)
+
+
 def test_builder_explains_frank_mounted_crossbow_gold_discount():
     class Analyzer:
         def get_unit(self, unit_id):

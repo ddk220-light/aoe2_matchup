@@ -1,5 +1,6 @@
 """Civilization HTML routes; JSON and HTML share the analysis service."""
 from flask import Blueprint, render_template, redirect, abort, request, jsonify
+from aoe2x.assets.catalog import load_manifest
 from ..services.civilizations import civilization_page_analysis, load_civilization_supplement
 from ..services.catalog import grouped_units
 
@@ -39,6 +40,7 @@ def create_blueprint(_get_page_civs, get_civ_detail, get_civ_overview_data, curr
         return render_template("civ_detail.html", civ=civ, civs=_get_page_civs(),
                                meta_desc=meta_desc, active_nav="civ_select",
                                analysis=analysis, civ_buildings=grouped_units(analysis),
+                               civ_sprites=load_manifest(),
                                civ_emblems={name: item['emblem_url'] for name, item in supplement.items()
                                             if item['emblem_url']},
                                civ_page_footer=True)

@@ -19,15 +19,18 @@
         {% set media = unit.media | default({}) %}
         {% set stats = unit.stats | default({}) %}
         {% set name = unit.unit_name %}
+        {% set media_name = media.get('catalog_name') or name %}
+        {% set sprite = (civ_sprites | default({})).get(media_name, {}) %}
+        {% set use_sprite = media.get('idle') or sprite.get('url') %}
         {% set icon = site_catalog.icon_names.get(name) if site_catalog is defined else none %}
         {% set icon_url = media.get('icon') or ('/static/img/units/' ~ icon ~ '.png' if icon else '') %}
-        {% set preview_url = media.get('idle') or icon_url %}
+        {% set preview_url = use_sprite or icon_url %}
         <div class="unit-badge{% if unit.tier %} is-tier-{{ unit.tier }}{% else %} no-strength{% endif %}"
-             tabindex="0" aria-label="Details for {{ name }}"{% if not media %} data-anim-name="{{ name }}"{% endif %}>
+             tabindex="0" aria-label="Details for {{ name }}" data-anim-name="{{ media_name }}"{% if media.get('attack') %} data-anim-src="{{ media.attack }}"{% endif %}>
             <div class="unit-badge-tooltip">
                 <button type="button" class="unit-badge-tooltip-close" aria-label="Close">×</button>
-                <div class="tt-head{% if media.get('idle') %} tt-head--sprite{% endif %}">
-                    {% if preview_url %}<img class="tt-icon anim-slot{% if media.get('idle') %} tt-icon--sprite{% endif %}" src="{{ preview_url }}" alt="{{ name }}">{% endif %}
+                <div class="tt-head{% if use_sprite %} tt-head--sprite{% endif %}">
+                    {% if preview_url %}<img class="tt-icon anim-slot{% if use_sprite %} tt-icon--sprite{% endif %}" src="{{ preview_url }}" alt="{{ name }}">{% endif %}
                     <div class="tt-head-text"><div class="tt-name">{{ name }}</div>
                     {% if unit.tier %}<span class="tooltip-tier tier-{{ unit.tier }}">{{ unit.tier | title }}</span>{% endif %}</div>
                 </div>
@@ -59,7 +62,7 @@
                 {% if not unit.is_unique %}{% for missing in unit.missing_techs | default([]) %}<div class="tooltip-missing">✗ Missing: {{ missing }}</div>{% endfor %}{% endif %}
                 {% if unit.score is defined and unit.score is not none %}<div class="tooltip-rank">Effectiveness score: {{ '%.1f' | format(unit.score) }} / 100</div>{% endif %}
             </div>
-            {% if preview_url %}<img class="unit-badge-icon{% if media.get('idle') %} sprite{% endif %}" src="{{ preview_url }}" alt="{{ name }}" loading="lazy">{% endif %}
+            {% if preview_url %}<img class="unit-badge-icon{% if use_sprite %} sprite{% endif %}" src="{{ preview_url }}" alt="{{ name }}" loading="lazy">{% endif %}
             <div class="unit-badge-info"><span class="unit-badge-name">{{ name }}</span>
                 {% if unit.tier %}<span class="unit-badge-rank tier-{{ unit.tier }}">{{ unit.tier | title }}</span>{% endif %}
             </div>

@@ -47,7 +47,8 @@ test('new unit card uses supplied media, costs and abilities without an invented
     assert.match(html, /<img[^>]+src="\/static\/img\/resources\/food\.png"/);
     assert.match(html, /<img[^>]+src="\/static\/img\/resources\/gold\.png"/);
     assert.doesNotMatch(html, /\/resources\/wood\.png/);
-    assert.doesNotMatch(html, /Wood|Coming soon|Unranked|data-anim-name|tier-good/);
+    assert.doesNotMatch(html, /Wood|Coming soon|Unranked|tier-good/);
+    assert.match(html, /data-anim-src="\/static\/media\/185872\/jomsviking\/attack.webp"/);
     assert.match(html, /Fast raid|Charged attack/);
 });
 
@@ -72,6 +73,42 @@ test('legacy card keeps catalog media behavior and explicit building groups new 
     assert.match(context.renderUnitBadge(legacy, 'cavalry'), /data-anim-name="Paladin"/);
     const groups = context.groupUnitsByBuilding({ infantry: { jomsviking: [unit] } });
     assert.equal(groups.barracks[0].unit.unit_name, 'Elite Jomsviking');
+});
+
+test('generic icon-only overrides retain the existing sprite and hover animation', () => {
+    context.hasSprite = () => true;
+    const html = context.renderUnitBadge({ unit_name: 'Hussar', stats: { hp: 95 },
+        media: { icon: '/portrait/hussar.png' } }, 'cavalry');
+    assert.match(html, /data-anim-name="Hussar"/);
+    assert.match(html, /src="\/legacy\/idle.png" class="unit-badge-icon sprite"/);
+    context.hasSprite = () => false;
+});
+
+test('renamed Longship resolves the same catalog sprite and animation as Longboat', () => {
+    context.hasSprite = name => name === 'Elite Longboat';
+    context.spriteFor = name => name === 'Elite Longboat' ? '/legacy/longboat.png' : '/wrong.png';
+    const html = context.renderUnitBadge({ unit_name: 'Elite Longship', stats: { hp: 156 },
+        media: { icon: '/portrait/longboat.png', catalog_name: 'Elite Longboat' } }, 'navy');
+    assert.match(html, /data-anim-name="Elite Longboat"/);
+    assert.match(html, /src="\/legacy\/longboat.png" class="unit-badge-icon sprite"/);
+    context.hasSprite = () => false;
+    context.spriteFor = () => '/legacy/idle.png';
+});
+
+test('hover plays explicit new-unit media and restores the sharp still on exit', () => {
+    const handlers = {};
+    const hoverContext = vm.createContext({ window: { SITE_CATALOG: {
+        civilizations: [], icon_names: {}, unique_buildings: {},
+    } }, document: { addEventListener: (event, handler) => { handlers[event] = handler; } } });
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../apps/website/static/js/constants.js'), 'utf8'), hoverContext);
+    const image = { src: '/sharp.png', dataset: {}, getAttribute: () => image.src };
+    const badge = { dataset: { animName: 'Elite Jarl', animSrc: '/jarl/attack.webp' },
+        querySelector: () => image, contains: () => false };
+    const target = { closest: () => badge };
+    handlers.mouseover({ target, relatedTarget: null });
+    assert.equal(image.src, '/jarl/attack.webp');
+    handlers.mouseout({ target, relatedTarget: null });
+    assert.equal(image.src, '/sharp.png');
 });
 
 test('selecting Attack preview changes the visible detail image and active control', () => {

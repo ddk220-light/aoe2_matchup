@@ -109,7 +109,7 @@ def media_for(name):
     legacy = aliases.get(name, name)
     icons = json.loads(Path(__file__).with_name('presentation.json').read_text())['icon_names']
     icon = icons[legacy]
-    return {'icon': f'/static/img/units/{icon}.png'}
+    return {'icon': f'/static/img/units/{icon}.png', 'catalog_name': legacy}
 
 
 def apply_tree_availability(analyzer, trees):
@@ -214,6 +214,44 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def write_idle_sprite(source, target):
+    """Publish the selected DAT 4x idle with the shared website's 384px bound."""
+    with Image.open(source) as idle:
+        sprite = idle.convert('RGBA')
+        if max(sprite.size) > 384:
+            scale = 384 / max(sprite.size)
+            sprite = sprite.resize((round(sprite.width * scale), round(sprite.height * scale)),
+                                   Image.Resampling.LANCZOS)
+        sprite.save(target)
+    return {'transform': 'DAT 4x idle, max 384px (shared web sprite recipe)'}
+
+
+MEDIA_NOTE = ('Uses the selected DAT 4x idle sprites and DAT 4x attack animations, '
+              'matching the existing civilization media. Idle PNGs use the shared '
+              '384px web bound; animated WebP preserves the source GIF frames and timing. '
+              'Original library assets are unchanged.')
+
+
+def refresh_idles(assets, output):
+    """Publish ten selected DAT 4x idles and aliases; keep all stats and attacks."""
+    target = output / 'data' / f'civilizations-{BUILD}.json'
+    release = json.loads(target.read_text(encoding='utf-8'))
+    inventory = {item['output']: item for item in release['media_inventory']}
+    for unit_slug, media in release['media'].items():
+        source = assets / unit_slug / f'{unit_slug}_idle_dir06_dat4x.png'
+        idle = output / media['idle'].removeprefix('/static/')
+        details = write_idle_sprite(source, idle)
+        inventory[media['idle']].clear()
+        inventory[media['idle']].update(source=str(source), output=media['idle'],
+                                        source_sha256=digest(source), bytes=idle.stat().st_size, **details)
+    for record in release['civilizations'].values():
+        for row in record['units']:
+            row['media'] = media_for(row['unit_name'])
+    release['media_notes'] = [MEDIA_NOTE]
+    target.write_text(json.dumps(release, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+    print('Published ten existing DAT 4x idles and catalog aliases; no stats or attack animations regenerated.')
+
+
 def copy_emblem(game_root, output, civ):
     src = game_root / 'widgetui' / 'textures' / 'menu' / 'civs' / f'{civ.lower()}.png'
     dst = output / 'img' / 'civilizations' / str(BUILD) / src.name
@@ -238,21 +276,20 @@ def build_release(dat, trees, assets, output, extracted, *, reuse_extracted=Fals
                'civilizations': {}, 'media': {}, 'sources': {'dat': str(dat),
                'tech_trees': str(trees), 'approved_assets': str(assets), 'asset_revision': '68e99758'},
                'media_inventory': [],
-               'media_notes': ['Enhanced dat4x and ultrasharp idle PNGs contain visible streaks. '
-                   'This release reuses clean native red idle sprites. No clean existing blue '
-                   'idle source was available; idle_blue is intentionally absent. '
-                   'Approved attack GIFs remain the source of lossless animated WebP.']}
+               'media_notes': [MEDIA_NOTE]}
     for name in NEW_NAMES.values():
         unit_slug = slug(name)
         source = assets / unit_slug
         dest = output / 'media' / 'civilizations' / str(BUILD) / unit_slug
         dest.mkdir(parents=True, exist_ok=True)
         sources = {'icon.png': source / 'icon.png', 'icon_transparent.png': source / 'icon_transparent.png',
-                   'idle.png': source / f'{unit_slug}_idle_dir06.png',
+                   'idle.png': source / f'{unit_slug}_idle_dir06_dat4x.png',
                    'attack.webp': source / f'{unit_slug}_attack_dir06_dat4x.gif'}
         for filename, path in sources.items():
             details = convert_attack(path, dest / filename) if filename == 'attack.webp' else {}
-            if filename != 'attack.webp':
+            if filename == 'idle.png':
+                details = write_idle_sprite(path, dest / filename)
+            elif filename != 'attack.webp':
                 shutil.copyfile(path, dest / filename)
             release['media_inventory'].append({'source': str(path),
                 'output': '/static/' + (dest / filename).relative_to(output).as_posix(),
@@ -271,7 +308,9 @@ def build_release(dat, trees, assets, output, extracted, *, reuse_extracted=Fals
             'units': [reference_row(civ, n, analyzer) for n in select_roster(civ, tree)]}
     for record in release['civilizations'].values():
         for row in record['units']:
-            for url in row['media'].values():
+            for key, url in row['media'].items():
+                if key == 'catalog_name':
+                    continue
                 if not (output / url.removeprefix('/static/')).is_file():
                     raise ValueError(f'Missing referenced media: {url}')
     target = output / 'data' / f'civilizations-{BUILD}.json'
@@ -284,11 +323,21 @@ def build_release(dat, trees, assets, output, extracted, *, reuse_extracted=Fals
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    for key in ('dat', 'trees', 'assets', 'output', 'extracted'):
-        parser.add_argument('--' + key, type=Path, required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--refresh-idles', action='store_true', help='Publish selected DAT 4x idles; no DAT extraction or model runs')
+    for key in ('dat', 'trees', 'assets', 'extracted'):
+        parser.add_argument('--' + key, type=Path)
     parser.add_argument('--reuse-extracted', action='store_true', help='Reuse this release’s already extracted DAT')
     args = parser.parse_args()
-    build_release(**vars(args))
+    if args.refresh_idles:
+        if not args.assets:
+            parser.error('--assets is required to refresh selected idle sprites')
+        refresh_idles(args.assets, args.output)
+    else:
+        if not all((args.dat, args.trees, args.assets, args.extracted)):
+            parser.error('--dat, --trees, --assets and --extracted are required for a full release')
+        del args.refresh_idles
+        build_release(**vars(args))
 
 
 if __name__ == '__main__':

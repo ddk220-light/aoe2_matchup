@@ -67,8 +67,8 @@ function sheetFor(name) {
     }
     document.addEventListener("mouseover", function (e) {
         const el = e.target.closest && e.target.closest("[data-anim-name]");
-        if (!el) return;
-        const url = (typeof animFor === "function") && animFor(el.dataset.animName);
+        if (!el || el.contains(e.relatedTarget)) return;
+        const url = el.dataset.animSrc || ((typeof animFor === "function") && animFor(el.dataset.animName));
         if (!url) return;
         const img = targetImg(el);
         if (!img) return;

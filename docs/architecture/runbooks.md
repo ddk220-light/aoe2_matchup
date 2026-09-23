@@ -423,20 +423,33 @@ Outputs:
   categories exclude civilians, Monks, Petards and Siege Towers; Trebuchet uses
   the existing combat representation.
 - `apps/website/static/media/civilizations/185872/`: ten base/elite forms, four
-  files each — icon, transparent icon, native transparent idle PNG, animated
+  files each — icon, transparent icon, enhanced transparent card still, animated
   lossless attack WebP. Conversion preserves all 390 source frames, alpha,
   durations and loop settings. Base forms remain reusable in the media map;
   civilization cards show only the available tier.
 - `apps/website/static/img/civilizations/185872/`: three finished shields from
   `widgetui/textures/menu/civs/`, **not** the mask textures in `ingame/emblems`.
-- These 43 files total 14,481,088 bytes; exact sources, hashes and animation
+- These 43 files total 15,763,368 bytes; exact sources, hashes and animation
   metadata are recorded in the supplement's `media_inventory`.
 
-Source-quality decision: the enhanced red/blue idle derivatives have visible
-streaking. Use the clean original red idle sprites; omit the unavailable blue
-variant rather than relabel red as blue. Native idle is lower resolution but
-clean. No originals are modified, and no temporary media-status labels are added.
-Longship names use the existing Longboat icons through page-only aliases.
+Owner correction (2026-09-23): use the selected DAT 4x idle sprites and DAT 4x
+attack GIFs just like the existing civilizations. Streaking is not permission
+to substitute native-resolution stills or attack-frame posters. Idle PNGs use
+the shared website's 384px bound; the lossless animated WebPs preserve the GIF
+frames and timing. No originals are modified or regenerated.
+
+Generic cards use the same sprite catalog and hover animation lookup as existing
+civilizations; an icon-only override must not suppress either. Longship names
+resolve through the existing Longboat media name. New-unit attack WebPs use the
+same hover behavior through an explicit animation URL. Ships without an attack
+entry in the shared catalog remain still, exactly as in the other civilizations.
+
+To publish only the ten selected idle sprites and media aliases (no DAT
+extraction, AI inference, stat changes, or attack conversion):
+
+```powershell
+python -m aoe2x.assets.build_civilization_release --output apps/website/static --assets D:/AI/aoe2_matchup/graphics/units --refresh-idles
+```
 
 The shared food/wood/gold cost images are three unchanged game files, copied once
 from `widgetui/textures/ingame/staticons/{food,wood,gold}.png` into
@@ -448,7 +461,7 @@ from `widgetui/textures/ingame/staticons/{food,wood,gold}.png` into
 | wood.png | 9,441 | `427aac7fa89381bff4cc50a895ebda11654d257cdfacc425d39cce52bb799223` |
 | gold.png | 11,940 | `fcca46c72630f27a6b242bf3aebfe879b6575aca835faad79ce8e4ec750eb86f` |
 
-Total selected new media, including those cost images: **46 files / 14,512,669
+Total selected new media, including those cost images: **46 files / 15,794,949
 bytes**. No source GIF library, recordings, caches, contact sheets or scratch
 extraction outputs belong in this feature's commit set.
 

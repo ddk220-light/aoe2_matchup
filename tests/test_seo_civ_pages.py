@@ -60,6 +60,21 @@ def test_new_civ_server_html_uses_reference_emblems_media_buildings_and_costs(cl
     assert 'Unranked' not in detail
 
 
+def test_new_civ_generic_cards_share_existing_sprites_and_hover_hooks(client):
+    import re
+    body = client.get('/civilizations/varangians').get_data(as_text=True)
+    for name, catalog_name, slug in [('Hussar', 'Hussar', 'hussar'),
+                                    ('Cavalier', 'Cavalier', 'cavalier'),
+                                    ('Crossbowman', 'Crossbowman', 'crossbowman'),
+                                    ('Galleon', 'Galleon', 'galleon'),
+                                    ('Elite Longship', 'Elite Longboat', 'elite_longboat')]:
+        badge = re.search(r'aria-label="Details for ' + re.escape(name)
+                          + r'".*?<img class="unit-badge-icon[^>]+>', body, re.S).group()
+        assert f'data-anim-name="{catalog_name}"' in badge
+        assert f'src="/static/img/unit_sprites/{slug}.png"' in badge
+    assert 'data-anim-src="/static/media/civilizations/185872/elite_jarl/attack.webp"' in body
+
+
 def test_server_html_shows_only_supplied_ship_media_and_real_tier(client):
     import app
     from flask import render_template

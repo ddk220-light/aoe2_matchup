@@ -1,0 +1,2608 @@
+{
+  "schema_version": 1,
+  "reference_build": 185872,
+  "published_at": "2026-09-22",
+  "source_dat_sha256": "4aa2f0a719e88e5f1502517eddb27c669aeb40c2fe9d8c4f3eec7751c01e7baa",
+  "source_tech_tree_sha256": {
+    "Bohemians": "aab039101a899a3f91dede0f8c0988ea095e5a36cbad6a61b95c3e1e4686e6af",
+    "Britons": "0418f78c030c15215d01947db98dcebc73daf3379e3833d30414b4ace8154bd0",
+    "Burgundians": "2cc6d4e31b8131a6cd81481ecea22dd676df199ed9ac1679a43f57fc94eab6aa",
+    "Byzantines": "a536dcfc841efccb728d9cc5235d75aaececc6913d0086a6bc3c93aec498b5d6",
+    "Celts": "b8bbfd0346cdd522e16ea460258e005a1755930a9c931b00b380273aee3697a0",
+    "Danes": "3bfcea7a8d181dbcb5af0a51d44619d78dc665c221cef209b99c55c00a638029",
+    "Franks": "74530a29d912599c90b57c429e44dd0555f13805361154a38f8a3f3991b5c1c6",
+    "Italians": "bc2935ec3dfcf57dab949bf7af8de2407c7a79dde37f7b16e9da4f25146898cb",
+    "Poles": "d5c929c077e3bbac55d09d92a2f8bf39185edc6deec41a570b86ceacfd15c028",
+    "Portuguese": "b00d2b5748ce717d8eb80110f2e8f9984d3ffe60dd1f9b7490790500afda40c2",
+    "Saxons": "d1e9f9606eac379f4b0efe08e77cbd9566a027a42e9ec6f6e5fc408551c58448",
+    "Sicilians": "e21ed277449864de9506cef2478819b320f290b8bfa69158509128d98755d012",
+    "Spanish": "3282401526fe84243c1955b27387bca3562ec17885cfa4421f3fe34d61ca1db0",
+    "Teutons": "8313407c24616a5a058c3de8c492c82aac324f0ef4cf94dc37cfdab5714dd4f2",
+    "Varangians": "9a87eee2963900160a943e1e1944fc91baa52ba9fcc75d3a0a3a8a3923f19575",
+    "Vikings": "2f932403345bc3e3a360b82a1aa2bd8ec9a131902d69ba89efe50f94067af91c"
+  },
+  "civilizations": {
+    "Bohemians": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [],
+      "units": [
+        {
+          "unit_name": "Mounted Crossbowman",
+          "unit_slug": "mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 45,
+            "attack": 11,
+            "reload_time": 2.5,
+            "range": 7.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Britons": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 55,
+            "attack": 12,
+            "reload_time": 2.5,
+            "range": 8.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Cranequins: +1 range and +2 attack against infantry."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Burgundians": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Mounted Crossbowman",
+          "unit_slug": "mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 45,
+            "attack": 11,
+            "reload_time": 2.5,
+            "range": 7.0,
+            "melee_armor": 4,
+            "pierce_armor": 2,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Byzantines": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [],
+      "units": [
+        {
+          "unit_name": "Elite Varangian Guard",
+          "unit_slug": "elite_varangian_guard",
+          "line_slug": "varangian_guard",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 80,
+            "attack": 19,
+            "reload_time": 2.0,
+            "range": 0.0,
+            "melee_armor": 5,
+            "pierce_armor": 7,
+            "cost_food": 65,
+            "cost_wood": 0,
+            "cost_gold": 45,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Generates gold while fighting other units.",
+            "Logistica: trample damage."
+          ],
+          "bonus_abilities": [
+            "Logistica: trample damage.",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/elite_varangian_guard/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/elite_varangian_guard/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/elite_varangian_guard/idle.png",
+            "attack": "/static/media/civilizations/185872/elite_varangian_guard/attack.webp"
+          }
+        }
+      ]
+    },
+    "Celts": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 55,
+            "attack": 11,
+            "reload_time": 2.5,
+            "range": 6.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Danes": {
+      "description": "Infantry and siege civilization. Jomsvikings throw torches at buildings and ships; Northmen’s Fury strengthens siege attacks. Varangian Guards and Longships move faster.",
+      "emblem_url": "/static/img/civilizations/185872/danes.png",
+      "complete_roster": true,
+      "remove_slugs": [],
+      "units": [
+        {
+          "unit_name": "Crossbowman",
+          "unit_slug": "crossbowman",
+          "line_slug": "archer",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 35,
+            "attack": 9,
+            "reload_time": 1.7,
+            "range": 8.0,
+            "melee_armor": 3,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 25,
+            "cost_gold": 45,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Crossbowman.png"
+          }
+        },
+        {
+          "unit_name": "Elite Skirmisher",
+          "unit_slug": "elite_skirmisher",
+          "line_slug": "skirmisher",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 35,
+            "attack": 7,
+            "reload_time": 3.0,
+            "range": 8.0,
+            "melee_armor": 3,
+            "pierce_armor": 8,
+            "cost_food": 25,
+            "cost_wood": 35,
+            "cost_gold": 0,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Elite_Skirmisher.png"
+          }
+        },
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 75,
+            "attack": 12,
+            "reload_time": 2.25,
+            "range": 8.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Cranequins: +1 range and +2 attack against infantry."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Champion",
+          "unit_slug": "champion",
+          "line_slug": "militia",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 70,
+            "attack": 18,
+            "reload_time": 2.0,
+            "range": 0.0,
+            "melee_armor": 4,
+            "pierce_armor": 6,
+            "cost_food": 50,
+            "cost_wood": 0,
+            "cost_gold": 20,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Hamask increases damage as hit points are lost; listed attack is at full health."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Champion.png"
+          }
+        },
+        {
+          "unit_name": "Halberdier",
+          "unit_slug": "halberdier",
+          "line_slug": "spear",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 60,
+            "attack": 10,
+            "reload_time": 3.0,
+            "range": 0.0,
+            "melee_armor": 3,
+            "pierce_armor": 4,
+            "cost_food": 35,
+            "cost_wood": 25,
+            "cost_gold": 0,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Hamask increases damage as hit points are lost; listed attack is at full health."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Halberdier.png"
+          }
+        },
+        {
+          "unit_name": "Elite Varangian Guard",
+          "unit_slug": "elite_varangian_guard",
+          "line_slug": "varangian_guard",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 80,
+            "attack": 21,
+            "reload_time": 2.0,
+            "range": 0.0,
+            "melee_armor": 5,
+            "pierce_armor": 7,
+            "cost_food": 65,
+            "cost_wood": 0,
+            "cost_gold": 45,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Generates gold while fighting other units.",
+            "Hamask increases damage as hit points are lost; listed attack is at full health."
+          ],
+          "bonus_abilities": [
+            "Longships and Varangian Guards move 10% faster.",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/elite_varangian_guard/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/elite_varangian_guard/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/elite_varangian_guard/idle.png",
+            "attack": "/static/media/civilizations/185872/elite_varangian_guard/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Light Cavalry",
+          "unit_slug": "light_cavalry",
+          "line_slug": "light_cav",
+          "column": "cavalry",
+          "building": "stable",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 80,
+            "attack": 11,
+            "reload_time": 2.0,
+            "range": 0.0,
+            "melee_armor": 3,
+            "pierce_armor": 6,
+            "cost_food": 80,
+            "cost_wood": 0,
+            "cost_gold": 0,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Light_Cavalry.png"
+          }
+        },
+        {
+          "unit_name": "Knight",
+          "unit_slug": "knight",
+          "line_slug": "knight",
+          "column": "cavalry",
+          "building": "stable",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 120,
+            "attack": 14,
+            "reload_time": 1.8,
+            "range": 0.0,
+            "melee_armor": 5,
+            "pierce_armor": 6,
+            "cost_food": 60,
+            "cost_wood": 0,
+            "cost_gold": 75,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Knight.png"
+          }
+        },
+        {
+          "unit_name": "Siege Ram",
+          "unit_slug": "siege_ram",
+          "line_slug": "ram",
+          "column": "siege",
+          "building": "siege_workshop",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 270,
+            "attack": 4,
+            "reload_time": 5.0,
+            "range": 0.0,
+            "melee_armor": -1,
+            "pierce_armor": 195,
+            "cost_food": 0,
+            "cost_wood": 160,
+            "cost_gold": 75,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Northmen's Fury",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Siege_Ram.png"
+          }
+        },
+        {
+          "unit_name": "Siege Onager",
+          "unit_slug": "siege_onager",
+          "line_slug": "mangonel",
+          "column": "siege",
+          "building": "siege_workshop",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 70,
+            "attack": 76,
+            "reload_time": 6.0,
+            "range": 10.0,
+            "melee_armor": 0,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 160,
+            "cost_gold": 135,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Northmen’s Fury: +1 range and +40% siege attack against buildings."
+          ],
+          "bonus_abilities": [
+            "Northmen's Fury",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Siege_Onager.png"
+          }
+        },
+        {
+          "unit_name": "Heavy Scorpion",
+          "unit_slug": "heavy_scorpion",
+          "line_slug": "scorpion",
+          "column": "ranged",
+          "building": "siege_workshop",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 60,
+            "attack": 15,
+            "reload_time": 3.6,
+            "range": 8.0,
+            "melee_armor": 1,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 75,
+            "cost_gold": 75,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Northmen's Fury",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Heavy_Scorpion.png"
+          }
+        },
+        {
+          "unit_name": "Fast Fire Ship",
+          "unit_slug": "fast_fire_ship",
+          "line_slug": "fire",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 140,
+            "attack": 4,
+            "reload_time": 0.25,
+            "range": 2.5,
+            "melee_armor": 3,
+            "pierce_armor": 9,
+            "cost_food": 0,
+            "cost_wood": 60,
+            "cost_gold": 45,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Fast_Fire_Ship.png"
+          }
+        },
+        {
+          "unit_name": "Galleon",
+          "unit_slug": "galleon",
+          "line_slug": "galleon",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 155,
+            "attack": 13,
+            "reload_time": 3.0,
+            "range": 10.0,
+            "melee_armor": 0,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 72,
+            "cost_gold": 30,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Galleon.png"
+          }
+        },
+        {
+          "unit_name": "War Hulk",
+          "unit_slug": "war_hulk",
+          "line_slug": "hulk",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 110,
+            "attack": 8,
+            "reload_time": 1.5,
+            "range": 1.0,
+            "melee_armor": 4,
+            "pierce_armor": 3,
+            "cost_food": 0,
+            "cost_wood": 60,
+            "cost_gold": 35,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/War_Hulk.png"
+          }
+        },
+        {
+          "unit_name": "Catapult Galleon",
+          "unit_slug": "catapult_galleon",
+          "line_slug": "catapult_galleon",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 140,
+            "attack": 31,
+            "reload_time": 6.0,
+            "range": 14.0,
+            "melee_armor": 0,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 180,
+            "cost_gold": 100,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Northmen’s Fury: +1 range and +40% siege attack against buildings."
+          ],
+          "bonus_abilities": [
+            "Northmen's Fury"
+          ],
+          "media": {
+            "icon": "/static/img/units/Catapult_Galleon.png"
+          }
+        },
+        {
+          "unit_name": "Elite Longship",
+          "unit_slug": "elite_longship",
+          "line_slug": "longship",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 130,
+            "attack": 11,
+            "reload_time": 3.0,
+            "range": 10.0,
+            "melee_armor": 1,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 80,
+            "cost_gold": 50,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Longships and Varangian Guards move 10% faster."
+          ],
+          "media": {
+            "icon": "/static/img/units/Elite_Longboat.png"
+          }
+        },
+        {
+          "unit_name": "Elite Jomsviking",
+          "unit_slug": "elite_jomsviking",
+          "line_slug": "jomsviking",
+          "column": "infantry",
+          "building": "castle",
+          "reference_build": 185872,
+          "is_unique": true,
+          "stats": {
+            "hp": 75,
+            "attack": 13,
+            "reload_time": 1.8,
+            "range": 0.0,
+            "melee_armor": 5,
+            "pierce_armor": 6,
+            "cost_food": 65,
+            "cost_wood": 0,
+            "cost_gold": 15,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Throws torches against buildings and ships; torch damage is separate from the displayed melee attack.",
+            "Hamask increases damage as hit points are lost; listed attack is at full health."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/elite_jomsviking/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/elite_jomsviking/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/elite_jomsviking/idle.png",
+            "attack": "/static/media/civilizations/185872/elite_jomsviking/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Trebuchet",
+          "unit_slug": "trebuchet",
+          "line_slug": "trebuchet",
+          "column": "siege",
+          "building": "castle",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 150,
+            "attack": 201,
+            "reload_time": 10.0,
+            "range": 17.0,
+            "melee_armor": 2,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 200,
+            "cost_gold": 200,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Northmen's Fury"
+          ],
+          "media": {
+            "icon": "/static/img/units/Trebuchet.png"
+          }
+        }
+      ]
+    },
+    "Franks": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 66,
+            "attack": 11,
+            "reload_time": 2.5,
+            "range": 7.0,
+            "melee_armor": 4,
+            "pierce_armor": 2,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 39,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Cranequins: +1 range and +2 attack against infantry."
+          ],
+          "bonus_abilities": [
+            "Cavalry have 20% more HP.",
+            "Ordonnance Companies",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Italians": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Mounted Crossbowman",
+          "unit_slug": "mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 65,
+            "attack": 11,
+            "reload_time": 2.25,
+            "range": 7.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Poles": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 75,
+            "attack": 12,
+            "reload_time": 2.25,
+            "range": 7.0,
+            "melee_armor": 4,
+            "pierce_armor": 2,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Portuguese": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Mounted Crossbowman",
+          "unit_slug": "mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 65,
+            "attack": 11,
+            "reload_time": 2.25,
+            "range": 7.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 52,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Units cost 20% less gold.",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Saxons": {
+      "description": "Infantry and defensive civilization. Hearth Troops open combat with a javelin. Foot-soldier discounts depend on Town Centers and Castles; Shield Wall rewards massed infantry.",
+      "emblem_url": "/static/img/civilizations/185872/saxons.png",
+      "complete_roster": true,
+      "remove_slugs": [],
+      "units": [
+        {
+          "unit_name": "Arbalester",
+          "unit_slug": "arbalester",
+          "line_slug": "archer",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 40,
+            "attack": 10,
+            "reload_time": 1.7,
+            "range": 8.0,
+            "melee_armor": 3,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 25,
+            "cost_gold": 45,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Foot soldiers cost 5% less per controlled Town Center or Castle (maximum 20%); listed costs exclude this variable discount."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Arbalester.png"
+          }
+        },
+        {
+          "unit_name": "Elite Skirmisher",
+          "unit_slug": "elite_skirmisher",
+          "line_slug": "skirmisher",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 35,
+            "attack": 7,
+            "reload_time": 3.0,
+            "range": 8.0,
+            "melee_armor": 3,
+            "pierce_armor": 8,
+            "cost_food": 25,
+            "cost_wood": 35,
+            "cost_gold": 0,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Foot soldiers cost 5% less per controlled Town Center or Castle (maximum 20%); listed costs exclude this variable discount."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Elite_Skirmisher.png"
+          }
+        },
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 75,
+            "attack": 12,
+            "reload_time": 2.25,
+            "range": 8.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Cranequins: +1 range and +2 attack against infantry."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Champion",
+          "unit_slug": "champion",
+          "line_slug": "militia",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 70,
+            "attack": 16,
+            "reload_time": 2.0,
+            "range": 0.0,
+            "melee_armor": 4,
+            "pierce_armor": 6,
+            "cost_food": 50,
+            "cost_wood": 0,
+            "cost_gold": 20,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Foot soldiers cost 5% less per controlled Town Center or Castle (maximum 20%); listed costs exclude this variable discount.",
+            "Shield Wall grants armor when infantry are massed; listed armor excludes formation-dependent bonuses."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Champion.png"
+          }
+        },
+        {
+          "unit_name": "Halberdier",
+          "unit_slug": "halberdier",
+          "line_slug": "spear",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 60,
+            "attack": 8,
+            "reload_time": 3.0,
+            "range": 0.0,
+            "melee_armor": 3,
+            "pierce_armor": 4,
+            "cost_food": 35,
+            "cost_wood": 25,
+            "cost_gold": 0,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Foot soldiers cost 5% less per controlled Town Center or Castle (maximum 20%); listed costs exclude this variable discount.",
+            "Shield Wall grants armor when infantry are massed; listed armor excludes formation-dependent bonuses."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Halberdier.png"
+          }
+        },
+        {
+          "unit_name": "Elite Varangian Guard",
+          "unit_slug": "elite_varangian_guard",
+          "line_slug": "varangian_guard",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 80,
+            "attack": 19,
+            "reload_time": 2.0,
+            "range": 0.0,
+            "melee_armor": 5,
+            "pierce_armor": 7,
+            "cost_food": 65,
+            "cost_wood": 0,
+            "cost_gold": 45,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Generates gold while fighting other units.",
+            "Foot soldiers cost 5% less per controlled Town Center or Castle (maximum 20%); listed costs exclude this variable discount.",
+            "Shield Wall grants armor when infantry are massed; listed armor excludes formation-dependent bonuses."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/elite_varangian_guard/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/elite_varangian_guard/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/elite_varangian_guard/idle.png",
+            "attack": "/static/media/civilizations/185872/elite_varangian_guard/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Hussar",
+          "unit_slug": "hussar",
+          "line_slug": "light_cav",
+          "column": "cavalry",
+          "building": "stable",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 95,
+            "attack": 9,
+            "reload_time": 1.9,
+            "range": 0.0,
+            "melee_armor": 2,
+            "pierce_armor": 4,
+            "cost_food": 80,
+            "cost_wood": 0,
+            "cost_gold": 0,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Hussar.png"
+          }
+        },
+        {
+          "unit_name": "Cavalier",
+          "unit_slug": "cavalier",
+          "line_slug": "knight",
+          "column": "cavalry",
+          "building": "stable",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 140,
+            "attack": 14,
+            "reload_time": 1.8,
+            "range": 0.0,
+            "melee_armor": 4,
+            "pierce_armor": 4,
+            "cost_food": 60,
+            "cost_wood": 0,
+            "cost_gold": 75,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Cavalier.png"
+          }
+        },
+        {
+          "unit_name": "Siege Ram",
+          "unit_slug": "siege_ram",
+          "line_slug": "ram",
+          "column": "siege",
+          "building": "siege_workshop",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 270,
+            "attack": 4,
+            "reload_time": 5.0,
+            "range": 0.0,
+            "melee_armor": -1,
+            "pierce_armor": 195,
+            "cost_food": 0,
+            "cost_wood": 160,
+            "cost_gold": 75,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Siege_Ram.png"
+          }
+        },
+        {
+          "unit_name": "Onager",
+          "unit_slug": "onager",
+          "line_slug": "mangonel",
+          "column": "siege",
+          "building": "siege_workshop",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 60,
+            "attack": 56,
+            "reload_time": 6.0,
+            "range": 9.0,
+            "melee_armor": 0,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 160,
+            "cost_gold": 135,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Onager.png"
+          }
+        },
+        {
+          "unit_name": "Heavy Scorpion",
+          "unit_slug": "heavy_scorpion",
+          "line_slug": "scorpion",
+          "column": "ranged",
+          "building": "siege_workshop",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 60,
+            "attack": 15,
+            "reload_time": 3.6,
+            "range": 8.0,
+            "melee_armor": 1,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 75,
+            "cost_gold": 75,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Heavy_Scorpion.png"
+          }
+        },
+        {
+          "unit_name": "Fire Ship",
+          "unit_slug": "fire_ship",
+          "line_slug": "fire",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 120,
+            "attack": 3,
+            "reload_time": 0.25,
+            "range": 2.5,
+            "melee_armor": 2,
+            "pierce_armor": 6,
+            "cost_food": 0,
+            "cost_wood": 60,
+            "cost_gold": 45,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Fire_Ship.png"
+          }
+        },
+        {
+          "unit_name": "Galleon",
+          "unit_slug": "galleon",
+          "line_slug": "galleon",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 155,
+            "attack": 13,
+            "reload_time": 3.0,
+            "range": 10.0,
+            "melee_armor": 0,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 72,
+            "cost_gold": 30,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Galleon.png"
+          }
+        },
+        {
+          "unit_name": "Carrack",
+          "unit_slug": "carrack",
+          "line_slug": "hulk",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 135,
+            "attack": 6,
+            "reload_time": 1.5,
+            "range": 1.0,
+            "melee_armor": 6,
+            "pierce_armor": 3,
+            "cost_food": 0,
+            "cost_wood": 60,
+            "cost_gold": 35,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Carrack.png"
+          }
+        },
+        {
+          "unit_name": "Catapult Galleon",
+          "unit_slug": "catapult_galleon",
+          "line_slug": "catapult_galleon",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 168,
+            "attack": 31,
+            "reload_time": 6.0,
+            "range": 13.0,
+            "melee_armor": 0,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 180,
+            "cost_gold": 100,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Longships and Catapult Galleons have 20% more HP."
+          ],
+          "media": {
+            "icon": "/static/img/units/Catapult_Galleon.png"
+          }
+        },
+        {
+          "unit_name": "Elite Longship",
+          "unit_slug": "elite_longship",
+          "line_slug": "longship",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 156,
+            "attack": 11,
+            "reload_time": 3.0,
+            "range": 10.0,
+            "melee_armor": 1,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 80,
+            "cost_gold": 50,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Longships and Catapult Galleons have 20% more HP."
+          ],
+          "media": {
+            "icon": "/static/img/units/Elite_Longboat.png"
+          }
+        },
+        {
+          "unit_name": "Elite Hearth Troop",
+          "unit_slug": "elite_hearth_troop",
+          "line_slug": "hearth_troop",
+          "column": "infantry",
+          "building": "castle",
+          "reference_build": 185872,
+          "is_unique": true,
+          "stats": {
+            "hp": 85,
+            "attack": 14,
+            "reload_time": 2.0,
+            "range": 0.0,
+            "melee_armor": 4,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 80,
+            "cost_gold": 35,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Throws a javelin before engaging in melee; javelin damage is separate from the displayed melee attack.",
+            "Foot soldiers cost 5% less per controlled Town Center or Castle (maximum 20%); listed costs exclude this variable discount.",
+            "Shield Wall grants armor when infantry are massed; listed armor excludes formation-dependent bonuses."
+          ],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/elite_hearth_troop/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/elite_hearth_troop/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/elite_hearth_troop/idle.png",
+            "attack": "/static/media/civilizations/185872/elite_hearth_troop/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Trebuchet",
+          "unit_slug": "trebuchet",
+          "line_slug": "trebuchet",
+          "column": "siege",
+          "building": "castle",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 150,
+            "attack": 201,
+            "reload_time": 10.0,
+            "range": 17.0,
+            "melee_armor": 2,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 200,
+            "cost_gold": 200,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Trebuchet.png"
+          }
+        }
+      ]
+    },
+    "Sicilians": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 75,
+            "attack": 12,
+            "reload_time": 2.5,
+            "range": 8.0,
+            "melee_armor": 4,
+            "pierce_armor": 2,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Cranequins: +1 range and +2 attack against infantry."
+          ],
+          "bonus_abilities": [
+            "Land military units resist bonus damage.",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Spanish": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 75,
+            "attack": 12,
+            "reload_time": 2.25,
+            "range": 7.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Teutons": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer"
+      ],
+      "units": [
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 75,
+            "attack": 11,
+            "reload_time": 2.5,
+            "range": 6.0,
+            "melee_armor": 7,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Infantry and cavalry gain +1 melee armor in Castle Age.",
+            "Infantry and cavalry gain another +1 melee armor in Imperial Age.",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        }
+      ]
+    },
+    "Varangians": {
+      "description": "Cavalry and naval civilization. Jarls throw axes that reduce armor. Stronger Bloodlines, faster-attacking Varangian Guards, and faster-firing Longships support their armies.",
+      "emblem_url": "/static/img/civilizations/185872/varangians.png",
+      "complete_roster": true,
+      "remove_slugs": [],
+      "units": [
+        {
+          "unit_name": "Crossbowman",
+          "unit_slug": "crossbowman",
+          "line_slug": "archer",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 35,
+            "attack": 9,
+            "reload_time": 2.0,
+            "range": 8.0,
+            "melee_armor": 3,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 25,
+            "cost_gold": 45,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Crossbowman.png"
+          }
+        },
+        {
+          "unit_name": "Elite Skirmisher",
+          "unit_slug": "elite_skirmisher",
+          "line_slug": "skirmisher",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 35,
+            "attack": 7,
+            "reload_time": 3.0,
+            "range": 8.0,
+            "melee_armor": 3,
+            "pierce_armor": 8,
+            "cost_food": 25,
+            "cost_wood": 35,
+            "cost_gold": 0,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Elite_Skirmisher.png"
+          }
+        },
+        {
+          "unit_name": "Heavy Mounted Crossbowman",
+          "unit_slug": "heavy_mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 85,
+            "attack": 12,
+            "reload_time": 2.5,
+            "range": 8.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Cranequins: +1 range and +2 attack against infantry."
+          ],
+          "bonus_abilities": [
+            "Bloodlines adds 30 HP instead of 20.",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Two-Handed Swordsman",
+          "unit_slug": "two_handed_swordsman",
+          "line_slug": "militia",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 65,
+            "attack": 16,
+            "reload_time": 2.0,
+            "range": 0.0,
+            "melee_armor": 4,
+            "pierce_armor": 6,
+            "cost_food": 50,
+            "cost_wood": 0,
+            "cost_gold": 20,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Two-Handed_Swordsman.png"
+          }
+        },
+        {
+          "unit_name": "Halberdier",
+          "unit_slug": "halberdier",
+          "line_slug": "spear",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 60,
+            "attack": 10,
+            "reload_time": 3.0,
+            "range": 0.0,
+            "melee_armor": 3,
+            "pierce_armor": 4,
+            "cost_food": 35,
+            "cost_wood": 25,
+            "cost_gold": 0,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Halberdier.png"
+          }
+        },
+        {
+          "unit_name": "Elite Varangian Guard",
+          "unit_slug": "elite_varangian_guard",
+          "line_slug": "varangian_guard",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 80,
+            "attack": 21,
+            "reload_time": 1.6,
+            "range": 0.0,
+            "melee_armor": 5,
+            "pierce_armor": 7,
+            "cost_food": 65,
+            "cost_wood": 0,
+            "cost_gold": 45,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Generates gold while fighting other units.",
+            "Attacks 25% faster and generates 50% more gold.",
+            "Gothikon: periodically throws axes."
+          ],
+          "bonus_abilities": [
+            "Varangian Guards attack 25% faster.",
+            "Gothikon",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/elite_varangian_guard/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/elite_varangian_guard/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/elite_varangian_guard/idle.png",
+            "attack": "/static/media/civilizations/185872/elite_varangian_guard/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Hussar",
+          "unit_slug": "hussar",
+          "line_slug": "light_cav",
+          "column": "cavalry",
+          "building": "stable",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 105,
+            "attack": 11,
+            "reload_time": 1.9,
+            "range": 0.0,
+            "melee_armor": 3,
+            "pierce_armor": 6,
+            "cost_food": 80,
+            "cost_wood": 0,
+            "cost_gold": 0,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Bloodlines adds 30 HP instead of 20.",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Hussar.png"
+          }
+        },
+        {
+          "unit_name": "Cavalier",
+          "unit_slug": "cavalier",
+          "line_slug": "knight",
+          "column": "cavalry",
+          "building": "stable",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 150,
+            "attack": 16,
+            "reload_time": 1.8,
+            "range": 0.0,
+            "melee_armor": 5,
+            "pierce_armor": 6,
+            "cost_food": 60,
+            "cost_wood": 0,
+            "cost_gold": 75,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Vendel Legacy: trample damage.",
+            "Team bonus: +1 attack against infantry."
+          ],
+          "bonus_abilities": [
+            "Bloodlines adds 30 HP instead of 20.",
+            "Vendel Legacy",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Cavalier.png"
+          }
+        },
+        {
+          "unit_name": "Siege Ram",
+          "unit_slug": "siege_ram",
+          "line_slug": "ram",
+          "column": "siege",
+          "building": "siege_workshop",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 270,
+            "attack": 4,
+            "reload_time": 5.0,
+            "range": 0.0,
+            "melee_armor": -1,
+            "pierce_armor": 195,
+            "cost_food": 0,
+            "cost_wood": 160,
+            "cost_gold": 75,
+            "is_ranged": false
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Siege_Ram.png"
+          }
+        },
+        {
+          "unit_name": "Onager",
+          "unit_slug": "onager",
+          "line_slug": "mangonel",
+          "column": "siege",
+          "building": "siege_workshop",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 60,
+            "attack": 56,
+            "reload_time": 6.0,
+            "range": 9.0,
+            "melee_armor": 0,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 160,
+            "cost_gold": 135,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Onager.png"
+          }
+        },
+        {
+          "unit_name": "Heavy Scorpion",
+          "unit_slug": "heavy_scorpion",
+          "line_slug": "scorpion",
+          "column": "ranged",
+          "building": "siege_workshop",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 60,
+            "attack": 15,
+            "reload_time": 3.6,
+            "range": 8.0,
+            "melee_armor": 1,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 75,
+            "cost_gold": 75,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/img/units/Heavy_Scorpion.png"
+          }
+        },
+        {
+          "unit_name": "Fast Fire Ship",
+          "unit_slug": "fast_fire_ship",
+          "line_slug": "fire",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 140,
+            "attack": 4,
+            "reload_time": 0.25,
+            "range": 2.5,
+            "melee_armor": 3,
+            "pierce_armor": 9,
+            "cost_food": 0,
+            "cost_wood": 60,
+            "cost_gold": 45,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Fast_Fire_Ship.png"
+          }
+        },
+        {
+          "unit_name": "Galleon",
+          "unit_slug": "galleon",
+          "line_slug": "galleon",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 155,
+            "attack": 13,
+            "reload_time": 3.0,
+            "range": 10.0,
+            "melee_armor": 0,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 72,
+            "cost_gold": 30,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Galleon.png"
+          }
+        },
+        {
+          "unit_name": "Carrack",
+          "unit_slug": "carrack",
+          "line_slug": "hulk",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 135,
+            "attack": 8,
+            "reload_time": 1.5,
+            "range": 1.0,
+            "melee_armor": 6,
+            "pierce_armor": 3,
+            "cost_food": 0,
+            "cost_wood": 60,
+            "cost_gold": 35,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Carrack.png"
+          }
+        },
+        {
+          "unit_name": "Catapult Galleon",
+          "unit_slug": "catapult_galleon",
+          "line_slug": "catapult_galleon",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 140,
+            "attack": 31,
+            "reload_time": 5.217,
+            "range": 13.0,
+            "melee_armor": 0,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 180,
+            "cost_gold": 100,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Longships and Catapult Galleons attack 15% faster."
+          ],
+          "media": {
+            "icon": "/static/img/units/Catapult_Galleon.png"
+          }
+        },
+        {
+          "unit_name": "Elite Longship",
+          "unit_slug": "elite_longship",
+          "line_slug": "longship",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 130,
+            "attack": 11,
+            "reload_time": 2.609,
+            "range": 10.0,
+            "melee_armor": 1,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 80,
+            "cost_gold": 50,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Longships and Catapult Galleons attack 15% faster."
+          ],
+          "media": {
+            "icon": "/static/img/units/Elite_Longboat.png"
+          }
+        },
+        {
+          "unit_name": "Elite Jarl",
+          "unit_slug": "elite_jarl",
+          "line_slug": "jarl",
+          "column": "cavalry",
+          "building": "castle",
+          "reference_build": 185872,
+          "is_unique": true,
+          "stats": {
+            "hp": 105,
+            "attack": 14,
+            "reload_time": 2.0,
+            "range": 5.0,
+            "melee_armor": 5,
+            "pierce_armor": 5,
+            "cost_food": 75,
+            "cost_wood": 0,
+            "cost_gold": 55,
+            "is_ranged": true
+          },
+          "special_effects": [
+            "Ranged melee attacks reduce enemy armor."
+          ],
+          "bonus_abilities": [
+            "Bloodlines adds 30 HP instead of 20.",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/elite_jarl/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/elite_jarl/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/elite_jarl/idle.png",
+            "attack": "/static/media/civilizations/185872/elite_jarl/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Trebuchet",
+          "unit_slug": "trebuchet",
+          "line_slug": "trebuchet",
+          "column": "siege",
+          "building": "castle",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 150,
+            "attack": 201,
+            "reload_time": 10.0,
+            "range": 17.0,
+            "melee_armor": 2,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 200,
+            "cost_gold": 200,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [],
+          "media": {
+            "icon": "/static/img/units/Trebuchet.png"
+          }
+        }
+      ]
+    },
+    "Vikings": {
+      "description": "",
+      "emblem_url": "",
+      "complete_roster": false,
+      "remove_slugs": [
+        "cavalry_archer",
+        "heavy_cavalry_archer",
+        "longboat",
+        "elite_longboat"
+      ],
+      "units": [
+        {
+          "unit_name": "Mounted Crossbowman",
+          "unit_slug": "mounted_crossbowman",
+          "line_slug": "mounted_crossbowman",
+          "column": "ranged",
+          "building": "archery_range",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 45,
+            "attack": 11,
+            "reload_time": 2.5,
+            "range": 7.0,
+            "melee_armor": 5,
+            "pierce_armor": 4,
+            "cost_food": 0,
+            "cost_wood": 40,
+            "cost_gold": 65,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/mounted_crossbowman/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/mounted_crossbowman/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/mounted_crossbowman/idle.png",
+            "attack": "/static/media/civilizations/185872/mounted_crossbowman/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Elite Varangian Guard",
+          "unit_slug": "elite_varangian_guard",
+          "line_slug": "varangian_guard",
+          "column": "infantry",
+          "building": "barracks",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 96,
+            "attack": 21,
+            "reload_time": 2.0,
+            "range": 0.0,
+            "melee_armor": 5,
+            "pierce_armor": 6,
+            "cost_food": 65,
+            "cost_wood": 0,
+            "cost_gold": 45,
+            "is_ranged": false
+          },
+          "special_effects": [
+            "Generates gold while fighting other units."
+          ],
+          "bonus_abilities": [
+            "Infantry have 20% more HP.",
+            "Chieftains: infantry gain bonus attack against cavalry.",
+            "Conscription: faster military training."
+          ],
+          "media": {
+            "icon": "/static/media/civilizations/185872/elite_varangian_guard/icon.png",
+            "icon_transparent": "/static/media/civilizations/185872/elite_varangian_guard/icon_transparent.png",
+            "idle": "/static/media/civilizations/185872/elite_varangian_guard/idle.png",
+            "attack": "/static/media/civilizations/185872/elite_varangian_guard/attack.webp"
+          }
+        },
+        {
+          "unit_name": "Elite Longship",
+          "unit_slug": "elite_longship",
+          "line_slug": "longship",
+          "column": "navy",
+          "building": "dock",
+          "reference_build": 185872,
+          "is_unique": false,
+          "stats": {
+            "hp": 130,
+            "attack": 12,
+            "reload_time": 3.0,
+            "range": 10.0,
+            "melee_armor": 1,
+            "pierce_armor": 8,
+            "cost_food": 0,
+            "cost_wood": 80,
+            "cost_gold": 40,
+            "is_ranged": true
+          },
+          "special_effects": [],
+          "bonus_abilities": [
+            "Bogsveigar",
+            "Warships cost less as the civilization advances through the ages."
+          ],
+          "media": {
+            "icon": "/static/img/units/Elite_Longboat.png"
+          }
+        }
+      ]
+    }
+  },
+  "media": {
+    "mounted_crossbowman": {
+      "icon": "/static/media/civilizations/185872/mounted_crossbowman/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/mounted_crossbowman/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/mounted_crossbowman/idle.png",
+      "attack": "/static/media/civilizations/185872/mounted_crossbowman/attack.webp"
+    },
+    "heavy_mounted_crossbowman": {
+      "icon": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+      "attack": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp"
+    },
+    "varangian_guard": {
+      "icon": "/static/media/civilizations/185872/varangian_guard/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/varangian_guard/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/varangian_guard/idle.png",
+      "attack": "/static/media/civilizations/185872/varangian_guard/attack.webp"
+    },
+    "elite_varangian_guard": {
+      "icon": "/static/media/civilizations/185872/elite_varangian_guard/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/elite_varangian_guard/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/elite_varangian_guard/idle.png",
+      "attack": "/static/media/civilizations/185872/elite_varangian_guard/attack.webp"
+    },
+    "hearth_troop": {
+      "icon": "/static/media/civilizations/185872/hearth_troop/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/hearth_troop/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/hearth_troop/idle.png",
+      "attack": "/static/media/civilizations/185872/hearth_troop/attack.webp"
+    },
+    "elite_hearth_troop": {
+      "icon": "/static/media/civilizations/185872/elite_hearth_troop/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/elite_hearth_troop/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/elite_hearth_troop/idle.png",
+      "attack": "/static/media/civilizations/185872/elite_hearth_troop/attack.webp"
+    },
+    "jarl": {
+      "icon": "/static/media/civilizations/185872/jarl/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/jarl/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/jarl/idle.png",
+      "attack": "/static/media/civilizations/185872/jarl/attack.webp"
+    },
+    "elite_jarl": {
+      "icon": "/static/media/civilizations/185872/elite_jarl/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/elite_jarl/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/elite_jarl/idle.png",
+      "attack": "/static/media/civilizations/185872/elite_jarl/attack.webp"
+    },
+    "jomsviking": {
+      "icon": "/static/media/civilizations/185872/jomsviking/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/jomsviking/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/jomsviking/idle.png",
+      "attack": "/static/media/civilizations/185872/jomsviking/attack.webp"
+    },
+    "elite_jomsviking": {
+      "icon": "/static/media/civilizations/185872/elite_jomsviking/icon.png",
+      "icon_transparent": "/static/media/civilizations/185872/elite_jomsviking/icon_transparent.png",
+      "idle": "/static/media/civilizations/185872/elite_jomsviking/idle.png",
+      "attack": "/static/media/civilizations/185872/elite_jomsviking/attack.webp"
+    }
+  },
+  "sources": {
+    "dat": "D:\\SteamLibrary\\steamapps\\common\\AoE2DE\\resources\\_common\\dat\\empires2_x2_p1.dat",
+    "tech_trees": "D:\\SteamLibrary\\steamapps\\common\\AoE2DE\\resources\\_common\\dat\\CivTechTrees",
+    "approved_assets": "D:\\AI\\aoe2_matchup\\graphics\\units",
+    "asset_revision": "68e99758"
+  },
+  "media_inventory": [
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\mounted_crossbowman\\icon.png",
+      "output": "/static/media/civilizations/185872/mounted_crossbowman/icon.png",
+      "bytes": 68863,
+      "source_sha256": "716f2b6d95c2ec0020ee7e09f153e891f366acc15aafdbd3cb89793a670f5af7"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\mounted_crossbowman\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/mounted_crossbowman/icon_transparent.png",
+      "bytes": 74289,
+      "source_sha256": "1aca81451b6ff433f41f8f14ed403760d4eb15f4f3d578515f0e8da8da3044b1"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\mounted_crossbowman\\mounted_crossbowman_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/mounted_crossbowman/idle.png",
+      "bytes": 11739,
+      "source_sha256": "196c7e1300881e4e7663e3c7f2fc251bad2c90e3fede34fd7d13f2732b5b0da3"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\mounted_crossbowman\\mounted_crossbowman_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/mounted_crossbowman/attack.webp",
+      "bytes": 1741768,
+      "source_sha256": "197e62070dc24e0fccf5ece13c541feddb6ea8539489d5266d28b524d1efa308",
+      "frames": 30,
+      "duration_ms": 1500,
+      "loop": 0
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\heavy_mounted_crossbowman\\icon.png",
+      "output": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon.png",
+      "bytes": 73790,
+      "source_sha256": "c316f33a6bc3b5c8cdfc5e1a20dc7a1d568c19eda0c64bd0b74a288d9e9a5a8f"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\heavy_mounted_crossbowman\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/heavy_mounted_crossbowman/icon_transparent.png",
+      "bytes": 80191,
+      "source_sha256": "afa35742edcee6386969c051b0f86b967abc43b44e97ca6e6810aff8f4d8c79a"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\heavy_mounted_crossbowman\\heavy_mounted_crossbowman_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/heavy_mounted_crossbowman/idle.png",
+      "bytes": 12758,
+      "source_sha256": "b421c801fee830c4289cecc4ba1b706035dd0aa02dabfcfa8fc74a76ab98631a"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\heavy_mounted_crossbowman\\heavy_mounted_crossbowman_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/heavy_mounted_crossbowman/attack.webp",
+      "bytes": 1777282,
+      "source_sha256": "d6191390f46f2dcc4f3e8b8b9d2e83e3af1a6208041cf4c26eb028a0223a7950",
+      "frames": 30,
+      "duration_ms": 1500,
+      "loop": 0
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\varangian_guard\\icon.png",
+      "output": "/static/media/civilizations/185872/varangian_guard/icon.png",
+      "bytes": 71064,
+      "source_sha256": "09e3a4a651aef546405c25548a675e6c1754a8d2eeff8f139202e50a94ed4bf7"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\varangian_guard\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/varangian_guard/icon_transparent.png",
+      "bytes": 75071,
+      "source_sha256": "2e6d41fb4dd29352196abe20debe306750020bffaf9c8d04622f157e84db43a9"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\varangian_guard\\varangian_guard_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/varangian_guard/idle.png",
+      "bytes": 4473,
+      "source_sha256": "aebd19ceb18029f1de88c3e18bd5a0813ed18a12fcd0e7b0de6bda03267ca485"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\varangian_guard\\varangian_guard_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/varangian_guard/attack.webp",
+      "bytes": 996744,
+      "source_sha256": "a78a8c9d6c6cd53fa74c81620c585ff754993dc3ac23a4cb1d86528188c3f811",
+      "frames": 45,
+      "duration_ms": 2250,
+      "loop": 0
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_varangian_guard\\icon.png",
+      "output": "/static/media/civilizations/185872/elite_varangian_guard/icon.png",
+      "bytes": 72553,
+      "source_sha256": "8eb208c5f71944fc9daa9c15899c84ecd805dfe1c4f105edfdf8d2ada41bd116"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_varangian_guard\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/elite_varangian_guard/icon_transparent.png",
+      "bytes": 76842,
+      "source_sha256": "c955dafcc8efe1fcc1a337999fedbbdbd9cac0503bdceb5285d2b3a2521c52b7"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_varangian_guard\\elite_varangian_guard_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/elite_varangian_guard/idle.png",
+      "bytes": 4726,
+      "source_sha256": "fbe78882d189402b14f8083bd15e8ee535b5df4f9ef70f9c398c5313ab36a9f5"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_varangian_guard\\elite_varangian_guard_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/elite_varangian_guard/attack.webp",
+      "bytes": 1050654,
+      "source_sha256": "c7e4bca5375415b00dc53c42c3f9180d3058f2987b67c24c4d3bf2628b1d046d",
+      "frames": 45,
+      "duration_ms": 2250,
+      "loop": 0
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\hearth_troop\\icon.png",
+      "output": "/static/media/civilizations/185872/hearth_troop/icon.png",
+      "bytes": 67825,
+      "source_sha256": "b02cbc52f3866d0d5fb534115880e90064473d8723b83de4ec0de719e965b583"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\hearth_troop\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/hearth_troop/icon_transparent.png",
+      "bytes": 71042,
+      "source_sha256": "d45efd56e8b1f70fccf0416ac50ee788524b6d710e9191a30e14742f6b0b1eb0"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\hearth_troop\\hearth_troop_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/hearth_troop/idle.png",
+      "bytes": 5447,
+      "source_sha256": "abfb588c6bbaebb0330c65ef0b9b54c8002d34d2db17e97983c4c615f62a9b84"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\hearth_troop\\hearth_troop_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/hearth_troop/attack.webp",
+      "bytes": 1179562,
+      "source_sha256": "d6a77ec8e39ad5f65926a81d5edf79f9a4f05b5d661430a586a6f2ec818426a1",
+      "frames": 45,
+      "duration_ms": 2250,
+      "loop": 0
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_hearth_troop\\icon.png",
+      "output": "/static/media/civilizations/185872/elite_hearth_troop/icon.png",
+      "bytes": 68337,
+      "source_sha256": "2b78b6ad31572a523f036a21433bfa603aff3bf9cf3f95f16f83719b097e51cd"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_hearth_troop\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/elite_hearth_troop/icon_transparent.png",
+      "bytes": 71485,
+      "source_sha256": "e3228a60273e3569f11633911abfe2445d0313ca021ba15f766061eb640e9562"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_hearth_troop\\elite_hearth_troop_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/elite_hearth_troop/idle.png",
+      "bytes": 5659,
+      "source_sha256": "5eacd2382cb0bd342259b50eade0742944a939d9fa74121d1dbc283ffc52b6ff"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_hearth_troop\\elite_hearth_troop_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/elite_hearth_troop/attack.webp",
+      "bytes": 1176526,
+      "source_sha256": "8684cd45acd69e9d595847b52fe7b49e1b6f6b29b1c79a612ad6aedca38fbb71",
+      "frames": 45,
+      "duration_ms": 2250,
+      "loop": 0
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\jarl\\icon.png",
+      "output": "/static/media/civilizations/185872/jarl/icon.png",
+      "bytes": 79932,
+      "source_sha256": "1bfb1a7d3be71dfe455ef53186dfc3983290f16560c90b44db7fbbfcac14a20b"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\jarl\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/jarl/icon_transparent.png",
+      "bytes": 83770,
+      "source_sha256": "15dbc679143659b9e697b5512b2c5853469cf82a1d29d91334c10ce97912355c"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\jarl\\jarl_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/jarl/idle.png",
+      "bytes": 10848,
+      "source_sha256": "1cd2f6280863875489d2804b8cfe248e371c57dde2f74fa62a178ad682143482"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\jarl\\jarl_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/jarl/attack.webp",
+      "bytes": 1366068,
+      "source_sha256": "e749569cc79638502ca7c826040d388996ffe76550eab2f96d49da460ea8a938",
+      "frames": 30,
+      "duration_ms": 1500,
+      "loop": 0
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_jarl\\icon.png",
+      "output": "/static/media/civilizations/185872/elite_jarl/icon.png",
+      "bytes": 82465,
+      "source_sha256": "ecaec6f015f11e3921d71a6d73358f21f4cdf64643d9cdb3f9cd0f7709ef9750"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_jarl\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/elite_jarl/icon_transparent.png",
+      "bytes": 88534,
+      "source_sha256": "c3739cde90cad4fe8487b7ab4349a07b5b2128de7ae42e3b3d0683cf43a140e1"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_jarl\\elite_jarl_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/elite_jarl/idle.png",
+      "bytes": 11275,
+      "source_sha256": "7cbcdd5554424142e39d2fde33e9be292982c6c40b530f8ccf7b0289947c76af"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_jarl\\elite_jarl_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/elite_jarl/attack.webp",
+      "bytes": 1400738,
+      "source_sha256": "e41bbdc4a3a48795c987213fd38d6872c85feb55a27d251b9fb06bc61bd76891",
+      "frames": 30,
+      "duration_ms": 1500,
+      "loop": 0
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\jomsviking\\icon.png",
+      "output": "/static/media/civilizations/185872/jomsviking/icon.png",
+      "bytes": 74073,
+      "source_sha256": "7352e16347f918f1aee2908da4d734d29d538ab80b46ac80553d1faf0647ccfb"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\jomsviking\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/jomsviking/icon_transparent.png",
+      "bytes": 77051,
+      "source_sha256": "62551e4a692f567c59a59f43e4f501baeb85763a289cda38b5697d1a8464cc89"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\jomsviking\\jomsviking_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/jomsviking/idle.png",
+      "bytes": 5417,
+      "source_sha256": "a0cf94db0b5684af2a0ae362466b3e27d69c57b6388e0b0f7a024a5a7f91590f"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\jomsviking\\jomsviking_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/jomsviking/attack.webp",
+      "bytes": 1087052,
+      "source_sha256": "2adc221d1d87a906cd41feaf55fb1477c1001d8324cfc1fd24ff1072e7ba0890",
+      "frames": 45,
+      "duration_ms": 2250,
+      "loop": 0
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_jomsviking\\icon.png",
+      "output": "/static/media/civilizations/185872/elite_jomsviking/icon.png",
+      "bytes": 71039,
+      "source_sha256": "45dd9e68883e039cb442b6a7b6d5849951ad0a10a220c2aed5389db34e77783c"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_jomsviking\\icon_transparent.png",
+      "output": "/static/media/civilizations/185872/elite_jomsviking/icon_transparent.png",
+      "bytes": 74747,
+      "source_sha256": "6f3c8efab2cbf478da06fd4e01cae24623e3e5d82988e743d91f999c97dbb903"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_jomsviking\\elite_jomsviking_idle_dir06.png",
+      "output": "/static/media/civilizations/185872/elite_jomsviking/idle.png",
+      "bytes": 5371,
+      "source_sha256": "ed25bc75de907461b5ce4cefbf9b4923676db567602dfa332734e43878a464f5"
+    },
+    {
+      "source": "D:\\AI\\aoe2_matchup\\graphics\\units\\elite_jomsviking\\elite_jomsviking_attack_dir06_dat4x.gif",
+      "output": "/static/media/civilizations/185872/elite_jomsviking/attack.webp",
+      "bytes": 1072100,
+      "source_sha256": "499da007cf9b5cc5174eaf268700b61cf74bbd75af3ba90896929898063b4c0d",
+      "frames": 45,
+      "duration_ms": 2250,
+      "loop": 0
+    },
+    {
+      "source": "D:\\SteamLibrary\\steamapps\\common\\AoE2DE\\widgetui\\textures\\ingame\\emblems\\danes.png",
+      "output": "/static/img/civilizations/185872/danes.png",
+      "bytes": 64175,
+      "source_sha256": "b4d434501476a70e1b4ed486bad096a1038bace515bfe453078dff3fed1313bb"
+    },
+    {
+      "source": "D:\\SteamLibrary\\steamapps\\common\\AoE2DE\\widgetui\\textures\\ingame\\emblems\\saxons.png",
+      "output": "/static/img/civilizations/185872/saxons.png",
+      "bytes": 74741,
+      "source_sha256": "f5e78f6450c663b549579cc306a6def0ee67abe1e6c14febe3aa2fe20c95b2cc"
+    },
+    {
+      "source": "D:\\SteamLibrary\\steamapps\\common\\AoE2DE\\widgetui\\textures\\ingame\\emblems\\varangians.png",
+      "output": "/static/img/civilizations/185872/varangians.png",
+      "bytes": 65124,
+      "source_sha256": "99454481dd4c2c6a899696c62c930bab43e52affe2105ea6ea92a2af84046392"
+    }
+  ],
+  "media_notes": [
+    "Enhanced dat4x and ultrasharp idle PNGs contain visible streaks. This release reuses clean native red idle sprites. No clean existing blue idle source was available; idle_blue is intentionally absent. Approved attack GIFs remain the source of lossless animated WebP."
+  ]
+}

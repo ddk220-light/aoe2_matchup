@@ -113,4 +113,7 @@ CIV_NAMES = [
     "Muisca",  # 57
     "Mapuche",  # 58
     "Tupi",  # 59
+    "Saxons",  # 60
+    "Varangians",  # 61
+    "Danes",  # 62
 ]

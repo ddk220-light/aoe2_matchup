@@ -34,6 +34,17 @@ UNIT_CLASSES = {
 
 # Unit IDs to extract and their display names
 UNIT_NAMES = {
+    # The Viking Sagas: verified installed build 185872 identities.
+    2700: "Mounted Crossbowman",
+    2701: "Heavy Mounted Crossbowman",
+    2703: "Varangian Guard",
+    2704: "Elite Varangian Guard",
+    2705: "Hearth Troop",
+    2706: "Elite Hearth Troop",
+    2708: "Jarl",
+    2709: "Elite Jarl",
+    2711: "Jomsviking",
+    2712: "Elite Jomsviking",
     # ===== Core Infantry =====
     # Militia line: 77 → 74(MaA) → 75(LS) → 76(LS) → 473(2HS) → 567(Champ) → 360(Champ)
     77: "Militia",

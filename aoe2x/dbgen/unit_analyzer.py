@@ -1,6 +1,7 @@
 """UnitStats dataclass and UnitAnalyzer class for computing civ-specific unit stats."""
 
 import json
+from pathlib import Path
 from dataclasses import dataclass, field
 
 from .config import (
@@ -95,27 +96,28 @@ class UnitStats:
 class UnitAnalyzer:
     """Analyzes unit stats and calculates civ-specific values."""
 
-    def __init__(self):
+    def __init__(self, extracted_dir=None):
+        self.extracted_dir = Path(extracted_dir) if extracted_dir is not None else OUTPUT_DIR
         self.load_data()
         self._tech_cache = {}
 
     def load_data(self):
         """Load all game data from JSON files."""
-        self.units = {u["id"]: u for u in json.load(open(OUTPUT_DIR / "units.json"))}
+        self.units = {u["id"]: u for u in json.load(open(self.extracted_dir / "units.json"))}
         self.techs = {
-            t["id"]: t for t in json.load(open(OUTPUT_DIR / "technologies.json"))
+            t["id"]: t for t in json.load(open(self.extracted_dir / "technologies.json"))
         }
-        self.civs = json.load(open(OUTPUT_DIR / "civilizations.json"))
+        self.civs = json.load(open(self.extracted_dir / "civilizations.json"))
         self.civ_tech_trees = {
-            c["name"]: c for c in json.load(open(OUTPUT_DIR / "civ_tech_trees.json"))
+            c["name"]: c for c in json.load(open(self.extracted_dir / "civ_tech_trees.json"))
         }
         self.effects = {
-            e["id"]: e for e in json.load(open(OUTPUT_DIR / "effects.json"))
+            e["id"]: e for e in json.load(open(self.extracted_dir / "effects.json"))
         }
-        self.tech_effects = json.load(open(OUTPUT_DIR / "tech_effects.json"))
+        self.tech_effects = json.load(open(self.extracted_dir / "tech_effects.json"))
 
         # Load tech ages
-        tech_ages_file = OUTPUT_DIR / "tech_ages.json"
+        tech_ages_file = self.extracted_dir / "tech_ages.json"
         if tech_ages_file.exists():
             tech_ages_data = json.load(open(tech_ages_file))
             self.tech_ages = tech_ages_data.get("techs", {})
@@ -357,7 +359,10 @@ class UnitAnalyzer:
                 for req in required_techs
                 if req > 0
             )
-            if has_dlc_requirement:
+            # Cranequins (185872) requires the regional Mounted Crossbowman
+            # availability tech 1450, not a campaign/DLC ruleset. Its normal
+            # age and per-civ disabled-tech checks still apply.
+            if has_dlc_requirement and tech_id != 1452:
                 continue
 
             affects_unit = False

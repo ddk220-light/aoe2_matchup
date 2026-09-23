@@ -64,6 +64,11 @@ def compose_civilization_analysis(name, age, baseline, supplement):
                 ranked = existing.get(alias)
         row = deepcopy(ranked) if ranked is not None else {}
         row.update(deepcopy(reference_row))
+        # Prefer the explained effect over the same technology's bare label.
+        explained = {effect.replace('’', "'").split(':', 1)[0]
+                     for effect in row.get('special_effects', [])}
+        row['bonus_abilities'] = [ability for ability in row.get('bonus_abilities', [])
+                                  if ability.replace('’', "'").split(':', 1)[0] not in explained]
         columns.setdefault(reference_row['column'], {}).setdefault(reference_row['line_slug'], []).append(row)
 
     if release['description']:

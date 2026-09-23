@@ -1,9 +1,13 @@
 {# Initial HTML uses the same analysis payload as the interactive view. #}
+{% macro fmt_stat(value) -%}
+{%- if (value - (value | round)) | abs < 0.05 -%}{{ value | round | int }}
+{%- else -%}{{ '%.1f' | format(value) }}{%- endif -%}
+{%- endmacro %}
 <div class="analysis-hero">
     <img class="analysis-emblem" src="{{ analysis.emblem_url or civ.emblem_url or 'https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/' ~ civ.slug ~ '.png' }}" alt="{{ civ.name }}">
     <div class="analysis-hero-body">
         <h2 class="analysis-civ-name">{{ civ.name }}</h2>
-        <p>{{ analysis.strategic_description }}</p>
+        <div class="analysis-hero-narrative">{{ analysis.strategic_description }}</div>
     </div>
 </div>
 <div class="civ-deep-links">
@@ -25,7 +29,7 @@
         {% set icon = site_catalog.icon_names.get(name) if site_catalog is defined else none %}
         {% set icon_url = media.get('icon') or ('/static/img/units/' ~ icon ~ '.png' if icon else '') %}
         {% set preview_url = use_sprite or icon_url %}
-        <div class="unit-badge{% if unit.tier %} is-tier-{{ unit.tier }}{% else %} no-strength{% endif %}"
+        <div class="unit-badge{% if unit.tier == 'signature' %} signature{% endif %}{% if unit.tier %} is-tier-{{ unit.tier }}{% else %} no-strength{% endif %}"
              tabindex="0" aria-label="Details for {{ name }}" data-anim-name="{{ media_name }}"{% if media.get('attack') %} data-anim-src="{{ media.attack }}"{% endif %}>
             <div class="unit-badge-tooltip">
                 <button type="button" class="unit-badge-tooltip-close" aria-label="Close">×</button>
@@ -45,7 +49,7 @@
                 <div class="tt-stats">
                     {% for label, key in [('HP', 'hp'), ('Attack', 'attack'), ('Attack speed', 'reload_time'), ('Range', 'range'), ('Melee armor', 'melee_armor'), ('Pierce armor', 'pierce_armor')] %}
                     {% if stats.get(key) is not none and (key != 'range' or stats.get('is_ranged') or stats.get('range', 0) > 0) %}
-                    <div class="tt-stat-row"><span class="tt-stat-label">{{ label }}</span><span class="tt-stat-val">{{ stats[key] }}{% if key == 'reload_time' %}s{% endif %}</span></div>
+                    <div class="tt-stat-row"><span class="tt-stat-label">{{ label }}</span><span class="tt-stat-val">{{ fmt_stat(stats[key]) }}{% if key == 'reload_time' %}s{% endif %}</span></div>
                     {% endif %}
                     {% endfor %}
                 </div>
@@ -62,7 +66,8 @@
                 {% if not unit.is_unique %}{% for missing in unit.missing_techs | default([]) %}<div class="tooltip-missing">✗ Missing: {{ missing }}</div>{% endfor %}{% endif %}
                 {% if unit.score is defined and unit.score is not none %}<div class="tooltip-rank">Effectiveness score: {{ '%.1f' | format(unit.score) }} / 100</div>{% endif %}
             </div>
-            {% if preview_url %}<img class="unit-badge-icon{% if use_sprite %} sprite{% endif %}" src="{{ preview_url }}" alt="{{ name }}" loading="lazy">{% endif %}
+            {% if unit.tier == 'signature' %}<span class="signature-star">★</span>{% endif %}
+            {% if preview_url %}<img class="{% if unit.tier == 'signature' %}signature-icon{% else %}unit-badge-icon{% endif %}{% if use_sprite %} sprite{% endif %}" src="{{ preview_url }}" alt="{{ name }}" loading="lazy">{% endif %}
             <div class="unit-badge-info"><span class="unit-badge-name">{{ name }}</span>
                 {% if unit.tier %}<span class="unit-badge-rank tier-{{ unit.tier }}">{{ unit.tier | title }}</span>{% endif %}
             </div>

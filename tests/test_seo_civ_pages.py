@@ -75,6 +75,36 @@ def test_new_civ_generic_cards_share_existing_sprites_and_hover_hooks(client):
     assert 'data-anim-src="/static/media/civilizations/185872/elite_jarl/attack.webp"' in body
 
 
+def test_initial_civ_cards_keep_narrative_signature_and_stat_formatting(client):
+    import app
+    from flask import render_template
+    unit = {'unit_name': 'Elite Longship', 'unit_slug': 'elite_longship',
+            'tier': 'signature', 'stats': {'hp': 156.0, 'reload_time': 5.217}}
+    with app.app.test_request_context('/civilizations/vikings'):
+        body = render_template('_civ_content.html', civ={'name': 'Vikings', 'slug': 'vikings'},
+                               analysis={'strategic_description': 'Naval civilization.'},
+                               civ_buildings={'dock': [unit]},
+                               civ_sprites={'Elite Longship': {'url': '/ship.png'}})
+    assert '<div class="analysis-hero-narrative">Naval civilization.</div>' in body
+    assert 'class="unit-badge signature is-tier-signature"' in body
+    assert 'class="signature-star"' in body
+    assert 'class="signature-icon sprite"' in body
+    assert '<span class="tt-stat-val">156</span>' in body
+    assert '<span class="tt-stat-val">5.2s</span>' in body
+
+
+def test_reference_tooltips_show_explained_technologies_only_once(client):
+    for civ, line, effect, redundant in [
+        ('Byzantines', 'varangian_guard', 'Logistica: trample damage.', 'Logistica: trample damage.'),
+        ('Varangians', 'varangian_guard', 'Gothikon: periodically throws axes.', 'Gothikon'),
+        ('Danes', 'mangonel', 'Northmen’s Fury: +1 range and +40% siege attack against buildings.', "Northmen's Fury"),
+    ]:
+        data = client.get(f'/api/civilizations/{civ}').get_json()
+        unit = next(rows[line][0] for rows in data['power_units'].values() if line in rows)
+        assert effect in unit['special_effects']
+        assert redundant not in unit['bonus_abilities']
+
+
 def test_server_html_shows_only_supplied_ship_media_and_real_tier(client):
     import app
     from flask import render_template

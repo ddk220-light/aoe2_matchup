@@ -92,6 +92,22 @@ def test_release_selected_missing_unit_is_a_build_error():
         builder().reference_row('Danes', node('Heavy Mounted Crossbowman', 2701), analyzer)
 
 
+@pytest.mark.parametrize('civ', ['Danes', 'Saxons', 'Varangians'])
+def test_emblem_copies_finished_menu_shield_instead_of_ingame_mask(tmp_path, civ):
+    game = tmp_path / 'game'
+    static = tmp_path / 'static'
+    textures = game / 'widgetui' / 'textures'
+    shield = textures / 'menu' / 'civs' / (civ.lower() + '.png')
+    mask = textures / 'ingame' / 'emblems' / shield.name
+    for path, content in ((shield, b'finished shield'), (mask, b'ingame mask')):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+    record = builder().copy_emblem(game, static, civ)
+    assert (static / record['output'].removeprefix('/static/')).read_bytes() == b'finished shield'
+    assert Path(record['source']) == shield
+    assert record['source_sha256'] == builder().digest(shield)
+
+
 @pytest.mark.parametrize('available,expected_range,infantry_bonus', [(True, 5, 2), (False, 4, 0)])
 def test_cranequins_is_applied_despite_new_regional_availability_prerequisite(tmp_path, available, expected_range, infantry_bonus):
     """A generic >1000 prerequisite exclusion previously omitted this real upgrade."""

@@ -213,6 +213,15 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def copy_emblem(game_root, output, civ):
+    src = game_root / 'widgetui' / 'textures' / 'menu' / 'civs' / f'{civ.lower()}.png'
+    dst = output / 'img' / 'civilizations' / str(BUILD) / src.name
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(src, dst)
+    return {'source': str(src), 'output': '/static/' + dst.relative_to(output).as_posix(),
+            'bytes': dst.stat().st_size, 'source_sha256': digest(src)}
+
+
 def build_release(dat, trees, assets, output, extracted, *, reuse_extracted=False):
     """All input paths are read-only; output is a website static directory."""
     from aoe2x.extract.run import extract_all
@@ -252,13 +261,9 @@ def build_release(dat, trees, assets, output, extracted, *, reuse_extracted=Fals
     for civ, tree in analyzer.release_trees.items():
         emblem = ''
         if civ in NEW_CIVS:
-            src = game_root / 'widgetui' / 'textures' / 'ingame' / 'emblems' / f'{civ.lower()}.png'
-            dst = output / 'img' / 'civilizations' / str(BUILD) / src.name
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(src, dst)
-            emblem = '/static/' + dst.relative_to(output).as_posix()
-            release['media_inventory'].append({'source': str(src), 'output': emblem,
-                'bytes': dst.stat().st_size, 'source_sha256': digest(src)})
+            inventory = copy_emblem(game_root, output, civ)
+            emblem = inventory['output']
+            release['media_inventory'].append(inventory)
         release['civilizations'][civ] = {'description': DESCRIPTIONS.get(civ, ''),
             'emblem_url': emblem, 'complete_roster': civ in NEW_CIVS,
             'remove_slugs': removed_slugs(civ),

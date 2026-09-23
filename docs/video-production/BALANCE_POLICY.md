@@ -1,30 +1,34 @@
 # Approved army-size formula
 
-Updated September 15, 2026: population is fixed at one per physical unit in new
-comparisons (`geometric_shared_discount_unit_count_v2`). Default for newly planned AoE2 Lab matchups and new
+Updated September 22, 2026: resource weights are food 1.0, wood 0.9 and gold 1.1;
+all discounts count in full. Population remains one per physical unit
+(`geometric_full_discount_weighted_resources_v3`). Default for newly planned AoE2 Lab matchups and new
 video episodes. Existing manifests, recordings and published videos retain the
 explicit policy under which they were created.
 
 ## Formula
 
-Start with fully upgraded Imperial **purchase cost per physical unit**. Food,
-wood and gold have weight 1. Divide batch purchases before calculating discounts;
+Start with fully upgraded Imperial **purchase cost per physical unit**. Divide
+batch purchases to obtain the cost of one physical unit;
 Blackwood Archers are two physical units per purchase, Karambits are one.
 
-For units shared across civilizations (including regional and team-granted units):
+Owner instruction, September 22, 2026: assume the maximum applicable civilization
+cost discount for new comparisons, including conditional discounts. Record the
+condition and its verified maximum with the purchase-cost evidence before freezing
+counts. This selects the actual purchase price before resource weighting.
+It does not authorize changing old captures.
+
+For all units, including civilization-exclusive, regional and team-granted units:
 
 ```
-comparisonFood = finalFood + 0.5 * max(0, baseFood - finalFood)
-comparisonWood = finalWood + 0.5 * max(0, baseWood - finalWood)
-comparisonGold = finalGold
-comparisonCost = comparisonFood + comparisonWood + comparisonGold
+comparisonCost = finalFood + 0.9 * finalWood + 1.1 * finalGold
+weightedCostOf27 = 27 * comparisonCost
 ```
 
-For civilization-exclusive units, use the actual final resource total. This
-halves only positive food/wood discounts; food/wood prices themselves keep full
-weight. Gold discounts and resource-cost increases remain fully effective.
-Classification follows unit availability, not its production building. Exclusive
-final upgrades such as Savar, Houfnice and Imperial Camel remain exclusive.
+Use the actual final per-resource costs after all applicable discounts. Discount
+effectiveness is 100% for food, wood and gold for every unit. Shared/exclusive
+classification remains recorded provenance and no longer changes the price.
+The old half-strength food/wood discount adjustment does not apply to v3.
 
 Let `score = comparisonCost`. Cap the lower-score side at
 27 physical units. Give the higher-score side:
@@ -47,17 +51,55 @@ New standard episodes use only the formula and 27-unit cap. Historical plans
 retain their explicit budgets. Golden placement, full HP and authored buffer
 rules are independent.
 
+## Hussar buffer for new captures
+
+Approved September 22, 2026: new geometric mixed melee/ranged plans use
+`fielded_weighted_cost_v1`. Calculate the main armies first. Let T be the ranged
+side's actual rounded unit count multiplied by its discounted, weighted unit cost:
+
+```
+T = rangedCount * (finalFood + 0.9 * finalWood + 1.1 * finalGold)
+Hussars = round_half_up(clamp(5 + (T - 1000) / 1800, 5, 10))
+```
+
+Use the actually fielded ranged army, never an assumed 27-unit army or both armies
+combined. Hussars are additional support and excluded from T and the main army's
+27-unit allowance. Only mixed matchups receive the buffer. Jarl is ranged for
+scenario selection, like other thrown-weapon units. Its registry identity and
+release costs still require verification before capture.
+
+Examples: T=1093.5 gives 5 Hussars; T=2700 gives 6; T=5500 gives 8; T>=10000
+gives 10. All rounds use nearest integer, halves up. Save the ranged owner,
+fielded count, weighted unit price, T and final buffer count in the hashed plan.
+
+Scenario generation keeps the first N existing P4 records. For ten, preserve the
+nine original records and clone one at the empty adjacent tile (7.5, 5.5), inside
+the existing P4 patrol area. Verify it is unoccupied. Never use (10.5, 10.5), which
+contains a Golden tree. Keep the shared Golden files, camera, diplomacy, AI and
+gate triggers unchanged. Existing saved plans retain their original screen;
+explicit `golden`, `none`, and manual counts remain available for reproduction.
+Non-nine-unit screens remain recording-only until simulator placement support is
+implemented; do not compare against the simulator's fixed nine-unit screen.
+
 | 27 featured units versus Spanish Paladin | Comparison cost | Population | Paladins |
 |---|---:|---:|---:|
-| Inca Elite Champi Warrior | 67.5 | 1 | 19 |
-| Mapuche/Muisca/Tupi Elite Champi Warrior | 75 | 1 | 20 |
-| Tupi Elite Blackwood Archer | 40 | 1 | 15 |
+| Inca Elite Champi Warrior | 62.5 | 1 | 18 |
+| Mapuche/Muisca/Tupi Elite Champi Warrior | 77.5 | 1 | 20 |
+| Tupi Elite Blackwood Archer | 40.5 | 1 | 14 |
+
+Spanish Paladin comparison cost in these examples is 60 food + 1.1 * 75 gold = 142.5.
 
 This is an agreed comparison benchmark, not an in-game price, a claim of equal
 spending, or a prediction of economic/strategic play. Describe new videos as
 using geometric cost balance with one population per unit, not as equal resources.
 
 ## Historical recordings
+
+`geometric_shared_discount_unit_count_v2` used one population per physical unit,
+equal resource weights, and half-strength food/wood discounts for shared units.
+Its corresponding Champi/Blackwood example counts were 19, 20 and 15 Paladins.
+Keep those saved prices, counts and presentation rules intact. The v3 default
+does not authorize replanning, recapturing or overwriting any existing result.
 
 The earlier `geometric_shared_discount_v1` used actual catalog population:
 `score = comparisonCost * population`. Its Blackwood example was 27 versus 10
@@ -89,8 +131,8 @@ with a new catalog hash; archive indexes retain original evidence for replay.
 ## Registering a new identity
 
 First audit effective purchase costs using [Setup and data](SETUP_AND_DATA.md).
-Then review whether the exact unit is shared or exclusive. The catalog retains
-population source evidence for inspection, but v2 counts never use that number.
+Then review whether the exact unit is shared or exclusive for provenance. The catalog retains
+population source evidence for inspection, but v2 and v3 counts never use that number.
 The catalog is not universal coverage.
 
 Existing reviewed classifications are preserved by the generator. A new master

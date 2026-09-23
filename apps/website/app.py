@@ -68,7 +68,8 @@ from aoe2x.assets import catalog as _assets_catalog
 from apps.website.services.catalog import site_catalog, grouped_units
 from apps.website.services.release import release_metadata
 from apps.website.services.seo import content_lastmod, sitemap_document, indexing_enabled
-from apps.website.services.civilizations import civilization_analysis, civilization_overview
+from apps.website.services.civilizations import (civilization_analysis, civilization_overview,
+    civilization_page_names, load_civilization_supplement)
 from aoe2x.rank.methodology import load_published_methods
 from apps.website.services.database import connect_readonly
 from apps.website.services.mechanics import _find_ref_unit, _load_v3_mechanics, _load_v3_auxiliary_mechanics
@@ -851,7 +852,10 @@ def _data_lastmod():
 def sitemap_xml():
     lastmod = _data_lastmod()
     entries = [(path, lastmod) for path in ('/', '/matchup-advisor', '/units', '/civilizations', '/matchups', '/about', '/patches')]
-    entries.extend((f'/civilizations/{name.lower()}', lastmod) for name in _get_ref_civs())
+    supplement = load_civilization_supplement()
+    entries.extend((f'/civilizations/{name.lower()}',
+                    supplement['published_at'] if name in supplement['civilizations'] else lastmod)
+                   for name in civilization_page_names(_get_ref_civs(), supplement))
     entries.extend((f"/units/{page['url']}", lastmod) for page in _UNIT_LINE_PAGES)
     conn = get_ref_db()
     try:
@@ -1396,7 +1400,7 @@ _CIV_ROLE_LABELS = [
 
 
 def get_civ_overview_data():
-    return civilization_overview(_get_ref_civs(), build_number=current_build())
+    return civilization_overview(_get_page_civs(), build_number=current_build())
 
 
 def get_civ_detail(slug):
@@ -1416,6 +1420,10 @@ def _get_ref_civs():
     civs = [row["civ_name"] for row in rc.fetchall()]
     ref_conn.close()
     return civs
+
+
+def _get_page_civs():
+    return civilization_page_names(_get_ref_civs(), load_civilization_supplement())
 
 
 @lru_cache(maxsize=1)
@@ -1456,7 +1464,7 @@ def _valid_civs():
 
 
 app.register_blueprint(battle_blueprint(lambda: get_ref_db(), lambda: _valid_civs()))
-app.register_blueprint(civilization_blueprint(_get_ref_civs, get_civ_detail, get_civ_overview_data, current_build))
+app.register_blueprint(civilization_blueprint(_get_page_civs, get_civ_detail, get_civ_overview_data, current_build))
 
 
 def _validate_civ_name(name):

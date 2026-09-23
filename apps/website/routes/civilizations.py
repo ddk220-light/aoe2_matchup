@@ -1,14 +1,14 @@
 """Civilization HTML routes; JSON and HTML share the analysis service."""
-from flask import Blueprint, render_template, redirect, abort
-from ..services.civilizations import civilization_analysis
+from flask import Blueprint, render_template, redirect, abort, request, jsonify
+from ..services.civilizations import civilization_page_analysis
 from ..services.catalog import grouped_units
 
-def create_blueprint(_get_ref_civs, get_civ_detail, get_civ_overview_data, current_build):
+def create_blueprint(_get_page_civs, get_civ_detail, get_civ_overview_data, current_build):
     bp = Blueprint('civilizations', __name__)
     @bp.route("/civilizations")
     def civ_view():
         """Civilization analysis page — shows power units, strengths, and strategic identity."""
-        civs = _get_ref_civs()
+        civs = _get_page_civs()
         return render_template(
             "civ_overview.html",
             civs=civs,
@@ -31,10 +31,25 @@ def create_blueprint(_get_ref_civs, get_civ_detail, get_civ_overview_data, curre
             if civ["description"] else ""
         meta_desc = (f"{civ['name']} in Age of Empires II — strongest fully-upgraded "
                      f"units by role, tiers, and strategy. {first_sentence}").strip()[:250]
-        analysis = civilization_analysis(civ["name"], build_number=current_build())
-        return render_template("civ_detail.html", civ=civ, civs=_get_ref_civs(),
+        analysis = civilization_page_analysis(civ["name"], build_number=current_build())
+        return render_template("civ_detail.html", civ=civ, civs=_get_page_civs(),
                                meta_desc=meta_desc, active_nav="civ_select",
                                analysis=analysis, civ_buildings=grouped_units(analysis))
+
+
+    @bp.route('/api/civilizations/<civ_name>')
+    def api_civilization(civ_name):
+        if civ_name not in _get_page_civs():
+            return jsonify(error=f"Unknown civilization: {civ_name!r}"), 400
+        age = request.args.get('age', 'imperial').lower()
+        if age != 'imperial':
+            return jsonify(error=f"Invalid age: {age!r}. Must be 'imperial'."), 400
+        try:
+            return jsonify(civilization_page_analysis(civ_name, age, build_number=current_build()))
+        except FileNotFoundError as exc:
+            return jsonify(error=str(exc)), 500
+        except LookupError as exc:
+            return jsonify(error=str(exc)), 404
 
 
     @bp.route("/civ")

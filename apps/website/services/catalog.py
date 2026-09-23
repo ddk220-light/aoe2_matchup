@@ -18,6 +18,8 @@ def site_catalog(reference_path):
     return {'schema_version':1, 'civilizations':civs, **presentation()}
 
 def building_for_unit(unit, column, line):
+    if unit.get('building'):
+        return unit['building']
     if unit.get('is_unique'):
         override = presentation()['unique_buildings'].get(unit.get('unit_name'))
         if override:

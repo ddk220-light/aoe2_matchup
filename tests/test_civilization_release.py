@@ -2,11 +2,117 @@
 import importlib
 import importlib.util
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
 
 MODULE = 'aoe2x.assets.build_civilization_release'
+
+
+def test_page_composition_leaves_unaffected_civilization_and_input_unchanged():
+    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    baseline = {'civ_name': 'Aztecs', 'age': 'imperial', 'strategic_description': 'Original',
+                'power_units': {'infantry': {'militia': [
+                    {'unit_name': 'Elite Jaguar Warrior', 'unit_slug': 'elite_jaguar_warrior_aztecs',
+                     'score': 85.4, 'rank': 5, 'tier': 'strong'}]}}}
+    original = deepcopy(baseline)
+    result = compose_civilization_analysis('Aztecs', 'imperial', baseline, load_civilization_supplement())
+    assert result == original
+    assert result is not baseline
+    assert result['power_units'] is not baseline['power_units']
+    assert baseline == original
+
+
+def test_page_composition_replaces_affected_cavalry_archer_without_changing_other_rows():
+    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    paladin = {'unit_name': 'Paladin', 'unit_slug': 'paladin', 'score': 75.5,
+               'rank': 8, 'tier': 'signature'}
+    baseline = {'civ_name': 'Franks', 'age': 'imperial', 'strategic_description': 'Old description',
+                'power_units': {'cavalry': {'knight': [paladin], 'camel': None}, 'ranged': {'cav_archer': [
+                    {'unit_name': 'Heavy Cavalry Archer', 'unit_slug': 'heavy_cav_archer',
+                     'score': 40.0, 'tier': 'weak'}]}}}
+    original = deepcopy(baseline)
+    result = compose_civilization_analysis('Franks', 'imperial', baseline, load_civilization_supplement())
+    assert result['power_units']['cavalry']['knight'] == [paladin]
+    assert result['power_units']['cavalry']['camel'] is None
+    assert all(row['unit_slug'] != 'heavy_cav_archer'
+               for lines in result['power_units'].values() for rows in lines.values() for row in rows or [])
+    mounted = result['power_units']['ranged']['mounted_crossbowman'][0]
+    assert mounted['unit_slug'] == 'heavy_mounted_crossbowman'
+    assert mounted['building'] == 'archery_range'
+    assert 'score' not in mounted and 'tier' not in mounted
+    assert result['strategic_description'] == 'Old description'
+    assert baseline == original
+
+
+@pytest.mark.parametrize('name,unique_slug,unique_column', [
+    ('Danes', 'elite_jomsviking', 'infantry'),
+    ('Saxons', 'elite_hearth_troop', 'infantry'),
+    ('Varangians', 'elite_jarl', 'cavalry'),
+])
+def test_new_civilization_composes_complete_roster_and_explicit_buildings(name, unique_slug, unique_column):
+    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    supplement = load_civilization_supplement()
+    result = compose_civilization_analysis(name, 'imperial', {}, supplement)
+    rows = [row for lines in result['power_units'].values() for units in lines.values() for row in units]
+    assert len(rows) == 18
+    assert result['strategic_description'] == supplement['civilizations'][name]['description']
+    assert result['emblem_url'] == supplement['civilizations'][name]['emblem_url']
+    guard = next(row for row in rows if row['unit_slug'] == 'elite_varangian_guard')
+    mounted = next(row for row in rows if row['unit_slug'] == 'heavy_mounted_crossbowman')
+    unique = result['power_units'][unique_column][unique_slug.removeprefix('elite_')][0]
+    assert guard['building'] == 'barracks'
+    assert mounted['building'] == 'archery_range'
+    assert unique['unit_slug'] == unique_slug and unique['building'] == 'castle'
+    assert all('score' not in row and 'tier' not in row for row in rows)
+
+
+def test_new_civilization_keeps_actual_supplied_rank_fields():
+    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    scored = {'unit_slug': 'elite_jomsviking', 'unit_name': 'Old Jomsviking',
+              'score': 91.2, 'rank': 2, 'percentile': 97.0, 'tier': 'signature',
+              'median_delta': 34.5}
+    baseline = {'civ_name': 'Danes', 'age': 'imperial', 'power_units': {
+        'infantry': {'jomsviking': [scored], 'militia': [
+            {'unit_slug': 'champion', 'score': 70.0, 'tier': 'strong'}]}}}
+    original = deepcopy(baseline)
+    result = compose_civilization_analysis('Danes', 'imperial', baseline, load_civilization_supplement())
+    row = result['power_units']['infantry']['jomsviking'][0]
+    assert (row['score'], row['rank'], row['percentile'], row['tier'], row['median_delta']) == (
+        91.2, 2, 97.0, 'signature', 34.5)
+    assert row['unit_name'] == 'Elite Jomsviking'
+    assert len([u for lines in result['power_units'].values() for units in lines.values() for u in units]) == 18
+    assert baseline == original
+
+
+def test_viking_longship_alias_preserves_actual_longboat_rank():
+    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    baseline = {'civ_name': 'Vikings', 'age': 'imperial', 'power_units': {
+        'navy': {'galleon': [{'unit_slug': 'elite_longboat_vikings', 'unit_name': 'Elite Longboat',
+                             'score': 100.0, 'rank': 1, 'percentile': 100.0,
+                             'tier': 'signature', 'median_delta': 22.5}]}}}
+    result = compose_civilization_analysis('Vikings', 'imperial', baseline, load_civilization_supplement())
+    row = result['power_units']['navy']['longship'][0]
+    assert row['unit_slug'] == 'elite_longship'
+    assert (row['score'], row['rank'], row['percentile'], row['tier'], row['median_delta']) == (
+        100.0, 1, 100.0, 'signature', 22.5)
+    assert baseline['power_units']['navy']['galleon'][0]['unit_slug'] == 'elite_longboat_vikings'
+
+
+def test_page_names_add_only_supplement_civilizations():
+    from apps.website.services.civilizations import civilization_page_names, load_civilization_supplement
+    assert civilization_page_names(['Franks', 'Aztecs'], load_civilization_supplement())[:2] == [
+        'Aztecs', 'Bohemians']
+    names = civilization_page_names(['Franks', 'Aztecs'], load_civilization_supplement())
+    assert names.count('Franks') == 1
+    assert {'Danes', 'Saxons', 'Varangians'} <= set(names)
+
+
+def test_explicit_building_overrides_unique_unit_default():
+    from apps.website.services.catalog import building_for_unit
+    assert building_for_unit({'unit_name': 'Varangian Guard', 'is_unique': True,
+                              'building': 'barracks'}, 'infantry', 'varangian_guard') == 'barracks'
 
 
 def builder():

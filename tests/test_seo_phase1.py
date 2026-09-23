@@ -1,14 +1,17 @@
 # tests/test_seo_phase1.py
+PAGE_ONLY_CIVS = ["Danes", "Saxons", "Varangians"]
+
+
 def test_get_civ_overview_data_shape(client):
     import app
     data = app.get_civ_overview_data()
-    # One entry per civ in the reference DB.
-    civs = app._get_ref_civs()
+    # Page-only additions do not expand the simulation reference catalog.
+    civs = sorted(app._get_ref_civs() + PAGE_ONLY_CIVS)
     assert len(data) == len(civs)
     assert [c["name"] for c in data] == civs  # same order (alphabetical)
     # Every entry has the SSR fields.
     for c in data:
-        assert set(c.keys()) == {"name", "slug", "description", "roles"}
+        assert set(c.keys()) == {"name", "slug", "description", "emblem_url", "roles"}
         assert c["slug"] == c["name"].lower()
         assert isinstance(c["roles"], list)
     # At least one civ has a non-empty description and at least one unit.
@@ -21,7 +24,7 @@ def test_get_civ_overview_data_shape(client):
 
 def test_civ_picker_renders_all_civ_links_without_duplicate_overview(client):
     import app
-    civs = app._get_ref_civs()
+    civs = sorted(app._get_ref_civs() + PAGE_ONLY_CIVS)
     body = client.get("/civilizations").data.decode()
     for civ in civs:
         assert f'data-civ="{civ}"' in body, f"{civ} missing from civ picker"
@@ -31,7 +34,7 @@ def test_civ_picker_renders_all_civ_links_without_duplicate_overview(client):
 
 def test_civ_overview_itemlist_jsonld(client):
     import app
-    n = len(app._get_ref_civs())
+    n = len(app._get_ref_civs()) + len(PAGE_ONLY_CIVS)
     body = client.get("/civilizations").data.decode()
     assert '"@type": "ItemList"' in body
     assert f'"numberOfItems": {n}' in body

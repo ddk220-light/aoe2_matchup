@@ -100,23 +100,6 @@ UNIT_STAT_OVERRIDES = {
     # Elite Woad Raider (534): dat file has speed=1.17 (same as base), but elite should
     # be faster. 1.4 (wiki final speed) / 1.15 (Celts infantry speed bonus) ≈ 1.217
     534: {"speed": 1.2174},  # Elite Woad Raider
-    # War Chariot (2150): dat extracts as melee, but is actually ranged siege unit
-    # with scorpion-like pass-through bolts. Override base stats to match game data.
-    2150: {  # War Chariot
-        "hp": 65,
-        "attack": 8,
-        "range": 6,
-        "reload_time": 7.5,
-        "accuracy": 100,
-        "melee_armor": 0,
-        "pierce_armor": 5,
-        "speed": 0.9,
-        "cost_food": 65,
-        "cost_wood": 0,
-        "cost_gold": 90,
-        "los": 8,
-        "attacks": {3: 8, 1: 2},  # Pierce 8, +2 buildings
-    },
     # Fire Archer (1968) / Elite Fire Archer (1970): dat exposes the
     # anti-BUILDING primary attack (range 9 / 10). For unit-vs-unit combat
     # the in-game logic auto-switches to the anti-UNIT charge attack
@@ -188,6 +171,20 @@ FEUDAL_UNITS = {
 }
 
 CASTLE_UNITS = {
+    "mounted_crossbowman": {
+        "base_id": 2700,
+        "display_name": "Mounted Crossbowman",
+        "unit_class": 36,
+        "availability_tech": 1450,
+        "upgrades": [],
+    },
+    "varangian_guard": {
+        "base_id": 2703,
+        "display_name": "Varangian Guard",
+        "unit_class": 6,
+        "availability_tech": 1453,
+        "upgrades": [],
+    },
     "swordsmen": {
         "base_id": 75,  # Man-at-Arms
         "display_name": "Long Swordsman",
@@ -355,6 +352,33 @@ CASTLE_UNITS = {
 }
 
 IMPERIAL_UNITS = {
+    "heavy_mounted_crossbowman": {
+        "base_id": 2700,
+        "display_name": "Heavy Mounted Crossbowman",
+        "unit_class": 36,
+        "availability_tech": 1450,
+        "upgrades": [],
+        # Installed build-185872 CivTechTrees: five owners keep the base tier.
+        "civ_upgrades": {
+            "Britons": [(1451, 2701, "Heavy Mounted Crossbowman")],
+            "Celts": [(1451, 2701, "Heavy Mounted Crossbowman")],
+            "Danes": [(1451, 2701, "Heavy Mounted Crossbowman")],
+            "Franks": [(1451, 2701, "Heavy Mounted Crossbowman")],
+            "Poles": [(1451, 2701, "Heavy Mounted Crossbowman")],
+            "Saxons": [(1451, 2701, "Heavy Mounted Crossbowman")],
+            "Sicilians": [(1451, 2701, "Heavy Mounted Crossbowman")],
+            "Spanish": [(1451, 2701, "Heavy Mounted Crossbowman")],
+            "Teutons": [(1451, 2701, "Heavy Mounted Crossbowman")],
+            "Varangians": [(1451, 2701, "Heavy Mounted Crossbowman")],
+        },
+    },
+    "elite_varangian_guard": {
+        "base_id": 2703,
+        "display_name": "Elite Varangian Guard",
+        "unit_class": 6,
+        "availability_tech": 1453,
+        "upgrades": [(1454, 2704, "Elite Varangian Guard")],
+    },
     "champion": {
         "base_id": 75,  # Man-at-Arms
         "display_name": "Champion",
@@ -767,14 +791,139 @@ NAVAL_UNIQUE_UNITS = {
     "Vikings": [
         {
             "base_id": 250,
-            "display_name": "Longboat",
+            "display_name": "Longship",
+            "slug": "longboat",  # Preserve the existing Vikings row identity.
             "unit_class": 22,
             "availability_tech": 272,
             "elite_tech": 372,
             "elite_id": 533,
-            "elite_name": "Elite Longboat",
+            "elite_name": "Elite Longship",
             "line": "galleon",
-        }
+        },
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        },
+    ],
+    "Danes": [
+        {
+            "base_id": 250,
+            "display_name": "Longship",
+            "unit_class": 22,
+            "availability_tech": 272,
+            "elite_tech": 372,
+            "elite_id": 533,
+            "elite_name": "Elite Longship",
+            "line": "galleon",
+        },
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        },
+    ],
+    "Saxons": [
+        {
+            "base_id": 250,
+            "display_name": "Longship",
+            "unit_class": 22,
+            "availability_tech": 272,
+            "elite_tech": 372,
+            "elite_id": 533,
+            "elite_name": "Elite Longship",
+            "line": "galleon",
+        },
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        },
+    ],
+    "Varangians": [
+        {
+            "base_id": 250,
+            "display_name": "Longship",
+            "unit_class": 22,
+            "availability_tech": 272,
+            "elite_tech": 372,
+            "elite_id": 533,
+            "elite_name": "Elite Longship",
+            "line": "galleon",
+        },
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        },
+    ],
+    "Aztecs": [
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        },
+    ],
+    "Cumans": [
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        },
+    ],
+    "Incas": [
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        },
+    ],
+    "Mayans": [
+        {
+            "base_id": 2633,
+            "display_name": "Catapult Galleon",
+            "unit_class": 22,
+            "availability_tech": 913,
+            "elite_tech": None,
+            "elite_id": None,
+            "elite_name": None,
+            "line": "cannon_galleon",
+        },
     ],
     "Koreans": [
         {
@@ -1010,6 +1159,39 @@ for _cfg in CASTLE_UNITS.values():
 # Format: civ_name -> list of unique unit configs
 # Each unique unit has: base_id, display_name, unit_class, availability_tech, elite_tech, elite_id
 UNIQUE_UNITS = {
+    "Saxons": [
+        {
+            "base_id": 2705,
+            "display_name": "Hearth Troop",
+            "unit_class": 6,
+            "availability_tech": 1461,
+            "elite_tech": 1462,
+            "elite_id": 2706,
+            "elite_name": "Elite Hearth Troop",
+        },
+    ],
+    "Varangians": [
+        {
+            "base_id": 2708,
+            "display_name": "Jarl",
+            "unit_class": 12,
+            "availability_tech": 1471,
+            "elite_tech": 1472,
+            "elite_id": 2709,
+            "elite_name": "Elite Jarl",
+        },
+    ],
+    "Danes": [
+        {
+            "base_id": 2711,
+            "display_name": "Jomsviking",
+            "unit_class": 6,
+            "availability_tech": 1481,
+            "elite_tech": 1482,
+            "elite_id": 2712,
+            "elite_name": "Elite Jomsviking",
+        },
+    ],
     "Britons": [
         {
             "base_id": 8,
@@ -1605,7 +1787,7 @@ UNIQUE_UNITS = {
             "elite_name": "Elite White Feather Guard",
         },
         {
-            "base_id": 2150,
+            "base_id": 1962,  # Playable Shu Focus Fire; 1980 is the Barrage form.
             "display_name": "War Chariot",
             "unit_class": 12,
             "availability_tech": 1065,
@@ -1745,6 +1927,11 @@ UNIQUE_UNITS = {
 # "civ_only", so this needs no code change. NOTE: per these sources the Eagle
 # line is Aztecs/Mayans only (Incas is excluded) -- matches the clean baseline.
 _AVAILABILITY_OVERRIDES = {
+    # Regional grants verified against installed build-185872 CivTechTrees.
+    "mounted_crossbowman": ["Bohemians", "Britons", "Burgundians", "Celts", "Danes", "Franks", "Italians", "Poles", "Portuguese", "Saxons", "Sicilians", "Spanish", "Teutons", "Varangians", "Vikings"],
+    "heavy_mounted_crossbowman": ["Bohemians", "Britons", "Burgundians", "Celts", "Danes", "Franks", "Italians", "Poles", "Portuguese", "Saxons", "Sicilians", "Spanish", "Teutons", "Varangians", "Vikings"],
+    "varangian_guard": ["Byzantines", "Danes", "Saxons", "Varangians", "Vikings"],
+    "elite_varangian_guard": ["Byzantines", "Danes", "Saxons", "Varangians", "Vikings"],
     "eagle_warrior": ["Aztecs", "Mayans"],
     "elite_eagle": ["Aztecs", "Mayans"],
     "camel": ["Berbers", "Byzantines", "Cumans", "Ethiopians", "Gurjaras", "Hindustanis", "Khitans", "Malians", "Mongols", "Persians", "Saracens", "Tatars", "Turks"],
@@ -1765,7 +1952,7 @@ _AVAILABILITY_OVERRIDES = {
     "elite_steppe": ["Cumans", "Jurchens", "Khitans", "Mongols", "Tatars"],
     "fire_lancer": ["Chinese", "Jurchens", "Khitans", "Koreans", "Vietnamese"],
     "elite_fire_lancer": ["Chinese", "Jurchens", "Khitans", "Koreans", "Vietnamese"],
-    "paladin": ["Armenians", "Berbers", "Bohemians", "Britons", "Bulgarians", "Burgundians", "Burmese", "Byzantines", "Celts", "Chinese", "Cumans", "Ethiopians", "Franks", "Georgians", "Goths", "Huns", "Italians", "Japanese", "Khmer", "Koreans", "Lithuanians", "Magyars", "Malay", "Malians", "Mongols", "Persians", "Poles", "Portuguese", "Romans", "Saracens", "Shu", "Sicilians", "Slavs", "Spanish", "Tatars", "Teutons", "Turks", "Vietnamese", "Vikings", "Wei", "Wu"],
+    "paladin": ["Armenians", "Berbers", "Bohemians", "Britons", "Bulgarians", "Burgundians", "Burmese", "Byzantines", "Celts", "Chinese", "Cumans", "Danes", "Ethiopians", "Franks", "Georgians", "Goths", "Huns", "Italians", "Japanese", "Khmer", "Koreans", "Lithuanians", "Magyars", "Malay", "Malians", "Mongols", "Persians", "Poles", "Portuguese", "Romans", "Saracens", "Saxons", "Shu", "Sicilians", "Slavs", "Spanish", "Tatars", "Teutons", "Turks", "Varangians", "Vietnamese", "Vikings", "Wei", "Wu"],
 }
 
 _missing_override_slugs = []

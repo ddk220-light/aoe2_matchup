@@ -149,8 +149,8 @@ UNIT_NAMES = {
     2627: "War Hulk",
     2628: "Carrack",
     # Naval unique units
-    250: "Longboat",
-    533: "Elite Longboat",
+    250: "Longship",
+    533: "Elite Longship",
     831: "Turtle Ship",
     832: "Elite Turtle Ship",
     1004: "Caravel",

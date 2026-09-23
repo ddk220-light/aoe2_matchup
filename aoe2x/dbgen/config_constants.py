@@ -79,7 +79,7 @@ ATTR_DISPLAY_NAMES = {
     ATTR_HP_REGEN: "HP Regen",
 }
 
-# All playable civilizations (53), alphabetical — derived from the dat civ-slot
+# All playable civilizations (56), alphabetical — derived from the dat civ-slot
 # list so a new DLC civ added to CIV_NAMES flows through automatically.
 # CIV_NAMES[0] is "Gaia" (not playable); None entries are unused dat slots.
 # Name is historical ("original 13" from the first prototype); rename deferred.
@@ -110,6 +110,7 @@ ALLOWED_SHADOW_TECHS = {
 # These are skipped during unique tech and civ bonus application
 REMOVED_TECHS = {
     9,  # Saracen Zealotry (replaced by Bimaristan + Counterweights)
+    83,  # Bearded Axe (replaced by tech 1496 in build 185872)
 }
 
 

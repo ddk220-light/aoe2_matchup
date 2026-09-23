@@ -456,7 +456,7 @@ def generate_reference_database(analyzer, ref_db_path=REF_DB_PATH):
 
     # Load armor class names
     armor_class_names = {}
-    ac_file = OUTPUT_DIR / "armor_classes.json"
+    ac_file = analyzer.extracted_dir / "armor_classes.json"
     if ac_file.exists():
         for ac in json.load(open(ac_file)):
             armor_class_names[ac["id"]] = ac["name"]
@@ -865,6 +865,17 @@ def generate_reference_database(analyzer, ref_db_path=REF_DB_PATH):
                 step += 1
                 all_tech_names.append(tb_name)
 
+        new_team_commands = analyzer.apply_new_civ_team_bonus(
+            civ_name, stats, unit_id, unit_class)
+        if new_team_commands:
+            tb_name = f"{civ_name} Team Bonus"
+            _insert_tech_applied(
+                ref_unit_id, 0, tb_name, "civ_bonus", "N/A", "Dark",
+                "; ".join(_describe_effect_cmd(c, armor_class_names) for c in new_team_commands), {})
+            _insert_stat_chain_row(ref_unit_id, step, tb_name, "civ_bonus", _snapshot_stats(stats))
+            step += 1
+            all_tech_names.append(tb_name)
+
         # Phase 3: Unique techs
         unique_techs = analyzer.get_unique_techs_for_unit(
             civ_name, unit_id, unit_class, max_age
@@ -878,8 +889,9 @@ def generate_reference_database(analyzer, ref_db_path=REF_DB_PATH):
             cost = tech_data.get("cost", {})
 
             before = _snapshot_stats(stats)
-            applied = False
-            effects = []
+            conditional = te.get("conditional_description")
+            applied = bool(conditional)
+            effects = [conditional] if conditional else []
             applied_attrs = set()
             for cmd in te.get("commands", []):
                 attr_key = (cmd.get("type", 0), cmd.get("c", 0), cmd.get("d", 0))
@@ -1381,6 +1393,7 @@ def generate_reference_database(analyzer, ref_db_path=REF_DB_PATH):
                     .replace(" ", "_")
                     .replace("-", "_")
                 )
+                slug = nu_config.get("slug", slug)
                 civ_slug = f"{slug}_{civ_name.lower()}"
 
                 # Imperial Age (elite form if exists, else base with Imp techs)

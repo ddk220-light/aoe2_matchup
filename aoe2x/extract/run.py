@@ -12,7 +12,7 @@ from pathlib import Path
 from genieutils.datfile import DatFile
 
 
-def extract_all(dat_path, output_dir):
+def extract_all(dat_path, output_dir, tech_tree_dir=None):
     """Parse dat file once and write all 8 JSON files.
 
     Args:
@@ -28,7 +28,16 @@ def extract_all(dat_path, output_dir):
     from .extract_techs import extract_technologies, generate_tech_ages
     from .extract_units import extract_units
 
-    output_dir.mkdir(exist_ok=True)
+    dat_path, output_dir = Path(dat_path), Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    tree_dir = Path(tech_tree_dir) if tech_tree_dir else dat_path.parent / "CivTechTrees"
+    resolved_trees = {}
+    if tree_dir.is_dir():
+        for civ_name in CIV_NAMES[1:]:
+            if civ_name:
+                tree_path = tree_dir / f"{civ_name.upper()}.json"
+                if tree_path.is_file():
+                    resolved_trees[civ_name] = json.loads(tree_path.read_text(encoding="utf-8"))
 
     print(f"Loading {dat_path}...")
     df = DatFile.parse(dat_path)
@@ -37,6 +46,14 @@ def extract_all(dat_path, output_dir):
     # --- Units ---
     print("\nExtracting units...")
     units = extract_units(df)
+    # Public names come from the installed tree; DAT internal labels can be
+    # historical development names (including the militia-line IDs).
+    names = {node["Node ID"]: node["Name"]
+             for tree in resolved_trees.values() for node in tree["civ_techs_units"]
+             if node.get("Use Type") == "Unit"}
+    for unit in units:
+        if unit["id"] in names:
+            unit["name"] = names[unit["id"]]
     print(f"  {len(units)} units")
     with open(output_dir / "units.json", "w") as f:
         json.dump(units, f, indent=2)
@@ -94,7 +111,7 @@ def extract_all(dat_path, output_dir):
     techs_by_id = {t["id"]: t for t in techs}
 
     print("Extracting civ tech trees...")
-    civ_tech_trees = extract_civ_tech_trees(df, techs_by_id, units_by_id)
+    civ_tech_trees = extract_civ_tech_trees(df, techs_by_id, units_by_id, resolved_trees)
     print(f"  {len(civ_tech_trees)} civ tech trees")
     with open(output_dir / "civ_tech_trees.json", "w") as f:
         json.dump(civ_tech_trees, f, indent=2)
@@ -107,6 +124,7 @@ def extract_all(dat_path, output_dir):
         json.dump(tech_effects, f, indent=2)
 
     print("\nExtraction complete!")
+    return df
 
 
 def main():

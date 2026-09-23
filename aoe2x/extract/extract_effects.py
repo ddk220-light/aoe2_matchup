@@ -159,7 +159,30 @@ def extract_effects(df):
     return effects
 
 
-def extract_civ_tech_trees(df, techs_by_id, units_by_id):
+def apply_resolved_tech_tree(civ_data, tree):
+    """Retain the installed game's regional grants and disabled upgrade tiers."""
+    disabled = {t["id"]: t for t in civ_data["disabled_techs"]}
+    resolved = {}
+    for node in tree["civ_techs_units"]:
+        available = node.get("Node Status") != "NotAvailable"
+        node_id = node["Node ID"]
+        if node.get("Use Type") == "Unit":
+            resolved[str(node_id)] = {
+                "name": node["Name"], "available": available,
+                "building_id": node.get("Building ID"),
+                "age": node.get("Age ID"),
+                "upgrade_tech_id": node.get("Trigger Tech ID"),
+            }
+            if not available and "Trigger Tech ID" in node:
+                tech_id = node["Trigger Tech ID"]
+                disabled[tech_id] = {"id": tech_id, "name": node["Name"]}
+        elif node.get("Use Type") == "Tech" and not available:
+            disabled[node_id] = {"id": node_id, "name": node["Name"]}
+    civ_data["resolved_units"] = resolved
+    civ_data["disabled_techs"] = [disabled[k] for k in sorted(disabled)]
+
+
+def extract_civ_tech_trees(df, techs_by_id, units_by_id, resolved_trees=None):
     """Extract tech tree (disabled units/techs) for each civilization.
 
     Args:
@@ -222,6 +245,8 @@ def extract_civ_tech_trees(df, techs_by_id, units_by_id):
                 ],
             }
 
+        if resolved_trees and civ_name in resolved_trees:
+            apply_resolved_tech_tree(data, resolved_trees[civ_name])
         civ_data.append(data)
 
     return civ_data

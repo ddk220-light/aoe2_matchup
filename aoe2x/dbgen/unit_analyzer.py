@@ -280,6 +280,36 @@ class UnitAnalyzer:
         """Get unit by ID."""
         return self.units.get(unit_id)
 
+    def is_unit_available(self, civ_name: str, unit_id: int) -> bool:
+        """Respect explicit installed-tree exclusions, including regional replacements."""
+        # The tree shows the packed trebuchet; combat uses its unpacked form.
+        tree_id = 331 if unit_id == 42 else unit_id
+        node = self.civ_tech_trees.get(civ_name, {}).get("resolved_units", {}).get(str(tree_id))
+        return node is None or node["available"]
+
+    def apply_new_civ_team_bonus(self, civ_name, stats, unit_id, unit_class):
+        """Apply the new roster's self-team stats directly from the DAT effects.
+
+        Existing civilizations retain their current curated team-bonus handling.
+        Other team effects (repair work rate, etc.) are recorded separately.
+        """
+        if civ_name not in {"Danes", "Saxons", "Varangians"}:
+            return []
+        team = self.civ_tech_trees.get(civ_name, {}).get("team_bonus") or {}
+        applied = []
+        for cmd in team.get("commands", []):
+            if cmd["type"] != CMD_ADD_ATTRIBUTE or cmd["c"] not in {ATTR_LOS, ATTR_ATTACK}:
+                continue
+            if not self.effect_applies_to_unit(cmd, unit_id, unit_class):
+                continue
+            if cmd["c"] == ATTR_ATTACK:
+                attack_class, amount = self._decode_armor_attack_value(cmd["d"])
+                stats.attacks[attack_class] = stats.attacks.get(attack_class, 0) + amount
+            else:
+                self.apply_effect_command(cmd, stats, unit_id, unit_class)
+            applied.append(cmd)
+        return applied
+
     def get_base_stats(self, unit: dict) -> UnitStats:
         """Extract base stats from unit data."""
         stats = UnitStats()
@@ -565,6 +595,18 @@ class UnitAnalyzer:
                 continue
 
             te = self.tech_effect_map[tech_id]
+            # These UTs select engine rules through a player resource rather
+            # than a unit attribute. Research still belongs in the upgrade
+            # audit; the initial full-health/unformed stats stay unchanged.
+            conditional = {
+                1464: "Shield Wall: armor depends on nearby infantry; formation bonus not evaluated",
+                1484: "Hamask: damage depends on own lost HP; full-health baseline",
+            }
+            classes = unit_class if isinstance(unit_class, (list, tuple)) else (unit_class,)
+            if tech_id in conditional and 6 in classes:
+                relevant.append({**te, "tech_name": tech_name,
+                                 "conditional_description": conditional[tech_id]})
+                continue
             for cmd in te.get("commands", []):
                 if self.effect_applies_to_unit(cmd, unit_id, unit_class):
                     te_with_name = dict(te)
@@ -708,7 +750,7 @@ class UnitAnalyzer:
             atk_class, amount = self._decode_armor_attack_value(value)
             if atk_class in stats.attacks:
                 stats.attacks[atk_class] += amount
-            if atk_class == 4:
+            if atk_class == 4 and 4 in stats.attacks:
                 # Melee primary attack
                 stats.attack += amount
             elif atk_class == 3 and 3 in stats.attacks:
@@ -751,13 +793,13 @@ class UnitAnalyzer:
             stats.cost_wood *= value
         elif attr == ATTR_ATTACK:
             # Encoded as class * 256 + percent (e.g., Siege Engineers: class 11, 120 = 1.2x)
-            atk_class, percent = self._decode_armor_attack_value(value)
+            atk_class, percent = divmod(int(value), 256)
             if atk_class in stats.attacks:
                 stats.attacks[atk_class] = round(stats.attacks[atk_class] * percent / 100)
             if atk_class == 4:
                 stats.attack = round(stats.attack * percent / 100)
         elif attr == ATTR_ARMOR:
-            arm_class, percent = self._decode_armor_attack_value(value)
+            arm_class, percent = divmod(int(value), 256)
             if arm_class in stats.armors:
                 stats.armors[arm_class] = round(stats.armors[arm_class] * percent / 100)
             if arm_class == 4:
@@ -830,6 +872,14 @@ class UnitAnalyzer:
                 upgrades = civ_upgrades[civ_name]
                 using_civ_upgrades = True  # Skip age check for civ-specific upgrades
 
+        # DAT disables do not fully encode regional replacement availability.
+        has_civ_replacement = using_civ_upgrades and any(
+            tech not in disabled_techs and self.is_unit_available(civ_name, uid)
+            for tech, uid, _ in upgrades)
+        if not self.is_unit_available(civ_name, base_id) and not has_civ_replacement:
+            return {"unit_name": base_name, "stats": None, "has_unit": False,
+                    "applied_bonuses": []}
+
         # Check if civ has access to this unit
         avail_tech = unit_config.get("availability_tech")
         if not use_alternate and avail_tech:
@@ -879,6 +929,8 @@ class UnitAnalyzer:
         final_unit_name = base_name
 
         for tech_id, upgraded_id, upgraded_name in upgrades:
+            if not self.is_unit_available(civ_name, upgraded_id):
+                continue
             if tech_id not in disabled_techs:
                 # For civ-specific upgrades, skip age check (they're explicitly available)
                 if using_civ_upgrades:
@@ -992,12 +1044,17 @@ class UnitAnalyzer:
                         stats.attacks[atk_class] = amount
                     applied_bonuses.append(f"{civ_name} Team Bonus")
 
+        if self.apply_new_civ_team_bonus(civ_name, stats, final_unit_id, unit_class):
+            applied_bonuses.append(f"{civ_name} Team Bonus")
+
         # Apply unique techs (Castle/Imperial Age civ-specific techs like Garland Wars)
         unique_techs = self.get_unique_techs_for_unit(
             civ_name, final_unit_id, unit_class, max_age
         )
         for te in unique_techs:
             tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
+            if te.get("conditional_description"):
+                applied_bonuses.append(tech_name)
             for cmd in te.get("commands", []):
                 if self.apply_effect_command(cmd, stats, final_unit_id, unit_class):
                     if tech_name not in applied_bonuses:
@@ -1142,12 +1199,17 @@ class UnitAnalyzer:
                         stats.attacks[atk_class] = amount
                     applied_bonuses.append(f"{civ_name} Team Bonus")
 
+        if self.apply_new_civ_team_bonus(civ_name, stats, unit_id, unit_class):
+            applied_bonuses.append(f"{civ_name} Team Bonus")
+
         # Apply unique techs (Castle/Imperial Age civ-specific techs like Garland Wars)
         unique_techs = self.get_unique_techs_for_unit(
             civ_name, unit_id, unit_class, max_age
         )
         for te in unique_techs:
             tech_name = te.get("tech_name", f"Tech {te['tech_id']}")
+            if te.get("conditional_description"):
+                applied_bonuses.append(tech_name)
             for cmd in te.get("commands", []):
                 if self.apply_effect_command(cmd, stats, unit_id, unit_class):
                     if tech_name not in applied_bonuses:
@@ -1297,6 +1359,8 @@ class UnitAnalyzer:
                 continue
             if matched:
                 stats.attacks[atk_class] = stats.attacks.get(atk_class, 0) + amount
+
+        self.apply_new_civ_team_bonus(civ_name, stats, unit_id, unit_class)
 
         # Unique techs (research-cost civ techs)
         for te in self.get_unique_techs_for_unit(

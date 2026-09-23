@@ -248,16 +248,18 @@ def build_combat_dict_from_ref(rc, row):
     }
 
 
-def generate_main_database():
+def generate_main_database(reference_db=None, output_db=None):
     """Generate aoe2_units.db from aoe2_reference.db."""
+    reference_db = Path(reference_db) if reference_db is not None else REF_DB_PATH
+    output_db = Path(output_db) if output_db is not None else MAIN_DB_PATH
 
-    if not REF_DB_PATH.exists():
-        print(f"ERROR: Reference database not found at {REF_DB_PATH}")
+    if not reference_db.exists():
+        print(f"ERROR: Reference database not found at {reference_db}")
         print("Run 'python3 -m extraction.run' and 'python3 -m analysis.generate_reference' first.")
         sys.exit(1)
 
     # Connect to reference DB
-    ref_conn = sqlite3.connect(str(REF_DB_PATH))
+    ref_conn = sqlite3.connect(str(reference_db))
     ref_conn.row_factory = sqlite3.Row
     rc = ref_conn.cursor()
 
@@ -297,9 +299,9 @@ def generate_main_database():
             }
 
     # --- Create main database ---
-    if MAIN_DB_PATH.exists():
+    if output_db.exists():
         # Preserve any user data (comments, verifications) before recreating
-        old_conn = sqlite3.connect(str(MAIN_DB_PATH))
+        old_conn = sqlite3.connect(str(output_db))
         old_conn.row_factory = sqlite3.Row
         old_c = old_conn.cursor()
 
@@ -321,7 +323,7 @@ def generate_main_database():
                 pass  # Table doesn't exist
 
         old_conn.close()
-        MAIN_DB_PATH.unlink()
+        output_db.unlink()
 
     else:
         preserved_data = {
@@ -331,7 +333,7 @@ def generate_main_database():
         }
 
     # Create fresh database
-    conn = sqlite3.connect(str(MAIN_DB_PATH))
+    conn = sqlite3.connect(str(output_db))
     cursor = conn.cursor()
 
     # --- Create schema ---
@@ -523,17 +525,10 @@ def generate_main_database():
 
     print(f"  Inserted {len(civ_id_map)} civilizations")
 
-    # --- Populate armor_classes from reference DB extracted data ---
-    from aoe2x.paths import EXTRACTED_DIR
-    armor_classes_file = EXTRACTED_DIR / "armor_classes.json"
-    if armor_classes_file.exists():
-        armor_classes = json.load(open(armor_classes_file))
-        for ac in armor_classes:
-            cursor.execute(
-                "INSERT OR REPLACE INTO armor_classes (id, name) VALUES (?, ?)",
-                (ac["id"], ac["name"]),
-            )
-        print(f"  Inserted {len(armor_classes)} armor classes")
+    # Use the same reference snapshot as the stats, not a different extraction.
+    armor_classes = rc.execute("SELECT id, name FROM armor_classes").fetchall()
+    cursor.executemany("INSERT INTO armor_classes (id, name) VALUES (?, ?)", armor_classes)
+    print(f"  Inserted {len(armor_classes)} armor classes")
 
     # --- Populate units table ---
     # Build the units table from distinct (slug, age_id) pairs
@@ -854,7 +849,7 @@ def generate_main_database():
     cursor.execute("SELECT COUNT(*) FROM unit_stats WHERE has_unit=0")
     n_missing = cursor.fetchone()[0]
 
-    print(f"\n  Main DB created at: {MAIN_DB_PATH}")
+    print(f"\n  Main DB created at: {output_db}")
     print(f"  Civilizations: {n_civs}")
     print(f"  Unit definitions: {n_units}")
     print(f"  Unit stats rows: {n_stats} ({n_has} has_unit=1, {n_missing} has_unit=0)")

@@ -2,15 +2,23 @@
 _DEFAULT_DESC = "Free Age of Empires II matchup simulator"  # base.html fallback
 
 
-def test_detail_seo_copy_describes_units_without_rank_claims(client):
-    for name in ('Danes', 'Franks'):
+def test_detail_pages_keep_owner_approved_best_units_copy(client):
+    for name in ('Danes', 'Saxons', 'Varangians', 'Franks', 'Byzantines'):
         body = client.get(f'/civilizations/{name.lower()}').get_data(as_text=True)
         head = body.split('</head>', 1)[0]
-        assert f'<title>{name} — AoE2 Civilization: Units, Bonuses, and Strategy</title>' in head
-        assert f'{name} in Age of Empires II — units, bonuses, and strategy.' in head
-        assert 'strongest fully-upgraded' not in head
-        assert 'Best Units' not in head
-        assert '<p class="subtitle">Age of Empires II civilization analysis — units, bonuses, and strategy</p>' in body
+        assert f'<title>{name} — AoE2 Civilization: Best Units & Strategy</title>' in head
+        assert f'{name} in Age of Empires II — strongest fully-upgraded units by role, tiers, and strategy.' in head
+        assert '<p class="subtitle">Age of Empires II civilization analysis — power units, tiers, and strategic identity</p>' in body
+        assert 'All 56 civs, fully upgraded.' in body
+
+
+def test_overview_keeps_original_copy_with_current_civilization_count(client):
+    body = client.get('/civilizations').get_data(as_text=True)
+    assert '<title>AoE2 Civilizations — Strengths, power units & strategic identity for all 56 civs</title>' in body
+    assert ('Detailed Age of Empires II civilization breakdowns: power units, unique techs, '
+            'civ bonuses, and the matchup-tested strengths of all 56 civilizations including Three Kingdoms.') in body
+    assert '<p class="subtitle">Select a civilization to see its strengths, weaknesses, and strategic identity</p>' in body
+    assert 'All 56 civs, fully upgraded.' in body
 
 
 def test_new_civ_is_page_only(client):
@@ -23,6 +31,19 @@ def test_new_civ_is_page_only(client):
         assert name not in app._get_ref_civs()
         assert name not in app._valid_civs()
         assert name not in app.site_catalog(app.REF_DB_PATH)['civilizations']
+
+
+def test_new_civilizations_use_normal_unit_media_and_popups(client):
+    for name in ('Danes', 'Saxons', 'Varangians'):
+        data = client.get(f'/api/civilizations/{name}').get_json()
+        for lines in data['power_units'].values():
+            for units in lines.values():
+                assert all('media' not in unit for unit in units or [])
+        html = client.get(f'/civilizations/{name.lower()}').get_data(as_text=True)
+        assert 'tt-media-control' not in html
+        assert 'data-anim-src=' not in html
+        assert 'tabindex="0"' not in html
+        assert 'tt-cost-resource' in html
 
 
 def test_new_civ_selector_overview_and_page_api_share_reference_data(client):
@@ -52,9 +73,9 @@ def test_new_civ_server_html_uses_reference_emblems_media_buildings_and_costs(cl
     assert 'src="/static/img/civilizations/185872/saxons.png"' in detail
     assert 'Elite Jomsviking' in detail
     assert 'Castle' in detail
-    assert '/static/media/civilizations/185872/elite_jomsviking/idle.png' in detail
-    assert '/static/media/civilizations/185872/elite_jomsviking/attack.webp' in detail
-    assert 'Attack preview' in detail
+    assert '/static/img/unit_sprites/elite_jomsviking.png' in detail
+    assert 'data-anim-name="Elite Jomsviking"' in detail
+    assert 'Attack preview' not in detail
     assert 'tt-cost-resource' in detail
     assert 'Coming soon' not in detail
     assert 'Unranked' not in detail
@@ -67,12 +88,13 @@ def test_new_civ_generic_cards_share_existing_sprites_and_hover_hooks(client):
                                     ('Cavalier', 'Cavalier', 'cavalier'),
                                     ('Crossbowman', 'Crossbowman', 'crossbowman'),
                                     ('Galleon', 'Galleon', 'galleon'),
-                                    ('Elite Longship', 'Elite Longboat', 'elite_longboat')]:
-        badge = re.search(r'aria-label="Details for ' + re.escape(name)
+                                    ('Elite Longship', 'Elite Longship', 'elite_longboat')]:
+        badge = re.search(r'data-anim-name="' + re.escape(name)
                           + r'".*?<img class="unit-badge-icon[^>]+>', body, re.S).group()
         assert f'data-anim-name="{catalog_name}"' in badge
         assert f'src="/static/img/unit_sprites/{slug}.png"' in badge
-    assert 'data-anim-src="/static/media/civilizations/185872/elite_jarl/attack.webp"' in body
+    assert 'data-anim-name="Elite Jarl"' in body
+    assert '/static/img/unit_sprites/elite_jarl.png' in body
 
 
 def test_initial_civ_cards_keep_narrative_signature_and_stat_formatting(client):
@@ -105,19 +127,20 @@ def test_reference_tooltips_show_explained_technologies_only_once(client):
         assert redundant not in unit['bonus_abilities']
 
 
-def test_server_html_shows_only_supplied_ship_media_and_real_tier(client):
+def test_server_html_uses_shared_ship_media_and_real_tier(client):
     import app
     from flask import render_template
+    from aoe2x.assets.catalog import load_manifest
 
     data = client.get('/api/civilizations/Vikings').get_json()
     ship = data['power_units']['navy']['longship'][0]
-    assert 'idle_blue' not in ship['media']
+    assert 'media' not in ship
     with app.app.app_context():
         html = render_template('_civ_content.html', civ={'name': 'Vikings', 'slug': 'vikings'},
                                analysis=data, civ_buildings={'dock': [ship]},
-                               site_catalog={'icon_names': {}})
+                               site_catalog={'icon_names': {}}, civ_sprites=load_manifest())
     assert 'Elite Longship' in html
-    assert ship['media']['icon'] in html
+    assert '/static/img/unit_sprites/elite_longboat.png' in html
     assert 'Attack preview' not in html
     assert 'Blue' not in html
     assert 'idle_blue' not in html

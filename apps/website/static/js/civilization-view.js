@@ -84,35 +84,6 @@ function buildingForUnit(unit, column, lineSlug) {
     return "archery_range";
 }
 
-function shouldNavigateCivCard(name) {
-    return !!(window.PRESELECT_CIV && name !== window.PRESELECT_CIV);
-}
-
-function civilizationUnitMedia(unit, name) {
-    var media = unit.media || {};
-    var catalogName = media.catalog_name || name;
-    var useSprite = !!media.idle || (typeof hasSprite === "function" && hasSprite(catalogName));
-    return {
-        catalogName: catalogName,
-        useSprite: useSprite,
-        idle: media.idle || (useSprite ? spriteFor(catalogName) : (media.icon || getIconUrl(catalogName))),
-        icon: media.icon || getIconUrl(catalogName),
-        iconTransparent: media.icon_transparent || null,
-        attack: media.attack || (typeof animFor === "function" ? animFor(catalogName) : null),
-        hasDirectMedia: !!(media.idle || media.icon || media.icon_transparent || media.attack),
-    };
-}
-
-function activateCivMediaPreview(control, tooltip) {
-    var image = tooltip && tooltip.querySelector('.anim-slot');
-    if (!image) return false;
-    image.src = control.dataset.previewSrc;
-    tooltip.querySelectorAll('[data-preview-src]').forEach(function (candidate) {
-        candidate.classList.toggle('is-active', candidate === control);
-    });
-    return true;
-}
-
 function groupUnitsByBuilding(powerUnits) {
     var grouped = {};
     for (var c = 0; c < COLUMN_ORDER.length; c++) {
@@ -140,9 +111,8 @@ function renderUnitBadge(unit, colKey) {
     // like Elite Skirmisher / Elite Leitis get the `.sprite` treatment too. Spriteless
     // units (naval) fall back to the boxed portrait. The `.sprite` class drives the CSS,
     // where a fixed box + object-fit: contain keeps every aspect ratio inside the badge.
-    var media = civilizationUnitMedia(unit, name);
-    var useSprite = media.useSprite;
-    var iconUrl = media.idle;
+    var useSprite = hasSprite(name);
+    var iconUrl = useSprite ? spriteFor(name) : getIconUrl(name);
     // The backend grades each unit into one of six tiers (see TIER_META). A few
     // stat-only naval/siege fallbacks carry no score and so no tier — those fall
     // back to a plain, edge-less badge.
@@ -157,12 +127,10 @@ function renderUnitBadge(unit, colKey) {
         (meta ? " is-tier-" + tier : " no-strength");
     var iconSize = (isSig ? "signature-icon" : "unit-badge-icon") + (useSprite ? " sprite" : "");
 
-    var html = '<div class="' + badgeClass + '" tabindex="0" aria-label="Details for ' + escapeHtml(name) + '"'
-        + ' data-anim-name="' + escapeHtml(media.catalogName) + '"'
-        + (unit.media && unit.media.attack ? ' data-anim-src="' + escapeHtml(unit.media.attack) + '"' : '') + '>';
+    var html = '<div class="' + badgeClass + '" data-anim-name="' + escapeHtml(name) + '">';
 
     /* Tooltip */
-    html += renderTooltip(unit, name, media);
+    html += renderTooltip(unit, name);
 
     /* Signature star */
     if (isSig) {
@@ -226,8 +194,7 @@ function renderStatRow(row, stats, baseline) {
 }
 
 /* ---- Tooltip renderer ---- */
-function renderTooltip(unit, name, media) {
-    media = media || civilizationUnitMedia(unit, name);
+function renderTooltip(unit, name) {
     var bonusAbilities = unit.bonus_abilities || [];
     var specialEffects = unit.special_effects || [];
     var missingTechs = unit.missing_techs || [];
@@ -239,11 +206,11 @@ function renderTooltip(unit, name, media) {
     var baseline = (!isUnique && unit.stat_baseline) ? unit.stat_baseline : null;
 
     var hasContent = meta || stats || bonusAbilities.length || specialEffects.length
-        || missingTechs.length || unit.score != null || media.hasDirectMedia;
+        || missingTechs.length || unit.score != null;
     if (!hasContent) return "";
 
-    var useSprite = media.useSprite;
-    var iconUrl = media.idle;
+    var useSprite = hasSprite(name);
+    var iconUrl = useSprite ? spriteFor(name) : getIconUrl(name);
 
     var html = '<div class="unit-badge-tooltip">';
 
@@ -261,23 +228,6 @@ function renderTooltip(unit, name, media) {
         html += '<span class="tooltip-tier tier-' + unit.tier + '">' + meta.label + '</span>';
     }
     html += '</div></div>';
-
-    if (media.hasDirectMedia) {
-        html += '<div class="tt-media-controls" aria-label="Unit media">';
-        var variants = [
-            { label: 'Idle', url: unit.media.idle },
-            { label: 'Attack preview', url: unit.media.attack },
-            { label: 'Icon', url: unit.media.icon },
-            { label: 'Transparent icon', url: unit.media.icon_transparent },
-        ];
-        for (var v = 0; v < variants.length; v++) {
-            if (!variants[v].url) continue;
-            html += '<a class="tt-media-control" href="' + escapeHtml(variants[v].url)
-                + '" data-preview-src="' + escapeHtml(variants[v].url) + '" target="_blank" rel="noopener">'
-                + variants[v].label + '</a>';
-        }
-        html += '</div>';
-    }
 
     if (meta) {
         html += '<div class="tooltip-tier-hint">' + escapeHtml(meta.hint) + '</div>';

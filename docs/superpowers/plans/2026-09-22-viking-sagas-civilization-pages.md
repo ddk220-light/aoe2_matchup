@@ -1,5 +1,12 @@
 # Viking Sagas Civilization Pages Implementation Plan
 
+> **Historical plan, corrected by the owner on 2026-09-23.** The media selectors,
+> keyboard/focus additions, changed navigation, copy rewrites and separate unit
+> asset lookup described below were not authorized by merely approving this plan.
+> They are superseded by the explicit decisions in `AGENTS.md` and the current
+> [runbook §8](../../architecture/runbooks.md#8-civilization-page-only-reference-release-viking-sagas).
+> Do not execute those superseded steps or treat this document as owner approval.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make Danes, Saxons, Varangians and the new regional units browsable on civilization pages, with their correct rosters and existing approved game-derived media, without changing simulations or ranking results.

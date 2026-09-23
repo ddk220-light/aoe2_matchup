@@ -33,8 +33,8 @@ def create_blueprint(_get_page_civs, get_civ_detail, get_civ_overview_data, curr
             abort(404)
         first_sentence = (civ["description"].split(". ")[0].strip().rstrip(".") + ".") \
             if civ["description"] else ""
-        meta_desc = (f"{civ['name']} in Age of Empires II — units, bonuses, and strategy. "
-                     f"{first_sentence}").strip()[:250]
+        meta_desc = (f"{civ['name']} in Age of Empires II — strongest fully-upgraded "
+                     f"units by role, tiers, and strategy. {first_sentence}").strip()[:250]
         analysis = civilization_page_analysis(civ["name"], build_number=current_build())
         supplement = load_civilization_supplement()['civilizations']
         return render_template("civ_detail.html", civ=civ, civs=_get_page_civs(),

@@ -378,8 +378,15 @@ re-checks candidate flips (both PyPy-only).
 Verified locally on 2026-09-22 against installed game build **185872**. Use this
 when civilization presentation is approved before simulations/rankings are ready.
 It is **not** the full patch/DLC pipeline in §1/§4: do not rebuild golden databases,
-derive rankings, rerun simulations, flip the current-build pointer, extend Advisor
-candidates, or upload the global media catalog as part of this workflow.
+derive rankings, rerun simulations, flip the current-build pointer, or extend Advisor
+candidates. Unit media uses the existing shared asset catalog; an asset-catalog
+publication does not authorize changing the simulation/ranking databases.
+
+Owner correction (2026-09-23): retain the original Best Units titles, descriptions,
+SEO wording and subtitles, with the civilization count updated to 56. Keep costs,
+normal hover/click animations and in-place civilization selection. Do not add media
+selectors or new keyboard/focus interactions. The explicit-question rule in
+`AGENTS.md` applies to each additional change; inclusion in a plan is not approval.
 
 ### Inputs and isolated checkout
 
@@ -422,11 +429,13 @@ Outputs:
   military rows at their highest available Imperial tier. Existing page combat
   categories exclude civilians, Monks, Petards and Siege Towers; Trebuchet uses
   the existing combat representation.
-- `apps/website/static/media/civilizations/185872/`: ten base/elite forms, four
-  files each — icon, transparent icon, enhanced transparent card still, animated
-  lossless attack WebP. Conversion preserves all 390 source frames, alpha,
-  durations and loop settings. Base forms remain reusable in the media map;
-  civilization cards show only the available tier.
+- Ten base/elite forms use the standard shared paths: `static/img/units/<Name>.png`
+  and `<Name>_transparent.png`, `static/img/unit_sprites/<slug>.png`, and
+  `static/anim/<slug>.webp`. The existing presentation icon map, `unit_sprites.json`
+  / `unit_sprites.js`, and `unit_anims.json` register them just like older units.
+  Conversion preserves all 390 source frames, alpha, durations and loop settings.
+  The release's media inventory is build provenance, not a separate runtime lookup.
+  Civilization rows carry no media overrides; cards show the available unit tier.
 - `apps/website/static/img/civilizations/185872/`: three finished shields from
   `widgetui/textures/menu/civs/`, **not** the mask textures in `ingame/emblems`.
 - These 43 files total 15,763,368 bytes; exact sources, hashes and animation
@@ -438,11 +447,9 @@ to substitute native-resolution stills or attack-frame posters. Idle PNGs use
 the shared website's 384px bound; the lossless animated WebPs preserve the GIF
 frames and timing. No originals are modified or regenerated.
 
-Generic cards use the same sprite catalog and hover animation lookup as existing
-civilizations; an icon-only override must not suppress either. Longship names
-resolve through the existing Longboat media name. New-unit attack WebPs use the
-same hover behavior through an explicit animation URL. Ships without an attack
-entry in the shared catalog remain still, exactly as in the other civilizations.
+All cards use the same sprite catalog and hover animation lookup. Longship names
+are shared-catalog aliases of the existing Longboat assets. Ships without an
+attack entry in that catalog remain still, exactly as in the other civilizations.
 
 To publish only the ten selected idle sprites and media aliases (no DAT
 extraction, AI inference, stat changes, or attack conversion):
@@ -467,17 +474,25 @@ extraction outputs belong in this feature's commit set.
 
 ### Serving, verification and publication boundary
 
-When the existing bucket configuration is enabled, the supplement loader maps
-its image/animation URLs from `/static/` to the same-origin `/assets/` broker.
-Publish the 43 exact `media_inventory` outputs under their paths with `/static/`
-removed before deploying that configuration. Publish the ten selected original
-DAT4x attack GIFs separately as `gifs/<slug>.gif`; the cards use the lossless WebP
-versions. The September 23 staging upload added these 53 missing objects
-(31,943,382 bytes), verified their sizes and ETags, and overwrote no objects.
-This is a media-only operation: no global catalog or database publication.
-Production has a separate bucket. The owner-authorized September 23 main release
-publishes and verifies the same 53 files there before code promotion; a successful
-staging upload alone does not make those files available in production.
+When the existing bucket configuration is enabled, the shared catalog supplies
+`/assets/img/units/`, `/assets/img/unit_sprites/`, and `/assets/anim/` URLs. The
+supplement loader rewrites only civilization emblem URLs. Before deploying this
+correction, obtain publication approval and upload/verify the 40 relocated media
+files at their canonical bucket keys. Keep the old bucket objects; this correction
+does not authorize deleting them. The images/animations are byte-identical moves,
+not regenerated assets. The three emblems and previously uploaded source GIFs
+remain at their existing keys and do not require re-uploading.
+
+The normal `/api/assets/catalog` path synthesizes its response from the committed
+manifests when no catalog database is configured. Check the actual deployment's
+catalog mode before promotion: the optional Postgres reader currently returns
+only sprites/icons, not animations, so refreshing its rows alone is not sufficient.
+That pre-existing limitation needs separate approval to address if that path is
+used; this correction does not refactor it or authorize database writes. A
+read-only production check on September 23 returned build 177723 with 223 sprites
+and 193 animations, including `/assets/anim/arbalester.webp`. Verify the new shared
+icon/sprite/animation entries before promotion without changing the game build or
+ranking data. Production has a separate bucket: a staging upload does not update it.
 
 `civilization_page_analysis` composes the supplement onto a copy of the existing
 ranked analysis. Initial HTML and `/api/civilizations/<Name>` use that same data.
@@ -499,11 +514,10 @@ node --test tests/civilization_media.test.cjs
 python -B -m flask --app apps.website.app run --host 127.0.0.1 --port 5011 --no-debugger
 ```
 
-The September 22 smoke check covered all 56 routes and overview/sitemap parity;
-new civ API isolation; Danes, Saxons, Varangians, Vikings, Byzantines, Franks,
-Bohemians and Huns; desktop and phone-width cards; attack/static previews;
-keyboard/tap controls; canonical selector navigation and positive-only resource
-costs. Browser checks found no horizontal overflow or console errors.
+The historical September 22 smoke check included preview controls and changed
+navigation that the owner subsequently rejected. Those checks are not approval
+to reintroduce them. Current focused tests require the original presentation,
+shared unit assets, unchanged simulator availability, and retained resource costs.
 
 Stage exact source, test, JSON, media and documentation paths. Review the entire
 outgoing range against freshly fetched `origin/main`, including binary sizes,

@@ -1,5 +1,14 @@
 # Project Agent Instructions
 
+## Ask explicitly before every unrequested change
+
+- Preserve the existing product unless the owner explicitly requests a change. Adding civilizations or units means extending the existing roster, shared assets and normal UI, not inventing a separate architecture or new controls.
+- Before implementing any unrequested change, ask the owner a clear, separate question describing that specific change and why it is proposed; wait for an explicit answer. Raise it during the design/brainstorming discussion, or immediately if discovered during implementation. Do not silently bundle it into an implementation plan, review, commit or release. Approval of a plan or "go ahead" does not authorize additions that were never individually raised and approved.
+- This includes titles, subtitles, civilization descriptions, search/SEO metadata, footer copy, product claims, navigation, accessibility/keyboard behavior, media controls, asset organization and quality substitutions. An apparently beneficial improvement is still a separate decision. Routine internal implementation and verification of the explicitly requested result do not require duplicate approval.
+- Partial or sequential delivery is intentional. Do not rewrite "Best Units" or ranking-related language, add interim states, redesign assets, or add compatibility work merely because simulations/rankings will arrive later. Explain any concern and ask; do not invent a workaround. Production-action approvals remain separately required.
+- Civilization correction approved on 2026-09-23: restore the original Best Units titles, descriptions/SEO wording and subtitles, retaining the correct count of 56; keep resource costs; remove the added media selectors and keyboard/focus interactions; restore in-place civilization switching; use the existing shared asset system without changing simulation/ranking data. Preserve existing civilization strategy paragraphs and approved image quality.
+- Before completion/publication, compare the actual diff against the owner's requests and explicit answers, not merely the agent-authored plan. List every material change and stop for any unapproved addition.
+
 ## Live capture sources of truth
 
 This JavaScript simulation is a new engine built from scratch. The newest

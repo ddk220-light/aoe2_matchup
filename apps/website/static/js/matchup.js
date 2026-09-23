@@ -84,7 +84,6 @@ const SUMMARY_TEMPLATES = {
 const stepLabel = document.getElementById("step-label");
 const civGrid = document.getElementById("civ-grid");
 const resultsEl = document.getElementById("results");
-document.documentElement.classList.add("has-civ-js");
 
 let selectedCiv = null;
 const civilizationData = import("./shared/page-data.js").then(m => m.createPageData());
@@ -116,7 +115,6 @@ CIVS.forEach(function (name) {
         civGrid.appendChild(card);
     }
     card.addEventListener("click", function (event) {
-        if (shouldNavigateCivCard(name)) return;
         event.preventDefault();
         onCivClick(name);
     });
@@ -222,15 +220,6 @@ async function loadAnalysis(civName) {
 
     /* Tap / click on a badge toggles its pinned tooltip. */
     resultsEl.addEventListener("click", function (e) {
-        var preview = e.target.closest("[data-preview-src]");
-        if (preview) {
-            var previewTooltip = preview.closest(".unit-badge-tooltip");
-            if (activateCivMediaPreview(preview, previewTooltip)) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            return;
-        }
         /* Close button inside a pinned tooltip. */
         if (e.target.closest(".unit-badge-tooltip-close")) {
             e.preventDefault();
@@ -254,23 +243,6 @@ async function loadAnalysis(civName) {
         e.stopPropagation();
         pin(tooltip);
     });
-
-    resultsEl.addEventListener("keydown", function (e) {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        var badge = e.target.closest(".unit-badge");
-        if (!badge || e.target !== badge) return;
-        var tooltip = badge.querySelector(".unit-badge-tooltip");
-        if (!tooltip) return;
-        e.preventDefault();
-        pin(tooltip);
-    });
-
-    function previewFromControl(e) {
-        var control = e.target.closest("[data-preview-src]");
-        if (control) activateCivMediaPreview(control, control.closest(".unit-badge-tooltip"));
-    }
-    resultsEl.addEventListener("mouseover", previewFromControl);
-    resultsEl.addEventListener("focusin", previewFromControl);
 
     /* Outside tap anywhere on the document dismisses the pinned tooltip. */
     document.addEventListener("click", function (e) {

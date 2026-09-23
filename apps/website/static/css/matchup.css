@@ -534,14 +534,6 @@
         display: block;
     }
 }
-.unit-badge:focus-visible {
-    outline: 2px solid var(--gold);
-    outline-offset: 2px;
-}
-html:not(.has-civ-js) .unit-badge:focus-within .unit-badge-tooltip {
-    display: block;
-    pointer-events: auto;
-}
 /* Pinned (tap) state — works on every device; pointer-events on so the close
    button and inner scroll are usable. Extra top padding clears the × button. */
 .unit-badge-tooltip.pinned {
@@ -700,26 +692,6 @@ html:not(.has-civ-js) .unit-badge:focus-within .unit-badge-tooltip {
 }
 .tt-head--sprite .tt-head-text {
     width: 100%;
-}
-.tt-media-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin: 0 0 9px;
-}
-.tt-media-control {
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 3px 6px;
-    font-size: var(--fs-xs);
-    text-decoration: none;
-}
-.tt-media-control:hover,
-.tt-media-control:focus-visible,
-.tt-media-control.is-active {
-    color: var(--gold);
-    border-color: var(--gold);
 }
 .tt-costs {
     display: flex;

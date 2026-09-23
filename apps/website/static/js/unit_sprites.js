@@ -606,6 +606,14 @@ const UNIT_SPRITES = {
   "url_blue": "/static/img/unit_sprites/elite_guecha_warrior_blue.png",
   "w": 320
  },
+ "Elite Hearth Troop": {
+  "cat": "square",
+  "h": 348,
+  "ratio": 1.034,
+  "slug": "elite_hearth_troop",
+  "url": "/static/img/unit_sprites/elite_hearth_troop.png",
+  "w": 360
+ },
  "Elite Huskarl": {
   "cat": "square",
   "h": 376,
@@ -659,6 +667,22 @@ const UNIT_SPRITES = {
   "url": "/static/img/unit_sprites/elite_janissary.png",
   "url_blue": "/static/img/unit_sprites/elite_janissary_blue.png",
   "w": 276
+ },
+ "Elite Jarl": {
+  "cat": "square",
+  "h": 384,
+  "ratio": 1.032,
+  "slug": "elite_jarl",
+  "url": "/static/img/unit_sprites/elite_jarl.png",
+  "w": 372
+ },
+ "Elite Jomsviking": {
+  "cat": "borderline",
+  "h": 384,
+  "ratio": 1.512,
+  "slug": "elite_jomsviking",
+  "url": "/static/img/unit_sprites/elite_jomsviking.png",
+  "w": 254
  },
  "Elite Kamayuk": {
   "cat": "borderline",
@@ -758,6 +782,15 @@ const UNIT_SPRITES = {
   "url": "/static/img/unit_sprites/elite_longbowman.png",
   "url_blue": "/static/img/unit_sprites/elite_longbowman_blue.png",
   "w": 283
+ },
+ "Elite Longship": {
+  "cat": "square",
+  "h": 384,
+  "ratio": 1.004,
+  "slug": "elite_longboat",
+  "url": "/static/img/unit_sprites/elite_longboat.png",
+  "url_blue": "/static/img/unit_sprites/elite_longboat_blue.png",
+  "w": 383
  },
  "Elite Magyar Huszar": {
   "cat": "square",
@@ -966,6 +999,14 @@ const UNIT_SPRITES = {
   "url_blue": "/static/img/unit_sprites/elite_urumi_swordsman_blue.png",
   "w": 328
  },
+ "Elite Varangian Guard": {
+  "cat": "square",
+  "h": 380,
+  "ratio": 1.397,
+  "slug": "elite_varangian_guard",
+  "url": "/static/img/unit_sprites/elite_varangian_guard.png",
+  "w": 272
+ },
  "Elite War Chariot": {
   "cat": "square",
   "h": 314,
@@ -1164,6 +1205,14 @@ const UNIT_SPRITES = {
   "url_blue": "/static/img/unit_sprites/hand_cannoneer_blue.png",
   "w": 300
  },
+ "Hearth Troop": {
+  "cat": "square",
+  "h": 348,
+  "ratio": 1.023,
+  "slug": "hearth_troop",
+  "url": "/static/img/unit_sprites/hearth_troop.png",
+  "w": 356
+ },
  "Heavy Camel Rider": {
   "cat": "square",
   "h": 384,
@@ -1199,6 +1248,14 @@ const UNIT_SPRITES = {
   "url": "/static/img/unit_sprites/heavy_hei_kuang_cavalry.png",
   "url_blue": "/static/img/unit_sprites/heavy_hei_kuang_cavalry_blue.png",
   "w": 305
+ },
+ "Heavy Mounted Crossbowman": {
+  "cat": "square",
+  "h": 384,
+  "ratio": 1.076,
+  "slug": "heavy_mounted_crossbowman",
+  "url": "/static/img/unit_sprites/heavy_mounted_crossbowman.png",
+  "w": 357
  },
  "Heavy Rocket Cart": {
   "cat": "square",
@@ -1326,6 +1383,14 @@ const UNIT_SPRITES = {
   "url_blue": "/static/img/unit_sprites/janissary_blue.png",
   "w": 264
  },
+ "Jarl": {
+  "cat": "square",
+  "h": 384,
+  "ratio": 1.016,
+  "slug": "jarl",
+  "url": "/static/img/unit_sprites/jarl.png",
+  "w": 378
+ },
  "Jian Swordsman": {
   "cat": "square",
   "h": 344,
@@ -1343,6 +1408,14 @@ const UNIT_SPRITES = {
   "url": "/static/img/unit_sprites/jian_swordsman_transformed.png",
   "url_blue": "/static/img/unit_sprites/jian_swordsman_transformed_blue.png",
   "w": 372
+ },
+ "Jomsviking": {
+  "cat": "borderline",
+  "h": 384,
+  "ratio": 1.512,
+  "slug": "jomsviking",
+  "url": "/static/img/unit_sprites/jomsviking.png",
+  "w": 254
  },
  "Kamayuk": {
   "cat": "extreme",
@@ -1479,6 +1552,15 @@ const UNIT_SPRITES = {
   "url_blue": "/static/img/unit_sprites/longbowman_blue.png",
   "w": 298
  },
+ "Longship": {
+  "cat": "square",
+  "h": 384,
+  "ratio": 1.072,
+  "slug": "longboat",
+  "url": "/static/img/unit_sprites/longboat.png",
+  "url_blue": "/static/img/unit_sprites/longboat_blue.png",
+  "w": 358
+ },
  "Lou Chuan": {
   "cat": "square",
   "h": 317,
@@ -1550,6 +1632,14 @@ const UNIT_SPRITES = {
   "url": "/static/img/unit_sprites/monaspa.png",
   "url_blue": "/static/img/unit_sprites/monaspa_blue.png",
   "w": 384
+ },
+ "Mounted Crossbowman": {
+  "cat": "square",
+  "h": 384,
+  "ratio": 1.067,
+  "slug": "mounted_crossbowman",
+  "url": "/static/img/unit_sprites/mounted_crossbowman.png",
+  "w": 360
  },
  "Mounted Trebuchet": {
   "cat": "square",
@@ -1892,6 +1982,14 @@ const UNIT_SPRITES = {
   "url": "/static/img/unit_sprites/urumi_swordsman.png",
   "url_blue": "/static/img/unit_sprites/urumi_swordsman_blue.png",
   "w": 308
+ },
+ "Varangian Guard": {
+  "cat": "square",
+  "h": 376,
+  "ratio": 1.492,
+  "slug": "varangian_guard",
+  "url": "/static/img/unit_sprites/varangian_guard.png",
+  "w": 252
  },
  "War Chariot": {
   "cat": "square",

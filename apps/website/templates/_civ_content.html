@@ -20,17 +20,15 @@
     <div class="role-header">{{ building | replace('_', ' ') | title }}</div>
     <div class="building-unit-grid">
         {% for unit in units %}
-        {% set media = unit.media | default({}) %}
         {% set stats = unit.stats | default({}) %}
         {% set name = unit.unit_name %}
-        {% set media_name = media.get('catalog_name') or name %}
-        {% set sprite = (civ_sprites | default({})).get(media_name, {}) %}
-        {% set use_sprite = media.get('idle') or sprite.get('url') %}
+        {% set sprite = (civ_sprites | default({})).get(name, {}) %}
+        {% set use_sprite = sprite.get('url') %}
         {% set icon = site_catalog.icon_names.get(name) if site_catalog is defined else none %}
-        {% set icon_url = media.get('icon') or ('/static/img/units/' ~ icon ~ '.png' if icon else '') %}
+        {% set icon_url = '/static/img/units/' ~ icon ~ '.png' if icon else '' %}
         {% set preview_url = use_sprite or icon_url %}
         <div class="unit-badge{% if unit.tier == 'signature' %} signature{% endif %}{% if unit.tier %} is-tier-{{ unit.tier }}{% else %} no-strength{% endif %}"
-             tabindex="0" aria-label="Details for {{ name }}" data-anim-name="{{ media_name }}"{% if media.get('attack') %} data-anim-src="{{ media.attack }}"{% endif %}>
+             data-anim-name="{{ name }}">
             <div class="unit-badge-tooltip">
                 <button type="button" class="unit-badge-tooltip-close" aria-label="Close">×</button>
                 <div class="tt-head{% if use_sprite %} tt-head--sprite{% endif %}">
@@ -38,13 +36,6 @@
                     <div class="tt-head-text"><div class="tt-name">{{ name }}</div>
                     {% if unit.tier %}<span class="tooltip-tier tier-{{ unit.tier }}">{{ unit.tier | title }}</span>{% endif %}</div>
                 </div>
-                {% if media %}
-                <div class="tt-media-controls" aria-label="Unit media">
-                    {% for label, key in [('Idle', 'idle'), ('Attack preview', 'attack'), ('Icon', 'icon'), ('Transparent icon', 'icon_transparent')] %}
-                    {% if media.get(key) %}<a class="tt-media-control" href="{{ media[key] }}" data-preview-src="{{ media[key] }}" target="_blank" rel="noopener">{{ label }}</a>{% endif %}
-                    {% endfor %}
-                </div>
-                {% endif %}
                 {% if stats %}
                 <div class="tt-stats">
                     {% for label, key in [('HP', 'hp'), ('Attack', 'attack'), ('Attack speed', 'reload_time'), ('Range', 'range'), ('Melee armor', 'melee_armor'), ('Pierce armor', 'pierce_armor')] %}

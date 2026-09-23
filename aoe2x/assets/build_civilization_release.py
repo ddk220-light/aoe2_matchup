@@ -99,10 +99,11 @@ def identity(node):
 def media_for(name):
     unit_slug = slug(name)
     if name in NEW_NAMES.values():
-        base = f'/static/media/civilizations/{BUILD}/{unit_slug}/'
-        return {key: base + filename for key, filename in {
-            'icon': 'icon.png', 'icon_transparent': 'icon_transparent.png',
-            'idle': 'idle.png', 'attack': 'attack.webp'}.items()}
+        icon = name.replace(' ', '_')
+        return {'icon': f'/static/img/units/{icon}.png',
+                'icon_transparent': f'/static/img/units/{icon}_transparent.png',
+                'idle': f'/static/img/unit_sprites/{unit_slug}.png',
+                'attack': f'/static/anim/{unit_slug}.webp'}
     # Page-only aliases: the engine and shared display-name icon catalog stay intact.
     aliases = {'Longship': 'Longboat', 'Elite Longship': 'Elite Longboat',
                'Trebuchet (Packed)': 'Trebuchet'}
@@ -190,7 +191,7 @@ def reference_row(civ, node, analyzer):
     return {'unit_name': display, 'unit_slug': unit_slug, 'line_slug': line,
             'column': column, 'building': building, 'reference_build': BUILD,
             'is_unique': unique, 'stats': values, 'special_effects': effects,
-            'bonus_abilities': bonuses, 'media': media_for(node['Name'])}
+            'bonus_abilities': bonuses}
 
 
 def convert_attack(source, target):
@@ -232,6 +233,32 @@ MEDIA_NOTE = ('Uses the selected DAT 4x idle sprites and DAT 4x attack animation
               'Original library assets are unchanged.')
 
 
+def register_shared_media(output):
+    """Add this release's existing media to the normal website manifests."""
+    manifest_path = output / 'data' / 'unit_sprites.json'
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    for name in NEW_NAMES.values():
+        unit_slug = slug(name)
+        url = media_for(name)['idle']
+        with Image.open(output / url.removeprefix('/static/')) as sprite:
+            width, height = sprite.size
+        ratio = round(max(width, height) / min(width, height), 3)
+        manifest[name] = {'slug': unit_slug, 'w': width, 'h': height, 'ratio': ratio,
+                          'cat': 'square' if ratio <= 1.5 else 'borderline' if ratio <= 1.8 else 'extreme',
+                          'url': url}
+    for name, original in [('Longship', 'Longboat'), ('Elite Longship', 'Elite Longboat')]:
+        manifest[name] = dict(manifest[original])
+    serialized = json.dumps(manifest, indent=1, sort_keys=True)
+    manifest_path.write_text(serialized, encoding='utf-8')
+    javascript = output / 'js' / 'unit_sprites.js'
+    header = javascript.read_text(encoding='utf-8').split('const UNIT_SPRITES = ', 1)[0]
+    javascript.write_text(header + 'const UNIT_SPRITES = ' + serialized + ';\n', encoding='utf-8')
+    animations_path = output / 'data' / 'unit_anims.json'
+    animations = set(json.loads(animations_path.read_text(encoding='utf-8')))
+    animations.update(slug(name) for name in NEW_NAMES.values())
+    animations_path.write_text(json.dumps(sorted(animations)) + '\n', encoding='utf-8')
+
+
 def refresh_idles(assets, output):
     """Publish ten selected DAT 4x idles and aliases; keep all stats and attacks."""
     target = output / 'data' / f'civilizations-{BUILD}.json'
@@ -244,9 +271,7 @@ def refresh_idles(assets, output):
         inventory[media['idle']].clear()
         inventory[media['idle']].update(source=str(source), output=media['idle'],
                                         source_sha256=digest(source), bytes=idle.stat().st_size, **details)
-    for record in release['civilizations'].values():
-        for row in record['units']:
-            row['media'] = media_for(row['unit_name'])
+    register_shared_media(output)
     release['media_notes'] = [MEDIA_NOTE]
     target.write_text(json.dumps(release, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     print('Published ten existing DAT 4x idles and catalog aliases; no stats or attack animations regenerated.')
@@ -280,21 +305,23 @@ def build_release(dat, trees, assets, output, extracted, *, reuse_extracted=Fals
     for name in NEW_NAMES.values():
         unit_slug = slug(name)
         source = assets / unit_slug
-        dest = output / 'media' / 'civilizations' / str(BUILD) / unit_slug
-        dest.mkdir(parents=True, exist_ok=True)
-        sources = {'icon.png': source / 'icon.png', 'icon_transparent.png': source / 'icon_transparent.png',
-                   'idle.png': source / f'{unit_slug}_idle_dir06_dat4x.png',
-                   'attack.webp': source / f'{unit_slug}_attack_dir06_dat4x.gif'}
-        for filename, path in sources.items():
-            details = convert_attack(path, dest / filename) if filename == 'attack.webp' else {}
-            if filename == 'idle.png':
-                details = write_idle_sprite(path, dest / filename)
-            elif filename != 'attack.webp':
-                shutil.copyfile(path, dest / filename)
+        media = media_for(name)
+        sources = {'icon': source / 'icon.png', 'icon_transparent': source / 'icon_transparent.png',
+                   'idle': source / f'{unit_slug}_idle_dir06_dat4x.png',
+                   'attack': source / f'{unit_slug}_attack_dir06_dat4x.gif'}
+        for kind, path in sources.items():
+            dest = output / media[kind].removeprefix('/static/')
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            details = convert_attack(path, dest) if kind == 'attack' else {}
+            if kind == 'idle':
+                details = write_idle_sprite(path, dest)
+            elif kind != 'attack':
+                shutil.copyfile(path, dest)
             release['media_inventory'].append({'source': str(path),
-                'output': '/static/' + (dest / filename).relative_to(output).as_posix(),
-                'bytes': (dest / filename).stat().st_size, 'source_sha256': digest(path), **details})
-        release['media'][unit_slug] = media_for(name)
+                'output': media[kind],
+                'bytes': dest.stat().st_size, 'source_sha256': digest(path), **details})
+        release['media'][unit_slug] = media
+    register_shared_media(output)
     game_root = dat.parents[3]
     for civ, tree in analyzer.release_trees.items():
         emblem = ''
@@ -306,13 +333,10 @@ def build_release(dat, trees, assets, output, extracted, *, reuse_extracted=Fals
             'emblem_url': emblem, 'complete_roster': civ in NEW_CIVS,
             'remove_slugs': removed_slugs(civ),
             'units': [reference_row(civ, n, analyzer) for n in select_roster(civ, tree)]}
-    for record in release['civilizations'].values():
-        for row in record['units']:
-            for key, url in row['media'].items():
-                if key == 'catalog_name':
-                    continue
-                if not (output / url.removeprefix('/static/')).is_file():
-                    raise ValueError(f'Missing referenced media: {url}')
+    for media in release['media'].values():
+        for url in media.values():
+            if not (output / url.removeprefix('/static/')).is_file():
+                raise ValueError(f'Missing referenced media: {url}')
     target = output / 'data' / f'civilizations-{BUILD}.json'
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(release, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')

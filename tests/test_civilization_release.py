@@ -12,19 +12,13 @@ MODULE = 'aoe2x.assets.build_civilization_release'
 
 
 @pytest.mark.parametrize('enabled', [False, True])
-def test_civilization_media_uses_configured_asset_bucket(monkeypatch, enabled):
+def test_civilization_emblems_use_configured_asset_bucket(monkeypatch, enabled):
     from aoe2x.assets import config
     from apps.website.services.civilizations import load_civilization_supplement
     monkeypatch.setattr(config, 'assets_enabled', lambda: enabled)
     release = load_civilization_supplement()
     prefix = '/assets' if enabled else '/static'
     assert release['civilizations']['Varangians']['emblem_url'] == prefix + '/img/civilizations/185872/varangians.png'
-    for media in [*release['media'].values(), *[
-            row['media'] for civ in release['civilizations'].values()
-            for row in civ['units']]]:
-        for field in ('idle', 'attack', 'icon', 'icon_transparent'):
-            if field in media:
-                assert media[field].startswith(prefix + '/')
     assert release['media_inventory'][0]['output'].startswith('/static/')
 
 
@@ -317,10 +311,12 @@ def test_generated_release_contract_and_visible_longship_icons():
         assert set(media) == {'icon', 'icon_transparent', 'idle', 'attack'}
     for civ in ('Danes', 'Saxons', 'Varangians', 'Vikings'):
         ship = next(u for u in release['civilizations'][civ]['units'] if u['unit_name'] == 'Elite Longship')
-        assert ship['media']['icon'].endswith('Elite_Longboat.png')
+        from apps.website.services.catalog import presentation
+        assert presentation()['icon_names'][ship['unit_name']] == 'Elite_Longboat'
     for civ, record in release['civilizations'].items():
         assert record['complete_roster'] == (civ in {'Danes', 'Saxons', 'Varangians'})
         for row in record['units']:
+            assert 'media' not in row
             assert not {'tier', 'score', 'stat_baseline', 'ranking_status', 'simulation_available'} & row.keys()
             assert row['stats']['hp'] > 0
     assert next(u for u in release['civilizations']['Vikings']['units']

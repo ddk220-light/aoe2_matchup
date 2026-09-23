@@ -2,6 +2,17 @@
 _DEFAULT_DESC = "Free Age of Empires II matchup simulator"  # base.html fallback
 
 
+def test_detail_seo_copy_describes_units_without_rank_claims(client):
+    for name in ('Danes', 'Franks'):
+        body = client.get(f'/civilizations/{name.lower()}').get_data(as_text=True)
+        head = body.split('</head>', 1)[0]
+        assert f'<title>{name} — AoE2 Civilization: Units, Bonuses, and Strategy</title>' in head
+        assert f'{name} in Age of Empires II — units, bonuses, and strategy.' in head
+        assert 'strongest fully-upgraded' not in head
+        assert 'Best Units' not in head
+        assert '<p class="subtitle">Age of Empires II civilization analysis — units, bonuses, and strategy</p>' in body
+
+
 def test_new_civ_is_page_only(client):
     import app
     for name in ('Danes', 'Saxons', 'Varangians'):

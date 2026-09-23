@@ -180,6 +180,7 @@ def reference_row(civ, node, analyzer):
         'C-Bonus, VG attack +25% faster': 'Varangian Guards attack 25% faster.',
         'Byzantine Logistica': 'Logistica: trample damage.',
         'Viking Chieftains': 'Chieftains: infantry gain bonus attack against cavalry.',
+        'Ordonnance Companies': 'Ordonnance Companies: Mounted Crossbowmen cost 40% less gold.',
         'Conscription': 'Conscription: faster military training.',
     }
     bonuses = [bonus_names.get(b, b) for b in result['applied_bonuses']

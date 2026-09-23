@@ -19,8 +19,11 @@ UI media controls. All 56 page routes plus overview/sitemap parity pass; the foc
 checks report 58 Python and 5 Node tests passing. Desktop/mobile browser smoke and
 individual implementation reviews are complete. Reproduction steps, source-quality
 decisions and media inventory are recorded in [runbooks §8](../../architecture/runbooks.md#8-civilization-page-only-reference-release-viking-sagas).
-Final outgoing-range review is the last local gate; merge/push to main and deployment
-still require separate explicit approval. No production action has occurred.
+The final review identified two copy defects: detail-page SEO language implied
+rankings for unranked new rows, and the Franks' Ordonnance Companies discount
+needed an explanation. Local corrections are awaiting scoped re-review, followed
+by a renewed outgoing-range review. Merge/push to main and deployment still
+require separate explicit approval. No production action has occurred.
 
 ## Global Constraints
 

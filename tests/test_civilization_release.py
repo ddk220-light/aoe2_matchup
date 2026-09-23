@@ -4,10 +4,41 @@ import importlib.util
 import json
 from copy import deepcopy
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 MODULE = 'aoe2x.assets.build_civilization_release'
+
+
+def test_builder_explains_frank_mounted_crossbow_gold_discount():
+    class Analyzer:
+        def get_unit(self, unit_id):
+            assert unit_id == 2701
+            return {'class': 36}
+
+        def calculate_unit_stats_for_civ(self, civ, config, max_age):
+            assert civ == 'Franks'
+            assert config['base_id'] == 2701
+            assert max_age == 4
+            stats = SimpleNamespace(hp=66, attack=11, reload_time=2.5, range=7,
+                                    melee_armor=4, pierce_armor=2, cost_food=0,
+                                    cost_wood=40, cost_gold=39)
+            return {'stats': stats, 'applied_bonuses': ['Ordonnance Companies']}
+
+    row = builder().reference_row('Franks', {'Node ID': 2701,
+        'Name': 'Heavy Mounted Crossbowman', 'Building ID': 87}, Analyzer())
+    assert row['stats']['cost_gold'] == 39
+    assert 'Ordonnance Companies: Mounted Crossbowmen cost 40% less gold.' in row['bonus_abilities']
+
+
+def test_committed_frank_mounted_crossbow_row_explains_gold_discount():
+    path = Path(__file__).resolve().parents[1] / 'apps/website/static/data/civilizations-185872.json'
+    release = json.loads(path.read_text(encoding='utf-8'))
+    row = next(row for row in release['civilizations']['Franks']['units']
+               if row['unit_slug'] == 'heavy_mounted_crossbowman')
+    assert row['stats']['cost_gold'] == 39
+    assert 'Ordonnance Companies: Mounted Crossbowmen cost 40% less gold.' in row['bonus_abilities']
 
 
 def test_page_composition_leaves_unaffected_civilization_and_input_unchanged():

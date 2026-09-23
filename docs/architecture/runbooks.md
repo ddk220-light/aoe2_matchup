@@ -460,6 +460,8 @@ The civilization overview, selector and sitemap contain 56 civilizations; the
 engine/Advisor catalogs and `/api/civ-power-units` stay unchanged. Actual supplied
 rank fields continue to render normally. No scores or tiers are fabricated, and
 no “not ranked yet” or other interim status UI is introduced.
+The builder sets `published_at` to its generation date, so rebuilding identical
+inputs on another day changes affected civilization sitemap `lastmod` dates.
 
 Run only the focused checks for this page release:
 

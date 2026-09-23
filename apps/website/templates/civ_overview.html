@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}AoE2 Civilizations — Strengths, power units & strategic identity for all 53 civs{% endblock %}
-{% block meta_description %}Detailed Age of Empires II civilization breakdowns: power units, unique techs, civ bonuses, and the matchup-tested strengths of all 53 civilizations including Three Kingdoms.{% endblock %}
+{% block title %}AoE2 Civilizations — Strengths, power units & strategic identity for all {{ civs | length }} civs{% endblock %}
+{% block meta_description %}Detailed Age of Empires II civilization breakdowns for all {{ civs | length }} civilizations: units, bonuses, and strategic identity.{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/matchup.css') }}" />
@@ -22,7 +22,7 @@
 </script>
 <div class="page-header">
     <h1>Civilizations</h1>
-    <p class="subtitle">Select a civilization to see its strengths, weaknesses, and strategic identity</p>
+    <p class="subtitle">Explore all {{ civs | length }} civs: select one to see its strengths, weaknesses, and strategic identity</p>
 </div>
 
 <div class="container-wide">
@@ -38,7 +38,7 @@
         <div class="civ-grid" id="civ-grid">
             {% for civ in civs %}
             <a class="civ-card" data-civ="{{ civ }}" href="/civilizations/{{ civ | lower }}">
-                <img class="civ-emblem" src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ | lower }}.png" alt="{{ civ }}" loading="lazy">
+                <img class="civ-emblem" src="{{ civ_emblems.get(civ) or 'https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/' ~ (civ | lower) ~ '.png' }}" alt="{{ civ }}" loading="lazy">
                 <span class="civ-card-name">{{ civ }}</span>
             </a>
             {% endfor %}
@@ -50,6 +50,7 @@
 {% block page_js %}
 <script>
     const CIVS = {{ civs | tojson }};
+    const CIV_EMBLEMS = {{ civ_emblems | tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/civilization-view.js') }}"></script>
 <script src="{{ url_for('static', filename='js/matchup.js') }}"></script>

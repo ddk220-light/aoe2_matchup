@@ -31,6 +31,52 @@ def test_new_civ_selector_overview_and_page_api_share_reference_data(client):
                if civ['name'] == 'Danes')
 
 
+def test_new_civ_server_html_uses_reference_emblems_media_buildings_and_costs(client):
+    overview = client.get('/civilizations').get_data(as_text=True)
+    detail = client.get('/civilizations/danes').get_data(as_text=True)
+    assert '56 civs' in overview
+    assert 'All 53 civs, fully upgraded.' not in overview
+    assert 'src="/static/img/civilizations/185872/danes.png"' in overview
+    assert 'src="/static/img/civilizations/185872/danes.png"' in detail
+    assert 'src="/static/img/civilizations/185872/saxons.png"' in detail
+    assert 'Elite Jomsviking' in detail
+    assert 'Castle' in detail
+    assert '/static/media/civilizations/185872/elite_jomsviking/idle.png' in detail
+    assert '/static/media/civilizations/185872/elite_jomsviking/attack.webp' in detail
+    assert 'Attack preview' in detail
+    assert 'tt-cost-resource' in detail
+    assert 'Coming soon' not in detail
+    assert 'Unranked' not in detail
+
+
+def test_server_html_shows_only_supplied_ship_media_and_real_tier(client):
+    import app
+    from flask import render_template
+
+    data = client.get('/api/civilizations/Vikings').get_json()
+    ship = data['power_units']['navy']['longship'][0]
+    assert 'idle_blue' not in ship['media']
+    with app.app.app_context():
+        html = render_template('_civ_content.html', civ={'name': 'Vikings', 'slug': 'vikings'},
+                               analysis=data, civ_buildings={'dock': [ship]},
+                               site_catalog={'icon_names': {}})
+    assert 'Elite Longship' in html
+    assert ship['media']['icon'] in html
+    assert 'Attack preview' not in html
+    assert 'Blue' not in html
+    assert 'idle_blue' not in html
+
+    ranked = {'unit_name': 'Ranked Example', 'unit_slug': 'ranked_example',
+              'tier': 'good', 'score': 63.0, 'stats': {'hp': 100},
+              'bonus_abilities': [], 'special_effects': [], 'missing_techs': []}
+    with app.app.app_context():
+        ranked_html = render_template('_civ_content.html', civ={'name': 'Franks', 'slug': 'franks'},
+                                      analysis={}, civ_buildings={'stable': [ranked]},
+                                      site_catalog={'icon_names': {}})
+    assert 'tier-good' in ranked_html
+    assert '63.0' in ranked_html
+
+
 def test_page_api_keeps_imperial_age_policy_and_existing_ranks(client):
     assert client.get('/api/civilizations/Danes?age=castle').status_code == 400
     assert client.get('/api/civilizations/atlantis').status_code == 400

@@ -1,6 +1,6 @@
 {# Initial HTML uses the same analysis payload as the interactive view. #}
 <div class="analysis-hero">
-    <img class="analysis-emblem" src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ.slug }}.png" alt="{{ civ.name }}">
+    <img class="analysis-emblem" src="{{ analysis.emblem_url or civ.emblem_url or 'https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/' ~ civ.slug ~ '.png' }}" alt="{{ civ.name }}">
     <div class="analysis-hero-body">
         <h2 class="analysis-civ-name">{{ civ.name }}</h2>
         <p>{{ analysis.strategic_description }}</p>
@@ -10,19 +10,62 @@
     <a class="civ-deep-link" href="https://aoe2techtree.net/#{{ civ.slug }}" target="_blank" rel="noopener">Open Tech Tree ↗</a>
     <a class="civ-deep-link" href="https://ageofempires.fandom.com/wiki/{{ civ.name | urlencode }}" target="_blank" rel="noopener">Open Wiki ↗</a>
 </div>
+<div class="role-columns">
 {% for building, units in civ_buildings.items() %}
-<section class="role-section">
-    <h3 class="role-header">{{ building | replace('_', ' ') | title }}</h3>
+<div class="role-column">
+    <div class="role-header">{{ building | replace('_', ' ') | title }}</div>
     <div class="building-unit-grid">
         {% for unit in units %}
-        <a class="unit-badge{% if unit.tier %} is-tier-{{ unit.tier }}{% endif %}"
-           href="/?{{ {'civ1':civ.name, 'unit1':unit.unit_slug} | urlencode }}">
-            {% set icon = site_catalog.icon_names.get(unit.unit_name) %}
-            {% if icon %}<img class="unit-badge-icon" src="/static/img/units/{{ icon }}.png" alt="" loading="lazy">{% endif %}
-            <span class="unit-badge-info"><span class="unit-badge-name">{{ unit.unit_name }}</span>
-            {% if unit.tier %}<span class="unit-badge-rank tier-{{ unit.tier }}">{{ unit.tier | title }}</span>{% endif %}</span>
-        </a>
+        {% set media = unit.media | default({}) %}
+        {% set stats = unit.stats | default({}) %}
+        {% set name = unit.unit_name %}
+        {% set icon = site_catalog.icon_names.get(name) if site_catalog is defined else none %}
+        {% set icon_url = media.get('icon') or ('/static/img/units/' ~ icon ~ '.png' if icon else '') %}
+        {% set preview_url = media.get('idle') or icon_url %}
+        <div class="unit-badge{% if unit.tier %} is-tier-{{ unit.tier }}{% else %} no-strength{% endif %}"
+             tabindex="0" aria-label="Details for {{ name }}"{% if not media %} data-anim-name="{{ name }}"{% endif %}>
+            <div class="unit-badge-tooltip">
+                <button type="button" class="unit-badge-tooltip-close" aria-label="Close">×</button>
+                <div class="tt-head{% if media.get('idle') %} tt-head--sprite{% endif %}">
+                    {% if preview_url %}<img class="tt-icon anim-slot{% if media.get('idle') %} tt-icon--sprite{% endif %}" src="{{ preview_url }}" alt="{{ name }}">{% endif %}
+                    <div class="tt-head-text"><div class="tt-name">{{ name }}</div>
+                    {% if unit.tier %}<span class="tooltip-tier tier-{{ unit.tier }}">{{ unit.tier | title }}</span>{% endif %}</div>
+                </div>
+                {% if media %}
+                <div class="tt-media-controls" aria-label="Unit media">
+                    {% for label, key in [('Idle', 'idle'), ('Attack preview', 'attack'), ('Icon', 'icon'), ('Transparent icon', 'icon_transparent')] %}
+                    {% if media.get(key) %}<a class="tt-media-control" href="{{ media[key] }}" data-preview-src="{{ media[key] }}" target="_blank" rel="noopener">{{ label }}</a>{% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if stats %}
+                <div class="tt-stats">
+                    {% for label, key in [('HP', 'hp'), ('Attack', 'attack'), ('Attack speed', 'reload_time'), ('Range', 'range'), ('Melee armor', 'melee_armor'), ('Pierce armor', 'pierce_armor')] %}
+                    {% if stats.get(key) is not none and (key != 'range' or stats.get('is_ranged') or stats.get('range', 0) > 0) %}
+                    <div class="tt-stat-row"><span class="tt-stat-label">{{ label }}</span><span class="tt-stat-val">{{ stats[key] }}{% if key == 'reload_time' %}s{% endif %}</span></div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% if stats.get('cost_food', 0) > 0 or stats.get('cost_wood', 0) > 0 or stats.get('cost_gold', 0) > 0 %}
+                <div class="tt-costs"><span class="tt-cost-label">Cost</span>
+                    {% for label, key, icon in [('Food', 'cost_food', 'F'), ('Wood', 'cost_wood', 'W'), ('Gold', 'cost_gold', 'G')] %}
+                    {% if stats.get(key, 0) > 0 %}<span class="tt-cost-resource" aria-label="{{ label }}"><span class="tt-cost-icon" aria-hidden="true">{{ icon }}</span><span>{{ stats[key] }}</span> {{ label }}</span>{% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endif %}
+                {% for ability in unit.bonus_abilities | default([]) %}<div class="tooltip-bonus">✦ {{ ability }}</div>{% endfor %}
+                {% for effect in unit.special_effects | default([]) %}<div class="tooltip-bonus">✦ {{ effect }}</div>{% endfor %}
+                {% if not unit.is_unique %}{% for missing in unit.missing_techs | default([]) %}<div class="tooltip-missing">✗ Missing: {{ missing }}</div>{% endfor %}{% endif %}
+                {% if unit.score is defined and unit.score is not none %}<div class="tooltip-rank">Effectiveness score: {{ '%.1f' | format(unit.score) }} / 100</div>{% endif %}
+            </div>
+            {% if preview_url %}<img class="unit-badge-icon{% if media.get('idle') %} sprite{% endif %}" src="{{ preview_url }}" alt="{{ name }}" loading="lazy">{% endif %}
+            <div class="unit-badge-info"><span class="unit-badge-name">{{ name }}</span>
+                {% if unit.tier %}<span class="unit-badge-rank tier-{{ unit.tier }}">{{ unit.tier | title }}</span>{% endif %}
+            </div>
+        </div>
         {% endfor %}
     </div>
-</section>
+</div>
 {% endfor %}
+</div>

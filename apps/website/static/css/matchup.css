@@ -534,6 +534,14 @@
         display: block;
     }
 }
+.unit-badge:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+}
+html:not(.has-civ-js) .unit-badge:focus-within .unit-badge-tooltip {
+    display: block;
+    pointer-events: auto;
+}
 /* Pinned (tap) state — works on every device; pointer-events on so the close
    button and inner scroll are usable. Extra top padding clears the × button. */
 .unit-badge-tooltip.pinned {
@@ -692,6 +700,48 @@
 }
 .tt-head--sprite .tt-head-text {
     width: 100%;
+}
+.tt-media-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 0 0 9px;
+}
+.tt-media-control {
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: var(--fs-xs);
+    text-decoration: none;
+}
+.tt-media-control:hover,
+.tt-media-control:focus-visible,
+.tt-media-control.is-active {
+    color: var(--gold);
+    border-color: var(--gold);
+}
+.tt-costs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    margin: 6px 0 9px;
+    font-size: var(--fs-xs);
+}
+.tt-cost-label { color: var(--text-muted); margin-right: 3px; }
+.tt-cost-resource { display: inline-flex; align-items: center; gap: 3px; color: var(--text); }
+.tt-cost-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 1.3em;
+    height: 1.3em;
+    border-radius: 50%;
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    font-size: 0.9em;
+    font-weight: 700;
 }
 .tt-name {
     font-weight: 700;

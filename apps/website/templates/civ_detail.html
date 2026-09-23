@@ -38,7 +38,7 @@
         <div class="civ-grid" id="civ-grid">
             {% for civ_name in civs %}
             <a class="civ-card" data-civ="{{ civ_name }}" href="/civilizations/{{ civ_name | lower }}">
-                <img class="civ-emblem" src="https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{{ civ_name | lower }}.png" alt="{{ civ_name }}" loading="lazy">
+                <img class="civ-emblem" src="{{ civ_emblems.get(civ_name) or 'https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/' ~ (civ_name | lower) ~ '.png' }}" alt="{{ civ_name }}" loading="lazy">
                 <span class="civ-card-name">{{ civ_name }}</span>
             </a>
             {% endfor %}
@@ -50,6 +50,7 @@
 {% block page_js %}
 <script>
     const CIVS = {{ civs | tojson }};
+    const CIV_EMBLEMS = {{ civ_emblems | tojson }};
     window.PRESELECT_CIV = {{ civ.name | tojson }};
     window.CIV_ANALYSIS = {{ analysis | tojson }};
 </script>

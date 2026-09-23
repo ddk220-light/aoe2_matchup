@@ -14,7 +14,8 @@ function renderAnalysis(civName, data) {
     var summary = data.strategic_summary || {};
     var strategicDescription = data.strategic_description || "";
     var civSlug = civName.toLowerCase();
-    var emblemUrl = CIV_EMBLEM_BASE + civSlug + ".png";
+    var emblemUrl = data.emblem_url || (typeof CIV_EMBLEMS !== "undefined" && CIV_EMBLEMS[civName])
+        || CIV_EMBLEM_BASE + civSlug + ".png";
     var html = '';
 
     /* Hero: emblem + name + strategic description side-by-side */
@@ -67,6 +68,7 @@ function renderCivDeepLinks(civName) {
 }
 
 function buildingForUnit(unit, column, lineSlug) {
+    if (unit.building) return unit.building;
     var name = unit.unit_name || slugToName(unit.unit_slug);
     if (unit.is_unique) {
         var override = (typeof UNIQUE_BUILDING !== "undefined") ? UNIQUE_BUILDING[name] : null;
@@ -80,6 +82,31 @@ function buildingForUnit(unit, column, lineSlug) {
     if (lineSlug === "trebuchet") return "castle";
     if (column === "siege" || lineSlug === "scorpion") return "siege_workshop";
     return "archery_range";
+}
+
+function shouldNavigateCivCard(name) {
+    return !!(window.PRESELECT_CIV && name !== window.PRESELECT_CIV);
+}
+
+function civilizationUnitMedia(unit, name) {
+    var media = unit.media || {};
+    return {
+        idle: media.idle || spriteFor(name) || getIconUrl(name),
+        icon: media.icon || getIconUrl(name),
+        iconTransparent: media.icon_transparent || null,
+        attack: media.attack || (typeof animFor === "function" ? animFor(name) : null),
+        hasDirectMedia: !!(media.idle || media.icon || media.icon_transparent || media.attack),
+    };
+}
+
+function activateCivMediaPreview(control, tooltip) {
+    var image = tooltip && tooltip.querySelector('.anim-slot');
+    if (!image) return false;
+    image.src = control.dataset.previewSrc;
+    tooltip.querySelectorAll('[data-preview-src]').forEach(function (candidate) {
+        candidate.classList.toggle('is-active', candidate === control);
+    });
+    return true;
 }
 
 function groupUnitsByBuilding(powerUnits) {
@@ -109,8 +136,10 @@ function renderUnitBadge(unit, colKey) {
     // like Elite Skirmisher / Elite Leitis get the `.sprite` treatment too. Spriteless
     // units (naval) fall back to the boxed portrait. The `.sprite` class drives the CSS,
     // where a fixed box + object-fit: contain keeps every aspect ratio inside the badge.
-    var useSprite = typeof hasSprite === "function" && hasSprite(name);
-    var iconUrl = useSprite ? spriteFor(name) : getIconUrl(name);
+    var media = civilizationUnitMedia(unit, name);
+    var useSprite = !!(unit.media && unit.media.idle) || (typeof hasSprite === "function" && hasSprite(name));
+    var iconUrl = unit.media && unit.media.idle ? media.idle :
+        (unit.media && unit.media.icon ? media.icon : (useSprite ? spriteFor(name) : getIconUrl(name)));
     // The backend grades each unit into one of six tiers (see TIER_META). A few
     // stat-only naval/siege fallbacks carry no score and so no tier — those fall
     // back to a plain, edge-less badge.
@@ -125,10 +154,11 @@ function renderUnitBadge(unit, colKey) {
         (meta ? " is-tier-" + tier : " no-strength");
     var iconSize = (isSig ? "signature-icon" : "unit-badge-icon") + (useSprite ? " sprite" : "");
 
-    var html = '<div class="' + badgeClass + '" data-anim-name="' + escapeHtml(name) + '">';
+    var html = '<div class="' + badgeClass + '" tabindex="0" aria-label="Details for ' + escapeHtml(name) + '"'
+        + (media.hasDirectMedia ? '' : ' data-anim-name="' + escapeHtml(name) + '"') + '>';
 
     /* Tooltip */
-    html += renderTooltip(unit, name);
+    html += renderTooltip(unit, name, media);
 
     /* Signature star */
     if (isSig) {
@@ -192,7 +222,8 @@ function renderStatRow(row, stats, baseline) {
 }
 
 /* ---- Tooltip renderer ---- */
-function renderTooltip(unit, name) {
+function renderTooltip(unit, name, media) {
+    media = media || civilizationUnitMedia(unit, name);
     var bonusAbilities = unit.bonus_abilities || [];
     var specialEffects = unit.special_effects || [];
     var missingTechs = unit.missing_techs || [];
@@ -204,11 +235,12 @@ function renderTooltip(unit, name) {
     var baseline = (!isUnique && unit.stat_baseline) ? unit.stat_baseline : null;
 
     var hasContent = meta || stats || bonusAbilities.length || specialEffects.length
-        || missingTechs.length || unit.score != null;
+        || missingTechs.length || unit.score != null || media.hasDirectMedia;
     if (!hasContent) return "";
 
-    var useSprite = typeof hasSprite === "function" && hasSprite(name);
-    var iconUrl = useSprite ? spriteFor(name) : getIconUrl(name);
+    var useSprite = !!(unit.media && unit.media.idle) || (typeof hasSprite === "function" && hasSprite(name));
+    var iconUrl = unit.media && unit.media.idle ? media.idle :
+        (unit.media && unit.media.icon ? media.icon : (useSprite ? spriteFor(name) : getIconUrl(name)));
 
     var html = '<div class="unit-badge-tooltip">';
 
@@ -226,6 +258,23 @@ function renderTooltip(unit, name) {
         html += '<span class="tooltip-tier tier-' + unit.tier + '">' + meta.label + '</span>';
     }
     html += '</div></div>';
+
+    if (media.hasDirectMedia) {
+        html += '<div class="tt-media-controls" aria-label="Unit media">';
+        var variants = [
+            { label: 'Idle', url: unit.media.idle },
+            { label: 'Attack preview', url: unit.media.attack },
+            { label: 'Icon', url: unit.media.icon },
+            { label: 'Transparent icon', url: unit.media.icon_transparent },
+        ];
+        for (var v = 0; v < variants.length; v++) {
+            if (!variants[v].url) continue;
+            html += '<a class="tt-media-control" href="' + escapeHtml(variants[v].url)
+                + '" data-preview-src="' + escapeHtml(variants[v].url) + '" target="_blank" rel="noopener">'
+                + variants[v].label + '</a>';
+        }
+        html += '</div>';
+    }
 
     if (meta) {
         html += '<div class="tooltip-tier-hint">' + escapeHtml(meta.hint) + '</div>';
@@ -246,6 +295,19 @@ function renderTooltip(unit, name) {
                     + (LINE_NAMES[unit.line_slug] || "unit").toLowerCase() + '</div>';
             }
         }
+        var costs = [
+            { key: 'cost_food', label: 'Food', icon: 'F' },
+            { key: 'cost_wood', label: 'Wood', icon: 'W' },
+            { key: 'cost_gold', label: 'Gold', icon: 'G' },
+        ];
+        var costHtml = '';
+        for (var c = 0; c < costs.length; c++) {
+            if (!(stats[costs[c].key] > 0)) continue;
+            costHtml += '<span class="tt-cost-resource" aria-label="' + costs[c].label + '">'
+                + '<span class="tt-cost-icon" aria-hidden="true">' + costs[c].icon + '</span>'
+                + '<span>' + escapeHtml(stats[costs[c].key]) + '</span> ' + costs[c].label + '</span>';
+        }
+        if (costHtml) html += '<div class="tt-costs"><span class="tt-cost-label">Cost</span>' + costHtml + '</div>';
     }
 
     /* Green: bonus abilities */

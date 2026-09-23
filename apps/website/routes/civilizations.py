@@ -1,6 +1,6 @@
 """Civilization HTML routes; JSON and HTML share the analysis service."""
 from flask import Blueprint, render_template, redirect, abort, request, jsonify
-from ..services.civilizations import civilization_page_analysis
+from ..services.civilizations import civilization_page_analysis, load_civilization_supplement
 from ..services.catalog import grouped_units
 
 def create_blueprint(_get_page_civs, get_civ_detail, get_civ_overview_data, current_build):
@@ -9,10 +9,13 @@ def create_blueprint(_get_page_civs, get_civ_detail, get_civ_overview_data, curr
     def civ_view():
         """Civilization analysis page — shows power units, strengths, and strategic identity."""
         civs = _get_page_civs()
+        overview = get_civ_overview_data()
         return render_template(
             "civ_overview.html",
             civs=civs,
-            civ_overview=get_civ_overview_data(),
+            civ_overview=overview,
+            civ_emblems={item['name']: item['emblem_url'] for item in overview if item['emblem_url']},
+            civ_page_footer=True,
             active_nav="civ_select",
         )
 
@@ -32,9 +35,13 @@ def create_blueprint(_get_page_civs, get_civ_detail, get_civ_overview_data, curr
         meta_desc = (f"{civ['name']} in Age of Empires II — strongest fully-upgraded "
                      f"units by role, tiers, and strategy. {first_sentence}").strip()[:250]
         analysis = civilization_page_analysis(civ["name"], build_number=current_build())
+        supplement = load_civilization_supplement()['civilizations']
         return render_template("civ_detail.html", civ=civ, civs=_get_page_civs(),
                                meta_desc=meta_desc, active_nav="civ_select",
-                               analysis=analysis, civ_buildings=grouped_units(analysis))
+                               analysis=analysis, civ_buildings=grouped_units(analysis),
+                               civ_emblems={name: item['emblem_url'] for name, item in supplement.items()
+                                            if item['emblem_url']},
+                               civ_page_footer=True)
 
 
     @bp.route('/api/civilizations/<civ_name>')

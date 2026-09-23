@@ -4,14 +4,14 @@ _DEFAULT_DESC = "Free Age of Empires II matchup simulator"  # base.html fallback
 
 def test_new_civ_is_page_only(client):
     import app
-    assert client.get('/civilizations/danes').status_code == 200
-    assert client.get('/api/civilizations/Danes').status_code == 200
-    assert client.get('/api/ref/civ/Danes').status_code == 400
-    assert client.get('/api/civ-power-units/Danes').status_code == 400
-    assert 'Danes' not in app._get_ref_civs()
-    assert 'Danes' not in app._valid_civs()
-    assert 'Danes' not in app.site_catalog(app.REF_DB_PATH)['civilizations']
-    assert b'/civilizations/danes</loc>' in client.get('/sitemap.xml').data
+    for name in ('Danes', 'Saxons', 'Varangians'):
+        assert client.get(f'/civilizations/{name.lower()}').status_code == 200
+        assert client.get(f'/api/civilizations/{name}').status_code == 200
+        assert client.get(f'/api/ref/civ/{name}').status_code == 400
+        assert client.get(f'/api/civ-power-units/{name}').status_code == 400
+        assert name not in app._get_ref_civs()
+        assert name not in app._valid_civs()
+        assert name not in app.site_catalog(app.REF_DB_PATH)['civilizations']
 
 
 def test_new_civ_selector_overview_and_page_api_share_reference_data(client):
@@ -124,7 +124,20 @@ def test_civilization_sitemap_dates_use_supplement_only_for_affected_pages(clien
 
 def test_all_civ_pages_resolve_with_own_title(client):
     import app
-    for name in app._get_ref_civs():
+    import re
+    from xml.etree import ElementTree as ET
+
+    names = app._get_page_civs()
+    assert len(names) == 56
+    expected_paths = {f'/civilizations/{name.lower()}' for name in names}
+    overview = client.get('/civilizations').get_data(as_text=True)
+    assert set(re.findall(r'href="(/civilizations/[^"?#]+)"', overview)) == expected_paths
+    sitemap = ET.fromstring(client.get('/sitemap.xml').data)
+    sitemap_paths = {'/civilizations/' + node.find('{*}loc').text.rsplit('/', 1)[-1]
+                     for node in sitemap.findall('{*}url')
+                     if '/civilizations/' in node.find('{*}loc').text}
+    assert sitemap_paths == expected_paths
+    for name in names:
         resp = client.get(f"/civilizations/{name.lower()}")
         assert resp.status_code == 200, name
         body = resp.data.decode()

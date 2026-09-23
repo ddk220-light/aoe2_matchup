@@ -63,12 +63,12 @@ class PageSim {
         this.renderer.resize();
     }
 
-    showSelectionPreview(selections, images) {
+    showSelectionPreview(selections, images, resolvedCounts = null) {
         if (!this.renderer || !this.previewPlacementByOwner || this.running) return;
         const previewCounts = {
-            1: Math.min(27, Math.max(1,
+            1: resolvedCounts?.[0] ?? Math.min(27, Math.max(1,
                 parseInt(document.getElementById("team1Count")?.value, 10) || 27)),
-            2: Math.min(27, Math.max(1,
+            2: resolvedCounts?.[1] ?? Math.min(27, Math.max(1,
                 parseInt(document.getElementById("team2Count")?.value, 10) || 27)),
         };
         for (const teamNumber of [1, 2]) {

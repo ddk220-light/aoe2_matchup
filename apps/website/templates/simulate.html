@@ -74,11 +74,15 @@
                     <div class="army-config">
                         <div class="formula-note">
                             Resource cost per unit =
-                            <strong>Wood + Food + Gold</strong>
+                            <strong id="armyCostFormula">Food + 0.9 Wood + 1.1 Gold</strong>
                         </div>
                         <div class="mode-toggle">
                             <label class="mode-option">
-                                <input type="radio" name="armyMode" value="resources" checked />
+                                <input type="radio" name="armyMode" value="cost" checked />
+                                <span>Cost-efficient</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="armyMode" value="resources" />
                                 <span>Resource-based</span>
                             </label>
                             <label class="mode-option">
@@ -86,7 +90,7 @@
                                 <span>Count-based</span>
                             </label>
                         </div>
-                        <div class="side-input-grid resource-input" id="resourceInput">
+                        <div class="side-input-grid resource-input" id="resourceInput" style="display: none">
                             <label for="team1Resources">
                                 <span>Team A</span>
                                 <input type="number" id="team1Resources" value="5000" min="1" step="100" />
@@ -108,7 +112,7 @@
                             <small class="count-limit">Maximum 27 units per side</small>
                         </div>
                         <label class="buffer-option" title="Applied automatically when one side is ranged and the other is melee">
-                            <input type="checkbox" id="rangedBuffer" />
+                            <input type="checkbox" id="rangedBuffer" checked />
                             <span>Ranged-unit buffer</span>
                         </label>
                     </div>

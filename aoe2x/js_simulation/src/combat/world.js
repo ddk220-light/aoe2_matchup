@@ -65,6 +65,7 @@ import {
   attackAnimationTicks,
   attackDelayTicks,
   calculateDamage,
+  chargeCanTarget,
   chargeProjectileDamage,
   chargeSpec,
   createAttackCanceledEvent,
@@ -504,6 +505,12 @@ function refreshNearbyAuras(units) {
   for (const unit of units) {
     if (!unit.alive || !unit.specialState) continue;
     const effects = unitEffects(unit);
+    if (effects.nearby_infantry_armor_step > 0) {
+      const infantryCount = nearbyAllies(unit, units,
+        effects.nearby_infantry_armor_radius).filter(ally => ally.mechanics.unit_class === 6).length;
+      unit.specialState.nearbyArmorBonus = Math.min(effects.nearby_infantry_armor_max,
+        Math.floor(infantryCount / effects.nearby_infantry_armor_step));
+    }
     const allies = nearbyAllies(unit, units);
     const attackPerAlly = effects.attack_bonus_nearby ?? 0;
     unit.specialState.nearbyAttackBonus = attackPerAlly > 0
@@ -2627,8 +2634,8 @@ function advanceScenarioTriggers(world, units, tick, events) {
 // charge is spent this returns false and normal pursuit resumes.
 function holdsForChargeVolley(unit, target) {
   const spec = chargeSpec(unit.mechanics);
-  if (!spec || !target) return false;
-  if ((unit.charge ?? 0) + 1e-9 < spec.maxCharge) return false;
+  if (!chargeCanTarget(spec, target)) return false;
+  if ((unit.charge ?? 0) + 1e-9 < spec.chargeCost) return false;
   if (unit.actionTimers.reload > 0) return false;
   const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
   return distance <= spec.attackRangeTiles;
@@ -4286,11 +4293,11 @@ function releaseChargeVolley(unit, target, spec, tick, events, projectiles,
   // The volley leaves the unit whether or not anything is left to aim at; an
   // unreleased cycle abandoned earlier (validateAttackTargets) keeps its
   // charge instead.
-  unit.charge = 0;
+  unit.charge = Math.max(0, unit.charge - spec.chargeCost);
   if (!target?.alive || !isHostile(unit, target)) return;
   const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
   const flight = Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed));
-  const amount = chargeProjectileDamage(spec, target);
+  const amount = chargeProjectileDamage(spec, target, unit);
   const ordinaryRanged = rangedSpec(unit.mechanics);
   const accuracy = ordinaryRanged?.baseAccuracyPercent ?? 100;
   let aimedProjectiles = 0;
@@ -4873,7 +4880,7 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
         // bystanders (still winding up) retarget on the very next tick.
         unit.action = unit.actionTimers.reload > 0 ? "reload" : "idle";
         unit.attackTargetId = null;
-        if (charge) {
+        if (charge && charge.chargeCost === charge.maxCharge) {
           // Completing the CHARGE cycle re-enters combat through the engine's
           // acquisition reaction lag (the unit's own measured draw): across
           // byte-identical tape repeats the first post-charge melee swing
@@ -4904,11 +4911,12 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
       spec
       && unit.action === "idle"
       && unit.actionTimers.reload === 0
-      && unit.charge + 1e-9 >= spec.maxCharge
+      && unit.charge + 1e-9 >= spec.chargeCost
     ) {
       const chargeTarget = byReference.get(unit.engagedTargetId)
         ?? byReference.get(unit.pursuitTargetId);
-      if (chargeTarget?.alive && isHostile(unit, chargeTarget)) {
+      if (chargeTarget?.alive && isHostile(unit, chargeTarget)
+          && chargeCanTarget(spec, chargeTarget)) {
         const distance = Math.hypot(chargeTarget.x - unit.x, chargeTarget.y - unit.y);
         if (distance <= spec.attackRangeTiles) {
           events.push(createAttackStartEvent({
@@ -5099,7 +5107,7 @@ function commitReadyAttacks(units, ready, tick, events) {
         const splashBaseDamage = calculateDamage(actor, victim)
           + (attack.charged ? (attack.chargeDamage ?? 0) : 0);
         applyCommittedDamage(units, attack.actorId, victim,
-          blast.damageFraction * splashBaseDamage,
+          blast.flatDamage ?? blast.damageFraction * splashBaseDamage,
           attack.readyTick, tick, events, { kind: "trample" });
       }
     }

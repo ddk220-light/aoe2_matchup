@@ -559,6 +559,15 @@ export async function runFight(root, {
         [reportedOwner(Number(owner)), hp]
       )),
     )),
+    remainingByOwner: Object.freeze(Object.fromEntries(
+      initialWorld.scenarioOwners.map((owner) => {
+        const remaining = live.filter((unit) => unit.owner === owner);
+        return [reportedOwner(owner), Object.freeze({
+          units: remaining.length,
+          hp: remaining.reduce((total, unit) => total + unit.hp, 0),
+        })];
+      }),
+    )),
     finalStateHash: hashCanonicalJson({
       tick: result.world.tick,
       ratio: `${innerCount2}v${innerCount3}`,

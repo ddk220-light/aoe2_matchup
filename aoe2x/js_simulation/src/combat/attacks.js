@@ -187,15 +187,26 @@ export function calculateDamage(actor, target, options = {}) {
   // Melee units carry their base attack in class 4, ranged units in class 3
   // (archers have no class-4 attack at all); both resolve through the one
   // shared armor-class rule, then any matching bonus classes stack on top.
-  const baseAttack = classValue(attacks, "4", "attack");
+  let baseAttack = classValue(attacks, "4", "attack");
   const baseArmor = classValue(armors, "4", "armor");
-  const pierceAttack = classValue(attacks, "3", "attack");
+  let pierceAttack = classValue(attacks, "3", "attack");
   const pierceArmor = classValue(armors, "3", "armor");
   if (
     (baseAttack === undefined || baseArmor === undefined)
     && (pierceAttack === undefined || pierceArmor === undefined)
   ) {
     throw new TypeError("attack and armor must share class 4 or class 3");
+  }
+  // Task160 own-HP mode (Hamask): modify primary attack, not damage after
+  // armor/minimum-one, and do not multiply bonus attack classes.
+  const hpStep = actorEffects.missing_hp_attack_step ?? 0;
+  const maxHp = actor.maxHp ?? actor.specialState?.baseMaxHp ?? actor.mechanics.hp;
+  if (hpStep > 0 && maxHp > 0) {
+    const missing = Math.max(0, 1 - actor.hp / maxHp);
+    const bonus = (actorEffects.missing_hp_attack_per_step ?? 0)
+      * Math.floor(missing / hpStep + 1e-12);
+    if (baseAttack !== undefined) baseAttack += bonus;
+    else if (pierceAttack !== undefined) pierceAttack += bonus;
   }
   const strippedArmor = (classId, armorValue) => {
     if (armorValue === undefined || options.ignoreArmor === true) return 0;
@@ -205,7 +216,8 @@ export function calculateDamage(actor, target, options = {}) {
     if (classId === "4" && actorEffects.ignores_melee_armor) return 0;
     if (classId === "3" && actorEffects.ignores_pierce_armor) return 0;
     if (classId !== "3" && classId !== "4") return armorValue;
-    return Math.max(0, armorValue - (target?.specialState?.armorStripped ?? 0));
+    return Math.max(0, armorValue + (target?.specialState?.nearbyArmorBonus ?? 0)
+      - (target?.specialState?.armorStripped ?? 0));
   };
   const term = (classId, attackValue, armorValue) => (
     attackValue === undefined || armorValue === undefined
@@ -290,8 +302,8 @@ export function meleeChargeSpec(mechanics) {
 // blast.damage_fraction x the post-armor damage against ITSELF (14 -> 3.5 on
 // Champions, 13 -> 3.25 on Paladins). Allies are never hit despite the dat's
 // level-2/friendly-fire flags, and the main target takes only the main hit.
-// Gate mirrors the Python ability registry: blast_attack_level == 2 with a
-// true fraction (the Champion carries width 0 / damage -5.0 sentinels).
+// Radial blast requires level2 and positive width; positive fractional damage
+// scales post-armor damage, while negative DAT damage denotes a fixed amount.
 export function trampleSpec(mechanics) {
   const areaCharge = meleeChargeSpec(mechanics);
   if (areaCharge) {
@@ -321,6 +333,11 @@ export function trampleSpec(mechanics) {
   }
   const effectRadius = mechanics?.effects?.trample_radius;
   const effectFraction = mechanics?.effects?.trample_percent;
+  const effectFlat = mechanics?.effects?.trample_flat_damage;
+  if (Number.isFinite(effectRadius) && effectRadius > 0
+      && Number.isFinite(effectFlat) && effectFlat > 0) {
+    return { shape: "radial", widthTiles: effectRadius, flatDamage: effectFlat };
+  }
   if (Number.isFinite(effectRadius) && effectRadius > 0
       && Number.isFinite(effectFraction) && effectFraction > 0) {
     return {
@@ -332,6 +349,11 @@ export function trampleSpec(mechanics) {
   if (!blast) return null;
   const width = requireFinite(blast.width_tiles, "blast width");
   const fraction = requireFinite(blast.damage_fraction, "blast damage fraction");
+  // Update 83607 modding notes: negative Blast Damage is fixed damage.
+  // Width zero disables it; -5 is not itself an inactive sentinel.
+  if (blast.attack_level === 2 && width > 0 && fraction < 0) {
+    return { shape: "radial", widthTiles: width, flatDamage: -fraction };
+  }
   if (blast.attack_level !== 2 || width <= 0 || fraction <= 0 || fraction >= 1) {
     return null;
   }
@@ -568,15 +590,19 @@ export function chargeSpec(mechanics) {
     throw new RangeError("charge windup must sit inside the charge animation");
   }
   const attacks = charge.projectile_attacks;
-  if (!attacks || typeof attacks !== "object" || !Object.keys(attacks).length) {
+  if (!attacks || typeof attacks !== "object"
+      || (!Object.keys(attacks).length && charge.target_filter !== "buildings_and_ships")) {
     throw new TypeError("charge projectile attacks are required");
   }
   return {
     maxCharge,
+    chargeCost: charge.charge_cost ?? maxCharge,
     rechargeRate,
     projectileCount,
     projectileSpeed: speed,
     projectileAttacks: attacks,
+    inheritsUnitAttack: charge.inherits_unit_attack === true,
+    targetFilter: charge.target_filter ?? null,
     windupTicks,
     animationTicks,
     ignoresArmor: charge.ignores_armor === true,
@@ -588,12 +614,31 @@ export function chargeSpec(mechanics) {
   };
 }
 
+export function chargeCanTarget(spec, target) {
+  if (!spec || !target) return false;
+  if (spec.targetFilter === "non_siege_units") {
+    const mechanics = target.mechanics;
+    if (mechanics?.unit_type === 80) return false;
+    if ((mechanics?.unit_traits & 2) !== 0) return true;
+    return mechanics?.armor_classes?.[20] === undefined;
+  }
+  if (spec.targetFilter !== "buildings_and_ships") return true;
+  // DAT type80 is a building; Unit Trait bit2 identifies ships. Damage
+  // classes are not object categories (20 is siege; 16 includes saboteurs).
+  return target.mechanics?.unit_type === 80 || (target.mechanics?.unit_traits & 2) !== 0;
+}
 
-// Charge projectile damage: standard armor-class matching, armor value IGNORED.
-// The victim takes the projectile's attack amount for every bonus class it
-// carries (min 1 like any hit). All four recorded victim types measure exactly
-// the projectile's class-3 pierce amount, through pierce armor 5-9.
-export function chargeProjectileDamage(spec, target) {
+
+// Ordinary charge projectiles use their own classes and optional armor bypass.
+// Smart Mode8 instead delegates to the live carrier's normal damage calculation.
+export function chargeProjectileDamage(spec, target, actor) {
+  if (spec.inheritsUnitAttack) {
+    if (!actor?.mechanics) throw new TypeError("inherited charge damage requires its firing unit");
+    return calculateDamage(actor, target);
+  }
+  if (!Object.keys(spec.projectileAttacks).length) {
+    throw new Error("unresolved charge projectile attacks for eligible target");
+  }
   const armors = target?.mechanics?.armor_classes;
   if (!armors || typeof armors !== "object") {
     throw new TypeError("target armor classes are required");
@@ -602,7 +647,8 @@ export function chargeProjectileDamage(spec, target) {
   for (const [classId, attack] of Object.entries(spec.projectileAttacks)) {
     if (attack <= 0) continue;
     if (classValue(armors, classId, "armor") === undefined) continue;
-    const armor = classValue(armors, classId, "armor");
+    const armor = classValue(armors, classId, "armor")
+      + ((classId === "3" || classId === "4") ? (target?.specialState?.nearbyArmorBonus ?? 0) : 0);
     damage += spec.ignoresArmor
       ? requireFinite(attack, `charge attack class ${classId}`)
       : Math.max(0, requireFinite(attack, `charge attack class ${classId}`) - armor);

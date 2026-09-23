@@ -34,6 +34,14 @@ test("matchup damage per hit delegates to the V3 armor-class calculation", () =>
   assert.ok(summary.timeToKillSeconds > 0);
 });
 
+test("fixed trample is described as fixed damage rather than zero percent", () => {
+  const knight = { ...paladin, blast: { ...paladin.blast,
+    width_tiles: 0.5, damage_fraction: -5, attack_level: 2,
+  } };
+  assert.ok(summarizeMatchup(knight, arbalester).callouts.includes(
+    "Area damage: 5 damage within 0.5 tiles"));
+});
+
 
 test("applicable armor-class bonus is called out for this opponent", () => {
   const summary = summarizeMatchup(halberdier, paladin);

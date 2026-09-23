@@ -1,6 +1,7 @@
 import { runFight } from "../src/fight.js";
 import { unitDescriptorFromMechanics, validateMechanicsProfile } from "../src/mechanics-schema.js";
 import { loadLabScenario } from "../src/lab-scenario.js";
+import { deriveRecordedBattleSetup } from "../src/battle-setup.js";
 
 const ROOT = new URL("../", import.meta.url);
 
@@ -27,13 +28,22 @@ export async function runHeadlessJob(job) {
     2: unitDescriptorFromMechanics(side2.mechanics),
     3: unitDescriptorFromMechanics(side3.mechanics),
   };
-  let scenario = job.engagementMode
+  const battleSetup = job.balancePolicy === "geometric_full_discount_weighted_resources_v3"
+    ? deriveRecordedBattleSetup(
+      { ...descriptors[2], effectiveCost: side2.effectiveCost },
+      { ...descriptors[3], effectiveCost: side3.effectiveCost },
+    ) : null;
+  const engagementMode = battleSetup
+    ? (battleSetup.player4Count > 0 ? "ranged_buffer" : "direct")
+    : job.engagementMode;
+  let scenario = engagementMode
     ? await loadLabScenario(ROOT, descriptors[2], descriptors[3], {
-      includeBuffer: job.engagementMode === "ranged_buffer",
+      includeBuffer: engagementMode === "ranged_buffer",
+      player4Count: battleSetup?.player4Count ?? job.player4Count,
     })
     : (job.scenario ?? {});
   const suppliedAuxiliary = job.scenario?.auxiliaryArmiesByOwner;
-  if (job.engagementMode === "ranged_buffer"
+  if (engagementMode === "ranged_buffer"
       && !suppliedAuxiliary?.[4]?.mechanics
       && !suppliedAuxiliary?.["4"]?.mechanics) {
     throw new TypeError(
@@ -55,13 +65,14 @@ export async function runHeadlessJob(job) {
     ...scenario,
     side2Slug: side2.mechanics.unit_slug,
     side3Slug: side3.mechanics.unit_slug,
-    ...(explicitCounts ? { n2: side2.count, n3: side3.count } : { budget: job.budget }),
+    ...(battleSetup ? { n2: battleSetup.n2, n3: battleSetup.n3 }
+      : explicitCounts ? { n2: side2.count, n3: side3.count } : { budget: job.budget }),
     openingSeed: seed,
     preserveOwnerOrientation: job.preserveOwnerOrientation
       ?? scenario.preserveOwnerOrientation
       ?? false,
-    disableAiOrders: job.disableAiOrders ?? Boolean(job.engagementMode),
-    disableKiting: job.disableKiting ?? Boolean(job.engagementMode),
+    disableAiOrders: job.disableAiOrders ?? Boolean(engagementMode),
+    disableKiting: job.disableKiting ?? Boolean(engagementMode),
     retainSnapshots: job.retainSnapshots === true,
     mechanicsBySide: {
       2: side2.mechanics,
@@ -75,6 +86,8 @@ export async function runHeadlessJob(job) {
     winnerOwner: result.winnerOwner,
     winnerHp: result.winnerHp,
     startingHpByOwner: result.startingHpByOwner,
+    remainingByOwner: result.remainingByOwner,
+    ...(battleSetup ? { battleSetup } : {}),
     ticks: result.ticks,
     family: result.family,
     side2: result.side2,

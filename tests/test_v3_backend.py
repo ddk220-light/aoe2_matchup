@@ -135,7 +135,8 @@ def test_battle_page_uses_player_controls_and_public_defaults(client):
     assert "Resource-based" in body
     assert "Count-based" in body
     assert "Maximum 27 units per side" in body
-    assert 'id="rangedBuffer" checked' not in body
+    assert 'id="rangedBuffer" checked' in body
+    assert 'name="armyMode" value="cost" checked' in body
     assert '<span class="rail-title">Team A</span>' in body
     assert '<span class="rail-title">Team B</span>' in body
     assert "simulationv3 · seed" not in body
@@ -203,7 +204,7 @@ def test_battle_config_includes_database_owned_ranged_buffer(client):
     assert scenario["family"] == "ranged_vs_melee"
     assert scenario["hasRangedBuffer"] is True
     auxiliary = scenario["auxiliaryArmiesByOwner"]["4"]
-    assert len(auxiliary["cells"]) == 9
+    assert len(auxiliary["cells"]) == 5
     assert auxiliary["mechanics"]["unit_master"] == 448
     validate_runtime_profile(auxiliary["mechanics"])
     assert scenario["victoryTeams"] == [

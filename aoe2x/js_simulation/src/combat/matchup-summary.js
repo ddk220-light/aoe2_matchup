@@ -1,5 +1,6 @@
 import {
   calculateDamage,
+  chargeCanTarget,
   chargeProjectileDamage,
   chargeSpec,
   meleeChargeSpec,
@@ -204,7 +205,8 @@ export function estimateTimeToKill(attackerMechanics, targetMechanics) {
   const attacker = attackerMechanics;
   let target = syntheticUnit(targetMechanics);
   let shieldCharges = shieldChargesFor(targetMechanics, attackerMechanics);
-  const openingProjectileCharge = chargeSpec(attacker);
+  const openingCharge = chargeSpec(attacker);
+  const openingProjectileCharge = chargeCanTarget(openingCharge, target) ? openingCharge : null;
   const openingMeleeCharge = meleeChargeSpec(attacker);
   const openingDelaySeconds = openingProjectileCharge
     ? openingProjectileCharge.windupTicks / TICKS_PER_SECOND
@@ -281,7 +283,8 @@ export function estimateTimeToKill(attackerMechanics, targetMechanics) {
 
     if (currentTick === nextAttackTick) {
       const ranged = rangedSpec(attacker);
-      const projectileCharge = chargeSpec(attacker);
+      const candidateCharge = chargeSpec(attacker);
+      const projectileCharge = chargeCanTarget(candidateCharge, target) ? candidateCharge : null;
       const meleeCharge = meleeChargeSpec(attacker);
       const legacyCharge = finite(attacker.effects?.charge_attack_melee);
       const chargeReady = currentTick >= nextChargeTick;
@@ -290,7 +293,7 @@ export function estimateTimeToKill(attackerMechanics, targetMechanics) {
       if (projectileCharge && chargeReady) {
         const hitWeight = (ranged?.baseAccuracyPercent ?? 100) / 100;
         for (let index = 0; index < projectileCharge.projectileCount; index += 1) {
-          damageTarget(chargeProjectileDamage(projectileCharge, target) * hitWeight,
+          damageTarget(chargeProjectileDamage(projectileCharge, target, syntheticUnit(attacker)) * hitWeight,
             hitWeight);
         }
         releasedRegularAttack = projectileCharge.addsToNormalAttack;
@@ -405,7 +408,9 @@ function mechanicCallouts(attacker, target, bonusRows) {
   const trample = trampleSpec(attacker);
   if (trample) {
     const shape = trample.shape === "forward-cone" ? "Forward splash" : "Area damage";
-    add(`${shape}: ${percent(trample.damageFraction)} within ${trample.widthTiles.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")} tiles`);
+    const amount = trample.flatDamage !== undefined
+      ? `${trample.flatDamage} damage` : percent(trample.damageFraction);
+    add(`${shape}: ${amount} within ${trample.widthTiles.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")} tiles`);
   }
   if (finite(effects.armor_strip_per_hit) > 0) {
     add(`Strips ${effects.armor_strip_per_hit} armor per hit`);

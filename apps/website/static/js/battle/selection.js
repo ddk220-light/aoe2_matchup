@@ -28,13 +28,15 @@ export function readBattleOptions(teamState, seed) {
     const s2 = teamState[2];
     const armyMode = document.querySelector(
         'input[name="armyMode"]:checked',
-    )?.value || "resources";
+    )?.value || "cost";
     const teams = [
         { civ: s1.civ, unit_slug: s1.unitSlug, age: s1.age },
         { civ: s2.civ, unit_slug: s2.unitSlug, age: s2.age },
     ];
     let army;
-    if (armyMode === "resources") {
+    if (armyMode === "cost") {
+        army = { mode: "cost_efficient", cap: 27 };
+    } else if (armyMode === "resources") {
         const budgets = ["team1Resources", "team2Resources"].map((id) => {
             const input = document.getElementById(id);
             const value = Math.max(1, parseInt(input.value, 10) || 5000);

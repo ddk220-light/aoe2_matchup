@@ -1,5 +1,6 @@
 """Build engine inputs independently of Flask or the legacy combat adapter."""
 import secrets
+import math
 from aoe2x.dbgen.v3_mechanics import MECHANICS_SCHEMA_VERSION
 from aoe2x.js_simulation.scenario_config import build_scenario_payload
 from .mechanics import _find_ref_unit, _load_v3_mechanics, _load_v3_auxiliary_mechanics
@@ -73,10 +74,15 @@ def _bounded_integer(value, label, *, minimum, maximum):
 def _v3_counts(army, teams, capacities):
     if not isinstance(army, dict):
         raise ValueError("army must be an object")
-    mode = army.get("mode", "equal_resources")
+    mode = army.get("mode", "cost_efficient")
     cap = _bounded_integer(army.get("cap", 27), "army.cap", minimum=1, maximum=27)
     limits = (min(cap, capacities[0]), min(cap, capacities[1]))
-    if mode == "explicit":
+    if mode == "cost_efficient":
+        costs = [_weighted_cost(team) for team in teams]
+        cheap = min(costs)
+        counts = tuple(max(1, min(limit, math.floor(cap * math.sqrt(cheap / cost) + 0.5)))
+                       for cost, limit in zip(costs, limits))
+    elif mode == "explicit":
         counts = tuple(
             _bounded_integer(
                 team.get("count"), f"team {index} count", minimum=1, maximum=limit
@@ -142,12 +148,17 @@ def _v3_counts(army, teams, capacities):
             )
     else:
         raise ValueError(
-            "army.mode must be explicit, equal_count, equal_resources, or resource_budgets"
+            "army.mode must be cost_efficient, explicit, equal_count, equal_resources, or resource_budgets"
         )
     for index, (count, limit) in enumerate(zip(counts, limits), 1):
         if count < 1 or count > limit:
             raise ValueError(f"team {index} count must be between 1 and {limit}")
     return counts
+
+
+def _weighted_cost(team):
+    cost = team["mechanics"]["cost"]
+    return cost["food"] + 0.9 * cost["wood"] + 1.1 * cost["gold"]
 
 
 
@@ -191,7 +202,7 @@ def build_battle_config(document, *, connect, valid_civs):
         counts = _v3_counts(document.get("army", {}), teams, capacities)
         for team, count in zip(teams, counts):
             team["count"] = count
-        engagement = document.get("engagement_mode", "direct")
+        engagement = document.get("engagement_mode", "ranged_buffer")
         if engagement not in ("direct", "ranged_buffer"):
             raise ValueError("engagement_mode must be direct or ranged_buffer")
         # The public option is intentionally safe to leave on. It only changes
@@ -201,10 +212,14 @@ def build_battle_config(document, *, connect, valid_civs):
             "ranged_vs_melee", "melee_vs_ranged"
         ):
             engagement = "direct"
+        ranged_index = 0 if classes[0] in ("mobile_ranged", "siege_ranged") else 1
+        player4_count = math.floor(max(5, min(10,
+            5 + (counts[ranged_index] * _weighted_cost(teams[ranged_index]) - 1000) / 1800)) + 0.5)
         scenario = build_scenario_payload(
             visual_family,
             engine_family=engine_family,
             include_buffer=engagement == "ranged_buffer",
+            player4_count=player4_count,
         )
         if engagement == "ranged_buffer":
             buffer_combat = _load_v3_auxiliary_mechanics(cursor, "scout_cavalry")

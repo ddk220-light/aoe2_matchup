@@ -108,3 +108,25 @@ test("a killing trample emits a death event", () => {
     event.type === "death" && event.targetId === 4 && event.tick === tick
   )), "trample kill must emit a death event");
 });
+
+test("negative DAT blast damage gives fixed damage, independent of the bystander's armor", () => {
+  // Vendel Legacy: width +0.5 activates the knight's raw -5 flat damage.
+  // Official modding notes for update 83607 define negative blast as fixed damage.
+  const knight = { ...paladinMechanics, blast: {
+    ...paladinMechanics.blast, width_tiles: 0.5, damage_fraction: -5, attack_level: 2,
+  } };
+  const armored = { ...paladinMechanics, armor_classes: { ...paladinMechanics.armor_classes, 4: 200 } };
+  const world = createWorld({ ratio: "flat-trample", units: [
+    unit({ referenceId: 1, owner: 3, x: 5, y: 5, mechanics: knight }),
+    unit({ referenceId: 2, owner: 3, x: 5, y: 4.45, mechanics: knight }),
+    unit({ referenceId: 3, owner: 2, x: 4.5, y: 5, mechanics: paladinMechanics }),
+    unit({ referenceId: 4, owner: 2, x: 5, y: 5.55, mechanics: armored }),
+  ] });
+  const { world: after, tick } = stepUntilDamage(world, 1);
+  const splash = after.eventLog.filter(e => e.type === "damage" && e.actorId === 1
+    && e.tick === tick && e.kind === "trample");
+  assert.equal(splash.length, 1);
+  assert.equal(splash[0].targetId, 4);
+  assert.equal(splash[0].amount, 5);
+  assert.equal(trampleSpec(paladinMechanics), null, "zero-width unupgraded knight stays inactive");
+});

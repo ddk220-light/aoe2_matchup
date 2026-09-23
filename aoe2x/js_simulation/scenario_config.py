@@ -93,6 +93,7 @@ def build_scenario_payload(
     *,
     engine_family: str,
     include_buffer: bool,
+    player4_count: int = 9,
 ) -> dict[str, Any]:
     """Return JSON-safe scenario inputs sourced from the golden fixtures."""
     if family not in _GOLDEN_HASHES:
@@ -148,6 +149,7 @@ def build_scenario_payload(
     )
     if include_buffer:
         buffer_cells = _cells(fixture["sides"]["4"], 4, 9)
+        buffer_cells = (buffer_cells + [{"x": 7.5, "y": 5.5}])[:player4_count]
         if any(row.get("unit_const") != 448 for row in fixture["sides"]["4"]):
             raise RuntimeError(f"{family} golden contains a non-scout buffer unit")
         result.update(

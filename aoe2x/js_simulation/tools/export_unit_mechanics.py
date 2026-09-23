@@ -211,7 +211,44 @@ def _runtime_effects(reference: dict[str, Any], unit_slug: str) -> dict[str, Any
     effects.update(RUNTIME_EFFECTS_BY_CIV_SLUG.get(
         (reference["civ_name"], unit_slug), {}
     ))
+    if 1484 in reference["applied_tech_ids"]:
+        # Shipped Effects.xs EffectFunction30: task160, WorkValue1=1,
+        # WorkValue2=.1, WorkRange=0 (own HP). This is not execute damage.
+        effects["missing_hp_attack_per_step"] = 1
+        effects["missing_hp_attack_step"] = 0.1
+    if 1464 in reference["applied_tech_ids"]:
+        # Effects.xs function31 supplies radius7; owner-supplied wiki rule
+        # resolves the tiers: every15 OTHER infantry, up to +3/+3.
+        effects["nearby_infantry_armor_step"] = 15
+        effects["nearby_infantry_armor_max"] = 3
+        effects["nearby_infantry_armor_radius"] = 7
     return effects or None
+
+
+def _ability_attribute(data, unit, reference, attribute, initial):
+    """Replay researched unit-attribute commands omitted by scalar stat export.
+
+    Used for charge and blast attributes, not ordinary stats already upgraded
+    by UnitAnalyzer. Never mutate the shared parsed DAT unit.
+    """
+    value = initial
+    for tech_id in reference["applied_tech_ids"]:
+        effect_id = int(data.techs[tech_id].effect_id)
+        if effect_id < 0:
+            continue
+        for command in data.effects[effect_id].effect_commands:
+            if int(command.c) != attribute or not (
+                int(command.a) == int(unit.id)
+                or (int(command.a) == -1 and int(command.b) == int(unit.class_))
+            ):
+                continue
+            if int(command.type) == 0:
+                value = float(command.d)
+            elif int(command.type) == 4:
+                value += float(command.d)
+            elif int(command.type) == 5:
+                value *= float(command.d)
+    return value
 
 
 def _parse_classes(raw: str) -> dict[str, int | float]:
@@ -341,20 +378,21 @@ def _raw_unit(dat_path: Path, civ: str, master: int):
     return data, unit
 
 
-@lru_cache(maxsize=1)
-def _unit_analyzer():
+@lru_cache(maxsize=2)
+def _unit_analyzer(extracted_dir=None):
     """Load the shared fully-teched stat evaluator once for concrete forms."""
     repository_root = Path(__file__).resolve().parents[3]
     if str(repository_root) not in sys.path:
         sys.path.insert(0, str(repository_root))
     from aoe2x.dbgen.unit_analyzer import UnitAnalyzer
 
-    return UnitAnalyzer()
+    return UnitAnalyzer(extracted_dir)
 
 
-def _concrete_form_stats(civ: str, master: int):
+def _concrete_form_stats(civ: str, master: int, reference_db: Path):
     """Fully upgrade a real DAT form rather than its public mode-switch shell."""
-    stats = _unit_analyzer().calculate_form_stats(civ, master, 4)
+    extracted = reference_db.resolve().parent / "extracted"
+    stats = _unit_analyzer(str(extracted) if extracted.is_dir() else None).calculate_form_stats(civ, master, 4)
     if stats is None:
         raise ValueError(f"cannot derive fully-teched {civ} form master {master}")
     return stats
@@ -451,7 +489,7 @@ def export_unit_mechanics(
     dat_path = Path(dat_path)
     reference = _read_reference_row(reference_db, unit_slug, civ)
     data, unit = _raw_unit(dat_path, civ, master)
-    form_stats = _concrete_form_stats(civ, master) if concrete_form else None
+    form_stats = _concrete_form_stats(civ, master, reference_db) if concrete_form else None
     attack_classes = (
         {str(class_id): amount for class_id, amount in sorted(form_stats.attacks.items())}
         if form_stats else _parse_classes(reference["final_attacks_json"])
@@ -640,6 +678,9 @@ def export_unit_mechanics(
     charge = None
     melee_charge = None
     charge_type = int(getattr(unit.creatable, "charge_type", 0) or 0)
+    gothikon = 1474 in reference["applied_tech_ids"] and master in (2703, 2704)
+    if gothikon:
+        charge_type = int(_ability_attribute(data, unit, reference, 62, charge_type))
     # ref_units is the canonical, fully-upgraded mechanics contract.  In
     # particular, an explicit zero may disable a raw DAT charge representation
     # when the same weapon is represented by ordinary primary/extra projectiles
@@ -648,11 +689,15 @@ def export_unit_mechanics(
     # Older reference databases without the column are rejected by the SELECT
     # above, so zero is always meaningful here and must be preserved.
     projectile_count = int(reference.get("charge_projectile_count") or 0)
+    if gothikon:
+        projectile_count = int(_ability_attribute(data, unit, reference, 107, 1))
     # A few units retain a charge_type flag while declaring no charge
     # projectiles at all.  Treat that combination as an inactive DAT feature,
     # matching the database extractor's generic max/total-projectile rule.
     if charge_type in (6, 7) and projectile_count > 0:
         proj_id = int(unit.creatable.charge_projectile_unit)
+        if gothikon:
+            proj_id = int(_ability_attribute(data, unit, reference, 125, proj_id))
         proj = data.civs[0].units[proj_id] if proj_id >= 0 else None
         if proj is None:
             raise ValueError(f"charge_type {charge_type} without projectile unit")
@@ -694,6 +739,57 @@ def export_unit_mechanics(
                 if frame_delay > 0 else attack_delay_seconds
             ),
         }
+        # The new land charges use attribute 61 as a range modifier (not an
+        # event selector). Preserve the older, calibrated charge exports.
+        # Source: AoE2ScenarioParser ObjectAttribute.CHARGE_EVENT, type 6/7.
+        if master in (2705, 2706, 2711, 2712):
+            modifier = float(unit.creatable.charge_event)
+            for tech_id in reference["applied_tech_ids"]:
+                effect_id = int(data.techs[tech_id].effect_id)
+                if effect_id < 0:
+                    continue
+                for command in data.effects[effect_id].effect_commands:
+                    if int(command.type) == 4 and int(command.a) == master and int(command.c) == 61:
+                        modifier += float(command.d)
+            charge["attack_range_tiles"] = float(reference["final_range"]) + modifier
+            if master in (2705, 2706):
+                # Projectile-only technologies (notably Chemistry) do not
+                # appear in the melee carrier's ref_techs_applied. Evaluate
+                # availability through the shared FU pipeline; projectiles
+                # themselves are intentionally absent from extracted units.
+                extracted = reference_db.resolve().parent / "extracted"
+                analyzer = _unit_analyzer(str(extracted) if extracted.is_dir() else None)
+                charge["projectile_attacks"] = {
+                    str(entry.class_): entry.amount for entry in proj.type_50.attacks
+                }
+                projectile_techs = analyzer.find_techs_affecting_unit(proj_id, int(proj.class_), 4)
+                for tech_id in sorted(projectile_techs - analyzer.get_disabled_techs(civ)):
+                    effect_id = int(data.techs[tech_id].effect_id)
+                    if effect_id < 0:
+                        continue
+                    for command in data.effects[effect_id].effect_commands:
+                        if int(command.a) == proj_id and int(command.c) == 9 and int(command.type) == 4:
+                            attack_class, amount = _decode_armor_attack_value(command.d)
+                            key = str(attack_class)
+                            charge["projectile_attacks"][key] = charge["projectile_attacks"].get(key, 0) + amount
+            else:
+                # Shipped Jomsviking tooltips restrict torches to these targets.
+                charge["target_filter"] = "buildings_and_ships"
+        # Update185872: Smart Mode bit8 makes charge/secondary projectiles
+        # inherit the firing unit's damage. Keep the live actor in the runtime
+        # damage path so Hamask and other transient modifiers are not frozen.
+        if int(proj.projectile.smart_mode) & 8:
+            charge["inherits_unit_attack"] = True
+            charge["projectile_attacks"] = dict(attack_classes)
+        if gothikon:
+            charge.update({
+                "max_charge": _ability_attribute(data, unit, reference, 59, float(unit.creatable.max_charge)),
+                "recharge_rate": _ability_attribute(data, unit, reference, 60, float(unit.creatable.recharge_rate)),
+                "charge_cost": 1,
+                "attack_range_tiles": float(reference["final_range"]) + _ability_attribute(
+                    data, unit, reference, 61, float(unit.creatable.charge_event)),
+                "target_filter": "non_siege_units",
+            })
         fields.update({
             "charge.max_charge": "unit.creatable.max_charge",
             "charge.recharge_rate": "unit.creatable.recharge_rate",
@@ -724,6 +820,20 @@ def export_unit_mechanics(
                 "charge animation seconds * frame_delay / frames"
             ),
         })
+        if master in (2705, 2706, 2711, 2712):
+            fields["charge.attack_range_tiles"] = (
+                "ref_units.final_range + unit.creatable.charge_event + "
+                "applied tech attribute-61 additions"
+            )
+        if master in (2705, 2706):
+            fields["charge.projectile_attacks"] = (
+                f"raw projectile {proj_id} attacks + candidate civ-available Imperial "
+                "projectile attack tech additions (including Chemistry)"
+            )
+        if charge.get("inherits_unit_attack"):
+            fields["charge.projectile_attacks"] = "projectile Smart Mode bit8 inherits fully upgraded carrier attack"
+        if gothikon:
+            fields["charge.gothikon"] = "tech1474 attributes59/60/61/62/107/125; wiki: two separately spent axes, 30s per charge; normal reload timing pending live verification"
 
     # Ranged attack projectile. Exported whenever the unit fires a projectile
     # (type_50.projectile_unit_id >= 0 with a positive range). Semantics
@@ -1067,8 +1177,8 @@ def export_unit_mechanics(
             runtime_effects = None
 
     # Melee blast ("trample"). Raw dat values, exported for every unit; the
-    # engine gates on attack_level == 2 and 0 < damage_fraction < 1 (the
-    # Champion's blast_damage is a -5.0 "no trample" sentinel with width 0).
+    # engine gates on positive width, then interprets a positive fraction or
+    # a negative fixed-damage amount. A zero-width Champion stays inactive.
     # Semantics measured from the authorized elephant tapes (54 fights, 1694
     # bystander samples, 0 misclassifications): the blast is a circle of radius
     # width_tiles centred on the ATTACKER, it reaches every ENEMY unit whose
@@ -1076,15 +1186,22 @@ def export_unit_mechanics(
     # level-2/friendly-fire dat flags), the main target is excluded, and each
     # victim takes damage_fraction x the post-armor damage against THAT victim.
     blast = {
-        "width_tiles": float(unit.type_50.blast_width),
-        "damage_fraction": float(unit.type_50.blast_damage),
+        "width_tiles": _ability_attribute(data, unit, reference, 22, float(unit.type_50.blast_width)),
+        "damage_fraction": _ability_attribute(data, unit, reference, 115, float(unit.type_50.blast_damage)),
         "attack_level": int(unit.type_50.blast_attack_level),
         "defense_level": int(unit.blast_defense_level),
         "friendly_fire_damage": float(unit.type_50.friendly_fire_damage),
     }
+    fields["blast.width_tiles"] = "raw blast width + researched attribute-22 commands (including Vendel Legacy)"
+    fields["blast.damage_fraction"] = "raw blast damage + researched attribute-115 commands; negative means fixed damage"
+    if 1484 in reference["applied_tech_ids"]:
+        fields["effects.missing_hp_attack"] = "Effects.xs EffectFunction30; task160 (+1 primary attack / 10% own HP lost)"
 
     return {
         "unit_master": unit.id,
+        "unit_type": int(unit.type),
+        "unit_class": int(unit.class_),
+        "unit_traits": int(unit.trait),
         "civilization": reference["civ_name"],
         "age": reference["age"],
         "blast": blast,

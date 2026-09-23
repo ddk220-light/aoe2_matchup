@@ -93,7 +93,13 @@ def crawler_headers(response):
 
 @app.context_processor
 def inject_public_catalog():
-    return {"site_catalog": site_catalog(REF_DB_PATH), "ranking_methods": load_published_methods(_GOLDEN_DIR)}
+    reference = SIM_REF_DB_PATH if request.endpoint == "home" else REF_DB_PATH
+    catalog = site_catalog(reference)
+    if request.endpoint == "home":
+        catalog = {**catalog, "civilization_emblems": {
+            name: civ["emblem_url"] for name, civ in load_civilization_supplement()["civilizations"].items()
+        }}
+    return {"site_catalog": catalog, "ranking_methods": load_published_methods(_GOLDEN_DIR)}
 
 # Reject unexpectedly large request bodies before Flask buffers them.
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
@@ -162,6 +168,8 @@ from aoe2x.paths import GOLDEN_DIR as _GOLDEN_DIR
 
 DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_units.db")
 REF_DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db")
+# Rankings retain their original reference until their own patch run is published.
+SIM_REF_DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference_simulation.db")
 RANKINGS_DERIVED_DB_PATH = os.path.join(str(_GOLDEN_DIR), "derived_data_v3.db")
 PATCHES_DB_PATH = os.path.join(str(_GOLDEN_DIR), "patches.db")
 
@@ -182,6 +190,12 @@ def get_db():
 def get_ref_db():
     """Get a connection to the reference/audit database."""
     conn = connect_readonly(REF_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_sim_ref_db():
+    conn = connect_readonly(SIM_REF_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -1054,11 +1068,11 @@ def asset_redirect(key):
 @app.route("/api/ref/civ/<civ_name>")
 def api_ref_civ(civ_name):
     """Get all reference data for a civilization."""
-    err = _validate_civ_name(civ_name)
+    err = _validate_sim_civ_name(civ_name)
     if err:
         return err
 
-    ref_conn = get_ref_db()
+    ref_conn = get_sim_ref_db()
     rc = ref_conn.cursor()
 
     # Get all units for this civ
@@ -1306,7 +1320,7 @@ def api_ref_stat_chain(ref_unit_id):
 @app.route("/api/ref/combat-unit/<civ_name>/<unit_slug>")
 def api_ref_combat_unit(civ_name, unit_slug):
     """Get combat-ready stats for a unit from reference DB (for battle simulator)."""
-    err = _validate_civ_name(civ_name)
+    err = _validate_sim_civ_name(civ_name)
     if err:
         return err
 
@@ -1315,7 +1329,7 @@ def api_ref_combat_unit(civ_name, unit_slug):
     if err:
         return err
 
-    ref_conn = get_ref_db()
+    ref_conn = get_sim_ref_db()
     rc = ref_conn.cursor()
 
     row = _find_ref_unit(rc, civ_name, unit_slug, age)
@@ -1435,7 +1449,7 @@ def _unit_search_index():
     straight to a unique unit, which selects its civ + that unit. Standard units
     stay reachable via the civ -> unit grid. Cached for the process lifetime
     (restart Flask if the unit roster changes)."""
-    ref_conn = get_ref_db()
+    ref_conn = get_sim_ref_db()
     rc = ref_conn.cursor()
     rc.execute(
         "SELECT civ_name, unit_name, unit_slug FROM ref_units "
@@ -1465,7 +1479,17 @@ def _valid_civs():
     return frozenset(_get_ref_civs())
 
 
-app.register_blueprint(battle_blueprint(lambda: get_ref_db(), lambda: _valid_civs()))
+def _sim_civs():
+    return frozenset(site_catalog(SIM_REF_DB_PATH)["civilizations"])
+
+
+def _validate_sim_civ_name(name):
+    if not isinstance(name, str) or name not in _sim_civs():
+        return jsonify({"error": f"Unknown civilization: {name!r}"}), 400
+    return None
+
+
+app.register_blueprint(battle_blueprint(lambda: get_sim_ref_db(), lambda: _sim_civs()))
 app.register_blueprint(civilization_blueprint(_get_page_civs, get_civ_detail, get_civ_overview_data, current_build))
 
 

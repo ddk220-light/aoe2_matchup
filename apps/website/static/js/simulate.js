@@ -32,6 +32,11 @@ function unitIconUrl(name) {
     return id ? iconUrl(id) : "";
 }
 
+function civEmblem(civ) {
+    return window.SITE_CATALOG?.civilization_emblems?.[civ]
+        || `${CIV_EMBLEM_BASE}${civ.toLowerCase()}.png`;
+}
+
 function hasRelicOption(state) {
     return false;
 }
@@ -89,8 +94,13 @@ function updateOptionsCurrent() {
     const el = document.getElementById("optionsCurrent");
     if (!el) return;
     const checked = document.querySelector('input[name="armyMode"]:checked');
-    const mode = checked ? checked.value : "resources";
-    if (mode === "resources") {
+    const mode = checked ? checked.value : "cost";
+    const formula = document.getElementById("armyCostFormula");
+    if (formula) formula.textContent = mode === "cost"
+        ? "Food + 0.9 Wood + 1.1 Gold" : "Wood + Food + Gold";
+    if (mode === "cost") {
+        el.textContent = "Cost-efficient · up to 27 units";
+    } else if (mode === "resources") {
         const teamA = (document.getElementById("team1Resources") || {}).value || 5000;
         const teamB = (document.getElementById("team2Resources") || {}).value || 5000;
         el.textContent = `Resource-based · ${formatResourceBudget(teamA)} / ${formatResourceBudget(teamB)}`;
@@ -122,7 +132,7 @@ function renderSelection(teamNum) {
         for (const civ of ENABLED_CIVS) {
             const civSafe = escapeHtml(civ);
             html += `<div class="civ-card" data-action="selectCiv" data-team="${teamNum}" data-civ="${civSafe}">
-                        <img src="${CIV_EMBLEM_BASE}${civ.toLowerCase()}.png" alt="${civSafe}" />
+                        <img src="${civEmblem(civ)}" alt="${civSafe}" />
                         <span>${civSafe}</span>
                     </div>`;
         }
@@ -135,7 +145,7 @@ function renderSelection(teamNum) {
     // Civ selected badge
     const civSafe = escapeHtml(state.civ);
     let html = `<div class="selection-badge">
-                <img src="${CIV_EMBLEM_BASE}${state.civ.toLowerCase()}.png" alt="${civSafe}" />
+                <img src="${civEmblem(state.civ)}" alt="${civSafe}" />
                 <span class="badge-text">${civSafe}</span>
                 <span class="change-btn" data-action="clearCiv" data-team="${teamNum}">change</span>
             </div>`;
@@ -419,7 +429,7 @@ function renderSearchResults(teamNum, raw) {
     matches.forEach((it, idx) => {
         if (it.type === "civ") {
             html += `<div class="search-result" data-idx="${idx}">
-                <img class="emblem" src="${CIV_EMBLEM_BASE}${it.civ.toLowerCase()}.png" alt="" onerror="this.style.display='none'" />
+                <img class="emblem" src="${civEmblem(it.civ)}" alt="" onerror="this.style.display='none'" />
                 <span class="sr-name">${escapeHtml(it.name)}</span>
                 <span class="sr-sub">Civ</span>
             </div>`;
@@ -608,6 +618,7 @@ function scheduleMatchupPreview(delay = 100) {
             if (!ticket.isCurrent()) return;
             if (sequence !== matchupPreviewSequence || pageSim?.config) return;
             renderMatchupCards(config);
+            pageSim?.showSelectionPreview(teamState, unitImages, config.teams.map(team => team.count));
         } catch (error) {
             if (sequence !== matchupPreviewSequence || error.name === "AbortError") return;
             console.error("Could not load matchup statistics", error);
@@ -699,6 +710,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                     document.getElementById(
                         "resourceInput",
                     ).style.display = "flex";
+                } else {
+                    document.getElementById("countInputs").style.display = "none";
+                    document.getElementById("resourceInput").style.display = "none";
                 }
                 updateOptionsCurrent();
                 refreshArenaPreview();

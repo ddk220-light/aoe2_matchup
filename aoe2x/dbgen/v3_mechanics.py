@@ -8,6 +8,7 @@ import math
 from typing import Any, Mapping
 
 from .v3_runtime_config import BEHAVIOR_CLASS_BY_CIV_SLUG
+from aoe2x.js_simulation.battle_setup import effective_cost
 
 
 MECHANICS_SCHEMA_VERSION = 1
@@ -85,11 +86,7 @@ def build_runtime_profile(
                 if row["unit_slug"] == "siege_onager"
                 else {}
             ),
-            "cost": {
-                "food": float(row["final_cost_food"] or 0),
-                "wood": float(row["final_cost_wood"] or 0),
-                "gold": float(row["final_cost_gold"] or 0),
-            },
+            "cost": effective_cost(row)[0],
         }
     )
     validate_runtime_profile(profile)

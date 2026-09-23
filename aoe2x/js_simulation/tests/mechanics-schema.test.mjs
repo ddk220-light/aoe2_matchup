@@ -102,6 +102,26 @@ test("headless runner accepts JSON lines and isolates invalid jobs", async () =>
   assert.equal(results.every(({ error }) => error?.message), true);
 });
 
+test("recording-policy headless jobs derive counts from effective costs", async () => {
+  const champion = await profile("champion_chinese_imperial.json", {
+    behavior_class: "melee", unit_slug: "champion", unit_name: "Champion",
+    cost: { food: 60, wood: 0, gold: 20 },
+  });
+  const result = await runHeadlessJob({
+    balancePolicy: "geometric_full_discount_weighted_resources_v3",
+    teams: [
+      { mechanics: champion, effectiveCost: { food: 20, wood: 0, gold: 0 } },
+      { mechanics: champion, effectiveCost: { food: 80, wood: 0, gold: 0 } },
+    ], seed: 1,
+  });
+  assert.equal(result.side2.count, 27);
+  assert.equal(result.side3.count, 14);
+  assert.equal(result.battleSetup.player4Count, 0);
+  assert.ok(result.remainingByOwner[2].units > 0);
+  assert.equal(result.remainingByOwner[3].units, 0);
+  assert.equal(result.remainingByOwner[2].hp, result.winnerHp);
+});
+
 
 test("mechanics schema rejects provenance and incompatible versions", async () => {
   const champion = await profile("champion_chinese_imperial.json", {

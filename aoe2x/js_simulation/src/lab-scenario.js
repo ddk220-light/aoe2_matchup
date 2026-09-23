@@ -74,6 +74,7 @@ function resolveUnit(unitOrSlug) {
 
 export async function loadLabScenario(root, side2Unit, side3Unit, {
   includeBuffer = true,
+  player4Count,
 } = {}) {
   const side2 = resolveUnit(side2Unit);
   const side3 = resolveUnit(side3Unit);
@@ -84,7 +85,7 @@ export async function loadLabScenario(root, side2Unit, side3Unit, {
     readFile(new URL("fixtures/golden_map.json", root), "utf8").then(JSON.parse),
     family === "melee_vs_melee"
       ? loadMeleePlacement(root)
-      : loadRangedPlacement(root, family, { includeBuffer }),
+      : loadRangedPlacement(root, family, { includeBuffer, player4Count }),
   ]);
   return Object.freeze({
     family,
@@ -115,7 +116,7 @@ async function loadMeleePlacement(root) {
 }
 
 
-async function loadRangedPlacement(root, family, { includeBuffer = true } = {}) {
+async function loadRangedPlacement(root, family, { includeBuffer = true, player4Count } = {}) {
   const { readFile } = await import("node:fs/promises");
   const fixture = JSON.parse(await readFile(
     new URL("fixtures/current_ranged_golden_formations.json", root), "utf8",
@@ -129,17 +130,23 @@ async function loadRangedPlacement(root, family, { includeBuffer = true } = {}) 
     3: cells(selected.sides?.["3"], 3),
   });
   const mixed = family === "ranged_vs_melee" || family === "melee_vs_ranged";
+  includeBuffer = includeBuffer && player4Count !== 0;
   const p4Rows = selected.sides?.["4"] ?? [];
   if ((mixed && p4Rows.length !== 9) || (!mixed && p4Rows.length !== 0)) {
     throw new Error(`${family} golden has the wrong Player 4 roster`);
   }
-  const p4Cells = Object.freeze(p4Rows.map((row) => {
+  const p4Count = player4Count ?? p4Rows.length;
+  const p4Positions = p4Rows.map((row) => {
     if (row.player_id !== 4 || row.unit_const !== 448
         || !Number.isFinite(row.position?.x) || !Number.isFinite(row.position?.y)) {
       throw new Error(`${family} golden has an invalid Player 4 unit`);
     }
     return Object.freeze({ x: row.position.x, y: row.position.y });
-  }));
+  });
+  // The approved tenth screen slot is adjacent to the nine original records.
+  // It is empty in the Golden map and within the authored P4 patrol area.
+  if (mixed && p4Count === 10) p4Positions.push(Object.freeze({ x: 7.5, y: 5.5 }));
+  const p4Cells = Object.freeze(p4Positions.slice(0, p4Count));
   const expectedTriggers = mixed ? 2 : 1;
   if (!Array.isArray(selected.triggers) || selected.triggers.length !== expectedTriggers) {
     throw new Error(`${family} golden has the wrong trigger set`);

@@ -467,6 +467,15 @@ extraction outputs belong in this feature's commit set.
 
 ### Serving, verification and publication boundary
 
+When the existing bucket configuration is enabled, the supplement loader maps
+its image/animation URLs from `/static/` to the same-origin `/assets/` broker.
+Publish the 43 exact `media_inventory` outputs under their paths with `/static/`
+removed before deploying that configuration. Publish the ten selected original
+DAT4x attack GIFs separately as `gifs/<slug>.gif`; the cards use the lossless WebP
+versions. The September 23 staging upload added these 53 missing objects
+(31,943,382 bytes), verified their sizes and ETags, and overwrote no objects.
+This is a media-only operation: no global catalog or database publication.
+
 `civilization_page_analysis` composes the supplement onto a copy of the existing
 ranked analysis. Initial HTML and `/api/civilizations/<Name>` use that same data.
 The civilization overview, selector and sitemap contain 56 civilizations; the

@@ -11,6 +11,23 @@ import pytest
 MODULE = 'aoe2x.assets.build_civilization_release'
 
 
+@pytest.mark.parametrize('enabled', [False, True])
+def test_civilization_media_uses_configured_asset_bucket(monkeypatch, enabled):
+    from aoe2x.assets import config
+    from apps.website.services.civilizations import load_civilization_supplement
+    monkeypatch.setattr(config, 'assets_enabled', lambda: enabled)
+    release = load_civilization_supplement()
+    prefix = '/assets' if enabled else '/static'
+    assert release['civilizations']['Varangians']['emblem_url'] == prefix + '/img/civilizations/185872/varangians.png'
+    for media in [*release['media'].values(), *[
+            row['media'] for civ in release['civilizations'].values()
+            for row in civ['units']]]:
+        for field in ('idle', 'attack', 'icon', 'icon_transparent'):
+            if field in media:
+                assert media[field].startswith(prefix + '/')
+    assert release['media_inventory'][0]['output'].startswith('/static/')
+
+
 def test_idle_sprite_uses_selected_dat_image_and_shared_web_size(tmp_path):
     from PIL import Image
     source = tmp_path / 'selected_idle_dat4x.png'

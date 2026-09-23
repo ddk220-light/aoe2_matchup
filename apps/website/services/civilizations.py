@@ -4,6 +4,8 @@ from copy import deepcopy
 from pathlib import Path
 
 from aoe2x.advisor.best_units import load_civ_power_units
+from aoe2x.assets import config as asset_config
+from aoe2x.assets.catalog import _rewrite
 
 
 _PAGE_COLUMNS = ('cavalry', 'ranged', 'infantry', 'siege', 'navy')
@@ -12,7 +14,17 @@ _SUPPLEMENT_PATH = Path(__file__).resolve().parents[1] / 'static/data/civilizati
 
 def load_civilization_supplement(path=None):
     """Read the scoped page reference release without changing ranking inputs."""
-    return json.loads(Path(path or _SUPPLEMENT_PATH).read_text(encoding='utf-8'))
+    release = json.loads(Path(path or _SUPPLEMENT_PATH).read_text(encoding='utf-8'))
+    if asset_config.assets_enabled():
+        media_entries = list(release['media'].values())
+        for civ in release['civilizations'].values():
+            civ['emblem_url'] = _rewrite(civ['emblem_url'], asset_config.ASSET_ROUTE_PREFIX)
+            media_entries.extend(row['media'] for row in civ['units'])
+        for media in media_entries:
+            for field in ('idle', 'attack', 'icon', 'icon_transparent'):
+                if field in media:
+                    media[field] = _rewrite(media[field], asset_config.ASSET_ROUTE_PREFIX)
+    return release
 
 
 def civilization_page_names(reference_names, supplement):

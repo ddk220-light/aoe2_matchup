@@ -48,8 +48,8 @@
                 </div>
                 {% if stats.get('cost_food', 0) > 0 or stats.get('cost_wood', 0) > 0 or stats.get('cost_gold', 0) > 0 %}
                 <div class="tt-costs"><span class="tt-cost-label">Cost</span>
-                    {% for label, key, icon in [('Food', 'cost_food', 'F'), ('Wood', 'cost_wood', 'W'), ('Gold', 'cost_gold', 'G')] %}
-                    {% if stats.get(key, 0) > 0 %}<span class="tt-cost-resource" aria-label="{{ label }}"><span class="tt-cost-icon" aria-hidden="true">{{ icon }}</span><span>{{ stats[key] }}</span> {{ label }}</span>{% endif %}
+                    {% for label, key, icon in [('Food', 'cost_food', 'food'), ('Wood', 'cost_wood', 'wood'), ('Gold', 'cost_gold', 'gold')] %}
+                    {% if stats.get(key, 0) > 0 %}<span class="tt-cost-resource" aria-label="{{ label }}"><img class="tt-cost-icon" src="/static/img/resources/{{ icon }}.png" alt="" aria-hidden="true"><span>{{ stats[key] }}</span> {{ label }}</span>{% endif %}
                     {% endfor %}
                 </div>
                 {% endif %}

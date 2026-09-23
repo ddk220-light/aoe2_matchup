@@ -296,15 +296,15 @@ function renderTooltip(unit, name, media) {
             }
         }
         var costs = [
-            { key: 'cost_food', label: 'Food', icon: 'F' },
-            { key: 'cost_wood', label: 'Wood', icon: 'W' },
-            { key: 'cost_gold', label: 'Gold', icon: 'G' },
+            { key: 'cost_food', label: 'Food', icon: 'food' },
+            { key: 'cost_wood', label: 'Wood', icon: 'wood' },
+            { key: 'cost_gold', label: 'Gold', icon: 'gold' },
         ];
         var costHtml = '';
         for (var c = 0; c < costs.length; c++) {
             if (!(stats[costs[c].key] > 0)) continue;
             costHtml += '<span class="tt-cost-resource" aria-label="' + costs[c].label + '">'
-                + '<span class="tt-cost-icon" aria-hidden="true">' + costs[c].icon + '</span>'
+                + '<img class="tt-cost-icon" src="/static/img/resources/' + costs[c].icon + '.png" alt="" aria-hidden="true">'
                 + '<span>' + escapeHtml(stats[costs[c].key]) + '</span> ' + costs[c].label + '</span>';
         }
         if (costHtml) html += '<div class="tt-costs"><span class="tt-cost-label">Cost</span>' + costHtml + '</div>';

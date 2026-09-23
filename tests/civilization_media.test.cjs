@@ -44,6 +44,9 @@ test('new unit card uses supplied media, costs and abilities without an invented
     assert.match(html, /Attack preview/);
     assert.match(html, /45.*Food/s);
     assert.match(html, /30.*Gold/s);
+    assert.match(html, /<img[^>]+src="\/static\/img\/resources\/food\.png"/);
+    assert.match(html, /<img[^>]+src="\/static\/img\/resources\/gold\.png"/);
+    assert.doesNotMatch(html, /\/resources\/wood\.png/);
     assert.doesNotMatch(html, /Wood|Coming soon|Unranked|data-anim-name|tier-good/);
     assert.match(html, /Fast raid|Charged attack/);
 });
@@ -59,6 +62,7 @@ test('only available ship media controls render and supplied tiers use normal pa
     assert.match(html, /\/ship\/attack\.webp/);
     assert.match(html, /80.*Wood/s);
     assert.match(html, /50.*Gold/s);
+    assert.match(html, /<img[^>]+src="\/static\/img\/resources\/wood\.png"/);
     assert.doesNotMatch(html, /Food|Transparent icon|Blue|idle_blue|icon_transparent/);
 });
 

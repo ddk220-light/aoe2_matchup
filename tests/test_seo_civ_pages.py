@@ -77,6 +77,25 @@ def test_server_html_shows_only_supplied_ship_media_and_real_tier(client):
     assert '63.0' in ranked_html
 
 
+def test_server_costs_use_resource_images_and_omit_zero(client):
+    import app
+    from flask import render_template
+
+    unit = {'unit_name': 'Hearth Troop', 'unit_slug': 'hearth_troop',
+            'stats': {'cost_food': 0, 'cost_wood': 80, 'cost_gold': 35}}
+    with app.app.test_request_context():
+        html = render_template('_civ_content.html', civ={'name': 'Saxons', 'slug': 'saxons'},
+                               analysis={}, civ_buildings={'castle': [unit]},
+                               site_catalog={'icon_names': {}})
+    assert 'src="/static/img/resources/wood.png"' in html
+    assert 'src="/static/img/resources/gold.png"' in html
+    assert '/static/img/resources/food.png' not in html
+    for resource in ('food', 'wood', 'gold'):
+        response = client.get(f'/static/img/resources/{resource}.png')
+        assert response.status_code == 200
+        assert response.mimetype == 'image/png'
+
+
 def test_page_api_keeps_imperial_age_policy_and_existing_ranks(client):
     assert client.get('/api/civilizations/Danes?age=castle').status_code == 400
     assert client.get('/api/civilizations/atlantis').status_code == 400

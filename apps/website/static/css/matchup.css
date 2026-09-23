@@ -732,16 +732,10 @@ html:not(.has-civ-js) .unit-badge:focus-within .unit-badge-tooltip {
 .tt-cost-label { color: var(--text-muted); margin-right: 3px; }
 .tt-cost-resource { display: inline-flex; align-items: center; gap: 3px; color: var(--text); }
 .tt-cost-icon {
-    display: inline-grid;
-    place-items: center;
-    width: 1.3em;
-    height: 1.3em;
-    border-radius: 50%;
-    background: var(--bg-warm);
-    border: 1px solid var(--border);
-    color: var(--gold);
-    font-size: 0.9em;
-    font-weight: 700;
+    display: inline-block;
+    width: 1.5em;
+    height: 1.5em;
+    object-fit: contain;
 }
 .tt-name {
     font-weight: 700;

@@ -5,7 +5,12 @@ editorial lists used to choose comparison-video chapters. It records the approve
 rules as of **September 21, 2026**: top 25, an HP advantage strictly greater than
 10 percentage points, and finishes below 10% surviving HP treated as draws.
 
-Start here when handing the analysis to another person or agent. The executable
+For a new unit family or civilization roster, start with the
+[civilization comparison handoff](CIVILIZATION_COMPARISON_GUIDE.md). It explains
+how to reuse these rules, adapt the historical reporter for newer capture
+policies, and display top 10 without changing the full top-25 analysis.
+
+This document specifies the historical camel/knight benchmark. The executable
 implementation is [report_knight_line_rankings.py](../../apps/video/report_knight_line_rankings.py),
 the versioned input roster is [ranking_sources.json](../../apps/video/ranking_sources.json),
 and the focused checks are [test_recorded_line_ranking.py](../../apps/video/tests/test_recorded_line_ranking.py).
@@ -165,7 +170,10 @@ keeps `metadataOnly: true`; the report states this limitation. See the
 
 ### Counts and comparability
 
-The benchmark uses `geometric_shared_discount_unit_count_v2`:
+The historical camel/knight benchmark uses
+`geometric_shared_discount_unit_count_v2`. New captures use the newer
+[balance policy](BALANCE_POLICY.md); do not apply the following historical prices
+to new runs or silently reprice old recordings:
 
 ```text
 shared-unit comparisonFood = finalFood + 0.5 * max(0, baseFood - finalFood)

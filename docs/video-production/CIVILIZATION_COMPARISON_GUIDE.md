@@ -31,6 +31,10 @@ For the detailed historical specification and file schema, use
 [minimal retake audit](KNIGHT_MINIMAL_RETAKE_AUDIT.md) and
 [retention guide](RECORDING_RETENTION.md).
 
+To turn the selected chapters into a full video, generated unit artwork,
+thumbnail and description with results/timestamps, continue with the
+[YouTube package handoff](YOUTUBE_PACKAGE_HANDOFF.md).
+
 ## 1. Define a comparable benchmark before scoring
 
 One observation is **one civilization's unit variant versus one opponent**.

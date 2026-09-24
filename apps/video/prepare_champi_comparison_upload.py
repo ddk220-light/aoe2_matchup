@@ -2,6 +2,11 @@
 
 No network operations. Authorization is recorded only when explicitly supplied.
 The upload command still verifies the live channel and resumable source identity.
+This historical 74-chapter package has fixed paths and v1 policy wording; adapt
+those from saved inputs for a new family. Public chapter lines summarize only
+the best result, while chapter-results.json retains every civilization. The
+ranking report's close-finish draw convention is not applied here automatically.
+Workflow: docs/video-production/YOUTUBE_PACKAGE_HANDOFF.md.
 """
 import argparse
 import json

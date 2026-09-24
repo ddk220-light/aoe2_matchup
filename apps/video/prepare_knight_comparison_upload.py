@@ -1,4 +1,12 @@
-"""Prepare approved comparison uploads from measured chapter durations/results."""
+"""Prepare the historical knight comparison package from encoded chapters.
+
+Episode-specific: 74 chapters, historical balance wording and fixed profile
+assumptions are not defaults for new v3 recordings. Adapt them from saved plans.
+Description rows summarize the best chapter result; chapter-results.json keeps
+all civilizations. These results are not the ranking report's adjusted draws.
+Preparation is not upload approval; authorized=True requires existing permission.
+Workflow: docs/video-production/YOUTUBE_PACKAGE_HANDOFF.md.
+"""
 import argparse
 from pathlib import Path
 from build_knight_comparison_series import read,save,read_probe,REPO
@@ -39,8 +47,12 @@ def prepare(plan,series_dir,intro,authorized=False):
             counts=[recording['sides'][s]['count'] for s in ('side1','side2')]
             assert counts==chapter['startingCounts'][i] and max(counts)<=27
             checks+=1
+        # Chapter rank, not overall benchmark rank. Credit all tied best results;
+        # retain every civilization in rows below even when the public line is short.
         best=[r for r in chapter['results'] if r['rank']==1 and r['winner']!='not_tested'];assert best
         outcome='W' if best[0]['winner']=='2' else 'L' if best[0]['winner']=='3' else 'D'
+        # Encoded durations include frame rounding and the result hold. Accumulate
+        # these after the measured intro offset; round only the displayed timestamp.
         duration=float(read_probe(Path(chapter['video']))['format']['duration'])
         label=data['opponent']['label'].removeprefix('Elite ')
         description+=f"{stamp(cursor)} {label} | {'/'.join(r['civ'] for r in best)} {outcome} {best[0]['percent']:.0f}%\n"

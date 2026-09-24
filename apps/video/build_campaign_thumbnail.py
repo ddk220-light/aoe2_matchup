@@ -1,4 +1,10 @@
-"""Compose the approved campaign parchment cover from an episode intro plan."""
+"""Compose approved intro artwork into campaign-parchment YouTube covers.
+
+This does not generate unit art: review the illustration, equipment and theme
+first, then reuse the same plan for the intro and thumbnail. Fixed placements
+need visual review on each parchment. Both output JPEGs are overwritten.
+Workflow: docs/video-production/YOUTUBE_PACKAGE_HANDOFF.md.
+"""
 import argparse
 import json
 from pathlib import Path
@@ -27,6 +33,8 @@ def build(plan_path, prefix, title, subtitle='Matchup'):
         drawing.thumbnail(max_art, Image.Resampling.LANCZOS)
         x = (bg.width - drawing.width) // 2
         box = (x, top, x + drawing.width, top + drawing.height)
+        # Multiply preserves parchment under white sketch paper; alpha keeps
+        # genuinely transparent regions clear. A painted checkerboard is invalid.
         bg.paste(ImageChops.multiply(bg.crop(box), drawing.convert('RGB')), box, drawing.getchannel('A'))
         bg = bg.convert('RGBA')
         for label, y in zip(labels, ys):

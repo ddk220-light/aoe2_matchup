@@ -2,6 +2,11 @@
 
 [Return to the complete runbook](../VIDEO_PRODUCTION_RUNBOOK.md).
 
+For the end-to-end thumbnail, generated artwork, full-video assembly and
+chapter/results description handoff, start with
+[YOUTUBE_PACKAGE_HANDOFF.md](YOUTUBE_PACKAGE_HANDOFF.md). It distinguishes the
+current presentation from historical episode-specific helper assumptions.
+
 ## Campaign background and copy
 
 The game already supplies the surrounding painted scene, parchment, and border as a single clean DDS. Text, drawings and buttons are separate layers. Use the clean asset, not a screenshot with old text or navigation controls baked in.

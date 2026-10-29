@@ -1,8 +1,8 @@
 # Collision optimization validation
 
-114 exact state/event checks; 0 mismatches. 81 flagged-run retries recorded.
+114 exact state/event checks; 0 mismatches. 107 flagged-run retries recorded.
 
-Retry outcomes: {'win': 70, 'processing_timeout': 10, 'engine_error': 1}.
+Retry outcomes: {'win': 95, 'processing_timeout': 11, 'engine_error': 1}.
 
 The candidate preserves solver order, tolerances, random seeds, unit stats, and attack mechanics. 
 It caches pair properties and repeated static-obstacle passes within one solve, conservatively 
@@ -16,6 +16,7 @@ reference tick, so their timeout result is expected and does not represent a fai
 |---|---:|---:|---|
 | Franks Crossbowman vs. Spanish Hussar / 0 | 179.52 | 47.55 | True |
 | Chinese Heavy Scorpion vs. Spanish Elite Skirmisher / 0 | 379.94 | 24.36 | True |
+| Vikings Mounted Crossbowman vs. Saracens Heavy Cavalry Archer / 0 | 250.15 | 17.60 | True |
 
 See [summary.json](summary.json) for each partial-run hash comparison, 
 [runs.jsonl](runs.jsonl) for every run, and [manifest.json](manifest.json) for the task list.

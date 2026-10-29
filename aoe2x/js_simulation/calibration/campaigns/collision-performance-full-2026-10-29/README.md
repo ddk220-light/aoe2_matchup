@@ -1,8 +1,8 @@
 # Collision optimization validation
 
-114 exact state/event checks; 0 mismatches. 56 flagged-run retries recorded.
+114 exact state/event checks; 0 mismatches. 81 flagged-run retries recorded.
 
-Retry outcomes: {'win': 50, 'processing_timeout': 5, 'engine_error': 1}.
+Retry outcomes: {'win': 70, 'processing_timeout': 10, 'engine_error': 1}.
 
 The candidate preserves solver order, tolerances, random seeds, unit stats, and attack mechanics. 
 It caches pair properties and repeated static-obstacle passes within one solve, conservatively 

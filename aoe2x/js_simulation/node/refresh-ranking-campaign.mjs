@@ -20,6 +20,12 @@ export function prepareRefresh(previousDirectory, directory, validationDirectory
   const validation = json(resolve(validationDirectory, 'summary.json'));
   const validationManifest = json(resolve(validationDirectory, 'manifest.json'));
   const testStatus = json(resolve(validationDirectory, 'test-status.json'));
+  const refreshVerification = json(resolve(validationDirectory, 'refresh-verification.json'));
+  if (!refreshVerification.allExact || refreshVerification.parity.length !== 10
+      || refreshVerification.equivalence.length !== 5 || !refreshVerification.clock?.exact
+      || digest(refreshVerification.sourceHashes) !== digest(validation.sourceHashes)) {
+    throw new Error('current-engine worker and equivalence checks must pass');
+  }
   if (!validation.complete || validation.controlFailures !== 0 || validation.controls !== 37 || validation.anomalyRetries !== 107
       || validation.anomalyOutcomes.win + (validation.anomalyOutcomes.draw ?? 0) !== 107
       || testStatus.failed !== 0 || testStatus.exitCode !== 0) {
@@ -33,7 +39,7 @@ export function prepareRefresh(previousDirectory, directory, validationDirectory
   for (const name of readdirSync(resolve(sim, 'src'), { recursive: true }).filter(name => name.endsWith('.js'))) {
     runtimePaths.add(relative(root, resolve(sim, 'src', name)));
   }
-  for (const name of ['refresh-ranking-campaign.mjs', 'collision-validation-worker.mjs']) {
+  for (const name of ['refresh-ranking-campaign.mjs', 'collision-validation-worker.mjs', 'verify-ranking-refresh.mjs']) {
     runtimePaths.add(relative(root, resolve(sim, 'node', name)));
   }
   const branch = execFileSync('git', ['branch', '--show-current'], { cwd: root, encoding: 'utf8' }).trim();
@@ -48,7 +54,8 @@ export function prepareRefresh(previousDirectory, directory, validationDirectory
     refreshedFrom: { campaignHash: previousHash, directory: relative(root, previousDirectory),
       note: 'Matrix, costs, unit profiles, equivalence groups and phases preserved; zero old results imported.' },
     validation: { directory: relative(root, validationDirectory),
-      summarySha256: sha(resolve(validationDirectory, 'summary.json')), testStatusSha256: sha(resolve(validationDirectory, 'test-status.json')) },
+      summarySha256: sha(resolve(validationDirectory, 'summary.json')), testStatusSha256: sha(resolve(validationDirectory, 'test-status.json')),
+      refreshVerificationSha256: sha(resolve(validationDirectory, 'refresh-verification.json')) },
     policy: { ...previous.policy, reusePilotRuns: false, maxSimulationTicks: Number.MAX_SAFE_INTEGER,
       wallTimeoutSeconds: 120, workers: 4 },
     reuseCampaign: null,
@@ -57,7 +64,8 @@ export function prepareRefresh(previousDirectory, directory, validationDirectory
   definition.historicalBenchmark = definition.benchmark;
   delete definition.benchmark;
   definition.historicalEquivalenceVerification = definition.equivalenceVerification;
-  delete definition.equivalenceVerification;
+  definition.equivalenceVerification = { allExact: true, pairs: 5,
+    checks: refreshVerification.equivalence.map(({ results, ...check }) => check) };
   const manifest = { ...definition, campaignHash: digest(definition) };
   mkdirSync(directory, { recursive: true });
   for (const [name, value] of [['manifest.json', manifest], ['equivalence.json', manifest.equivalence]]) {

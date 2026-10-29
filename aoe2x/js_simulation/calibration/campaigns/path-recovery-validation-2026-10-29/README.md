@@ -6,7 +6,7 @@ Coverage: 60/144 recorded tasks; complete=False.
 
 23 anomaly retries: {'win': 22, 'engine_error': 1}.
 
-The exact-preserving collision optimization has its own validation report. These 
+The exact-preserving collision optimization has its own validation report. These
 additional corrections intentionally repair pursuit, contact handoffs, obstacle routing and collision recovery.
 
 | Matchup / seed | Processing seconds | Game seconds reached | Status |
@@ -39,5 +39,5 @@ Separate engine version. Keep original results immutable; do not combine changed
 
 Regression checks are still pending.
 
-See [summary.json](summary.json) for winner, survivor, and duration comparisons; 
+See [summary.json](summary.json) for winner, survivor, and duration comparisons;
 [runs.jsonl](runs.jsonl) includes every result and its engine source hashes.

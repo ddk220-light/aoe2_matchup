@@ -54,7 +54,7 @@ lines = ['# Movement, pursuit and contact corrections: validation', '',
          f"{len(controls)} pilot checks: {summary['exactControls']} exact, "
          f"{summary['changedControls']} changed, {summary['winnerChanges']} winner changes.", '',
          f"{len(anomalies)} anomaly retries: {dict(counts)}.", '',
-         'The exact-preserving collision optimization has its own validation report. These ',
+         'The exact-preserving collision optimization has its own validation report. These',
          'additional corrections intentionally repair pursuit, contact handoffs, obstacle routing and collision recovery.', '',
          '| Matchup / seed | Processing seconds | Game seconds reached | Status |',
          '|---|---:|---:|---|']
@@ -67,7 +67,7 @@ lines.extend(['', summary['dataPolicy'], '',
               (f"Regression checks: {summary['tests']['passed']}/{summary['tests']['tests']} passed; "
                f"{summary['tests']['failed']} failed. See [test-status.json](test-status.json)."
                if 'tests' in summary else 'Regression checks are still pending.'), '',
-              'See [summary.json](summary.json) for winner, survivor, and duration comparisons; ',
+              'See [summary.json](summary.json) for winner, survivor, and duration comparisons;',
               '[runs.jsonl](runs.jsonl) includes every result and its engine source hashes.', ''])
 (directory / 'README.md').write_text('\n'.join(lines))
 print(json.dumps({key: summary[key] for key in ['updatedAt', 'controls', 'exactControls',

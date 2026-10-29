@@ -16,6 +16,7 @@ test("pool retains heartbeats until the matching final result and passes the con
     const result = await pool.run({ seed: 8 }, 5);
     assert.deepEqual(result.result, { maxTicks: Number.MAX_SAFE_INTEGER, seed: 8 });
     assert.equal(result.progress, undefined);
+    assert.deepEqual(result.lastProgress, { tick: 123, simulationSeconds: 2.05 });
   } finally { await pool.close(); }
 });
 

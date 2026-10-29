@@ -1,0 +1,779 @@
+{
+  "sourceHashes": {
+    "arena-physics-map.js": "7a4cdb06eb275c38f0fd76f8f00bbdfdb492d89e228a69e6f0f2bcdec47078bd",
+    "battle-setup.js": "e3fe43c18a94545f6300410234df88274704e7dfc16c25c55cdb89a179c19318",
+    "canonical-json.js": "ebffd58076b4fa7811697f4ff93e0da2a55b95fbfefa9ad6fff4a254965d14f0",
+    "champion-comparison.js": "38f895eacd2a182e24c39a2d699601162a6368f6511f7ba140f22a085f8abdc9",
+    "champion-scenarios.js": "2c149421aaed39f2dce265f51ded730560b3c7fc08323548b09beae5af55d132",
+    "combat/ai-orders.js": "419304d06e005449f3f62c1dfa62144b26e4ef85a55dc2bc62822fe9810b0d4e",
+    "combat/attacks.js": "496782759dc9540355626f3ab5718db19e2964f1003b4adbd0747088a33f00e6",
+    "combat/chase-path.js": "502a9567b736941ef8f63765b36aef18abba84b91131c886dc16060077ed28c4",
+    "combat/cohort-motion.js": "93db572f1be894693c86f8cd6449522fe6531fdd1db6270a45422611cbf98161",
+    "combat/collision.js": "3e4bc576462051826cef72eccdcfd112e77212c2718f9cc465ea6bf217948aa3",
+    "combat/contact-graph-steering.js": "3e04ec8c0b9301b91be3c3b2dc2a080551b43e5e833268b6784bdafca7a19469",
+    "combat/contact-reservations.js": "28a0fb292776e3857d380e5bdff5f2bf2eeffdb17012a4d21de85fdd295b2975",
+    "combat/diplomacy.js": "dfa46fde46f83f09a52e3818a495a9c3373eba1c59ee7f93de87ec0a6389844a",
+    "combat/experiments.js": "65be7ae497bf3bed48e74d73e3a7e47f9aea0273913cbe46bac132e620d8058c",
+    "combat/kite-timing.js": "f86ed7caca423911190a7aa98cfff93ec9420fefdf0afbceddcbe4ab2f83853f",
+    "combat/local-avoidance.js": "3ec1de33580cd0738d29fc1627b8d6d4aacbbc02962df49ab1e4c817ff86c5ec",
+    "combat/matchup-summary.js": "c4d6ddf08d160b561e298cef2b7a02522db2aa8ee839583f0c45b1054cf50081",
+    "combat/movement.js": "613b9db05a2713ce3cf444b5e29b3cba5f0fc9d7d570efe702350d2b18fe1c97",
+    "combat/pair-interactions.js": "23a1579a6e9b93dd7097fb6a8bb1c1ed7209d2a7ee7b445e0d7317d6f58ac716",
+    "combat/projectile-mechanics.js": "77c0c9d58fda17872cee1f1e2010be4a5e602f970a9550930b847f69de13bf96",
+    "combat/ranged-crowding.js": "6c4b98c52601da822a13042ea8bfb84ef52ff6a19cb8e0b617f4ef49aeb561e9",
+    "combat/reach-melee.js": "e1aba17836c00a01908c7381200194beafbff5a1f96c78e475b1f1a6c168dfc7",
+    "combat/solo-navigation.js": "c4adb8087f1ff4a2851b193516620972d4cbcda70357d5e45badd8815e4503f0",
+    "combat/targeting.js": "d97c0f3a6d80c070943c983148802714866ceb4e4b672965daf309cf29ee9adf",
+    "combat/unit-defenses.js": "1e90c38a8a3a23ecdb870162b5b2e493b38cd005cd6dbe84c15539493a155f4a",
+    "combat/unit-state.js": "f9aa4196e0a62de16b08cdda29736e060698d2abe219f68ec81bf3c598492e3a",
+    "combat/world.js": "ee4f333822df501cb47135fb3f5a198d9ff8c2b16e6a376b26efa9d5488d1915",
+    "dedicated-benchmark-rig.js": "8bf88c46a58905e9f8c9f5e8e07ab595424ce3d4bc9a0f8d1870af1806be39ee",
+    "dedicated-golden-comparison.js": "310b96fa55a37670c208ecf4aa3fbbc4227ca0b19e100dc95e17b9b5320dd3ea",
+    "dedicated-golden-corpus.js": "e1cc7bdc1b5e465df063d8dafd0f00149107e3b4dc61ad27f246ae25b727642a",
+    "engine-config.js": "1636b7c15b8088114d6b709af4500f8f3825d36d1367f13c7625efff58c1dc89",
+    "fight.js": "c6cdc76c76d5f7ae3d12810cd7ace410624ef8e4b657104d4366e2444563de94",
+    "formation-model.js": "8f1b7ca80879c2ee732dea7171e3e69ed8f97c1b2f239ec08079bff011f47276",
+    "kite-profiles.js": "f45e9ec67850427eb50dddc461f9d422b9c6db5a99b00cc47fae567bd71208b9",
+    "kiting-observation-matchups.js": "0dbd2c4a80f085fb68ff689370d0facae05e2466c3af59a6a939a5df7d63bd0d",
+    "kiting-observation-placement.js": "4e85983caea8b7b22f37d3bc9a9dc9fff3dbd5f511ade62c274bfbf2a821450d",
+    "lab-scenario.js": "9d87d64a6d6ebfedff67a33b0f587e2caa13860f8d62cbf885f2bee724b40acb",
+    "map-model.js": "5689f3f360c699e20cb256d1a70eb29f3db13a2dca5653e673527ad16ab99936",
+    "matchup-playback.js": "d2a2d9d25be073f77c2d0aaeabcdab8f0df3c990da32480e15dd41f2c2e718be",
+    "mechanics-schema.js": "9a6d0902add6d434da9b74d08e05496b9c1c0733da9ad15e0ae2b8e594ca6f56",
+    "phase2-batch1-comparison.js": "a2933507b035ef6bb91e33ffd821574a1052ef2852319bb1df9ec5bd1802b64a",
+    "phase2-wrong-winner-review.js": "452c3d2adc33be3ca72df2ac4a6e2fb5265fa2324a8e8da8ee0d807aa583af85",
+    "placement-table.js": "38d1566c3f18373703db1a2584b6551376a9b1a50703ba2cadf79c01b19954be",
+    "placement.js": "c1b42b95b1de138b54f37c3f5aa78f3280aed1cf7f3de87ee73f794eaa58cda2",
+    "purchase.js": "92050e141c098b420808289fa164d496c7ea8ce7c998fb32af255d4947801239",
+    "simulation-clock.js": "b2abb7591762f625803c616f82fd8d9ae09c8c4f24f1b2a8db7f2923ef7013d5",
+    "standard-units-comparison.js": "253313a4916a105277000938dbadaaef770334d8e58935b06b59c164c2668d63",
+    "unit-registry.js": "260d19ddcf9a8cecf027de965ead841829cd23069e87a1664fe56bfeefbb1325"
+  },
+  "campaignHash": "0aebb7b2c73afe3c8cfca5226234b90c0af095bb5be58617f1f4d5af9b9f41a0",
+  "maxWallSeconds": 120,
+  "workerCount": 3,
+  "allFlagged": true,
+  "note": "Behavior corrections; changed hashes are reported, never substituted into the frozen campaign.",
+  "tasks": [
+    {
+      "kind": "control",
+      "matchupId": "m_1953dc7ed7f5690da46a",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1953dc7ed7f5690da46a",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1953dc7ed7f5690da46a",
+      "seed": 2
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_497ee2a68a272a1f4fcd",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_497ee2a68a272a1f4fcd",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_497ee2a68a272a1f4fcd",
+      "seed": 2
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_62f2291f3c26de9db10f",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_62f2291f3c26de9db10f",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_62f2291f3c26de9db10f",
+      "seed": 2
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 2
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 3
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 4
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 5
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 6
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 7
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 8
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 9
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_9dbe33eceef98c3aae72",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_9dbe33eceef98c3aae72",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_9dbe33eceef98c3aae72",
+      "seed": 2
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_19b0be5f01f75e80e258",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_19b0be5f01f75e80e258",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_19b0be5f01f75e80e258",
+      "seed": 2
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_735b95318dc4432456b5",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_735b95318dc4432456b5",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_735b95318dc4432456b5",
+      "seed": 2
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_7bf4c642a74217824b64",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_7bf4c642a74217824b64",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_7bf4c642a74217824b64",
+      "seed": 2
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_af47f361f34798711c25",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_af47f361f34798711c25",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_af47f361f34798711c25",
+      "seed": 2
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_c4d0b4d4dac68fadd4eb",
+      "seed": 0
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_c4d0b4d4dac68fadd4eb",
+      "seed": 1
+    },
+    {
+      "kind": "control",
+      "matchupId": "m_c4d0b4d4dac68fadd4eb",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_75259c25e0e311285d0f",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_318d8eed9fdb6b2a0100",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_1fb69067f9398f2309ce",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_318d8eed9fdb6b2a0100",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_7f887f8f3fab653c553a",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_a496158d51565a9c832e",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_aec31411caccb86c55e5",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_5ae9ad79f7d6a5ddeeb8",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_aec31411caccb86c55e5",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_aec31411caccb86c55e5",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_d80eb7ee96f46bf06530",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_de08d5907319e3f1237d",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_de08d5907319e3f1237d",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_00ce0474739733c6feb2",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_00ce0474739733c6feb2",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_00ce0474739733c6feb2",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_37f33ea91dbdedda8d83",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_3fb05e487a0685c8dcd7",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_37f33ea91dbdedda8d83",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_5e5573811c13a0d956db",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_5e5573811c13a0d956db",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_77452dc2df8e26c631bd",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_5e5573811c13a0d956db",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_bf1ed614717ec1806ca0",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_8d9ee346dae1cdac7c52",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_d687b81fffad659d9b72",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_d687b81fffad659d9b72",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_e1b16d1cc27900b777f4",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_ed79846db7272bf05960",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_5c951a7bad151e048fb7",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_a315a10a95405cac3c93",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_a315a10a95405cac3c93",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_9f24a61daa053dd6cbde",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_ab29a22ad2541ca15219",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_c4816b60d8b32f7a77cb",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_ab29a22ad2541ca15219",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_ca7c090fe84eedf9b08a",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_ca7c090fe84eedf9b08a",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_ca7c090fe84eedf9b08a",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_0445c2f7cdd81c9446b9",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_0445c2f7cdd81c9446b9",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_541cb4f47757dc381e24",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_541cb4f47757dc381e24",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_884099beb2270e9030a6",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_884099beb2270e9030a6",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_a3d5818088a977998b00",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_884099beb2270e9030a6",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_a3d5818088a977998b00",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_c75495b82b2961071269",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_c75495b82b2961071269",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_0c68e610b8767183612d",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_1dcec090a20ee815ce4c",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_37c30f06e68d852f5c25",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_6ae4fc5733a4bef055c4",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_cfef7e2dfe096a793b5f",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_b87035b586b3baac05d8",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_927a914ef2de84d80395",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_ce33e3944153ff258187",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_4fcb05713847c40f4b5e",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_4fcb05713847c40f4b5e",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_4fcb05713847c40f4b5e",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_0645f9dd7620892eaeeb",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_edc9b0f477d0c4e3b8cb",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_a16ec12f3502b6cdd334",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_03d5ca59552b4d81aecf",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_03d5ca59552b4d81aecf",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_2001b4ec56e343b36fac",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_60fc1eebd5894d219d2a",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_793dc0d956f79e4e43dd",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_793dc0d956f79e4e43dd",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_793dc0d956f79e4e43dd",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_d7d39a8b9adc02491168",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_d681f3f7b7ea94aaf710",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_f10c56e300cff4e4b4b2",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_13c2360680396b66c117",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_13c2360680396b66c117",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_14c654e4d24dbf59ee7b",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_1e49e0284b17acd04ec6",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_42c63b4c3fafb71721e6",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_fd1eebbb6c1579534aac",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_47341333e6c09205a174",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_63efd460c7019f99c77c",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_95d1499627691cf3c02f",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_84ddf03e4cb66ff1d8a3",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_97613e2115bcc013da3a",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_b1514092de28e0395d25",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_b1514092de28e0395d25",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_b89bf55ce1873e7ac838",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_b89bf55ce1873e7ac838",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_f0e3947fab0462692501",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_da7da5f98989d0913ec0",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_19d46af37e9f423dbe56",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_19d46af37e9f423dbe56",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_19d46af37e9f423dbe56",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_55b143fd6c092a98027e",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_645c7985fb11bf8feae7",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_968ecebb18fbe9f09f62",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_bff2e104a2dde69c5f1a",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_d68bf9b8c7fd0687b8b6",
+      "seed": 2
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_fc5ea04998edffc9e957",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_fe48b3779f1dac3146bf",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_94d18770a3cd337104d9",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_9ae6163ad68b2d1a9ee4",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_a31297d0614154669474",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_77921566a09000903b8f",
+      "seed": 0
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_77921566a09000903b8f",
+      "seed": 1
+    },
+    {
+      "kind": "anomaly",
+      "matchupId": "m_77921566a09000903b8f",
+      "seed": 2
+    }
+  ]
+}

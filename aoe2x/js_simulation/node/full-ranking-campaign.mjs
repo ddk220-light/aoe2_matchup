@@ -459,7 +459,7 @@ export async function runFull(directory, { workers = 4, publishResults = false, 
     state = existsSync(resolve(directory, "state.json")) ? JSON.parse(readFileSync(resolve(directory, "state.json"), "utf8"))
       : { startedAt: now(), reviews: {} };
     state.status = "running"; state.workers = workers; state.pid = process.pid;
-    pool = new RankingWorkerPool(workers, manifest.policy?.maxSimulationTicks ? {
+    pool = new RankingWorkerPool(workers, manifest.policy?.maxSimulationTicks > 9000 ? {
       workerUrl: new URL("./collision-validation-worker.mjs", import.meta.url),
       maxTicks: manifest.policy?.maxSimulationTicks,
     } : {});

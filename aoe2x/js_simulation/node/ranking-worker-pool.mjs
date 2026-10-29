@@ -20,7 +20,7 @@ export class RankingWorkerPool {
       if (message.progress) { task.lastProgress = message.progress; return; }
       clearTimeout(task.timer);
       slot.task = null;
-      task.resolve(message);
+      task.resolve({ ...message, ...(task.lastProgress ? { lastProgress: task.lastProgress } : {}) });
       this.dispatch();
     });
     const failed = error => {
@@ -28,7 +28,7 @@ export class RankingWorkerPool {
       slot.worker = null;
       if (slot.task) {
         clearTimeout(slot.task.timer);
-        slot.task.resolve({ error: { name: "WorkerExit", message: String(error) } });
+        slot.task.resolve({ error: { name: "WorkerExit", message: String(error) }, lastProgress: slot.task.lastProgress });
         slot.task = null;
       }
       worker.terminate();

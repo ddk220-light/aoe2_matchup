@@ -1,6 +1,6 @@
 # Full Imperial land rankings campaign
 
-Status: **running**. 3221/7376 currently required runs; 1800/3591 complete matchups; 105 flagged for review.
+Status: **running**. 3354/7404 currently required runs; 1927/3591 complete matchups; 111 flagged for review.
 
 555 civilization/unit variants across 56 civilizations. Infantry 147, Ranged 274, Cavalry 134. Imperial units only; naval and anti-building groups are outside the agreed opponent pools. Scoring remains deferred.
 

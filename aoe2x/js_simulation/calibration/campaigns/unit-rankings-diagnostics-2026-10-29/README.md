@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 9/110 diagnostic tasks.
+Status: **running**. Completed 10/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -14,6 +14,7 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 
 | Task | Matchup / seed | Stop reason | Processing seconds | Last game seconds |
 |---|---|---|---:|---:|
+| diagnose_engine_error | Burgundians Scorpion vs. Saracens Hand Cannoneer / seed 0 | engine_error | 24.34 | 13.916666666666666 |
 | extend_game_time | Aztecs Elite Skirmisher vs. Turks Cavalier / seed 2 | processing_limit | 121.15 | 168.86666666666667 |
 | extend_game_time | Bohemians Mounted Crossbowman vs. Spanish Hussar / seed 0 | decided | 32.87 | 288.8 |
 | extend_game_time | Khmer Elite Battle Elephant vs. Saracens Heavy Cavalry Archer / seed 0 | decided | 30.12 | 207.33333333333334 |

@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 50/110 diagnostic tasks.
+Status: **running**. Completed 55/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -49,6 +49,11 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.32 | 22.216666666666665 |
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.47 | 31.916666666666668 |
 | diagnose_processing_timeout | Cumans Crossbowman vs. Spanish Hussar / seed 0 | processing_limit | 120.16 | 15.033333333333333 |
+| diagnose_processing_timeout | Cumans Crossbowman vs. Spanish Hussar / seed 1 | processing_limit | 120.63 | 7.916666666666667 |
+| diagnose_processing_timeout | Georgians Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.51 | 20.133333333333333 |
+| diagnose_processing_timeout | Georgians Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 1 | processing_limit | 120.75 | 22.15 |
+| diagnose_processing_timeout | Celts Crossbowman vs. Spanish Hussar / seed 0 | processing_limit | 120.19 | 12.15 |
+| diagnose_processing_timeout | Celts Crossbowman vs. Spanish Hussar / seed 1 | processing_limit | 120.52 | 7.883333333333334 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.19 | 23.833333333333332 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.28 | 24.666666666666668 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.26 | 37.71666666666667 |

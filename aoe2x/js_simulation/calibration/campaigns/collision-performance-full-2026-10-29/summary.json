@@ -1,14 +1,14 @@
 {
-  "updatedAt": "2026-10-29T19:31:52.294822+00:00",
+  "updatedAt": "2026-10-29T19:42:20.834179+00:00",
   "candidateSourceSha256": "3aab0df60312a8a293e213130b872fb3e532cdef8d95c3ae19f641d236f23952",
-  "validationRuns": 142,
+  "validationRuns": 170,
   "exactChecks": 114,
   "exactMatches": 114,
   "mismatches": 0,
-  "completionRetries": 28,
+  "completionRetries": 56,
   "completionOutcomes": {
-    "win": 26,
-    "processing_timeout": 1,
+    "win": 50,
+    "processing_timeout": 5,
     "engine_error": 1
   },
   "prefixComparisons": [
@@ -1322,7 +1322,30 @@
       "exact": true
     }
   ],
-  "completeBaselineComparisons": [],
+  "completeBaselineComparisons": [
+    {
+      "teams": [
+        "Franks Crossbowman",
+        "Spanish Hussar"
+      ],
+      "matchupId": "m_541cb4f47757dc381e24",
+      "seed": 0,
+      "exact": true,
+      "baselineWallSeconds": 179.52297525799997,
+      "candidateWallSeconds": 47.54620536200004
+    },
+    {
+      "teams": [
+        "Chinese Heavy Scorpion",
+        "Spanish Elite Skirmisher"
+      ],
+      "matchupId": "m_ca7c090fe84eedf9b08a",
+      "seed": 0,
+      "exact": true,
+      "baselineWallSeconds": 379.938598228,
+      "candidateWallSeconds": 24.361620817000045
+    }
+  ],
   "medianPrefixSpeedRatio": 7.550573944345766,
   "timingCaveat": "Prefix baselines had CPU profiling and detailed tracing; candidates use lightweight progress reporting. Concurrent workloads differ. Exact state/event comparisons are independent of timing.",
   "knownPreexistingTests": [

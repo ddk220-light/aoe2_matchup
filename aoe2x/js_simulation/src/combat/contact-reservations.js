@@ -176,7 +176,17 @@ export function updateContactReservations({
     }
     const left = byReference.get(candidate.reservation.leftId);
     const right = byReference.get(candidate.reservation.rightId);
-    if (!contactSlotsAvailable(candidate.reservation, left, right, contactSlots)) continue;
+    if (!contactSlotsAvailable(candidate.reservation, left, right, contactSlots)) {
+      // A transient crowd surface may end while the bodies still overlap.
+      // Losing the new deep-lane claim cannot instantly make that existing
+      // geometry hard. Preserve only its current separation and release it
+      // monotonically, exactly as for an expired persistent reservation.
+      if (pairSeparation(left, right) < pairFullExtent(left, right) - EPSILON) {
+        inheritReleasedPair({ key: candidate.key, left, right, inheritedExtents,
+          contactReservations, diagnostics, tick });
+      }
+      continue;
+    }
     reservations.set(candidate.key, candidate.reservation);
     contactReservations.set(candidate.key, candidate.reservation);
     occupyContactSlots(candidate.reservation, left, right, contactSlots);

@@ -138,6 +138,29 @@ test("allied convergence gives one deep lane without compounding shallow overlap
   assert.equal(interactions.filter(({ kind }) => kind === "hard").length, 2);
 });
 
+test("an existing ranged overlap releases safely when a new deep lane is unavailable", () => {
+  const bodies = [
+    unit(1, 2, 4, { mechanics: rangedMechanics(0.5), pursuitTargetId: 4 }),
+    unit(2, 2, 4.4, { mechanics: rangedMechanics(0.5), pursuitTargetId: 4 }),
+    unit(3, 2, 4.8, { mechanics: rangedMechanics(0.5), pursuitTargetId: 4 }),
+    unit(4, 3, 14, { mechanics: rangedMechanics(0.5), action: "idle" }),
+  ];
+  const result = updateContactReservations({
+    state: createContactReservationState(), tick: 10, units: bodies,
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0), proposal(4, 0)],
+  });
+  const snapshot = createPairInteractionSnapshot({ contactReservations: result.contactReservations });
+  const denied = resolvePairInteraction(bodies[0], bodies[1], snapshot);
+  assert.equal(denied.kind, "releasing");
+  assert.equal(denied.collisionExtent, 0.4);
+  assert.equal(denied.mayDeepen, false);
+  assert.equal(result.state.reservations.size, 1, "release must not grant another deep lane");
+  const separated = bodies.map(body => body.referenceId === 2 ? { ...body, x: 4.45 } : body);
+  const next = updateContactReservations({ state: result.state, tick: 11, units: separated,
+    proposals: [proposal(1, 0.1), proposal(2, 0), proposal(3, 0), proposal(4, 0)] });
+  assert.equal(next.contactReservations.get("1:2").collisionExtent, 0.45);
+});
+
 test("one unit may hold one allied transit and one enemy engagement contact", () => {
   const result = updateContactReservations({
     state: createContactReservationState(),

@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 100/110 diagnostic tasks.
+Status: **running**. Completed 105/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -103,8 +103,13 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Bulgarians Archer vs. Spanish Hussar / seed 0 | processing_limit | 120.33 | 12.45 |
 | diagnose_processing_timeout | Bulgarians Archer vs. Spanish Hussar / seed 1 | processing_limit | 120.19 | 8.016666666666667 |
 | diagnose_processing_timeout | Turks Hand Cannoneer vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.34 | 26.533333333333335 |
+| diagnose_processing_timeout | Portuguese Hand Cannoneer vs. Spanish Hussar / seed 1 | processing_limit | 120.29 | 11.583333333333334 |
+| diagnose_processing_timeout | Berbers Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.18 | 16.85 |
+| diagnose_processing_timeout | Tatars Heavy Cavalry Archer vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.22 | 42.25 |
 | diagnose_processing_timeout | Aztecs Scorpion vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.33 | 23.116666666666667 |
 | diagnose_processing_timeout | Aztecs Scorpion vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.40 | 21.633333333333333 |
+| diagnose_processing_timeout | Britons Heavy Mounted Crossbowman vs. Spanish Hussar / seed 2 | processing_limit | 120.39 | 13.666666666666666 |
+| diagnose_processing_timeout | Malians Arbalester vs. Spanish Hussar / seed 1 | processing_limit | 121.36 | 7.983333333333333 |
 | extend_game_time | Aztecs Elite Skirmisher vs. Turks Cavalier / seed 2 | processing_limit | 121.15 | 168.86666666666667 |
 | extend_game_time | Bohemians Mounted Crossbowman vs. Spanish Hussar / seed 0 | decided | 32.87 | 288.8 |
 | extend_game_time | Khmer Elite Battle Elephant vs. Saracens Heavy Cavalry Archer / seed 0 | decided | 30.12 | 207.33333333333334 |

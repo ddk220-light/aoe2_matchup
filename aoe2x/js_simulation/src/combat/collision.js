@@ -113,7 +113,21 @@ function normalizeBodies(snapshot, proposals) {
       throw new Error(`movement proposal references unknown unit ${referenceId}`);
     }
   }
-  return bodies.sort(pairKey);
+  bodies.sort(pairKey);
+  for (let index = 0; index < bodies.length; index += 1) {
+    bodies[index].solveIndex = index;
+    bodies[index].pairInteractions = new Array(bodies.length);
+  }
+  return bodies;
+}
+
+
+function solverPairInteraction(left, right, snapshot) {
+  // Unit state and reservations are fixed during one solve; only dx/dy change.
+  // Keep this cache on the temporary bodies so it cannot survive a new tick,
+  // reservation, formation order, or collision solve.
+  return left.pairInteractions[right.solveIndex]
+    ??= resolvePairInteraction(left, right, snapshot);
 }
 
 
@@ -167,7 +181,7 @@ function validateStartingGeometry(bodies, obstacles, bounds, pairInteractions) {
         Math.abs(bodies[j].x - bodies[i].x),
         Math.abs(bodies[j].y - bodies[i].y),
       );
-      const interaction = resolvePairInteraction(
+      const interaction = solverPairInteraction(
         bodies[i], bodies[j], pairInteractions,
       );
       const extent = interaction.collisionExtent;
@@ -227,11 +241,25 @@ function sweptDistanceFromOrigin(startX, startY, endX, endY) {
 function constrainObstacle(body, obstacle) {
   const startX = body.x - obstacle.x;
   const startY = body.y - obstacle.y;
+  const endX = startX + body.dx;
+  const endY = startY + body.dy;
+  const extent = body.radius + obstacle.radius;
+  // Conservative broad phase only: a segment whose entire bounding box is
+  // outside an expanded obstacle box cannot touch its circle. Keep a numerical
+  // guard; nearby candidates still execute the original swept-distance math.
+  const guard = GEOMETRY_SLOP + 8 * Number.EPSILON * Math.max(
+    1, Math.abs(startX), Math.abs(startY), Math.abs(endX), Math.abs(endY), extent,
+  );
+  const paddedExtent = extent + guard;
+  if ((startX > paddedExtent && endX > paddedExtent)
+      || (startX < -paddedExtent && endX < -paddedExtent)
+      || (startY > paddedExtent && endY > paddedExtent)
+      || (startY < -paddedExtent && endY < -paddedExtent)) return 0;
   if (sweptDistanceFromOrigin(
     startX,
     startY,
-    startX + body.dx,
-    startY + body.dy,
+    endX,
+    endY,
   ) >= body.radius + obstacle.radius) return 0;
   const centerX = obstacle.x - body.x;
   const centerY = obstacle.y - body.y;
@@ -281,7 +309,7 @@ function distributeEqualMassRemoval(excess, available) {
 // meet on, which a Euclidean radius cannot produce. Resolution is the standard
 // minimum-translation push along the axis that is closest to clearing.
 function constrainPair(left, right, pairInteractions) {
-  const interaction = resolvePairInteraction(left, right, pairInteractions);
+  const interaction = solverPairInteraction(left, right, pairInteractions);
   const extent = interaction.collisionExtent;
   const centerX = right.x - left.x;
   const centerY = right.y - left.y;
@@ -328,19 +356,41 @@ function reportCollisionDiagnostics(callback, mode, sweeps, largestCorrection,
 }
 
 
+function constrainStaticGeometry(body, obstacles, bounds) {
+  const cached = body.staticConstraints;
+  if (cached && Object.is(cached.inputX, body.dx) && Object.is(cached.inputY, body.dy)) {
+    body.dx = cached.outputX;
+    body.dy = cached.outputY;
+    return cached.correction;
+  }
+  const inputX = body.dx, inputY = body.dy;
+  let correction = constrainBounds(body, bounds);
+  for (const obstacle of obstacles) {
+    correction = Math.max(correction, constrainObstacle(body, obstacle));
+  }
+  // The ordered obstacle pass is a pure function of this displacement within
+  // the solve. Reusing it retains both the exact output and correction value.
+  const entry = cached ?? (body.staticConstraints = {});
+  entry.inputX = inputX; entry.inputY = inputY;
+  entry.outputX = body.dx; entry.outputY = body.dy;
+  entry.correction = correction;
+  return correction;
+}
+
+
 function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
   onCollisionDiagnostics, allowEarlySlop, collisionRecoveryState) {
   let lastCorrection = Infinity;
+  const previousMovement = new Float64Array(bodies.length * 2);
   for (let sweep = 0; sweep < MAX_CONSTRAINT_SWEEPS; sweep += 1) {
+    for (let index = 0; index < bodies.length; index += 1) {
+      previousMovement[index * 2] = bodies[index].dx;
+      previousMovement[index * 2 + 1] = bodies[index].dy;
+    }
     let largestCorrection = 0;
     for (const body of bodies) {
-      largestCorrection = Math.max(largestCorrection, constrainBounds(body, bounds));
-      for (const obstacle of obstacles) {
-        largestCorrection = Math.max(
-          largestCorrection,
-          constrainObstacle(body, obstacle),
-        );
-      }
+      largestCorrection = Math.max(largestCorrection,
+        constrainStaticGeometry(body, obstacles, bounds));
     }
     for (let i = 0; i < bodies.length; i += 1) {
       for (let j = i + 1; j < bodies.length; j += 1) {
@@ -368,6 +418,14 @@ function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
       return;
     }
     lastCorrection = largestCorrection;
+    // An exactly repeated displacement vector is a fixed point of this
+    // deterministic sweep. All remaining sweeps would repeat the same work and
+    // end with the same state and correction. Apply the existing budget-end
+    // validation/recovery below, preserving tolerances and diagnostic semantics.
+    if (bodies.every((body, index) => (
+      Object.is(body.dx, previousMovement[index * 2])
+      && Object.is(body.dy, previousMovement[index * 2 + 1])
+    ))) break;
   }
 
   // Ally separation is a soft constraint: a crowd can stay mutually unsatisfied
@@ -426,7 +484,7 @@ function invalidBodyReferences(bodies, obstacles, bounds, tolerance, pairInterac
       const gap = Math.max(
         Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
         Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),
-      ) - resolvePairInteraction(
+      ) - solverPairInteraction(
         bodies[i], bodies[j], pairInteractions,
       ).collisionExtent;
       if (gap >= -tolerance) continue;
@@ -491,7 +549,7 @@ function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON,
       const gap = Math.max(
         Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
         Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),
-      ) - resolvePairInteraction(
+      ) - solverPairInteraction(
         bodies[i], bodies[j], pairInteractions,
       ).collisionExtent;
       if (gap < -tolerance) {

@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 80/110 diagnostic tasks.
+Status: **running**. Completed 85/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -56,15 +56,20 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Spanish Hand Cannoneer vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.34 | 22.716666666666665 |
 | diagnose_processing_timeout | Turks Heavy Cavalry Archer vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.22 | 22.133333333333333 |
 | diagnose_processing_timeout | Khmer Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.61 | 19.033333333333335 |
+| diagnose_processing_timeout | Mapuche Elite Bolas Rider vs. Spanish Hussar / seed 1 | processing_limit | 120.75 | 25.6 |
+| diagnose_processing_timeout | Bulgarians Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.59 | 16.266666666666666 |
 | diagnose_processing_timeout | Portuguese Cavalier vs. Spanish Paladin / seed 0 | decided | 108.41 | 60.03333333333333 |
 | diagnose_processing_timeout | Portuguese Cavalier vs. Spanish Paladin / seed 1 | decided | 109.12 | 60.03333333333333 |
 | diagnose_processing_timeout | Portuguese Cavalier vs. Spanish Paladin / seed 2 | decided | 108.01 | 60.03333333333333 |
 | diagnose_processing_timeout | Muisca Elite Guecha Warrior vs. Spanish Hussar / seed 0 | processing_limit | 120.46 | 42.516666666666666 |
 | diagnose_processing_timeout | Muisca Elite Guecha Warrior vs. Spanish Hussar / seed 1 | processing_limit | 120.80 | 48.7 |
 | diagnose_processing_timeout | Muisca Elite Guecha Warrior vs. Spanish Hussar / seed 2 | processing_limit | 120.34 | 31.316666666666666 |
+| diagnose_processing_timeout | Bengalis Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.32 | 42.93333333333333 |
+| diagnose_processing_timeout | Slavs Heavy Scorpion vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.26 | 8.05 |
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.27 | 23.2 |
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.32 | 22.216666666666665 |
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.47 | 31.916666666666668 |
+| diagnose_processing_timeout | Incas Elite Skirmisher vs. Turks Cavalier / seed 0 | processing_limit | 120.45 | 46.8 |
 | diagnose_processing_timeout | Cumans Crossbowman vs. Spanish Hussar / seed 0 | processing_limit | 120.16 | 15.033333333333333 |
 | diagnose_processing_timeout | Cumans Crossbowman vs. Spanish Hussar / seed 1 | processing_limit | 120.63 | 7.916666666666667 |
 | diagnose_processing_timeout | Georgians Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.51 | 20.133333333333333 |

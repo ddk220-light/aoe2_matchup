@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 55/110 diagnostic tasks.
+Status: **running**. Completed 60/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -57,9 +57,14 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.19 | 23.833333333333332 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.28 | 24.666666666666668 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.26 | 37.71666666666667 |
+| diagnose_processing_timeout | Spanish Archer vs. Spanish Hussar / seed 0 | processing_limit | 120.15 | 12.333333333333334 |
+| diagnose_processing_timeout | Spanish Archer vs. Spanish Hussar / seed 1 | processing_limit | 120.93 | 7.966666666666667 |
+| diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.80 | 29.266666666666666 |
+| diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.27 | 15.15 |
 | diagnose_processing_timeout | Chinese Heavy Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.20 | 24.25 |
 | diagnose_processing_timeout | Chinese Heavy Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.23 | 24.466666666666665 |
 | diagnose_processing_timeout | Chinese Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | decided | 111.05 | 51.53333333333333 |
+| diagnose_processing_timeout | Bulgarians Archer vs. Spanish Hussar / seed 0 | processing_limit | 120.33 | 12.45 |
 | extend_game_time | Aztecs Elite Skirmisher vs. Turks Cavalier / seed 2 | processing_limit | 121.15 | 168.86666666666667 |
 | extend_game_time | Bohemians Mounted Crossbowman vs. Spanish Hussar / seed 0 | decided | 32.87 | 288.8 |
 | extend_game_time | Khmer Elite Battle Elephant vs. Saracens Heavy Cavalry Archer / seed 0 | decided | 30.12 | 207.33333333333334 |

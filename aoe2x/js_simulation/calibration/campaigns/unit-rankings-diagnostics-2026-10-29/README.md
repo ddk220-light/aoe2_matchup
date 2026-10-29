@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 45/110 diagnostic tasks.
+Status: **running**. Completed 50/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -29,9 +29,13 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Vikings Mounted Crossbowman vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.10 | 11.316666666666666 |
 | diagnose_processing_timeout | Berbers Hand Cannoneer vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.22 | 18.116666666666667 |
 | diagnose_processing_timeout | Berbers Hand Cannoneer vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.27 | 19.233333333333334 |
+| diagnose_processing_timeout | Burgundians Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.20 | 28.333333333333332 |
+| diagnose_processing_timeout | Burgundians Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.25 | 23.4 |
 | diagnose_processing_timeout | Mayans Elite Plumed Archer vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.15 | 41.4 |
 | diagnose_processing_timeout | Mayans Elite Plumed Archer vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.43 | 8.683333333333334 |
 | diagnose_processing_timeout | Mayans Elite Plumed Archer vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.42 | 8.7 |
+| diagnose_processing_timeout | Franks Crossbowman vs. Spanish Hussar / seed 0 | processing_limit | 120.32 | 12.35 |
+| diagnose_processing_timeout | Franks Crossbowman vs. Spanish Hussar / seed 1 | processing_limit | 120.95 | 8.05 |
 | diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.48 | 73.46666666666667 |
 | diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.52 | 76.5 |
 | diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.48 | 69.65 |
@@ -44,6 +48,7 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.27 | 23.2 |
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.32 | 22.216666666666665 |
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.47 | 31.916666666666668 |
+| diagnose_processing_timeout | Cumans Crossbowman vs. Spanish Hussar / seed 0 | processing_limit | 120.16 | 15.033333333333333 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.19 | 23.833333333333332 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.28 | 24.666666666666668 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.26 | 37.71666666666667 |

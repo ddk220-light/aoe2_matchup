@@ -2,7 +2,7 @@
 
 37 pilot checks: 19 exact, 18 changed, 0 winner changes.
 
-7 anomaly retries: {'win': 7}.
+12 anomaly retries: {'win': 11, 'processing_timeout': 1}.
 
 The exact-preserving collision optimization has its own validation report. These 
 additional corrections intentionally repair blocked-pursuit and contact-handoff behavior.
@@ -16,6 +16,11 @@ additional corrections intentionally repair blocked-pursuit and contact-handoff 
 | Burgundians|heavy_scorpion vs. Saracens|hand_cannoneer / 0 | 14.13 | 34.73 | win |
 | Gurjaras|imp_elite_skirm vs. Turks|paladin / 0 | 8.50 | 33.70 | win |
 | Incas|imp_elite_skirm vs. Turks|paladin / 0 | 7.42 | 33.70 | win |
+| Incas|imp_elite_skirm vs. Spanish|champion / 1 | 120.00 | 152.92 | processing timeout |
+| Mapuche|imp_elite_skirm vs. Spanish|hussar / 2 | 80.43 | 40.20 | win |
+| Muisca|elite_guecha_warrior_muisca vs. Spanish|hussar / 0 | 16.90 | 50.48 | win |
+| Muisca|imp_elite_skirm vs. Turks|paladin / 1 | 7.32 | 34.18 | win |
+| Tupi|imp_slinger vs. Turks|paladin / 1 | 6.71 | 27.62 | win |
 
 Separate engine version. Keep original results immutable; do not combine changed behavior with original ranking samples. Recompute affected campaign results before scoring.
 

@@ -72,7 +72,8 @@ try {
       decidedAnomalies: records.filter(row => row.kind === 'anomaly' && ['win', 'draw'].includes(row.result?.outcome)).length,
       errors: records.filter(row => row.error).length, watchdogs: records.filter(row => row.watchdog).length });
     console.log(JSON.stringify({ completed: records.length, kind: record.kind, teams: record.teams, seed: row.seed,
-      exact: record.exact, wallSeconds: record.wallSeconds, gameSeconds: record.result?.ticks / 60,
+      exact: record.exact, wallSeconds: record.wallSeconds,
+      gameSeconds: (record.result?.ticks ?? record.lastProgress?.tick) / 60,
       outcome: record.result?.outcome, error: record.error, watchdog: record.watchdog }));
     if (message.error || message.watchdog) { await worker.terminate(); worker = new Worker(new URL('./collision-validation-worker.mjs', import.meta.url)); }
   }

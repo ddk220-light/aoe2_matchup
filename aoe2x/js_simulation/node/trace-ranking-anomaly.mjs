@@ -3,16 +3,26 @@ import { registerHooks } from 'node:module';
 import { readFileSync, writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { Session } from 'node:inspector/promises';
 
-const [campaign, matchupId, seedText, outputPath, wallText = '120'] = process.argv.slice(2);
+const [campaign, matchupId, seedText, outputPath, wallText = '120', profileMode, tickText] = process.argv.slice(2);
 const output = resolve(outputPath); mkdirSync(output, { recursive: true });
 const manifest = JSON.parse(readFileSync(resolve(campaign, 'manifest.json')));
 const matchup = manifest.matchups.find(row => row.id === matchupId);
 if (!matchup) throw new Error('unknown matchup');
 const started = performance.now();
 globalThis.__anomalyDeadline = started + Number(wallText) * 1000;
+globalThis.__anomalyMaxTicks = tickText ? Number(tickText) : Number.MAX_SAFE_INTEGER;
 let lastSample = -Infinity, lastWorld, lastContacts;
 const contacts = [];
+const collision = { solves: 0, actualSweeps: 0, maxActualSweeps: 0, modes: {} };
+let solveSweeps = 0;
+globalThis.__anomalySolveStart = () => { collision.solves++; solveSweeps = 0; };
+globalThis.__anomalySweep = () => { collision.actualSweeps++; solveSweeps++; };
+globalThis.__anomalySolveEnd = mode => {
+  collision.maxActualSweeps = Math.max(collision.maxActualSweeps, solveSweeps);
+  collision.modes[mode] = (collision.modes[mode] ?? 0) + 1;
+};
 const serializable = value => JSON.stringify(value, (_, item) => item instanceof Map
   ? { mapEntries: [...item] } : item instanceof Set ? { setValues: [...item] } : item);
 globalThis.__anomalyContacts = input => {
@@ -39,7 +49,8 @@ globalThis.__anomalyObserve = world => {
   }
   appendFileSync(resolve(output, 'timeline.jsonl'), JSON.stringify({ tick: world.tick,
     gameSeconds: world.tick / 60, wallSeconds: (performance.now() - started) / 1000,
-    totals, units: world.units.filter(unit => unit.alive).map(unit => ({
+    totals, ...(profileMode === 'profile' ? { collision } : {}),
+    units: world.units.filter(unit => unit.alive).map(unit => ({
       id: unit.referenceId, owner: unit.owner, x: unit.x, y: unit.y, hp: unit.hp,
       action: unit.action, pursuitTargetId: unit.pursuitTargetId,
       engagedTargetId: unit.engagedTargetId, attackTargetId: unit.attackTargetId,
@@ -50,7 +61,7 @@ registerHooks({ load(url, context, nextLoad) {
   const result = nextLoad(url, context);
   let source = String(result.source);
   if (url.endsWith('/src/fight.js')) {
-    source = source.replace('maxTicks: MAX_TICKS,', 'maxTicks: Number.MAX_SAFE_INTEGER,');
+    source = source.replace('maxTicks: MAX_TICKS,', 'maxTicks: globalThis.__anomalyMaxTicks,');
   } else if (url.endsWith('/src/combat/world.js')) {
     source = source.replace('const MAX_WORLD_TICKS = 9000;', 'const MAX_WORLD_TICKS = Number.MAX_SAFE_INTEGER;')
       .replace('  const publish = (current) => {',
@@ -61,20 +72,51 @@ registerHooks({ load(url, context, nextLoad) {
     proposals, tick, externalReservations: rangedCrowdPlan.contactReservations,
     inheritedOverlapReferenceIds: allowedStartingOverlapReferenceIds });
   const contactUpdate = contactReservationState`);
+  } else if (profileMode === 'profile' && url.endsWith('/src/combat/collision.js')) {
+    source = source.replace('  let lastCorrection = Infinity;',
+      '  globalThis.__anomalySolveStart();\n  let lastCorrection = Infinity;')
+      .replace('for (let sweep = 0; sweep < MAX_CONSTRAINT_SWEEPS; sweep += 1) {',
+        'for (let sweep = 0; sweep < MAX_CONSTRAINT_SWEEPS; sweep += 1) { globalThis.__anomalySweep();')
+      .replace('  if (callback === undefined) return;',
+        '  globalThis.__anomalySolveEnd(mode);\n  if (callback === undefined) return;');
   } else return result;
   return { ...result, source };
 } });
 const { jobFor } = await import('./full-ranking-campaign.mjs');
 const { runHeadlessJob } = await import('./run-job.mjs');
 let result = null, error = null;
+const profiler = profileMode === 'profile' ? new Session() : null;
+if (profiler) {
+  profiler.connect(); await profiler.post('Profiler.enable');
+  await profiler.post('Profiler.setSamplingInterval', { interval: 5000 });
+  await profiler.post('Profiler.start');
+}
 try { result = await runHeadlessJob(jobFor(manifest, matchup, Number(seedText))); }
 catch (caught) { error = { name: caught.name, message: caught.message, stack: caught.stack }; }
+let hotFunctions;
+if (profiler) {
+  const { profile } = await profiler.post('Profiler.stop'); profiler.disconnect();
+  const nodes = new Map(profile.nodes.map(node => [node.id, node.callFrame]));
+  const totals = new Map();
+  for (let index = 0; index < (profile.samples ?? []).length; index++) {
+    const frame = nodes.get(profile.samples[index]);
+    const key = `${frame?.functionName || '(anonymous)'} ${frame?.url}:${(frame?.lineNumber ?? 0) + 1}`;
+    totals.set(key, (totals.get(key) ?? 0) + (profile.timeDeltas?.[index] ?? 0));
+  }
+  const sampled = [...totals.values()].reduce((sum, value) => sum + value, 0);
+  hotFunctions = [...totals].sort((a, b) => b[1] - a[1]).slice(0, 20)
+    .map(([frame, value]) => ({ frame, percent: 100 * value / sampled }));
+}
 if (error && lastContacts) writeFileSync(resolve(output, 'contact-input.json'), serializable(lastContacts) + '\n');
 if (error) writeFileSync(resolve(output, 'contact-history.json'), serializable(contacts) + '\n');
+if (profileMode === 'snapshot' && lastWorld) {
+  writeFileSync(resolve(output, 'world-input.json'), serializable(lastWorld) + '\n');
+}
 const sourceHashes = Object.fromEntries(['world.js', 'contact-reservations.js', 'collision.js'].map(name =>
   [name, createHash('sha256').update(readFileSync(new URL('../src/combat/' + name, import.meta.url))).digest('hex')]));
 const record = { matchupId, seed: Number(seedText), sourceHashes,
   wallSeconds: (performance.now() - started) / 1000, tick: lastWorld?.tick,
-  gameSeconds: lastWorld?.tick / 60, result, error };
+  gameSeconds: lastWorld?.tick / 60, result, error,
+  ...(profiler ? { collision, hotFunctions, note: 'Profiling and trace overhead included in wall time.' } : {}) };
 writeFileSync(resolve(output, 'result.json'), JSON.stringify(record, null, 2) + '\n');
 console.log(JSON.stringify({ ...record, result: result && { outcome: result.outcome, ticks: result.ticks } }));

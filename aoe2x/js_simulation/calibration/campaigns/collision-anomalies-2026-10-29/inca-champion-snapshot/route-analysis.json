@@ -1,0 +1,930 @@
+{
+  "rows": [
+    {
+      "id": 9508,
+      "x": 14.423292912701665,
+      "y": 5.804316090892676,
+      "target": {
+        "x": 15.010102051443365,
+        "y": 6
+      },
+      "inReach": false,
+      "inStopRange": false,
+      "attempts": {
+        "targetReferenceId": 9008,
+        "count": 3
+      },
+      "planned": {
+        "stand": true
+      },
+      "staticOnly": {
+        "targetReferenceId": 9008,
+        "targetX": 15.010102051443365,
+        "targetY": 6,
+        "waypoints": [
+          {
+            "x": 14.375,
+            "y": 5.625
+          },
+          {
+            "x": 14.625,
+            "y": 5.625
+          }
+        ],
+        "waypointIndex": 0
+      }
+    },
+    {
+      "id": 9506,
+      "x": 14.814353713586527,
+      "y": 5.358971700028753,
+      "target": {
+        "x": 15.010102051443365,
+        "y": 6
+      },
+      "inReach": false,
+      "inStopRange": false,
+      "planned": {
+        "stand": true
+      },
+      "staticOnly": {
+        "targetReferenceId": 9008,
+        "targetX": 15.010102051443365,
+        "targetY": 6,
+        "waypoints": [
+          {
+            "x": 14.625,
+            "y": 5.375
+          },
+          {
+            "x": 14.625,
+            "y": 5.625
+          }
+        ],
+        "waypointIndex": 0
+      }
+    }
+  ],
+  "ticks": [
+    {
+      "tick": 3601,
+      "events": [
+        {
+          "id": "3601:contact-reservation-persisted:9506:9507",
+          "eventId": "3601:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3601,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3601:blocked:9506:9008",
+          "eventId": "3601:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3601,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3601:blocked:9508:9008",
+          "eventId": "3601:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3601,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3602,
+      "events": [
+        {
+          "id": "3602:contact-reservation-persisted:9506:9507",
+          "eventId": "3602:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3602,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3602:blocked:9506:9008",
+          "eventId": "3602:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3602,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3602:blocked:9508:9008",
+          "eventId": "3602:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3602,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3602:pursuit-retarget-requested:9508:9008",
+          "eventId": "3602:pursuit-retarget-requested:9508:9008",
+          "type": "pursuit-retarget-requested",
+          "tick": 3602,
+          "actorId": 9508,
+          "targetId": 9008,
+          "reason": "blocked-route-unreachable",
+          "failedAttempts": 5
+        }
+      ]
+    },
+    {
+      "tick": 3603,
+      "events": [
+        {
+          "id": "3603:contact-reservation-persisted:9506:9507",
+          "eventId": "3603:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3603,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3603:blocked:9506:9008",
+          "eventId": "3603:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3603,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3603:blocked:9508:9008",
+          "eventId": "3603:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3603,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3604,
+      "events": [
+        {
+          "id": "3604:contact-reservation-persisted:9506:9507",
+          "eventId": "3604:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3604,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3604:blocked:9506:9008",
+          "eventId": "3604:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3604,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3604:blocked:9508:9008",
+          "eventId": "3604:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3604,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3605,
+      "events": [
+        {
+          "id": "3605:contact-reservation-persisted:9506:9507",
+          "eventId": "3605:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3605,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3605:blocked:9506:9008",
+          "eventId": "3605:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3605,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3605:blocked:9508:9008",
+          "eventId": "3605:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3605,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3605:pursuit-retarget-requested:9506:9008",
+          "eventId": "3605:pursuit-retarget-requested:9506:9008",
+          "type": "pursuit-retarget-requested",
+          "tick": 3605,
+          "actorId": 9506,
+          "targetId": 9008,
+          "reason": "blocked-route-unreachable",
+          "failedAttempts": 5
+        }
+      ]
+    },
+    {
+      "tick": 3606,
+      "events": [
+        {
+          "id": "3606:contact-reservation-persisted:9506:9507",
+          "eventId": "3606:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3606,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3606:blocked:9506:9008",
+          "eventId": "3606:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3606,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3606:blocked:9508:9008",
+          "eventId": "3606:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3606,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3607,
+      "events": [
+        {
+          "id": "3607:contact-reservation-persisted:9506:9507",
+          "eventId": "3607:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3607,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3607:blocked:9506:9008",
+          "eventId": "3607:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3607,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3607:blocked:9508:9008",
+          "eventId": "3607:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3607,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3607:pursuit-retarget-requested:9508:9008",
+          "eventId": "3607:pursuit-retarget-requested:9508:9008",
+          "type": "pursuit-retarget-requested",
+          "tick": 3607,
+          "actorId": 9508,
+          "targetId": 9008,
+          "reason": "blocked-route-unreachable",
+          "failedAttempts": 5
+        }
+      ]
+    },
+    {
+      "tick": 3608,
+      "events": [
+        {
+          "id": "3608:contact-reservation-persisted:9506:9507",
+          "eventId": "3608:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3608,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3608:blocked:9506:9008",
+          "eventId": "3608:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3608,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3608:blocked:9508:9008",
+          "eventId": "3608:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3608,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3609,
+      "events": [
+        {
+          "id": "3609:contact-reservation-persisted:9506:9507",
+          "eventId": "3609:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3609,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3609:blocked:9506:9008",
+          "eventId": "3609:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3609,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3609:blocked:9508:9008",
+          "eventId": "3609:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3609,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3610,
+      "events": [
+        {
+          "id": "3610:contact-reservation-persisted:9506:9507",
+          "eventId": "3610:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3610,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3610:blocked:9506:9008",
+          "eventId": "3610:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3610,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3610:blocked:9508:9008",
+          "eventId": "3610:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3610,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3610:pursuit-retarget-requested:9506:9008",
+          "eventId": "3610:pursuit-retarget-requested:9506:9008",
+          "type": "pursuit-retarget-requested",
+          "tick": 3610,
+          "actorId": 9506,
+          "targetId": 9008,
+          "reason": "blocked-route-unreachable",
+          "failedAttempts": 5
+        }
+      ]
+    },
+    {
+      "tick": 3611,
+      "events": [
+        {
+          "id": "3611:contact-reservation-persisted:9506:9507",
+          "eventId": "3611:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3611,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3611:blocked:9506:9008",
+          "eventId": "3611:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3611,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3611:blocked:9508:9008",
+          "eventId": "3611:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3611,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3612,
+      "events": [
+        {
+          "id": "3612:contact-reservation-persisted:9506:9507",
+          "eventId": "3612:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3612,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3612:blocked:9506:9008",
+          "eventId": "3612:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3612,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3612:blocked:9508:9008",
+          "eventId": "3612:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3612,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3612:pursuit-retarget-requested:9508:9008",
+          "eventId": "3612:pursuit-retarget-requested:9508:9008",
+          "type": "pursuit-retarget-requested",
+          "tick": 3612,
+          "actorId": 9508,
+          "targetId": 9008,
+          "reason": "blocked-route-unreachable",
+          "failedAttempts": 5
+        }
+      ]
+    },
+    {
+      "tick": 3613,
+      "events": [
+        {
+          "id": "3613:contact-reservation-persisted:9506:9507",
+          "eventId": "3613:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3613,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3613:blocked:9506:9008",
+          "eventId": "3613:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3613,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3613:blocked:9508:9008",
+          "eventId": "3613:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3613,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3614,
+      "events": [
+        {
+          "id": "3614:contact-reservation-persisted:9506:9507",
+          "eventId": "3614:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3614,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3614:blocked:9506:9008",
+          "eventId": "3614:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3614,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3614:blocked:9508:9008",
+          "eventId": "3614:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3614,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3615,
+      "events": [
+        {
+          "id": "3615:contact-reservation-persisted:9506:9507",
+          "eventId": "3615:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3615,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3615:blocked:9506:9008",
+          "eventId": "3615:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3615,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3615:blocked:9508:9008",
+          "eventId": "3615:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3615,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3615:pursuit-retarget-requested:9506:9008",
+          "eventId": "3615:pursuit-retarget-requested:9506:9008",
+          "type": "pursuit-retarget-requested",
+          "tick": 3615,
+          "actorId": 9506,
+          "targetId": 9008,
+          "reason": "blocked-route-unreachable",
+          "failedAttempts": 5
+        }
+      ]
+    },
+    {
+      "tick": 3616,
+      "events": [
+        {
+          "id": "3616:contact-reservation-persisted:9506:9507",
+          "eventId": "3616:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3616,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3616:blocked:9506:9008",
+          "eventId": "3616:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3616,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3616:blocked:9508:9008",
+          "eventId": "3616:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3616,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3617,
+      "events": [
+        {
+          "id": "3617:contact-reservation-persisted:9506:9507",
+          "eventId": "3617:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3617,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3617:blocked:9506:9008",
+          "eventId": "3617:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3617,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3617:blocked:9508:9008",
+          "eventId": "3617:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3617,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3617:pursuit-retarget-requested:9508:9008",
+          "eventId": "3617:pursuit-retarget-requested:9508:9008",
+          "type": "pursuit-retarget-requested",
+          "tick": 3617,
+          "actorId": 9508,
+          "targetId": 9008,
+          "reason": "blocked-route-unreachable",
+          "failedAttempts": 5
+        }
+      ]
+    },
+    {
+      "tick": 3618,
+      "events": [
+        {
+          "id": "3618:contact-reservation-persisted:9506:9507",
+          "eventId": "3618:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3618,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3618:blocked:9506:9008",
+          "eventId": "3618:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3618,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3618:blocked:9508:9008",
+          "eventId": "3618:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3618,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3619,
+      "events": [
+        {
+          "id": "3619:contact-reservation-persisted:9506:9507",
+          "eventId": "3619:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3619,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3619:blocked:9506:9008",
+          "eventId": "3619:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3619,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3619:blocked:9508:9008",
+          "eventId": "3619:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3619,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        }
+      ]
+    },
+    {
+      "tick": 3620,
+      "events": [
+        {
+          "id": "3620:contact-reservation-persisted:9506:9507",
+          "eventId": "3620:contact-reservation-persisted:9506:9507",
+          "type": "contact-reservation-persisted",
+          "tick": 3620,
+          "actorId": 9506,
+          "targetId": 9507,
+          "pairKey": "9506:9507",
+          "kind": "allied-transit"
+        },
+        {
+          "id": "3620:blocked:9506:9008",
+          "eventId": "3620:blocked:9506:9008",
+          "type": "blocked",
+          "tick": 3620,
+          "actorId": 9506,
+          "targetId": 9008,
+          "proposedDx": 0.005140130156311178,
+          "proposedDy": 0.01683267879465164,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3620:blocked:9508:9008",
+          "eventId": "3620:blocked:9508:9008",
+          "type": "blocked",
+          "tick": 3620,
+          "actorId": 9508,
+          "targetId": 9008,
+          "proposedDx": 0.01669613605613407,
+          "proposedDy": 0.005567679428881891,
+          "actualDx": 0,
+          "actualDy": 0
+        },
+        {
+          "id": "3620:pursuit-retarget-requested:9506:9008",
+          "eventId": "3620:pursuit-retarget-requested:9506:9008",
+          "type": "pursuit-retarget-requested",
+          "tick": 3620,
+          "actorId": 9506,
+          "targetId": 9008,
+          "reason": "blocked-route-unreachable",
+          "failedAttempts": 5
+        }
+      ]
+    }
+  ]
+}

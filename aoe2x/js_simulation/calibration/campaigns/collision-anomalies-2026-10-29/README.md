@@ -56,3 +56,43 @@ The follow-up validation directory records all 37 pilot replays and retries of
 remaining anomalies, including changes in final-state and event hashes. These
 corrections can legitimately alter previously completed fights, so any adoption
 requires a new ranking dataset version and reevaluation of affected results.
+
+## Remaining undecided case: Inca Elite Skirmisher / Spanish Champion, seed 1
+
+The exact optimization completed 95 of the original 107 flagged runs, leaving
+11 processing cutoffs and the Scorpion exception. The two separate behavior
+corrections completed 11 of those remaining 12 cases. This is recovery evidence
+across two engine versions, not a merged ranking dataset.
+
+The remaining Inca/Champion case still reaches the 120-second watchdog. Its
+profiled replay reached 166 game seconds in 121.80 processing seconds, including
+profiling overhead. One Skirmisher remains at 5 HP while 21 Champions are packed
+against terrain. The Skirmisher continues dealing small amounts of damage;
+this is not a fully inactive world, but the apparent prolonged combat result
+needs a pathing review before it can be used in rankings.
+
+The profile recorded 1,953,071 actual collision sweeps over 9,960 ticks, with
+7,912 steps using the solver's existing numerical-slop path. The largest step
+performed all 4,096 sweeps. `finalGeometryViolation` accounted for 46.3% of
+sampled execution time, and repeated static-geometry passes another 11.3%.
+These are measured post-optimization costs, not estimates from the old engine.
+
+- [Profile and both clocks](inca-champion-profile/result.json)
+- [Positions and HP through the retry](inca-champion-profile/timeline.jsonl)
+- [Reproducible world state at 60 game seconds](inca-champion-snapshot/world-input.json)
+- [Front-unit route checks and 20 replayed ticks](inca-champion-snapshot/route-analysis.json)
+
+Replaying the saved state confirms that the two front Champions make repeated
+zero-length blocked steps. The planner finds a terrain-only route for each,
+but returns `stand: true` when allied bodies are included. A read-only probe
+that retires each actor's current transit reservation into non-deepening
+release geometry still finds no route; that simple handoff is insufficient.
+
+The next investigation is therefore cooperative allied pathing around the
+terrain pinch, including whether finer local route searches can find a valid
+approach under the current collision rules. Any yielding or contact-rule change
+needs independent mechanical validation. Reducing collision radii, extending
+attack range, skipping frames, or awarding a winner would conceal the issue.
+A separate exact-preserving optimization can avoid duplicate geometry
+validation, but cheaper ticks alone would not establish that this prolonged
+endgame is mechanically correct.

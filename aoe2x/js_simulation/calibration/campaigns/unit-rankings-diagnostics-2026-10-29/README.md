@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 85/110 diagnostic tasks.
+Status: **running**. Completed 90/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -70,6 +70,11 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.32 | 22.216666666666665 |
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.47 | 31.916666666666668 |
 | diagnose_processing_timeout | Incas Elite Skirmisher vs. Turks Cavalier / seed 0 | processing_limit | 120.45 | 46.8 |
+| diagnose_processing_timeout | Wu Elite Fire Archer vs. Saracens Heavy Cavalry Archer / seed 1 | decided | 118.79 | 32.03333333333333 |
+| diagnose_processing_timeout | Sicilians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.40 | 41.7 |
+| diagnose_processing_timeout | Teutons Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.64 | 41.35 |
+| diagnose_processing_timeout | Spanish Hand Cannoneer vs. Spanish Hussar / seed 1 | processing_limit | 120.29 | 11.133333333333333 |
+| diagnose_processing_timeout | Tupi Slinger vs. Turks Cavalier / seed 1 | processing_limit | 121.08 | 128.38333333333333 |
 | diagnose_processing_timeout | Cumans Crossbowman vs. Spanish Hussar / seed 0 | processing_limit | 120.16 | 15.033333333333333 |
 | diagnose_processing_timeout | Cumans Crossbowman vs. Spanish Hussar / seed 1 | processing_limit | 120.63 | 7.916666666666667 |
 | diagnose_processing_timeout | Georgians Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.51 | 20.133333333333333 |

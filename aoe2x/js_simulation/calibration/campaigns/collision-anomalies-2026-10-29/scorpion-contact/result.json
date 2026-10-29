@@ -1,0 +1,18 @@
+{
+  "matchupId": "m_bf1ed614717ec1806ca0",
+  "seed": 0,
+  "sourceHashes": {
+    "world.js": "b1678dc9d1ef36e81a3cdb33365a0f1a7b02b7d10827ca6372e20ea3d749a712",
+    "contact-reservations.js": "6109ee992d592139f126d962d6421cc902231a1cb8bd05d3aaf3352faba80926",
+    "collision.js": "3aab0df60312a8a293e213130b872fb3e532cdef8d95c3ae19f641d236f23952"
+  },
+  "wallSeconds": 9.277051705000002,
+  "tick": 835,
+  "gameSeconds": 13.916666666666666,
+  "result": null,
+  "error": {
+    "name": "RangeError",
+    "message": "starting overlap between references 9006 and 9010 (hard/hard-allied-contact; separation=0.49154752164549675; extent=1)",
+    "stack": "RangeError: starting overlap between references 9006 and 9010 (hard/hard-allied-contact; separation=0.49154752164549675; extent=1)\n    at validateStartingGeometry (file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/collision.js:193:13)\n    at resolveMovementProposals (file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/collision.js:676:30)\n    at resolveMovement (file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/world.js:3007:15)\n    at moveUnits (file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/world.js:3568:17)\n    at stepWorld (file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/world.js:5929:7)\n    at runWorld (file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/world.js:6148:15)\n    at runFight (file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/fight.js:457:18)\n    at async runHeadlessJob (file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/node/run-job.mjs:64:18)\n    at async file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/node/trace-ranking-anomaly.mjs:70:16"
+  }
+}

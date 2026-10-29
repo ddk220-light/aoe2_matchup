@@ -1,0 +1,37 @@
+{
+  "command": "node --test --test-concurrency=1",
+  "files": [
+    "arena-physics-map",
+    "mechanics-schema",
+    "unit-model",
+    "combat-resolution",
+    "movement-collision",
+    "pair-interactions",
+    "collision-performance",
+    "ranking-campaign",
+    "full-ranking-campaign",
+    "bolt-passthrough",
+    "conditional-damage-reduction",
+    "production-mobile-presentation",
+    "contact-reservations",
+    "blocked-pursuit-recovery",
+    "pursuit-attack-position",
+    "chase-path",
+    "ranged-crowding",
+    "ranged-attack",
+    "contact-graph-steering"
+  ],
+  "exitCode": 1,
+  "tests": 192,
+  "passed": 191,
+  "failed": 1,
+  "preexistingFailures": [
+    {
+      "file": "tests/ranged-crowding.test.mjs:244",
+      "name": "a large mobile-ranged body remains compliant after committing",
+      "assertion": "collisionExtent must equal 0.35",
+      "confirmedOnUnchangedBaseline": true,
+      "baselineRoot": "/workspace/aoe2_matchup"
+    }
+  ]
+}

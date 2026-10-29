@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 70/110 diagnostic tasks.
+Status: **running**. Completed 75/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -36,13 +36,18 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Muisca Elite Skirmisher vs. Spanish Champion / seed 1 | processing_limit | 120.49 | 32.333333333333336 |
 | diagnose_processing_timeout | Berbers Hand Cannoneer vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.22 | 18.116666666666667 |
 | diagnose_processing_timeout | Berbers Hand Cannoneer vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.27 | 19.233333333333334 |
+| diagnose_processing_timeout | Italians Mounted Crossbowman vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.43 | 26.683333333333334 |
 | diagnose_processing_timeout | Burgundians Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.20 | 28.333333333333332 |
 | diagnose_processing_timeout | Burgundians Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.25 | 23.4 |
+| diagnose_processing_timeout | Bulgarians Heavy Cavalry Archer vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.23 | 28.166666666666668 |
+| diagnose_processing_timeout | Tatars Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.23 | 19.383333333333333 |
+| diagnose_processing_timeout | Saxons Elite Skirmisher vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 121.42 | 25.0 |
 | diagnose_processing_timeout | Mayans Elite Plumed Archer vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.15 | 41.4 |
 | diagnose_processing_timeout | Mayans Elite Plumed Archer vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.43 | 8.683333333333334 |
 | diagnose_processing_timeout | Mayans Elite Plumed Archer vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.42 | 8.7 |
 | diagnose_processing_timeout | Franks Crossbowman vs. Spanish Hussar / seed 0 | processing_limit | 120.32 | 12.35 |
 | diagnose_processing_timeout | Franks Crossbowman vs. Spanish Hussar / seed 1 | processing_limit | 120.95 | 8.05 |
+| diagnose_processing_timeout | Varangians Heavy Mounted Crossbowman vs. Spanish Hussar / seed 2 | processing_limit | 120.92 | 12.95 |
 | diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.48 | 73.46666666666667 |
 | diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.52 | 76.5 |
 | diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.48 | 69.65 |

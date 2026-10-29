@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 65/110 diagnostic tasks.
+Status: **running**. Completed 70/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -26,9 +26,14 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Khitans Mounted Trebuchet vs. Turks Cavalier / seed 0 | processing_limit | 120.92 | 24.616666666666667 |
 | diagnose_processing_timeout | Saracens Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.33 | 20.633333333333333 |
 | diagnose_processing_timeout | Saracens Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 2 | processing_limit | 120.28 | 20.15 |
+| diagnose_processing_timeout | Shu War Chariot vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.30 | 32.31666666666667 |
 | diagnose_processing_timeout | Vikings Mounted Crossbowman vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.43 | 11.516666666666667 |
 | diagnose_processing_timeout | Vikings Mounted Crossbowman vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.14 | 12.316666666666666 |
 | diagnose_processing_timeout | Vikings Mounted Crossbowman vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.10 | 11.316666666666666 |
+| diagnose_processing_timeout | Huns Heavy Cavalry Archer vs. Chinese Arbalester / seed 1 | processing_limit | 120.49 | 6.15 |
+| diagnose_processing_timeout | Sicilians Heavy Mounted Crossbowman vs. Spanish Hussar / seed 2 | processing_limit | 120.82 | 13.2 |
+| diagnose_processing_timeout | Armenians Heavy Scorpion vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 121.23 | 22.683333333333334 |
+| diagnose_processing_timeout | Muisca Elite Skirmisher vs. Spanish Champion / seed 1 | processing_limit | 120.49 | 32.333333333333336 |
 | diagnose_processing_timeout | Berbers Hand Cannoneer vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.22 | 18.116666666666667 |
 | diagnose_processing_timeout | Berbers Hand Cannoneer vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.27 | 19.233333333333334 |
 | diagnose_processing_timeout | Burgundians Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.20 | 28.333333333333332 |

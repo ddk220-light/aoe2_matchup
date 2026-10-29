@@ -1,10 +1,10 @@
 # Movement, pursuit and contact corrections: validation
 
-Coverage: 84/144 recorded tasks; complete=False.
+Coverage: 144/144 recorded tasks; complete=True.
 
 37 pilot checks: 3 exact, 34 changed, 3 winner changes.
 
-47 anomaly retries: {'win': 47}.
+107 anomaly retries: {'win': 107}.
 
 The exact-preserving collision optimization has its own validation report. These
 additional corrections intentionally repair pursuit, contact handoffs, obstacle routing and collision recovery.
@@ -58,6 +58,66 @@ additional corrections intentionally repair pursuit, contact handoffs, obstacle 
 | Dravidians|heavy_scorpion vs. Spanish|imp_elite_skirm / 0 | 33.47 | 70.47 | win |
 | Dravidians|heavy_scorpion vs. Spanish|imp_elite_skirm / 1 | 31.16 | 67.23 | win |
 | Georgians|heavy_cav_archer vs. Saracens|hand_cannoneer / 1 | 11.19 | 35.40 | win |
+| Dravidians|heavy_scorpion vs. Spanish|imp_elite_skirm / 2 | 40.19 | 77.60 | win |
+| Dravidians|heavy_scorpion vs. Saracens|heavy_cav_archer / 1 | 46.66 | 74.48 | win |
+| Khitans|mounted_trebuchet_khitans vs. Turks|paladin / 0 | 12.00 | 39.20 | win |
+| Huns|heavy_cav_archer vs. Chinese|arbalester / 1 | 14.21 | 42.77 | win |
+| Italians|heavy_mounted_crossbowman vs. Saracens|heavy_cav_archer / 1 | 9.73 | 35.68 | win |
+| Dravidians|heavy_scorpion vs. Saracens|heavy_cav_archer / 2 | 63.88 | 74.25 | win |
+| Gurjaras|imp_elite_skirm vs. Turks|paladin / 0 | 7.11 | 32.27 | win |
+| Khmer|heavy_cav_archer vs. Saracens|hand_cannoneer / 0 | 8.26 | 32.43 | win |
+| Jurchens|heavy_cav_archer vs. Saracens|heavy_cav_archer / 1 | 11.44 | 48.92 | win |
+| Incas|imp_elite_skirm vs. Turks|paladin / 0 | 7.10 | 32.27 | win |
+| Incas|imp_elite_skirm vs. Spanish|champion / 1 | 8.12 | 34.55 | win |
+| Mayans|elite_plumed_archer_mayans vs. Saracens|heavy_cav_archer / 1 | 15.23 | 57.62 | win |
+| Mayans|elite_plumed_archer_mayans vs. Saracens|heavy_cav_archer / 0 | 16.30 | 62.52 | win |
+| Mayans|elite_plumed_archer_mayans vs. Saracens|heavy_cav_archer / 2 | 15.15 | 62.15 | win |
+| Koreans|elite_war_wagon_koreans vs. Saracens|hand_cannoneer / 0 | 8.45 | 37.02 | win |
+| Malians|arbalester vs. Spanish|hussar / 1 | 12.06 | 35.07 | win |
+| Portuguese|heavy_scorpion vs. Saracens|heavy_cav_archer / 0 | 26.17 | 46.98 | win |
+| Portuguese|heavy_scorpion vs. Saracens|heavy_cav_archer / 2 | 24.36 | 47.80 | win |
+| Muisca|imp_elite_skirm vs. Spanish|champion / 1 | 7.60 | 29.83 | win |
+| Muisca|elite_guecha_warrior_muisca vs. Spanish|hussar / 1 | 12.24 | 60.45 | win |
+| Romans|heavy_scorpion vs. Saracens|heavy_cav_archer / 2 | 22.07 | 43.32 | win |
+| Mapuche|imp_elite_skirm vs. Spanish|hussar / 2 | 66.85 | 39.38 | win |
+| Muisca|elite_guecha_warrior_muisca vs. Spanish|hussar / 2 | 9.14 | 55.50 | win |
+| Muisca|elite_guecha_warrior_muisca vs. Spanish|hussar / 0 | 16.05 | 67.03 | win |
+| Portuguese|hand_cannoneer vs. Spanish|hussar / 1 | 8.09 | 42.53 | win |
+| Muisca|elite_guecha_warrior_muisca vs. Turks|paladin / 2 | 14.48 | 46.68 | win |
+| Romans|heavy_cav_archer vs. Spanish|hussar / 1 | 13.76 | 64.55 | win |
+| Saracens|heavy_cav_archer vs. Saracens|hand_cannoneer / 0 | 13.53 | 28.17 | win |
+| Saracens|heavy_cav_archer vs. Saracens|hand_cannoneer / 2 | 16.81 | 28.63 | win |
+| Sicilians|heavy_mounted_crossbowman vs. Spanish|hussar / 2 | 11.09 | 63.55 | win |
+| Shu|war_chariot_shu vs. Saracens|heavy_cav_archer / 2 | 19.82 | 85.38 | win |
+| Muisca|imp_elite_skirm vs. Turks|paladin / 1 | 5.71 | 30.30 | win |
+| Saxons|imp_elite_skirm vs. Saracens|heavy_cav_archer / 0 | 7.15 | 46.45 | win |
+| Tatars|heavy_cav_archer vs. Saracens|hand_cannoneer / 0 | 14.54 | 28.12 | win |
+| Spanish|hand_cannoneer vs. Saracens|heavy_cav_archer / 1 | 14.43 | 28.77 | win |
+| Spanish|hand_cannoneer vs. Spanish|hussar / 1 | 6.54 | 48.02 | win |
+| Sicilians|heavy_scorpion vs. Spanish|imp_elite_skirm / 2 | 19.35 | 67.98 | win |
+| Slavs|heavy_scorpion vs. Saracens|heavy_cav_archer / 0 | 34.23 | 52.55 | win |
+| Shu|war_chariot_shu vs. Spanish|imp_elite_skirm / 1 | 22.97 | 150.93 | win |
+| Shu|war_chariot_shu vs. Spanish|imp_elite_skirm / 2 | 25.43 | 158.57 | win |
+| Spanish|arbalester vs. Spanish|hussar / 1 | 16.42 | 30.12 | win |
+| Tatars|heavy_cav_archer vs. Chinese|arbalester / 0 | 10.09 | 37.30 | win |
+| Spanish|arbalester vs. Spanish|hussar / 0 | 24.59 | 30.28 | win |
+| Vikings|heavy_mounted_crossbowman vs. Saracens|heavy_cav_archer / 1 | 14.20 | 30.17 | win |
+| Tatars|heavy_cav_archer vs. Saracens|heavy_cav_archer / 1 | 17.75 | 63.45 | win |
+| Vikings|heavy_mounted_crossbowman vs. Saracens|heavy_cav_archer / 0 | 18.40 | 32.80 | win |
+| Varangians|heavy_mounted_crossbowman vs. Spanish|hussar / 2 | 13.91 | 99.43 | win |
+| Vikings|heavy_mounted_crossbowman vs. Saracens|heavy_cav_archer / 2 | 18.39 | 31.83 | win |
+| Vietnamese|elite_rattan_archer_vietnamese vs. Spanish|hussar / 0 | 8.66 | 50.95 | win |
+| Turks|heavy_cav_archer vs. Saracens|heavy_cav_archer / 1 | 18.65 | 63.45 | win |
+| Teutons|heavy_scorpion vs. Spanish|imp_elite_skirm / 2 | 17.95 | 67.98 | win |
+| Vietnamese|imp_elite_skirm vs. Spanish|champion / 0 | 7.84 | 32.65 | win |
+| Turks|hand_cannoneer vs. Saracens|heavy_cav_archer / 2 | 14.85 | 37.03 | win |
+| Turks|heavy_cav_archer vs. Chinese|arbalester / 0 | 9.59 | 39.05 | win |
+| Tupi|imp_slinger vs. Turks|paladin / 1 | 4.99 | 27.62 | win |
+| Khmer|elite_elephant vs. Saracens|heavy_cav_archer / 0 | 5.56 | 37.90 | win |
+| Wu|elite_fire_archer_wu vs. Saracens|heavy_cav_archer / 1 | 11.16 | 32.03 | win |
+| Portuguese|paladin vs. Spanish|paladin / 0 | 41.51 | 59.07 | win |
+| Portuguese|paladin vs. Spanish|paladin / 2 | 40.33 | 59.07 | win |
+| Portuguese|paladin vs. Spanish|paladin / 1 | 41.15 | 59.07 | win |
 
 Separate engine version. Keep original results immutable; do not combine changed behavior with original ranking samples. Recompute affected campaign results before scoring.
 

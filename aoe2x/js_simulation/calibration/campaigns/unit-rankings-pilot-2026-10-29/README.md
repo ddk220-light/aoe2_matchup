@@ -6,20 +6,20 @@ Raw results only; scoring is deferred. Campaign: `1c5f5ec95034f949e812d8256fca19
 
 Three seeds initially; seven additional seeds if completed outcomes differ. 150 game-second limit; 120s wall-clock watchdog. Timeouts/errors are flagged for review.
 
-Recorded 6/37 currently required runs; 1 complete matchups; 0 need review.
+Recorded 37/37 currently required runs; 10 complete matchups; 0 need review.
 
 | Unit | Opponent | Counts | Runs | W/L/D | Undecided | Mean unit HP%* | Mean opponent HP%* |
 |---|---|---|---|---|---|---|---|
-| Spanish Champion | Spanish Champion | 27:27 | 3/10 | 1/2/0 | 0 | 5.43 | 6.67 |
+| Spanish Champion | Spanish Champion | 27:27 | 10/10 | 5/5/0 | 0 | 7.48 | 6.00 |
 | Spanish Champion | Spanish Paladin | 27:19 | 3/3 | 0/3/0 | 0 | 0.00 | 60.70 |
-| Chinese Arbalester | Turks Cavalier | 27:19 | 0/3 | 0/0/0 | 0 | — | — |
-| Saracens Heavy Cavalry Archer | Spanish Elite Skirmisher | 20:27 | 0/3 | 0/0/0 | 0 | — | — |
-| Saracens Hand Cannoneer | Chinese Arbalester | 23:27 | 0/3 | 0/0/0 | 0 | — | — |
-| Persians Elite War Elephant | Spanish Halberdier | 13:27 | 0/3 | 0/0/0 | 0 | — | — |
-| Varangians Elite Varangian Guard | Chinese Arbalester | 21:27 | 0/3 | 0/0/0 | 0 | — | — |
-| Varangians Elite Jarl | Spanish Hussar | 21:27 | 0/3 | 0/0/0 | 0 | — | — |
-| Bulgarians Elite Konnik | Turks Heavy Camel Rider | 25:27 | 0/3 | 0/0/0 | 0 | — | — |
-| Tupi Elite Blackwood Archer | Spanish Hussar | 27:20 | 0/3 | 0/0/0 | 0 | — | — |
+| Chinese Arbalester | Turks Cavalier | 27:19 | 3/3 | 0/3/0 | 0 | 0.00 | 53.58 |
+| Saracens Heavy Cavalry Archer | Spanish Elite Skirmisher | 20:27 | 3/3 | 0/3/0 | 0 | 0.00 | 42.43 |
+| Saracens Hand Cannoneer | Chinese Arbalester | 23:27 | 3/3 | 0/3/0 | 0 | 0.00 | 39.97 |
+| Persians Elite War Elephant | Spanish Halberdier | 13:27 | 3/3 | 3/0/0 | 0 | 65.29 | 0.00 |
+| Varangians Elite Varangian Guard | Chinese Arbalester | 21:27 | 3/3 | 3/0/0 | 0 | 57.24 | 0.00 |
+| Varangians Elite Jarl | Spanish Hussar | 21:27 | 3/3 | 3/0/0 | 0 | 78.91 | 0.00 |
+| Bulgarians Elite Konnik | Turks Heavy Camel Rider | 25:27 | 3/3 | 3/0/0 | 0 | 24.74 | 0.00 |
+| Tupi Elite Blackwood Archer | Spanish Hussar | 27:20 | 3/3 | 0/3/0 | 0 | 0.00 | 57.42 |
 
 *Descriptive averages over decided runs only, not ranking scores. Review rows remain incomplete.
 

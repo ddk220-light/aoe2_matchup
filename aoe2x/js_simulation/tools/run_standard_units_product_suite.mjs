@@ -134,10 +134,11 @@ function summarizeControl(name, result, startingHpByOwner, reverseOwners) {
     : result.winnerOwner;
   return Object.freeze({
     name,
-    outcome: "win",
+    outcome: result.outcome ?? "win",
     winnerOwner,
     winnerHp: result.winnerHp,
-    score: signedScore({ winnerOwner, winnerHp: result.winnerHp, startingHpByOwner }),
+    score: result.outcome === "draw" ? 0
+      : signedScore({ winnerOwner, winnerHp: result.winnerHp, startingHpByOwner }),
     ticks: result.ticks,
     finalStateHash: result.finalStateHash,
     eventLogHash: result.eventLogHash,

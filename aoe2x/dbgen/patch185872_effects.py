@@ -62,8 +62,10 @@ UNIT_NOTES = {
     2704: "Fighting gold is task based, not gold_per_kill. Gothikon is a separate technology; base charge fields are not the upgraded fields.",
     2705: "Javelin count, profile and speed are already extracted. Launch/recharge event and target mask still require validation; do not add a second projectile.",
     2706: "Javelin count, profile and speed are already extracted. Launch/recharge event and target mask still require validation; do not add a second projectile.",
-    2708: "Ranged melee attack. Shipped civ tip confirms armor reduction; amount, duration and reset behavior are unresolved. Do not assume the existing Obuch armor-strip scalar is equivalent.",
-    2709: "Ranged melee attack. Shipped civ tip confirms armor reduction; amount, duration and reset behavior are unresolved. Do not assume the existing Obuch armor-strip scalar is equivalent.",
+    # Owner correction, 2026-10-28: the old tooltip claim was misleading.
+    # The comparison report also found no supporting armor-stripping behavior.
+    2708: "Ranged melee attack. Jarl does not strip armor; do not add an Obuch-style armor-strip effect.",
+    2709: "Ranged melee attack. Jarl does not strip armor; do not add an Obuch-style armor-strip effect.",
     2711: "Torch projectile is restricted to buildings and ships by charge_target=320. Generic unrestricted charge behavior is not equivalent; projectile has no independent attack entries.",
     2712: "Torch projectile is restricted to buildings and ships by charge_target=320. Generic unrestricted charge behavior is not equivalent; projectile has no independent attack entries.",
 }

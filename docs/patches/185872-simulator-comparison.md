@@ -113,10 +113,11 @@ differ only by the added type/trait fields.
   reload and special animation cycle (Varangian elite Guard inter-throw model:
   1.6seconds); that interval is not a live measurement. No Guard recordings were
   found in the named E-drive collections.
-- **Jarl armor reduction:** shipped civ tip claims it, but repeated recorded hits
-  do not support ordinary stacking Obuch stripping. Current
+- **Jarl armor reduction — closed, 2026-10-28:** the owner confirmed Jarl does
+  not strip armor. The earlier shipped-civ-tip claim was misleading; repeated recorded hits
+  did not support ordinary stacking Obuch stripping. The
   [official description](https://www.ageofempires.com/news/varangians-civilization-deep-dive/)
-  does not specify it. No speculative rule was added.
+  does not specify it. No armor-stripping rule was added; this is not a missing ability.
 - **Jomsviking torch damage:** Smart Mode8 inherits the carrier's damage, including
   live HP-dependent modifiers; implemented. Building/ship-only restriction is
   retained. These land tests do not validate naval combat or torch flight.

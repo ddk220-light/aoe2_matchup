@@ -17,6 +17,13 @@ export function compareRecordedResult(metadata, simulation) {
   const recorded = { ...captured,
     eliminationGameSeconds: captured.eliminationTimeSeconds * metadata.recordingClock.gameSpeed,
   };
+  if (simulation.outcome === "timeout") return {
+    jobId: metadata.jobId, status: "timeout", recorded,
+    simulation: { ...simulation, signedRemainingHpPercent: null, eliminationTimeSeconds: null },
+    winnerMatches: null,
+    signedHpPercentagePointDifference: null,
+    durationDifferenceSeconds: null,
+  };
   const owner = simulation.winnerOwner;
   const hpPercent = owner == null ? 0
     : 100 * simulation.winnerHp / simulation.startingHpByOwner[owner];
@@ -70,6 +77,7 @@ async function main() {
   const comparisons = results.map(result => compareRecordedResult(evidence.get(result.jobId), result));
   const summary = {
     runs: comparisons.length, errors: comparisons.filter(row => row.status === "error").length,
+    timeouts: comparisons.filter(row => row.status === "timeout").length,
     matchingWinners: comparisons.filter(row => row.winnerMatches === true).length,
     flippedWinners: comparisons.filter(row => row.winnerMatches === false).length,
   };

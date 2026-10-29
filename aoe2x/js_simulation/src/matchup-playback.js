@@ -337,8 +337,10 @@ function runRoster({ name, ratio, roster, mechanics, truth, synthetic }) {
     ratio,
     synthetic,
     ticks: result.ticks,
-    winnerOwner: live.length ? live[0].owner : null,
-    winnerHp: live.reduce((total, unit) => total + unit.hp, 0),
+    outcome: result.outcome,
+    winnerOwner: result.winner,
+    winnerHp: live.filter(unit => unit.owner === result.winner)
+      .reduce((total, unit) => total + unit.hp, 0),
     finalStateHash: hashCanonicalJson({
       tick: result.world.tick,
       ratio,

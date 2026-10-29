@@ -2,6 +2,7 @@ import {
   queryEnemyContactManifold,
   resolveMovementProposals,
 } from "./collision.js";
+import { advanceDefenseCharge, consumeDamageBlock, incomingDamageMultiplier, isMeleeWeaponDamage } from "./unit-defenses.js";
 import {
   createPairInteractionSnapshot,
   resolvePairInteraction,
@@ -82,6 +83,7 @@ import { collisionRadius } from "./targeting.js";
 import {
   blastFalloffFraction,
   displacedAimPoint,
+  projectileSegmentContact,
   selectProjectileLandingVictim,
   siegeDebrisLandingPoints,
 } from "./projectile-mechanics.js";
@@ -91,6 +93,7 @@ import {
   createDiplomacyByOwner,
   DIPLOMACY,
   isHostile,
+  relationFrom,
   withDiplomacy,
 } from "./diplomacy.js";
 
@@ -221,7 +224,7 @@ function effectiveUnitSpeed(unit, tick) {
   if (unit?.specialState?.chargedSpeedActive === true) {
     speed *= effects.charged_speed_multiplier ?? 1;
   }
-  return speed;
+  return speed * (unit.specialState?.auraMoveMultiplier ?? 1);
 }
 
 
@@ -251,7 +254,7 @@ function reloadTicksForUnit(unit, tick) {
     seconds = Math.max(effects.attack_speed_min ?? 1,
       seconds - ramp * unit.specialState.rampHitTicks.length);
   }
-  return secondsToTicksCeil(seconds);
+  return secondsToTicksCeil(seconds / (unit.specialState?.auraAttackRateMultiplier ?? 1));
 }
 
 
@@ -369,6 +372,8 @@ function freezeUnit(unit) {
     ...(unit.specialState ? {
       specialState: Object.freeze({
         ...unit.specialState,
+        resourcesGained: Object.freeze({ ...unit.specialState.resourcesGained }),
+        chargeReadyTicks: Object.freeze([...(unit.specialState.chargeReadyTicks ?? [])]),
         rampHitTicks: Object.freeze([...(unit.specialState.rampHitTicks ?? [])]),
         ...(unit.specialState.bleedStacks ? {
           bleedStacks: Object.freeze(unit.specialState.bleedStacks.map((stack) => (
@@ -451,6 +456,7 @@ function mutableUnit(unit) {
       specialState: {
         ...unit.specialState,
         rampHitTicks: [...(unit.specialState.rampHitTicks ?? [])],
+        chargeReadyTicks: [...(unit.specialState.chargeReadyTicks ?? [])],
         ...(unit.specialState.bleedStacks ? {
           bleedStacks: unit.specialState.bleedStacks.map((stack) => ({ ...stack })),
         } : {}),
@@ -485,6 +491,10 @@ function ensureSpecialState(unit) {
     slowUntilTick: 0,
     allyHealRemaining: 0,
     allyHealPerTick: 0,
+    allyHealUntilTick: 0,
+    dodgeShieldCharges: unitEffects(unit).dodge_shield_max ?? 0,
+    meleeBlockReadyTick: 0,
+    resourcesGained: { food: 0, wood: 0, gold: 0 },
     meleeChargeReadyTick: 0,
   };
   return unit.specialState;
@@ -505,16 +515,41 @@ function refreshNearbyAuras(units) {
   for (const unit of units) {
     if (!unit.alive || !unit.specialState) continue;
     const effects = unitEffects(unit);
+    const previousRate = unit.specialState.auraAttackRateMultiplier ?? 1;
+    unit.specialState.auraMoveMultiplier = 1;
+    unit.specialState.auraAttackRateMultiplier = 1;
+    if (effects.speed_attack_aura_recipient) {
+      for (const source of units) {
+        const aura = unitEffects(source);
+        if (!source.alive || source.owner !== unit.owner
+            || aura.speed_attack_aura_group !== effects.speed_attack_aura_recipient
+            || Math.hypot(source.x - unit.x, source.y - unit.y)
+              > aura.speed_attack_aura_radius_tiles + 1e-12) continue;
+        unit.specialState.auraMoveMultiplier = Math.max(
+          unit.specialState.auraMoveMultiplier, aura.aura_move_multiplier);
+        unit.specialState.auraAttackRateMultiplier = Math.max(
+          unit.specialState.auraAttackRateMultiplier, aura.aura_attack_rate_multiplier);
+      }
+    }
+    // Preserve completed reload progress when entering or leaving an aura.
+    if (previousRate !== unit.specialState.auraAttackRateMultiplier && unit.actionTimers?.reload > 0) {
+      unit.actionTimers.reload = Math.ceil(unit.actionTimers.reload * previousRate
+        / unit.specialState.auraAttackRateMultiplier);
+    }
     if (effects.nearby_infantry_armor_step > 0) {
       const infantryCount = nearbyAllies(unit, units,
         effects.nearby_infantry_armor_radius).filter(ally => ally.mechanics.unit_class === 6).length;
       unit.specialState.nearbyArmorBonus = Math.min(effects.nearby_infantry_armor_max,
         Math.floor(infantryCount / effects.nearby_infantry_armor_step));
     }
-    const allies = nearbyAllies(unit, units);
+    const allies = nearbyAllies(unit, units, effects.nearby_attack_radius_tiles ?? 5)
+      .filter((ally) => !effects.nearby_attack_group
+        || unitEffects(ally).nearby_attack_group === effects.nearby_attack_group);
     const attackPerAlly = effects.attack_bonus_nearby ?? 0;
     unit.specialState.nearbyAttackBonus = attackPerAlly > 0
-      ? attackPerAlly * Math.min(allies.length, effects.nearby_bonus_count ?? allies.length)
+      ? attackPerAlly * Math.min(
+        Math.floor(allies.length / (effects.nearby_attack_step ?? 1)),
+        effects.nearby_bonus_count ?? allies.length)
       : 0;
     const hpPercent = effects.hp_nearby_percent_per_unit ?? 0;
     if (hpPercent <= 0) continue;
@@ -644,20 +679,20 @@ function applyPendingDismounts(units, tick, events) {
 
 
 function advanceSpecialEffects(units, tick, events) {
+  refreshNearbyAuras(units);
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
   for (const unit of units) {
     if (!unit.alive || !unit.specialState) continue;
     const effects = unitEffects(unit);
+    advanceDefenseCharge(unit);
     const maxHp = unit.maxHp ?? unit.specialState.baseMaxHp;
     const passiveRegen = effects.hp_regen ?? 0;
-    const combatRegen = effects.hp_regen_in_combat ?? 0;
-    const recentlyAttacked = tick - (unit.specialState.lastAttackTick ?? -Infinity)
-      <= 10 * TICKS_PER_SECOND;
-    const regen = passiveRegen + (recentlyAttacked ? combatRegen : 0);
+    const regen = passiveRegen;
     if (regen > 0 && unit.hp < maxHp) {
       unit.hp = Math.min(maxHp, unit.hp + regen / 60 / TICKS_PER_SECOND);
     }
-    if (unit.specialState.allyHealRemaining > 0 && unit.hp < maxHp) {
+    if (unit.specialState.allyHealRemaining > 0
+        && tick <= unit.specialState.allyHealUntilTick) {
       const heal = Math.min(
         unit.specialState.allyHealRemaining,
         unit.specialState.allyHealPerTick,
@@ -667,7 +702,7 @@ function advanceSpecialEffects(units, tick, events) {
     }
     if (Array.isArray(unit.specialState.bleedStacks)) {
       unit.specialState.bleedStacks = unit.specialState.bleedStacks
-        .filter((stack) => stack.untilTick > tick);
+        .filter((stack) => stack.untilTick >= tick);
       // Curare and other damage-over-time projectiles create one independent
       // stack per successful projectile. Group the active stacks by attacker
       // for this tick: it preserves source ownership and expiration while
@@ -760,7 +795,6 @@ function advanceSpecialEffects(units, tick, events) {
       });
     }
   }
-  refreshNearbyAuras(units);
 }
 
 
@@ -1610,6 +1644,7 @@ export function createWorld(scenario) {
     scenarioOwners,
     diplomacyByOwner,
     victoryTeams,
+    combatSeed: scenario.openingSeed ?? 0,
     ...(scenarioTriggerState ? { scenarioTriggerState } : {}),
     ...(scenarioTriggerState || units.some(({ moveOrder }) => (
       moveOrder?.kind === "opening-patrol"
@@ -4294,9 +4329,15 @@ function releaseChargeVolley(unit, target, spec, tick, events, projectiles,
   // unreleased cycle abandoned earlier (validateAttackTargets) keeps its
   // charge instead.
   unit.charge = Math.max(0, unit.charge - spec.chargeCost);
+  const independentSeconds = unitEffects(unit).independent_charge_recharge_seconds;
+  if (independentSeconds > 0) {
+    unit.specialState.chargeReadyTicks ??= [];
+    unit.specialState.chargeReadyTicks.push(tick + secondsToTicksCeil(independentSeconds));
+  }
   if (!target?.alive || !isHostile(unit, target)) return;
   const distance = Math.hypot(target.x - unit.x, target.y - unit.y);
   const flight = Math.max(1, secondsToTicksCeil(distance / spec.projectileSpeed));
+  const stepLength = spec.projectileSpeed / TICKS_PER_SECOND;
   const amount = chargeProjectileDamage(spec, target, unit);
   const ordinaryRanged = rangedSpec(unit.mechanics);
   const accuracy = ordinaryRanged?.baseAccuracyPercent ?? 100;
@@ -4311,6 +4352,15 @@ function releaseChargeVolley(unit, target, spec, tick, events, projectiles,
       actorRelationByOwner: unit.relationByOwner,
       actorMechanics: unit.mechanics,
       targetId: target.referenceId,
+      x: unit.x,
+      y: unit.y,
+      aimX: target.x,
+      aimY: target.y,
+      stepX: distance > 0 ? (target.x - unit.x) / distance * stepLength : 0,
+      stepY: distance > 0 ? (target.y - unit.y) / distance * stepLength : 0,
+      stepLength,
+      totalDistance: distance,
+      traveled: 0,
       firedTick: tick,
       arrivalTick: tick + flight,
       index,
@@ -4815,10 +4865,15 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
     // the rate is sourced and runs regardless.
     if (unit.charge !== undefined) {
       const spec = chargeSpec(unit.mechanics);
-      unit.charge = Math.min(
-        spec.maxCharge,
-        unit.charge + spec.rechargeRate / TICKS_PER_SECOND,
-      );
+      if (unitEffects(unit).independent_charge_recharge_seconds > 0) {
+        const pending = unit.specialState.chargeReadyTicks ?? [];
+        unit.charge = Math.min(spec.maxCharge,
+          unit.charge + pending.filter(readyTick => readyTick <= tick).length * spec.chargeCost);
+        unit.specialState.chargeReadyTicks = pending.filter(readyTick => readyTick > tick);
+      } else {
+        unit.charge = Math.min(spec.maxCharge,
+          unit.charge + spec.rechargeRate / TICKS_PER_SECOND);
+      }
     }
 
     if (unit.action === "attacking") {
@@ -5019,9 +5074,39 @@ function progressAttacks(units, tick, events, movedIds, projectiles,
 }
 
 
-function commitReadyAttacks(units, ready, tick, events) {
+// Active combat is evaluated after movement/attack transitions for THIS tick.
+// Reload qualifies for Ordo only while the stationary unit retains a live,
+// reachable enemy. Income uses attack-animation work time, not the reload gap.
+function advanceAttackActivity(units, movedIds, tick) {
+  const byReference = new Map(units.map(unit => [unit.referenceId, unit]));
+  for (const unit of units) {
+    if (!unit.alive || !unit.specialState || movedIds.has(unit.referenceId)
+        || !["attacking", "reload"].includes(unit.action)) continue;
+    const target = byReference.get(unit.attackTargetId ?? unit.engagedTargetId);
+    if (!target?.alive || !isHostile(unit, target)) continue;
+    const effects = unitEffects(unit);
+    if (isWithinActiveAttackReach(unit, target, tick)) {
+      const rate = effects.combat_regen_max_hp_per_minute
+        ? (unit.maxHp ?? unit.mechanics.hp) * effects.combat_regen_max_hp_per_minute
+        : effects.hp_regen_in_combat ?? 0;
+      unit.hp = Math.min(unit.maxHp ?? unit.mechanics.hp,
+        unit.hp + rate / 60 / TICKS_PER_SECOND);
+    }
+    if (unit.action === "attacking" && target.mechanics.unit_type !== 80
+        && (effects.combat_gold_per_animation_second ?? 0) > 0) {
+      unit.specialState.resourcesGained = {
+        ...unit.specialState.resourcesGained,
+        gold: (unit.specialState.resourcesGained?.gold ?? 0)
+          + effects.combat_gold_per_animation_second / TICKS_PER_SECOND,
+      };
+    }
+  }
+}
+
+
+function commitReadyAttacks(units, ready, tick, events, seed) {
   const byReference = new Map(units.map((unit) => [unit.referenceId, unit]));
-  for (const attack of orderReadyAttacks(ready)) {
+  for (const attack of orderReadyAttacks(ready, { seed })) {
     const actor = byReference.get(attack.actorId);
     const target = byReference.get(attack.targetId);
     if (!actor?.alive) {
@@ -5058,7 +5143,10 @@ function commitReadyAttacks(units, ready, tick, events) {
       attack.readyTick, tick, events, {
         triggersOnHit: true,
         charged: attack.charged === true,
+        chargeDamage: attack.chargeDamage ?? 0,
       });
+    // The shield blocks only the ordinary component. Special charge damage
+    // still lands now and consumes the attacker's charge.
     if (attack.charged && actor.specialState) {
       const rechargeSeconds = meleeChargeSpec(actor.mechanics)?.rechargeSeconds
         ?? unitEffects(actor).charge_recharge_time ?? 0;
@@ -5115,13 +5203,6 @@ function commitReadyAttacks(units, ready, tick, events) {
 }
 
 
-// Charge projectiles in flight land on their volley's target when their
-// arrival tick comes up, after this tick's melee commits. A projectile whose
-// target died mid-flight vanishes (the two no-damage tape volleys); the
-// firer's own later death does not recall a projectile already in the air.
-// The tapes' residual in-flight scatter (2.58 of 3 land on average, 88% on
-// the target) is not resolvable at the recorder's 10 Hz missile sampling and
-// is accepted as a documented overshoot, not modelled.
 function addImpactHazard(projectile, x, y, tick, hazards, events) {
   if (!projectile.impactHazard || !hazards) return;
   const durationTicks = secondsToTicksCeil(
@@ -5179,6 +5260,36 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
     || left.index - right.index
   ));
   for (const projectile of ordered) {
+    if (projectile.kind === "charge") {
+      // Freeze the aim on release. No homing or arrival-time target lookup:
+      // a moving target must still intersect the actual flight segment.
+      // Existing charge profiles lack spread/width/interception metadata;
+      // retain target-only point shots rather than borrowing another weapon's
+      // projectile rules. The firing unit's death does not recall its shot.
+      if (tick <= projectile.firedTick) {
+        remaining.push(projectile);
+        continue;
+      }
+      const distance = Math.min(projectile.stepLength,
+        Math.max(0, projectile.totalDistance - projectile.traveled));
+      const x0 = projectile.x;
+      const y0 = projectile.y;
+      projectile.x += projectile.stepX * distance / projectile.stepLength;
+      projectile.y += projectile.stepY * distance / projectile.stepLength;
+      projectile.traveled += distance;
+      const target = byReference.get(projectile.targetId);
+      const contact = target?.alive ? projectileSegmentContact(target,
+        x0, y0, projectile.x, projectile.y) : null;
+      if (contact !== null) {
+        projectile.x = x0 + (projectile.x - x0) * contact;
+        projectile.y = y0 + (projectile.y - y0) * contact;
+        resolved.push(projectile);
+      } else if (projectile.traveled < projectile.totalDistance - 1e-9
+          && tick < projectile.arrivalTick) {
+        remaining.push(projectile);
+      }
+      continue;
+    }
     if (projectile.kind === "delayed-impact-explosion") {
       if (projectile.arrivalTick > tick) {
         remaining.push(projectile);
@@ -5447,13 +5558,7 @@ function processChargeProjectiles(units, projectiles, tick, events, hazards = nu
       }
       continue;
     }
-    if (projectile.arrivalTick > tick) {
-      remaining.push(projectile);
-      continue;
-    }
-    const target = byReference.get(projectile.targetId);
-    if (!target?.alive) continue;
-    resolved.push(projectile);
+    throw new RangeError(`unsupported projectile kind ${projectile.kind}`);
   }
   for (const projectile of resolved) {
     const target = byReference.get(projectile.targetId);
@@ -5540,6 +5645,27 @@ function processImpactHazards(units, hazards, tick, events) {
 
 function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, events, extra) {
   const actor = units.find((unit) => unit.referenceId === actorId);
+  amount *= incomingDamageMultiplier(target, actor);
+  const blocked = amount > 0 ? consumeDamageBlock(target, extra, tick) : null;
+  if (blocked) {
+    events.push(event(tick, "damage-blocked", actorId, target.referenceId, {
+      reason: blocked,
+      amount: amount - (extra?.chargeDamage ?? 0) * incomingDamageMultiplier(target, actor),
+      readyTick,
+    }));
+    if ((extra?.chargeDamage ?? 0) > 0) {
+      return applyCommittedDamage(units, actorId, target, extra.chargeDamage,
+        readyTick, tick, events, { kind: "melee-charge", charged: true, triggersOnHit: true });
+    }
+    return false;
+  }
+  const reflectDamage = () => {
+    const fraction = unitEffects(target).damage_reflect_percent ?? 0;
+    if (fraction > 0 && amount > 0 && actor?.alive && isMeleeWeaponDamage(extra)) {
+      applyCommittedDamage(units, target.referenceId, actor, amount * fraction,
+        readyTick, tick, events, { kind: "damage-reflection" });
+    }
+  };
   const hpBefore = target.hp;
   const hpAfter = Math.max(0, hpBefore - amount);
   target.hp = hpAfter;
@@ -5571,7 +5697,10 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
       ensureSpecialState(target).armorStripped += strip;
     }
     const bleedDps = effects.bleed_dps ?? 0;
-    if (bleedDps > 0 && hpAfter > 0) {
+    const bleedTargetAllowed = effects.bleed_target_filter !== "non_mechanical_land"
+      || (target.mechanics.unit_type !== 80 && !(target.mechanics.unit_traits & 2)
+        && ![13, 55].includes(target.mechanics.unit_class));
+    if (bleedDps > 0 && hpAfter > 0 && bleedTargetAllowed) {
       const targetState = ensureSpecialState(target);
       const durationTicks = secondsToTicksCeil(effects.bleed_duration ?? 0);
       if (durationTicks > 0) {
@@ -5601,7 +5730,10 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
       );
     }
   }
-  if (hpAfter > 0) return;
+  if (hpAfter > 0) {
+    reflectDamage();
+    return;
+  }
 
   // Capture a durable command at the death boundary itself. Most deaths are
   // followed by applyPendingDismounts later in this tick, but damage-over-time
@@ -5614,6 +5746,16 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
     ensureSpecialState(target).dismountInheritedMoveOrder = target.moveOrder;
   }
 
+  // Already-fired projectiles can earn income after their shooter dies. This
+  // bookkeeping is independent of living-unit veterancy/healing below.
+  if (actor?.specialState && isHostile(actor, target)) {
+    const effects = unitEffects(actor);
+    actor.specialState.resourcesGained = { ...actor.specialState.resourcesGained };
+    for (const resource of ["food", "wood", "gold"]) {
+      actor.specialState.resourcesGained[resource] =
+        (actor.specialState.resourcesGained[resource] ?? 0) + (effects[`${resource}_per_kill`] ?? 0);
+    }
+  }
   if (actor?.alive && actor.specialState) {
     const effects = unitEffects(actor);
     const attackCap = effects.attack_bonus_per_kill ?? 0;
@@ -5630,6 +5772,10 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
         healPerKill,
         healCap - actor.specialState.hpGainedFromKills,
       );
+      if (effects.hp_per_kill_increases_maximum) {
+        actor.specialState.baseMaxHp += heal;
+        actor.maxHp = (actor.maxHp ?? actor.mechanics.hp) + heal;
+      }
       actor.hp = Math.min(actor.maxHp ?? actor.mechanics.hp, actor.hp + heal);
       actor.specialState.hpGainedFromKills += heal;
     }
@@ -5650,6 +5796,15 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
     readyTick,
   }));
   const deathEffects = unitEffects(target);
+  const refundFraction = deathEffects.death_resource_refund_fraction ?? 0;
+  if (refundFraction > 0) {
+    const state = ensureSpecialState(target);
+    state.resourcesGained = { ...state.resourcesGained };
+    for (const resource of ["food", "wood", "gold"]) {
+      state.resourcesGained[resource] = (state.resourcesGained[resource] ?? 0)
+        + refundFraction * (target.mechanics.cost?.[resource] ?? 0);
+    }
+  }
   const deathExplosionAttack = deathEffects.death_explosion_melee_attack ?? 0;
   const deathExplosionRadius = deathEffects.death_explosion_radius_tiles ?? 0;
   if (deathExplosionAttack > 0 && deathExplosionRadius > 0) {
@@ -5680,14 +5835,18 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
     }
   }
   for (const ally of units) {
-    if (!ally.alive || ally.owner !== target.owner || !ally.specialState) continue;
+    if (!ally.alive || relationFrom(ally, target) !== DIPLOMACY.ALLY || !ally.specialState) continue;
     const effects = unitEffects(ally);
     const heal = effects.ally_death_heal ?? 0;
-    if (heal <= 0 || Math.hypot(ally.x - target.x, ally.y - target.y) > 5 + 1e-12) {
+    const group = effects.ally_death_heal_group;
+    if (heal <= 0 || (group && unitEffects(target).ally_death_heal_group !== group)
+        || Math.hypot(ally.x - target.x, ally.y - target.y)
+          > (effects.ally_death_heal_radius_tiles ?? 5) + 1e-12) {
       continue;
     }
     const duration = effects.ally_death_heal_duration ?? 0;
     ally.specialState.allyHealRemaining = heal;
+    ally.specialState.allyHealUntilTick = tick + Math.max(1, secondsToTicksCeil(duration));
     ally.specialState.allyHealPerTick = duration > 0
       ? heal / secondsToTicksCeil(duration)
       : heal;
@@ -5703,6 +5862,7 @@ function applyCommittedDamage(units, actorId, target, amount, readyTick, tick, e
       { reason: "target-dead" },
     ));
   }
+  reflectDamage();
 }
 
 
@@ -5794,9 +5954,11 @@ export function stepWorld(world) {
   const hazards = world.hazards
     ? world.hazards.map((hazard) => ({ ...hazard }))
     : null;
+  const shotRng = world.shotRng ? { ...world.shotRng } : null;
   const ready = progressAttacks(units, tick, events, movedIds,
-    projectiles, velocities, world.shotRng ?? null);
-  commitReadyAttacks(units, ready, tick, events);
+    projectiles, velocities, shotRng);
+  advanceAttackActivity(units, movedIds, tick);
+  commitReadyAttacks(units, ready, tick, events, world.combatSeed ?? 0);
   const remainingProjectiles = projectiles
     ? processChargeProjectiles(units, projectiles, tick, events, hazards)
     : null;
@@ -5819,6 +5981,7 @@ export function stepWorld(world) {
   ]);
   return Object.freeze({
     ...world,
+    ...(shotRng ? { shotRng: Object.freeze(shotRng) } : {}),
     pursuitRecoveryState,
     ...(contactUpdate ? {
       contactReservationState: contactUpdate.state,
@@ -5848,29 +6011,71 @@ export function stepWorld(world) {
 }
 
 
-function outcome(world) {
-  const liveOwners = new Set(
-    world.units.filter(({ alive }) => alive).map(({ owner }) => owner),
-  );
-  if (liveOwners.size === 0) {
-    throw new Error(`invalid terminal world at tick ${world.tick}: no live owners`);
-  }
-  const liveTeams = world.victoryTeams.filter((team) => (
-    team.owners.some((owner) => liveOwners.has(owner))
-  ));
-  if (liveTeams.length > 1) return null;
-  if (liveTeams.length === 0) {
-    throw new Error(`invalid terminal world at tick ${world.tick}: no live victory team`);
-  }
-  const winner = liveTeams[0].winnerOwner;
+function hasPendingDamage(world) {
+  const live = world.units.filter(({ alive }) => alive);
+  if (live.some((unit) => unit.specialState?.bleedStacks?.some((stack) => (
+    stack.damagePerSecond > 0 && stack.untilTick > world.tick
+  )))) return true;
+  const hostileTo = (source, victim) => isHostile({
+    referenceId: source.actorId,
+    owner: source.actorOwner,
+    relationByOwner: source.actorRelationByOwner,
+  }, victim);
+  if (world.projectiles?.some((shot) => live.some((victim) => {
+    // Siege stones/fragments and explicitly friendly-fire blasts can still
+    // hurt a survivor after every enemy has died.
+    if (["shell", "pebble"].includes(shot.kind)) return victim.referenceId !== shot.actorId;
+    if (((shot.kind === "grenade" && shot.friendlyFireFraction > 0)
+        || (shot.impactSplashRadius > 0 && shot.impactSplashFriendlyFireFraction > 0))
+        && victim.referenceId !== shot.actorId) return true;
+    if (!hostileTo(shot, victim)) return false;
+    if (shot.kind === "charge") return shot.targetId === victim.referenceId;
+    if (shot.kind === "bolt" && shot.hitIds.includes(victim.referenceId)) return false;
+    if (shot.kind === "ranged" && (shot.hitMode ?? 0) === 0
+        && !shot.impactHazard && !shot.delayedImpactExplosion
+        && !(shot.impactSplashRadius > 0)) {
+      return shot.originalTargetId === victim.referenceId;
+    }
+    return true;
+  }))) return true;
+  return world.hazards?.some((hazard) => (
+    hazard.endTick > world.tick + 1 && hazard.damagePerSecond > 0
+      && live.some((victim) => hostileTo(hazard, victim) && (
+        // A moving survivor could still enter a hostile burning area.
+        victim.mechanics.speed_tiles_per_second > 0
+        || Math.hypot(victim.x - hazard.x, victim.y - hazard.y)
+          - collisionRadius(victim) <= hazard.radiusTiles + 1e-12
+      ))
+  )) ?? false;
+}
+
+
+function worldResult(world, result, winner = null) {
   return Object.freeze({
-    outcome: "win",
+    outcome: result,
     winner,
     ticks: world.tick,
     world,
     snapshots: world.snapshots,
     events: world.eventLog,
   });
+}
+
+
+function outcome(world) {
+  const liveOwners = new Set(
+    world.units.filter(unit => unit.alive || (
+      unit.mechanics?.dismount_form && unit.specialState?.dismounted !== true
+    )).map(({ owner }) => owner),
+  );
+  const liveTeams = world.victoryTeams.filter((team) => (
+    team.owners.some((owner) => liveOwners.has(owner))
+  ));
+  if (liveTeams.length > 1) return null;
+  if (liveTeams.length === 0) return worldResult(world, "draw");
+  if (world.units.some((unit) => !unit.alive && unit.mechanics?.dismount_form
+      && unit.specialState?.dismounted !== true) || hasPendingDamage(world)) return null;
+  return worldResult(world, "win", liveTeams[0].winnerOwner);
 }
 
 
@@ -5908,9 +6113,7 @@ export function runWorld(
       const result = outcome(current);
       if (result !== null) return result;
     }
-    const error = new Error(`world exceeded ${maxTicks} ticks`);
-    error.world = current;
-    throw error;
+    return worldResult(current, "timeout");
   }
 
   const collectedEvents = [...world.eventLog];
@@ -5945,8 +6148,5 @@ export function runWorld(
     if (result !== null) return compactResult(result, current);
     current = compactWorld(current);
   }
-  const error = new Error(`world exceeded ${maxTicks} ticks`);
-  error.events = Object.freeze([...collectedEvents]);
-  error.world = compactWorld(current, error.events);
-  throw error;
+  return compactResult(worldResult(current, "timeout"), current);
 }

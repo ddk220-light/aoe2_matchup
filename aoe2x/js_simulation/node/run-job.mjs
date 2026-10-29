@@ -5,7 +5,7 @@ import { deriveRecordedBattleSetup } from "../src/battle-setup.js";
 
 const ROOT = new URL("../", import.meta.url);
 
-export async function runHeadlessJob(job) {
+export async function runHeadlessJob(job, { onSnapshot } = {}) {
   if (!job || typeof job !== "object" || Array.isArray(job)) {
     throw new TypeError("job must be an object");
   }
@@ -74,6 +74,7 @@ export async function runHeadlessJob(job) {
     disableAiOrders: job.disableAiOrders ?? Boolean(engagementMode),
     disableKiting: job.disableKiting ?? Boolean(engagementMode),
     retainSnapshots: job.retainSnapshots === true,
+    ...(onSnapshot ? { onSnapshot } : {}),
     mechanicsBySide: {
       2: side2.mechanics,
       3: side3.mechanics,
@@ -83,6 +84,7 @@ export async function runHeadlessJob(job) {
   return {
     jobId: job.jobId ?? null,
     seed,
+    outcome: result.outcome,
     winnerOwner: result.winnerOwner,
     winnerHp: result.winnerHp,
     startingHpByOwner: result.startingHpByOwner,
@@ -94,8 +96,7 @@ export async function runHeadlessJob(job) {
     side3: result.side3,
     finalStateHash: result.finalStateHash,
     eventLogHash: result.eventLogHash,
-    ...(job.retainSnapshots === true
-      ? { unitIndex: result.unitIndex, snapshots: result.snapshots }
-      : {}),
+    ...(job.retainSnapshots === true || onSnapshot ? { unitIndex: result.unitIndex } : {}),
+    ...(job.retainSnapshots === true ? { snapshots: result.snapshots } : {}),
   };
 }

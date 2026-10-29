@@ -141,6 +141,29 @@ def validate_runtime_profile(profile: Mapping[str, Any]) -> None:
     _class_map(profile.get("attack_classes"), "attack_classes")
     _class_map(profile.get("armor_classes"), "armor_classes")
 
+    effects = profile.get("effects")
+    effects = {} if effects is None else effects
+    if not isinstance(effects, dict):
+        raise MechanicsValidationError("effects must be an object or null")
+    for key in ("bonus_damage_reduction", "damage_reflect_percent", "friendly_fire_damage_multiplier",
+                "death_resource_refund_fraction"):
+        if key in effects and _finite_number(effects[key], f"effects.{key}", minimum=0) > 1:
+            raise MechanicsValidationError(f"effects.{key} must be <= 1")
+    for key in ("dodge_shield_max", "nearby_attack_step"):
+        if key in effects and (isinstance(effects[key], bool) or not isinstance(effects[key], int)
+                               or effects[key] <= 0):
+            raise MechanicsValidationError(f"effects.{key} must be a positive integer")
+    for key in ("dodge_shield_recharge", "melee_block_recharge_seconds",
+                "nearby_attack_radius_tiles", "ally_death_heal_radius_tiles",
+                "combat_regen_max_hp_per_minute", "combat_gold_per_animation_second",
+                "independent_charge_recharge_seconds", "speed_attack_aura_radius_tiles",
+                "aura_move_multiplier", "aura_attack_rate_multiplier"):
+        if key in effects:
+            if _finite_number(effects[key], f"effects.{key}", minimum=0) <= 0:
+                raise MechanicsValidationError(f"effects.{key} must be positive")
+    if effects.get("dodge_shield_max") and not effects.get("dodge_shield_recharge"):
+        raise MechanicsValidationError("projectile shield needs its full-pool recharge time")
+
     cost = profile.get("cost")
     if not isinstance(cost, dict):
         raise MechanicsValidationError("cost must be an object")

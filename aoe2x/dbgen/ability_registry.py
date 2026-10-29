@@ -474,9 +474,11 @@ ABILITIES = {
         ),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Tiger Cavalry +10, max +40)",
         engines=ALL_ENGINES,
-        description="Heal on kill, capped by total HP gained.",
+        description="Tiger Cavalry gains maximum HP and heals on kill, capped "
+                    "at four gains (+40 HP).",
         quirks="simulation.py lets healing exceed max_hp by up to the cap "
-               "(hp + hp_per_kill_max ceiling); position/JS clamp to max_hp.",
+               "(hp + hp_per_kill_max ceiling); legacy position/JS clamp to max_hp. "
+               "V3's hp_per_kill_increases_maximum flag grows both ceilings.",
     ),
     "resources_per_kill": Ability(
         name="resources_per_kill",
@@ -577,8 +579,10 @@ ABILITIES = {
         params=(_p("block_first_melee", int, 0, audit="Blocks first melee hit"),),
         source="curated:UNIQUE_COMBAT_PROPERTIES (Iron Pagoda)",
         engines=ALL_ENGINES,
-        description="Negates the first melee hit ever received (once per "
-                    "unit, no recharge).",
+        description="Iron Pagoda blocks a non-projectile hit and recharges "
+                    "in 40 seconds (30 for Elite).",
+        quirks="The legacy flag/engines model only the first block. V3 adds "
+               "the sourced recharge time in v3_runtime_config.py.",
     ),
     # ------------------------------------------------------------------
     # aura — effects driven by nearby/army allies
@@ -596,8 +600,9 @@ ABILITIES = {
         engines=ALL_ENGINES,
         description="Attack bonus per nearby ally up to a cap (Monaspa; "
                     "real game: +1 per 7 Knights/Monaspas in 15 tiles).",
-        quirks="Approximation everywhere: +1 per adjacent ally capped — the "
-               "7-unit threshold is not modeled. simulation.py pre-computes "
+        quirks="Legacy engines approximate +1 per adjacent ally capped. "
+               "V3 models the seven-other-unit threshold, eligible family "
+               "and 15-tile radius. simulation.py pre-computes "
                "it as flat damage from army size at setup (min(cap, n-1)), "
                "so it never decays as allies die; position/JS recompute "
                "live within a radius.",
@@ -839,13 +844,13 @@ ABILITIES = {
                      "Ordo Cavalry)"),
         ),
         source="curated:CIV_COMBAT_PROPERTIES (Khitan Ordo Cavalry: "
-               "round(base_hp*1.5)/min)",
+               "max_hp*1.5/min; no integer rounding)",
         engines=(ENGINE_POSITION,),
-        description="HP/minute regeneration gated to combat (within 5s of "
-                    "attacking; COMBAT_WINDOW_S).",
+        description="V3: melee cavalry regenerates on active stationary attack/reload ticks. "
+                    "Legacy position engine retains its five-second COMBAT_WINDOW_S.",
         quirks="KNOWN ENGINE GAP: position-only. simulation.py parses the "
                "field but never applies it; simulate.js does not read it at "
-               "all. Khitan Ordo regen exists only in batch matchup data.",
+               "all. V3 exports melee-only eligibility and evaluates each active combat tick.",
     ),
     "projectile_speed": Ability(
         name="projectile_speed",

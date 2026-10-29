@@ -16,6 +16,55 @@ from __future__ import annotations
 # Effects merged into the runtime ``effects`` object after the ordinary
 # registry-backed ref_units columns have been read.
 RUNTIME_EFFECTS_BY_SLUG = {
+    # Official updates 83607 and 95810; see the dated unit audit for URLs.
+    "elite_centurion_romans": {
+        "speed_attack_aura_group": "militia",
+        "speed_attack_aura_radius_tiles": 12.0,
+        "aura_move_multiplier": 1.15,
+        "aura_attack_rate_multiplier": 1.2,
+    },
+    # Task151: work rate * civilization resource, paid during attack animation.
+    # Published direct DAT/recording analysis and stored 185872 tasks:
+    # https://www.reddit.com/r/aoe2/comments/gq309z/how_does_keshik_gold_generation_ability_work_an/
+    # https://www.reddit.com/r/aoe2/comments/1wpq9yi/reasoning_for_the_weird_numbers_behind_the/
+    # Exact gold tick timing remains uncalibrated; do not apply tooltip +50%
+    # again on top of the animation/reload and resource multiplier.
+    "elite_keshik_tatars": {"combat_gold_per_animation_second": 0.01 * 50},
+    "elite_varangian_guard": {
+        "combat_gold_per_animation_second": 0.015908999368548393 * 50,
+    },
+    # reference/units/unique/Monaspa.md: seven OTHER own Knights/Monaspas,
+    # within 15 tiles, one attack per tier and at most four tiers.
+    "elite_monaspa_georgians": {
+        "nearby_attack_step": 7,
+        "nearby_attack_radius_tiles": 15.0,
+    },
+    # The old registry's block_first_melee flag identifies this ability, but
+    # its once-per-life description is incomplete. Iron_Pagoda.md documents
+    # a 30-second recharge for the elite unit (40 seconds for the base unit).
+    "elite_iron_pagoda_jurchens": {
+        "melee_block_recharge_seconds": 30.0,
+        "friendly_fire_damage_multiplier": 0.5,
+    },
+    "elite_guecha_warrior_muisca": {
+        "ally_death_heal_radius_tiles": 6.0,
+        "ally_death_heal_group": "guecha",
+    },
+    "elite_leitis_lithuanians": {
+        "melee_armor_bypass_non_siege_land_only": True,
+    },
+    "elite_tiger_cavalry_wei": {
+        "hp_per_kill_increases_maximum": True,
+    },
+    "elite_liao_dao_khitans": {
+        "bleed_target_filter": "non_mechanical_land",
+    },
+    "elite_blackwood_archer_tupi": {
+        "death_resource_refund_fraction": 0.15,
+    },
+    "elite_ibirapema_warrior_tupi": {
+        "death_resource_refund_fraction": 0.15,
+    },
     "jian_swordsman_wu": {
         "hp_transform_reversible": True,
     },
@@ -42,6 +91,13 @@ RUNTIME_EFFECTS_BY_SLUG = {
 # Fully researched civilization technologies whose runtime behavior is a
 # compound event rather than a single unit attribute.
 RUNTIME_EFFECTS_BY_CIV_SLUG = {
+    ("Varangians", "elite_varangian_guard"): {
+        # Patch185872 task151 and tech1488, preserved in ref_special_effects.
+        "combat_gold_per_animation_second": 0.015908999368548393 * 50 * 1.333299994468689,
+        # Owner-specified independent slots. Existing fully-upgraded reload
+        # supplies the rapid 1.6-second throw interval; exact live cadence open.
+        "independent_charge_recharge_seconds": 30.0,
+    },
     ("Jurchens", "grenadier_jurchens"): {
         "delayed_impact_melee_attack": 4.0,
         "delayed_impact_radius_tiles": 0.65,

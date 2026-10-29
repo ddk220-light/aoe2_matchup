@@ -80,24 +80,21 @@ export function runDedicatedTapeRepeat({ row, run, context }) {
     mechanicsByMaster: context.mechanicsByMaster,
     map: context.map,
   });
-  let result;
-  try {
-    result = runWorld(createWorld(scenario), {
-      maxTicks: DEDICATED_MAX_TICKS,
-      retainSnapshots: false,
-    });
-  } catch (error) {
-    if (!String(error?.message ?? error).includes("world exceeded")) throw error;
+  const result = runWorld(createWorld(scenario), {
+    maxTicks: DEDICATED_MAX_TICKS,
+    retainSnapshots: false,
+  });
+  if (result.outcome !== "win") {
     return Object.freeze({
       rowId: row.id,
       repeat: run.repeat,
-      outcome: "timeout",
+      outcome: result.outcome,
       winnerOwner: null,
-      winnerHp: null,
-      score: null,
-      ticks: DEDICATED_MAX_TICKS,
+      winnerHp: result.outcome === "draw" ? 0 : null,
+      score: result.outcome === "draw" ? 0 : null,
+      ticks: result.ticks,
       tapeScore: run.signed_score,
-      delta: null,
+      delta: result.outcome === "draw" ? -run.signed_score : null,
     });
   }
   const live = result.world.units.filter(({ alive }) => alive);

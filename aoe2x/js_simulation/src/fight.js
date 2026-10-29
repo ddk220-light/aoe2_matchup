@@ -550,6 +550,7 @@ export async function runFight(root, {
     ...(rangedTargetPressureOwner === undefined ? {} : { rangedTargetPressureOwner }),
     ...(rangedWindupRetargetOwner === undefined ? {} : { rangedWindupRetargetOwner }),
     ticks: result.ticks,
+    outcome: result.outcome,
     winnerOwner: reportedOwner(result.winner),
     winnerHp: live
       .filter((unit) => reportedOwner(unit.owner) === reportedOwner(result.winner))

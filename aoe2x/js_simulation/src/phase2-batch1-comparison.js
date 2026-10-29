@@ -126,6 +126,7 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
   const warWagonKiter = kiter?.slug === "elite_war_wagon";
   return Object.freeze({
     ratio: `${row.side2.count}v${row.side3.count}`,
+    openingSeed: mixSeed(seed, sampleIndex, row.id),
     units: Object.freeze(units),
     map: context.map,
     ...(family === "rvr" && orderedRangedOwner === null ? {
@@ -163,23 +164,20 @@ export function scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context })
 
 export function runPhase2Batch1Sample({ row, sampleIndex, seed, context }) {
   const scenario = scenarioFromPhase2Batch1Row({ row, sampleIndex, seed, context });
-  let result;
-  try {
-    result = runWorld(createWorld(scenario), {
-      maxTicks: PHASE2_MAX_TICKS,
-      retainSnapshots: false,
-    });
-  } catch (error) {
-    if (!String(error?.message ?? error).includes("world exceeded")) throw error;
+  const result = runWorld(createWorld(scenario), {
+    maxTicks: PHASE2_MAX_TICKS,
+    retainSnapshots: false,
+  });
+  if (result.outcome !== "win") {
     return Object.freeze({
       rowId: row.id,
       sampleIndex,
       seed,
-      outcome: "timeout",
+      outcome: result.outcome,
       winnerOwner: null,
-      winnerHp: null,
-      score: null,
-      ticks: PHASE2_MAX_TICKS,
+      winnerHp: result.outcome === "draw" ? 0 : null,
+      score: result.outcome === "draw" ? 0 : null,
+      ticks: result.ticks,
       finalStateHash: null,
       eventLogHash: null,
     });

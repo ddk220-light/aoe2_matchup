@@ -97,3 +97,18 @@ test("product controls record a 9000-tick engine timeout instead of aborting the
     "timeout", "timeout", "timeout",
   ]);
 });
+
+test("product controls preserve returned timeout and draw outcomes", async () => {
+  const row = truth.rows.find((candidate) => candidate.matchup === "Champion vs Paladin");
+  for (const outcome of ["timeout", "draw"]) {
+    const report = await runStandardUnitsProductSuite({ root: ROOT, rows: [row],
+      runFightImpl: async () => ({ outcome, winnerOwner: null, winnerHp: 0, ticks: 9000 }),
+    });
+    assert.equal(report.summary.unresolvedControls, outcome === "timeout" ? 3 : 0);
+    for (const control of report.rows[0].controls) {
+      assert.equal(control.outcome, outcome);
+      assert.equal(control.winnerOwner, null);
+      assert.equal(control.score, outcome === "timeout" ? null : 0);
+    }
+  }
+});

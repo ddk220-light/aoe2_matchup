@@ -59,6 +59,28 @@ export function validateMechanicsProfile(value) {
   ]) requireFinite(profile[key], key, minimum);
   validateClassMap(profile.attack_classes, "attack_classes");
   validateClassMap(profile.armor_classes, "armor_classes");
+  const effects = profile.effects == null ? {} : requireObject(profile.effects, "effects");
+  for (const key of ["bonus_damage_reduction", "damage_reflect_percent", "friendly_fire_damage_multiplier",
+    "death_resource_refund_fraction"]) {
+    if (effects[key] === undefined) continue;
+    requireFinite(effects[key], `effects.${key}`, 0);
+    if (effects[key] > 1) throw new RangeError(`effects.${key} must be <= 1`);
+  }
+  for (const key of ["dodge_shield_max", "nearby_attack_step"]) {
+    if (effects[key] !== undefined && (!Number.isSafeInteger(effects[key]) || effects[key] <= 0)) {
+      throw new RangeError(`effects.${key} must be a positive integer`);
+    }
+  }
+  for (const key of ["dodge_shield_recharge", "melee_block_recharge_seconds",
+    "nearby_attack_radius_tiles", "ally_death_heal_radius_tiles",
+    "combat_regen_max_hp_per_minute", "combat_gold_per_animation_second",
+    "independent_charge_recharge_seconds", "speed_attack_aura_radius_tiles",
+    "aura_move_multiplier", "aura_attack_rate_multiplier"]) {
+    if (effects[key] !== undefined) requireFinite(effects[key], `effects.${key}`, Number.MIN_VALUE);
+  }
+  if (effects.dodge_shield_max && !effects.dodge_shield_recharge) {
+    throw new RangeError("projectile shield needs its full-pool recharge time");
+  }
   const cost = requireObject(profile.cost, "cost");
   for (const resource of ["food", "wood", "gold"]) {
     requireFinite(cost[resource], `cost.${resource}`, 0);

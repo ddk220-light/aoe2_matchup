@@ -159,7 +159,8 @@ UNIQUE_COMBAT_PROPERTIES = {
                           "extra_projectile_attacks_json": '{"3": 3}'},
     # Monaspa nearby ally attack bonus: +1 attack per 7 Knights/Monaspas within 15 tiles, max +4
     # Wiki: "Receive +1 (max +4) attack for every 7 own Monaspas or Knights within 15 tiles"
-    # Simulation approximation: +1 per adjacent ally, capped at 4 (exact threshold not modelled)
+    # Legacy simulations approximate +1 per adjacent ally, capped at 4.
+    # V3 adds the exact group, threshold and radius in v3_runtime_config.py.
     "monaspa": {"attack_bonus_nearby": 1, "nearby_bonus_count": 4},
     "elite_monaspa": {"attack_bonus_nearby": 1, "nearby_bonus_count": 4},
     # Ibirapema Warrior: blast_attack_level=162 = conical splash shape; blast_damage=1.0 = 100%.
@@ -292,21 +293,14 @@ CIV_COMBAT_PROPERTIES = {
     ("Khitans", "elite_liao_dao"): {"damage_reflect_percent": 0.25},
     ("Khitans", "fire_lancer"): {"damage_reflect_percent": 0.25},
     ("Khitans", "elite_fire_lancer"): {"damage_reflect_percent": 0.25},
-    # Khitan Ordo Cavalry — "Melee cavalry regenerates 150% of max HP per minute in combat"
-    # Per-unit values = round(base_hp * 1.5). Source: Ordo_Cavalry wiki page.
-    # NOTE: uses hp_regen_in_combat (gated) NOT hp_regen (passive) — only Khitan Ordo has this caveat.
-    ("Khitans", "heavy_cav_archer"): {"hp_regen_in_combat": 90},   # 60 HP × 1.5
-    ("Khitans", "cav_archer"): {"hp_regen_in_combat": 75},          # 50 HP × 1.5
-    ("Khitans", "hussar"): {"hp_regen_in_combat": 113},             # 75 HP × 1.5
-    ("Khitans", "light_cav"): {"hp_regen_in_combat": 90},           # 60 HP × 1.5
-    ("Khitans", "steppe_lancer"): {"hp_regen_in_combat": 90},       # 60 HP × 1.5
-    ("Khitans", "elite_steppe"): {"hp_regen_in_combat": 120},       # 80 HP × 1.5
-    ("Khitans", "camel"): {"hp_regen_in_combat": 150},              # 100 HP × 1.5
-    ("Khitans", "heavy_camel"): {"hp_regen_in_combat": 180},        # 120 HP × 1.5
-    # NOTE: Fire Lancer is INFANTRY, not cavalry — Ordo Cavalry does NOT apply.
-    # (Fandom wiki Ordo_Cavalry: "causes melee cavalry units to regenerate HP".)
-    # Lamellar Armor's 25% melee damage reflect IS applied above.
-    ("Khitans", "mounted_trebuchet"): {"hp_regen_in_combat": 113},  # 75 HP × 1.5
+    # Owner contract 2026-10-29: melee cavalry only, active attacking/reload
+    # ticks only. Rate is 150% maximum HP per minute; retain fractional HP.
+    ("Khitans", "hussar"): {"hp_regen_in_combat": 112.5},
+    ("Khitans", "light_cav"): {"hp_regen_in_combat": 90},
+    ("Khitans", "steppe_lancer"): {"hp_regen_in_combat": 90},
+    ("Khitans", "elite_steppe"): {"hp_regen_in_combat": 120},
+    ("Khitans", "camel"): {"hp_regen_in_combat": 150},
+    ("Khitans", "heavy_camel"): {"hp_regen_in_combat": 180},
     # Shu Coiled Serpent Array (Castle UT) — spear-line + White Feather gain %HP near each other
     # +0.5% HP per nearby qualifying unit, capped at 30 units = +15% HP max
     ("Shu", "halberdier"): {"hp_nearby_percent_per_unit": 0.5, "hp_nearby_max_units": 30},

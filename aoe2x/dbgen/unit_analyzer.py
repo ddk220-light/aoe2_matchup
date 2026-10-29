@@ -312,6 +312,8 @@ class UnitAnalyzer:
 
     def get_base_stats(self, unit: dict) -> UnitStats:
         """Extract base stats from unit data."""
+        from .patch188329_stats import patch_base_unit
+        unit = patch_base_unit(unit)
         stats = UnitStats()
         stats.hp = unit.get("hit_points", 0)
         stats.speed = unit.get("speed", 0)

@@ -61,7 +61,7 @@ Costs are per-unit resource totals; no variable Saxon building discount is selec
 | Varangians / Elite Jarl | 105 | 14 melee | 5 / 5 | 5 | 75 food, 55 gold |
 | Danes / Elite Jomsviking | 75 | 13 melee | 5 / 6 | melee | 65 food, 15 gold |
 
-The separate javelin/torch attacks and armor reduction are not summed into the
+The separate javelin/torch attacks are not summed into the
 ordinary attack column. Guard HP varies from 80 to Viking 96; Varangian Guards'
 reload is 1.6 seconds instead of 2.0, while Danish Guards receive the speed bonus.
 
@@ -147,7 +147,7 @@ evidence, but their prose is not treated as a numeric specification.
 | Gothikon,1474 | Capacity2, recharge/event/target and inherited projectile semantics retained; not approximated as one simple charge |
 | Hearth Troop | Source javelin profile retained once; launch/recharge timing and target mask need validation |
 | Jomsviking | Torch target mask320 limits it to buildings/ships; generic unrestricted charge is not an acceptable implementation |
-| Jarl | Ranged melee and armor reduction identified; amount, duration and reset behavior must be measured, not copied from Obuch |
+| Jarl | Ranged melee damage. Correction 2026-10-28: the earlier armor-reduction claim was incorrect; Jarl does not strip armor. |
 | Guard fighting gold | Tasks/resource evidence retained; not modeled as gold per kill |
 
 **Unresolved source discrepancy:** Varangian tech1488 multiplies resource297 by

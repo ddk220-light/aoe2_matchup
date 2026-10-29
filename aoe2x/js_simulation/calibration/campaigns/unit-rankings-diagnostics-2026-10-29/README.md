@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 20/110 diagnostic tasks.
+Status: **running**. Completed 25/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -25,6 +25,11 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Mayans Elite Plumed Archer vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.43 | 8.683333333333334 |
 | diagnose_processing_timeout | Mayans Elite Plumed Archer vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.42 | 8.7 |
 | diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Saracens Heavy Cavalry Archer / seed 0 | processing_limit | 120.48 | 73.46666666666667 |
+| diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.52 | 76.5 |
+| diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.48 | 69.65 |
+| diagnose_processing_timeout | Portuguese Cavalier vs. Spanish Paladin / seed 0 | decided | 108.41 | 60.03333333333333 |
+| diagnose_processing_timeout | Portuguese Cavalier vs. Spanish Paladin / seed 1 | decided | 109.12 | 60.03333333333333 |
+| diagnose_processing_timeout | Portuguese Cavalier vs. Spanish Paladin / seed 2 | decided | 108.01 | 60.03333333333333 |
 | extend_game_time | Aztecs Elite Skirmisher vs. Turks Cavalier / seed 2 | processing_limit | 121.15 | 168.86666666666667 |
 | extend_game_time | Bohemians Mounted Crossbowman vs. Spanish Hussar / seed 0 | decided | 32.87 | 288.8 |
 | extend_game_time | Khmer Elite Battle Elephant vs. Saracens Heavy Cavalry Archer / seed 0 | decided | 30.12 | 207.33333333333334 |

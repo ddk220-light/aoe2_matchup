@@ -1,5 +1,10 @@
 # Project Agent Instructions
 
+## Work duration approval
+
+- User instruction, 2026-10-29: ask before starting any work estimated to take more than one hour. Earlier broad authorization does not waive this requirement.
+- The full `unit-rankings-path-recovery-2026-10-29` recomputation was explicitly stopped. Do not resume it or its disabled scheduled check. The requested replacement is the consolidated dataset at `aoe2x/js_simulation/calibration/campaigns/unit-rankings-consolidated-2026-10-29`, with per-run engine provenance. Ranking/scoring remains deferred.
+
 ## Ask explicitly before every unrequested change
 
 - Preserve the existing product unless the owner explicitly requests a change. Adding civilizations or units means extending the existing roster, shared assets and normal UI, not inventing a separate architecture or new controls.

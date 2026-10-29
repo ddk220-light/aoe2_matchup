@@ -1,3 +1,5 @@
+> Stopped by the owner on 2026-10-29. Do not resume this campaign. Existing results are being reused in [the consolidated dataset](../unit-rankings-consolidated-2026-10-29/README.md).
+
 # Full Imperial land rankings campaign
 
 Status: **paused**. 684/7201 currently required runs; 319/3591 complete matchups; 0 flagged for review.
@@ -17,7 +19,7 @@ Three seeds per matchup, expanding to ten when the initial completed outcomes di
 - [Manifest](manifest.json) freezes all profiles, formations, seeds, cost rules and source hashes.
 - All results are recomputed on this engine version; historical pilot/campaign results are not imported.
 
-Resume (Node v24.19.0):
+Historical command (do not run; the owner stopped this campaign) (Node v24.19.0):
 
 ```bash
 node aoe2x/js_simulation/node/full-ranking-campaign.mjs run --campaign aoe2x/js_simulation/calibration/campaigns/unit-rankings-path-recovery-2026-10-29 --publish true

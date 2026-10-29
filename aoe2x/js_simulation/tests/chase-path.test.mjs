@@ -8,6 +8,7 @@ import {
   planPersistentChaseRoute,
 } from "../src/combat/chase-path.js";
 import { createPairInteractionSnapshot } from "../src/combat/pair-interactions.js";
+import { resolveMovementProposals } from "../src/combat/collision.js";
 
 const map = Object.freeze({ width: 8, height: 8, obstacles: Object.freeze([]) });
 
@@ -31,6 +32,33 @@ test("coordinate path keeps a clear move order on its exact direct route", () =>
   const mover = body(1, 1);
   const goal = Object.freeze({ x: 5, y: 1 });
   assert.equal(planMoveAim(mover, goal, [], map), null);
+});
+
+test("path planning and movement agree beside a circular map-obstacle corner", () => {
+  const mover = dynamicBody(1, 1.125, 2.375, 0.2, 3, 75);
+  const goal = { x: 1.375, y: 2.375 };
+  const cornerMap = { ...map, obstacles: [
+    { referenceId: 9, x: 1.625, y: 2.625, radius: 0.1 },
+  ] };
+  // The destination is outside the radius-sum circle (distance sqrt(.125)),
+  // but inside the former square (axis separation .25 < radius sum .3).
+  assert.equal(planMoveAim(mover, goal, [], cornerMap), null);
+  const [moved] = resolveMovementProposals([mover], [
+    { referenceId: 1, dx: 0.25, dy: 0 },
+  ], cornerMap);
+  assert.equal(moved.x, goal.x);
+  assert.equal(moved.y, goal.y);
+
+  const target = dynamicBody(2, 1.875, 2.125, 0.2, 2, 4);
+  assert.equal(planPersistentChaseRoute(mover, target, [], cornerMap), null);
+});
+
+test("dynamic unit corners keep their box obstruction", () => {
+  const mover = dynamicBody(1, 1.125, 2.375, 0.2, 3, 75);
+  const blocker = dynamicBody(9, 1.625, 2.625, 0.1, 2, 4);
+  const waypoint = planMoveAim(mover, { x: 1.375, y: 2.375 }, [blocker], map);
+  assert.ok(waypoint && waypoint.stand !== true);
+  assert.notEqual(waypoint.y, 2.375, "a dynamic box still requires a detour");
 });
 
 test("coordinate path deterministically routes around a blocking body", () => {

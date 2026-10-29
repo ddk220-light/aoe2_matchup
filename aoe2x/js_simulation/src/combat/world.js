@@ -2814,13 +2814,18 @@ function obstacleCollisionRadius(obstacle) {
 
 
 function stepClearsMapObstacles(mover, dx, dy, map) {
-  const x = mover.x + dx;
-  const y = mover.y + dy;
   const moverRadius = collisionRadius(mover);
-  return (map.obstacles ?? []).every((obstacle) => (
-    Math.max(Math.abs(x - obstacle.x), Math.abs(y - obstacle.y))
-      >= moverRadius + obstacleCollisionRadius(obstacle) - STEP_EPSILON
-  ));
+  const lengthSquared = dx * dx + dy * dy;
+  return (map.obstacles ?? []).every((obstacle) => {
+    const x = mover.x - obstacle.x;
+    const y = mover.y - obstacle.y;
+    const fraction = lengthSquared === 0 ? 0
+      : Math.max(0, Math.min(1, -(x * dx + y * dy) / lengthSquared));
+    // Static obstacles use circular swept clearance in the movement solver.
+    // A square test falsely walls off valid positions beside rounded corners.
+    return Math.hypot(x + fraction * dx, y + fraction * dy)
+      >= moverRadius + obstacleCollisionRadius(obstacle) - STEP_EPSILON;
+  });
 }
 
 

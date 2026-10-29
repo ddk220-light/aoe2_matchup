@@ -74,8 +74,8 @@ function obstacleRadius(body) {
 }
 
 // Blocked-cell grid for ONE mover: a cell is blocked when placing the mover's
-// centre there would overlap an obstacle body (Chebyshev, radius sum -- the
-// same test the collision solver applies).
+// centre there would overlap an obstacle body. Static obstacles are circular;
+// dynamic units use axis-aligned boxes, matching the movement solver.
 function buildBlockedGrid(mover, obstacles, cols, rows, options = {}) {
   const blocked = new Uint8Array(cols * rows);
   const moverRadius = collisionRadius(mover);
@@ -92,11 +92,12 @@ function buildBlockedGrid(mover, obstacles, cols, rows, options = {}) {
     const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / CELL_TILES - 0.5) - 1);
     const loY = Math.max(0, Math.floor((body.y - reach) / CELL_TILES - 0.5) + 1);
     const hiY = Math.min(rows - 1, Math.ceil((body.y + reach) / CELL_TILES - 0.5) - 1);
+    const distance = body.owner === undefined ? Math.hypot : Math.max;
     for (let cy = loY; cy <= hiY; cy += 1) {
       for (let cx = loX; cx <= hiX; cx += 1) {
         const centreX = (cx + 0.5) * CELL_TILES;
         const centreY = (cy + 0.5) * CELL_TILES;
-        if (Math.max(Math.abs(centreX - body.x), Math.abs(centreY - body.y))
+        if (distance(Math.abs(centreX - body.x), Math.abs(centreY - body.y))
           < reach) {
           blocked[cellIndex(cx, cy, cols)] = 1;
         }
@@ -302,11 +303,12 @@ function addHardBody(blocked, body, reach, cols, rows) {
   const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / CELL_TILES - 0.5) - 1);
   const loY = Math.max(0, Math.floor((body.y - reach) / CELL_TILES - 0.5) + 1);
   const hiY = Math.min(rows - 1, Math.ceil((body.y + reach) / CELL_TILES - 0.5) - 1);
+  const distance = body.owner === undefined ? Math.hypot : Math.max;
   for (let cy = loY; cy <= hiY; cy += 1) {
     for (let cx = loX; cx <= hiX; cx += 1) {
       const centreX = (cx + 0.5) * CELL_TILES;
       const centreY = (cy + 0.5) * CELL_TILES;
-      if (Math.max(Math.abs(centreX - body.x), Math.abs(centreY - body.y)) < reach) {
+      if (distance(Math.abs(centreX - body.x), Math.abs(centreY - body.y)) < reach) {
         blocked[cellIndex(cx, cy, cols)] = 1;
       }
     }

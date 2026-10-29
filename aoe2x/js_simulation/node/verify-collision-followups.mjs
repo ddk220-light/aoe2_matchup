@@ -6,16 +6,22 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { jobFor } from './full-ranking-campaign.mjs';
 
-const [campaignPath, outputPath, performanceOutput] = process.argv.slice(2);
+const [campaignPath, outputPath, performanceOutput, ...options] = process.argv.slice(2);
+const allFlagged = options.includes('--all-flagged');
+const workerCount = Number(options.find(value => value.startsWith('--workers='))?.split('=')[1] ?? 1);
+if (!Number.isInteger(workerCount) || workerCount < 1 || workerCount > 4) throw new Error('workers must be 1..4');
+if (allFlagged && !performanceOutput) throw new Error('--all-flagged requires performance results');
 const campaign = resolve(campaignPath), output = resolve(outputPath);
 const manifest = JSON.parse(readFileSync(resolve(campaign, 'manifest.json')));
 const matchups = new Map(manifest.matchups.map(row => [row.id, row]));
 const originals = readdirSync(resolve(campaign, 'runs')).filter(name => name.endsWith('.jsonl')).flatMap(name =>
   readFileSync(resolve(campaign, 'runs', name), 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse));
-const hashes = () => Object.fromEntries(['collision.js', 'world.js', 'contact-reservations.js'].map(name =>
-  [name, createHash('sha256').update(readFileSync(new URL('../src/combat/' + name, import.meta.url))).digest('hex')]));
+const sourceRoot = new URL('../src/', import.meta.url);
+const hashes = () => Object.fromEntries(readdirSync(sourceRoot, { recursive: true })
+  .filter(name => name.endsWith('.js')).sort().map(name =>
+    [name, createHash('sha256').update(readFileSync(new URL(name, sourceRoot))).digest('hex')]));
 const sourceHashes = hashes(), sourceKey = JSON.stringify(sourceHashes);
-const selected = [
+const selected = allFlagged ? [] : [
   ['m_5ae9ad79f7d6a5ddeeb8', 2], ['m_ed79846db7272bf05960', 2],
   ['m_5c951a7bad151e048fb7', 0], ['m_9f24a61daa053dd6cbde', 0],
   ['m_bf1ed614717ec1806ca0', 0],
@@ -23,7 +29,7 @@ const selected = [
 if (performanceOutput) {
   const performanceRows = readFileSync(resolve(performanceOutput, 'runs.jsonl'), 'utf8').trim()
     .split('\n').filter(Boolean).map(JSON.parse);
-  for (const row of performanceRows.filter(row => row.kind === 'completion' && (row.watchdog || row.error))) {
+  for (const row of performanceRows.filter(row => row.kind === 'completion' && (allFlagged || row.watchdog || row.error))) {
     if (!selected.some(([id, seed]) => id === row.matchupId && seed === row.seed)) selected.push([row.matchupId, row.seed]);
   }
 }
@@ -38,13 +44,17 @@ if (records.some(row => JSON.stringify(row.sourceHashes) !== sourceKey)) throw n
 const atomic = (name, value) => {
   const path = resolve(output, name); writeFileSync(path + '.tmp', JSON.stringify(value, null, 2) + '\n'); renameSync(path + '.tmp', path);
 };
-atomic('manifest.json', { sourceHashes, campaignHash: manifest.campaignHash, maxWallSeconds: 120,
+atomic('manifest.json', { sourceHashes, campaignHash: manifest.campaignHash, maxWallSeconds: 120, workerCount, allFlagged,
   note: 'Behavior corrections; changed hashes are reported, never substituted into the frozen campaign.',
   tasks: tasks.map(({ kind, row }) => ({ kind, matchupId: row.matchupId, seed: row.seed })) });
 const done = new Set(records.map(row => `${row.kind}:${row.matchupId}:${row.seed}`));
-let worker = new Worker(new URL('./collision-validation-worker.mjs', import.meta.url));
-try {
-  for (const task of tasks) {
+const pending = tasks.filter(({ kind, row }) => !done.has(`${kind}:${row.matchupId}:${row.seed}`));
+let nextTask = 0;
+async function runLane() {
+  let worker = new Worker(new URL('./collision-validation-worker.mjs', import.meta.url));
+  try {
+  while (nextTask < pending.length) {
+    const task = pending[nextTask++];
     const row = task.row, key = `${task.kind}:${row.matchupId}:${row.seed}`;
     if (done.has(key)) continue;
     if (JSON.stringify(hashes()) !== sourceKey) throw new Error('source changed while checking');
@@ -77,4 +87,8 @@ try {
       outcome: record.result?.outcome, error: record.error, watchdog: record.watchdog }));
     if (message.error || message.watchdog) { await worker.terminate(); worker = new Worker(new URL('./collision-validation-worker.mjs', import.meta.url)); }
   }
-} finally { await worker.terminate(); }
+  } finally { await worker.terminate(); }
+}
+const lanes = await Promise.allSettled(Array.from({ length: workerCount }, runLane));
+const failures = lanes.filter(result => result.status === 'rejected');
+if (failures.length) throw new AggregateError(failures.map(result => result.reason));

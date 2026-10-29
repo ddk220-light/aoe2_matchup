@@ -428,10 +428,9 @@ function resolveConstraints(bodies, obstacles, bounds, pairInteractions,
     ))) break;
   }
 
-  // Ally separation is a soft constraint: a crowd can stay mutually unsatisfied
-  // for as long as it likes, exactly as the tapes show. Spending the whole sweep
-  // budget is therefore not an error provided the hard invariants -- enemy
-  // separation, map bounds and static obstacles -- all hold.
+  // Pair reservations already define any permitted allied compression. The
+  // published surfaces, map bounds and static obstacles must all hold, even
+  // when the iterative solve exhausts its budget.
   if (finalGeometryIsValid(
     bodies, obstacles, bounds, EPSILON, pairInteractions,
   )) {
@@ -480,7 +479,9 @@ function invalidBodyReferences(bodies, obstacles, bounds, tolerance, pairInterac
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {
-      if (!areOpponents(bodies[i], bodies[j])) continue;
+      // Match finalGeometryViolation: allied reservation surfaces are also
+      // constraints. Ignoring them can report successful recovery while the
+      // final safety check still rejects the same overlap.
       const gap = Math.max(
         Math.abs(bodies[j].x + bodies[j].dx - bodies[i].x - bodies[i].dx),
         Math.abs(bodies[j].y + bodies[j].dy - bodies[i].y - bodies[i].dy),

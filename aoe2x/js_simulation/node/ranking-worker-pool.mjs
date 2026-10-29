@@ -1,8 +1,10 @@
 import { Worker } from "node:worker_threads";
 
 export class RankingWorkerPool {
-  constructor(size = 4) {
+  constructor(size = 4, { workerUrl, maxTicks } = {}) {
     if (!Number.isSafeInteger(size) || size < 1) throw new Error("invalid worker count");
+    this.workerUrl = workerUrl ?? new URL("./ranking-pool-worker.mjs", import.meta.url);
+    this.maxTicks = maxTicks;
     this.queue = [];
     this.sequence = 0;
     this.closed = false;
@@ -10,11 +12,12 @@ export class RankingWorkerPool {
     for (const slot of this.slots) this.spawn(slot);
   }
   spawn(slot) {
-    const worker = new Worker(new URL("./ranking-pool-worker.mjs", import.meta.url));
+    const worker = new Worker(this.workerUrl);
     slot.worker = worker;
     worker.on("message", message => {
-      if (slot.worker !== worker || message.requestId !== slot.task?.requestId) return;
+      if (slot.worker !== worker || (message.requestId ?? message.id) !== slot.task?.requestId) return;
       const task = slot.task;
+      if (message.progress) { task.lastProgress = message.progress; return; }
       clearTimeout(task.timer);
       slot.task = null;
       task.resolve(message);
@@ -51,12 +54,12 @@ export class RankingWorkerPool {
         const worker = slot.worker;
         slot.worker = null;
         slot.task = null;
-        task.resolve({ watchdog: true });
+        task.resolve({ watchdog: true, lastProgress: task.lastProgress });
         worker.terminate().finally(() => {
           if (!this.closed) { this.spawn(slot); this.dispatch(); }
         });
       }, task.timeoutSeconds * 1000);
-      slot.worker.postMessage({ requestId: task.requestId, job: task.job });
+      slot.worker.postMessage({ requestId: task.requestId, id: task.requestId, job: task.job, maxTicks: this.maxTicks });
     }
   }
   async close() {

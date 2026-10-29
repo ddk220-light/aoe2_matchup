@@ -112,7 +112,7 @@ if (error) writeFileSync(resolve(output, 'contact-history.json'), serializable(c
 if (profileMode === 'snapshot' && lastWorld) {
   writeFileSync(resolve(output, 'world-input.json'), serializable(lastWorld) + '\n');
 }
-const sourceHashes = Object.fromEntries(['world.js', 'contact-reservations.js', 'collision.js'].map(name =>
+const sourceHashes = Object.fromEntries(['world.js', 'contact-reservations.js', 'collision.js', 'chase-path.js'].map(name =>
   [name, createHash('sha256').update(readFileSync(new URL('../src/combat/' + name, import.meta.url))).digest('hex')]));
 const record = { matchupId, seed: Number(seedText), sourceHashes,
   wallSeconds: (performance.now() - started) / 1000, tick: lastWorld?.tick,

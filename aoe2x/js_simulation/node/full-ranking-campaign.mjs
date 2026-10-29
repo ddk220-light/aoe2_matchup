@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, openSy
   closeSync, fsyncSync, appendFileSync, unlinkSync, renameSync } from "node:fs";
 import { resolve, dirname, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { DatabaseSync } from "node:sqlite";
 import { hashCanonicalJson as digest } from "../src/canonical-json.js";
 import { unitDescriptorFromMechanics, validateMechanicsProfile } from "../src/mechanics-schema.js";
@@ -21,8 +21,7 @@ const ROOT = resolve(SIM, "../..");
 const now = () => new Date().toISOString();
 const sha = value => createHash("sha256").update(value).digest("hex");
 function currentCommit() {
-  const head = readFileSync(resolve(ROOT, ".git/HEAD"), "utf8").trim();
-  return head.startsWith("ref: ") ? readFileSync(resolve(ROOT, ".git", head.slice(5)), "utf8").trim() : head;
+  return execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim();
 }
 const DECIDED = new Set(["win", "loss", "draw"]);
 export const OPPONENTS = {
@@ -206,7 +205,7 @@ export function validateRecord(manifest, m, row) {
       if (!Number.isFinite(row[k]) || row[k] < 0) throw new Error(`invalid ${k}`);
     }
     if (!row.finalStateHash || !row.eventLogHash) throw new Error("missing replay hashes");
-    if (row.ticks > 9000) throw new Error("simulation ceiling exceeded");
+    if (row.ticks > (manifest.policy?.maxSimulationTicks ?? 9000)) throw new Error("simulation ceiling exceeded");
   }
 }
 export function restoreFullDb(directory, manifest) {
@@ -232,6 +231,7 @@ export function restoreFullDb(directory, manifest) {
   return db;
 }
 export function importPilot(directory, manifest, db) {
+  if (manifest.policy?.reusePilotRuns === false) return 0;
   const pilotDirectory = resolve(ROOT, manifest.pilotDirectory);
   const pilot = loadCampaign(pilotDirectory);
   if (pilot.campaignHash !== manifest.pilotCampaignHash) throw new Error("pilot changed");
@@ -302,7 +302,8 @@ export function recordFromMessage(manifest, m, seed, message, timing) {
     opponentStartingHp: result?.startingHpByOwner[3] ?? manifest.profiles[m.teamKeys[1]].mechanics.hp * m.counts[1],
     unitRemainingHp: result?.remainingByOwner[2]?.hp ?? null, opponentRemainingHp: result?.remainingByOwner[3]?.hp ?? null,
     unitSurvivors: result?.remainingByOwner[2]?.units ?? null, opponentSurvivors: result?.remainingByOwner[3]?.units ?? null,
-    ticks: result?.ticks ?? null, simulationSeconds: result ? result.ticks / 60 : null,
+    ticks: result?.ticks ?? message.lastProgress?.tick ?? null,
+    simulationSeconds: result ? result.ticks / 60 : message.lastProgress?.simulationSeconds ?? null,
     partialSimulationTime: !result, finalStateHash: result?.finalStateHash ?? null, eventLogHash: result?.eventLogHash ?? null,
     playbackPath: null, result: result ?? null };
   row.unitHpPercent = row.unitRemainingHp === null ? null : 100 * row.unitRemainingHp / row.unitStartingHp;
@@ -370,15 +371,17 @@ export function exportFull(directory, manifest, db, state) {
     + `27 on the cheaper side; expensive side = round(27 × sqrt(cheaper / expensive weighted unit cost)). `
     + `Weights: food 1, wood 0.9, gold 1.1; full discounts and per-physical-unit batch costs. No buffers or scripted kiting.\n\n`
     + `Three seeds per matchup, expanding to ten when the initial completed outcomes differ. `
-    + `150 game seconds / 120 wall seconds per attempt. Undecided/error cases are saved and excluded from decided averages.\n\n`
-    + `Four persistent workers run sequential phases automatically. Each phase verifies coverage, record validity, `
+    + `${manifest.policy?.maxSimulationTicks === Number.MAX_SAFE_INTEGER ? "No practical game-time ceiling" : `${(manifest.policy?.maxSimulationTicks ?? 9000) / 60} game seconds`} / ${manifest.policy?.wallTimeoutSeconds ?? 120} wall seconds per attempt. Undecided/error cases are saved and excluded from decided averages.\n\n`
+    + `${state.workers} persistent workers run sequential phases automatically. Each phase verifies coverage, record validity, `
     + `source hashes, SQLite integrity and a separate exact-seed replay before continuing. `
     + `Each result commits to SQLite and a flushed JSONL journal. GitHub checkpoints occur at phase boundaries, `
     + `250 new results or ten minutes; network failures do not discard results.\n\n`
     + `- [Plan](PLAN.md), [progress](progress.json), [phase reviews](state.json), [summary table](summary.csv), [undecided](undecided.json).\n`
     + `- Every individual run is in [phase journals](runs/); these restore SQLite after a fresh checkout.\n`
     + `- [Manifest](manifest.json) freezes all profiles, formations, seeds, cost rules and source hashes.\n`
-    + `- The [pilot](../unit-rankings-pilot-2026-10-29/) supplies 37 reused results with recorded provenance.\n\n`
+    + (manifest.policy?.reusePilotRuns === false
+      ? `- All results are recomputed on this engine version; historical pilot/campaign results are not imported.\n\n`
+      : `- The [pilot](../unit-rankings-pilot-2026-10-29/) supplies 37 reused results with recorded provenance.\n\n`)
     + `Resume (Node ${process.version}):\n\n\`\`\`bash\nnode aoe2x/js_simulation/node/full-ranking-campaign.mjs run --campaign ${relative(ROOT, directory)} --publish true\n\`\`\`\n`);
   return progress;
 }
@@ -394,10 +397,10 @@ async function command(args) {
     child.on("close", code => { clearTimeout(timeout); code === 0 ? resolveCommand(stdout.trim()) : reject(new Error(`git ${args[0]} failed (${code}): ${stderr.slice(-1500)}`)); });
   });
 }
-async function publish(directory, state) {
+async function publish(directory, state, manifest) {
   try {
     const branch = await command(["branch", "--show-current"]);
-    if (branch !== "simulations/v3-engine-ranking-pilot-2026-10-29") throw new Error("unexpected publishing branch");
+    if (branch !== (manifest.publishBranch ?? "simulations/v3-engine-ranking-pilot-2026-10-29")) throw new Error("unexpected publishing branch");
     const prefix = relative(ROOT, directory);
     const staged = await command(["diff", "--cached", "--name-only"]);
     if (staged.split("\n").some(p => p && !p.startsWith(`${prefix}/`))) throw new Error("unrelated staged changes; checkpoint retained locally");
@@ -456,7 +459,10 @@ export async function runFull(directory, { workers = 4, publishResults = false, 
     state = existsSync(resolve(directory, "state.json")) ? JSON.parse(readFileSync(resolve(directory, "state.json"), "utf8"))
       : { startedAt: now(), reviews: {} };
     state.status = "running"; state.workers = workers; state.pid = process.pid;
-    pool = new RankingWorkerPool(workers);
+    pool = new RankingWorkerPool(workers, manifest.policy?.maxSimulationTicks ? {
+      workerUrl: new URL("./collision-validation-worker.mjs", import.meta.url),
+      maxTicks: manifest.policy?.maxSimulationTicks,
+    } : {});
     let lastExport = 0, lastPublish = Date.now(), sincePublish = 0, completedHere = 0;
     exportFull(directory, manifest, db, state);
     for (const phase of manifest.phases) {
@@ -496,7 +502,7 @@ export async function runFull(directory, { workers = 4, publishResults = false, 
         if (Date.now() - lastExport >= 30000) { exportFull(directory, manifest, db, state); lastExport = Date.now(); }
         if (sincePublish >= 250 || Date.now() - lastPublish >= 600000) {
           exportFull(directory, manifest, db, state);
-          if (publishResults) await publish(directory, state);
+          if (publishResults) await publish(directory, state, manifest);
           sincePublish = 0; lastPublish = Date.now();
         }
       }
@@ -504,7 +510,7 @@ export async function runFull(directory, { workers = 4, publishResults = false, 
       state.reviews[phase.id] = await reviewPhase(directory, manifest, phase, db, pool);
       completedHere++;
       exportFull(directory, manifest, db, state);
-      if (publishResults) await publish(directory, state);
+      if (publishResults) await publish(directory, state, manifest);
       sincePublish = 0; lastPublish = Date.now();
       console.log(JSON.stringify({ phaseCompleted: phase.id, review: state.reviews[phase.id] }));
     }
@@ -512,13 +518,13 @@ export async function runFull(directory, { workers = 4, publishResults = false, 
     if (state.status === "complete") { state.activePhase = null; state.completedAt = now(); }
     const progress = exportFull(directory, manifest, db, state);
     if (state.status === "complete" && progress.pendingRuns !== 0) throw new Error("completion coverage mismatch");
-    if (publishResults) await publish(directory, state);
+    if (publishResults) await publish(directory, state, manifest);
     return progress;
   } catch (error) {
     if (state && db) {
       state.status = "failed"; state.failure = { at: now(), message: error.message };
       exportFull(directory, manifest, db, state);
-      if (publishResults) await publish(directory, state);
+      if (publishResults) await publish(directory, state, manifest);
     }
     throw error;
   } finally {

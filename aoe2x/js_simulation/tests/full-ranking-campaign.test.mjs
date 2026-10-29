@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "nod
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { hydrate, jobFor, phasePending, recordFromMessage, validateRecord, restoreFullDb, exportFull, POOLS, OPPONENTS } from "../node/full-ranking-campaign.mjs";
+import { hydrate, jobFor, phasePending, recordFromMessage, validateRecord, restoreFullDb, exportFull, importPilot, POOLS, OPPONENTS } from "../node/full-ranking-campaign.mjs";
 import { storedRuns, saveRun } from "../node/ranking-campaign.mjs";
 import { combatProfileHash, assignEquivalence } from "../node/ranking-equivalence.mjs";
 
@@ -46,6 +46,26 @@ test("watchdogs and errors remain review cases; corrupted completed records are 
   assert.throws(() => validateRecord(manifest, m, { ...row, unitCount: 30 }), /counts/);
   assert.throws(() => validateRecord(manifest, m, { ...row, unitRemainingHp: NaN }), /invalid/);
   assert.throws(() => validateRecord(manifest, m, { ...row, campaignHash: "wrong" }), /identity/);
+});
+
+test("a refreshed campaign records partial game time and keeps stop policy separate from outcomes", () => {
+  const refreshed = { ...manifest, policy: { maxSimulationTicks: Number.MAX_SAFE_INTEGER, reusePilotRuns: false } };
+  const row = recordFromMessage(refreshed, m, 0, {
+    watchdog: true, lastProgress: { tick: 12000, simulationSeconds: 200 },
+  }, timing);
+  assert.equal(row.outcome, "undecided");
+  assert.equal(row.reason, "wall_timeout");
+  assert.equal(row.ticks, 12000);
+  assert.equal(row.simulationSeconds, 200);
+  assert.equal(row.partialSimulationTime, true);
+  assert.equal(row.unitRemainingHp, null);
+  const longer = recordFromMessage(refreshed, m, 0, {
+    result: { ...saved.result, ticks: 12000 },
+  }, timing);
+  assert.doesNotThrow(() => validateRecord(refreshed, m, longer));
+  assert.throws(() => validateRecord(manifest, m, longer), /ceiling/);
+  assert.equal(importPilot("unused", refreshed, null), 0,
+    "an engine refresh must never read or import the old pilot results");
 });
 
 test("portable journals recover every committed run and attempt, ignore only an interrupted last line, and resume without duplicates", () => {

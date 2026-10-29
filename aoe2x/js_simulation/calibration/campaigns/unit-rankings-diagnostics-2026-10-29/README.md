@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 90/110 diagnostic tasks.
+Status: **running**. Completed 95/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -75,17 +75,22 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 | diagnose_processing_timeout | Teutons Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.64 | 41.35 |
 | diagnose_processing_timeout | Spanish Hand Cannoneer vs. Spanish Hussar / seed 1 | processing_limit | 120.29 | 11.133333333333333 |
 | diagnose_processing_timeout | Tupi Slinger vs. Turks Cavalier / seed 1 | processing_limit | 121.08 | 128.38333333333333 |
+| diagnose_processing_timeout | Celts Elite Skirmisher vs. Spanish Hussar / seed 0 | processing_limit | 120.49 | 24.3 |
+| diagnose_processing_timeout | Koreans Elite War Wagon vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.32 | 29.75 |
 | diagnose_processing_timeout | Cumans Crossbowman vs. Spanish Hussar / seed 0 | processing_limit | 120.16 | 15.033333333333333 |
 | diagnose_processing_timeout | Cumans Crossbowman vs. Spanish Hussar / seed 1 | processing_limit | 120.63 | 7.916666666666667 |
 | diagnose_processing_timeout | Georgians Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 0 | processing_limit | 120.51 | 20.133333333333333 |
 | diagnose_processing_timeout | Georgians Heavy Cavalry Archer vs. Saracens Hand Cannoneer / seed 1 | processing_limit | 120.75 | 22.15 |
+| diagnose_processing_timeout | Bohemians Elite Hussite Wagon vs. Chinese Arbalester / seed 2 | processing_limit | 120.55 | 65.8 |
 | diagnose_processing_timeout | Celts Crossbowman vs. Spanish Hussar / seed 0 | processing_limit | 120.19 | 12.15 |
 | diagnose_processing_timeout | Celts Crossbowman vs. Spanish Hussar / seed 1 | processing_limit | 120.52 | 7.883333333333334 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.19 | 23.833333333333332 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 1 | processing_limit | 120.28 | 24.666666666666668 |
 | diagnose_processing_timeout | Armenians Heavy Scorpion vs. Spanish Elite Skirmisher / seed 2 | processing_limit | 120.26 | 37.71666666666667 |
+| diagnose_processing_timeout | Jurchens Heavy Cavalry Archer vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.31 | 33.43333333333333 |
 | diagnose_processing_timeout | Spanish Archer vs. Spanish Hussar / seed 0 | processing_limit | 120.15 | 12.333333333333334 |
 | diagnose_processing_timeout | Spanish Archer vs. Spanish Hussar / seed 1 | processing_limit | 120.93 | 7.966666666666667 |
+| diagnose_processing_timeout | Vietnamese Elite Rattan Archer vs. Spanish Hussar / seed 0 | decided | 103.35 | 79.4 |
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Saracens Heavy Cavalry Archer / seed 1 | processing_limit | 120.80 | 29.266666666666666 |
 | diagnose_processing_timeout | Dravidians Heavy Scorpion vs. Saracens Heavy Cavalry Archer / seed 2 | processing_limit | 120.27 | 15.15 |
 | diagnose_processing_timeout | Chinese Heavy Scorpion vs. Spanish Elite Skirmisher / seed 0 | processing_limit | 120.20 | 24.25 |

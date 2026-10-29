@@ -1,0 +1,821 @@
+{
+  "task": "diagnose_processing_timeout",
+  "matchupId": "m_a16ec12f3502b6cdd334",
+  "seed": 0,
+  "teams": [
+    "Koreans Elite War Wagon",
+    "Saracens Hand Cannoneer"
+  ],
+  "removeGameCap": false,
+  "nominalWallLimitSeconds": 120,
+  "processingWallSeconds": 120.323578494,
+  "cpuSeconds": 119.907208,
+  "stopReason": "processing_limit",
+  "result": {
+    "jobId": "m_a16ec12f3502b6cdd334",
+    "seed": 0,
+    "outcome": "timeout",
+    "winnerOwner": null,
+    "winnerHp": 0,
+    "startingHpByOwner": {
+      "2": 4400,
+      "3": 1080
+    },
+    "remainingByOwner": {
+      "2": {
+        "units": 18,
+        "hp": 3514.5
+      },
+      "3": {
+        "units": 6,
+        "hp": 195
+      }
+    },
+    "ticks": 1785,
+    "family": "rvr",
+    "side2": {
+      "slug": "elite_war_wagon_koreans",
+      "label": "Elite War Wagon",
+      "civ": "Koreans",
+      "count": 22,
+      "class": "mobile_ranged"
+    },
+    "side3": {
+      "slug": "hand_cannoneer",
+      "label": "Hand Cannoneer",
+      "civ": "Saracens",
+      "count": 27,
+      "class": "mobile_ranged"
+    },
+    "finalStateHash": "a07b3a59675fe26ecd749c550ca0b92d47fb6dda447eb86a56862f411e6e10f3",
+    "eventLogHash": "b98266f27c26ea610717efb300a48ff7f915e9e1105fd9d7b7606c387b6a11af"
+  },
+  "error": null,
+  "lastProgress": {
+    "tick": 1785,
+    "simulationSeconds": 29.75,
+    "wallSeconds": 120.29053513500001,
+    "cpuSeconds": 119.907208,
+    "remainingByOwner": {
+      "2": {
+        "units": 18,
+        "hp": 3514.5
+      },
+      "3": {
+        "units": 6,
+        "hp": 195
+      }
+    },
+    "gameSecondsSinceHpOrSurvivorChange": 0.21666666666666667,
+    "gameSecondsSincePositionChange": 0,
+    "projectileCount": 14,
+    "eventCounts": {
+      "move": 9177,
+      "blocked": 1378,
+      "pursuit-acquired": 294,
+      "engagement-started": 280,
+      "attack-start": 463,
+      "pursuit-route-planned": 65,
+      "pursuit-route-invalidated": 39,
+      "contact-reservation-acquired": 15,
+      "contact-reservation-persisted": 246,
+      "pursuit-retarget-requested": 80,
+      "contact-reservation-released": 15,
+      "engagement-ended": 236,
+      "damage": 223,
+      "pursuit-route-advanced": 26,
+      "death": 25,
+      "pursuit-invalidated": 240,
+      "attack-canceled": 109
+    },
+    "maxStep": {
+      "tick": 1680,
+      "milliseconds": 1440.479634000003
+    },
+    "positions": [
+      [
+        9000,
+        12.561604052575042,
+        4.361925893496806
+      ],
+      [
+        9001,
+        10.349987394380216,
+        2.17331701383848
+      ],
+      [
+        9002,
+        13.224644481166807,
+        5.022786090456665
+      ],
+      [
+        9003,
+        10.973399908789531,
+        2.681757806669808
+      ],
+      [
+        9004,
+        11.444158271247813,
+        1.8204354689438167
+      ],
+      [
+        9005,
+        13.146668423731608,
+        5.924522154019806
+      ],
+      [
+        9006,
+        10.063071366770464,
+        2.7198880715809493
+      ],
+      [
+        9007,
+        11.643664370383325,
+        2.8168437242077022
+      ],
+      [
+        9008,
+        11.34294567292955,
+        3.5843396123870135
+      ],
+      [
+        9009,
+        13.516245618278717,
+        6.550238904625473
+      ],
+      [
+        9010,
+        9.449981010537101,
+        2.508501511415414
+      ],
+      [
+        9011,
+        12.425565923248087,
+        5.260570614103981
+      ],
+      [
+        9012,
+        10.733723908000982,
+        3.3746634752805624
+      ],
+      [
+        9013,
+        11.630248894691995,
+        4.276490483477083
+      ],
+      [
+        9014,
+        12.538646924153152,
+        6.172117999466556
+      ],
+      [
+        9015,
+        9.805199870104374,
+        3.4090463415555807
+      ],
+      [
+        9016,
+        12.754793951150099,
+        6.832094260745075
+      ],
+      [
+        9017,
+        11.850223274005025,
+        5.026009730567374
+      ],
+      [
+        9505,
+        3.949726483585132,
+        8.324714085388521
+      ],
+      [
+        9512,
+        4.680253371256201,
+        9.087441300835067
+      ],
+      [
+        9513,
+        3.9765816384400132,
+        8.36083379461597
+      ],
+      [
+        9515,
+        4.278302052891909,
+        8.68862487164859
+      ],
+      [
+        9516,
+        4.339479131753234,
+        8.739268457321632
+      ],
+      [
+        9517,
+        4.669808259486808,
+        9.071839000763994
+      ]
+    ],
+    "units": [
+      {
+        "id": 9000,
+        "owner": 2,
+        "x": 12.561604052575042,
+        "y": 4.361925893496806,
+        "hp": 200,
+        "action": "idle",
+        "pursuitTargetId": 9512,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9001,
+        "owner": 2,
+        "x": 10.349987394380216,
+        "y": 2.17331701383848,
+        "hp": 200,
+        "action": "reload",
+        "pursuitTargetId": 9513,
+        "engagedTargetId": 9513,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 5,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9002,
+        "owner": 2,
+        "x": 13.224644481166807,
+        "y": 5.022786090456665,
+        "hp": 200,
+        "action": "idle",
+        "pursuitTargetId": 9512,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9003,
+        "owner": 2,
+        "x": 10.973399908789531,
+        "y": 2.681757806669808,
+        "hp": 200,
+        "action": "attacking",
+        "pursuitTargetId": 9517,
+        "engagedTargetId": 9517,
+        "attackTargetId": 9517,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 65,
+          "swing": 70,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9004,
+        "owner": 2,
+        "x": 11.444158271247813,
+        "y": 1.8204354689438167,
+        "hp": 200,
+        "action": "idle",
+        "pursuitTargetId": 9517,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9005,
+        "owner": 2,
+        "x": 13.146668423731608,
+        "y": 5.924522154019806,
+        "hp": 200,
+        "action": "reload",
+        "pursuitTargetId": 9512,
+        "engagedTargetId": 9512,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 16,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9006,
+        "owner": 2,
+        "x": 10.063071366770464,
+        "y": 2.7198880715809493,
+        "hp": 200,
+        "action": "reload",
+        "pursuitTargetId": 9513,
+        "engagedTargetId": 9513,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 5,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9007,
+        "owner": 2,
+        "x": 11.643664370383325,
+        "y": 2.8168437242077022,
+        "hp": 200,
+        "action": "idle",
+        "pursuitTargetId": 9517,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9008,
+        "owner": 2,
+        "x": 11.34294567292955,
+        "y": 3.5843396123870135,
+        "hp": 200,
+        "action": "reload",
+        "pursuitTargetId": 9517,
+        "engagedTargetId": 9517,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 18,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9009,
+        "owner": 2,
+        "x": 13.516245618278717,
+        "y": 6.550238904625473,
+        "hp": 200,
+        "action": "idle",
+        "pursuitTargetId": 9516,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9010,
+        "owner": 2,
+        "x": 9.449981010537101,
+        "y": 2.508501511415414,
+        "hp": 200,
+        "action": "reload",
+        "pursuitTargetId": 9513,
+        "engagedTargetId": 9513,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 5,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9011,
+        "owner": 2,
+        "x": 12.425565923248087,
+        "y": 5.260570614103981,
+        "hp": 200,
+        "action": "reload",
+        "pursuitTargetId": 9512,
+        "engagedTargetId": 9512,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 15,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9012,
+        "owner": 2,
+        "x": 10.733723908000982,
+        "y": 3.3746634752805624,
+        "hp": 200,
+        "action": "reload",
+        "pursuitTargetId": 9517,
+        "engagedTargetId": 9517,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 14,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9013,
+        "owner": 2,
+        "x": 11.630248894691995,
+        "y": 4.276490483477083,
+        "hp": 195.5,
+        "action": "reload",
+        "pursuitTargetId": 9517,
+        "engagedTargetId": 9517,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 14,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9014,
+        "owner": 2,
+        "x": 12.538646924153152,
+        "y": 6.172117999466556,
+        "hp": 200,
+        "action": "reload",
+        "pursuitTargetId": 9512,
+        "engagedTargetId": 9512,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 14,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9015,
+        "owner": 2,
+        "x": 9.805199870104374,
+        "y": 3.4090463415555807,
+        "hp": 128,
+        "action": "reload",
+        "pursuitTargetId": 9516,
+        "engagedTargetId": 9516,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 5,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9016,
+        "owner": 2,
+        "x": 12.754793951150099,
+        "y": 6.832094260745075,
+        "hp": 191,
+        "action": "reload",
+        "pursuitTargetId": 9512,
+        "engagedTargetId": 9512,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 14,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9017,
+        "owner": 2,
+        "x": 11.850223274005025,
+        "y": 5.026009730567374,
+        "hp": 200,
+        "action": "reload",
+        "pursuitTargetId": 9512,
+        "engagedTargetId": 9512,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 14,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.3200000286102294
+      },
+      {
+        "id": 9505,
+        "owner": 3,
+        "x": 3.949726483585132,
+        "y": 8.324714085388521,
+        "hp": 40,
+        "action": "reload",
+        "pursuitTargetId": 9015,
+        "engagedTargetId": 9015,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 152,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 7,
+        "speed": 0.96
+      },
+      {
+        "id": 9512,
+        "owner": 3,
+        "x": 4.680253371256201,
+        "y": 9.087441300835067,
+        "hp": 40,
+        "action": "reload",
+        "pursuitTargetId": 9015,
+        "engagedTargetId": 9015,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 118,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 7,
+        "speed": 0.96
+      },
+      {
+        "id": 9513,
+        "owner": 3,
+        "x": 3.9765816384400132,
+        "y": 8.36083379461597,
+        "hp": 4,
+        "action": "reload",
+        "pursuitTargetId": 9015,
+        "engagedTargetId": 9015,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 114,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 7,
+        "speed": 0.96
+      },
+      {
+        "id": 9515,
+        "owner": 3,
+        "x": 4.278302052891909,
+        "y": 8.68862487164859,
+        "hp": 40,
+        "action": "reload",
+        "pursuitTargetId": 9015,
+        "engagedTargetId": 9015,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 75,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 7,
+        "speed": 0.96
+      },
+      {
+        "id": 9516,
+        "owner": 3,
+        "x": 4.339479131753234,
+        "y": 8.739268457321632,
+        "hp": 31,
+        "action": "attacking",
+        "pursuitTargetId": 9015,
+        "engagedTargetId": 9015,
+        "attackTargetId": 9015,
+        "actionTimers": {
+          "windup": 2,
+          "reload": 188,
+          "swing": 19,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 7,
+        "speed": 0.96
+      },
+      {
+        "id": 9517,
+        "owner": 3,
+        "x": 4.669808259486808,
+        "y": 9.071839000763994,
+        "hp": 40,
+        "action": "reload",
+        "pursuitTargetId": 9015,
+        "engagedTargetId": 9015,
+        "attackTargetId": null,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 29,
+          "swing": 0,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 7,
+        "speed": 0.96
+      }
+    ]
+  },
+  "hotFunctions": [
+    {
+      "frame": "sweptDistanceFromOrigin file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:215",
+      "sampledSeconds": 37.873498,
+      "percent": 31.48535289019153
+    },
+    {
+      "frame": "finalGeometryViolation file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:470",
+      "sampledSeconds": 18.048278,
+      "percent": 15.004064369503977
+    },
+    {
+      "frame": "resolvePairInteraction file://<runtime>/aoe2x/js_simulation/src/combat/pair-interactions.js:167",
+      "sampledSeconds": 17.003223,
+      "percent": 14.135279408984642
+    },
+    {
+      "frame": "resolveConstraints file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:331",
+      "sampledSeconds": 15.475556,
+      "percent": 12.865284897421432
+    },
+    {
+      "frame": "constrainPair file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:283",
+      "sampledSeconds": 12.47376,
+      "percent": 10.369803588450042
+    },
+    {
+      "frame": "interaction file://<runtime>/aoe2x/js_simulation/src/combat/pair-interactions.js:105",
+      "sampledSeconds": 7.057962,
+      "percent": 5.867491411951491
+    },
+    {
+      "frame": "(garbage collector) :0",
+      "sampledSeconds": 2.22328,
+      "percent": 1.8482780590719403
+    },
+    {
+      "frame": "areAllies file://<runtime>/aoe2x/js_simulation/src/combat/diplomacy.js:112",
+      "sampledSeconds": 0.785266,
+      "percent": 0.6528147234424753
+    },
+    {
+      "frame": "dynamicPairKey file://<runtime>/aoe2x/js_simulation/src/combat/pair-interactions.js:142",
+      "sampledSeconds": 0.757503,
+      "percent": 0.6297345249276619
+    },
+    {
+      "frame": "resolveMovementProposals file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:603",
+      "sampledSeconds": 0.658904,
+      "percent": 0.5477662760582283
+    },
+    {
+      "frame": "freezeUnit file://<runtime>/aoe2x/js_simulation/src/combat/world.js:366",
+      "sampledSeconds": 0.543067,
+      "percent": 0.45146757075403077
+    },
+    {
+      "frame": "finalGeometryIsValid file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:507",
+      "sampledSeconds": 0.482268,
+      "percent": 0.4009235737255346
+    },
+    {
+      "frame": "validateStartingGeometry file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:134",
+      "sampledSeconds": 0.476442,
+      "percent": 0.39608024856084406
+    },
+    {
+      "frame": "moveUnits file://<runtime>/aoe2x/js_simulation/src/combat/world.js:3050",
+      "sampledSeconds": 0.401196,
+      "percent": 0.3335260354914479
+    },
+    {
+      "frame": "constrainObstacle file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:227",
+      "sampledSeconds": 0.389567,
+      "percent": 0.3238585057385838
+    },
+    {
+      "frame": "updateEngagements file://<runtime>/aoe2x/js_simulation/src/combat/world.js:3897",
+      "sampledSeconds": 0.368067,
+      "percent": 0.30598492334228344
+    },
+    {
+      "frame": "distributeEqualMassRemoval file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:251",
+      "sampledSeconds": 0.327968,
+      "percent": 0.27264944517906253
+    },
+    {
+      "frame": "crowdMetrics file://<runtime>/aoe2x/js_simulation/src/combat/ranged-crowding.js:141",
+      "sampledSeconds": 0.31051,
+      "percent": 0.2581360962732666
+    },
+    {
+      "frame": "relationFrom file://<runtime>/aoe2x/js_simulation/src/combat/diplomacy.js:90",
+      "sampledSeconds": 0.301632,
+      "percent": 0.25075555373771524
+    },
+    {
+      "frame": "selectEngagementTarget file://<runtime>/aoe2x/js_simulation/src/combat/targeting.js:256",
+      "sampledSeconds": 0.277014,
+      "percent": 0.2302898862292444
+    }
+  ],
+  "tickMilliseconds": {
+    "p50": 4.502115000000231,
+    "p95": 803.0805909999908,
+    "p99": 1055.407871000003,
+    "max": {
+      "tick": 1680,
+      "milliseconds": 1440.479634000003
+    }
+  },
+  "notes": "Diagnostic tracing and CPU profiling add overhead. HP/position inactivity is sampled, not a proof of deadlock.",
+  "original": {
+    "outcome": "undecided",
+    "reason": "wall_timeout",
+    "wallSeconds": 120.00300609200075,
+    "simulationSeconds": null,
+    "finalStateHash": null,
+    "eventLogHash": null,
+    "campaignHash": "0aebb7b2c73afe3c8cfca5226234b90c0af095bb5be58617f1f4d5af9b9f41a0"
+  }
+}

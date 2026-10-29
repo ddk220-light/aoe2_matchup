@@ -1,0 +1,245 @@
+{
+  "task": "diagnose_processing_timeout",
+  "matchupId": "m_bff2e104a2dde69c5f1a",
+  "seed": 0,
+  "teams": [
+    "Vietnamese Elite Rattan Archer",
+    "Spanish Hussar"
+  ],
+  "removeGameCap": false,
+  "nominalWallLimitSeconds": 120,
+  "processingWallSeconds": 103.349992721,
+  "cpuSeconds": 107.598787,
+  "stopReason": "decided",
+  "result": {
+    "jobId": "m_bff2e104a2dde69c5f1a",
+    "seed": 0,
+    "outcome": "win",
+    "winnerOwner": 2,
+    "winnerHp": 48,
+    "startingHpByOwner": {
+      "2": 1200,
+      "3": 2565
+    },
+    "remainingByOwner": {
+      "2": {
+        "units": 1,
+        "hp": 48
+      },
+      "3": {
+        "units": 0,
+        "hp": 0
+      }
+    },
+    "ticks": 4764,
+    "family": "kite",
+    "side2": {
+      "slug": "elite_rattan_archer_vietnamese",
+      "label": "Elite Rattan Archer",
+      "civ": "Vietnamese",
+      "count": 25,
+      "class": "mobile_ranged"
+    },
+    "side3": {
+      "slug": "hussar",
+      "label": "Hussar",
+      "civ": "Spanish",
+      "count": 27,
+      "class": "melee"
+    },
+    "finalStateHash": "d964d040aad53cc497633bfe3cf5e50a9ebaf4c86df46860d4dbe25f7b048c25",
+    "eventLogHash": "1c013fb615a92b2b7d7856fe4678b24b853bccb0f0c3c561fb63f66c3c5ef6f0"
+  },
+  "error": null,
+  "lastProgress": {
+    "tick": 4764,
+    "simulationSeconds": 79.4,
+    "wallSeconds": 103.326626312,
+    "cpuSeconds": 107.598787,
+    "remainingByOwner": {
+      "2": {
+        "units": 1,
+        "hp": 48
+      }
+    },
+    "gameSecondsSinceHpOrSurvivorChange": 0,
+    "gameSecondsSincePositionChange": 0,
+    "projectileCount": 0,
+    "eventCounts": {
+      "move": 23919,
+      "pursuit-acquired": 464,
+      "engagement-started": 285,
+      "attack-start": 762,
+      "damage": 657,
+      "contact-reservation-acquired": 106,
+      "contact-reservation-persisted": 13709,
+      "blocked": 20120,
+      "death": 51,
+      "engagement-ended": 225,
+      "pursuit-invalidated": 238,
+      "attack-canceled": 54,
+      "contact-reservation-released": 106,
+      "contact-release-persisted": 10103,
+      "pursuit-retarget-requested": 656,
+      "pursuit-route-planned": 285,
+      "pursuit-route-advanced": 195,
+      "pursuit-route-invalidated": 151,
+      "contact-release-published": 20,
+      "owner-defeated": 1
+    },
+    "maxStep": {
+      "tick": 541,
+      "milliseconds": 666.182777
+    },
+    "positions": [
+      [
+        9006,
+        12.893507889024981,
+        6.842799888811966
+      ]
+    ],
+    "units": [
+      {
+        "id": 9006,
+        "owner": 2,
+        "x": 12.893507889024981,
+        "y": 6.842799888811966,
+        "hp": 48,
+        "action": "attacking",
+        "pursuitTargetId": 9512,
+        "engagedTargetId": null,
+        "attackTargetId": 9512,
+        "actionTimers": {
+          "windup": 0,
+          "reload": 55,
+          "swing": 47,
+          "acquire": 0
+        },
+        "minRange": 0,
+        "range": 8,
+        "speed": 1.1
+      }
+    ]
+  },
+  "hotFunctions": [
+    {
+      "frame": "sweptDistanceFromOrigin file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:215",
+      "sampledSeconds": 27.605329,
+      "percent": 26.71678406571726
+    },
+    {
+      "frame": "resolvePairInteraction file://<runtime>/aoe2x/js_simulation/src/combat/pair-interactions.js:167",
+      "sampledSeconds": 19.594294,
+      "percent": 18.963603792520615
+    },
+    {
+      "frame": "constrainPair file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:283",
+      "sampledSeconds": 18.218965,
+      "percent": 17.632543115347783
+    },
+    {
+      "frame": "resolveConstraints file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:331",
+      "sampledSeconds": 11.511987,
+      "percent": 11.141445582711375
+    },
+    {
+      "frame": "interaction file://<runtime>/aoe2x/js_simulation/src/combat/pair-interactions.js:105",
+      "sampledSeconds": 9.794937,
+      "percent": 9.479663030507783
+    },
+    {
+      "frame": "finalGeometryViolation file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:470",
+      "sampledSeconds": 4.698453,
+      "percent": 4.547221815176391
+    },
+    {
+      "frame": "(garbage collector) :0",
+      "sampledSeconds": 1.724723,
+      "percent": 1.6692085779588453
+    },
+    {
+      "frame": "freezeUnit file://<runtime>/aoe2x/js_simulation/src/combat/world.js:366",
+      "sampledSeconds": 1.026591,
+      "percent": 0.9935476614246744
+    },
+    {
+      "frame": "areAllies file://<runtime>/aoe2x/js_simulation/src/combat/diplomacy.js:112",
+      "sampledSeconds": 0.792578,
+      "percent": 0.7670669413589692
+    },
+    {
+      "frame": "dynamicPairKey file://<runtime>/aoe2x/js_simulation/src/combat/pair-interactions.js:142",
+      "sampledSeconds": 0.609364,
+      "percent": 0.5897501314120086
+    },
+    {
+      "frame": "resolveMovementProposals file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:603",
+      "sampledSeconds": 0.592688,
+      "percent": 0.5736108891997568
+    },
+    {
+      "frame": "relationFrom file://<runtime>/aoe2x/js_simulation/src/combat/diplomacy.js:90",
+      "sampledSeconds": 0.565079,
+      "percent": 0.5468905522941402
+    },
+    {
+      "frame": "validateStartingGeometry file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:134",
+      "sampledSeconds": 0.520994,
+      "percent": 0.5042245356878122
+    },
+    {
+      "frame": "updateEngagements file://<runtime>/aoe2x/js_simulation/src/combat/world.js:3897",
+      "sampledSeconds": 0.441552,
+      "percent": 0.42733957047878646
+    },
+    {
+      "frame": "moveUnits file://<runtime>/aoe2x/js_simulation/src/combat/world.js:3050",
+      "sampledSeconds": 0.440017,
+      "percent": 0.42585397820271265
+    },
+    {
+      "frame": "selectEngagementTarget file://<runtime>/aoe2x/js_simulation/src/combat/targeting.js:256",
+      "sampledSeconds": 0.384809,
+      "percent": 0.3724229825170565
+    },
+    {
+      "frame": "acquirePursuitTargets file://<runtime>/aoe2x/js_simulation/src/combat/world.js:1801",
+      "sampledSeconds": 0.258382,
+      "percent": 0.2500653442843647
+    },
+    {
+      "frame": "distributeEqualMassRemoval file://<runtime>/aoe2x/js_simulation/src/combat/collision.js:251",
+      "sampledSeconds": 0.250893,
+      "percent": 0.24281739603972843
+    },
+    {
+      "frame": "planPersistentChaseRoute file://<runtime>/aoe2x/js_simulation/src/combat/chase-path.js:552",
+      "sampledSeconds": 0.21595,
+      "percent": 0.2089991218359195
+    },
+    {
+      "frame": "stepWorld file://<runtime>/aoe2x/js_simulation/src/combat/world.js:5869",
+      "sampledSeconds": 0.193771,
+      "percent": 0.18753400711862914
+    }
+  ],
+  "tickMilliseconds": {
+    "p50": 1.6106419999996433,
+    "p95": 66.0906479999976,
+    "p99": 508.0379959999991,
+    "max": {
+      "tick": 541,
+      "milliseconds": 666.182777
+    }
+  },
+  "notes": "Diagnostic tracing and CPU profiling add overhead. HP/position inactivity is sampled, not a proof of deadlock.",
+  "original": {
+    "outcome": "undecided",
+    "reason": "wall_timeout",
+    "wallSeconds": 120.00439117599652,
+    "simulationSeconds": null,
+    "finalStateHash": null,
+    "eventLogHash": null,
+    "campaignHash": "0aebb7b2c73afe3c8cfca5226234b90c0af095bb5be58617f1f4d5af9b9f41a0"
+  }
+}

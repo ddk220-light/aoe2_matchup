@@ -285,6 +285,18 @@ function isWithinActiveAttackReach(unit, target, tick) {
 }
 
 
+function recoveryAttackPositionReached(unit, target, tick) {
+  if (!isWithinReach(unit, target)) return false;
+  // Ordinary range-zero swings require the collision stop surface, even when
+  // the larger outline already permits engagement. A blocked pursuer in that
+  // gap still needs a route; clearing its recovery would strand a live lock.
+  return readyMeleeAreaCharge(unit, tick) !== null
+    || !hasMeleeMode(unit)
+    || (unit.mechanics.attack_range_tiles ?? 0) !== 0
+    || isWithinStopRange(unit, target);
+}
+
+
 function meleeAttackAmount(actor, target, tick, options = {}) {
   let amount = calculateDamage(actor, target);
   const areaCharge = meleeChargeSpec(actor.mechanics);
@@ -1984,7 +1996,7 @@ function acquirePursuitTargets(
         ? snapshot.find(({ referenceId }) => referenceId === unit.pursuitTargetId)
         : null;
       if (routeActive && current?.alive && isHostile(unit, current)
-          && isWithinReach(unit, current)) {
+          && recoveryAttackPositionReached(unit, current, tick)) {
         pursuitRecoveryState.routes.delete(unit.referenceId);
         pursuitRecoveryState.attempts.delete(unit.referenceId);
         pursuitRecoveryState.nextRetargetScanTick.delete(unit.referenceId);
@@ -2005,7 +2017,7 @@ function acquirePursuitTargets(
       const recoveryScanDue = !scenarioPatrol
         || tick >= nextRetargetScanTick;
       const opportunity = recoveryScanDue && (routeActive || retargetReady)
-          && current?.alive && !isWithinReach(unit, current)
+          && current?.alive && !recoveryAttackPositionReached(unit, current, tick)
         ? recoveryOpportunityTarget(unit, snapshot)
         : null;
       const alternate = opportunity ?? (
@@ -3706,7 +3718,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
       const actual = Math.hypot(dx, dy);
       const failedAttempt = target?.alive
         && isHostile(unit, target)
-        && !isWithinReach(before, target)
+        && !recoveryAttackPositionReached(before, target, tick)
         && wanted > ZERO_STEP_EPSILON
         && isBlocked
         && actual < wanted * BLOCKED_PURSUIT_PROGRESS_FRACTION;
@@ -3750,7 +3762,7 @@ function moveUnits(units, map, tick, events, kiteState = null,
       const unit = postMoveByReference.get(request.referenceId);
       const target = postMoveByReference.get(request.targetReferenceId);
       if (!unit?.alive || !target?.alive || !isHostile(unit, target)
-          || isWithinReach(unit, target)) continue;
+          || recoveryAttackPositionReached(unit, target, tick)) continue;
       const obstacles = postMoveLive.filter((other) => (
         other.referenceId !== unit.referenceId
         && other.referenceId !== target.referenceId

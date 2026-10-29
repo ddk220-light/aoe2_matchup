@@ -4,8 +4,9 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "nod
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { hydrate, jobFor, phasePending, recordFromMessage, validateRecord, restoreFullDb, POOLS, OPPONENTS } from "../node/full-ranking-campaign.mjs";
-import { storedRuns } from "../node/ranking-campaign.mjs";
+import { hydrate, jobFor, phasePending, recordFromMessage, validateRecord, restoreFullDb, exportFull, POOLS, OPPONENTS } from "../node/full-ranking-campaign.mjs";
+import { storedRuns, saveRun } from "../node/ranking-campaign.mjs";
+import { combatProfileHash, assignEquivalence } from "../node/ranking-equivalence.mjs";
 
 const pilotPath = fileURLToPath(new URL("../calibration/campaigns/unit-rankings-pilot-2026-10-29/", import.meta.url));
 const pilot = JSON.parse(readFileSync(resolve(pilotPath, "manifest.json"), "utf8"));
@@ -62,6 +63,47 @@ test("portable journals recover every committed run and attempt, ignore only an 
     db = restoreFullDb(directory, manifest);
     assert.equal(storedRuns(db).length, 1);
     assert.deepEqual(phasePending([m], new Map([[m.id, storedRuns(db)]])).map(r => r.seed), [1, 2]);
+    db.close();
+  } finally { rmSync(directory, { recursive: true }); }
+});
+
+test("equivalence ignores only civilization and splits costs, effects, armor, collision and unknown fields", () => {
+  const original = profiles["0"].mechanics;
+  const clone = { ...original, civilization: "Armenians" };
+  assert.equal(combatProfileHash(original), combatProfileHash(clone));
+  for (const altered of [
+    { ...clone, cost: { ...clone.cost, gold: clone.cost.gold + 1 } },
+    { ...clone, effects: { ...clone.effects, damage_reflect_percent: 0.25 } },
+    { ...clone, armor_classes: { ...clone.armor_classes, 4: 99 } },
+    { ...clone, collision_size_tiles: { x: 0.9, y: 0.9 } },
+    { ...clone, reload_seconds: clone.reload_seconds + 0.01 },
+    { ...clone, future_effect: { value: 1 } },
+  ]) assert.notEqual(combatProfileHash(original), combatProfileHash(altered));
+});
+
+test("shared simulations retain every civilization row without counting aliases as physical runs", () => {
+  const directory = mkdtempSync(resolve(tmpdir(), "full-ranking-equivalence-"));
+  try {
+    const aliasProfile = { ...profiles["0"], mechanics: { ...profiles["0"].mechanics, civilization: "Armenians" } };
+    const a = { ...m, phase: "phase", civilization: "Spanish" };
+    const b = { ...m, id: "alias", teamKeys: ["alias", "1"], phase: "phase", civilization: "Armenians" };
+    const sample = { ...manifest, profiles: { ...profiles, alias: aliasProfile }, matchups: [a, b],
+      phases: [{ id: "phase", matchupIds: [a.id] }],
+      roster: { units: [a, b], civilizations: 2, counts: { Infantry: 2, Ranged: 0, Cavalry: 0 } } };
+    sample.equivalence = assignEquivalence(sample, [a.id]);
+    assert.equal(sample.equivalence.distinctMatchups, 1);
+    assert.equal(b.canonicalMatchupId, a.id);
+    const db = restoreFullDb(directory, sample);
+    saveRun(db, recordFromMessage(sample, a, 0, { result: saved.result }, timing));
+    const progress = exportFull(directory, sample, db, { status: "paused", workers: 4, startedAt: new Date().toISOString(), reviews: {} });
+    assert.equal(progress.recordedRuns, 1);
+    assert.equal(progress.requiredRuns, 3);
+    assert.equal(progress.pendingRuns, 2);
+    const rows = JSON.parse(readFileSync(resolve(directory, "summary.json"), "utf8"));
+    assert.equal(rows.length, 2);
+    assert.equal(rows[1].sharedEquivalentResults, true);
+    assert.equal(rows[0].meanUnitHpPercentDecided, rows[1].meanUnitHpPercentDecided);
+    assert.notEqual(rows[0].unit, rows[1].unit);
     db.close();
   } finally { rmSync(directory, { recursive: true }); }
 });

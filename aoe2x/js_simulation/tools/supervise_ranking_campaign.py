@@ -11,11 +11,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--campaign", required=True)
     parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--publish", choices=("true", "false"), default="false")
     args = parser.parse_args()
     directory = Path(args.campaign).resolve()
     root = Path(__file__).resolve().parents[3]
     command = ["node", "aoe2x/js_simulation/node/full-ranking-campaign.mjs", "run",
-               "--campaign", str(directory), "--workers", str(args.workers), "--publish", "true"]
+               "--campaign", str(directory), "--workers", str(args.workers), "--publish", args.publish]
     # A deterministic data-integrity failure must not be silently waived.
     # Three automatic restarts handle transient process failures, using saved
     # per-run records rather than repeating completed work.

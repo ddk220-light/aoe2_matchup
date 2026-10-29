@@ -14,11 +14,16 @@ import { deriveRecordedBattleSetup } from "../src/battle-setup.js";
 import { atomicJson, loadCampaign, openCampaignDb, storedRuns, saveRun, requiredSeeds,
   summarize } from "./ranking-campaign.mjs";
 import { RankingWorkerPool } from "./ranking-worker-pool.mjs";
+import { assignEquivalence } from "./ranking-equivalence.mjs";
 
 const SIM = fileURLToPath(new URL("../", import.meta.url));
 const ROOT = resolve(SIM, "../..");
 const now = () => new Date().toISOString();
 const sha = value => createHash("sha256").update(value).digest("hex");
+function currentCommit() {
+  const head = readFileSync(resolve(ROOT, ".git/HEAD"), "utf8").trim();
+  return head.startsWith("ref: ") ? readFileSync(resolve(ROOT, ".git", head.slice(5)), "utf8").trim() : head;
+}
 const DECIDED = new Set(["win", "loss", "draw"]);
 export const OPPONENTS = {
   champion: ["Spanish", "champion"], hussar: ["Spanish", "hussar"],
@@ -87,13 +92,15 @@ export function jobFor(manifest, m, seed) {
     scenario: matchup.scenario, disableAiOrders: true, disableKiting: true,
     preserveOwnerOrientation: true, retainSnapshots: false };
 }
-export async function prepareFull(directory, rosterPath, pilotDirectory, referenceDb) {
+export async function prepareFull(directory, rosterPath, pilotDirectory, referenceDb, reuseDirectory = null) {
   if (existsSync(resolve(directory, "manifest.json"))) throw new Error("campaign exists; resume it");
   const pilot = loadCampaign(pilotDirectory);
   if (sha(readFileSync(referenceDb)) !== pilot.referenceDbSha256) throw new Error("reference changed since pilot");
   const roster = JSON.parse(readFileSync(rosterPath, "utf8"));
   const benchmark = JSON.parse(readFileSync("/tmp/ranking-pool-benchmark.json", "utf8"));
   if (!benchmark.allExact || benchmark.jobs !== 10) throw new Error("persistent-worker parity must pass first");
+  const equivalenceVerification = JSON.parse(readFileSync("/tmp/ranking-equivalence-verification.json", "utf8"));
+  if (!equivalenceVerification.allExact || equivalenceVerification.pairs !== 5) throw new Error("cross-civilization equivalence checks must pass");
   const db = new DatabaseSync(referenceDb, { readOnly: true });
   const query = db.prepare(`SELECT u.id,u.final_cost_food,u.final_cost_wood,u.final_cost_gold,
     m.mechanics_json,m.mechanics_hash,m.source_build FROM ref_units u
@@ -128,37 +135,53 @@ export async function prepareFull(directory, rosterPath, pilotDirectory, referen
       }
     }
   } finally { db.close(); }
+  const preferredIds = pilot.matchups.map(old => matchups.find(m => digest(m.teamKeys)
+    === digest(old.teams.map(t => `${t.mechanics.civilization}|${t.mechanics.unit_slug}`)))?.id).filter(Boolean);
+  let reuseCampaign = null;
+  if (reuseDirectory) {
+    const previous = JSON.parse(readFileSync(resolve(reuseDirectory, "manifest.json"), "utf8"));
+    reuseCampaign = { directory: relative(ROOT, reuseDirectory), campaignHash: previous.campaignHash };
+    for (const name of readdirSync(resolve(reuseDirectory, "runs")).filter(n => n.endsWith(".jsonl"))) {
+      for (const row of readLines(resolve(reuseDirectory, "runs", name))) preferredIds.push(row.matchupId);
+    }
+  }
+  const equivalence = assignEquivalence({ profiles, matchups }, [...new Set(preferredIds)]);
+  const canonicalMatchups = matchups.filter(m => m.canonicalMatchupId === m.id);
   const phases = [];
   const early = EARLY.map(([civ, slug, opponent]) => {
     const found = matchups.find(m => m.civilization === civ && m.slug === slug && m.opponent === opponent);
     if (!found) throw new Error(`missing validation matchup: ${civ}/${slug}/${opponent}`);
-    return found;
+    return canonicalMatchups.find(m => m.id === found.canonicalMatchupId);
   });
   const assign = (label, items) => {
     const id = `${String(phases.length + 1).padStart(2, "0")}-${label}`;
     items.forEach(m => { m.phase = id; });
     phases.push({ id, label, matchupIds: items.map(m => m.id), minimumRuns: items.length * 3 });
   };
-  assign("mechanics-validation", early);
+  assign("mechanics-validation", [...new Map(early.map(m => [m.id, m])).values()]);
   for (const group of ["Infantry", "Ranged", "Cavalry"]) {
-    const remaining = matchups.filter(m => m.group === group && !m.phase);
+    const remaining = canonicalMatchups.filter(m => m.group === group && !m.phase);
     for (let i = 0; i < remaining.length; i += 120) assign(`${group.toLowerCase()}-${Math.floor(i / 120) + 1}`, remaining.slice(i, i + 120));
   }
+  for (const m of matchups) m.phase = canonicalMatchups.find(c => c.id === m.canonicalMatchupId).phase;
   const extraFiles = ["node/full-ranking-campaign.mjs", "node/ranking-worker-pool.mjs", "node/ranking-pool-worker.mjs",
+    "node/ranking-equivalence.mjs",
     "tools/export_ranking_roster.py"].map(p => ({ path: relative(ROOT, resolve(SIM, p)), sha256: sha(readFileSync(resolve(SIM, p))) }));
-  const definition = { schemaVersion: 2, campaignName: "unit-rankings-full-2026-10-29", createdAt: now(),
-    scope: roster.scope, sourceCommit: "58e480b76c9382b699fcea1980e63a81ef8da70d",
+  const definition = { schemaVersion: 3, campaignName: "unit-rankings-full-deduplicated-2026-10-29", createdAt: now(),
+    scope: roster.scope, sourceCommit: currentCommit(), engineBaseCommit: "58e480b76c9382b699fcea1980e63a81ef8da70d",
     nodeVersion: process.version, runtimeFiles: [...pilot.runtimeFiles, ...extraFiles],
     simulationEnvironment: pilot.simulationEnvironment, engineConfig: pilot.engineConfig,
     referenceDb: relative(ROOT, referenceDb), referenceDbSha256: pilot.referenceDbSha256,
     pilotDirectory: relative(ROOT, pilotDirectory), pilotCampaignHash: pilot.campaignHash,
     policy: { ...pilot.policy, workers: 4, chunkMatchups: 120,
       playbackPolicy: "results and replay inputs for every run; no per-tick animation export", phasesAdvanceAutomatically: true },
-    roster, profiles, scenarios, matchups, phases, benchmark };
+    roster, profiles, scenarios, matchups, phases, benchmark, equivalence, equivalenceVerification, reuseCampaign };
   const manifest = { ...definition, campaignHash: digest(definition) };
   atomicJson(resolve(directory, "manifest.json"), manifest);
   atomicText(resolve(directory, ".gitignore"), "*.sqlite*\n*.tmp\n.runner.lock\n*.log\n*.pid\n");
   atomicJson(resolve(directory, "benchmark.json"), benchmark);
+  atomicJson(resolve(directory, "equivalence.json"), equivalence);
+  atomicJson(resolve(directory, "equivalence-verification.json"), equivalenceVerification);
   return manifest;
 }
 export function loadFull(directory) {
@@ -222,9 +245,10 @@ export function importPilot(directory, manifest, db) {
       || m.teamKeys.some((k, i) => manifest.profiles[k].profileHash !== old.teams[i].profileHash)) {
       throw new Error(`pilot inputs do not match full campaign: ${old.id}`);
     }
+    if (m.canonicalMatchupId !== m.id) throw new Error("pilot must be the canonical equivalent matchup");
     if (db.prepare("SELECT 1 FROM runs WHERE matchup_id=? AND seed=?").get(m.id, original.seed)) continue;
     const record = { ...original, campaignHash: manifest.campaignHash, matchupId: m.id, attempt: null,
-      provenance: { campaignHash: pilot.campaignHash, matchupId: original.matchupId, attempt: original.attempt,
+      provenance: { kind: "pilot", campaignHash: pilot.campaignHash, matchupId: original.matchupId, attempt: original.attempt,
         directory: manifest.pilotDirectory }, playbackPath: null };
     validateRecord(manifest, m, record);
     saveRun(db, record);
@@ -232,6 +256,37 @@ export function importPilot(directory, manifest, db) {
     imported.push(record);
   }
   return imported.length;
+}
+export function importEarlier(directory, manifest, db) {
+  if (!manifest.reuseCampaign) return 0;
+  const previousDirectory = resolve(ROOT, manifest.reuseCampaign.directory);
+  const previous = JSON.parse(readFileSync(resolve(previousDirectory, "manifest.json"), "utf8"));
+  const { campaignHash, ...definition } = previous;
+  if (digest(definition) !== campaignHash || campaignHash !== manifest.reuseCampaign.campaignHash) throw new Error("previous campaign manifest changed");
+  // Orchestration changes are allowed; simulation source and fixtures must be identical.
+  for (const entry of previous.runtimeFiles.filter(e => e.path.includes("/src/") || e.path.includes("/fixtures/") || e.path.endsWith("/run-job.mjs"))) {
+    if (sha(readFileSync(resolve(ROOT, entry.path))) !== entry.sha256) throw new Error("previous simulation source changed");
+  }
+  let imported = 0;
+  for (const name of readdirSync(resolve(previousDirectory, "runs")).filter(n => n.endsWith(".jsonl"))) {
+    for (const original of readLines(resolve(previousDirectory, "runs", name))) {
+      if (original.campaignHash !== campaignHash) throw new Error("previous record campaign mismatch");
+      const m = manifest.matchups.find(m => m.id === original.matchupId);
+      const old = previous.matchups.find(m => m.id === original.matchupId);
+      if (!m || !old || m.canonicalMatchupId !== m.id || m.scenarioHash !== old.scenarioHash
+        || digest(m.counts) !== digest(old.counts)
+        || m.teamKeys.some(k => manifest.profiles[k].profileHash !== previous.profiles[k].profileHash)) throw new Error("previous run input mismatch");
+      if (db.prepare("SELECT 1 FROM runs WHERE matchup_id=? AND seed=?").get(m.id, original.seed)) continue;
+      const row = { ...original, campaignHash: manifest.campaignHash, attempt: null,
+        provenance: { kind: "earlier_campaign", campaignHash, matchupId: original.matchupId,
+          attempt: original.attempt, directory: manifest.reuseCampaign.directory } };
+      validateRecord(manifest, m, row);
+      saveRun(db, row);
+      appendJson(resolve(directory, "runs", `${m.phase}.jsonl`), row);
+      imported++;
+    }
+  }
+  return imported;
 }
 export function recordFromMessage(manifest, m, seed, message, timing) {
   const result = message.result;
@@ -269,21 +324,28 @@ export function exportFull(directory, manifest, db, state) {
     byMatchup.get(row.matchupId).push(row);
   }
   const summaries = manifest.matchups.map(m => ({ phase: m.phase, civilization: m.civilization, slug: m.slug,
-    opponentKey: m.opponent, ...summarize({ matchups: [hydrate(manifest, m)] }, byMatchup.get(m.id) ?? [])[0] }));
+    opponentKey: m.opponent, simulationSourceMatchupId: m.canonicalMatchupId,
+    sharedEquivalentResults: m.canonicalMatchupId !== m.id,
+    ...summarize({ matchups: [hydrate(manifest, m)] }, (byMatchup.get(m.canonicalMatchupId) ?? [])
+      .map(r => ({ ...r, matchupId: m.id })))[0] }));
   for (const phase of manifest.phases) {
     const ids = new Set(phase.matchupIds), rows = all.filter(r => ids.has(r.matchupId));
     if (rows.length) atomicText(resolve(directory, "runs", `${phase.id}.jsonl`), rows.map(r => JSON.stringify(r)).join("\n") + "\n");
   }
-  const pendingRuns = summaries.reduce((sum, r) => sum + r.requiredRuns - r.recordedRuns, 0);
+  const physicalSummaries = summaries.filter(r => r.matchupId === r.simulationSourceMatchupId);
+  const pendingRuns = physicalSummaries.reduce((sum, r) => sum + r.requiredRuns - r.recordedRuns, 0);
   const computedRuns = all.filter(r => !r.provenance).length;
   const elapsedSeconds = (Date.now() - Date.parse(state.startedAt)) / 1000;
   const progress = { campaignHash: manifest.campaignHash, updatedAt: now(), status: state.status,
     activePhase: state.activePhase, workers: state.workers, recordedRuns: all.length,
-    requiredRuns: summaries.reduce((n, r) => n + r.requiredRuns, 0), pendingRuns,
+    requiredRuns: physicalSummaries.reduce((n, r) => n + r.requiredRuns, 0), pendingRuns,
+    uniqueMatchups: manifest.equivalence.distinctMatchups, distinctUnitProfiles: manifest.equivalence.distinctUnitProfiles,
+    avoidedBaselineRuns: manifest.equivalence.avoidedBaselineRuns,
     totalMatchups: manifest.matchups.length, completeMatchups: summaries.filter(r => r.state === "complete").length,
     reviewMatchups: summaries.filter(r => r.state === "needs_review").length,
     undecidedRuns: all.filter(r => r.outcome === "undecided").length, errors: all.filter(r => r.outcome === "error").length,
-    reusedPilotRuns: all.filter(r => r.provenance).length,
+    reusedPilotRuns: all.filter(r => r.provenance?.kind === "pilot").length,
+    reusedEarlierCampaignRuns: all.filter(r => r.provenance?.kind === "earlier_campaign").length,
     workerSeconds: all.filter(r => !r.provenance).reduce((sum, r) => sum + r.wallSeconds, 0),
     startedAt: state.startedAt, phasesReviewed: Object.keys(state.reviews ?? {}).length,
     totalPhases: manifest.phases.length,
@@ -301,6 +363,10 @@ export function exportFull(directory, manifest, db, state) {
     + `${manifest.roster.units.length} civilization/unit variants across ${manifest.roster.civilizations} civilizations. Infantry ${manifest.roster.counts.Infantry}, `
     + `Ranged ${manifest.roster.counts.Ranged}, Cavalry ${manifest.roster.counts.Cavalry}. `
     + `Imperial units only; naval and anti-building groups are outside the agreed opponent pools. Scoring remains deferred.\n\n`
+    + `Exact profile sharing reduces this to **${manifest.equivalence.distinctMatchups} distinct matchups** `
+    + `(${manifest.equivalence.distinctUnitProfiles} combat profiles), avoiding ${manifest.equivalence.avoidedBaselineRuns} baseline runs. `
+    + `Only the civilization label is excluded from equality; every other profile field, cost, count and scenario must match. `
+    + `The summary retains all civilization rows and identifies their shared simulation source. [Equivalence map](equivalence.json).\n\n`
     + `27 on the cheaper side; expensive side = round(27 × sqrt(cheaper / expensive weighted unit cost)). `
     + `Weights: food 1, wood 0.9, gold 1.1; full discounts and per-physical-unit batch costs. No buffers or scripted kiting.\n\n`
     + `Three seeds per matchup, expanding to ten when the initial completed outcomes differ. `
@@ -351,7 +417,7 @@ async function reviewPhase(directory, manifest, phase, db, pool) {
   loadFull(directory);
   const integrity = db.prepare("PRAGMA integrity_check").get().integrity_check;
   if (integrity !== "ok") throw new Error(`SQLite integrity: ${integrity}`);
-  const matchups = manifest.matchups.filter(m => m.phase === phase.id);
+  const matchups = manifest.matchups.filter(m => m.phase === phase.id && m.canonicalMatchupId === m.id);
   const all = storedRuns(db), rowsById = new Map(matchups.map(m => [m.id, all.filter(r => r.matchupId === m.id)]));
   if (phasePending(matchups, rowsById).length) throw new Error("phase has missing seeds");
   for (const m of matchups) for (const row of rowsById.get(m.id)) validateRecord(manifest, m, row);
@@ -386,6 +452,7 @@ export async function runFull(directory, { workers = 4, publishResults = false, 
     db = restoreFullDb(directory, manifest);
     db.prepare("UPDATE attempts SET status='interrupted',finished_at=? WHERE status='running'").run(now());
     importPilot(directory, manifest, db);
+    importEarlier(directory, manifest, db);
     state = existsSync(resolve(directory, "state.json")) ? JSON.parse(readFileSync(resolve(directory, "state.json"), "utf8"))
       : { startedAt: now(), reviews: {} };
     state.status = "running"; state.workers = workers; state.pid = process.pid;
@@ -395,14 +462,14 @@ export async function runFull(directory, { workers = 4, publishResults = false, 
     for (const phase of manifest.phases) {
       if (stopping || completedHere >= maxPhases) break;
       if (state.reviews[phase.id]) {
-        const all = storedRuns(db), items = manifest.matchups.filter(m => m.phase === phase.id);
+        const all = storedRuns(db), items = manifest.matchups.filter(m => m.phase === phase.id && m.canonicalMatchupId === m.id);
         if (!phasePending(items, new Map(items.map(m => [m.id, all.filter(r => r.matchupId === m.id)]))).length) continue;
         delete state.reviews[phase.id];
       }
       loadFull(directory);
       state.activePhase = phase.id;
       console.log(JSON.stringify({ phaseStarted: phase.id, matchups: phase.matchupIds.length }));
-      const matchups = manifest.matchups.filter(m => m.phase === phase.id);
+      const matchups = manifest.matchups.filter(m => m.phase === phase.id && m.canonicalMatchupId === m.id);
       const allSaved = storedRuns(db);
       const byId = new Map(matchups.map(m => [m.id, allSaved.filter(r => r.matchupId === m.id)]));
       const active = new Map();
@@ -466,9 +533,11 @@ async function main() {
   const directory = resolve(options["--campaign"]);
   if (commandName === "prepare") {
     const manifest = await prepareFull(directory, resolve(options["--roster"]),
-      resolve(options["--pilot"]), resolve(options["--reference-db"] ?? "data/golden/aoe2_reference_simulation.db"));
+      resolve(options["--pilot"]), resolve(options["--reference-db"] ?? "data/golden/aoe2_reference_simulation.db"),
+      options["--reuse-campaign"] ? resolve(options["--reuse-campaign"]) : null);
     console.log(JSON.stringify({ campaignHash: manifest.campaignHash, units: manifest.roster.units.length,
-      matchups: manifest.matchups.length, minimumRuns: manifest.matchups.length * 3, phases: manifest.phases.length }));
+      matchups: manifest.matchups.length, distinctMatchups: manifest.equivalence.distinctMatchups,
+      minimumRuns: manifest.equivalence.distinctMatchups * 3, phases: manifest.phases.length }));
   } else if (commandName === "run") console.log(JSON.stringify(await runFull(directory, {
     workers: Number(options["--workers"] ?? 4), publishResults: options["--publish"] === "true",
     maxPhases: options["--max-phases"] === undefined ? Infinity : Number(options["--max-phases"]),

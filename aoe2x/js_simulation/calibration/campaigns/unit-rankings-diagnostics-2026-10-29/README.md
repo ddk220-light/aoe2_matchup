@@ -1,6 +1,6 @@
 # Ranking timeout diagnostics
 
-Status: **running**. Completed 8/110 diagnostic tasks.
+Status: **running**. Completed 9/110 diagnostic tasks.
 
 The bulk campaign and its saved outcomes remain the source records. These are supplemental diagnostic reruns.
 
@@ -16,6 +16,7 @@ A faster rerun alone does not prove a contention bug. Inactivity observations re
 |---|---|---|---:|---:|
 | extend_game_time | Aztecs Elite Skirmisher vs. Turks Cavalier / seed 2 | processing_limit | 121.15 | 168.86666666666667 |
 | extend_game_time | Bohemians Mounted Crossbowman vs. Spanish Hussar / seed 0 | decided | 32.87 | 288.8 |
+| extend_game_time | Khmer Elite Battle Elephant vs. Saracens Heavy Cavalry Archer / seed 0 | decided | 30.12 | 207.33333333333334 |
 | extend_game_time | Shu War Chariot vs. Spanish Elite Skirmisher / seed 1 | decided | 47.62 | 202.03333333333333 |
 | extend_game_time | Shu War Chariot vs. Spanish Elite Skirmisher / seed 2 | decided | 71.07 | 199.65 |
 | extend_game_time | Britons Elite Skirmisher vs. Turks Cavalier / seed 2 | processing_limit | 121.15 | 148.21666666666667 |

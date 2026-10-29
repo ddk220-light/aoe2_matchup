@@ -1,12 +1,16 @@
 {
-  "updatedAt": "2026-10-29T19:18:17.036491+00:00",
+  "updatedAt": "2026-10-29T19:31:52.294822+00:00",
   "candidateSourceSha256": "3aab0df60312a8a293e213130b872fb3e532cdef8d95c3ae19f641d236f23952",
-  "validationRuns": 93,
-  "exactChecks": 93,
-  "exactMatches": 93,
+  "validationRuns": 142,
+  "exactChecks": 114,
+  "exactMatches": 114,
   "mismatches": 0,
-  "completionRetries": 0,
-  "completionOutcomes": {},
+  "completionRetries": 28,
+  "completionOutcomes": {
+    "win": 26,
+    "processing_timeout": 1,
+    "engine_error": 1
+  },
   "prefixComparisons": [
     {
       "teams": [
@@ -959,10 +963,367 @@
       "expectedEventLogHash": "008a06c08840c1f19ff0ba6635fc280d5f92e8b430c65e057a9e1c2ef61a564b",
       "actualEventLogHash": "008a06c08840c1f19ff0ba6635fc280d5f92e8b430c65e057a9e1c2ef61a564b",
       "exact": true
+    },
+    {
+      "teams": [
+        "Bohemians Mounted Crossbowman",
+        "Spanish Hussar"
+      ],
+      "matchupId": "m_8d9ee346dae1cdac7c52",
+      "seed": 0,
+      "gameSeconds": 288.8,
+      "baselineWallSeconds": 32.868266775,
+      "candidateWallSeconds": 37.069271971000006,
+      "speedRatio": 0.8866714944041381,
+      "expectedFinalStateHash": "56a49d24db64428ad644a9074111f7b5d7397fe00dfdbb6773c0725ccdd49ee0",
+      "actualFinalStateHash": "56a49d24db64428ad644a9074111f7b5d7397fe00dfdbb6773c0725ccdd49ee0",
+      "expectedEventLogHash": "55283dab875bc43d8d45bf2d1dfaac485591d97efbd92b40eb05b09bb7255be2",
+      "actualEventLogHash": "55283dab875bc43d8d45bf2d1dfaac485591d97efbd92b40eb05b09bb7255be2",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Aztecs Elite Skirmisher",
+        "Turks Cavalier"
+      ],
+      "matchupId": "m_5ae9ad79f7d6a5ddeeb8",
+      "seed": 2,
+      "gameSeconds": 168.86666666666667,
+      "baselineWallSeconds": 121.14623496899999,
+      "candidateWallSeconds": 57.59398744900001,
+      "speedRatio": 2.103452813998615,
+      "expectedFinalStateHash": "867d46e2dbd578226b8e41e0cd5d0056be4bd930c507c671e3a5f71d97fa688f",
+      "actualFinalStateHash": "867d46e2dbd578226b8e41e0cd5d0056be4bd930c507c671e3a5f71d97fa688f",
+      "expectedEventLogHash": "16300020fd55b0fd803bd922e37eaabfe9c8468108fbc8869e959112243cd37c",
+      "actualEventLogHash": "16300020fd55b0fd803bd922e37eaabfe9c8468108fbc8869e959112243cd37c",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Khmer Elite Battle Elephant",
+        "Saracens Heavy Cavalry Archer"
+      ],
+      "matchupId": "m_a31297d0614154669474",
+      "seed": 0,
+      "gameSeconds": 207.33333333333334,
+      "baselineWallSeconds": 30.116278022,
+      "candidateWallSeconds": 26.660700576000032,
+      "speedRatio": 1.129613152368197,
+      "expectedFinalStateHash": "7034429099d50d4484b1261cdd884996997aeef042dd01ed005821dcfac57b5b",
+      "actualFinalStateHash": "7034429099d50d4484b1261cdd884996997aeef042dd01ed005821dcfac57b5b",
+      "expectedEventLogHash": "a4766d97c0c688e2aa7e2b56c125c5bc694f1c4138bd2e7990e655dba66cdb2f",
+      "actualEventLogHash": "a4766d97c0c688e2aa7e2b56c125c5bc694f1c4138bd2e7990e655dba66cdb2f",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Shu War Chariot",
+        "Spanish Elite Skirmisher"
+      ],
+      "matchupId": "m_b1514092de28e0395d25",
+      "seed": 1,
+      "gameSeconds": 202.03333333333333,
+      "baselineWallSeconds": 47.621661896,
+      "candidateWallSeconds": 32.20056302500004,
+      "speedRatio": 1.478907740185389,
+      "expectedFinalStateHash": "a8d2c92c2dca1299ee25a991dfc791cfdb85e6b08d749476586318211f7b51aa",
+      "actualFinalStateHash": "a8d2c92c2dca1299ee25a991dfc791cfdb85e6b08d749476586318211f7b51aa",
+      "expectedEventLogHash": "9034819a2234faef407033cbce0dccc33d647855c16a1499e4cd742d4ac02a1b",
+      "actualEventLogHash": "9034819a2234faef407033cbce0dccc33d647855c16a1499e4cd742d4ac02a1b",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Shu War Chariot",
+        "Spanish Elite Skirmisher"
+      ],
+      "matchupId": "m_b1514092de28e0395d25",
+      "seed": 2,
+      "gameSeconds": 199.65,
+      "baselineWallSeconds": 71.06753399000002,
+      "candidateWallSeconds": 32.96368218200002,
+      "speedRatio": 2.155934327895164,
+      "expectedFinalStateHash": "89026715a2c9da8a6d2226baffff81c10269dfbfc335f6dded2c7a95fb8c3e7e",
+      "actualFinalStateHash": "89026715a2c9da8a6d2226baffff81c10269dfbfc335f6dded2c7a95fb8c3e7e",
+      "expectedEventLogHash": "dd657005e5fd68cf4073ed420063c6e686427552ff6eb302e8e5379f5dd17023",
+      "actualEventLogHash": "dd657005e5fd68cf4073ed420063c6e686427552ff6eb302e8e5379f5dd17023",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Gurjaras Spearman",
+        "Chinese Arbalester"
+      ],
+      "matchupId": "m_8cbea844c435e7e0b4b3",
+      "seed": 2,
+      "gameSeconds": 16.816666666666666,
+      "baselineWallSeconds": 3.3229272149999995,
+      "candidateWallSeconds": 3.2719827069999883,
+      "speedRatio": 1.0155699196976262,
+      "expectedFinalStateHash": "c9b798e522c4e034122439b291c3b6b051474b527bb1ad2ce2f425b9fc8629fb",
+      "actualFinalStateHash": "c9b798e522c4e034122439b291c3b6b051474b527bb1ad2ce2f425b9fc8629fb",
+      "expectedEventLogHash": "056bb31ba9265c5e8d3456ced0a9afac5ff62da831b12eed812017dd364de69a",
+      "actualEventLogHash": "056bb31ba9265c5e8d3456ced0a9afac5ff62da831b12eed812017dd364de69a",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Wei Elite Tiger Cavalry",
+        "Chinese Arbalester"
+      ],
+      "matchupId": "m_9a1f9ab0c7be89bf0a56",
+      "seed": 2,
+      "gameSeconds": 23.033333333333335,
+      "baselineWallSeconds": 5.160059476000001,
+      "candidateWallSeconds": 3.93187081699993,
+      "speedRatio": 1.3123675003995159,
+      "expectedFinalStateHash": "9613aceb354f87a84e100125395a6b13fb219adfda1636eca8757e89870714d7",
+      "actualFinalStateHash": "9613aceb354f87a84e100125395a6b13fb219adfda1636eca8757e89870714d7",
+      "expectedEventLogHash": "92dcfeac581fb7e461af18bc3269613f6ccb1defaa8ded0e67bb5e16a0c4b30c",
+      "actualEventLogHash": "92dcfeac581fb7e461af18bc3269613f6ccb1defaa8ded0e67bb5e16a0c4b30c",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Jurchens Grenadier",
+        "Spanish Champion"
+      ],
+      "matchupId": "m_c4474005330e3bf88496",
+      "seed": 2,
+      "gameSeconds": 11.65,
+      "baselineWallSeconds": 2.456966105,
+      "candidateWallSeconds": 2.278871826000046,
+      "speedRatio": 1.0781501956222572,
+      "expectedFinalStateHash": "1d2e8de99b7e801ff1ce2e54bf13780d663509ad0fea03d428e390d2f909ae1e",
+      "actualFinalStateHash": "1d2e8de99b7e801ff1ce2e54bf13780d663509ad0fea03d428e390d2f909ae1e",
+      "expectedEventLogHash": "74ea6769fe36d93e81b3382b72743327a77def515c2b2bc48f52c98b375ab345",
+      "actualEventLogHash": "74ea6769fe36d93e81b3382b72743327a77def515c2b2bc48f52c98b375ab345",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Britons Elite Skirmisher",
+        "Turks Cavalier"
+      ],
+      "matchupId": "m_ed79846db7272bf05960",
+      "seed": 2,
+      "gameSeconds": 148.21666666666667,
+      "baselineWallSeconds": 121.152337875,
+      "candidateWallSeconds": 44.14468939299998,
+      "speedRatio": 2.7444374293006377,
+      "expectedFinalStateHash": "d1821ebb24e0ec0c6404f9d27a55fa672b952850bc41be538ecba9e6b4fa02d5",
+      "actualFinalStateHash": "d1821ebb24e0ec0c6404f9d27a55fa672b952850bc41be538ecba9e6b4fa02d5",
+      "expectedEventLogHash": "059c1e57bc272292441e7100d981327d75344132d5beb78be8df811b1d19dcce",
+      "actualEventLogHash": "059c1e57bc272292441e7100d981327d75344132d5beb78be8df811b1d19dcce",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Huns Heavy Cavalry Archer",
+        "Chinese Arbalester"
+      ],
+      "matchupId": "m_1dcec090a20ee815ce4c",
+      "seed": 1,
+      "gameSeconds": 6.15,
+      "baselineWallSeconds": 120.490202313,
+      "candidateWallSeconds": 8.318077708999999,
+      "speedRatio": 14.485342230288607,
+      "expectedFinalStateHash": "e95b0982ed21b4c98e3abd7a743b81bd3637665081f3ea9b6935754a72c28598",
+      "actualFinalStateHash": "e95b0982ed21b4c98e3abd7a743b81bd3637665081f3ea9b6935754a72c28598",
+      "expectedEventLogHash": "e56c9bfc8857905d5bdcb691e58603d3b3a0d2e9cac06af9eba6c31be79a0e00",
+      "actualEventLogHash": "e56c9bfc8857905d5bdcb691e58603d3b3a0d2e9cac06af9eba6c31be79a0e00",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Sicilians Heavy Mounted Crossbowman",
+        "Spanish Hussar"
+      ],
+      "matchupId": "m_1e49e0284b17acd04ec6",
+      "seed": 2,
+      "gameSeconds": 13.2,
+      "baselineWallSeconds": 120.818338814,
+      "candidateWallSeconds": 8.518537632,
+      "speedRatio": 14.18299055933548,
+      "expectedFinalStateHash": "7b5ad22462e292c7f2fadb785f87bcee28f562d370ceb8db5120dbfaadbb303d",
+      "actualFinalStateHash": "7b5ad22462e292c7f2fadb785f87bcee28f562d370ceb8db5120dbfaadbb303d",
+      "expectedEventLogHash": "e6ef5392408a14a188c7827b287ece85c98b049d141aaf3460cb4d1ecd66ca8a",
+      "actualEventLogHash": "e6ef5392408a14a188c7827b287ece85c98b049d141aaf3460cb4d1ecd66ca8a",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Armenians Heavy Scorpion",
+        "Saracens Heavy Cavalry Archer"
+      ],
+      "matchupId": "m_1fb69067f9398f2309ce",
+      "seed": 0,
+      "gameSeconds": 22.683333333333334,
+      "baselineWallSeconds": 121.23017691700001,
+      "candidateWallSeconds": 18.087055659,
+      "speedRatio": 6.702593235880085,
+      "expectedFinalStateHash": "664880f3376e57cdf0a5b38b65f5f5ecfcb5c3710c369d11d1839dcc21e5518f",
+      "actualFinalStateHash": "664880f3376e57cdf0a5b38b65f5f5ecfcb5c3710c369d11d1839dcc21e5518f",
+      "expectedEventLogHash": "00641404d9e862426e3db08f8a847350ec3874816c961b361fd26469d22149cd",
+      "actualEventLogHash": "00641404d9e862426e3db08f8a847350ec3874816c961b361fd26469d22149cd",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Italians Mounted Crossbowman",
+        "Saracens Heavy Cavalry Archer"
+      ],
+      "matchupId": "m_37c30f06e68d852f5c25",
+      "seed": 1,
+      "gameSeconds": 26.683333333333334,
+      "baselineWallSeconds": 120.426263263,
+      "candidateWallSeconds": 10.838240098999998,
+      "speedRatio": 11.111237817485817,
+      "expectedFinalStateHash": "2fdfebe75ea6341b9f46f8dbcdf7f3268422d286723aae2ba25ed76b7fc11e9b",
+      "actualFinalStateHash": "2fdfebe75ea6341b9f46f8dbcdf7f3268422d286723aae2ba25ed76b7fc11e9b",
+      "expectedEventLogHash": "cfb5c5b94128785c92ad01b6ebe4405c0f89f94634d71526a1e9e1215557771f",
+      "actualEventLogHash": "cfb5c5b94128785c92ad01b6ebe4405c0f89f94634d71526a1e9e1215557771f",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Muisca Elite Skirmisher",
+        "Spanish Champion"
+      ],
+      "matchupId": "m_2001b4ec56e343b36fac",
+      "seed": 1,
+      "gameSeconds": 32.333333333333336,
+      "baselineWallSeconds": 120.485311799,
+      "candidateWallSeconds": 30.740050213999996,
+      "speedRatio": 3.919489752301288,
+      "expectedFinalStateHash": "53bdb7aac5b1c2b85e49fe6fc2cb73625d0e331e644efb2ac96fbd79c755c059",
+      "actualFinalStateHash": "53bdb7aac5b1c2b85e49fe6fc2cb73625d0e331e644efb2ac96fbd79c755c059",
+      "expectedEventLogHash": "822adc403855cf2d329e4f935d323b1c2c44d640a62cbeb353d9c3683d39a08a",
+      "actualEventLogHash": "822adc403855cf2d329e4f935d323b1c2c44d640a62cbeb353d9c3683d39a08a",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Bulgarians Heavy Cavalry Archer",
+        "Saracens Heavy Cavalry Archer"
+      ],
+      "matchupId": "m_3fb05e487a0685c8dcd7",
+      "seed": 1,
+      "gameSeconds": 28.166666666666668,
+      "baselineWallSeconds": 120.233784318,
+      "candidateWallSeconds": 11.223983407,
+      "speedRatio": 10.712220426396431,
+      "expectedFinalStateHash": "178a060424fe174ad92548376491f6a18604e6dee78062a5130f35f7709d4a1b",
+      "actualFinalStateHash": "178a060424fe174ad92548376491f6a18604e6dee78062a5130f35f7709d4a1b",
+      "expectedEventLogHash": "cc3506de53d8915fb8600e2ea02d5c21cf9ae8b4c1b9ea10f2163a9e94d6d9f5",
+      "actualEventLogHash": "cc3506de53d8915fb8600e2ea02d5c21cf9ae8b4c1b9ea10f2163a9e94d6d9f5",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Tatars Heavy Cavalry Archer",
+        "Saracens Hand Cannoneer"
+      ],
+      "matchupId": "m_42c63b4c3fafb71721e6",
+      "seed": 0,
+      "gameSeconds": 19.383333333333333,
+      "baselineWallSeconds": 120.225746621,
+      "candidateWallSeconds": 9.271772566,
+      "speedRatio": 12.966856743431471,
+      "expectedFinalStateHash": "8238d5dc4c3fc8bd5d53c5d26355cf10f3e16fd0d7cf425ff0fc416c3bd67440",
+      "actualFinalStateHash": "8238d5dc4c3fc8bd5d53c5d26355cf10f3e16fd0d7cf425ff0fc416c3bd67440",
+      "expectedEventLogHash": "d55a5a47da09a8c438014440860ec5949d84e4f5694e7a3b36c387c3e445dfc0",
+      "actualEventLogHash": "d55a5a47da09a8c438014440860ec5949d84e4f5694e7a3b36c387c3e445dfc0",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Saxons Elite Skirmisher",
+        "Saracens Heavy Cavalry Archer"
+      ],
+      "matchupId": "m_47341333e6c09205a174",
+      "seed": 0,
+      "gameSeconds": 25.0,
+      "baselineWallSeconds": 121.41836016500001,
+      "candidateWallSeconds": 4.690003549000001,
+      "speedRatio": 25.888756564137086,
+      "expectedFinalStateHash": "ed3b806bdad5f9132dd5fa06ba9b605ffa5f93e26c22ebd4f9bcb885e32e3a2f",
+      "actualFinalStateHash": "ed3b806bdad5f9132dd5fa06ba9b605ffa5f93e26c22ebd4f9bcb885e32e3a2f",
+      "expectedEventLogHash": "2b971b1156e2411fad631b9f5a7b3a5949a5491d9fe95aacd4e9a9eaf9df4777",
+      "actualEventLogHash": "2b971b1156e2411fad631b9f5a7b3a5949a5491d9fe95aacd4e9a9eaf9df4777",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Varangians Heavy Mounted Crossbowman",
+        "Spanish Hussar"
+      ],
+      "matchupId": "m_55b143fd6c092a98027e",
+      "seed": 2,
+      "gameSeconds": 12.95,
+      "baselineWallSeconds": 120.91751568299999,
+      "candidateWallSeconds": 8.128609981000002,
+      "speedRatio": 14.8755464914217,
+      "expectedFinalStateHash": "8db98ba51b35ddaaf4829b48b19a4de3a0049466e765febc69829f1ebdbf9282",
+      "actualFinalStateHash": "8db98ba51b35ddaaf4829b48b19a4de3a0049466e765febc69829f1ebdbf9282",
+      "expectedEventLogHash": "d4f38bc353c93cfc363dbd35d0a0f67e63f619a2ad5ef78a1566343e277f6ec3",
+      "actualEventLogHash": "d4f38bc353c93cfc363dbd35d0a0f67e63f619a2ad5ef78a1566343e277f6ec3",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Cumans Elite Skirmisher",
+        "Spanish Hussar"
+      ],
+      "matchupId": "m_5c951a7bad151e048fb7",
+      "seed": 0,
+      "gameSeconds": 24.616666666666667,
+      "baselineWallSeconds": 120.405058607,
+      "candidateWallSeconds": 10.867618881000002,
+      "speedRatio": 11.079249274880786,
+      "expectedFinalStateHash": "bfe3bfacccd025d0a6360cc19344e96eeb104848bfc1395b3505eef1169ac71d",
+      "actualFinalStateHash": "bfe3bfacccd025d0a6360cc19344e96eeb104848bfc1395b3505eef1169ac71d",
+      "expectedEventLogHash": "723e8eff35c45d4198967722e3fa582380d85c37f192073e5e7d26ce9eda9010",
+      "actualEventLogHash": "723e8eff35c45d4198967722e3fa582380d85c37f192073e5e7d26ce9eda9010",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Spanish Hand Cannoneer",
+        "Saracens Heavy Cavalry Archer"
+      ],
+      "matchupId": "m_63efd460c7019f99c77c",
+      "seed": 1,
+      "gameSeconds": 22.716666666666665,
+      "baselineWallSeconds": 120.338190319,
+      "candidateWallSeconds": 13.742952423000002,
+      "speedRatio": 8.756356466577284,
+      "expectedFinalStateHash": "028d9f5429a2b2938c78d7f334d9e332deb855bbed1155bc64d23de2229a9fe4",
+      "actualFinalStateHash": "028d9f5429a2b2938c78d7f334d9e332deb855bbed1155bc64d23de2229a9fe4",
+      "expectedEventLogHash": "5f39d80700f31259afe13879522c2750c31e2fe86290493504b1160bdeac3e3a",
+      "actualEventLogHash": "5f39d80700f31259afe13879522c2750c31e2fe86290493504b1160bdeac3e3a",
+      "exact": true
+    },
+    {
+      "teams": [
+        "Romans Heavy Scorpion",
+        "Saracens Heavy Cavalry Archer"
+      ],
+      "matchupId": "m_60fc1eebd5894d219d2a",
+      "seed": 2,
+      "gameSeconds": 22.866666666666667,
+      "baselineWallSeconds": 120.734207208,
+      "candidateWallSeconds": 41.791422238,
+      "speedRatio": 2.8889710075054373,
+      "expectedFinalStateHash": "e19ce574c7f5e6a7eb16c646d0f16d277f20b564de67fb834040659eda952333",
+      "actualFinalStateHash": "e19ce574c7f5e6a7eb16c646d0f16d277f20b564de67fb834040659eda952333",
+      "expectedEventLogHash": "9a846646842f45e3bd1e781929db62d1316ea97f0ed14d5dcc82a4cc9dfd7323",
+      "actualEventLogHash": "9a846646842f45e3bd1e781929db62d1316ea97f0ed14d5dcc82a4cc9dfd7323",
+      "exact": true
     }
   ],
   "completeBaselineComparisons": [],
-  "medianPrefixSpeedRatio": 7.810064094896729,
+  "medianPrefixSpeedRatio": 7.550573944345766,
   "timingCaveat": "Prefix baselines had CPU profiling and detailed tracing; candidates use lightweight progress reporting. Concurrent workloads differ. Exact state/event comparisons are independent of timing.",
   "knownPreexistingTests": [
     "collision-recovery: sub-tile obstacle residual has invalid starting allied overlap on baseline and candidate",

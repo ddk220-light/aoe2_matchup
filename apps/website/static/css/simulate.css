@@ -1298,6 +1298,8 @@
     margin-top: 10px;
 }
 .rail-live[hidden] { display: none; }
+.mobile-matchup-stats,
+.picker-browse-hint { display: none; }
 
 /* ---- Arena ---- */
 .arena {
@@ -1443,64 +1445,82 @@
 }
 
 @media (max-width: 768px) {
-    /* Mobile setup order follows the task: Team A, Team B, then the arena. */
+    /* Keep setup above the arena and the detailed team readouts below it. */
     #team1Rail { order: 1; }
     #team2Rail { order: 2; }
     .arena { order: 3; }
+    .mobile-matchup-stats {
+        order: 4;
+        width: 100%;
+        gap: 12px;
+    }
+    .mobile-matchup-stats:has(.rail-live:not([hidden])) { display: grid; margin-top: 4px; }
+    .mobile-matchup-stats .rail-live { margin-top: 0; }
+    .team-rail.has-unit .rail-search { display: none; }
+    .team-rail.has-unit .selection-badge {
+        padding: 2px 0;
+        margin-bottom: 4px;
+    }
+    .team-rail.has-unit .selection-badge:last-child { margin-bottom: 0; }
+    .team-rail.has-unit .selection-badge img { width: 1.5rem; height: 1.5rem; }
+    .selection-badge .badge-text { font-size: 0.875rem; }
 
-    /* Eight compact civilization choices per row, with exactly two rows in the
-       visible browse window. The remaining civilizations stay scrollable. */
-    .rail-picker { max-height: 34vh; }
-    .rail-picker > .civ-grid {
-        grid-template-columns: repeat(8, minmax(0, 1fr));
-        gap: 3px;
-        max-height: 91px;
+    /* Readable names and a visible scroll cue take priority over fitting the
+       whole roster into a miniature grid. Each picker has one scroll region. */
+    .rail-picker { max-height: none; overflow: visible; }
+    .rail-picker > .civ-grid,
+    .rail-picker > .unit-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        max-height: 220px;
         overflow-y: auto;
         overscroll-behavior: contain;
         scrollbar-width: thin;
     }
+    .rail-picker > .civ-grid {
+        grid-auto-rows: minmax(76px, auto);
+    }
     .rail-picker > .civ-grid .civ-card {
         min-width: 0;
-        min-height: 44px;
-        gap: 1px;
-        padding: 3px 1px;
+        min-height: 76px;
+        gap: 4px;
+        padding: 6px 3px;
         border-radius: 5px;
     }
     .rail-picker > .civ-grid .civ-card img {
-        width: 1.45rem;
-        height: 1.45rem;
+        width: 2rem;
+        height: 2rem;
     }
-    .rail-picker > .civ-grid .civ-card span {
+    .rail-picker > .civ-grid .civ-card span,
+    .rail-picker > .unit-grid .unit-pick span {
         display: block;
         width: 100%;
-        overflow: hidden;
+        overflow: visible;
         color: var(--text-muted);
-        font-size: 0.48rem;
-        line-height: 1.05;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .rail-picker > .unit-grid {
-        grid-template-columns: repeat(7, minmax(0, 1fr));
-        gap: 0;
+        font-size: var(--fs-sm);
+        line-height: 1.25;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
     .rail-picker > .unit-grid .unit-pick {
         min-width: 0;
-        min-height: 50px;
-        gap: 1px;
-        padding: 3px 1px;
+        min-height: 92px;
+        gap: 4px;
+        padding: 6px 3px;
     }
     .rail-picker > .unit-grid .unit-pick img,
     .rail-picker > .unit-grid .unit-pick img.sprite {
-        width: 1.68rem;
-        height: 1.68rem;
+        width: 2.25rem;
+        height: 2.25rem;
         padding: 0;
     }
-    .rail-picker > .unit-grid .unit-pick span {
-        font-size: 0.52rem;
-        line-height: 1.05;
+    .picker-browse-hint {
+        display: block;
+        margin: 6px 0 0;
+        color: var(--text-muted);
+        font-size: var(--fs-xs);
     }
-    .rail-search-input { min-height: 44px; }
+    .rail-search-input { min-height: 44px; font-size: 1rem; }
     .arena-toolbar {
         flex-wrap: wrap;
         min-height: 44px;

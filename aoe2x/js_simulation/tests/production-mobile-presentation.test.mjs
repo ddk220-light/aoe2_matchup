@@ -120,18 +120,6 @@ test("desktop battle shell fits below navigation and centers equal transport but
 });
 
 
-test("mobile unit picker uses larger seven-column cards", () => {
-  assert.match(
-    websiteCss,
-    /@media \(max-width: 768px\)[\s\S]*\.rail-picker > \.unit-grid \{[\s\S]*grid-template-columns: repeat\(7, minmax\(0, 1fr\)\);/,
-  );
-  assert.match(
-    websiteCss,
-    /\.rail-picker > \.unit-grid \.unit-pick img[\s\S]*width: 1\.68rem;[\s\S]*height: 1\.68rem;/,
-  );
-});
-
-
 test("roster changes remain available during active playback", () => {
   assert.doesNotMatch(websiteCss, /\.battle-running \.change-btn\s*\{[^}]*display:\s*none/);
   assert.match(

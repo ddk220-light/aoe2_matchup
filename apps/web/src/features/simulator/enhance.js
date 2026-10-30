@@ -123,6 +123,7 @@ function renderSelection(teamNum) {
         `team${teamNum}Selection`,
     );
     const state = teamState[teamNum];
+    document.getElementById(`team${teamNum}Rail`).classList.toggle("has-unit", !!state.unitSlug);
 
     if (!state.civ) {
         // Show civ grid
@@ -134,7 +135,7 @@ function renderSelection(teamNum) {
                         <span>${civSafe}</span>
                     </div>`;
         }
-        html += "</div>";
+        html += '</div><p class="picker-browse-hint">Scroll for more civilizations, or search above</p>';
         container.innerHTML = html;
         updateStartReady();
         return;
@@ -170,7 +171,7 @@ function renderSelection(teamNum) {
                             <span>${nameSafe}</span>
                         </div>`;
             }
-            html += "</div>";
+            html += '</div><p class="picker-browse-hint">Scroll for more units</p>';
         } else {
             html +=
                 '<div style="color:var(--text-muted);font-size:0.8rem;padding:8px">Loading units...</div>';
@@ -652,7 +653,21 @@ const {updateStats, renderMatchupCards} = createStatisticsView({
 });
 const PageSim = createPlaybackController({updateStats, syncPlayerControls, updateBattleWinner});
 
+function initResponsiveMatchupCards() {
+    const mobile = window.matchMedia("(max-width: 768px)");
+    const relocate = () => {
+        for (const team of [1, 2]) {
+            const target = document.getElementById(mobile.matches
+                ? "mobileMatchupStats" : `team${team}Rail`);
+            target.append(document.getElementById(`team${team}Live`));
+        }
+    };
+    mobile.addEventListener("change", relocate);
+    relocate();
+}
+
 async function initialize() {
+    initResponsiveMatchupCards();
     const canvas = document.getElementById("battleCanvas");
     pageSim = new PageSim(canvas);
     // Nothing in the templates reaches for the old `simulation` global (grepped

@@ -1,6 +1,7 @@
 """One source for the civilization API and its crawlable HTML projection."""
 import json
 from copy import deepcopy
+from functools import lru_cache
 from pathlib import Path
 
 from aoe2x.advisor.best_units import load_civ_power_units
@@ -10,6 +11,13 @@ from aoe2x.assets.catalog import _rewrite
 
 _PAGE_COLUMNS = ('cavalry', 'ranged', 'infantry', 'siege', 'navy')
 _SUPPLEMENT_PATH = Path(__file__).resolve().parents[1] / 'static/data/civilizations-185872.json'
+_STRATEGIES_PATH = Path(__file__).resolve().parents[1] / 'static/data/civilization-strategies.json'
+
+
+@lru_cache(maxsize=1)
+def load_civilization_descriptions():
+    """Editorial army and playstyle guidance, separate from published scores."""
+    return json.loads(_STRATEGIES_PATH.read_text(encoding='utf-8'))['descriptions']
 
 
 def load_civilization_supplement(path=None):
@@ -102,7 +110,11 @@ def _page_analysis_from_data(data, name, age, supplement):
         baseline = {'civ_name': name, 'age': age, 'power_units': {}}
     else:
         raise LookupError(f"Civilization '{name}' not found")
-    return compose_civilization_analysis(name, age, baseline, supplement)
+    result = compose_civilization_analysis(name, age, baseline, supplement)
+    description = load_civilization_descriptions().get(name)
+    if description:
+        result['strategic_description'] = description
+    return result
 
 def _analysis_from_data(data, name, age):
     if not data:

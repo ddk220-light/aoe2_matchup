@@ -44,7 +44,7 @@ def export_page(root, website, exports, data, media, head_parser):
     sprites = {name: {key: value for key, value in media['sprites'][name].items() if key != 'url_blue'}
                for name in sorted(names) if name in media['sprites']}
     sheets = {name: media['sheets'][name] for name in sorted(names) if name in media['sheets']}
-    return {'frame': frame, 'arena_url': arena_url, 'legacy_release': legacy_release,
+    return {'about': re.search(r'<section id="home-about".*?</section>', html, re.S).group(), 'frame': frame, 'arena_url': arena_url, 'legacy_release': legacy_release,
             'civilizations': catalog['civilizations'], 'civilization_emblems': catalog['civilization_emblems'],
             'icon_names': icon_names, 'unique_buildings': catalog['unique_buildings'], 'icons': icons,
             'sprites': sprites, 'sheets': sheets, 'search': search,

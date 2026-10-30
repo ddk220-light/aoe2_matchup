@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}AoE2 Unit Rankings — Best units by class, simulated head-to-head{% endblock %}
-{% block meta_description %}Age of Empires II unit rankings derived from population- and cost-balanced battle simulations. Compare every unit at full upgrades across all 56 civilizations and see which units actually dominate their class.{% endblock %}
+{% block meta_description %}Age of Empires II unit rankings derived from population- and cost-balanced battle simulations. Compare every unit at full upgrades across all {{ civilization_count }} civilizations and see which units actually dominate their class.{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/rankings.css') }}" />
@@ -39,6 +39,17 @@
         Each matchup averages three seeded runs, extended to ten when outcomes differ.
         Score = 50 + half the average signed surviving HP percentage. Higher is stronger; 50 is neutral.
         Below are the top units in each category; use the interactive table above to explore every line, civ, and matchup.
+    </p>
+    <p class="rankings-ssr-intro">
+        {% if ranking_release.source_summary %}
+        Published land rankings: {{ ranking_release.source_summary.variants }} unit variants
+        across {{ ranking_release.source_summary.categories }} categories,
+        {% else %}
+        Published ranking data: game build {{ ranking_release.game_build }},
+        {% endif %}
+        generated {{ ranking_release.generated_at[:10] }}. Some siege and naval categories retain historical
+        results; each category's score information explains its method. Scores are published separately
+        from the live simulator.
     </p>
     {% for group in rankings_overview %}
     <div class="rankings-ssr-group">

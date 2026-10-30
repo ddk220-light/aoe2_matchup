@@ -1,0 +1,814 @@
+{
+  "status": "preview_complete_not_published_to_web_app",
+  "dataComplete": true,
+  "directImportReady": false,
+  "datasetHash": "17a91c8fa14553abbce1f894cbeb4e637d9fe9a82977fc2da2b0bc824cfade3c",
+  "variants": 555,
+  "groups": {
+    "Ranged": 274,
+    "Infantry": 147,
+    "Cavalry": 134
+  },
+  "currentAppBuild": "177723",
+  "currentPublishedMetadata": {
+    "engine_revision": "96c9404dc3f2bb5b6f617d1e640142d7d7836acf",
+    "game_build": "177723",
+    "generated_at": "2026-09-04T01:46:57.952527+00:00",
+    "mechanics_build": "ce3530df36cf0b333a9751cb0ff94460fe904f811feecec8ae9794701622b4cf",
+    "published_rows": 17251,
+    "published_stages": [
+      "infantry",
+      "archery",
+      "cavalry"
+    ],
+    "resource_weights": {
+      "food": 1,
+      "gold": 1,
+      "wood": 1
+    },
+    "retail_source": "derived_data.db",
+    "retained_retail_lines": [
+      "bombard_cannon",
+      "cannon_galleon",
+      "fire",
+      "galleon",
+      "hulk",
+      "ram",
+      "trebuchet"
+    ],
+    "schema_version": 1,
+    "seed_count": 5,
+    "source_summary": {
+      "failures": 0,
+      "matchups": 4530,
+      "runs": 22650,
+      "scores": 15855
+    },
+    "unit_cap": 27,
+    "v3_source": "v3_unit_rankings.db",
+    "methodology": {
+      "schema_version": 1,
+      "methods": {
+        "infantry": {
+          "title": "Infantry score",
+          "setting": "Full Imperial upgrades \u00b7 equal resources \u00b7 food, wood, and gold valued 1:1:1 \u00b7 27-unit cap \u00b7 five seeded runs for every matchup.",
+          "formula": [
+            [
+              "75%",
+              "Average of the Champion, Paladin, and Arbalester matchups"
+            ],
+            [
+              "10%",
+              "Paladin matchup"
+            ],
+            [
+              "15%",
+              "Average of the Halberdier, Elite Skirmisher, and Hussar matchups"
+            ]
+          ],
+          "result": "A win records the winning army's remaining HP percentage; a loss records the negative of the opponent's remaining HP percentage; a draw records 0. The five seeded results are averaged.",
+          "finish": "Each matchup group is normalized from 0\u2013100 across all Infantry entries before the weights are applied. The weighted result is normalized once more to produce the displayed score.",
+          "source_engine": "simulationv3"
+        },
+        "archery": {
+          "title": "Ranged score",
+          "setting": "Full Imperial upgrades \u00b7 equal resources \u00b7 food, wood, and gold valued 1:1:1 \u00b7 27-unit cap \u00b7 five seeded runs for every matchup.",
+          "formula": [
+            [
+              "70%",
+              "Average of the Champion, Paladin, and Arbalester matchups"
+            ],
+            [
+              "30%",
+              "Arbalester matchup"
+            ]
+          ],
+          "result": "A win records the winning army's remaining HP percentage; a loss records the negative of the opponent's remaining HP percentage; a draw records 0. The five seeded results are averaged.",
+          "adjustment": "The weighted result is multiplied by movement speed and (range + 1).",
+          "finish": "Each matchup group is normalized from 0\u2013100 across all Ranged entries before weighting. After the movement and range adjustment, the result is normalized again to produce the displayed score.",
+          "source_engine": "simulationv3"
+        },
+        "stable": {
+          "title": "Stable score",
+          "setting": "Full Imperial upgrades \u00b7 equal resources \u00b7 food, wood, and gold valued 1:1:1 \u00b7 27-unit cap \u00b7 five seeded runs for every matchup.",
+          "formula": [
+            [
+              "70%",
+              "Average of the Champion, Paladin, and Arbalester matchups"
+            ],
+            [
+              "30%",
+              "Paladin matchup"
+            ]
+          ],
+          "result": "A win records the winning army's remaining HP percentage; a loss records the negative of the opponent's remaining HP percentage; a draw records 0. The five seeded results are averaged.",
+          "adjustment": "The weighted result is multiplied by movement speed.",
+          "finish": "Each matchup group is normalized from 0\u2013100 across all Stable entries before weighting. After the speed adjustment, the result is normalized again to produce the displayed score.",
+          "source_engine": "simulationv3"
+        },
+        "siege": {
+          "title": "Siege score",
+          "setting": "Full Imperial upgrades \u00b7 attacks against Persian, Byzantine, and Teuton Castles \u00b7 both fixed-count and 5,000-resource tests.",
+          "formula": [
+            [
+              "40%",
+              "Persian Castle results"
+            ],
+            [
+              "40%",
+              "Byzantine Castle results"
+            ],
+            [
+              "20%",
+              "Teuton Castle results"
+            ]
+          ],
+          "adjustment": "Each Castle's weight is split equally between its fixed-count and 5,000-resource tests.",
+          "result": "Each test records the effective time needed to destroy the Castle. If the attackers lose, the Castle damage they completed is used to assign an effective time.",
+          "finish": "The result uses effective time to destroy the Castle; units that lose receive credit for partial Castle damage. Lower time is better, then results are normalized from 0\u2013100 across all Siege entries of the same age. Movement speed is not added.",
+          "source_engine": "retained_historical"
+        },
+        "naval": {
+          "title": "Naval score",
+          "setting": "Full Imperial upgrades \u00b7 both 30 vs 30 and 3,000 equal-resource tests against every opponent.",
+          "formula": [
+            [
+              "33\u2153%",
+              "Britons Galleon matchup"
+            ],
+            [
+              "33\u2153%",
+              "Britons Fast Fire Ship matchup"
+            ],
+            [
+              "33\u2153%",
+              "Sicilians Carrack (Hulk-line) matchup"
+            ]
+          ],
+          "adjustment": "For each opponent, the 30 vs 30 and 3,000-resource results are averaged. Movement speed is then applied.",
+          "result": "A win records the winning fleet's remaining HP percentage; a loss records the negative of the opponent's remaining HP percentage; a draw records 0.",
+          "finish": "The three opponent results are averaged equally and normalized from 0\u2013100 within each Naval line.",
+          "source_engine": "retained_historical"
+        }
+      }
+    }
+  },
+  "formula": {
+    "status": "provisional, for this analysis; not an approved production formula",
+    "runMargin": "win: own remaining HP percent; loss: negative opponent remaining HP percent; draw: zero",
+    "aggregation": "average seeds inside each opponent matchup, then equal-weight the agreed opponents",
+    "displayScore": "50 + mean signed HP margin / 2 (fixed 0..100 scale; 50 is neutral)",
+    "mobilityBonus": null,
+    "costAdjustment": "already incorporated in approved army counts; no second multiplier",
+    "ties": "competition ranks using unrounded scores; exact ties share rank",
+    "comparison": "rank within each group; groups have different opponent pools"
+  },
+  "runEngineCounts": {
+    "original": 6768,
+    "corrected": 832
+  },
+  "unitEngineCoverage": {
+    "original": 324,
+    "mixed": 170,
+    "corrected": 61
+  },
+  "appCoverageAudit": {
+    "Infantry": {
+      "appRows": 134,
+      "appUniqueRows": 134,
+      "datasetVariants": 147,
+      "missingInApp": [
+        [
+          "Byzantines",
+          "elite_varangian_guard"
+        ],
+        [
+          "Danes",
+          "champion"
+        ],
+        [
+          "Danes",
+          "elite_jomsviking_danes"
+        ],
+        [
+          "Danes",
+          "elite_varangian_guard"
+        ],
+        [
+          "Danes",
+          "halberdier"
+        ],
+        [
+          "Saxons",
+          "champion"
+        ],
+        [
+          "Saxons",
+          "elite_hearth_troop_saxons"
+        ],
+        [
+          "Saxons",
+          "elite_varangian_guard"
+        ],
+        [
+          "Saxons",
+          "halberdier"
+        ],
+        [
+          "Varangians",
+          "champion"
+        ],
+        [
+          "Varangians",
+          "elite_varangian_guard"
+        ],
+        [
+          "Varangians",
+          "halberdier"
+        ],
+        [
+          "Vikings",
+          "elite_varangian_guard"
+        ]
+      ],
+      "appOutsideDataset": [],
+      "duplicates": []
+    },
+    "Ranged": {
+      "appRows": 260,
+      "appUniqueRows": 260,
+      "datasetVariants": 274,
+      "missingInApp": [
+        [
+          "Bohemians",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Britons",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Burgundians",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Celts",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Danes",
+          "arbalester"
+        ],
+        [
+          "Danes",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Danes",
+          "heavy_scorpion"
+        ],
+        [
+          "Danes",
+          "imp_elite_skirm"
+        ],
+        [
+          "Franks",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Italians",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Poles",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Portuguese",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Saxons",
+          "arbalester"
+        ],
+        [
+          "Saxons",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Saxons",
+          "heavy_scorpion"
+        ],
+        [
+          "Saxons",
+          "imp_elite_skirm"
+        ],
+        [
+          "Sicilians",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Spanish",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Teutons",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Varangians",
+          "arbalester"
+        ],
+        [
+          "Varangians",
+          "elite_jarl_varangians"
+        ],
+        [
+          "Varangians",
+          "heavy_mounted_crossbowman"
+        ],
+        [
+          "Varangians",
+          "heavy_scorpion"
+        ],
+        [
+          "Varangians",
+          "imp_elite_skirm"
+        ],
+        [
+          "Vikings",
+          "heavy_mounted_crossbowman"
+        ]
+      ],
+      "appOutsideDataset": [
+        [
+          "Britons",
+          "heavy_cav_archer"
+        ],
+        [
+          "Burgundians",
+          "heavy_cav_archer"
+        ],
+        [
+          "Celts",
+          "heavy_cav_archer"
+        ],
+        [
+          "Franks",
+          "heavy_cav_archer"
+        ],
+        [
+          "Italians",
+          "heavy_cav_archer"
+        ],
+        [
+          "Poles",
+          "heavy_cav_archer"
+        ],
+        [
+          "Portuguese",
+          "heavy_cav_archer"
+        ],
+        [
+          "Sicilians",
+          "heavy_cav_archer"
+        ],
+        [
+          "Spanish",
+          "heavy_cav_archer"
+        ],
+        [
+          "Teutons",
+          "heavy_cav_archer"
+        ],
+        [
+          "Vikings",
+          "heavy_cav_archer"
+        ]
+      ],
+      "duplicates": []
+    },
+    "Cavalry": {
+      "appRows": 129,
+      "appUniqueRows": 128,
+      "datasetVariants": 134,
+      "missingInApp": [
+        [
+          "Danes",
+          "hussar"
+        ],
+        [
+          "Danes",
+          "paladin"
+        ],
+        [
+          "Saxons",
+          "hussar"
+        ],
+        [
+          "Saxons",
+          "paladin"
+        ],
+        [
+          "Varangians",
+          "hussar"
+        ],
+        [
+          "Varangians",
+          "paladin"
+        ]
+      ],
+      "appOutsideDataset": [],
+      "duplicates": [
+        {
+          "civilization": "Huns",
+          "slug": "elite_tarkan_huns",
+          "count": 2
+        }
+      ]
+    }
+  },
+  "oldVsCorrectedEvidence": {
+    "comparableSuccessfulRuns": 704,
+    "changedWinners": 22,
+    "medianAbsoluteMarginChange": 2.0052910052910047,
+    "maxAbsoluteMarginChange": 37.929588477365975,
+    "caveat": "Selected overlap, concentrated in early infantry phases; not a random sample of all units."
+  },
+  "oldFormulaMissingOpponents": {
+    "Infantry": [
+      "halberdier",
+      "skirmisher"
+    ],
+    "Ranged": [
+      "paladin"
+    ],
+    "Cavalry": [
+      "skirmisher",
+      "hussar"
+    ]
+  },
+  "mirrorMatches": [
+    {
+      "civilization": "Chinese",
+      "unitSlug": "arbalester",
+      "unit": "Chinese Arbalester",
+      "group": "Ranged",
+      "opponentKey": "arbalester",
+      "opponent": "Chinese Arbalester",
+      "signedHpMargin": 7.222222222222222,
+      "score": 53.611111111111114,
+      "wins": 3,
+      "losses": 0,
+      "draws": 0,
+      "runs": 3,
+      "unitCount": 27,
+      "opponentCount": 27,
+      "simulationSourceMatchupId": "m_cef8228300fe0bd08eae",
+      "originalEngineRuns": 3,
+      "correctedEngineRuns": 0,
+      "minRunMargin": 2.037037037037037,
+      "maxRunMargin": 10.925925925925926
+    },
+    {
+      "civilization": "Saracens",
+      "unitSlug": "hand_cannoneer",
+      "unit": "Saracens Hand Cannoneer",
+      "group": "Ranged",
+      "opponentKey": "hand_cannoneer",
+      "opponent": "Saracens Hand Cannoneer",
+      "signedHpMargin": -16.635802469135804,
+      "score": 41.6820987654321,
+      "wins": 0,
+      "losses": 3,
+      "draws": 0,
+      "runs": 3,
+      "unitCount": 27,
+      "opponentCount": 27,
+      "simulationSourceMatchupId": "m_ef8db3a1b1a30ab65676",
+      "originalEngineRuns": 3,
+      "correctedEngineRuns": 0,
+      "minRunMargin": -23.00925925925926,
+      "maxRunMargin": -10.601851851851851
+    },
+    {
+      "civilization": "Saracens",
+      "unitSlug": "heavy_cav_archer",
+      "unit": "Saracens Heavy Cavalry Archer",
+      "group": "Ranged",
+      "opponentKey": "hca",
+      "opponent": "Saracens Heavy Cavalry Archer",
+      "signedHpMargin": -7.484567901234568,
+      "score": 46.257716049382715,
+      "wins": 0,
+      "losses": 3,
+      "draws": 0,
+      "runs": 3,
+      "unitCount": 27,
+      "opponentCount": 27,
+      "simulationSourceMatchupId": "m_5a7b26a871a72895dcf7",
+      "originalEngineRuns": 3,
+      "correctedEngineRuns": 0,
+      "minRunMargin": -10.87962962962963,
+      "maxRunMargin": -3.009259259259259
+    },
+    {
+      "civilization": "Spanish",
+      "unitSlug": "champion",
+      "unit": "Spanish Champion",
+      "group": "Infantry",
+      "opponentKey": "champion",
+      "opponent": "Spanish Champion",
+      "signedHpMargin": -10.37037037037037,
+      "score": 44.81481481481482,
+      "wins": 0,
+      "losses": 3,
+      "draws": 0,
+      "runs": 3,
+      "unitCount": 27,
+      "opponentCount": 27,
+      "simulationSourceMatchupId": "m_1855b762f7479a5e9fbe",
+      "originalEngineRuns": 0,
+      "correctedEngineRuns": 3,
+      "minRunMargin": -15.555555555555555,
+      "maxRunMargin": -6.666666666666667
+    },
+    {
+      "civilization": "Spanish",
+      "unitSlug": "imp_elite_skirm",
+      "unit": "Spanish Elite Skirmisher",
+      "group": "Ranged",
+      "opponentKey": "skirmisher",
+      "opponent": "Spanish Elite Skirmisher",
+      "signedHpMargin": -9.947089947089948,
+      "score": 45.026455026455025,
+      "wins": 0,
+      "losses": 3,
+      "draws": 0,
+      "runs": 3,
+      "unitCount": 27,
+      "opponentCount": 27,
+      "simulationSourceMatchupId": "m_3e5c1b5bc5bc0559ed75",
+      "originalEngineRuns": 3,
+      "correctedEngineRuns": 0,
+      "minRunMargin": -12.592592592592593,
+      "maxRunMargin": -8.042328042328043
+    },
+    {
+      "civilization": "Spanish",
+      "unitSlug": "paladin",
+      "unit": "Spanish Paladin",
+      "group": "Cavalry",
+      "opponentKey": "paladin",
+      "opponent": "Spanish Paladin",
+      "signedHpMargin": 10.137174211248286,
+      "score": 55.06858710562415,
+      "wins": 3,
+      "losses": 0,
+      "draws": 0,
+      "runs": 3,
+      "unitCount": 27,
+      "opponentCount": 27,
+      "simulationSourceMatchupId": "m_64904f0a90bdb980566d",
+      "originalEngineRuns": 3,
+      "correctedEngineRuns": 0,
+      "minRunMargin": 8.621399176954732,
+      "maxRunMargin": 12.592592592592593
+    },
+    {
+      "civilization": "Turks",
+      "unitSlug": "heavy_camel",
+      "unit": "Turks Heavy Camel Rider",
+      "group": "Cavalry",
+      "opponentKey": "camel",
+      "opponent": "Turks Heavy Camel Rider",
+      "signedHpMargin": 0.8492063492063492,
+      "score": 50.42460317460318,
+      "wins": 6,
+      "losses": 4,
+      "draws": 0,
+      "runs": 10,
+      "unitCount": 27,
+      "opponentCount": 27,
+      "simulationSourceMatchupId": "m_b098afa56371081c9756",
+      "originalEngineRuns": 10,
+      "correctedEngineRuns": 0,
+      "minRunMargin": -12.222222222222221,
+      "maxRunMargin": 7.962962962962963
+    },
+    {
+      "civilization": "Turks",
+      "unitSlug": "paladin",
+      "unit": "Turks Cavalier",
+      "group": "Cavalry",
+      "opponentKey": "cavalier",
+      "opponent": "Turks Cavalier",
+      "signedHpMargin": 6.375661375661376,
+      "score": 53.18783068783069,
+      "wins": 3,
+      "losses": 0,
+      "draws": 0,
+      "runs": 3,
+      "unitCount": 27,
+      "opponentCount": 27,
+      "simulationSourceMatchupId": "m_1b1a626bbbc39e5aee87",
+      "originalEngineRuns": 3,
+      "correctedEngineRuns": 0,
+      "minRunMargin": 1.3756613756613756,
+      "maxRunMargin": 12.46031746031746
+    }
+  ],
+  "costBalanceExamples": [
+    {
+      "unit": "Persians Elite War Elephant",
+      "opponent": "halberdier",
+      "counts": [
+        13,
+        27
+      ],
+      "weightedUnitCosts": [
+        263.5,
+        57.5
+      ],
+      "weightedArmyCosts": [
+        3425.5,
+        1552.5
+      ]
+    },
+    {
+      "unit": "Teutons Elite Teutonic Knight",
+      "opponent": "arbalester",
+      "counts": [
+        21,
+        27
+      ],
+      "weightedUnitCosts": [
+        118,
+        72
+      ],
+      "weightedArmyCosts": [
+        2478,
+        1944
+      ]
+    },
+    {
+      "unit": "Khmer Elite Ballista Elephant",
+      "opponent": "cavalier",
+      "counts": [
+        24,
+        27
+      ],
+      "weightedUnitCosts": [
+        188,
+        142.5
+      ],
+      "weightedArmyCosts": [
+        4512,
+        3847.5
+      ]
+    }
+  ],
+  "opponentSensitivity": {
+    "Infantry": {
+      "opponents": [
+        "arbalester",
+        "cavalier",
+        "champion",
+        "hussar",
+        "paladin"
+      ],
+      "leadersOmittingOneOpponent": {
+        "arbalester": [
+          "Teutons Elite Teutonic Knight"
+        ],
+        "cavalier": [
+          "Teutons Elite Teutonic Knight"
+        ],
+        "champion": [
+          "Teutons Elite Teutonic Knight"
+        ],
+        "hussar": [
+          "Teutons Elite Teutonic Knight"
+        ],
+        "paladin": [
+          "Teutons Elite Teutonic Knight"
+        ]
+      }
+    },
+    "Ranged": {
+      "opponents": [
+        "arbalester",
+        "cavalier",
+        "champion",
+        "hand_cannoneer",
+        "hca",
+        "hussar",
+        "skirmisher"
+      ],
+      "leadersOmittingOneOpponent": {
+        "arbalester": [
+          "Khmer Elite Ballista Elephant"
+        ],
+        "cavalier": [
+          "Khmer Elite Ballista Elephant"
+        ],
+        "champion": [
+          "Khmer Elite Ballista Elephant"
+        ],
+        "hand_cannoneer": [
+          "Khmer Elite Ballista Elephant"
+        ],
+        "hca": [
+          "Khmer Elite Ballista Elephant"
+        ],
+        "hussar": [
+          "Khmer Elite Ballista Elephant"
+        ],
+        "skirmisher": [
+          "Dravidians Elite Elephant Archer"
+        ]
+      }
+    },
+    "Cavalry": {
+      "opponents": [
+        "arbalester",
+        "camel",
+        "cavalier",
+        "champion",
+        "halberdier",
+        "hca",
+        "paladin"
+      ],
+      "leadersOmittingOneOpponent": {
+        "arbalester": [
+          "Persians Elite War Elephant"
+        ],
+        "camel": [
+          "Persians Elite War Elephant"
+        ],
+        "cavalier": [
+          "Persians Elite War Elephant"
+        ],
+        "champion": [
+          "Persians Elite War Elephant"
+        ],
+        "halberdier": [
+          "Persians Elite War Elephant"
+        ],
+        "hca": [
+          "Persians Elite War Elephant"
+        ],
+        "paladin": [
+          "Persians Elite War Elephant"
+        ]
+      }
+    }
+  },
+  "remainingIntegration": [
+    "Choose the final scoring weights and whether mobility needs a separate score.",
+    "Convert consolidated results to the serving battle_scores schema and preserve engine provenance.",
+    "Replace obsolete five-seed/six-opponent/1:1:1 validation with this campaign's actual policy.",
+    "Synchronize reference data and line registry: 44 missing variants, 11 replaced entries, one Tarkan duplicate.",
+    "Update opponent breakdowns, methodology and build/source metadata; keep siege and naval separate.",
+    "Check API and rendered ranking rows before publication."
+  ],
+  "newSimulationsPerformed": 0,
+  "sources": [
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/unit-rankings-consolidated-2026-10-29/manifest.json",
+      "sha256": "78ee6f95bf94af296e9da790dfdc4b8b10d8230b284f4c10d4bae1554cdc415c"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/unit-rankings-consolidated-2026-10-29/runs.jsonl",
+      "sha256": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/unit-rankings-consolidated-2026-10-29/summary.json",
+      "sha256": "2350a7ece81a61f7b2838776680f3b55527f0a6b92c75e066567e01b292849b2"
+    },
+    {
+      "path": "apps/website/services/rankings.py",
+      "sha256": "41dce319821fa530a0ed93316000e6e143d9a4b492228ee203c317809460f4b6"
+    },
+    {
+      "path": "aoe2x/rank/build_v3_serving_db.py",
+      "sha256": "f690f2c5f2569e2c8b20432f1be05dcf13ab720753e9a0ebd52bc0e1dbbe5b39"
+    },
+    {
+      "path": "data/golden/aoe2_reference.db",
+      "sha256": "01c4007e992ceb6ffa3d17f0ae83f361fab190ab3f74afe1d58171d9f973b76d"
+    },
+    {
+      "path": "data/golden/aoe2_reference_simulation.db",
+      "sha256": "234ad0a6c40e413563f737886f6eed2e71c0de41a6a373b569d34dbcaa5c0216"
+    },
+    {
+      "path": "data/golden/derived_data_v3.db",
+      "sha256": "9110589a8a94bdd3ac6e50da56698f3d389426ea79c21d11998fd7de9cb6fbc2"
+    },
+    {
+      "path": "data/golden/derived_data_v3.metadata.json",
+      "sha256": "35fee1fcac42e9cee7c185df70415b2d1a8d2d635427ac5ccb212a69753519dd"
+    }
+  ]
+}

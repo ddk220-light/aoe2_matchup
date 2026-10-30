@@ -1,0 +1,51 @@
+
+  /* DATA container token (fallback to old cap if base.css token absent) */
+  .pu-wrap { max-width: var(--container-data, 1100px); margin:0 auto;
+    padding:24px var(--gutter, 16px); }
+  .pu-wrap h1 { margin-bottom:4px; }
+  .pu-sub { color:var(--text-muted); margin-bottom:24px; }
+  .pu-sec { background:var(--bg-warm); border:1px solid var(--border); border-radius:10px;
+    padding:18px 22px; margin-bottom:20px; box-shadow:var(--shadow-card); }
+  .pu-sec h3 { margin-top:0; }
+
+  /* Horizontal-scroll safety net so no table ever pushes the page width.
+     Pairs with the shared .scroll-x utility from base.css (inline fallback here). */
+  .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain; max-width:100%; }
+
+  table.pu { width:100%; border-collapse:collapse; }
+  table.pu td, table.pu th { padding:7px 10px; text-align:left;
+    border-bottom:1px solid var(--border); }
+  table.pu th { color:var(--text-muted); font-weight:500; }
+  .up { color:var(--up); } .down { color:var(--down); }
+  .mlist a { color:var(--link-data); text-decoration:none;
+    display:inline-block; min-height:44px; line-height:44px; }
+  .mlist a:hover { text-decoration:underline; }
+  .swing { font-variant-numeric: tabular-nums; }
+  .back { font-size:.85rem; display:inline-block; min-height:44px; line-height:44px; }
+
+  /* Tablet / large phone: tighten section padding */
+  @media (max-width: 768px) {
+    .pu-sec { padding:16px 16px; }
+    table.pu td, table.pu th { padding:7px 8px; }
+  }
+
+  /* True phone: stacked-card reflow for the long-label matchup tables (.mlist).
+     thead hidden; each row becomes a card; each cell is a labelled flex row.
+     The 3/4-col stat/rank/timeline tables stay as scrollable tables (narrow). */
+  @media (max-width: 480px) {
+    .pu-wrap { padding-top:16px; }
+    .pu-sec { padding:14px 12px; margin-bottom:16px; }
+
+    table.pu.mlist { border-collapse:separate; border-spacing:0; }
+    table.pu.mlist tr:first-child { display:none; }            /* header (th) row */
+    table.pu.mlist tr { display:block; border:1px solid var(--border);
+      border-radius:8px; margin-bottom:8px; padding:6px 10px; background:var(--bg-deep); }
+    table.pu.mlist td { display:flex; justify-content:space-between; align-items:baseline;
+      gap:12px; border:0; padding:6px 0; white-space:normal; text-align:right; }
+    table.pu.mlist td::before { content:attr(data-label); color:var(--text-muted);
+      font-size:.78rem; font-weight:500; text-align:left; flex:0 0 auto; }
+    table.pu.mlist td:last-child { justify-content:flex-end; }
+    table.pu.mlist td:last-child::before { content:""; }
+    .mlist a { white-space:normal; min-height:0; line-height:1.4; padding:6px 0; }
+  }

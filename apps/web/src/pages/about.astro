@@ -1,0 +1,8 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import about from '../generated/about.json';
+---
+<BaseLayout>
+  <style slot="head" is:global set:html={about.style} />
+  <Fragment set:html={about.body} />
+</BaseLayout>

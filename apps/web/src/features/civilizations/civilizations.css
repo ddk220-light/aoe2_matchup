@@ -1,0 +1,105 @@
+.civ-page {
+  max-width: 1600px; margin: 0 auto; padding: 28px 24px 48px;
+  color: var(--text); scroll-margin-top: calc(var(--nav-h) + 16px);
+}
+.civ-page .civilization-breadcrumb {display:flex; gap:10px; margin:0 0 20px; font-size:14px; color:var(--text-dim)}
+.civ-page .civilization-breadcrumb a {color:var(--gold)}
+.civ-page .civilization-hero {
+  display:grid; grid-template-columns:88px minmax(0,1fr); gap:24px;
+  padding:28px 32px; margin-bottom:28px; background:var(--surface);
+  border:1px solid var(--border); border-radius:14px;
+}
+.civ-page .civilization-emblem {width:88px; height:88px; object-fit:contain; margin-top:6px}
+.civ-page h1 {font-size:36px; line-height:1.15; margin:0; color:var(--gold-light); font-weight:700}
+.civ-page .civilization-subtitle {font-size:14px; color:var(--text-dim); margin:8px 0 16px; line-height:1.5}
+.civ-page .civilization-strategy {font-size:17px; line-height:1.65; max-width:85ch; margin:0; color:var(--text-muted)}
+.civ-page .civilization-external-links {display:flex; gap:10px; flex-wrap:wrap; margin-top:18px}
+.civ-page .civilization-external-links a {color:var(--gold); border:1px solid var(--border); padding:7px 12px; border-radius:7px; font-size:14px; font-weight:600}
+.civ-page .civilization-external-links a:hover {background:var(--bg-hover); border-color:var(--gold)}
+.civ-page .building-groups {display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; align-items:stretch}
+.civ-page .building-group {min-width:0; background:var(--surface); border-top:2px solid var(--border); border-radius:0 0 8px 8px; padding:10px 6px}
+.civ-page .building-group h2 {margin:0 0 10px; color:var(--gold); font-size:12px; font-weight:600; line-height:1.3; text-align:center}
+.civ-page .building-units {display:grid; gap:6px}
+.civ-page .unit-card {position:relative; min-width:0; border:1px solid var(--border); border-left:3px solid var(--tier-color,var(--border)); border-radius:8px; background:var(--bg); cursor:pointer}
+.civ-page .unit-card-body {display:grid; grid-template-columns:56px minmax(0,1fr); align-items:center; gap:8px; padding:6px 8px; min-height:70px}
+.civ-page .unit-image {width:56px; height:56px; object-fit:contain; max-width:100%}
+.civ-page .unit-label {min-width:0; display:flex; align-items:flex-start; flex-direction:column; gap:4px}
+.civ-page .unit-name {font-size:12px; font-weight:600; line-height:1.25; overflow-wrap:break-word}
+.civ-page .unit-tier {display:inline-block; padding:2px 7px; border:1px solid currentColor; border-radius:6px; font-size:12px; font-weight:600; line-height:1.4; color:var(--text-dim)}
+.civ-page .is-tier-good {--tier-color:var(--strong)}
+.civ-page .is-tier-bad {--tier-color:var(--weak)}
+.civ-page .is-tier-worst {--tier-color:var(--poor)}
+.civ-page .is-tier-signature {--tier-color:var(--signature)}
+.civ-page .is-tier-situational {--tier-color:var(--situational)}
+.civ-page .tier-good {color:var(--strong); background:var(--strong-tint)}
+.civ-page .tier-bad {color:var(--weak); background:var(--weak-tint)}
+.civ-page .tier-worst {color:var(--poor); background:var(--poor-tint)}
+.civ-page .tier-signature {color:var(--signature); background:var(--gold-tint)}
+.civ-page .tier-situational {color:var(--situational); background:var(--situational-tint)}
+.civ-page .unit-card:hover {border-color:var(--tier-color,var(--gold))}
+.civ-page .unit-tooltip {display:none; position:absolute; z-index:1100; top:100%; left:0; width:min(360px,calc(100vw - 24px)); background:var(--surface-elevated); color:var(--text); border:1px solid var(--border-light); border-radius:12px; padding:20px; box-shadow:0 10px 40px #0003; cursor:default; max-height:calc(100dvh - var(--nav-h) - 24px); overflow:auto; overscroll-behavior:contain; text-align:left}
+.civ-page:not([data-enhanced]) .unit-card:hover .unit-tooltip {display:block}
+.civ-page[data-enhanced] .unit-tooltip {position:fixed; margin:0}
+.civ-page .unit-tooltip.open {display:block}
+.civ-page .tooltip-close {position:absolute; right:8px; top:8px; width:32px; height:32px; display:grid; place-items:center; font-size:24px; color:var(--text-muted); background:transparent; border:0; border-radius:6px; cursor:pointer; z-index:1}
+.civ-page .tooltip-close:hover {background:var(--bg-hover)}
+.civ-page .tooltip-head {display:grid; grid-template-columns:84px minmax(0,1fr); align-items:center; gap:14px; padding-right:16px; margin-bottom:12px}
+.civ-page .tooltip-image {width:84px; height:92px; object-fit:contain}
+.civ-page .tooltip-name {font-size:19px; font-weight:700; line-height:1.25; margin-bottom:6px}
+.civ-page .tier-hint {font-size:13px; line-height:1.5; color:var(--text-muted); margin:0 0 14px}
+.civ-page .unit-stats {margin:0; padding:10px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border)}
+.civ-page .stat-row {display:grid; grid-template-columns:1fr 1.25fr; align-items:baseline; gap:10px; padding:4px 0; font-size:14px; line-height:1.4}
+.civ-page .stat-row dt {color:var(--text-muted)}
+.civ-page .stat-row dd {margin:0; text-align:right; font-variant-numeric:tabular-nums}
+.civ-page .stat-comparison {display:inline-block; margin-left:6px; font-size:12px}
+.civ-page .better {color:var(--strong)}
+.civ-page .worse {color:var(--weak)}
+.civ-page .stats-note {font-size:11px; line-height:1.4; color:var(--text-dim); margin:7px 0 12px}
+.civ-page .unit-costs {display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:12px 0; color:var(--text-muted); font-size:13px}
+.civ-page .cost-resource {display:inline-flex; align-items:center; gap:4px}
+.civ-page .cost-resource img {width:16px; height:16px; object-fit:contain}
+.civ-page .unit-bonus,.civ-page .unit-missing {font-size:13px; line-height:1.5; margin:7px 0}
+.civ-page .unit-bonus {color:var(--strong)}
+.civ-page .unit-missing {color:var(--weak)}
+.civ-page .unit-score {font-size:12px; margin:14px 0 0; padding-top:10px; border-top:1px solid var(--border); color:var(--text-dim)}
+.civ-page .tooltip-focus .unit-card:not(.tooltip-pinned) {opacity:.45}
+.civ-page .tooltip-pinned {outline:2px solid var(--gold); outline-offset:2px}
+.civ-page .civilization-picker {margin-top:36px; padding-top:24px; border-top:1px solid var(--border)}
+.civ-page .picker-label {text-align:center; font-size:14px; color:var(--gold); margin:0 0 20px}
+.civ-page .civilization-grid {display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:10px}
+.civ-page .civilization-link {display:flex; min-height:44px; flex-direction:column; align-items:center; justify-content:flex-start; gap:6px; padding:12px 6px 10px; border:1px solid transparent; border-radius:10px; font-size:12px; line-height:1.2; text-align:center; color:var(--text-muted)}
+.civ-page .civilization-link img {width:44px; height:44px; object-fit:contain}
+.civ-page .civilization-link span {display:block; width:100%; overflow-wrap:anywhere}
+.civ-page .civilization-link:hover,.civ-page .civilization-link.selected {border-color:var(--gold); background:var(--gold-tint); color:var(--gold)}
+.civ-page .civilizations-heading {text-align:center; padding:20px 0 8px}
+.civ-page .civilizations-heading p {color:var(--text-muted); font-size:17px; line-height:1.5; margin:12px 0 0}
+.civ-page .civilizations-heading + .civilization-picker {border:0; padding-top:0; margin-top:28px}
+@media (max-width:600px) {
+  .civ-page {padding:20px 16px 32px}
+  .civ-page .civilization-breadcrumb {margin-bottom:16px; font-size:13px}
+  .civ-page .civilization-hero {padding:20px; grid-template-columns:1fr; gap:0; position:relative; margin-bottom:20px}
+  .civ-page .civilization-emblem {position:absolute; width:52px; height:52px; top:18px; right:18px; margin:0}
+  .civ-page h1 {font-size:30px}
+  .civ-page .civilization-hero h1 {padding-right:58px; min-height:52px; display:flex; align-items:center}
+  .civ-page .civilization-subtitle {margin:8px 0 14px; font-size:13px}
+  .civ-page .civilization-strategy {font-size:16px; line-height:1.6}
+  .civ-page .civilization-external-links {margin-top:16px}
+  .civ-page .building-groups {grid-template-columns:1fr; gap:10px}
+  .civ-page .building-group {padding:10px}
+  .civ-page .building-units {grid-template-columns:repeat(4,minmax(0,1fr))}
+  .civ-page .unit-card-body {grid-template-columns:1fr; justify-items:start; gap:4px; padding:7px 4px; min-height:106px; align-content:start}
+  .civ-page .unit-image {width:56px; height:56px; justify-self:center}
+  .civ-page .unit-label {width:100%; gap:4px}
+  .civ-page .unit-name {font-size:11px; line-height:1.25}
+  .civ-page .unit-tier {font-size:10px; padding:1px 4px}
+  .civ-page[data-enhanced] .unit-tooltip.open {left:12px !important; right:12px; top:auto !important; bottom:12px; width:auto; max-height:calc(100dvh - var(--nav-h) - 24px); padding:20px}
+}
+@media (max-width:480px) {
+  .civ-page .civilization-grid {grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px}
+  .civ-page .civilization-link {font-size:10px; min-height:58px; padding:5px 2px 4px; gap:3px; border-radius:6px}
+  .civ-page .civilization-link img {width:30px; height:30px}
+}
+@media (max-width:360px) {
+  .civ-page .civilization-grid {grid-template-columns:repeat(6,minmax(0,1fr))}
+  .civ-page .building-units {grid-template-columns:repeat(3,minmax(0,1fr))}
+}

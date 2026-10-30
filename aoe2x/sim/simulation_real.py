@@ -35,7 +35,7 @@ so it's a drop-in replacement in callers that pass the same args.
 
 import json
 import math
-import random
+from aoe2x.sim import random_source as random
 import time as _time
 
 try:

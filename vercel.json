@@ -1,0 +1,2842 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "headers": [
+    {
+      "has": [
+        {
+          "type": "host",
+          "value": ".*\\.vercel\\.app"
+        }
+      ],
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ],
+      "source": "/(.*)"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/archer.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/archery.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/bombard_cannon.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/camel.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/cannon_galleon.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/cav_archer.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/elephant.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/fire.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/galleon.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/gunpowder.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/hulk.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/infantry.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/knight.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/light_cav.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/mangonel.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/militia.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/naval.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/ram.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/scorpion.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/shock_infantry.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/siege.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/skirmisher.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/spear.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/stable.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/steppe_lancer.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8/trebuchet.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/armenians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/aztecs.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/bengalis.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/berbers.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/bohemians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/britons.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/bulgarians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/burgundians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/burmese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/byzantines.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/calculation-roster.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/celts.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/chinese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/cumans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/dravidians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/ethiopians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/franks.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/georgians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/goths.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/gurjaras.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/hindustanis.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/huns.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/incas.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/italians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/japanese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/jurchens.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/khitans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/khmer.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/koreans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/lithuanians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/magyars.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/malay.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/malians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/mapuche.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/mayans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/mongols.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/muisca.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/persians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/poles.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/portuguese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/romans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/saracens.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/shu.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/sicilians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/slavs.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/spanish.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/tatars.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/teutons.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/tupi.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/turks.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/vietnamese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/vikings.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/wei.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/126595a71570594605bbb9323531f05fdd2c5bb3df374cc31900ea7845f3cac4/wu.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/c714348caef2610b9ad821d272d01ffecbf2aa039bc6ddb2c2c3c3f0e71ae0cb/arena-preview.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e41052b18ddd8cd22ee473f7fa0837a3b7771f8b2e34b1f157905a92c59dceca/catalog.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/armenians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/aztecs.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/bengalis.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/berbers.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/bohemians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/britons.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/bulgarians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/burgundians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/burmese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/byzantines.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/celts.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/chinese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/cumans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/danes.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/dravidians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/ethiopians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/franks.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/georgians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/goths.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/gurjaras.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/hindustanis.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/huns.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/incas.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/italians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/japanese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/jurchens.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/khitans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/khmer.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/koreans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/lithuanians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/magyars.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/malay.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/malians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/mapuche.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/mayans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/mongols.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/muisca.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/persians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/poles.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/portuguese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/romans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/saracens.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/saxons.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/search.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/shu.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/sicilians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/slavs.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/spanish.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/tatars.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/teutons.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/tupi.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/turks.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/varangians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/vietnamese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/vikings.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/wei.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0/wu.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/armenians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/aztecs.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/bengalis.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/berbers.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/bohemians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/britons.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/bulgarians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/burgundians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/burmese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/byzantines.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/celts.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/chinese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/cumans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/danes.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/dravidians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/ethiopians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/franks.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/georgians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/goths.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/gurjaras.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/hindustanis.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/huns.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/incas.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/italians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/japanese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/jurchens.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/khitans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/khmer.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/koreans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/lithuanians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/magyars.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/malay.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/malians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/mapuche.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/mayans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/mongols.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/muisca.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/overview.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/persians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/poles.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/portuguese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/romans.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/saracens.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/saxons.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/shu.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/sicilians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/slavs.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/spanish.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/tatars.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/teutons.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/tupi.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/turks.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/varangians.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/vietnamese.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/vikings.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/wei.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/data/f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b/wu.json"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/arena-physics-map.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/battle-setup.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/canonical-json.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/champion-comparison.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/champion-scenarios.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/ai-orders.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/attacks.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/chase-path.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/cohort-motion.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/collision.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/contact-graph-steering.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/contact-reservations.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/diplomacy.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/experiments.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/kite-timing.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/local-avoidance.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/matchup-summary.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/movement.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/pair-interactions.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/projectile-mechanics.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/ranged-crowding.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/reach-melee.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/solo-navigation.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/targeting.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/unit-state.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/combat/world.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/dedicated-benchmark-rig.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/dedicated-golden-comparison.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/dedicated-golden-corpus.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/engine-config.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/fight.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/formation-model.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/kite-profiles.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/kiting-observation-matchups.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/kiting-observation-placement.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/lab-scenario.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/map-model.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/matchup-playback.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/mechanics-schema.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/phase2-batch1-comparison.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/phase2-wrong-winner-review.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/placement-table.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/placement.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/purchase.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/simulation-clock.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/standard-units-comparison.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/src/unit-registry.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/viewer/map-renderer.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/v3-runtime/viewer/unit-sprite-geometry.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/engine/bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941/worker.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/static/css/base.css"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/static/img/favicon.png"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/static/img/og-default.png"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/static/js/api_client.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/static/js/constants.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/static/js/unit_sprites.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/static/js/v3_sim_worker.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/arena-physics-map.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/battle-setup.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/canonical-json.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/champion-comparison.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/champion-scenarios.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/ai-orders.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/attacks.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/chase-path.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/cohort-motion.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/collision.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/contact-graph-steering.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/contact-reservations.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/diplomacy.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/experiments.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/kite-timing.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/local-avoidance.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/matchup-summary.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/movement.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/pair-interactions.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/projectile-mechanics.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/ranged-crowding.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/reach-melee.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/solo-navigation.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/targeting.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/unit-state.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/combat/world.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/dedicated-benchmark-rig.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/dedicated-golden-comparison.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/dedicated-golden-corpus.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/engine-config.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/fight.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/formation-model.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/kite-profiles.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/kiting-observation-matchups.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/kiting-observation-placement.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/lab-scenario.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/map-model.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/matchup-playback.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/mechanics-schema.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/phase2-batch1-comparison.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/phase2-wrong-winner-review.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/placement-table.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/placement.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/purchase.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/simulation-clock.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/standard-units-comparison.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/src/unit-registry.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/viewer/map-renderer.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "source": "/releases/site/f7ceb8e994b98fe315a5901f41b24844b12b589f5985b2b749f4e61965a1bd5f/v3-runtime/viewer/unit-sprite-geometry.js"
+    },
+    {
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ],
+      "source": "/data/release.json"
+    }
+  ],
+  "redirects": [
+    {
+      "destination": "/",
+      "source": "/simulate/",
+      "statusCode": 301
+    },
+    {
+      "destination": "/",
+      "source": "/replay/",
+      "statusCode": 301
+    },
+    {
+      "destination": "/civilizations",
+      "source": "/civilizations/",
+      "statusCode": 301
+    },
+    {
+      "destination": "/civilizations/:slug",
+      "source": "/civilizations/:slug/",
+      "statusCode": 301
+    },
+    {
+      "destination": "/about",
+      "source": "/about/",
+      "statusCode": 301
+    },
+    {
+      "destination": "/matchups",
+      "source": "/matchups/",
+      "statusCode": 301
+    },
+    {
+      "destination": "/matchup-advisor",
+      "source": "/matchup-advisor/",
+      "statusCode": 301
+    },
+    {
+      "destination": "/patches",
+      "source": "/patches/",
+      "statusCode": 301
+    },
+    {
+      "destination": "/patches/:path+",
+      "source": "/patches/:path+/",
+      "statusCode": 301
+    },
+    {
+      "destination": "/vs/:path+",
+      "source": "/vs/:path+/",
+      "statusCode": 301
+    }
+  ],
+  "regions": [
+    "sfo1"
+  ],
+  "rewrites": [
+    {
+      "destination": {
+        "service": "backend"
+      },
+      "source": "/api/(.*)"
+    },
+    {
+      "destination": {
+        "service": "frontend"
+      },
+      "source": "/(.*)"
+    }
+  ],
+  "services": {
+    "backend": {
+      "buildCommand": "bash ../../scripts/migration/build_service.sh backend",
+      "entrypoint": "app:app",
+      "framework": "flask",
+      "functions": {
+        "app.py": {
+          "maxDuration": 60
+        }
+      },
+      "root": "apps/backend"
+    },
+    "frontend": {
+      "bindings": [
+        {
+          "env": "BACKEND_INTERNAL_URL",
+          "format": "url",
+          "service": "backend",
+          "type": "service"
+        }
+      ],
+      "buildCommand": "bash ../../scripts/migration/build_service.sh frontend",
+      "framework": "astro",
+      "root": "apps/web"
+    }
+  }
+}

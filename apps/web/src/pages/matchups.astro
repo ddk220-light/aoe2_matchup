@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import pages from '../generated/remaining-pages.json';
+import '../features/remaining/matchups.css';
+const p=pages.matchups;
+const frame={...p.frame,links:p.frame.links.filter(l=>l.href!=='/static/css/matchups.css')};
+---
+<BaseLayout page={frame}>
+ <div class="page-header"><h1>AoE2 Unit Matchups</h1><p class="subtitle">Every civilization's unique unit, simulated against every other — pick a matchup to see who wins at full upgrades.</p></div>
+ {p.popular.length>0 && <div class="container"><section class="popular-matchups"><h2>Popular matchups</h2><ul class="popular-matchups-list">{p.popular.map(([label,url])=><li><a href={url}>{label}</a></li>)}</ul></section></div>}
+ <div class="container">{p.groups.map(group=><section class="matchup-group"><h2>{group.unit} <span class="matchup-group-civ">({group.civ})</span></h2><ul class="matchup-link-list">{group.links.map(link=><li><a href={link.url}>{link.label}</a></li>)}</ul></section>)}</div>
+</BaseLayout>

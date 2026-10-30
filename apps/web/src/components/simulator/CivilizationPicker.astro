@@ -1,0 +1,10 @@
+---
+import page from '../../generated/simulator-page.json';
+const {team} = Astro.props;
+---
+<div class="civ-grid">
+  {page.civilizations.map(civ => <div class="civ-card" data-action="selectCiv" data-team={team} data-civ={civ}>
+    <img src={page.civilization_emblems[civ] || `https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/${civ.toLowerCase()}.png`} alt={civ} width="32" height="32" loading="lazy" decoding="async" />
+    <span>{civ}</span>
+  </div>)}
+</div>

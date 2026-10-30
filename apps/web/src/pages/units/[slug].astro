@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import projection from '../../generated/ranking-pages.json';
+import '../../features/rankings/rankings.css';
+export function getStaticPaths() {
+  return Object.keys(projection.guides).map(slug=>({params:{slug}}));
+}
+const guide = projection.guides[Astro.params.slug! as keyof typeof projection.guides];
+const stat = (value:number) => Number(value).toFixed(1);
+---
+<BaseLayout page={guide}>
+  <div class="page-header">
+    <h1>{guide.heading}</h1>
+    <p class="subtitle">{guide.line_name} ({guide.building}) — every civilization at full Imperial upgrades</p>
+  </div>
+  <main class="container">
+    <p class="line-page-nav">
+      <a href={`/units?line=${guide.line}`} class="line-page-cta">Open in interactive rankings →</a>
+      {' · '}<a href="/units">All unit rankings</a>
+    </p>
+    <p class="line-page-desc">{guide.desc}</p>
+    <div class="table-container line-page-table">
+      <table class="stats-table">
+        <thead><tr><th>#</th><th>Civilization</th><th>Unit</th><th>HP</th><th>Attack</th><th>Armor</th><th>Sim score</th></tr></thead>
+        <tbody>{guide.rows.map((row,index)=><tr>
+          <td>{index+1}</td>
+          <td><a href={`/civilizations/${row.civ_name.toLowerCase()}`}>{row.civ_name}</a></td>
+          <td><a href={`/units?line=${guide.line}&unit=${row.unit_slug}`}>{row.unit_name}</a></td>
+          <td>{stat(row.final_hp)}</td><td>{stat(row.final_attack)}</td>
+          <td>{stat(row.final_melee_armor)}/{stat(row.final_pierce_armor)}</td>
+          <td>{typeof row.ranking_score === 'number' ? row.ranking_score.toFixed(1) : '—'}</td>
+        </tr>)}</tbody>
+      </table>
+    </div>
+    <p class="line-page-method">Land scores come from five-run Simulation V3
+      equal-resource matchups at full Imperial upgrades —
+      <a href="/about">methodology</a>. Rows without a score are outside this
+      line's simulated pool.</p>
+  </main>
+</BaseLayout>

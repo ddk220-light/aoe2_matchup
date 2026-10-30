@@ -1,0 +1,15 @@
+---
+import {roster} from '../../features/civilizations/data';
+const {selected = ''} = Astro.props;
+---
+<div class="civilization-picker">
+  <p class="picker-label">{selected ? 'Choose another civilization' : 'Click a civilization to analyze'}</p>
+  <div class="civilization-grid">
+    {roster.map(civ => <a class:list={['civilization-link', {selected: civ.slug === selected}]}
+      href={`/civilizations/${civ.slug}`} data-civ-link aria-current={civ.slug === selected ? 'page' : undefined}>
+      <img src={civ.emblem.url} width={civ.emblem.width} height={civ.emblem.height}
+        alt={civ.name} loading="lazy" decoding="async" />
+      <span>{civ.name}</span>
+    </a>)}
+  </div>
+</div>

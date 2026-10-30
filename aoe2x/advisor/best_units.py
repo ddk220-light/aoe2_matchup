@@ -9,7 +9,7 @@ its retail candidate snapshot until the full V3 matchup database is available.
 
 import json
 import os
-import random
+from aoe2x.sim.random_source import seeded_request
 import sqlite3
 from aoe2x.storage import connect_readonly
 import statistics
@@ -20,9 +20,8 @@ from aoe2x.sim.unit_lines import TREBUCHET_SLUGS, NAVAL_UNIT_LINES, CANNON_GALLE
 from aoe2x.batch.patches_db import get_current_build
 
 # GOLDEN_SEED — keep in sync with .golden/capture_baseline.py.
-# Seeded at the top of get_matchup_sims / get_matchup_recommendations so the
-# live advisor endpoints are deterministic (simulation.py rolls the unseeded
-# module-level `random` for accuracy/stray/scatter/trample).
+# Each advisor request starts its own seeded sequence. Other simulation callers
+# retain the standard module-level RNG and their existing external seeding.
 _SIM_SEED = 20260411
 
 from aoe2x.paths import GOLDEN_DIR as _DATA_DIR
@@ -1508,13 +1507,12 @@ def _generate_reasoning(gold_unit, trash_unit, opponent_unit):
     return "; ".join(reasons)
 
 
+@seeded_request(_SIM_SEED)
 def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
     """Get recommended units and compositions for civ_a vs civ_b.
 
     Returns dict with opponent_strengths, recommended_compositions, individual_counters.
     """
-    # Deterministic output: _sim_score -> simulate_battle rolls the global RNG.
-    random.seed(_SIM_SEED)
     power_data = load_advisor_power_units()
     if not power_data:
         return {"error": "advisor_power_units/<build>.json not found -- "
@@ -1698,6 +1696,7 @@ def get_matchup_recommendations(civ_a, civ_b, age="imperial"):
     }
 
 
+@seeded_request(_SIM_SEED)
 def get_matchup_sims(civ_left, civ_right, age="imperial", sim_func=None):
     """Run cross-civ simulations for all power units and return win/highlight data.
 
@@ -1711,10 +1710,6 @@ def get_matchup_sims(civ_left, civ_right, age="imperial", sim_func=None):
 
     Returns dict with 'left', 'right', and 'name_map' keys.
     """
-    # Deterministic output: the sims below roll the global RNG. Matches the
-    # external seeding .golden/capture_baseline.py applies, so the golden
-    # baseline is unchanged by this seed.
-    random.seed(_SIM_SEED)
     power_data = load_advisor_power_units()
     if not power_data:
         return {"left": {}, "right": {}, "name_map": {}}

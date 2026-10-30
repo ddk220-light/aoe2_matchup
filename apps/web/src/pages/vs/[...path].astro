@@ -1,0 +1,33 @@
+---
+export const prerender=false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import pages from '../../generated/remaining-pages.json';
+import {frameFor} from '../../features/remaining/metadata.mjs';
+import '../../features/remaining/matchup.css';
+const parts=(Astro.params.path??'').split('/');
+const [ca,ua,cb,ub]=parts;
+const a=pages.landing_units[`${ca}/${ua}`],b=pages.landing_units[`${cb}/${ub}`];
+if(parts.length!==4||!pages.valid_civs.includes(ca)||!pages.valid_civs.includes(cb)||!a||!b)return new Response('Not found',{status:404,headers:{'Cache-Control':'no-store'}});
+const pretty=s=>s.replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
+const an=a.unit_name||pretty(ua),bn=b.unit_name||pretty(ub),canonical=`https://aoe2matchup.com/vs/${ca}/${ua}/${cb}/${ub}`;
+const title=`${an} (${ca}) vs ${bn} (${cb}) — Who Wins? | AoE2 Simulator`;
+const description=`Simulated 1v1 result for ${an} (${ca}) versus ${bn} (${cb}) in Age of Empires II at full upgrades. Stat comparison, costs, armor classes, and a live battle simulator to test it yourself.`;
+const int=n=>Math.trunc(n||0);
+const structured=[{'@context':'https://schema.org','@type':'FAQPage',mainEntity:[
+ {'@type':'Question',name:`Who wins, ${an} (${ca}) or ${bn} (${cb})?`,acceptedAnswer:{'@type':'Answer',text:`Run the live battle simulator at ${canonical} to see the tick-by-tick result. The page shows full upgraded stats, costs, and armor classes for both units.`}},
+ ...[[a,an,ca],[b,bn,cb]].map(([u,name,civ])=>({'@type':'Question',name:`What are the full stats for ${name}?`,acceptedAnswer:{'@type':'Answer',text:`${name} (${civ}, Imperial Age, fully upgraded): ${int(u.final_hp)} HP, ${int(u.final_attack)} attack, ${int(u.final_melee_armor)}/${int(u.final_pierce_armor)} armor.`}}))
+ ]},{'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[['Home','/'],['Matchups','/matchups'],[`${an} vs ${bn}`,`/vs/${ca}/${ua}/${cb}/${ub}`]].map(([name,path],i)=>({'@type':'ListItem',position:i+1,name,item:'https://aoe2matchup.com'+path}))}];
+const frame=frameFor(pages.landing_frame,title,description,canonical,structured);
+const related=[];for(const [civ,slug,name] of pages.related_units){if(civ===ca||civ===cb)continue;related.push([`/vs/${ca}/${ua}/${civ}/${slug}`,`${an} vs ${name}`],[`/vs/${civ}/${slug}/${cb}/${ub}`,`${name} vs ${bn}`]);if(related.length>=12)break;}
+Astro.response.headers.set('Cache-Control','public, max-age=0, must-revalidate');
+Astro.response.headers.set('Vercel-CDN-Cache-Control','public, s-maxage=86400');
+const rows=[['HP',int(a.final_hp),int(b.final_hp)],['Attack',int(a.final_attack),int(b.final_attack)],['Melee / Pierce Armor',`${int(a.final_melee_armor)} / ${int(a.final_pierce_armor)}`,`${int(b.final_melee_armor)} / ${int(b.final_pierce_armor)}`],...(a.final_range||b.final_range?[['Range',a.final_range?int(a.final_range):'—',b.final_range?int(b.final_range):'—']]:[]),['Speed',a._speed,b._speed],['Cost',...[a,b].map(u=>[['food','F'],['wood','W'],['gold','G']].filter(([key])=>u['final_cost_'+key]).map(([key,suffix])=>`${int(u['final_cost_'+key])}${suffix}`).join(' '))]];
+---
+<BaseLayout page={frame}>
+ <main class="matchup-landing"><h1>{an} vs {bn}: Who Wins?</h1><p class="subtitle">{an} ({ca}) versus {bn} ({cb}) — full Imperial Age stats, fully upgraded, and a live tick-by-tick simulator.</p>
+ <a class="cta" href={`/?a_civ=${ca}&a_unit=${ua}&b_civ=${cb}&b_unit=${ub}`}>▶ Run this simulation now</a>
+ <div class="stat-grid"><div class="unit-col"><h2>{an}</h2><div class="civ">{ca}</div></div><div class="vs-divider">vs</div><div class="unit-col"><h2>{bn}</h2><div class="civ">{cb}</div></div>{rows.map(([label,av,bv])=><div class="stat-row"><span class="a">{av}</span><span class="label">{label}</span><span class="b">{bv}</span></div>)}</div>
+ <div class="body-copy"><p>This page lists the fully-upgraded Imperial Age stats for the <strong>{an}</strong> as fielded by the <strong>{ca}</strong> and the <strong>{bn}</strong> as fielded by the <strong>{cb}</strong>. Stats include all generic blacksmith / university / unique tech upgrades the civilization has access to, plus civ bonuses that affect this unit.</p><p>To find out who actually wins the fight, click <em>Run this simulation now</em> above. The simulator runs a deterministic, tick-by-tick model that handles armor classes, attack delays, projectile travel time, charge attacks, trample, bleed, and every other special mechanic in the game.</p><p>Want to compare other matchups? Browse the <a href="/units">unit rankings</a>, the <a href="/civilizations">civilization breakdowns</a>, or jump straight into the <a href="/">battle simulator</a> and pick your own.</p></div>
+ {related.length>0&&<nav class="related-matchups" aria-label="Related matchups"><strong style="display:block; margin-bottom:8px; opacity:0.7;">Related matchups</strong><ul>{related.map(([url,label])=><li><a href={url}>{label}</a></li>)}</ul></nav>}
+ <div class="related"><strong style="display:block; margin-bottom:8px; opacity:0.7;">Related:</strong><a href="/civilizations">Civilizations</a><a href="/units">All unit rankings</a><a href="/">Battle simulator</a></div></main>
+</BaseLayout>

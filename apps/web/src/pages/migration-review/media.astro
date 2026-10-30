@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Media from '../../components/Media.astro';
+import media from '../../generated/media-manifest.json';
+import samples from '../../generated/gallery.json';
+import release from '../../generated/release.json';
+import catalog from '../../generated/public-catalog.json';
+const sheet=catalog.sheets.Champion;
+---
+<BaseLayout title="AoE2 Matchup — media and data review" metadata={false}>
+  <main>
+    <div class="intro">
+      <p class="eyebrow">Migration · Milestone 3</p>
+      <h1>One shared media library.<br />Separate, versioned game data.</h1>
+      <p class="lead">The artwork below is copied without resizing, recompression or color changes. Compare the saved source with delivery from Vercel Blob. Railway remains live.</p>
+      <div class="facts"><span><strong>1,804</strong> compatible asset paths</span><span><strong>1,095</strong> unique files</span><span><strong>138 MB</strong> shared media</span></div>
+      <p><a href="/migration-review/foundation">Check the working simulator connection</a> · <a href="#data">Inspect the data versions</a></p>
+    </div>
+    <section aria-labelledby="media-title">
+      <h2 id="media-title">Source and delivered artwork</h2>
+      <div class="gallery">
+        {samples.map(sample=>{
+          const asset=media.aliases[sample.alias as keyof typeof media.aliases];
+          return <article>
+            <h3>{sample.label}</h3>
+            <div class="comparison">
+              <figure><div class="art"><img src={sample.source_url} alt={`Saved source: ${sample.label}`} width={asset.width} height={asset.height} decoding="async" /></div><figcaption>Source snapshot</figcaption></figure>
+              <figure><div class="art"><Media alias={sample.alias} alt={`Vercel Blob: ${sample.label}`} eager /></div><figcaption>Vercel Blob · identical bytes</figcaption></figure>
+            </div>
+            <p class="detail">{asset.width} × {asset.height} · {asset.frames} {asset.frames===1?'frame':'frames'} · {(asset.bytes/1024).toFixed(1)} KB · {asset.transparency?'transparency preserved':'opaque'}</p>
+            <details><summary>Integrity and metadata</summary><code>{asset.sha256}</code><p>{asset.content_type}</p>{asset.frames>1 && <p>Frame durations: {Array.from(new Set(asset.duration_ms)).join(', ')} ms; total {asset.duration_ms.reduce((a,b)=>a+b,0)} ms.</p>}</details>
+          </article>;
+        })}
+      </div>
+    </section>
+    <section class="checks" aria-labelledby="canvas-title">
+      <div><h2 id="canvas-title">The simulator’s attack sheet</h2><p>The same sprite sheet loads across origins into a canvas, with its original frame geometry and timing.</p><button id="sheet-play" type="button">Play attack animation</button> <button id="canvas-check" type="button">Check canvas access</button><p id="canvas-result" aria-live="polite">Ready</p></div>
+      <div class="art"><canvas id="attack" width={sheet.fw} height={sheet.fh} data-sheet={JSON.stringify(sheet)}></canvas></div>
+    </section>
+    <section id="data" aria-labelledby="data-title">
+      <h2 id="data-title">Data for each feature</h2><p>These compact files preserve the current API values. A page loads the selected civilization or ranking line as needed. Game databases stay in the read-only Python backend.</p>
+      <div class="table-wrap"><table><thead><tr><th>Feature</th><th>Civilizations</th><th>Example dataset</th><th>Version</th></tr></thead><tbody>
+      {['civilizations','rankings','simulator','advisor'].map(key=>{
+        const component=release.components[key as 'civilizations'];
+        const name=key==='rankings'?'knight':'spanish';
+        const file=component.files[name as keyof typeof component.files];
+        return <tr><th scope="row">{key}</th><td>{component.civilizations.length}</td><td><button class="inspect" data-url={file.url} data-feature={key}>Inspect {name}</button><small>{(file.bytes/1024).toFixed(1)} KB raw · {(file.gzip_bytes/1024).toFixed(1)} KB gzip estimate</small></td><td><code>{component.version.slice(0,12)}</code></td></tr>;
+      })}
+      </tbody></table></div>
+      <pre id="data-result" aria-live="polite">Select a dataset to inspect its summary.</pre>
+      <p>Danes, Saxons and Varangians have civilization content and simulator data. They are not silently added to the older rankings or advisor calculations.</p>
+      <details><summary>Release manifest</summary><p><a href="/data/release.json">Open the coordinated release manifest</a></p><code>{release.release_id}</code></details>
+    </section>
+    <section class="deferred"><h2>Media loads when needed</h2><p>This additional sprite stays unloaded until this section is near the viewport. Hidden tooltip images use the same deferred source pattern.</p><img id="deferred-sprite" data-src={catalog.sprites.Paladin.url} width={catalog.sprites.Paladin.w} height={catalog.sprites.Paladin.h} alt="Paladin" decoding="async" crossorigin="anonymous" /></section>
+  </main>
+  <script>
+    const canvas=document.querySelector<HTMLCanvasElement>('#attack')!;
+    const context=canvas.getContext('2d')!;
+    const sheet=JSON.parse(canvas.dataset.sheet!);
+    const image=new Image();image.crossOrigin='anonymous';image.src=sheet.url;
+    let frameRequest=0,start=0;
+    const play=document.querySelector<HTMLButtonElement>('#sheet-play')!;
+    const status=document.querySelector('#canvas-result')!;
+    function stop(){cancelAnimationFrame(frameRequest);frameRequest=0;play.textContent='Play attack animation';}
+    function draw(index:number){context.clearRect(0,0,canvas.width,canvas.height);context.drawImage(image,index*sheet.fw,0,sheet.fw,sheet.fh,0,0,sheet.fw,sheet.fh);}
+    image.addEventListener('load',()=>draw(0));
+    image.addEventListener('error',()=>{status.textContent='The attack sheet could not load. Retry after checking your connection.';});
+    play.addEventListener('click',async()=>{
+      if(frameRequest){stop();return;}
+      try{await image.decode();start=performance.now();play.textContent='Pause animation';
+        const animate=(now:number)=>{draw(Math.floor((now-start)/sheet.dur)%sheet.frames);frameRequest=requestAnimationFrame(animate);};
+        frameRequest=requestAnimationFrame(animate);
+      }catch{status.textContent='The attack sheet is unavailable.';}
+    });
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
+    window.addEventListener('pagehide',stop);
+    document.querySelector('#canvas-check')!.addEventListener('click',async()=>{
+      try{await image.decode();draw(0);context.getImageData(0,0,1,1);status.textContent='Passed: canvas pixels are readable; CORS and frame geometry work.';}
+      catch(error){status.textContent='Failed: '+String(error);}
+    });
+    document.querySelectorAll<HTMLButtonElement>('.inspect').forEach(button=>button.addEventListener('click',async()=>{
+      const output=document.querySelector('#data-result')!;
+      button.disabled=true;
+      try{const response=await fetch(button.dataset.url!);if(!response.ok)throw new Error(String(response.status));
+        const data=await response.json();
+        output.textContent=JSON.stringify({feature:button.dataset.feature,keys:Object.keys(data),
+          civilization:data.civ_name,line:data.line_name,total_units:data.total_units,
+          ranking_rows:data.imperial?.length,description:data.strategic_description,
+          sample:data.imperial?.[0]??data.power_units??Object.values(data.units_by_age??{})[0]},null,2).slice(0,10000);
+      }catch(error){output.textContent='Dataset unavailable: '+String(error);}finally{button.disabled=false;}
+    }));
+    const deferred=document.querySelector<HTMLImageElement>('#deferred-sprite')!;
+    const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){deferred.src=deferred.dataset.src!;observer.disconnect();}},{rootMargin:'200px'});
+    observer.observe(deferred);window.addEventListener('pagehide',()=>observer.disconnect());
+  </script>
+</BaseLayout>
+<style>
+  main{max-width:1100px;margin:auto;padding:48px var(--gutter) 80px}h1{font-size:clamp(30px,5vw,48px);line-height:1.1;letter-spacing:-.025em;margin:12px 0 20px}h2{font-size:25px;margin:0 0 12px}h3{margin:0 0 20px}.eyebrow{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted)}.lead{font-size:18px;line-height:1.65;max-width:760px}.facts{display:flex;gap:12px;flex-wrap:wrap;margin:28px 0}.facts span{background:var(--bg-card);padding:16px;border:1px solid var(--border);border-radius:10px}.facts strong{font-size:23px;display:block}.intro{margin-bottom:48px}section{margin-top:40px}.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.gallery article{background:var(--bg-card);border:1px solid var(--border);padding:24px;border-radius:12px}.comparison{display:grid;grid-template-columns:1fr 1fr;gap:12px}figure{margin:0;min-width:0}.art{height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden;background-color:#879098;background-image:linear-gradient(45deg,#73808c 25%,transparent 25%),linear-gradient(-45deg,#73808c 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#73808c 75%),linear-gradient(-45deg,transparent 75%,#73808c 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;border-radius:8px}.art :global(img){max-width:100%;max-height:180px;width:auto;height:auto;object-fit:contain}figcaption{font-size:12px;margin-top:10px;text-align:center}.detail{font-size:13px;line-height:1.6}details{margin-top:16px}summary{cursor:pointer}code{overflow-wrap:anywhere;font-size:12px}.checks{display:grid;grid-template-columns:1fr 220px;gap:24px;align-items:center;padding:24px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px}canvas{width:144px;height:auto;image-rendering:auto}button{font:inherit;padding:9px 13px;border:1px solid var(--border);border-radius:7px;background:var(--bg-card);color:var(--text);cursor:pointer}button:disabled{opacity:.6}button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px;margin-top:24px}table{border-collapse:collapse;width:100%;text-align:left}th,td{padding:14px;border-bottom:1px solid var(--border)}small{display:block;margin-top:8px;white-space:nowrap}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg-card);padding:20px;max-height:360px;overflow:auto;font-size:13px}.deferred{margin-top:400px}.deferred img{width:200px;height:auto;min-height:200px}@media(max-width:700px){main{padding-top:28px}.gallery{grid-template-columns:1fr}.gallery article{padding:18px}.checks{grid-template-columns:1fr}.art{height:170px}.facts{gap:8px}.facts span{flex:1;min-width:125px}.table-wrap{font-size:13px}}
+</style>

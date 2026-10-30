@@ -57,7 +57,7 @@ def test_new_civ_selector_overview_and_page_api_share_reference_data(client):
     assert 'data-civ="Saxons"' in detail
     row = client.get('/api/civilizations/Danes').get_json()
     assert row['emblem_url'] == '/static/img/civilizations/185872/danes.png'
-    assert row['strategic_description'].startswith('Infantry and siege civilization.')
+    assert row['strategic_description'].startswith('Danes favor infantry-led attacks backed by siege.')
     assert row['power_units']['infantry']['jomsviking'][0]['unit_slug'] == 'elite_jomsviking'
     assert all(civ['emblem_url'] == row['emblem_url'] for civ in app.get_civ_overview_data()
                if civ['name'] == 'Danes')

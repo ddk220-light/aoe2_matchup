@@ -66,7 +66,7 @@ from aoe2x.assets import catalog as _assets_catalog
 
 
 from apps.website.services.catalog import site_catalog, grouped_units
-from apps.website.services.release import release_metadata
+from apps.website.services.release import release_metadata, published_ranking_release
 from apps.website.services.seo import content_lastmod, sitemap_document, indexing_enabled
 from apps.website.services.civilizations import (civilization_analysis, civilization_overview,
     civilization_page_names, load_civilization_supplement)
@@ -102,7 +102,14 @@ def inject_public_catalog():
         catalog = {**catalog, "civilization_emblems": {
             name: civ["emblem_url"] for name, civ in load_civilization_supplement()["civilizations"].items()
         }}
-    return {"site_catalog": catalog, "ranking_methods": load_published_methods(_GOLDEN_DIR)}
+    return {
+        "site_catalog": catalog,
+        "civilization_count": len(_get_page_civs()),
+        "simulation_civilization_count": len(site_catalog(SIM_REF_DB_PATH)["civilizations"]),
+        "civilization_reference_build": load_civilization_supplement()["reference_build"],
+        "ranking_release": published_ranking_release(_GOLDEN_DIR),
+        "ranking_methods": load_published_methods(_GOLDEN_DIR),
+    }
 
 # Reject unexpectedly large request bodies before Flask buffers them.
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024

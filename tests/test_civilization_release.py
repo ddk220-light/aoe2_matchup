@@ -11,6 +11,28 @@ import pytest
 MODULE = 'aoe2x.assets.build_civilization_release'
 
 
+def test_every_civilization_uses_the_same_editorial_description_in_html_and_api(client):
+    import app
+    import html
+    import re
+    from apps.website.services.civilizations import load_civilization_descriptions
+
+    descriptions = load_civilization_descriptions()
+    assert set(descriptions) == set(app._get_page_civs())
+    assert len(set(descriptions.values())) == len(descriptions)
+    overview = {row['name']: row['description'] for row in app.get_civ_overview_data()}
+    for name, description in descriptions.items():
+        response = client.get(f'/civilizations/{name.lower()}')
+        assert response.status_code == 200, name
+        body = response.get_data(as_text=True)
+        narrative = re.search(r'<div class="analysis-hero-narrative">(.*?)</div>', body, re.S)
+        assert narrative is not None, name
+        assert html.unescape(narrative.group(1)) == description, name
+        assert overview[name] == description, name
+        assert client.get(f'/api/civilizations/{name}').get_json()['strategic_description'] == description, name
+        assert description.split('. ', 1)[0] in html.unescape(body.split('</head>', 1)[0]), name
+
+
 @pytest.mark.parametrize('enabled', [False, True])
 def test_civilization_emblems_use_configured_asset_bucket(monkeypatch, enabled):
     from aoe2x.assets import config

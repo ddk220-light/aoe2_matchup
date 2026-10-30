@@ -6,6 +6,12 @@ from pathlib import Path
 from aoe2x.dbgen.v3_mechanics import MECHANICS_SCHEMA_VERSION
 
 @lru_cache(maxsize=1)
+def published_ranking_release(golden_dir):
+    """Human-readable provenance for published scores, separate from live battles."""
+    ranking = json.loads((Path(golden_dir) / 'derived_data_v3.metadata.json').read_text(encoding='utf-8'))
+    return {key: ranking[key] for key in ('game_build', 'generated_at', 'source_summary') if key in ranking}
+
+@lru_cache(maxsize=1)
 def release_metadata(repo_root, golden_dir):
     root, golden = Path(repo_root), Path(golden_dir)
     ranking = json.loads((golden / 'derived_data_v3.metadata.json').read_text(encoding='utf-8'))

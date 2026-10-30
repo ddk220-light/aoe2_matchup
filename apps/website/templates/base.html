@@ -12,9 +12,9 @@
 
       gtag('config', 'G-MYNEW08LBR');
     </script>
-    <title>{% block title %}AoE2 Matchup — Simulate any matchup, fully upgraded{% endblock %}</title>
+    <title>{% block title %}AoE2 Matchup — Battle simulations and unit rankings{% endblock %}</title>
     {# ---- SEO meta ---- #}
-    <meta name="description" content="{% block meta_description %}Free Age of Empires II matchup simulator. Every unit, fully upgraded, all 53 civilizations — tick-by-tick battle simulations to settle who actually wins.{% endblock %}" />
+    <meta name="description" content="{% block meta_description %}Free Age of Empires II matchup tool. Explore {{ civilization_count }} civilizations, compare published unit rankings, and simulate supported armies at full Imperial upgrades.{% endblock %}" />
     <meta name="robots" content="{% if not search_indexing %}noindex, nofollow{% else %}{% block meta_robots %}index, follow, max-image-preview:large,max-snippet:-1{% endblock %}{% endif %}" />
     {# ---- Search-engine ownership verification (Search Console / Bing) ---- #}
     {% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}" />{% endif %}
@@ -42,7 +42,7 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "AoE2 Matchup",
-      "description": "Age of Empires II battle simulator and unit matchup database covering all 53 civilizations with fully-upgraded stats.",
+      "description": "Age of Empires II analysis tool with {{ civilization_count }} civilization overviews, published unit rankings, and fully-upgraded army simulations.",
       "applicationCategory": "GameApplication",
       "operatingSystem": "Web",
       "url": "{{ site_url }}",
@@ -100,7 +100,7 @@
                     </svg>
                 </span>
                 <span class="nav-tab-label">Unit Rankings</span>
-                <span class="nav-tab-desc">Compare every unit</span>
+                <span class="nav-tab-desc">Compare published scores</span>
             </a>
         </div>
         <div class="theme-toggle">

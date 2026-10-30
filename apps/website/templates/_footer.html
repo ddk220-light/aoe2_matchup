@@ -9,7 +9,7 @@
             </div>
             <p class="site-footer-tagline">
                 Free fan tool for Age of Empires II:DE matchup analysis.
-                All {% if civ_page_footer %}{{ civs | length }}{% elif request.endpoint in ['units', 'unit_line_page', 'about'] %}56{% else %}53{% endif %} civs, fully upgraded.
+                All {{ civilization_count }} civs, fully upgraded.
             </p>
         </div>
 

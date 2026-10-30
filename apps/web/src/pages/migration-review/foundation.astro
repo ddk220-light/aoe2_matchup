@@ -1,0 +1,51 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import release from '../../generated/release.json';
+let binding;
+let bindingError;
+try {
+  const url = process.env.BACKEND_INTERNAL_URL;
+  if (!url) throw new Error('BACKEND_INTERNAL_URL binding is missing');
+  const response = await fetch(new URL('/_internal/release', url), {signal: AbortSignal.timeout(15_000)});
+  if (!response.ok) throw new Error(`Backend binding returned ${response.status}`);
+  binding = await response.json();
+  if (binding.release_id !== release.release_id) throw new Error('Frontend/backend release mismatch');
+} catch (error) {
+  bindingError = error instanceof Error ? error.message : String(error);
+  Astro.response.status = 503;
+}
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+---
+<BaseLayout title="AoE2 Matchup migration verification" metadata={false}>
+  <main class="foundation">
+    <h1>Migration foundation verification</h1>
+    <p>This protected review page verifies the deployment. The first migrated page is <a href="/about">the existing About page</a>. Other feature pages arrive in subsequent milestones.</p>
+    <p><a href="/migration-review/media">Review shared media and data publication</a></p>
+    <h2>Sealed release</h2>
+    <code id="release">{release.release_id}</code>
+    <h2>Private Python service binding</h2>
+    <pre id="binding" data-status={bindingError ? 'failed' : 'passed'}>{JSON.stringify(bindingError ? {error:bindingError} : binding, null, 2)}</pre>
+    <h2>Browser → Python API → simulation worker</h2>
+    <button id="probe" type="button">Run seeded battle check</button>
+    <pre id="result" aria-live="polite">Ready</pre>
+  </main>
+  <script>
+    import {runProbe} from '../../features/foundation/probe';
+    const button = document.querySelector<HTMLButtonElement>('#probe')!;
+    const result = document.querySelector<HTMLPreElement>('#result')!;
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      result.textContent = 'Running';
+      try {result.textContent = JSON.stringify(await runProbe(), null, 2);}
+      catch (error) {result.textContent = JSON.stringify({error: String(error)}, null, 2);}
+      finally {button.disabled = false;}
+    });
+  </script>
+</BaseLayout>
+<style>
+  .foundation {max-width: 900px; margin: 32px auto; padding: 0 var(--gutter);}
+  pre {white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: var(--bg-card);}
+  code {overflow-wrap: anywhere;}
+</style>

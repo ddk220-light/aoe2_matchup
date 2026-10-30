@@ -1,0 +1,63 @@
+---
+import Media from '../Media.astro';
+import {formatStat, lines, tiers, type Unit} from '../../features/civilizations/data';
+interface Props {unit: Unit; id: string;}
+const {unit, id} = Astro.props;
+const tier = unit.tier ? tiers[unit.tier] : null;
+const stats = unit.stats ?? {};
+const baseline = !unit.is_unique ? unit.stat_baseline : null;
+const rows = [
+  ['hp', 'HP', true, ''], ['attack', 'Attack', true, ''],
+  ['reload_time', 'Attack speed', false, 's'], ['range', 'Range', true, ''],
+  ['melee_armor', 'Melee armor', true, ''], ['pierce_armor', 'Pierce armor', true, ''],
+] as const;
+const costs = [['cost_food', 'Food', 'food'], ['cost_wood', 'Wood', 'wood'], ['cost_gold', 'Gold', 'gold']] as const;
+---
+<div class:list={['unit-card', unit.tier ? `is-tier-${unit.tier}` : 'no-tier']}
+  data-unit-name={unit.unit_name} data-tooltip-id={id}>
+  <div class="unit-card-body">
+    {unit.media && <img class:list={['unit-image', {sprite: unit.sprite}]} src={unit.media.url}
+      width={unit.media.width} height={unit.media.height} alt={unit.unit_name} loading="lazy" decoding="async" />}
+    <div class="unit-label">
+      <span class="unit-name">{unit.unit_name}</span>
+      {tier && <span class:list={['unit-tier', `tier-${unit.tier}`]}>{unit.tier === 'signature' && <span aria-hidden="true">★ </span>}{tier.label}</span>}
+    </div>
+  </div>
+  <div class="unit-tooltip" id={id}>
+    <button type="button" class="tooltip-close" aria-label="Close">×</button>
+    <div class="tooltip-head">
+      {unit.media && <img class:list={['tooltip-image', {sprite: unit.sprite}]}
+        data-deferred-src={unit.media.url} data-animation-url={unit.animation_url}
+        width={unit.media.width} height={unit.media.height} alt={unit.unit_name} decoding="async" />}
+      <div><div class="tooltip-name">{unit.unit_name}</div>
+        {tier && <span class:list={['unit-tier', `tier-${unit.tier}`]}>{tier.label}</span>}
+      </div>
+    </div>
+    {tier && <p class="tier-hint">{tier.hint}</p>}
+    <dl class="unit-stats">
+      {rows.map(([key, label, higher, suffix]) => {
+        const value = stats[key];
+        if (typeof value !== 'number' || (key === 'range' && !(stats.is_ranged || value > 0))) return null;
+        const base = baseline?.[key];
+        const comparison = typeof base === 'number' && Math.abs(value - base) >= 0.05;
+        const better = comparison && (higher ? value > base : value < base);
+        return <div class="stat-row" data-stat={key}><dt>{label}</dt><dd>{formatStat(value, suffix)}
+          {comparison && <span class:list={['stat-comparison', better ? 'better' : 'worse']}>
+            {better ? '▲' : '▼'} <span>vs {formatStat(base, suffix)}</span>
+          </span>}
+        </dd></div>;
+      })}
+    </dl>
+    {baseline && <p class="stats-note">▲ / ▼ vs a typical fully-upgraded {(lines[unit.line_slug] || 'unit').toLowerCase()}</p>}
+    {costs.some(([key]) => Number(stats[key]) > 0) && <div class="unit-costs"><span>Cost</span>
+      {costs.map(([key, label, icon]) => Number(stats[key]) > 0 && <span class="cost-resource" aria-label={label}>
+        <Media alias={`/static/img/resources/${icon}.png`} alt="" />
+        <span>{stats[key]}</span> {label}
+      </span>)}
+    </div>}
+    {(unit.bonus_abilities ?? []).map(value => <p class="unit-bonus">✦ {value}</p>)}
+    {(unit.special_effects ?? []).map(value => <p class="unit-bonus">✦ {value}</p>)}
+    {!unit.is_unique && (unit.missing_techs ?? []).map(value => <p class="unit-missing">✗ Missing: {value}</p>)}
+    {unit.score != null && <p class="unit-score">Effectiveness score: {unit.score.toFixed(1)} / 100</p>}
+  </div>
+</div>

@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import pages from '../../generated/remaining-pages.json';
+import '../../features/remaining/patch.css';
+const p=pages.patch_index;
+---
+<BaseLayout page={p.frame}>
+ <div class="patch-wrap"><h1>AoE2 Patch Notes &amp; Balance Changes</h1><p class="patch-date">How each balance update reshaped unit rankings and matchups in our simulator.</p>
+ {!p.patches.length && <div class="empty">No patches recorded yet.</div>}
+ {p.patches.map(patch=><div class="patch-card"><div class="patch-head"><h2><a href={'/patches/'+patch.build_number}>{patch.title}</a></h2><span class="patch-date">{patch.release_date}</span>{patch.source_url&&<a class="patch-link" href={patch.source_url} target="_blank" rel="noopener">Official notes ↗</a>}</div><div class="patch-summary" set:html={patch.summary_html}/></div>)}
+ </div>
+</BaseLayout>

@@ -1,0 +1,1047 @@
+/* ==========================================================================
+   AoE2 Unit Analyzer - Rankings Page Styles
+   ==========================================================================
+
+   RESPONSIVE SCALE (shared site-wide, mobile-first; align all queries to these):
+     xs  <= 480px  small phone (PRIMARY TARGET) — 1 col, full-width controls,
+                   stacked controls, bottom-sheet hover-cards.
+     sm  <= 768px  large phone / small tablet — compact three-column table,
+                   five always-visible category tabs, 44px touch targets.
+     md  <= 1024px tablet landscape / small laptop.
+     lg  >= 1025px desktop default (base, no query).
+     xl  >= 1600px large monitor — use more width (data container).
+     xxl >= 1920px ultrawide — widest data layout.
+
+   Container/scroll tokens (--gutter, --container-data, --nav-h) and the .scroll-x
+   utility are defined canonically in base.css; the var() fallbacks here keep this
+   page correct even if loaded standalone.
+   ========================================================================== */
+
+/* This page is DATA-heavy: let the rankings region use the wide data container.
+   rankings.css only loads on this page, so scoping the cap to .container here
+   does not affect other pages. min() keeps it fluid so it never overflows. */
+.container {
+    max-width: var(--container-data, min(100% - 2 * var(--gutter, 24px), 1760px));
+    padding-left: var(--gutter, 24px);
+    padding-right: var(--gutter, 24px);
+}
+
+/* Reusable horizontal scroller (momentum + no page-overflow + no back-gesture
+   hijack). Mirrors base.css .scroll-x; self-contained so it works standalone. */
+.scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* Age toggle: .age-toggle / .age-btn live in base.css now (single source). */
+.age-toggle {
+    margin-bottom: 16px;
+}
+
+/* Tab bar */
+.tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border-light);
+    margin-bottom: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+    scrollbar-width: thin;
+}
+.unit-tab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+    margin-bottom: -2px;
+}
+.unit-tab:hover {
+    color: var(--text);
+    background: var(--gold-glow);
+}
+.unit-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    font-weight: 600;
+}
+.unit-tab.unavailable {
+    opacity: 0.35;
+    pointer-events: none;
+}
+.unit-tab img {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    object-fit: cover;
+    background: var(--bg);
+}
+/* Transparent sprite: drop the circle/frame and fit the whole figure inside a
+   fixed box (object-fit: contain = no crop). The 28px box clears the ~38px tab
+   content height, so a tall/wide off-shape sprite can never bleed the tab or its
+   neighbours; flex-shrink:0 keeps the flex row from squeezing the box. */
+.unit-tab img.sprite {
+    width: 1.75rem;
+    height: 1.75rem;
+    border: none;
+    border-radius: 0;
+    background: none;
+    object-fit: contain;
+    padding: 1px;
+    flex-shrink: 0;
+}
+.unit-tab-label-mobile,
+.table-title-mobile,
+.mobile-score-label,
+.mobile-civ-qualifier {
+    display: none;
+}
+.tab-separator {
+    width: 1px;
+    background: var(--border-light);
+    margin: 6px 0;
+    flex-shrink: 0;
+}
+
+/* Table container — momentum scroll, contained overscroll (no browser back-swipe
+   on horizontal drag), and max-width:100%/min-width:0 so a wide table can never
+   push the page width and cause horizontal page jank. */
+.table-container {
+    margin-top: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+    min-width: 0;
+}
+.table-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-md);
+    color: var(--gold);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.table-title img {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+}
+/* Transparent sprite in the title: no circle crop, whole figure contained in a
+   fixed 32px box. The row is a centred flex line, so an off-shape sprite stays
+   inside its box and the box stays inside the title row. */
+.table-title img.sprite {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0;
+    object-fit: contain;
+    padding: 1px;
+    flex-shrink: 0;
+}
+
+/* Stats table */
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+    min-width: 900px;
+    font-variant-numeric: tabular-nums;
+}
+.stats-table th {
+    background: var(--bg-warm);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    position: sticky;
+    /* Offset by the sticky site-nav height so the header row doesn't slide
+       under the nav while scrolling the page. Falls back to 0 if --nav-h is
+       not yet defined in base.css. */
+    top: var(--nav-h, 0px);
+    z-index: 1;
+}
+
+/* Sticky FIRST COLUMN (Civ identity): keeps the row's identity visible while
+   the wide numeric columns scroll horizontally on small screens. The header
+   corner cell stacks above both axes (z above the sticky header and column). */
+.stats-table th:first-child,
+.stats-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--bg-deep);
+}
+.stats-table th:first-child {
+    z-index: 3;
+    background: var(--bg-warm);
+}
+/* Preserve the unique-row / hover backgrounds on the sticky first cell so it
+   doesn't show the default --bg-deep over a tinted/hovered row. */
+.stats-table tr.unique-row td:first-child {
+    background: color-mix(in srgb, var(--gold) 6%, var(--bg-deep));
+}
+.stats-table tr:hover td:first-child {
+    background: color-mix(in srgb, var(--gold) 8%, var(--bg-deep));
+}
+.stats-table th:hover {
+    background: var(--gold-tint);
+}
+.stats-table th .sort-arrow {
+    font-size: var(--fs-xs);
+    margin-left: 4px;
+    opacity: 0.4;
+}
+.stats-table th.sorted .sort-arrow {
+    opacity: 1;
+    color: var(--gold-light);
+}
+.info-icon {
+    font-size: var(--fs-xs);
+    margin-left: 3px;
+    opacity: 0.6;
+    cursor: help;
+    vertical-align: super;
+}
+.info-icon:hover {
+    opacity: 1;
+}
+.score-method-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-left: 5px;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--gold) 72%, var(--border));
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
+    color: var(--gold-light);
+    font-family: Georgia, serif;
+    font-size: 0.72rem;
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: middle;
+    cursor: pointer;
+}
+.score-method-info:hover,
+.score-method-info:focus-visible,
+.score-method-info[aria-expanded="true"] {
+    border-color: var(--gold-light);
+    background: var(--gold-glow);
+    color: var(--gold);
+    outline: none;
+}
+.stats-table td {
+    border-bottom: 1px solid var(--border);
+    padding: 7px 10px;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    font-family: var(--font-body);
+}
+.stats-table tr {
+    background: var(--bg-deep);
+    transition: background 0.15s;
+}
+.stats-table tr:hover {
+    background: var(--gold-glow);
+}
+.stats-table tr.unique-row {
+    border-left: 0;
+    background: var(--gold-tint);
+}
+.stats-table tr.unique-row td:first-child {
+    padding-left: 10px;
+}
+.stats-table tr.missing-row {
+    opacity: 0.35;
+}
+.stats-table tr.ranking-row-selected {
+    outline: 2px solid var(--gold);
+    outline-offset: -2px;
+    background: var(--gold-glow);
+}
+.stats-table tr.ranking-row-selected td:first-child {
+    background: var(--gold-glow);
+}
+
+/* Cell coloring — tamed strength scale (single source of truth). */
+.val-high {
+    color: var(--strong);
+}
+.val-low {
+    color: var(--poor);
+}
+
+/* Civ cell — name text stays body font (tabular numerals keep numbers aligned). */
+.civ-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-body);
+}
+.civ-cell img {
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Unit cell — name text stays body font (tabular numerals keep numbers aligned). */
+.unit-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    font-family: var(--font-body);
+}
+.unit-cell-copy {
+    min-width: 0;
+}
+.unit-cell img {
+    width: 1.95rem;
+    height: 1.95rem;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    object-fit: cover;
+    background: var(--bg);
+}
+/* Transparent sprite in a table cell: no circle crop, whole figure contained in a
+   fixed 26px box. The cell (td) has no fixed height — it grows to its content — so a
+   26px box can't bleed vertically into other rows; object-fit: contain keeps the
+   sprite inside the box, flex-shrink:0 stops the unit name from squeezing it, and the
+   box stays well inside the cell's content width so it never crosses into neighbours. */
+.unit-cell img.sprite {
+    width: 2.1rem;
+    height: 2.1rem;
+    border: none;
+    border-radius: 0;
+    background: none;
+    object-fit: contain;
+    padding: 1px;
+    flex-shrink: 0;
+}
+
+/* Hover card */
+.hover-card {
+    display: none;
+    position: fixed;
+    background: var(--surface-elevated);
+    border: 1px solid var(--gold-dark);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: var(--fs-xs);
+    color: var(--text);
+    white-space: normal;
+    min-width: 230px;
+    /* Viewport-clamped width so it's never wider than the screen. On desktop the
+       card floats and sizes to its content — no inner scrollbar, so the wheel
+       always scrolls the page. (Phones get an internal scroll below.) */
+    max-width: min(340px, calc(100vw - 2 * var(--gutter, 24px)));
+    z-index: 200;
+    box-shadow: var(--shadow-card);
+    pointer-events: none;
+}
+.hover-card.visible {
+    display: block;
+}
+.hover-card.pinned {
+    pointer-events: auto;
+}
+.hover-card .hc-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    color: var(--gold);
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 4px;
+}
+.hover-card .hc-formula {
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    margin-bottom: 6px;
+}
+.score-method-label {
+    margin-top: 9px;
+    color: var(--gold);
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+}
+.score-method-setting,
+.score-method-adjustment {
+    margin-top: 3px;
+    line-height: 1.42;
+}
+.score-method-rows {
+    margin-top: 4px;
+}
+.score-method-row {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-light);
+    line-height: 1.3;
+}
+.score-method-row strong {
+    color: var(--gold-light);
+}
+.score-method-row span {
+    color: var(--text-muted);
+}
+.score-method-adjustment {
+    padding: 7px 9px;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--gold-tint);
+    color: var(--text);
+}
+.score-method-note {
+    margin-top: 8px;
+}
+.hover-card .hc-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    gap: 12px;
+}
+.hover-card .hc-row.highlight {
+    color: var(--gold-light);
+    font-weight: 600;
+}
+.hover-card .hc-row.hc-siege-header {
+    font-weight: 600;
+    font-size: 0.85em;
+    opacity: 0.75;
+}
+.hover-card .hc-row.total {
+    margin-top: 4px;
+    border-top: 1px solid var(--border-light);
+    padding-top: 4px;
+    font-weight: 600;
+}
+.hover-card .hc-sim-link {
+    color: var(--gold);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: var(--fs-xs);
+    display: inline-block;
+    margin-bottom: 4px;
+}
+.hover-card .hc-sim-link:hover {
+    color: var(--gold-light);
+}
+.hover-card .hc-close {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: var(--fs-base);
+    line-height: 1;
+}
+.hover-card .hc-close:hover {
+    color: var(--text);
+}
+.hover-card .hc-loading {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 8px 0;
+}
+td.hc-cell {
+    cursor: pointer;
+    position: relative;
+}
+
+/* Civ filter */
+.civ-filter-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.civ-filter-wrap input[type="text"] {
+    width: 240px;
+    padding: 6px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-size: var(--fs-sm);
+}
+.civ-filter-wrap input[type="text"]::placeholder {
+    color: var(--text-muted);
+}
+.line-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.line-filters-label {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.line-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s;
+}
+.line-checkbox:hover {
+    color: var(--text);
+}
+.line-checkbox input[type="checkbox"] {
+    accent-color: var(--gold);
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+}
+
+/* ---- sm: <=768px — large phone / small tablet ---- */
+@media (max-width: 768px) {
+    .unit-tab {
+        /* Keep the label legible and the touch target tall enough. */
+        padding: 10px 12px;
+        font-size: var(--fs-xs);
+        min-height: 44px;
+        scroll-snap-align: start;
+        flex: 0 0 auto;
+    }
+    .unit-tab img {
+        width: 20px;
+        height: 20px;
+    }
+    /* Smaller tab on mobile -> shrink the sprite box to match (still no crop). */
+    .unit-tab img.sprite {
+        width: 24px;
+        height: 24px;
+    }
+    /* Tabs scroll as a snap strip so all lines stay one tap away. */
+    .tab-bar {
+        scroll-snap-type: x proximity;
+    }
+
+    /* Controls wrap and grow touch targets. The filter input goes full width
+       so it's easy to tap and type on a phone. */
+    .civ-filter-wrap {
+        gap: 10px;
+    }
+    .civ-filter-wrap input[type="text"] {
+        width: 100%;
+        flex: 1 1 100%;
+        min-height: 44px;
+    }
+    .line-filters {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+    .line-checkbox {
+        min-height: 44px;
+        padding: 4px 2px;
+    }
+    .line-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+    /* Toggle / action buttons reach the 44px touch minimum. */
+    .export-btn,
+    .expand-btn {
+        min-height: 44px;
+    }
+}
+
+/* ---- xs: <=480px — small phone (PRIMARY TARGET) ---- */
+@media (max-width: 480px) {
+    /* Stack the filter/controls bar into a single column so nothing squishes. */
+    .civ-filter-wrap {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .civ-filter-wrap .export-btn,
+    .civ-filter-wrap .expand-btn {
+        width: 100%;
+    }
+
+    /* Pinned hover-card / breakdown becomes a bottom sheet: full-width above the
+       safe-area, scrollable, dismissed via its × (JS) or an outside tap. Only
+       PINNED cards become sheets — transient hover previews are suppressed on
+       touch by the JS, so this never fires on a stray pointer event. */
+    .hover-card.pinned {
+        position: fixed;
+        left: var(--gutter, 16px);
+        right: var(--gutter, 16px);
+        bottom: 0;
+        top: auto !important;
+        width: auto;
+        min-width: 0;
+        max-width: none;
+        max-height: 70vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
+        z-index: 300;
+    }
+    .hover-card.pinned .hc-close {
+        /* Bigger, easier-to-tap close affordance in sheet mode. */
+        font-size: var(--fs-md);
+        top: 8px;
+        right: 12px;
+        padding: 4px;
+    }
+}
+
+/* Light-mode overrides removed: theme tokens (--strong/--poor/--gold-tint/
+   --gold-glow/--surface-elevated/--shadow-card) now resolve per theme from
+   base.css, so light/dark are driven by one token-based ruleset. */
+
+/* Export CSV button */
+.export-btn {
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    padding: 6px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--bg-warm);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.export-btn:hover {
+    border-color: var(--gold-dark);
+    color: var(--text);
+    background: var(--bg);
+}
+
+/* Compact V3 score disclosure */
+.ranking-score-summary {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 8px 0 12px;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+}
+.ranking-score-value {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    line-height: 1;
+}
+.ranking-breakdown-label {
+    margin: 10px 0 5px;
+    color: var(--gold);
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    letter-spacing: 0;
+    text-transform: none;
+}
+.ranking-role-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(52px, 1fr));
+    gap: 6px;
+}
+.ranking-role-grid span {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-warm);
+}
+.ranking-yardstick-grid {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) auto;
+    gap: 5px 14px;
+    align-items: baseline;
+}
+.ranking-yardstick-grid strong { text-align: right; }
+
+@media (max-width: 480px) {
+    .ranking-role-grid { grid-template-columns: repeat(2, minmax(80px, 1fr)); }
+}
+
+/* === Special column two-line layout === */
+.special-cell {
+    max-width: 220px;
+    font-family: var(--font-body);
+    font-size: var(--fs-xs);
+    line-height: 1.3;
+    /* Each line truncates to a single line; full text on hover via title attr. */
+}
+.special-cell > div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+}
+.special-cell .special-effects {
+    color: var(--text);
+}
+.special-cell .special-bonuses {
+    color: var(--gold);
+    font-size: var(--fs-xs);
+    margin-top: 2px;
+}
+.special-cell .special-missing {
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    margin-top: 2px;
+}
+
+.expand-btn {
+    margin-left: 8px;
+    padding: 4px 10px;
+    background: var(--bg-warm);
+    color: var(--text);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    cursor: pointer;
+}
+.expand-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--gold-dark);
+}
+
+/* === Slide animation for expandable columns === */
+.col-expandable {
+    transition: max-width 200ms ease, padding 200ms ease, opacity 150ms ease;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 240px;
+    opacity: 1;
+}
+.col-expandable.collapsed {
+    max-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    .col-expandable {
+        transition: none;
+    }
+}
+
+/* "Rankings at a glance" — visible, crawlable top-units-per-category summary. */
+.rankings-ssr {
+    max-width: var(--container-max);
+    margin: 40px auto 0;
+    padding: 28px var(--gutter) 56px;
+    border-top: 1px solid var(--border);
+}
+.rankings-ssr-title {
+    font-family: var(--font-display);
+    color: var(--gold);
+    font-size: var(--fs-lg);
+    letter-spacing: 0;
+    margin: 0 0 8px;
+}
+.rankings-ssr-intro {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-base);
+    max-width: 760px;
+    margin: 0 0 24px;
+}
+.rankings-ssr-group { margin-bottom: 28px; }
+.rankings-ssr-group h3 {
+    color: var(--gold);
+    font-size: var(--fs-md);
+    margin: 0 0 8px;
+}
+.rankings-ssr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+}
+.rankings-ssr-table th,
+.rankings-ssr-table td {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+}
+.rankings-ssr-table th { color: var(--text-muted); font-weight: 600; }
+.rankings-ssr-table td:last-child,
+.rankings-ssr-table th:last-child { text-align: right; }
+
+.rankings-ssr-lines h3 { font-family: var(--font-display); color: var(--gold); font-size: var(--fs-md, 1rem); margin: 18px 0 8px; }
+.rankings-ssr-lines ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.rankings-ssr-lines a { color: var(--text-muted); font-size: var(--fs-sm, 0.9rem); text-decoration: none; }
+.rankings-ssr-lines a:hover { color: var(--gold); text-decoration: underline; }
+
+/* Mobile rankings are a purpose-built summary rather than a horizontally
+   clipped desktop spreadsheet. The same underlying rows remain in the DOM,
+   while only Unit, Score, and Special are presented at phone widths. */
+@media (max-width: 768px) {
+    .rankings-container {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    #lineSelector .tab-bar {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 4px;
+        width: 100%;
+        overflow: hidden;
+        scrollbar-width: none;
+        border-bottom: 0;
+        padding-bottom: 2px;
+    }
+    #lineSelector .tab-separator {
+        display: none;
+    }
+    #lineSelector .unit-tab {
+        flex: none;
+        width: 100%;
+        min-width: 0;
+        min-height: 62px;
+        box-sizing: border-box;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2px;
+        padding: 5px 2px;
+        font-size: 0.65rem;
+        scroll-snap-align: none;
+        border: 1px solid var(--border-light);
+        border-bottom: 2px solid var(--border-light);
+        border-radius: 8px 8px 3px 3px;
+        background: var(--bg-warm);
+    }
+    #lineSelector .unit-tab.active {
+        flex: none;
+        width: 100%;
+        border-color: var(--gold-dark);
+        border-bottom-color: var(--gold);
+        background: var(--gold-glow);
+    }
+    #lineSelector .unit-tab > img,
+    #lineSelector .unit-tab > img.sprite {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+        padding: 0;
+    }
+    #lineSelector .unit-tab-label-desktop {
+        display: none;
+    }
+    #lineSelector .unit-tab-label-mobile {
+        display: none;
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1;
+        text-align: center;
+    }
+    #lineSelector .unit-tab.active .unit-tab-label-mobile {
+        display: inline;
+    }
+
+    #tableContainer .civ-filter-wrap > input[type="text"],
+    #tableContainer .civ-filter-wrap > .export-btn,
+    #tableContainer .civ-filter-wrap > .expand-btn {
+        display: none;
+    }
+    #tableContainer .civ-filter-wrap {
+        margin-bottom: 8px;
+    }
+    #tableContainer .line-filters {
+        width: 100%;
+        gap: 4px 10px;
+    }
+    #tableContainer .line-checkbox {
+        min-height: 32px;
+        padding: 0;
+        font-size: 0.72rem;
+    }
+    #tableContainer .line-checkbox input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+    }
+
+    #tableContainer {
+        margin-top: 12px;
+        overflow-x: hidden;
+    }
+    #tableContainer .table-title {
+        margin-bottom: 8px;
+    }
+    #tableContainer .table-title-desktop {
+        display: none;
+    }
+    #tableContainer .table-title-mobile {
+        display: inline;
+    }
+
+    #tableContainer .stats-table {
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+        font-size: 0.75rem;
+    }
+    #tableContainer .stats-table th,
+    #tableContainer .stats-table td {
+        display: none;
+        position: static;
+        box-sizing: border-box;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+    #tableContainer .stats-table th[data-mobile-column],
+    #tableContainer .stats-table td.mobile-column {
+        display: table-cell;
+    }
+    #tableContainer .stats-table th {
+        top: var(--nav-h, 0px);
+        padding: 7px 6px;
+        font-size: 0.68rem;
+    }
+    #tableContainer .stats-table td {
+        padding: 7px 6px;
+        vertical-align: middle;
+        line-height: 1.25;
+    }
+    #tableContainer .stats-table th[data-mobile-column="unit"],
+    #tableContainer .stats-table td.mobile-column-unit {
+        width: 48%;
+    }
+    #tableContainer .stats-table th[data-mobile-column="score"],
+    #tableContainer .stats-table td.mobile-column-score {
+        width: 17%;
+        text-align: center;
+    }
+    #tableContainer .stats-table th[data-mobile-column="special"],
+    #tableContainer .stats-table td.mobile-column-special {
+        width: 35%;
+    }
+    #tableContainer .stats-table th[data-mobile-column="score"] .desktop-column-label {
+        display: none;
+    }
+    #tableContainer .mobile-score-label {
+        display: inline;
+    }
+    #tableContainer .stats-table .info-icon,
+    #tableContainer .stats-table .col-chevron,
+    #tableContainer .stats-table .sort-arrow {
+        display: none;
+    }
+    #tableContainer .stats-table th[data-mobile-column="score"] .score-method-info {
+        width: 22px;
+        height: 22px;
+        margin-left: 3px;
+        font-size: 0.78rem;
+    }
+    #tableContainer .stats-table tr.unique-row td:first-child,
+    #tableContainer .stats-table tr.unique-row td.mobile-column-unit {
+        padding-left: 6px;
+    }
+
+    #tableContainer .unit-cell {
+        align-items: flex-start;
+        gap: 5px;
+        min-width: 0;
+    }
+    #tableContainer .unit-cell > img,
+    #tableContainer .unit-cell img.sprite {
+        width: 33px;
+        height: 33px;
+        flex: 0 0 33px;
+    }
+    #tableContainer .unit-cell-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    #tableContainer .unit-cell-name {
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    #tableContainer .mobile-civ-qualifier {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        color: var(--text-muted);
+        font-size: 0.64rem;
+        line-height: 1.15;
+    }
+    #tableContainer .mobile-civ-qualifier img {
+        width: 12px;
+        height: 12px;
+        flex: 0 0 12px;
+        border: 0;
+        border-radius: 50%;
+        padding: 0;
+    }
+
+    #tableContainer .special-cell {
+        max-width: none;
+        font-size: 0.64rem;
+        line-height: 1.25;
+    }
+    #tableContainer .special-cell > div {
+        max-width: none;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+    }
+}
+.line-page-nav { margin: 0 0 10px; }
+.line-page-cta { font-weight: 600; }
+.line-page-desc { color: var(--text-muted); max-width: 820px; line-height: 1.6; margin: 0 0 16px; }
+.line-page-method { color: var(--text-muted); font-size: var(--fs-sm, 0.9rem); margin-top: 14px; max-width: 820px; }
+.line-page-table { overflow-x: auto; }
+/* This table scrolls inside its container. A page-navigation offset here
+   moves the header over the first ranked row even before anyone scrolls. */
+.line-page-table .stats-table th { top: 0; }
+
+/* Deep-link row highlight (/units?line=&unit=) */
+tr.row-deeplink-highlight > td { background: var(--bg-hover) !important; }
+tr.row-deeplink-highlight { outline: 2px solid var(--gold); outline-offset: -2px; }
+
+/* Reserve media and row space before decode; native HTML is the first view. */
+.unit-cell > img,.civ-cell > img,.table-title > img {flex-shrink:0; object-fit:contain;}
+#tableContainer .stats-table tbody tr {min-height:44px;}
+@media (min-width:769px) {#tableContainer .stats-table td {height:44px;}}
+.rankings-ssr {content-visibility:auto; contain-intrinsic-size:auto 1600px;}

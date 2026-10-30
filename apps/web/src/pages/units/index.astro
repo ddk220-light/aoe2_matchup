@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import projection from '../../generated/ranking-pages.json';
+import {buildLineSelector, buildTable, UNIT_LINES} from '../../features/rankings/render.mjs';
+import '../../features/rankings/rankings.css';
+const html = buildTable({currentData:projection.default,currentLine:'infantry',
+  enabledLines:new Set(UNIT_LINES.infantry.subLines),media:projection.media}).html;
+const json = (value:unknown) => JSON.stringify(value).replace(/</g,'\\u003c');
+const config = {files:projection.files,media:projection.media,methods:projection.methods};
+---
+<BaseLayout page={projection.frame}>
+  <div class="page-header">
+    <h1>Unit Rankings</h1>
+    <p class="subtitle">Compare unit stats across civilizations</p>
+  </div>
+  <main class="container rankings-container">
+    <div id="lineSelector" set:html={buildLineSelector('infantry','Imperial',projection.media)} />
+    <div class="table-container" id="tableContainer" set:html={html} />
+  </main>
+  <Fragment set:html={projection.overview} />
+  <script is:inline type="application/json" id="ranking-config" set:html={json(config)} />
+  <script is:inline type="application/json" id="ranking-bootstrap" set:html={json(projection.default)} />
+  <script>import '../../features/rankings/enhance.js';</script>
+</BaseLayout>

@@ -14,7 +14,7 @@ range/kiting advantages. No XY positions or unit movement.
 """
 
 import json
-import random
+from aoe2x.sim import random_source as random
 
 from aoe2x.dbgen.ability_registry import combat_dict_defaults
 

@@ -3,9 +3,13 @@
   function readSimParams(search) {
     const q = new URLSearchParams(search || "");
     const get = (k) => (q.has(k) ? q.get(k) : null);
+    // Compatibility with the already-published Varangian Guard video links.
+    const unit = (side) => get("civ" + side) === "Varangians" &&
+      get("unit" + side) === "elite_varangian_guard_varangians"
+      ? "elite_varangian_guard" : get("unit" + side);
     return {
-      civ1: get("civ1"), unit1: get("unit1"),
-      civ2: get("civ2"), unit2: get("unit2"),
+      civ1: get("civ1"), unit1: unit(1),
+      civ2: get("civ2"), unit2: unit(2),
       age1: get("age1"), age2: get("age2"),
       mode: get("mode"),
       resources: get("resources"),

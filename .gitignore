@@ -150,3 +150,29 @@ data/local/matchup_db.db
 # gRPC mTLS client credentials (CadeRemote) — NEVER commit; live beside aoe2x/grpc/
 aoe2x/grpc/*.key
 aoe2x/grpc/*.pem
+
+# Disposable sealed deployment artifacts and dependency/build directories.
+apps/backend/runtime/
+apps/backend/runtime.next/
+apps/backend/.venv/
+apps/backend/.vercel/
+apps/web/public/
+apps/web/public.next/
+apps/web/src/generated/
+apps/web/src/generated.next/
+apps/web/node_modules/
+apps/web/.astro/
+apps/web/dist/
+apps/web/.vercel/
+.vercel/
+.vercel
+.env*
+
+# Downloaded public-media bytes, immutable release archives and publication receipts.
+.migration-cache/
+scripts/migration/node_modules/
+
+# Frontend source modules are not Python build output.
+!apps/web/src/lib/
+!apps/web/src/lib/**
+scripts/migration/node_modules

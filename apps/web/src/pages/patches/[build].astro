@@ -1,0 +1,10 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import pages from '../../generated/remaining-pages.json';
+import '../../features/remaining/patch.css';
+export function getStaticPaths(){return Object.entries(pages.patch_builds).map(([build,p])=>({params:{build},props:{p}}));}
+const {p}=Astro.props;
+---
+<BaseLayout page={p.frame}>
+ <div class="patch-wrap"><h1>Update {p.build_number} — Balance Changes</h1><p class="patch-date">Released {p.release_date}{p.source_url&&<> · <a class="patch-link" href={p.source_url} target="_blank" rel="nofollow noopener">Official notes ↗</a></>}</p><p class="patch-intro">Every unit changed in Age of Empires II Update {p.build_number}, and how each change moved its fully-upgraded matchups in simulation. Click any unit for the full breakdown.</p><div class="patch-summary" set:html={p.summary_html}/></div>
+</BaseLayout>

@@ -1,0 +1,8 @@
+[project]
+name = "aoe2-matchup-api"
+version = "0.1.0"
+requires-python = ">=3.13,<3.14"
+dependencies = ["Flask==3.0.0", "boto3==1.43.31", "psycopg[binary]==3.3.4"]
+
+[tool.vercel]
+entrypoint = "app:app"

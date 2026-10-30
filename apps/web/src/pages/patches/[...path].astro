@@ -1,0 +1,28 @@
+---
+export const prerender=false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import pages from '../../generated/remaining-pages.json';
+import {frameFor} from '../../features/remaining/metadata.mjs';
+import '../../features/remaining/patch-unit.css';
+const path=Astro.params.path??'',parts=path.split('/'),[build,civ,...rest]=parts,unit=rest.join('/');
+const patch=pages.patch_builds[build];
+if(!patch||!civ||!unit)return new Response('Not found',{status:404,headers:{'Cache-Control':'no-store'}});
+const suffix='_'+civ.toLowerCase().replaceAll(' ','_');
+const pretty=(unit.endsWith(suffix)?unit.slice(0,-suffix.length):unit).replaceAll('_',' ').trim().replace(/\b\w/g,c=>c.toUpperCase());
+const p=pages.patch_units[path]??{build,civ,unit,unit_title:pages.unit_names[`${civ}/${unit}`]||pretty,patch,stat_changes:[],ranking:[],now_beats:[],now_loses:[],shifted:[],timeline:[]};
+const title=`${civ} ${p.unit_title} — ${patch.title}`,description=`How ${patch.title} changed the ${civ} ${p.unit_title} in Age of Empires II — exact stat changes, ranking movement, and which simulated matchups flipped.`;
+const canonical='https://aoe2matchup.com/patches/'+path;
+const structured=[...pages.empty_patch_frame.structured.map(x=>JSON.parse(x)).filter(x=>x['@type']!=='BreadcrumbList'),{'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[['Home','/'],['Patches','/patches'],[`Update ${build}`,`/patches/${build}`],[`${civ} ${p.unit_title}`,`/patches/${path}`]].map(([name,url],i)=>({'@type':'ListItem',position:i+1,name,item:'https://aoe2matchup.com'+url}))}];
+const frame=pages.patch_units[path]?.frame??frameFor(pages.empty_patch_frame,title,description,canonical,structured);
+Astro.response.headers.set('Cache-Control','public, max-age=0, must-revalidate');
+Astro.response.headers.set('Vercel-CDN-Cache-Control','public, s-maxage=86400');
+const field=s=>s.replaceAll('base_','').replaceAll('_',' ');
+---
+<BaseLayout page={frame}>
+ <div class="pu-wrap"><a class="back" href="/patches">← All patches</a><h1>{civ} {p.unit_title}</h1><div class="pu-sub">{patch.title} · {patch.release_date}</div>
+ <div class="pu-sec"><h3>Stat changes</h3>{p.stat_changes.length?<div class="table-scroll scroll-x"><table class="pu"><tr><th>Field</th><th>Before</th><th>After</th></tr>{p.stat_changes.map(s=><tr><td>{field(s.field)}</td><td>{s.old_value}</td><td class={Number(s.new_value||0)>Number(s.old_value||0)?'up':'down'}>{s.new_value}{s.note&&<> <em>({s.note})</em></>}</td></tr>)}</table></div>:<p>No direct stat changes recorded.</p>}</div>
+ <div class="pu-sec"><h3>Ranking move</h3>{p.ranking.length?<div class="table-scroll scroll-x"><table class="pu"><tr><th>Score</th><th>Before</th><th>After</th><th>Rank</th></tr>{p.ranking.map(r=><tr><td>{r.score_type.replaceAll('_',' ')}</td><td>{r.old_score}</td><td class={Number(r.new_score||0)>=Number(r.old_score||0)?'up':'down'}>{r.new_score}</td><td>#{r.old_rank} → #{r.new_rank}</td></tr>)}</table></div>:<p>Ranking unchanged.</p>}</div>
+ {[['Now beats',p.now_beats],['Now loses to',p.now_loses],['Shifted margins',p.shifted]].filter(([,items])=>items.length).map(([label,items])=><div class="pu-sec"><h3>{label}</h3><div class="table-scroll scroll-x"><table class="pu mlist"><tr><th>Opponent</th><th>Scale</th><th>Score</th><th>Swing</th><th></th></tr>{items.map(m=><tr><td data-label="Opponent">{m.opp}</td><td data-label="Scale">{m.scale}</td><td data-label="Score">{m.old_score} → {m.new_score}</td><td data-label="Swing" class={'swing '+(m.swing>=0?'up':'down')}>{m._swing_text}</td><td data-label="Fight"><a href={m.link}>▶ View fight</a></td></tr>)}</table></div></div>)}
+ {p.timeline.length>1&&<div class="pu-sec"><h3>Timeline</h3><div class="table-scroll scroll-x"><table class="pu"><tr><th>Patch</th><th>Field</th><th>Change</th></tr>{p.timeline.map(t=><tr><td>{t.build_number}</td><td>{field(t.field)}</td><td>{t.old_value} → {t.new_value}</td></tr>)}</table></div></div>}
+ </div>
+</BaseLayout>

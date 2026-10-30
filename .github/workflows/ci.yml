@@ -58,3 +58,25 @@ jobs:
           node tests/test_frontend_projectile_miss.js
           node tests/test_sim_params.js
           node --test tests/frontend_architecture.test.mjs tests/rankings_score_method.test.cjs tests/rankings_v3_model.test.cjs
+
+  vercel-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+      - run: pip install -r apps/backend/requirements.txt
+      - run: npm ci --prefix scripts/migration --no-audit --no-fund
+      - run: npm ci --prefix apps/web --no-audit --no-fund
+      - name: Generate and validate both deployment services from a clean checkout
+        run: |
+          python scripts/migration/prepare_release.py
+          node scripts/migration/check_release.mjs frontend
+          node scripts/migration/check_release.mjs backend
+          python scripts/migration/verify_build.py
+          npm run build --prefix apps/web

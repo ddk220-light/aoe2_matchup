@@ -1,0 +1,10 @@
+---
+import media from '../generated/media-manifest.json';
+import {resolveMedia, type MediaAliases} from '../lib/media';
+interface Props {alias:string; alt:string; eager?:boolean; class?:string;}
+const {alias,alt,eager=false,class:className}=Astro.props;
+const asset=resolveMedia(alias,media.aliases as MediaAliases);
+---
+<img src={asset.url} width={asset.width} height={asset.height} alt={alt}
+  loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : 'auto'}
+  decoding="async" crossorigin="anonymous" class={className} />

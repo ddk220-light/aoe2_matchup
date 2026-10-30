@@ -1,0 +1,9 @@
+---
+import CivilizationPage from '../../components/civilizations/CivilizationPage.astro';
+import {pages} from '../../features/civilizations/data';
+export function getStaticPaths() {
+  return Object.keys(pages).map(slug => ({params: {slug}}));
+}
+const civ = pages[Astro.params.slug!];
+---
+<CivilizationPage civ={civ} />

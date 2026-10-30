@@ -171,3 +171,8 @@ apps/web/.vercel/
 # Downloaded public-media bytes, immutable release archives and publication receipts.
 .migration-cache/
 scripts/migration/node_modules/
+
+# Frontend source modules are not Python build output.
+!apps/web/src/lib/
+!apps/web/src/lib/**
+scripts/migration/node_modules

@@ -3,7 +3,8 @@
 ## Work duration approval
 
 - User instruction, 2026-10-29: ask before starting any work estimated to take more than one hour. Earlier broad authorization does not waive this requirement.
-- The full `unit-rankings-path-recovery-2026-10-29` recomputation was explicitly stopped. Do not resume it or its disabled scheduled check. The requested replacement is the consolidated dataset at `aoe2x/js_simulation/calibration/campaigns/unit-rankings-consolidated-2026-10-29`, with per-run engine provenance. Ranking/scoring remains deferred.
+- The full `unit-rankings-path-recovery-2026-10-29` recomputation was explicitly stopped. Do not resume it or its disabled scheduled check. The replacement is the consolidated dataset at `aoe2x/js_simulation/calibration/campaigns/unit-rankings-consolidated-2026-10-29`, with per-run engine provenance.
+- The owner accepted the equal-opponent-weight HP-margin scores and finalized the tables with Shock Infantry merged into Militia, and Elephant plus Steppe Lancer merged into Knight. The completed score list is at `aoe2x/js_simulation/calibration/reports/unit-ranking-scores-final-2026-10-29`. Keep the scores unchanged when regrouping. Web app implementation is explicitly a later step.
 
 ## Ask explicitly before every unrequested change
 

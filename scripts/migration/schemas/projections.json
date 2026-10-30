@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aoe2matchup.com/schemas/migration/projections-v1.json",
+  "$defs": {
+    "civilizations": {
+      "type": "object", "required": ["civ_name", "age", "power_units"],
+      "properties": {"civ_name": {"type": "string"}, "age": {"const": "imperial"}, "power_units": {"type": "object"}}
+    },
+    "advisor": {"$ref": "#/$defs/civilizations"},
+    "rankings": {
+      "type": "object", "required": ["line_name", "building", "imperial"],
+      "properties": {"line_name": {"type": "string"}, "building": {"type": "string"},
+        "imperial": {"type": "array", "items": {"type": "object", "required": ["id", "civ_name", "unit_slug", "unit_name"],
+          "properties": {"id": {"type": "integer"}, "civ_name": {"type": "string"}, "unit_slug": {"type": "string"}, "unit_name": {"type": "string"}}}}}
+    },
+    "simulator": {
+      "type": "object", "required": ["civ_name", "units_by_age", "total_units"],
+      "properties": {"civ_name": {"type": "string"}, "units_by_age": {"type": "object"}, "total_units": {"type": "integer", "minimum": 1}}
+    }
+  }
+}

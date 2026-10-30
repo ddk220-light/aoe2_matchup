@@ -1,0 +1,38 @@
+---
+import about from '../generated/about.json';
+import release from '../generated/release.json';
+import '../styles/navigation.css';
+const {page = about, title = page.title, metadata = true, assets = false} = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>{title}</title>
+    {metadata && page.meta.filter(m => !['viewport'].includes(m.name) && !m.charset).map(m => <meta {...m} />)}
+    {metadata && page.links.map(link => <link {...link} />)}
+    {!metadata && <meta name="robots" content="noindex, nofollow" />}
+    {!metadata && <link rel="stylesheet" href="/static/css/base.css" />}
+    <script is:inline set:html={about.theme_start} />
+    <script>
+      import '../lib/telemetry.mjs';
+    </script>
+    {metadata && page.structured.map(value => <script is:inline type="application/ld+json" set:html={value} />)}
+    <slot name="head" />
+  </head>
+  <body>
+    <Fragment set:html={page.nav ?? about.nav} />
+    <script is:inline set:html={about.nav_script} />
+    <slot />
+    <Fragment set:html={page.footer ?? about.footer} />
+    {assets && <>
+      <script is:inline set:html={about.catalog_script} />
+      <script is:inline src={release.components.media.catalog_url} />
+      <script is:inline src="/static/js/constants.js" />
+      <script is:inline src="/static/js/api_client.js" />
+    </>}
+    <script is:inline set:html={about.theme_script} />
+    <slot name="scripts" />
+  </body>
+</html>

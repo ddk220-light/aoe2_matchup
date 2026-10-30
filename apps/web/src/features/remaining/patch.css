@@ -1,0 +1,69 @@
+
+  /* DATA container token (falls back to old cap if base.css token absent) */
+  .patch-wrap { max-width: var(--container-data, 1100px); margin: 0 auto;
+    padding: 24px var(--gutter, 16px); }
+  .patch-card { background:var(--bg-warm); border:1px solid var(--border); border-radius:10px;
+    padding:20px 24px; margin-bottom:22px; box-shadow:var(--shadow-card); }
+  .patch-head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .patch-head h2 { margin:0; font-size:1.3rem; }
+  .patch-date { color:var(--text-muted); font-size:.9rem; }
+  .patch-link { margin-left:auto; font-size:.85rem; }
+  .patch-summary p { margin:.4rem 0; line-height:1.5; }
+  .patch-summary ul { margin:.4rem 0 .4rem 1.2rem; }
+  .patch-summary h2 { font-size:1rem; margin:1rem 0 .2rem; color:var(--text); }
+  .patch-summary h3 { font-size:.95rem; margin:.8rem 0 .2rem; color:var(--text); }
+  .patch-summary h4 { font-size:.9rem; margin:.6rem 0 .1rem; color:var(--text-muted); }
+  .unit-acc { border:1px solid var(--border); border-radius:8px; margin-top:10px;
+    background:var(--bg-deep); overflow:hidden; }
+  .unit-acc > summary { list-style:none; cursor:pointer; padding:10px 14px;
+    display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; min-height:44px;
+    font-weight:600; color:var(--text); }
+  .unit-acc > summary::-webkit-details-marker { display:none; }
+  .unit-acc > summary::before { content:"\25B8"; color:var(--text-muted); font-weight:400;
+    transition:transform .15s; align-self:center; }
+  .unit-acc[open] > summary::before { transform:rotate(90deg); display:inline-block; }
+  .unit-acc > summary:hover { background:var(--bg-hover); }
+  .unit-acc .acc-stat { font-weight:400; font-size:.82rem; color:var(--text-muted); }
+  .unit-acc .acc-scale { margin-left:auto; font-weight:400; font-size:.75rem;
+    color:var(--text-muted); border:1px solid var(--border-light); border-radius:999px;
+    padding:1px 8px; align-self:center; }
+
+  /* Horizontal scroll safety net for the matchup table (.scroll-x utility from
+     base.css; inline fallback so it works before that lands / in isolation) */
+  .mtable-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain; max-width:100%; }
+  .mtable { width:100%; border-collapse:collapse; font-size:.85rem; }
+  .mtable th, .mtable td { padding:6px 14px; text-align:left;
+    border-top:1px solid var(--border); }
+  .mtable th { color:var(--text-muted); font-weight:500; font-size:.78rem; }
+  .mtable td.num { font-variant-numeric:tabular-nums; color:var(--text-muted); }
+  .mtable .swing { font-variant-numeric:tabular-nums; font-weight:600; }
+  .mtable .swing.up { color:var(--up); }
+  .mtable .swing.down { color:var(--down); }
+  .mtable a { color:var(--link-data); text-decoration:none; white-space:nowrap;
+    display:inline-block; min-height:44px; line-height:44px; }
+  .mtable a:hover { text-decoration:underline; }
+  .acc-foot { padding:8px 14px; font-size:.8rem; }
+  .acc-foot a { color:var(--text-muted); text-decoration:none;
+    display:inline-block; min-height:44px; line-height:44px; }
+  .acc-foot a:hover { color:var(--text); }
+  .empty { color:var(--text-muted); text-align:center; padding:60px 0; }
+
+  /* Tablet / large phone: tighten card padding, keep readable */
+  @media (max-width: 768px) {
+    .patch-wrap { padding-top:16px; }
+    .patch-card { padding:16px 16px; }
+    .patch-link { margin-left:0; }
+  }
+
+  /* True phone: minimal padding, table relies on .mtable-scroll (no overflow) */
+  @media (max-width: 480px) {
+    .patch-card { padding:14px 12px; margin-bottom:16px; }
+    .patch-head h2 { font-size:1.15rem; }
+    .unit-acc > summary { padding:10px 12px; }
+    .unit-acc .acc-scale { margin-left:0; }
+    .mtable th, .mtable td { padding:6px 10px; }
+  }
+
+  /* Per-patch landing page extras */
+  .patch-intro { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; max-width: 820px; margin: 6px 0 18px; }

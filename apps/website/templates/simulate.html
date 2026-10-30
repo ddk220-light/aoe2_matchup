@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}AoE2 Battle Simulator — Who wins? Every unit, every civ, fully upgraded{% endblock %}
-{% block meta_description %}Free Age of Empires II battle simulator. Pick any units from any of the 53 civilizations, run a tick-by-tick simulation, and see who wins. Includes every unique unit and the latest Three Kingdoms additions.{% endblock %}
+{% block meta_description %}Free Age of Empires II battle simulator. Pick any units from any of the {{ site_civilization_count }} civilizations, run a tick-by-tick simulation, and see who wins. Includes every unique unit and the latest Three Kingdoms additions.{% endblock %}
 
 {% block page_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/simulate.css') }}" />
@@ -213,7 +213,7 @@
     <div class="home-about-inner">
         <h2>Every Age of Empires II matchup, simulated</h2>
         <p>
-            AoE2 Matchup pits any units from any of the <strong>53 civilizations</strong> against each other in a
+            AoE2 Matchup pits any units from any of the <strong>{{ site_civilization_count }} civilizations</strong> against each other in a
             deterministic, tick-by-tick battle simulation — fully upgraded to the Imperial age, with armor classes,
             projectiles, charges and every special mechanic accounted for. Around <strong>500,000 matchups</strong> are
             pre-simulated, so you can see who actually wins, not just compare stat cards.

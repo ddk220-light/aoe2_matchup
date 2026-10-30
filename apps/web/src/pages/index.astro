@@ -1,0 +1,242 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import page from '../generated/simulator-page.json';
+import release from '../generated/release.json';
+import CivilizationPicker from '../components/simulator/CivilizationPicker.astro';
+import '../features/simulator/simulator.css';
+const json = (value:unknown) => JSON.stringify(value).replace(/</g,'\\u003c');
+const {frame, ...data} = page;
+const config = {...data, engine_worker_url:release.engine_worker_url,
+  versions:{simulator:release.components.simulator.version,engine:release.components.engine.version}};
+---
+<BaseLayout page={frame}>
+  <script slot="head" is:inline define:vars={{civs:page.civilizations}}>
+    const incoming = new URLSearchParams(location.search);
+    if(civs.includes(incoming.get('civ1')) && incoming.get('unit1') &&
+       civs.includes(incoming.get('civ2')) && incoming.get('unit2')) {
+      document.documentElement.dataset.simulatorPrefilled = 'both';
+    }
+  </script>
+<div class="page-header">
+    <h1>Battle Simulation</h1>
+    <p class="subtitle">Pick a unit for each side, then watch who wins</p>
+</div>
+
+<div class="container-wide sim-page" id="simPage">
+    <!-- ===== 3-area stage: picker | arena | picker ===== -->
+    <div class="sim-stage" id="simStage">
+        <!-- LEFT rail — Team A -->
+        <aside class="team-rail team1" id="team1Rail">
+            <div class="rail-head"><span class="rail-title">Team A</span></div>
+            <div class="rail-search">
+                <input type="search" class="rail-search-input" id="team1Search"
+                       placeholder="Search civ or unique unit…" autocomplete="off"
+                       spellcheck="false" aria-label="Search Team A civ or unit" />
+                <div class="rail-search-results" id="team1SearchResults" hidden></div>
+            </div>
+            <div class="rail-picker" id="team1Selection"><CivilizationPicker team={1} /></div>
+            <!-- Live readout (battle phase) -->
+            <div class="rail-live" id="team1Live" hidden>
+                <div class="progress-card team1">
+                    <div class="progress-header team1">
+                        <img id="prog1Icon" alt="" style="display:none" />
+                        <span class="prog-name" id="prog1Name">Team A</span>
+                    </div>
+                    <div class="progress-vitals">
+                        <span class="prog-label">Remaining</span>
+                        <span class="prog-value"><span id="prog1Units">—</span> <span class="progress-hp-inline">(<span id="prog1Hp">—</span> HP)</span></span>
+                    </div>
+                    <div class="progress-health-track" id="prog1HealthTrack" role="progressbar"
+                         aria-label="Team A health remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                        <span class="progress-health-fill" id="prog1HealthFill"></span>
+                    </div>
+                    <div class="progress-economy">
+                        <span>Resources <strong id="prog1Res">—</strong></span>
+                        <span>Lost <strong id="prog1Lost">—</strong></span>
+                    </div>
+                    <div class="matchup-metrics" aria-label="Team A matchup statistics">
+                        <div class="matchup-metric">
+                            <span>Damage / hit</span><strong id="prog1Damage">—</strong>
+                        </div>
+                        <div class="matchup-metric">
+                            <span>Damage / sec</span><strong id="prog1Dps">—</strong>
+                        </div>
+                        <div class="matchup-metric matchup-ttk" id="prog1TtkMetric" tabindex="0">
+                            <span>Time to kill <span class="metric-info" aria-hidden="true">?</span></span>
+                            <strong id="prog1Ttk">—</strong>
+                        </div>
+                    </div>
+                    <ul class="matchup-callouts" id="prog1Callouts" aria-label="Team A special mechanics" hidden></ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CENTER — arena -->
+        <div class="arena" id="arena">
+            <div class="arena-toolbar">
+                <details class="sim-options arena-options" id="simOptions">
+                    <summary aria-label="Battle options">
+                        <span class="options-menu-icon" aria-hidden="true">☰</span>
+                        <span class="sim-options-toggle">Options</span>
+                        <span class="sim-options-current" id="optionsCurrent">Resource-based · 5K / 5K</span>
+                    </summary>
+                    <div class="army-config">
+                        <div class="formula-note">
+                            Resource cost per unit =
+                            <strong id="armyCostFormula">Food + 0.9 Wood + 1.1 Gold</strong>
+                        </div>
+                        <div class="mode-toggle">
+                            <label class="mode-option">
+                                <input type="radio" name="armyMode" value="cost" checked />
+                                <span>Cost-efficient</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="armyMode" value="resources" />
+                                <span>Resource-based</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="armyMode" value="count" />
+                                <span>Count-based</span>
+                            </label>
+                        </div>
+                        <div class="side-input-grid resource-input" id="resourceInput" style="display: none">
+                            <label for="team1Resources">
+                                <span>Team A</span>
+                                <input type="number" id="team1Resources" value="5000" min="1" step="100" />
+                            </label>
+                            <label for="team2Resources">
+                                <span>Team B</span>
+                                <input type="number" id="team2Resources" value="5000" min="1" step="100" />
+                            </label>
+                        </div>
+                        <div class="side-input-grid count-inputs" id="countInputs" style="display: none">
+                            <label for="team1Count">
+                                <span>Team A</span>
+                                <input type="number" id="team1Count" value="27" min="1" max="27" />
+                            </label>
+                            <label for="team2Count">
+                                <span>Team B</span>
+                                <input type="number" id="team2Count" value="27" min="1" max="27" />
+                            </label>
+                            <small class="count-limit">Maximum 27 units per side</small>
+                        </div>
+                        <label class="buffer-option" title="Applied automatically when one side is ranged and the other is melee">
+                            <input type="checkbox" id="rangedBuffer" checked />
+                            <span>Ranged-unit buffer</span>
+                        </label>
+                    </div>
+                </details>
+                <p class="start-hint" id="startHint">Pick a civ &amp; unit for both teams</p>
+            </div>
+            <div class="arena-canvas-wrap">
+                <div class="v3-map-status" id="v3MapStatus" aria-live="polite">Golden Arena ready</div>
+                <canvas id="battleCanvas" width="900" height="600"></canvas>
+            </div>
+            <div class="arena-player" aria-label="Battle playback controls">
+                <div class="player-controls">
+                    <div class="player-control-side player-time-slot">
+                        <div class="battle-timer" id="battleTimer" hidden>0.0s</div>
+                    </div>
+                    <div class="transport-controls">
+                        <button class="player-button restart-button" id="restartBtn" type="button"
+                                aria-label="Restart with a new random battle" disabled>
+                            <svg class="media-glyph" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                                <path d="M7.2 7.1A7 7 0 1 1 5 12H2.8a9.2 9.2 0 1 0 2.7-6.5L3 3v6h6L7.2 7.1Z" />
+                            </svg>
+                        </button>
+                        <button class="player-button primary" id="playPauseBtn" type="button"
+                                data-state="play" aria-label="Start battle" disabled>
+                            <span class="media-state-icon media-play" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false"><path d="M7 4.8v14.4L19 12 7 4.8Z" /></svg>
+                            </span>
+                            <span class="media-state-icon media-pause" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false"><path d="M6.5 5h4v14h-4zm7 0h4v14h-4z" /></svg>
+                            </span>
+                            <span class="media-state-icon media-replay" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false"><path d="M7.2 7.1A7 7 0 1 1 5 12H2.8a9.2 9.2 0 1 0 2.7-6.5L3 3v6h6L7.2 7.1Z" /></svg>
+                            </span>
+                            <span class="media-state-icon media-loading" aria-hidden="true"></span>
+                        </button>
+                        <button class="player-button speed-button" id="speedBtn" type="button"
+                                aria-label="Playback speed 1x">
+                            <svg class="media-glyph" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                                <path d="M3.5 5.5 11 12l-7.5 6.5v-13Zm8.5 0 7.5 6.5-7.5 6.5v-13Z" />
+                            </svg>
+                            <span class="speed-value" id="speedLabel">1×</span>
+                        </button>
+                    </div>
+                    <div class="player-control-side player-balance-slot" aria-hidden="true"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT rail — Team B -->
+        <aside class="team-rail team2" id="team2Rail">
+            <div class="rail-head"><span class="rail-title">Team B</span></div>
+            <div class="rail-search">
+                <input type="search" class="rail-search-input" id="team2Search"
+                       placeholder="Search civ or unique unit…" autocomplete="off"
+                       spellcheck="false" aria-label="Search Team B civ or unit" />
+                <div class="rail-search-results" id="team2SearchResults" hidden></div>
+            </div>
+            <div class="rail-picker" id="team2Selection"><CivilizationPicker team={2} /></div>
+            <div class="rail-live" id="team2Live" hidden>
+                <div class="progress-card team2">
+                    <div class="progress-header team2">
+                        <img id="prog2Icon" alt="" style="display:none" />
+                        <span class="prog-name" id="prog2Name">Team B</span>
+                    </div>
+                    <div class="progress-vitals">
+                        <span class="prog-label">Remaining</span>
+                        <span class="prog-value"><span id="prog2Units">—</span> <span class="progress-hp-inline">(<span id="prog2Hp">—</span> HP)</span></span>
+                    </div>
+                    <div class="progress-health-track" id="prog2HealthTrack" role="progressbar"
+                         aria-label="Team B health remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                        <span class="progress-health-fill" id="prog2HealthFill"></span>
+                    </div>
+                    <div class="progress-economy">
+                        <span>Resources <strong id="prog2Res">—</strong></span>
+                        <span>Lost <strong id="prog2Lost">—</strong></span>
+                    </div>
+                    <div class="matchup-metrics" aria-label="Team B matchup statistics">
+                        <div class="matchup-metric">
+                            <span>Damage / hit</span><strong id="prog2Damage">—</strong>
+                        </div>
+                        <div class="matchup-metric">
+                            <span>Damage / sec</span><strong id="prog2Dps">—</strong>
+                        </div>
+                        <div class="matchup-metric matchup-ttk" id="prog2TtkMetric" tabindex="0">
+                            <span>Time to kill <span class="metric-info" aria-hidden="true">?</span></span>
+                            <strong id="prog2Ttk">—</strong>
+                        </div>
+                    </div>
+                    <ul class="matchup-callouts" id="prog2Callouts" aria-label="Team B special mechanics" hidden></ul>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+</div>
+
+<section id="home-about" class="home-about" aria-label="About AoE2 Matchup">
+    <div class="home-about-inner">
+        <h2>Every Age of Empires II matchup, simulated</h2>
+        <p>
+            AoE2 Matchup pits any units from any of the <strong>{page.civilizations.length} civilizations</strong> against each other in a
+            deterministic, tick-by-tick battle simulation — fully upgraded to the Imperial age, with armor classes,
+            projectiles, charges and every special mechanic accounted for. Around <strong>500,000 matchups</strong> are
+            pre-simulated, so you can see who actually wins, not just compare stat cards.
+            <a href="/about">How it works →</a>
+        </p>
+        <ul class="home-about-tools">
+            <li><a href="/units"><strong>Unit Rankings</strong><span>Every unit scored across all civs</span></a></li>
+            <li><a href="/civilizations"><strong>Civilizations</strong><span>Each civ's strengths &amp; best units</span></a></li>
+            <li><a href="/matchup-advisor"><strong>Matchup Advisor</strong><span>What to build against any civ</span></a></li>
+            <li><a href="/matchups"><strong>Unit Matchups</strong><span>Head-to-head for every unique unit</span></a></li>
+            <li><a href="/patches"><strong>Patch Tracker</strong><span>What each balance update changed</span></a></li>
+        </ul>
+    </div>
+</section>
+<script is:inline type="application/json" id="simulator-config" set:html={json(config)} />
+<script>import '../features/simulator/enhance.js';</script>
+</BaseLayout>

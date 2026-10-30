@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import pages from '../generated/remaining-pages.json';
+import data from '../generated/data-manifest.json';
+import release from '../generated/release.json';
+import catalog from '../generated/public-catalog.json';
+import '../features/advisor/advisor.css';
+const p=pages.advisor;
+const frame={...p.frame,links:p.frame.links.filter(l=>l.href!=='/static/css/matchup_advisor.css')};
+const config={civilizations:p.civs,icons:catalog.icons,icon_names:pages.icon_names,files:data.components.advisor.files,revision:release.release_id};
+---
+<BaseLayout page={frame}>
+ <div class="page-header"><h1>Matchup Advisor</h1><p class="subtitle">Compare two civilizations side by side</p></div>
+ <div class="container-wide"><div class="ma-picker"><div class="ma-slot ma-slot-left" id="slot-left"><span class="ma-slot-placeholder">Your Civ</span></div><div class="ma-vs">vs</div><div class="ma-slot ma-slot-right" id="slot-right"><span class="ma-slot-placeholder">Opponent</span></div></div>
+ <div class="ma-civ-grid" id="civ-grid">{p.civs.map(name=><div class="ma-civ-card" data-civ={name}><img src={'https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/'+name.toLowerCase()+'.png'} class="ma-civ-emblem" alt={name} loading="lazy" width="32" height="32"/><span class="ma-civ-card-name">{name}</span></div>)}</div>
+ <div class="ma-controls" id="controls" style="display:none;"></div><div id="top-units"></div><div id="results"></div></div>
+ <script is:inline id="advisor-config" type="application/json" set:html={JSON.stringify(config).replaceAll('<','\\u003c')}/>
+ <script>import '../features/advisor/enhance.js';</script>
+</BaseLayout>

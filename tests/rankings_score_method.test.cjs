@@ -6,13 +6,14 @@ const scoreMethod = require("../apps/website/static/js/rankings_score_method.js"
 
 test("land score help names the V3 matchups and settings", () => {
     const infantry = scoreMethod.buildHtml("infantry");
-    assert.match(infantry, /75%.*Champion, Paladin, and Arbalester/s);
-    assert.match(infantry, /10%.*Paladin matchup/s);
-    assert.match(infantry, /15%.*Halberdier, Elite Skirmisher, and Hussar/s);
-    assert.match(infantry, /equal resources/);
-    assert.match(infantry, /27-unit cap/);
-    assert.match(infantry, /five seeded runs/);
-    assert.match(infantry, /remaining HP percentage/);
+    assert.match(infantry, /1\/5.*Spanish Champion/s);
+    assert.match(infantry, /Chinese Arbalester/);
+    assert.match(infantry, /Turkish Cavalier/);
+    assert.match(infantry, /27 units on the cheaper side/);
+    assert.match(infantry, /three seeded runs/);
+    assert.match(infantry, /use ten when/);
+    assert.match(infantry, /surviving HP percentage/);
+    assert.match(infantry, /50 is neutral/);
     assert.doesNotMatch(infantry, /General Combat|Anti-Cavalry|Anti-Trash/);
 });
 
@@ -25,7 +26,11 @@ test("each ranking category has selectable score-method content", () => {
     }
 });
 
-test("ranged and stable help exposes their final mobility adjustment", () => {
-    assert.match(scoreMethod.buildHtml("archery"), /movement speed and \(range \+ 1\)/);
-    assert.match(scoreMethod.buildHtml("stable"), /multiplied by movement speed/);
+test("land categories use equal opponent weights without mobility adjustments", () => {
+    for (const category of ["infantry", "archery", "stable"]) {
+        const method = scoreMethod.getMethod(category);
+        assert.equal(method.formula.length, category === "infantry" ? 5 : 7);
+        assert.equal(method.adjustment, undefined);
+        assert.match(method.finish, /No additional speed, range or cost multiplier/);
+    }
 });

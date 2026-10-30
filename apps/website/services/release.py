@@ -20,6 +20,7 @@ def release_metadata(repo_root, golden_dir):
         'mechanics_schema_version':MECHANICS_SCHEMA_VERSION,
         'reference_sha256':hashlib.sha256((golden / 'aoe2_reference.db').read_bytes()).hexdigest(),
         'engine':{'name':'simulationv3','source_sha256':digest.hexdigest()},
-        'rankings':{key:ranking[key] for key in ('engine_revision','mechanics_build','generated_at','published_stages','retained_retail_lines')},
+        'rankings':{key:ranking[key] for key in ('engine_revision','mechanics_build','generated_at','published_stages','retained_retail_lines',
+                    'dataset_hash','ranking_build_key','source_summary','engine_run_counts','category_merges') if key in ranking},
         'ranking_methodology_version':ranking.get('methodology',{}).get('schema_version'),
     }

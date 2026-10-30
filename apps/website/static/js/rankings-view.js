@@ -21,13 +21,13 @@ function buildRankingScoreHoverHtml(row) {
     }
 
     if (breakdown.yardsticks.length) {
-        html += `<div class="ranking-breakdown-label">Equal-resource yardsticks</div>`;
+        html += `<div class="ranking-breakdown-label">Opponent scores</div>`;
         html += `<div class="ranking-yardstick-grid">`;
         for (const yardstick of breakdown.yardsticks) {
             html += `<span>${yardstick.label}</span><strong style="color:${scoreColor(yardstick.score)}">${Number(yardstick.score).toFixed(1)}</strong>`;
         }
         html += `</div>`;
-        html += `<div class="hc-note">Simulation V3 · five seeded runs · 27-unit cap · food, wood, and gold weighted 1:1:1.</div>`;
+        html += `<div class="hc-note">Simulation V3 · 3 runs, extended to 10 when outcomes differ · 27 units on the cheaper side · population and cost balanced · food/wood/gold weights 1/0.9/1.1.</div>`;
     } else {
         html += `<div class="hc-note">This line uses its published cost-based score. Detailed V3 yardsticks will appear when that campaign is available.</div>`;
     }

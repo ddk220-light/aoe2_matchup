@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}How AoE2 Matchup works — data &amp; simulation methodology{% endblock %}
-{% block meta_description %}How AoE2 Matchup works: unit data extracted from the Age of Empires II:DE game files, fully-upgraded stats for all 53 civilizations, and ~500,000 simulated battles deciding every matchup.{% endblock %}
+{% block meta_description %}How AoE2 Matchup works: unit data extracted from the Age of Empires II:DE game files, fully-upgraded stats for all 56 civilizations, and 7,600 selected simulation runs behind the finalized land rankings.{% endblock %}
 
 {% block page_css %}
 <style>
@@ -23,7 +23,7 @@
   "@type": "AboutPage",
   "name": "How AoE2 Matchup works",
   "url": "{{ site_url }}/about",
-  "description": "Methodology behind AoE2 Matchup: data extracted from the Age of Empires II:DE game files, fully-upgraded stats for all 53 civilizations, and ~500,000 simulated battles."
+  "description": "Methodology behind AoE2 Matchup: data extracted from the Age of Empires II:DE game files, fully-upgraded stats for all 56 civilizations, and 7,600 selected simulation runs behind the finalized land rankings."
 }
 </script>
 <script type="application/ld+json">
@@ -32,11 +32,11 @@
   "@type": "FAQPage",
   "mainEntity": [
     { "@type": "Question", "name": "Where does the data come from?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Unit stats are extracted directly from the Age of Empires II: Definitive Edition game files (the .dat), then fully upgraded for each of the 53 civilizations using every blacksmith, university and unique-tech upgrade plus that civ's bonuses." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "Unit stats are extracted directly from the Age of Empires II: Definitive Edition game files (the .dat), then fully upgraded for each of the 56 civilizations using every blacksmith, university and unique-tech upgrade plus that civ's bonuses." } },
     { "@type": "Question", "name": "How is the winner of a matchup decided?",
-      "acceptedAnswer": { "@type": "Answer", "text": "A deterministic, tick-by-tick battle simulation models armor classes, attack delays, projectile travel time and accuracy, charge attacks, trample, bleed and healing. About 500,000 matchups are pre-simulated." } },
-    { "@type": "Question", "name": "What do the 30v30 and 3k scores mean?",
-      "acceptedAnswer": { "@type": "Answer", "text": "30v30 is an equal-population fight (30 units a side); 3k is an equal-resources, cost-parity fight (3,000 resources a side). The Average score blends both, so it rewards raw strength and cost-efficiency together." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "A deterministic, tick-by-tick battle simulation models armor classes, attack delays, projectile travel time and accuracy, charge attacks, trample and bleed. Land rankings use 7,600 selected runs covering 555 civilization/unit variants." } },
+    { "@type": "Question", "name": "What does the land ranking score mean?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The cheaper side fields 27 units; the opposing count balances population and resource cost. Each opponent contributes equally. Score = 50 + half the average signed surviving HP percentage; 50 is neutral." } },
     { "@type": "Question", "name": "Is this an official Microsoft site?",
       "acceptedAnswer": { "@type": "Answer", "text": "No. AoE2 Matchup is a free fan-made tool and is not affiliated with or endorsed by Microsoft, Forgotten Empires, or World's Edge." } }
   ]
@@ -61,7 +61,7 @@
     <p>
         Every unit's stats are extracted directly from the game's binary data file
         (the <code>.dat</code>) — the same source the game itself reads. We then compute
-        <strong>fully-upgraded Imperial-age stats</strong> for all <strong>53 civilizations</strong>
+        <strong>fully-upgraded Imperial-age stats</strong> for all <strong>56 civilizations</strong>
         (including every unique unit and the Three Kingdoms civs), applying all the blacksmith,
         university and unique-technology upgrades a civilization can reach, plus its civ bonuses.
         So the numbers you see are what a unit actually looks like late-game for that civ — not the base stat card.
@@ -72,17 +72,22 @@
         Who wins isn't guessed from a formula — it's <strong>simulated</strong>. A deterministic,
         tick-by-tick model fights the units against each other, accounting for armor classes,
         attack reload and delays, projectile travel time and accuracy, charge attacks, trample,
-        bleed, healing, and the other special mechanics in the game. Roughly
-        <strong>500,000 unit matchups</strong> are pre-simulated so the rankings and matchup pages load instantly.
+        bleed, and other unit mechanics. The finalized land rankings use
+        <strong>7,600 selected runs for 555 civilization/unit variants</strong> across 56 civilizations,
+        covering 2,398 distinct matchups. Results are stored so the tables load instantly.
     </p>
 
     <h2>What the scores mean</h2>
-    <p>Each unit is scored from two kinds of fight, because they test different things:</p>
-    <ul>
-        <li><strong>30v30 (population)</strong> — 30 units a side. This rewards raw, per-unit strength at the population cap.</li>
-        <li><strong>3k (cost-parity)</strong> — 3,000 resources a side. This rewards cost-efficiency: cheap units field bigger armies.</li>
-        <li><strong>Average</strong> — blends the two, so a unit has to be both strong and cost-effective to top the list. Higher is better.</li>
-    </ul>
+    <p>Land rankings balance population and resource efficiency: the cheaper side fields 27 units;
+        the more expensive side fields <code>round(27 × sqrt(cheaper cost / expensive cost))</code>.
+        Weighted cost uses food 1, wood 0.9, and gold 1.1. There are no buffer units.</p>
+    <p>Each unit faces its group's standard opponents. A win contributes its surviving HP percentage,
+        a loss contributes the negative enemy surviving HP percentage, and a draw contributes zero.
+        Average three seeded runs per matchup, or ten when the first three outcomes differ,
+        then give each opponent equal weight. <strong>Score = 50 + half the average signed HP percentage</strong>.
+        Scores range from 0 to 100; 50 is neutral. There is no extra speed, range or cost multiplier.</p>
+    <p>The finalized dataset combines completed results from the original and corrected Simulation V3 engines;
+        source versions are recorded with the data. Siege and naval tables retain their earlier scoring methods.</p>
 
     <h2>The tools</h2>
     <ul>

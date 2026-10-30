@@ -11,10 +11,13 @@ def indexing_enabled(config, host, site_url, environment):
         return str(override).lower() in ('true', '1', 'yes')
     return environment.lower() in ('', 'production', 'prod') and host.split(':')[0] == urlsplit(site_url).hostname
 
-def content_lastmod(golden_dir):
+def content_lastmod(golden_dir, *, rankings=False):
     path = Path(golden_dir) / 'derived_data_v3.metadata.json'
     try:
-        value = json.loads(path.read_text(encoding='utf-8')).get('generated_at', '')[:10]
+        metadata = json.loads(path.read_text(encoding='utf-8'))
+        if not rankings:
+            metadata = metadata.get('retained_source_metadata', metadata)
+        value = metadata.get('generated_at', '')[:10]
         return date.fromisoformat(value).isoformat()
     except (OSError, ValueError, TypeError):
         return None

@@ -1,4 +1,5 @@
 """Published ranking projection shared by JSON and server-rendered pages."""
+import json
 from aoe2x.sim.unit_lines import UNIT_LINES, CIV_MISSING_UNITS
 from aoe2x.advisor.best_units import _compute_missing_techs as compute_missing_techs, _parse_techs_and_bonuses as parse_techs_and_bonuses
 
@@ -38,13 +39,25 @@ _V3_FINAL_SCORE_TYPES = {
 }
 
 _V3_BREAKDOWN_YARDSTICKS = (
-    ("champion", "Champion", "gc_v3_27_vs_champ"),
-    ("paladin", "Paladin", "gc_v3_27_vs_paladin"),
-    ("arbalester", "Arbalester", "gc_v3_27_vs_arb"),
-    ("halberdier", "Halberdier", "at_v3_27_vs_halb"),
-    ("elite_skirmisher", "Elite Skirmisher", "at_v3_27_vs_elite_skirm"),
-    ("hussar", "Hussar", "at_v3_27_vs_hussar"),
+    ("champion", "Spanish Champion", "versus_champion"),
+    ("paladin", "Spanish Paladin", "versus_paladin"),
+    ("arbalester", "Chinese Arbalester", "versus_arbalester"),
+    ("halberdier", "Spanish Halberdier", "versus_halberdier"),
+    ("elite_skirmisher", "Spanish Elite Skirmisher", "versus_skirmisher"),
+    ("hussar", "Spanish Hussar", "versus_hussar"),
+    ("cavalier", "Turkish Cavalier", "versus_cavalier"),
+    ("hca", "Saracen Heavy Cavalry Archer", "versus_hca"),
+    ("hand_cannoneer", "Saracen Hand Cannoneer", "versus_hand_cannoneer"),
+    ("camel", "Turkish Heavy Camel Rider", "versus_camel"),
 )
+
+LAND_GROUPS = {
+    "infantry": ["militia", "spear"],
+    "archery": ["archer", "skirmisher", "cav_archer", "scorpion", "gunpowder"],
+    "stable": ["knight", "light_cav", "camel"],
+}
+MERGED_LINES = {"shock_infantry": "militia", "elephant": "knight", "steppe_lancer": "knight"}
+LAND_LINES = set().union(*LAND_GROUPS.values()) | set(MERGED_LINES) | set(LAND_GROUPS)
 
 def get_unit_line_data(line_slug, *, get_ref_db, get_rankings_derived_db, current_build):
     """Return comparison data for a unit line across all civs as a plain dict.
@@ -67,7 +80,9 @@ def get_unit_line_data(line_slug, *, get_ref_db, get_rankings_derived_db, curren
         applied_bonuses_summary"""
 
     # Determine which sub-lines to fetch (virtual "infantry" or single line)
-    sub_lines = line.get("sub_lines", [line_slug])
+    sub_lines = LAND_GROUPS.get(line_slug, line.get("sub_lines", [MERGED_LINES.get(line_slug, line_slug)]))
+    is_land = line_slug in LAND_LINES
+    roster = []
 
     result = {
         "line_name": line["name"],
@@ -89,6 +104,16 @@ def get_unit_line_data(line_slug, *, get_ref_db, get_rankings_derived_db, curren
         derived_conn = get_rankings_derived_db()
         placeholders = ",".join("?" for _ in _score_line_slugs)
         _bld = current_build()
+        if is_land:
+            _bld = json.loads(derived_conn.execute(
+                "SELECT value_json FROM ranking_dataset WHERE key='build_key'"
+            ).fetchone()[0])
+            roster = derived_conn.execute(
+                f"SELECT * FROM ranking_roster WHERE line_slug IN ({placeholders}) ORDER BY civ_name,unit_slug",
+                _score_line_slugs,
+            ).fetchall()
+            if line_slug in MERGED_LINES:
+                roster = [row for row in roster if row['source_line'] == line_slug]
         if _bld:
             derived_rows = derived_conn.execute(
                 f"SELECT age, civ_name, unit_slug, score_type, score_value, rank, median_delta "
@@ -253,6 +278,19 @@ def get_unit_line_data(line_slug, *, get_ref_db, get_rankings_derived_db, curren
             seen.add(name)
             cleaned.append(name)
         entry["civ_bonus_techs"] = cleaned
+
+    if is_land:
+        for member in roster:
+            row = rc.execute(f"SELECT {stat_cols} FROM ref_units WHERE id=?", (member['ref_unit_id'],)).fetchone()
+            entry = dict(row)
+            entry.update(is_unique=bool(member['is_unique']), line_slug=member['line_slug'],
+                         stat_chain_source='rankings',
+                         ranking_engine_runs={'original': member['original_engine_runs'], 'corrected': member['corrected_engine_runs']})
+            _attach_scores(entry, 'imperial', member['line_slug'])
+            _attach_special(entry)
+            result['imperial'].append(entry)
+        ref_conn.close()
+        return result
 
     # Fetch units for each sub-line
     for sub_slug in sub_lines:

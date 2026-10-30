@@ -14,7 +14,7 @@ const UNIT_LINES = {
         castle: "Long Swordsman",
         imperial: "Champion",
         hasUnique: true,
-        subLines: ["militia", "spear", "shock_infantry"],
+        subLines: ["militia", "spear"],
     },
     archery: {
         name: "Ranged Effectiveness",
@@ -32,7 +32,7 @@ const UNIT_LINES = {
         castle: "Knight",
         imperial: "Paladin",
         hasUnique: true,
-        subLines: ["knight", "light_cav", "camel", "steppe_lancer", "elephant"],
+        subLines: ["knight", "light_cav", "camel"],
     },
     siege: {
         name: "Anti-Building Effectiveness",
@@ -542,15 +542,16 @@ function _buildSiegeBreakdownHtml(row) {
     return html;
 }
 
-async function getStatChain(refUnitId) {
-    if (statChainCache[refUnitId]) return statChainCache[refUnitId];
+async function getStatChain(refUnitId, source = "reference") {
+    const cacheKey = `${source}:${refUnitId}`;
+    if (statChainCache[cacheKey]) return statChainCache[cacheKey];
     try {
-        const data = await (await rankingsData).detail(`/api/ref/stat-chain/${refUnitId}`);
-        statChainCache[refUnitId] = data;
+        const data = await (await rankingsData).detail(`/api/ref/stat-chain/${refUnitId}?source=${encodeURIComponent(source)}`);
+        statChainCache[cacheKey] = data;
         return data;
     } catch (e) {
         console.error("Failed to load stat chain for unit", refUnitId, e);
-        statChainCache[refUnitId] = {};   // tombstone: degrade once, don't retry on every hover
+        statChainCache[cacheKey] = {};   // tombstone: degrade once, don't retry on every hover
         return {};
     }
 }
@@ -708,7 +709,7 @@ async function onStatCellEnter(e, rowIdx, key) {
     }
     const td = e.currentTarget;
     showHoverCard(td, `<div class="hc-loading">Loading...</div>`);
-    const chain = await getStatChain(row.id);
+    const chain = await getStatChain(row.id, row.stat_chain_source);
     if (!pinnedCell)
         showHoverCard(td, buildStatHoverHtml(row, key, chain));
 }
@@ -729,7 +730,7 @@ async function onStatCellClick(e, rowIdx, key) {
     }
     const td = e.currentTarget;
     pinHoverCard(td, `<div class="hc-loading">Loading...</div>`);
-    const chain = await getStatChain(row.id);
+    const chain = await getStatChain(row.id, row.stat_chain_source);
     // Update in place — don't re-call pinHoverCard, which would toggle this
     // same cell's card closed (and on touch there's no warm cache to dodge it).
     updatePinnedCard(td, buildStatHoverHtml(row, key, chain));
@@ -1189,7 +1190,7 @@ function renderTable() {
             ? ` mobile-column mobile-column-${col.mobileColumn}`
             : "";
         if (k === "civ_name") {
-            const civImg = `${CIV_EMBLEM_BASE}${v.toLowerCase()}.png`;
+            const civImg = window.SITE_CATALOG.civilization_emblems?.[v] || `${CIV_EMBLEM_BASE}${v.toLowerCase()}.png`;
             return `<td class="${expandableClass}${mobileColumnClass}"><div class="civ-cell">
                 <img src="${civImg}" alt="${v}" onerror="this.style.display='none'" />
                 ${v}
@@ -1208,7 +1209,7 @@ function renderTable() {
             const cellImgClass = cellUseSprite ? "sprite" : "";
             const nameKey = String(v || "").trim().toLowerCase();
             const needsCivQualifier = !row.is_unique && (unitNameCounts.get(nameKey) || 0) > 1;
-            const civImg = `${CIV_EMBLEM_BASE}${row.civ_name.toLowerCase()}.png`;
+            const civImg = window.SITE_CATALOG.civilization_emblems?.[row.civ_name] || `${CIV_EMBLEM_BASE}${row.civ_name.toLowerCase()}.png`;
             const civQualifier = needsCivQualifier
                 ? `<span class="mobile-civ-qualifier">(<img src="${civImg}" alt="" onerror="this.style.display='none'" />${row.civ_name})</span>`
                 : "";
@@ -1641,7 +1642,8 @@ renderLineSelector();
    Falls back to the default tab for missing/unknown params. */
 (async function initFromURL() {
     const params = new URLSearchParams(window.location.search);
-    const lineParam = params.get("line");
+    const requestedLine = params.get("line");
+    const lineParam = ({shock_infantry: "militia", elephant: "knight", steppe_lancer: "knight"})[requestedLine] || requestedLine;
     const unitParam = params.get("unit");
     // Valid deep-link lines: the 5 group tabs, their sub-lines (dedicated
     // filtered tables without a tab of their own), and mangonel (backend-only

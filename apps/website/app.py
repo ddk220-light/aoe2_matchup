@@ -74,6 +74,7 @@ from aoe2x.rank.methodology import load_published_methods
 from apps.website.services.database import connect_readonly
 from apps.website.services.mechanics import _find_ref_unit, _load_v3_mechanics, _load_v3_auxiliary_mechanics
 from apps.website.services.rankings import get_unit_line_data as ranking_data
+from apps.website.services.rankings import LAND_LINES as RANKING_LAND_LINES
 from apps.website.routes.civilizations import create_blueprint as civilization_blueprint
 from apps.website.routes.battles import create_blueprint as battle_blueprint
 
@@ -94,8 +95,10 @@ def crawler_headers(response):
 @app.context_processor
 def inject_public_catalog():
     reference = SIM_REF_DB_PATH if request.endpoint == "home" else REF_DB_PATH
+    if request.endpoint in {"units", "unit_line_page"}:
+        reference = RANKINGS_REF_DB_PATH
     catalog = site_catalog(reference)
-    if request.endpoint == "home":
+    if request.endpoint in {"home", "units", "unit_line_page"}:
         catalog = {**catalog, "civilization_emblems": {
             name: civ["emblem_url"] for name, civ in load_civilization_supplement()["civilizations"].items()
         }}
@@ -168,8 +171,8 @@ from aoe2x.paths import GOLDEN_DIR as _GOLDEN_DIR
 
 DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_units.db")
 REF_DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db")
-# Rankings retain their original reference until their own patch run is published.
 SIM_REF_DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference_simulation.db")
+RANKINGS_REF_DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference_rankings.db")
 RANKINGS_DERIVED_DB_PATH = os.path.join(str(_GOLDEN_DIR), "derived_data_v3.db")
 PATCHES_DB_PATH = os.path.join(str(_GOLDEN_DIR), "patches.db")
 
@@ -203,6 +206,12 @@ def get_sim_ref_db():
 def get_rankings_derived_db():
     """Get the staged V3 rankings database, including retained siege/naval rows."""
     conn = connect_readonly(RANKINGS_DERIVED_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_rankings_ref_db():
+    conn = connect_readonly(RANKINGS_REF_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -653,16 +662,16 @@ def units():
 _UNIT_LINE_PAGES = [
     {"url": "militia", "line": "militia", "short": "Militia / Champion",
      "title": "Militia Line — AoE2 Champion Rankings by Civilization",
-     "desc": "Champion and infantry unique-unit rankings for Age of Empires II: every civilization's militia line at full Imperial upgrades, scored by round-robin battle simulations."},
+     "desc": "Champion and infantry unique-unit rankings for Age of Empires II: every civilization's militia and shock infantry at full Imperial upgrades, scored against standard opponents in population- and cost-balanced battles."},
     {"url": "spearman", "line": "spear", "short": "Spearman / Halberdier",
      "title": "Spearman Line — AoE2 Pikeman & Halberdier Rankings by Civ",
      "desc": "Pikeman and Halberdier rankings for Age of Empires II: which civilizations field the best anti-cavalry spearmen at full upgrades, simulated head-to-head."},
     {"url": "shock-infantry", "line": "shock_infantry", "short": "Fire Lancer & Eagles",
      "title": "Fire Lancer & Eagle Warrior — AoE2 Shock Infantry Rankings",
-     "desc": "Fire Lancer and Eagle Warrior rankings for Age of Empires II: every civilization's shock infantry at full upgrades, scored by round-robin battle simulations."},
+     "desc": "Fire Lancer and Eagle Warrior rankings for Age of Empires II: every civilization's shock infantry at full upgrades, scored against standard opponents in population- and cost-balanced battles."},
     {"url": "archer", "line": "archer", "short": "Archer / Arbalester",
      "title": "Archer Line — AoE2 Crossbowman & Arbalester Rankings by Civ",
-     "desc": "Crossbowman and Arbalester rankings for Age of Empires II: the best foot-archer civilizations at full upgrades, simulated head-to-head across all 53 civs."},
+     "desc": "Crossbowman and Arbalester rankings for Age of Empires II: the best foot-archer civilizations at full upgrades, simulated head-to-head across all 56 civs."},
     {"url": "skirmisher", "line": "skirmisher", "short": "Skirmisher",
      "title": "Skirmisher Line — AoE2 Elite Skirmisher Rankings by Civ",
      "desc": "Elite and Imperial Skirmisher rankings for Age of Empires II: the best anti-archer skirmishers at full upgrades, scored by battle simulations."},
@@ -671,16 +680,16 @@ _UNIT_LINE_PAGES = [
      "desc": "Heavy Cavalry Archer and Elephant Archer rankings for Age of Empires II: the best mounted-archer civilizations at full upgrades, simulated head-to-head."},
     {"url": "knight", "line": "knight", "short": "Knight / Paladin",
      "title": "Knight Line — AoE2 Cavalier & Paladin Rankings by Civ",
-     "desc": "Knight, Cavalier and Paladin rankings for Age of Empires II: which civilizations have the strongest heavy cavalry at full upgrades, simulated head-to-head."},
+     "desc": "Knight, Cavalier, Paladin, elephant and steppe lancer rankings for Age of Empires II: which civilizations have the strongest heavy cavalry at full upgrades, simulated head-to-head."},
     {"url": "light-cavalry", "line": "light_cav", "short": "Light Cav / Hussar",
      "title": "Light Cavalry — AoE2 Hussar Rankings by Civilization",
-     "desc": "Light Cavalry and Hussar rankings for Age of Empires II: the best raiding and trash cavalry at full upgrades, scored by round-robin battle simulations."},
+     "desc": "Light Cavalry and Hussar rankings for Age of Empires II: the best raiding and trash cavalry at full upgrades, scored against standard opponents in population- and cost-balanced battles."},
     {"url": "camel", "line": "camel", "short": "Camel Rider",
      "title": "Camel Rider — AoE2 Heavy Camel Rankings by Civilization",
      "desc": "Camel Rider and Heavy Camel rankings for Age of Empires II: the best anti-cavalry camels at full upgrades, simulated head-to-head across all civilizations."},
     {"url": "steppe-lancer", "line": "steppe_lancer", "short": "Steppe Lancer",
      "title": "Steppe Lancer — AoE2 Elite Steppe Lancer Rankings by Civ",
-     "desc": "Steppe Lancer and Elite Steppe Lancer rankings for Age of Empires II at full upgrades, scored by round-robin battle simulations."},
+     "desc": "Steppe Lancer and Elite Steppe Lancer rankings for Age of Empires II at full upgrades, scored against standard opponents in population- and cost-balanced battles."},
     {"url": "battle-elephant", "line": "elephant", "short": "Battle Elephant",
      "title": "Battle Elephant — AoE2 Elite Battle Elephant Rankings by Civ",
      "desc": "Battle Elephant and Elite Battle Elephant rankings for Age of Empires II: the strongest elephant civilizations at full upgrades, simulated head-to-head."},
@@ -692,7 +701,7 @@ _UNIT_LINE_PAGES = [
      "desc": "Mangonel, Onager and Siege Onager rankings for Age of Empires II: the best splash-damage siege at full upgrades, simulated head-to-head."},
     {"url": "hand-cannoneer", "line": "gunpowder", "short": "Hand Cannoneer",
      "title": "Hand Cannoneer — AoE2 Gunpowder Rankings by Civilization",
-     "desc": "Hand Cannoneer and gunpowder unique-unit rankings for Age of Empires II at full upgrades, scored by round-robin battle simulations."},
+     "desc": "Hand Cannoneer and gunpowder unique-unit rankings for Age of Empires II at full upgrades, scored against standard opponents in population- and cost-balanced battles."},
     {"url": "scorpion", "line": "scorpion", "short": "Scorpion",
      "title": "Scorpion — AoE2 Heavy Scorpion Rankings by Civilization",
      "desc": "Scorpion and Heavy Scorpion rankings for Age of Empires II: the best scorpion civilizations at full upgrades, simulated head-to-head."},
@@ -865,14 +874,15 @@ def _data_lastmod():
 @app.route('/sitemap.xml')
 def sitemap_xml():
     lastmod = _data_lastmod()
+    ranking_lastmod = content_lastmod(_GOLDEN_DIR, rankings=True)
     supplement = load_civilization_supplement()
     civ_lastmod = max(lastmod or '', supplement['published_at'])
-    entries = [(path, civ_lastmod if path == '/civilizations' else lastmod)
+    entries = [(path, civ_lastmod if path == '/civilizations' else ranking_lastmod if path in {'/units', '/about'} else lastmod)
                for path in ('/', '/matchup-advisor', '/units', '/civilizations', '/matchups', '/about', '/patches')]
     entries.extend((f'/civilizations/{name.lower()}',
                     civ_lastmod if name in supplement['civilizations'] else lastmod)
                    for name in civilization_page_names(_get_ref_civs(), supplement))
-    entries.extend((f"/units/{page['url']}", lastmod) for page in _UNIT_LINE_PAGES)
+    entries.extend((f"/units/{page['url']}", ranking_lastmod if page['line'] in RANKING_LAND_LINES else lastmod) for page in _UNIT_LINE_PAGES)
     conn = get_ref_db()
     try:
         available = {(row[0], row[1]) for row in conn.execute('SELECT civ_name, unit_slug FROM ref_units')}
@@ -1295,7 +1305,7 @@ def _combat_response(rc, row, requested_mode=None, include_stat_chain=True):
 @app.route("/api/ref/stat-chain/<int:ref_unit_id>")
 def api_ref_stat_chain(ref_unit_id):
     """Get stat chain and techs applied for a single ref unit (for hover cards)."""
-    ref_conn = get_ref_db()
+    ref_conn = get_rankings_ref_db() if request.args.get('source') == 'rankings' else get_ref_db()
     rc = ref_conn.cursor()
     rc.execute(
         """SELECT step_order, tech_name, tech_type,
@@ -1354,7 +1364,8 @@ def api_ref_combat_unit(civ_name, unit_slug):
 
 
 def get_unit_line_data(line_slug):
-    return ranking_data(line_slug, get_ref_db=get_ref_db, get_rankings_derived_db=get_rankings_derived_db, current_build=current_build)
+    reference = get_rankings_ref_db if line_slug in RANKING_LAND_LINES else get_ref_db
+    return ranking_data(line_slug, get_ref_db=reference, get_rankings_derived_db=get_rankings_derived_db, current_build=current_build)
 
 
 # Headline categories for the server-rendered "Rankings at a glance" section.

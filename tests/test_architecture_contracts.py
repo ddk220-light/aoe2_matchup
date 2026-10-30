@@ -97,6 +97,9 @@ def test_lastmod_uses_recorded_data_date_and_omits_unknown_dates(tmp_path):
 
 def test_published_methodology_carries_source_identity():
     published = load_published_methods(Path(app._GOLDEN_DIR))
-    assert published == load_methodology()
+    assert published['schema_version'] == 2
+    assert published['methods']['siege'] == load_methodology()['methods']['siege']
+    assert published['methods']['naval'] == load_methodology()['methods']['naval']
+    assert len(published['methods']['infantry']['formula']) == 5
     assert published['methods']['infantry']['source_engine'] == 'simulationv3'
     assert published['methods']['siege']['source_engine'] == 'retained_historical'

@@ -21,12 +21,12 @@ def test_overview_keeps_original_copy_with_current_civilization_count(client):
     assert 'All 56 civs, fully upgraded.' in body
 
 
-def test_new_civ_is_page_only(client):
+def test_new_civs_have_simulator_data_and_keep_legacy_advisor_scope(client):
     import app
     for name in ('Danes', 'Saxons', 'Varangians'):
         assert client.get(f'/civilizations/{name.lower()}').status_code == 200
         assert client.get(f'/api/civilizations/{name}').status_code == 200
-        assert client.get(f'/api/ref/civ/{name}').status_code == 400
+        assert client.get(f'/api/ref/civ/{name}').status_code == 200
         assert client.get(f'/api/civ-power-units/{name}').status_code == 400
         assert name not in app._get_ref_civs()
         assert name not in app._valid_civs()

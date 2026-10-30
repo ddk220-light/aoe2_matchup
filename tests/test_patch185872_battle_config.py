@@ -30,7 +30,7 @@ def test_dynamic_buffer_uses_first_slots_and_new_tenth_slot():
 
 
 def test_new_civilizations_are_selectable_without_replacing_ranking_reference(client, monkeypatch):
-    candidate = Path(__file__).resolve().parents[1] / "data/local/generated/patch-185872/aoe2_reference.db"
+    candidate = Path(__file__).resolve().parents[1] / "data/golden/aoe2_reference_simulation.db"
     monkeypatch.setattr(website, "SIM_REF_DB_PATH", str(candidate), raising=False)
     old_reference = website.REF_DB_PATH
     for civ, slug in [("Saxons", "elite_hearth_troop_saxons"), ("Varangians", "elite_jarl_varangians"),

@@ -9,46 +9,64 @@ def _find(rows, civ, slug):
     )
 
 
-@pytest.mark.parametrize(
-    ("line", "civ", "slug", "score_type", "score", "rank", "median_delta"),
-    [
-        ("militia", "Aztecs", "elite_jaguar_warrior_aztecs", "militia_value", 85.4, 5, 32.1),
-        ("knight", "Franks", "paladin", "stable_effectiveness", 75.5, 8, 33.7),
-        ("archer", "Britons", "arbalester", "ranged_effectiveness", 54.8, 10, 22.7),
-    ],
-)
-def test_land_rows_expose_the_v3_final_score(
-    client, line, civ, slug, score_type, score, rank, median_delta
-):
-    response = client.get(f"/api/ref/unit-line/{line}")
-    assert response.status_code == 200
-    row = _find(response.get_json()["imperial"], civ, slug)
-    assert row["ranking_score_type"] == score_type
-    assert row["ranking_score"] == score
-    assert row["ranking_rank"] == rank
-    assert row["ranking_median_delta"] == median_delta
-    assert "pool_scores" not in row
+def test_land_scores_and_breakdowns_match_all_finalized_results(client):
+    import json
+    from collections import Counter
+    from pathlib import Path
+    from statistics import mean, median
+    bundle = json.loads((Path(__file__).parents[1] / 'data/golden/unit_rankings_final.json').read_text())
+    actual = []
+    for group, count in [('infantry', 147), ('archery', 274), ('stable', 134)]:
+        rows = client.get('/api/ref/unit-line/' + group).get_json()['imperial']
+        assert len(rows) == count
+        actual.extend(rows)
+    keyed = {(r['civ_name'], r['unit_slug']): r for r in actual}
+    assert len(keyed) == 555
+    assert len({r['civ_name'] for r in actual}) == 56
+    assert Counter(r['line_slug'] for r in actual) == {
+        'militia': 91, 'spear': 56, 'archer': 65, 'skirmisher': 57, 'cav_archer': 59,
+        'scorpion': 58, 'gunpowder': 35, 'knight': 70, 'light_cav': 51, 'camel': 13}
+    matches = {}
+    for r in bundle['matchups']:
+        matches.setdefault((r['civilization'], r['slug']), []).append(r)
+    for expected in bundle['scores']:
+        key = expected['civilization'], expected['unitSlug']
+        row = keyed[key]
+        assert row['ranking_score'] == expected['score']
+        assert row['ranking_rank'] == expected['categoryRank']
+        assert row['unit_name'] == expected['unit']
+        assert row['line_slug'] == expected['category']
+        category_median = median(r['score'] for r in bundle['scores'] if r['category'] == expected['category'])
+        assert row['ranking_median_delta'] == pytest.approx(expected['score'] - category_median)
+        assert row['ranking_engine_runs'] == {'original': expected['originalEngineRuns'], 'corrected': expected['correctedEngineRuns']}
+        assert row['stat_chain_source'] == 'rankings'
+        assert row['ranking_breakdown']['roles'] == {}
+        scores = row['ranking_breakdown']['yardsticks']
+        assert len(scores) == expected['opponents']
+        assert mean(r['score'] for r in scores) == pytest.approx(expected['score'])
+        by_opponent = {r['key']: r['score'] for r in scores}
+        for matchup in matches[key]:
+            opponent = 'elite_skirmisher' if matchup['opponentKey'] == 'skirmisher' else matchup['opponentKey']
+            assert by_opponent[opponent] == pytest.approx(50 + (matchup['meanUnitHpPercentDecided'] - matchup['meanOpponentHpPercentDecided']) / 2)
 
 
-def test_jaguar_breakdown_comes_from_the_same_v3_campaign(client):
-    payload = client.get("/api/ref/unit-line/militia").get_json()
-    jaguar = _find(
-        payload["imperial"], "Aztecs", "elite_jaguar_warrior_aztecs"
-    )
-    assert jaguar["ranking_breakdown"]["roles"] == {
-        "GC": 86.4,
-        "AC": 64.3,
-        "AT": 90.6,
-        "AA": 60.8,
-    }
-    assert jaguar["ranking_breakdown"]["yardsticks"] == [
-        {"key": "champion", "label": "Champion", "score": 86.5},
-        {"key": "paladin", "label": "Paladin", "score": 64.3},
-        {"key": "arbalester", "label": "Arbalester", "score": 60.8},
-        {"key": "halberdier", "label": "Halberdier", "score": 95.6},
-        {"key": "elite_skirmisher", "label": "Elite Skirmisher", "score": 94.0},
-        {"key": "hussar", "label": "Hussar", "score": 79.2},
-    ]
+@pytest.mark.parametrize(('alias', 'count', 'category'), [('shock_infantry', 9, 'militia'), ('elephant', 7, 'knight'), ('steppe_lancer', 5, 'knight')])
+def test_older_line_links_keep_their_units_and_use_merged_ranks(client, alias, count, category):
+    rows = client.get('/api/ref/unit-line/' + alias).get_json()['imperial']
+    assert len(rows) == count
+    assert all(r['line_slug'] == category and 'ranking_score' in r for r in rows)
+
+
+def test_ranking_stat_chain_uses_the_campaign_reference(client):
+    import app
+    rows = client.get('/api/ref/unit-line/archery').get_json()['imperial']
+    row = next(r for r in rows if r['civ_name'] == 'Varangians' and 'jarl' in r['unit_slug'])
+    chain = client.get(f"/api/ref/stat-chain/{row['id']}?source=rankings").get_json()
+    conn = app.get_rankings_ref_db()
+    expected = [r[0] for r in conn.execute('SELECT tech_name FROM ref_techs_applied WHERE ref_unit_id=?', (row['id'],))]
+    conn.close()
+    assert chain['stat_chain']
+    assert sorted(t['tech_name'] for t in chain['techs_applied']) == sorted(expected)
 
 
 @pytest.mark.parametrize(
@@ -83,7 +101,7 @@ def test_unit_row_keeps_missing_tech_details(client):
     assert isinstance(champion["missing_techs"], list)
 
 
-def test_seo_line_page_describes_only_equal_resource_scoring(client):
+def test_seo_line_page_describes_population_and_cost_balanced_scoring(client):
     body = client.get("/units/militia").get_data(as_text=True)
-    assert "equal-resource" in body.lower()
+    assert "population- and cost-balanced" in body.lower()
     assert "equal numbers" not in body.lower()

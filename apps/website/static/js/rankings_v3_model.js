@@ -23,7 +23,7 @@
             {
                 key: "ranking_score",
                 label: "Score",
-                info: "Equal-resource combat score. Higher is better.",
+                info: "Population- and cost-balanced combat score. Higher is better; 50 is neutral.",
             },
             { key: "ranking_rank", label: "Rank", info: "Rank within this unit line." },
             {
@@ -82,6 +82,10 @@
             { key: "ranking_vs_halberdier", label: "vs Halberdier" },
             { key: "ranking_vs_elite_skirmisher", label: "vs Elite Skirmisher" },
             { key: "ranking_vs_hussar", label: "vs Hussar" },
+            { key: "ranking_vs_cavalier", label: "vs Cavalier" },
+            { key: "ranking_vs_hca", label: "vs Heavy Cavalry Archer" },
+            { key: "ranking_vs_hand_cannoneer", label: "vs Hand Cannoneer" },
+            { key: "ranking_vs_camel", label: "vs Heavy Camel Rider" },
             { key: "total_cost", label: "Total Cost" },
             { key: "dps", label: "DPS" },
             { key: "final_hp", label: "HP" },

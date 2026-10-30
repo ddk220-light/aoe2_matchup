@@ -144,6 +144,7 @@ def inject_site_url():
     Unset -> None so base.html simply omits the meta tag."""
     return {
         "site_url": SITE_URL,
+        "site_civilization_count": len(_get_page_civs()),
         "search_indexing": allow_indexing(),
         "canonical_url": None,
         "google_site_verification": os.environ.get("GOOGLE_SITE_VERIFICATION") or None,

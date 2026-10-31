@@ -62,8 +62,8 @@ version and re-evaluate the affected anchors.
    valid stored result or a documented blocked case that is assigned to a
    recovery phase.
 4. **Slow/error recovery.** On worker failure, save the attempt and diagnostics,
-   resume without rerunning valid seeds, and escalate wall time from 180 to 600
-   to 1,800 seconds as needed. Isolate persistent outliers in later recovery
+   resume without rerunning valid seeds, and escalate wall time through 180,
+   600, 1,800 and 3,600 seconds as needed. Isolate persistent outliers in later recovery
    phases so the normal queue continues. Diagnose pathology using game ticks,
    processing time, unit counts, movement and damage activity. A ceiling or
    watchdog event cannot be called close. Any necessary physics fix starts a
@@ -95,8 +95,11 @@ After **every completed phase**, atomically write progress, source validation,
 inference coverage, unresolved requirements and phase review; commit and push
 these plus the new journals to
 `simulations/civ-matchups-campaign-2026-10-31`. Confirm the remote branch has
-the commit before advancing. On a transient GitHub failure, keep running no new
-phase until the checkpoint is pushed; retry the push with backoff. A phase that
+the commit before advancing when GitHub is available. On a transient GitHub
+authentication failure, retain the ordered per-phase local commits, mark the
+remote checkpoint pending, and continue calculation. Every later phase retries
+the push of the entire saved history; final completion requires a successful
+push. A phase that
 fails integrity remains open for repair, never marked complete. A fresh cloud
 worker can resume from the latest GitHub checkpoint without repeating completed
 seeds.

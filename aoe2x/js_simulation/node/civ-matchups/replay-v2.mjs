@@ -94,8 +94,9 @@ function frozenManifest(pilot,adaptive){
 }
 function checkpoint(state,label){
   state.lastPushedAt=now();atomic(resolve(DIR,'state.json'),state);
-  const prefix=relative(ROOT,DIR);
-  command('git',['add','--',prefix]);
+  const paths=['manifest.json','state.json','replays.jsonl','attempts.jsonl']
+    .map(x=>resolve(DIR,x)).filter(existsSync).map(x=>relative(ROOT,x));
+  command('git',['add','--',...paths]);
   if(command('git',['diff','--cached','--name-only']))command('git',['commit','-m',`Checkpoint collision repair replay: ${label}`]);
   command('git',['push','origin',state.publishBranch]);
 }
@@ -174,6 +175,7 @@ async function main(){
     state.sourceCandidates=candidates.length;
     state.remainingCandidates=candidates.length-saved.size;
     state.status=state.failedKeys?.length?'blocked':state.remainingCandidates?'paused_limit':'caught_up';
+    state.pid=null;
     state.updatedAt=now();state.savedReplays=saved.size;checkpoint(state,state.status);
   }finally{await pool?.close();unlinkSync(lock);}
 }

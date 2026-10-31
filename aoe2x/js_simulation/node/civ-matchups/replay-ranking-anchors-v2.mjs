@@ -56,7 +56,7 @@ function sourceRows(){
         sourceRecordSha256:sha(Buffer.from(line))});
     }
   }
-  assert.equal(rows.length,817,'corrected ranking source seed count');
+  assert.equal(rows.length,839,'corrected ranking source seed count');
   const keys=rows.map(({row})=>`${row.matchupId}:${row.seed}`);
   assert.equal(new Set(keys).size,keys.length,'duplicate corrected ranking seed');
   return {source,sourceFiles,rows};

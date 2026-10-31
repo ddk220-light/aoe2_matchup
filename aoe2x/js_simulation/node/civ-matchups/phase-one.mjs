@@ -1,8 +1,8 @@
 // Inference-only build. Do not import a battle runner or advance combat here.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync, existsSync} from 'node:fs';
-import {gzipSync} from 'node:zlib';
+import {readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync, existsSync, readdirSync} from 'node:fs';
+import {gzipSync,gunzipSync} from 'node:zlib';
 import {dirname, resolve, relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {combatProfileHash} from '../ranking-equivalence.mjs';
@@ -86,7 +86,7 @@ function profilesAndPairs(sourceManifest,definition) {
   return {variants,profiles,pairs,context,variantCells,civPairs:civPairs.size};
 }
 
-function sourceEvidence(definition,sourceManifest,profiles,pairs,context) {
+function sourceEvidence(definition,sourceManifest,profiles,pairs,context,extraCampaignDirectories=[]) {
   const byId=new Map(definition.matchups.map(m=>[m.id,m]));
   const runLedger=[];const groups=new Map();const sourceFiles=[];
   for(const file of ['runs.jsonl','additional-recorded-runs.jsonl']) {
@@ -119,7 +119,62 @@ function sourceEvidence(definition,sourceManifest,profiles,pairs,context) {
       groups.get(r.matchupId).push(normalized);
     }
   }
-  assert.equal(runLedger.length,7677);
+  assert(runLedger.length>=7677);
+  const additionalCampaignHashes=[];
+  for(const extraCampaignDirectory of extraCampaignDirectories) {
+    const manifestPath=resolve(extraCampaignDirectory,'manifest.json');
+    const campaign=json(manifestPath);
+    const {campaignHash,...payload}=campaign;
+    assert.equal(hashCanonicalJson(payload),campaignHash,'additional campaign manifest hash');
+    assert.equal(campaign.engineBaseCommit,definition.sourceCommit);
+    assert.equal(campaign.referenceDbSha256,definition.referenceDbSha256);
+    for(const frozen of definition.runtimeFiles){
+      const actual=campaign.runtimeFiles.find(x=>x.path===frozen.path);
+      assert.equal(actual?.sha256,frozen.sha256,`additional engine mismatch: ${frozen.path}`);
+    }
+    additionalCampaignHashes.push(campaignHash);
+    sourceFiles.push({path:relative(ROOT,manifestPath),sha256:sha(readFileSync(manifestPath))});
+    let additionalMatchups=campaign.matchups;
+    if(campaign.matchupInventory){
+      const inventoryPath=resolve(extraCampaignDirectory,campaign.matchupInventory.file);
+      const buffer=readFileSync(inventoryPath);
+      assert.equal(sha(buffer),campaign.matchupInventory.sha256);
+      sourceFiles.push({path:relative(ROOT,inventoryPath),sha256:sha(buffer)});
+      additionalMatchups=gunzipSync(buffer).toString('utf8').trim().split('\n').map(JSON.parse);
+    }
+    for(const m of additionalMatchups){
+      if(byId.has(m.id)){
+        const old=byId.get(m.id);
+        assert.deepEqual([m.teamKeys,m.counts,m.scenarioHash],[old.teamKeys,old.counts,old.scenarioHash]);
+      }else byId.set(m.id,m);
+    }
+    const runDir=resolve(extraCampaignDirectory,'runs');
+    for(const file of existsSync(runDir)?readdirSync(runDir).filter(x=>x.endsWith('.jsonl')).sort():[]) {
+      const path=resolve(runDir,file),raw=readFileSync(path);
+      sourceFiles.push({path:relative(ROOT,path),sha256:sha(raw),records:raw.toString('utf8').trim().split('\n').filter(Boolean).length});
+      let line=0;
+      for(const value of raw.toString('utf8').trim().split('\n').filter(Boolean)) {
+        line++;const r=JSON.parse(value),m=byId.get(r.matchupId);
+        assert(m&&r.campaignHash===campaignHash);
+        assert.deepEqual([r.unitCount,r.opponentCount],m.counts);
+        if(!['win','loss','draw'].includes(r.outcome)||r.error)continue;
+        assert(r.finalStateHash&&r.eventLogHash);
+        const hashes=m.teamKeys.map(k=>combatProfileHash(definition.profiles[k].mechanics));
+        assert.equal(m.scenarioHash,context(...hashes).scenarioHash);
+        const normalized={matchupId:r.matchupId,seed:r.seed,outcome:r.outcome,
+          winnerHash:r.outcome==='draw'?null:hashes[r.outcome==='win'?0:1],
+          engineVersion:'extended_duration',inputCampaignHash:campaignHash,sourceKind:'civ_matchup_campaign',
+          sourceFile:relative(ROOT,path),sourceLine:line,originFile:relative(ROOT,path),originLine:line,
+          originRecordHash:sha(Buffer.from(value)),scenarioHash:m.scenarioHash,profileHashes:hashes,
+          fullProfileHashes:m.teamKeys.map(k=>definition.profiles[k].profileHash),counts:m.counts,
+          unitRemainingHp:r.unitRemainingHp,opponentRemainingHp:r.opponentRemainingHp,
+          unitStartingHp:r.unitStartingHp,opponentStartingHp:r.opponentStartingHp,corrected:true};
+        runLedger.push(normalized);
+        if(!groups.has(r.matchupId))groups.set(r.matchupId,[]);
+        groups.get(r.matchupId).push(normalized);
+      }
+    }
+  }
   const anchors=[];const prior=[];const sourceGroupCounts={};
   for(const [id,rows] of groups) {
     const m=byId.get(id);
@@ -152,8 +207,8 @@ function sourceEvidence(definition,sourceManifest,profiles,pairs,context) {
     if(old)prior.push({...old,evidenceType:'original'});
     if(pair){if(current)pair.contexts.push({...current,evidenceType:'corrected'});if(old)pair.contexts.push({...old,evidenceType:'original'});}
   }
-  assert.equal(groups.size,2398);
-  return {runLedger,anchors,prior,sourceFiles,sourceGroupCounts};
+  assert(groups.size>=2398);
+  return {runLedger,anchors,prior,sourceFiles,sourceGroupCounts,additionalCampaignHashes};
 }
 
 function staticSafe(mechanics) {
@@ -290,6 +345,11 @@ function buildDecisions(inventory,evidence) {
   for(const pair of pairs.values())selected.set(pair.key,selectContext(pair,context));
   const roots=evidence.anchors.filter(a=>a.complete && !a.close && pairs.has(a.pairKey)
     && selected.get(a.pairKey).direct?.matchupId===a.matchupId);
+  const rootsByProfile=new Map();
+  for(const root of roots)for(const hash of new Set(root.profiles)){
+    if(!rootsByProfile.has(hash))rootsByProfile.set(hash,[]);
+    rootsByProfile.get(hash).push(root);
+  }
   // Choose an unmeasured orientation by mechanical proximity to an existing
   // anchor, without consulting the anchor's winner. This maximizes useful
   // same-setup comparisons and stays deterministic under input reordering.
@@ -297,7 +357,8 @@ function buildDecisions(inventory,evidence) {
     const s=selected.get(pair.key);
     if(s.direct||s.conflict||pair.profiles[0]===pair.profiles[1])continue;
     const candidates=[];
-    for(const root of roots) {
+    const nearby=[...new Set(pair.profiles.flatMap(h=>rootsByProfile.get(h)??[]))];
+    for(const root of nearby) {
       const common=pair.profiles.filter(h=>root.profiles.includes(h));
       if(common.length!==1)continue;
       const fixed=common[0],newHash=pair.profiles.find(h=>h!==fixed),oldHash=root.profiles.find(h=>h!==fixed);
@@ -559,10 +620,10 @@ function buildExports(inventory,evidence,results) {
 }
 
 function atomic(path,value) {const tmp=`${path}.tmp`;writeFileSync(tmp,value);renameSync(tmp,path);}
-export function buildPhaseOne(outputDirectory) {
+export function buildPhaseOne(outputDirectory,{campaignDirectories=[]}={}) {
   const {sourceManifest,definition,scoring}=canonicalInputs();
   const inventory=profilesAndPairs(sourceManifest,definition);
-  const evidence=sourceEvidence(definition,sourceManifest,inventory.profiles,inventory.pairs,inventory.context);
+  const evidence=sourceEvidence(definition,sourceManifest,inventory.profiles,inventory.pairs,inventory.context,campaignDirectories);
   const results=buildDecisions(inventory,evidence);
   const exports=buildExports(inventory,evidence,results);
   const sourceFiles=[...evidence.sourceFiles,...[DEFINITION,SCORES,resolve(SOURCE,'manifest.json'),fileURLToPath(import.meta.url),
@@ -570,6 +631,7 @@ export function buildPhaseOne(outputDirectory) {
     .map(path=>({path:relative(ROOT,path),sha256:sha(readFileSync(path))}))];
   const manifest={schemaVersion:1,phase:'infer-only',sourceDatasetHash:sourceManifest.datasetHash,
     correctedCampaignHash:definition.campaignHash,ruleVersion:RULE_VERSION,
+    additionalCampaignHashes:evidence.additionalCampaignHashes,
     engineSourceCommit:definition.sourceCommit,engineRuntimeFiles:definition.runtimeFiles,
     engineConfig:definition.engineConfig,policy:definition.policy,sourceFiles,
     counts:{civilizations:56,civilizationPairs:inventory.civPairs,

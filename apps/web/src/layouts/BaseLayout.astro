@@ -17,6 +17,8 @@ const {page = about, title = page.title, metadata = true, assets = false} = Astr
     <script is:inline set:html={about.theme_start} />
     <script>
       import '../lib/telemetry.mjs';
+      import { injectSpeedInsights } from '@vercel/speed-insights';
+      injectSpeedInsights();
     </script>
     {metadata && page.structured.map(value => <script is:inline type="application/ld+json" set:html={value} />)}
     <slot name="head" />

@@ -18,7 +18,14 @@ Validation: the streamed hash equals the original hash for nested objects,
 unicode, sparse arrays, unsupported-value errors, and a 100,000-event synthetic
 log. Six completed fight replays across the five scenario families also matched
 their saved winner, final-state hash, and event-log hash exactly. The isolated
-`diagnose_slow_civ_pair.mjs` job is intended to check whether streaming hashing
-allows the long seed to produce a complete result. Its result must not be
-inserted into either frozen campaign journal. Any later campaign using this
-output version must record its runtime hashes and validate evidence provenance.
+`diagnose_slow_civ_pair.mjs` completed the long seed under the isolated
+collision-repair plus streaming-hash source: Celtic Paladins won at tick
+175,254 (2,920.9 simulated seconds), with 11 of 17 surviving and 1,293.5 of
+2,720 starting HP remaining. The run took 2,013.7 wall seconds. Its
+final-state hash is `bf4af0b3912023ab83f9771339aa4112d78902fdc8ebc503e73f7bc40f20a279`
+and event-log hash is `7c7fd690aee9127c8900677dea991f02e42bb7de15173323daf4e6cf69da54eb`.
+A second replay with read-only HP and event-count samples is in progress to
+confirm exact hashes and explain why this otherwise decisive fight lasts so
+long. Neither diagnostic result belongs in a frozen campaign journal. Any
+later campaign using this output version must record its runtime hashes and
+validate evidence provenance.

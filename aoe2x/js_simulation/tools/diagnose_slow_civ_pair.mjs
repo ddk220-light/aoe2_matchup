@@ -24,7 +24,10 @@ const scenario=frozen.scenarios[job.scenarioHash];assert(scenario);
 const payload={jobId:id,seed,
   teams:job.teamKeys.map((key,index)=>({mechanics:frozen.profiles[key].mechanics,count:job.counts[index]})),
   scenario,disableAiOrders:true,disableKiting:true,preserveOwnerOrientation:true,retainSnapshots:false};
-const pool=new RankingWorkerPool(1,{workerUrl:new URL('../node/collision-validation-worker.mjs',import.meta.url),
+const timeline=process.env.SLOW_PAIR_TIMELINE==='1';
+const pool=new RankingWorkerPool(1,{workerUrl:new URL(timeline
+  ? '../node/slow-fight-diagnostic-worker.mjs'
+  : '../node/collision-validation-worker.mjs',import.meta.url),
   maxTicks:Number.MAX_SAFE_INTEGER});
 const startedAt=new Date().toISOString(),start=performance.now();
 let message;
@@ -33,11 +36,14 @@ const report={startedAt,finishedAt:new Date().toISOString(),
   wallSeconds:(performance.now()-start)/1000,sourceCampaignHash:oldCampaign.campaignHash,
   rankingInputCampaignHash:frozen.campaignHash,matchupId:id,seed,teamKeys:job.teamKeys,
   counts:job.counts,scenarioHash:job.scenarioHash,
-  runtimeSha256:Object.fromEntries(['src/combat/ranged-crowding.js','src/canonical-json.js','src/fight.js']
+  runtimeSha256:Object.fromEntries(['src/combat/ranged-crowding.js','src/canonical-json.js','src/fight.js',
+    timeline?'node/slow-fight-diagnostic-worker.mjs':'node/collision-validation-worker.mjs']
     .map(file=>[file,sha(resolve(sim,file))])),
   result:message.result??null,error:message.error??null,watchdog:message.watchdog??false,
-  lastProgress:message.lastProgress??null};
-const out=resolve(sim,'calibration/reports/civ-matchups-stream-hash-2026-10-31/slow-pair-seed0.json');
+  lastProgress:message.lastProgress??null,diagnostic:message.diagnostic??null};
+const out=process.env.SLOW_PAIR_REPORT_PATH
+  ? resolve(process.env.SLOW_PAIR_REPORT_PATH)
+  : resolve(sim,'calibration/reports/civ-matchups-stream-hash-2026-10-31/slow-pair-seed0.json');
 mkdirSync(dirname(out),{recursive:true});writeFileSync(out,JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({out,wallSeconds:report.wallSeconds,outcome:report.result?.outcome??null,
   winnerOwner:report.result?.winnerOwner??null,ticks:report.result?.ticks??null,

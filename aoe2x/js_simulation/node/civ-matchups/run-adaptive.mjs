@@ -237,8 +237,16 @@ async function main(){
   const lock=resolve(DIR,'.runner.lock');
   if(existsSync(lock)){
     const oldPid=Number(readFileSync(lock,'utf8'));
-    try{process.kill(oldPid,0);throw new Error(`adaptive runner already active under PID ${oldPid}`);}
-    catch(error){if(error.code!=='ESRCH')throw error;unlinkSync(lock);}
+    let alive=false;
+    try{
+      process.kill(oldPid,0);
+      // The container's PID 1 can leave exited children as zombies. A zombie
+      // still answers kill(0), but cannot own the campaign lock.
+      const status=readFileSync(`/proc/${oldPid}/status`,'utf8');
+      alive=!/^State:\s*Z/m.test(status);
+    }catch(error){if(error.code!=='ESRCH'&&error.code!=='ENOENT')throw error;}
+    if(alive)throw new Error(`adaptive runner already active under PID ${oldPid}`);
+    unlinkSync(lock);
   }
   const lockFd=openSync(lock,'wx');writeFileSync(lockFd,String(process.pid));closeSync(lockFd);
   let pool;

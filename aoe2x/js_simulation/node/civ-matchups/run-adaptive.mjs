@@ -34,7 +34,14 @@ function records(path){if(!existsSync(path))return[];const raw=readFileSync(path
     catch(error){if(i===lines.length-1&&!raw.endsWith('\n'))return[];throw error;}
   });}
 function command(program,args,{maxBuffer=16*1024*1024}={}){
-  return execFileSync(program,args,{cwd:ROOT,encoding:'utf8',maxBuffer,stdio:['ignore','pipe','inherit']}).trim();
+  // The managed cloud proxy supplies GitHub write access. An expired ambient
+  // GH_TOKEN takes precedence over it, so do not pass that token to Git pushes.
+  const pushing=program==='git'&&args[0]==='push';
+  const env={...process.env};
+  if(pushing)delete env.GH_TOKEN;
+  const commandArgs=pushing?['-c','http.extraHeader=','-c','credential.helper=',...args]:args;
+  return execFileSync(program,commandArgs,{cwd:ROOT,encoding:'utf8',maxBuffer,
+    env,stdio:['ignore','pipe','inherit']}).trim();
 }
 function loadManifest(){
   const manifest=load(resolve(DIR,'manifest.json'));
@@ -135,6 +142,7 @@ async function pushCheckpoint(state,saved,phaseLabel,{final=false}={}){
   const prefix=relative(ROOT,BASE);
   const existing=command('git',['diff','--cached','--name-only']);
   assert(existing.split('\n').every(x=>!x||x.startsWith(`${prefix}/`)),'unrelated staged change');
+  state.remotePending=false;state.lastPushError=null;
   progress(state,saved,state.pendingCurrentPhaseSeeds??0);
   command('git',['add','--',prefix]);
   if(final)command('git',['add','-f','--',relative(ROOT,INFERENCE)]);

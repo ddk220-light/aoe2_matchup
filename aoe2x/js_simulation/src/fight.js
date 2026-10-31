@@ -1,7 +1,7 @@
 // One fight, composed from the registry and derived placement. Product fights
 // use the generated family table; callers may pass an explicit golden-scenario
 // placement without changing any combat mechanics.
-import { hashCanonicalJson } from "./canonical-json.js";
+import { hashCanonicalJson, hashCanonicalJsonStreaming } from "./canonical-json.js";
 import { createUnitState } from "./combat/unit-state.js";
 import { createWorld, runWorld, stepWorld } from "./combat/world.js";
 import {
@@ -577,7 +577,7 @@ export async function runFight(root, {
     // Hashes the full, unfiltered engine event log -- not the wire-slimmed
     // per-snapshot events below -- so dropping move/blocked from the payload
     // can never mask a change in what the engine actually did.
-    eventLogHash: hashCanonicalJson(result.events),
+    eventLogHash: hashCanonicalJsonStreaming(result.events),
     unitIndex: Object.freeze(unitIndex),
     snapshots: Object.freeze(result.snapshots.map(slimSnapshot)),
   });

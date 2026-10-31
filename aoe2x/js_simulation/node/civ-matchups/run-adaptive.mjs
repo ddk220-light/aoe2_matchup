@@ -135,19 +135,22 @@ async function pushCheckpoint(state,saved,phaseLabel,{final=false}={}){
   const prefix=relative(ROOT,BASE);
   const existing=command('git',['diff','--cached','--name-only']);
   assert(existing.split('\n').every(x=>!x||x.startsWith(`${prefix}/`)),'unrelated staged change');
-  state.lastPushedAt=now();state.lastPushError=null;
   progress(state,saved,state.pendingCurrentPhaseSeeds??0);
   command('git',['add','--',prefix]);
   if(final)command('git',['add','-f','--',relative(ROOT,INFERENCE)]);
   if(command('git',['diff','--cached','--name-only']))command('git',['commit','-m',`Checkpoint civ matchups: ${phaseLabel}`]);
-  let last;
-  for(let attempt=0;attempt<6;attempt++){
-    try {command('git',['push','origin',branch]);return;}
-    catch(error){last=error;state.lastPushError=String(error);}
-    // Process remains in this phase until its durable checkpoint reaches GitHub.
-    await pause(Math.min(60000,5000*2**attempt));
+  try{
+    command('git',['push','origin',branch]);
+    state.lastPushedAt=now();state.lastPushError=null;state.remotePending=false;
+    return true;
+  }catch(error){
+    // Keep the per-phase local commit and continue calculation during a remote
+    // outage. The next phase push uploads the entire ordered commit history.
+    state.lastPushError=String(error);state.remotePending=true;
+    progress(state,saved,state.pendingCurrentPhaseSeeds??0);
+    console.error(JSON.stringify({remoteCheckpointPending:phaseLabel,error:String(error)}));
+    return false;
   }
-  throw new Error(`phase checkpoint push failed: ${last}`);
 }
 async function refreshInference(){
   command('node',['aoe2x/js_simulation/node/build-civ-matchup-inference.mjs','--phase','infer-only',
@@ -273,7 +276,23 @@ async function main(){
           const summary=load(resolve(INFERENCE,'summary.json'));
           state.status=summary.uniqueNeedsSim===0?'complete':'blocked_needs_review';
           state.completedAt=state.status==='complete'?now():null;
-          progress(state,saved,0);await pushCheckpoint(state,saved,state.status,{final:state.status==='complete'});
+          progress(state,saved,0);
+          const published=await pushCheckpoint(state,saved,state.status,{final:state.status==='complete'});
+          if(state.status==='complete'&&!published){
+            state.status='complete_local_pending_publish';progress(state,saved,0);
+            while(!stop){
+              await pause(60000);
+              try{
+                command('git',['push','origin',manifest.publishBranch]);
+                state.status='complete';state.remotePending=false;state.lastPushError=null;
+                state.lastPushedAt=now();progress(state,saved,0);
+                command('git',['add','--',relative(ROOT,resolve(DIR,'state.json'))]);
+                command('git',['commit','-m','Mark civ matchup campaign published']);
+                command('git',['push','origin',manifest.publishBranch]);
+                break;
+              }catch(error){state.lastPushError=String(error);progress(state,saved,0);}
+            }
+          }
           break;
         }
         const id=String(state.completedPhases.length+1).padStart(3,'0');

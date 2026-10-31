@@ -6,5 +6,8 @@ export default defineConfig({
   output: 'static',
   trailingSlash: 'never',
   devToolbar: { enabled: false },
-  adapter: vercel({ maxDuration: 60 }),
+  adapter: vercel({
+    maxDuration: 60,
+    webAnalytics: { enabled: true },
+  }),
 });

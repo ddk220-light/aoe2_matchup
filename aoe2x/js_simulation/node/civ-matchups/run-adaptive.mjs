@@ -269,7 +269,7 @@ async function main(){
     const statePath=resolve(DIR,'state.json');
     const state=existsSync(statePath)?load(statePath):{createdAt:now(),completedPhases:[],blockedPairs:[]};
     assert(Array.isArray(state.completedPhases));
-    state.status='running';state.pid=process.pid;progress(state,saved,0);
+    state.status='running';state.pid=process.pid;delete state.failure;progress(state,saved,0);
     pool=new RankingWorkerPool(manifest.policy.workers,{workerUrl:new URL('../collision-validation-worker.mjs',import.meta.url),
       maxTicks:manifest.policy.maxSimulationTicks});
     // Rebuild this derived table from the journals after every restart. The

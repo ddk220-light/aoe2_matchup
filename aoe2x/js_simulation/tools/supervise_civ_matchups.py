@@ -57,7 +57,7 @@ def main():
             event("blocked", pairs=state.get("blockedPairs"))
             return
         reason = state.get("failure", {}).get("message", "")
-        if any(term in reason for term in INTEGRITY_ERRORS):
+        if state.get("status") == "failed" and any(term in reason for term in INTEGRITY_ERRORS):
             event("integrityFailure", reason=reason)
             return
         pid = state.get("pid")

@@ -43,7 +43,7 @@
         "m_3fc8c437e3d62a2ed940"
       ],
       "ruleId": null,
-      "ruleVersion": "phase1-static-direction-v1",
+      "ruleVersion": "phase1-static-direction-and-tradeoff-v2",
       "explanation": "The benchmark opponent wins against a related unit; the replacement may cross the win boundary."
     },
     {
@@ -89,7 +89,7 @@
         "m_3fc8c437e3d62a2ed940"
       ],
       "ruleId": null,
-      "ruleVersion": "phase1-static-direction-v1",
+      "ruleVersion": "phase1-static-direction-and-tradeoff-v2",
       "explanation": "The benchmark opponent wins against a related unit; the replacement may cross the win boundary."
     },
     {
@@ -134,7 +134,7 @@
         "m_96afa0257b13847d3957"
       ],
       "ruleId": null,
-      "ruleVersion": "phase1-static-direction-v1",
+      "ruleVersion": "phase1-static-direction-and-tradeoff-v2",
       "explanation": "The benchmark opponent wins against a related unit; the replacement may cross the win boundary."
     },
     {
@@ -179,7 +179,7 @@
         "m_96afa0257b13847d3957"
       ],
       "ruleId": null,
-      "ruleVersion": "phase1-static-direction-v1",
+      "ruleVersion": "phase1-static-direction-and-tradeoff-v2",
       "explanation": "The benchmark opponent wins against a related unit; the replacement may cross the win boundary."
     },
     {
@@ -194,13 +194,11 @@
       "groupB": "Ranged",
       "lineB": "archer",
       "pairKey": "494016428bcc82515e663ea3e7a8f8eee62969d853f2db6c2e0f32b261e1f35a|db3a6bd98e07e51db827833fcd8f6686376664125fc6451b99a475499bff4eef",
-      "outcome": "unresolved",
-      "evidenceType": "none",
-      "needsSim": true,
-      "reasonCodes": [
-        "unvalidated_tradeoff"
-      ],
-      "candidateOutcome": "b_win",
+      "outcome": "b_win",
+      "evidenceType": "inferred",
+      "needsSim": false,
+      "reasonCodes": [],
+      "candidateOutcome": null,
       "context": {
         "profiles": [
           "db3a6bd98e07e51db827833fcd8f6686376664125fc6451b99a475499bff4eef",
@@ -223,9 +221,9 @@
       "rootAnchorIds": [
         "m_3190b1285f9cabca27af"
       ],
-      "ruleId": null,
-      "ruleVersion": "phase1-static-direction-v1",
-      "explanation": "Arbalester wins decisively against Pikeman; Arbalester has a related role and a nominal sustained-damage ratio of 0.77, but different mechanics may change the winner."
+      "ruleId": "R2_ROBUST_TRADEOFF",
+      "ruleVersion": "phase1-static-direction-and-tradeoff-v2",
+      "explanation": "Arbalester wins decisively against Pikeman; Arbalester fields 24 units, with nominal sustained-damage ratio 0.77 and durability ratio 1.00 against that opponent. This is a validated directional transfer, not a simulated fight."
     },
     {
       "civA": "Aztecs",
@@ -239,13 +237,11 @@
       "groupB": "Ranged",
       "lineB": "archer",
       "pairKey": "a1df487164b913aafaf778919cdc35b238124d9069db773c569f48dc39290a72|db3a6bd98e07e51db827833fcd8f6686376664125fc6451b99a475499bff4eef",
-      "outcome": "unresolved",
-      "evidenceType": "none",
-      "needsSim": true,
-      "reasonCodes": [
-        "unvalidated_tradeoff"
-      ],
-      "candidateOutcome": "b_win",
+      "outcome": "b_win",
+      "evidenceType": "inferred",
+      "needsSim": false,
+      "reasonCodes": [],
+      "candidateOutcome": null,
       "context": {
         "profiles": [
           "db3a6bd98e07e51db827833fcd8f6686376664125fc6451b99a475499bff4eef",
@@ -268,9 +264,9 @@
       "rootAnchorIds": [
         "m_3190b1285f9cabca27af"
       ],
-      "ruleId": null,
-      "ruleVersion": "phase1-static-direction-v1",
-      "explanation": "Arbalester wins decisively against Pikeman; Elite Longbowman has a related role and a nominal sustained-damage ratio of 0.68, but different mechanics may change the winner."
+      "ruleId": "R2_ROBUST_TRADEOFF",
+      "ruleVersion": "phase1-static-direction-and-tradeoff-v2",
+      "explanation": "Arbalester wins decisively against Pikeman; Elite Longbowman fields 24 units, with nominal sustained-damage ratio 0.68 and durability ratio 1.00 against that opponent. This is a validated directional transfer, not a simulated fight."
     }
   ],
   "conflicts": []

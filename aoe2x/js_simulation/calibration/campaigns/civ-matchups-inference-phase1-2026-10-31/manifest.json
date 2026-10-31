@@ -3,7 +3,7 @@
   "phase": "infer-only",
   "sourceDatasetHash": "17a91c8fa14553abbce1f894cbeb4e637d9fe9a82977fc2da2b0bc824cfade3c",
   "correctedCampaignHash": "1ac49a6abf1f3a1a104c7bcf675a3a327b6939d49273ae49c51eb6157264693d",
-  "ruleVersion": "phase1-static-direction-v1",
+  "ruleVersion": "phase1-static-direction-and-tradeoff-v2",
   "engineSourceCommit": "6ee3f32cff6bc99751408905f4415ed324c5ce3c",
   "engineRuntimeFiles": [
     {
@@ -329,7 +329,7 @@
     },
     {
       "path": "aoe2x/js_simulation/node/civ-matchups/phase-one.mjs",
-      "sha256": "7f9bf627cf53412cc656d7b495f6e1e9e05c5987141c78be5433abd1128df82c"
+      "sha256": "597d122d4ccaaa67baf12c9fb9fc6d8f48a1ee87a23d1de1e40ee2d50d54f1b5"
     },
     {
       "path": "aoe2x/js_simulation/node/build-civ-matchup-inference.mjs",
@@ -350,22 +350,22 @@
     {
       "file": "profile-matchups.jsonl.gz",
       "rows": 68916,
-      "sha256": "068742b6124689db9ad664460ab4df4276bc9ae44cf1390172237ac3eebb5a1a"
+      "sha256": "d628be8199146e41f57049ca3e4222df7ebc56bf0b8f36914a75e722b9a06da5"
     },
     {
       "file": "civ-matchups.jsonl.gz",
       "rows": 151223,
-      "sha256": "59023eb6d5f5c13617398dd70e83761780c2d8a90444615182ce2ee858395eb9"
+      "sha256": "d56476f0684d82015a17990efa5890e3568808ec26721b68895bcd476ac5747f"
     },
     {
       "file": "needs-sim.jsonl.gz",
-      "rows": 68680,
-      "sha256": "9edc445ab53193ab085eaa686abf2523f339d01ed65b97bd5451285595a4cf5b"
+      "rows": 68370,
+      "sha256": "cf072bffcca8150cfadbbec79f815d8958180538ac011f85af2254c90f67ecea"
     },
     {
       "file": "requirements.jsonl.gz",
-      "rows": 68411,
-      "sha256": "58d180725cb07ff1fdfa6b12cfda96c12aa9c1b9cecbde4a1115eb23c820a530"
+      "rows": 68293,
+      "sha256": "8430baed9a4faabb346fdb9bd93990c3bc74b8e77896699102f2cb529057c320"
     },
     {
       "file": "evidence-ledger.jsonl.gz",
@@ -376,7 +376,19 @@
       "file": "variant-profiles.json",
       "rows": 555,
       "sha256": "91fe53a3c8b7a6ef65d1dcc0a3c4041c65cfd81193f30fad8564093cbd3e40c6"
+    },
+    {
+      "file": "rule-validation.json",
+      "sha256": "f3f6966a5ad3eceeea41a838debcd29b39509f7954076687e09ed4d1bfbd9d00"
+    },
+    {
+      "file": "tradeoff-validation.json",
+      "sha256": "69dfe3699af27b7ff671223f59e89087354d5a84a59126f7e20d32b331b49862"
+    },
+    {
+      "file": "review.json",
+      "sha256": "8533c67400b1579bbd748a3914b72523d72a0525a51cf89a6207a7b67335fabf"
     }
   ],
-  "buildHash": "b1b6cdc1f2f62cd17dd6f7758d70426d58ff42cb03d0e080996d9f4e5459704c"
+  "buildHash": "5274d7adbc6c425f337c2cc287f7a162a798a04ce54b7358258e8f1be1d40a5e"
 }

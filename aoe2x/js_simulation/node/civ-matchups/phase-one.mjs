@@ -17,7 +17,7 @@ const ROOT = resolve(SIM, '../..');
 const SOURCE = resolve(SIM, 'calibration/campaigns/unit-rankings-consolidated-2026-10-29');
 const DEFINITION = resolve(SIM, 'calibration/campaigns/unit-rankings-path-recovery-2026-10-29/manifest.json');
 const SCORES = resolve(SIM, 'calibration/reports/unit-ranking-scores-final-2026-10-29/scores.json');
-const RULE_VERSION = 'phase1-static-direction-v1';
+const RULE_VERSION = 'phase1-static-direction-and-tradeoff-v2';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
 const key2 = (a,b) => a <= b ? `${a}|${b}` : `${b}|${a}`;
@@ -238,6 +238,52 @@ function proposalFor(pair,selected,root,profiles,context) {
   return null;
 }
 
+function tradeoffFor(targetContext,root,profiles) {
+  if(!root.complete||root.close||root.minWinnerHpFraction<0.5)return null;
+  const common=targetContext.profiles.filter(h=>root.profiles.includes(h));
+  if(common.length!==1)return null;
+  const fixed=common[0],oldHash=root.profiles.find(h=>h!==fixed);
+  const replacingWinner=root.outcome===oldHash;
+  if(targetContext.profiles.indexOf(fixed)!==root.profiles.indexOf(fixed)
+    ||targetContext.scenarioHash!==root.scenarioHash)return null;
+  const newHash=targetContext.profiles.find(h=>h!==fixed);
+  if(!newHash || newHash===oldHash)return null;
+  const oldProfile=profiles.get(oldHash),newProfile=profiles.get(newHash);
+  if(!oldProfile||!newProfile || oldProfile.group!==newProfile.group || oldProfile.line!==newProfile.line)return null;
+  const previous=oldProfile.mechanics,replacement=newProfile.mechanics,enemy=profiles.get(fixed).mechanics;
+  if(!staticSafe(previous)||!staticSafe(replacement)||!staticSafe(enemy))return null;
+  const oldCount=root.counts[root.profiles.indexOf(oldHash)];
+  const newCount=targetContext.counts[targetContext.profiles.indexOf(newHash)];
+  if(replacingWinner) {
+    if(replacement.attack_range_tiles<previous.attack_range_tiles
+      ||replacement.speed_tiles_per_second<0.9*previous.speed_tiles_per_second
+      ||replacement.hp<0.9*previous.hp
+      ||attackDelayTicks(replacement)>attackDelayTicks(previous)+18
+      ||newCount<0.9*oldCount)return null;
+  } else if(replacement.attack_range_tiles>previous.attack_range_tiles
+    ||replacement.speed_tiles_per_second>1.05*previous.speed_tiles_per_second
+    ||replacement.hp>1.05*previous.hp
+    ||attackDelayTicks(replacement)<attackDelayTicks(previous)-6
+    ||newCount>1.05*oldCount)return null;
+  let nominalRatio,defenseRatio;
+  try {
+    const oldDamage=calculateDamage(entity(previous),entity(enemy));
+    const newDamage=calculateDamage(entity(replacement),entity(enemy));
+    const oldIncoming=calculateDamage(entity(enemy),entity(previous));
+    const newIncoming=calculateDamage(entity(enemy),entity(replacement));
+    nominalRatio=(newDamage*newCount*(replacement.ranged?.accuracy_percent??100)/reloadTicks(replacement))
+      /(oldDamage*oldCount*(previous.ranged?.accuracy_percent??100)/reloadTicks(previous));
+    defenseRatio=(replacement.hp*newCount/newIncoming)/(previous.hp*oldCount/oldIncoming);
+  } catch {return null;}
+  if(replacingWinner ? nominalRatio<0.65 || defenseRatio<0.9
+    : nominalRatio>1.05 || defenseRatio>1.05)return null;
+  const mode=replacingWinner?'stronger_winner':'weaker_loser';
+  return {rootId:root.matchupId,rootPair:root.pairKey,winnerHash:replacingWinner?newHash:fixed,fixedHash:fixed,mode,
+    oldHash,newHash,nominalRatio,defenseRatio,
+    ruleId:'R2_ROBUST_TRADEOFF',family:`${newProfile.line}_vs_${profiles.get(fixed).line}:${mode}`,
+    explanation:`${oldProfile.mechanics.unit_name} ${replacingWinner?'wins':'loses'} decisively against ${enemy.unit_name}; ${replacement.unit_name} fields ${newCount} units, with nominal sustained-damage ratio ${nominalRatio.toFixed(2)} and durability ratio ${defenseRatio.toFixed(2)} against that opponent. This is a validated directional transfer, not a simulated fight.`};
+}
+
 function buildDecisions(inventory,evidence) {
   const {pairs,profiles,context}=inventory;
   const selected=new Map();
@@ -278,31 +324,8 @@ function buildDecisions(inventory,evidence) {
     const s=selected.get(target.key);if(!s.context||s.direct||s.conflict)continue;
     const proposal=proposalFor(target,s,root,profiles,context);
     if(proposal){if(!proposals.has(target.key))proposals.set(target.key,[]);proposals.get(target.key).push(proposal);}
-    const oldHash=root.profiles.find(h=>h!==fixed),newHash=s.context.profiles.find(h=>h!==fixed);
-    if(!newHash||oldHash===newHash||root.outcome!==oldHash||root.minWinnerHpFraction<0.5)continue;
-    const oldProfile=profiles.get(oldHash),newProfile=profiles.get(newHash);
-    if(oldProfile.group!==newProfile.group || oldProfile.line!==newProfile.line ||
-      s.context.scenarioHash!==root.scenarioHash ||
-      s.context.profiles.indexOf(fixed)!==root.profiles.indexOf(fixed))continue;
-    const previous=oldProfile.mechanics,replacement=newProfile.mechanics,enemy=profiles.get(fixed).mechanics;
-    if(!staticSafe(previous)||!staticSafe(replacement)||!staticSafe(enemy)
-      ||replacement.attack_range_tiles<previous.attack_range_tiles
-      ||replacement.speed_tiles_per_second<0.9*previous.speed_tiles_per_second
-      ||replacement.hp<0.9*previous.hp)continue;
-    const oldCount=root.counts[root.profiles.indexOf(oldHash)];
-    const newCount=s.context.counts[s.context.profiles.indexOf(newHash)];
-    if(newCount<0.9*oldCount)continue;
-    let nominalRatio;
-    try {
-      const oldDamage=calculateDamage(entity(previous),entity(enemy));
-      const newDamage=calculateDamage(entity(replacement),entity(enemy));
-      nominalRatio=(newDamage*newCount*(replacement.ranged?.accuracy_percent??100)/reloadTicks(replacement))
-        /(oldDamage*oldCount*(previous.ranged?.accuracy_percent??100)/reloadTicks(previous));
-    } catch {continue;}
-    if(nominalRatio<0.65)continue;
-    const item={rootId:root.matchupId,winnerHash:newHash,fixedHash:fixed,
-      ruleId:'R2_TRADEOFF_CANDIDATE',family:`${newProfile.line}_vs_${profiles.get(fixed).line}`,
-      explanation:`${oldProfile.mechanics.unit_name} wins decisively against ${profiles.get(fixed).mechanics.unit_name}; ${newProfile.mechanics.unit_name} has a related role and a nominal sustained-damage ratio of ${nominalRatio.toFixed(2)}, but different mechanics may change the winner.`};
+    const item=tradeoffFor(s.context,root,profiles);
+    if(!item)continue;
     if(!tradeoffCandidates.has(target.key))tradeoffCandidates.set(target.key,[]);
     tradeoffCandidates.get(target.key).push(item);
   }
@@ -352,6 +375,67 @@ function buildDecisions(inventory,evidence) {
     heldOutTargetPairs:validation.targetPairs.size,correct:validation.correct,wrong:validation.wrong,
     closePredictedDecisively:validation.closePredictedDecisively,families:familyValidation,
     requirement:'per family: at least 3 distinct held-out target pairs, 2 independent root pairs, zero wrong winners, zero decisive predictions of close fights'};
+  const tradeoffCheck=new Map();
+  for(const [engine,source] of [['corrected',evidence.anchors],['original',evidence.prior]]) {
+    const complete=source.filter(x=>x.complete&&!x.close&&pairs.has(x.pairKey));
+    const byHash=new Map();
+    for(const root of complete)for(const h of new Set(root.profiles)){
+      if(!byHash.has(h))byHash.set(h,[]);byHash.get(h).push(root);
+    }
+    for(const target of complete) {
+      const targetContext=context(...target.profiles);
+      for(const fixed of new Set(target.profiles))for(const root of byHash.get(fixed)??[]) {
+        if(root.pairKey===target.pairKey)continue;
+        const proposal=tradeoffFor(targetContext,root,profiles);
+        if(!proposal)continue;
+        const k=`${proposal.family}|${engine}`;
+        if(!tradeoffCheck.has(k))tradeoffCheck.set(k,{rootPairs:new Set(),targets:new Map()});
+        const entry=tradeoffCheck.get(k);
+        entry.rootPairs.add(root.pairKey);
+        if(!entry.targets.has(target.pairKey))entry.targets.set(target.pairKey,{actual:target.outcome,predictions:new Set()});
+        entry.targets.get(target.pairKey).predictions.add(proposal.winnerHash);
+      }
+    }
+  }
+  const tradeoffFamilies={};
+  for(const [key,entry] of tradeoffCheck) {
+    const n=key.lastIndexOf('|'),family=key.slice(0,n),engine=key.slice(n+1);
+    tradeoffFamilies[family]??={};
+    const wrong=[...entry.targets.values()].filter(t=>t.predictions.size!==1||!t.predictions.has(t.actual)).length;
+    tradeoffFamilies[family][engine]={targets:entry.targets.size,independentRoots:entry.rootPairs.size,
+      correct:entry.targets.size-wrong,wrong};
+  }
+  const modes=['stronger_winner','weaker_loser'];
+  const tradeoffModeStats=Object.fromEntries(modes.map(mode=>[mode,{
+    targets:{corrected:new Set(),original:new Set()},roots:{corrected:new Set(),original:new Set()},wrong:0}]));
+  for(const [key,entry] of tradeoffCheck) {
+    const engine=key.slice(key.lastIndexOf('|')+1);
+    const mode=key.includes(':weaker_loser|')?'weaker_loser':'stronger_winner';
+    for(const id of entry.targets.keys())tradeoffModeStats[mode].targets[engine].add(id);
+    for(const id of entry.rootPairs)tradeoffModeStats[mode].roots[engine].add(id);
+  }
+  for(const [family,tests] of Object.entries(tradeoffFamilies)) {
+    const old=tests.original??{targets:0,wrong:0},current=tests.corrected??{targets:0,wrong:0};
+    const mode=family.endsWith(':weaker_loser')?'weaker_loser':'stronger_winner';
+    tradeoffModeStats[mode].wrong+=old.wrong+current.wrong;
+  }
+  const tradeoffModeValidation={};
+  for(const [mode,stats] of Object.entries(tradeoffModeStats)) {
+    tradeoffModeValidation[mode]={enabled:stats.targets.original.size>=50
+      &&stats.targets.corrected.size>=5&&stats.wrong===0,
+      originalTargets:stats.targets.original.size,correctedTargets:stats.targets.corrected.size,
+      originalRoots:stats.roots.original.size,correctedRoots:stats.roots.corrected.size,wrong:stats.wrong};
+  }
+  for(const [family,tests] of Object.entries(tradeoffFamilies)) {
+    const old=tests.original??{wrong:0},current=tests.corrected??{wrong:0};
+    const mode=family.endsWith(':weaker_loser')?'weaker_loser':'stronger_winner';
+    tests.mode=mode;
+    tests.enabled=tradeoffModeValidation[mode].enabled&&old.wrong===0&&current.wrong===0;
+  }
+  const tradeoffValidation={ruleId:'R2_ROBUST_TRADEOFF',ruleVersion:RULE_VERSION,
+    requirement:'per directional mode: at least 50 independent original-engine and 5 corrected-engine held-out targets, zero wrong predictions in either stratum; disable any family with a known counterexample',
+    modes:tradeoffModeValidation,
+    families:tradeoffFamilies};
   const decisions=[];const reasonCounts={};
   const priorByPair=new Map();for(const p of evidence.prior)if(pairs.has(p.pairKey)){
     if(!priorByPair.has(p.pairKey))priorByPair.set(p.pairKey,[]);priorByPair.get(p.pairKey).push(p);
@@ -379,27 +463,31 @@ function buildDecisions(inventory,evidence) {
       const candidateOutcome=predicted.size===1?[...predicted][0]:tradeoffWinners.size===1?[...tradeoffWinners][0]:
         priorWinners.size===1?[...priorWinners][0]:null;
       const validatedProposals=rootsHere.filter(x=>familyValidation[x.family]?.enabled);
-      const eligibleWinners=new Set(validatedProposals.map(x=>x.winnerHash));
+      const validatedTradeoffs=tradeoffs.filter(x=>tradeoffModeValidation[x.mode]?.enabled
+        &&tradeoffFamilies[x.family]?.enabled!==false);
+      const eligibleWinners=new Set([...validatedProposals,...validatedTradeoffs].map(x=>x.winnerHash));
       const priorConflict=priorWinners.size && eligibleWinners.size===1 && !priorWinners.has([...eligibleWinners][0]);
       const reasonCodes=[];
       if(s.partial?.length)reasonCodes.push('incomplete_current_seeds');
       if(prior.length)reasonCodes.push('prior_engine_only');
       if(rootsHere.length && predicted.size>1)reasonCodes.push('conflicting_inferences');
       else if(rootsHere.length && !validatedProposals.length)reasonCodes.push('rule_needs_validation');
-      if(tradeoffs.length)reasonCodes.push('unvalidated_tradeoff');
+      if(tradeoffs.length && !validatedTradeoffs.length)reasonCodes.push('unvalidated_tradeoff');
       if(boundaries.length)reasonCodes.push('possible_win_boundary');
       if(priorConflict)reasonCodes.push('prior_engine_conflict');
       if(!rootsHere.length && !tradeoffs.length && !boundaries.length && !s.partial?.length && !prior.length)reasonCodes.push('no_eligible_anchor');
       if(pair.profiles.some(h=>!staticSafe(profiles.get(h).mechanics)))reasonCodes.push('unsupported_effect');
       if(!reasonCodes.length)reasonCodes.push('no_eligible_anchor');
-      const resolvable=eligibleWinners.size===1 && predicted.size===1 && !priorConflict && !s.partial?.length;
+      const allProposedWinners=new Set([...rootsHere,...tradeoffs].map(x=>x.winnerHash));
+      const resolvable=eligibleWinners.size===1 && allProposedWinners.size===1 && !priorConflict && !s.partial?.length;
       decision={...base,outcome:resolvable?candidateOutcome:'unresolved',evidenceType:resolvable?'inferred':'none',
         needsSim:!resolvable,reasonCodes:resolvable?[]:reasonCodes,candidateOutcome:resolvable?null:candidateOutcome,
-        ruleId:rootsHere.length?'R1_STATIC_DIRECTION':null,
+        ruleId:validatedProposals.length?'R1_STATIC_DIRECTION':validatedTradeoffs.length?'R2_ROBUST_TRADEOFF':
+          rootsHere.length?'R1_STATIC_DIRECTION':tradeoffs.length?'R2_ROBUST_TRADEOFF':null,
         rootAnchorIds:[...new Set([...rootsHere.map(x=>x.rootId),...tradeoffs.map(x=>x.rootId),...boundaries.map(x=>x.rootId)])].sort(),
         tradeoffFamily:tradeoffs.length?tradeoffs[0].family:null,
         priorMatchups:prior.map(x=>x.matchupId).sort(),
-        explanation:resolvable?rootsHere[0].explanation:
+        explanation:resolvable?(validatedProposals[0]??validatedTradeoffs[0]).explanation:
           rootsHere.length?`${rootsHere.length} static directional transfer(s) proposed; applicable family validation or evidence is insufficient.`:
           tradeoffs.length?tradeoffs[0].explanation:
           boundaries.length?'The benchmark opponent wins against a related unit; the replacement may cross the win boundary.':
@@ -416,7 +504,7 @@ function buildDecisions(inventory,evidence) {
     }
     decisions.push(decision);
   }
-  return {decisions,proposals,ruleValidation,reasonCounts,roots:roots.length};
+  return {decisions,proposals,ruleValidation,tradeoffValidation,reasonCounts,roots:roots.length};
 }
 
 function buildExports(inventory,evidence,results) {
@@ -507,13 +595,20 @@ export function buildPhaseOne(outputDirectory) {
     civilization:v.civilization,slug:v.slug,name:v.name,line:v.line,group:v.group})),null,2)+'\n';
   atomic(resolve(outputDirectory,variantFile),variantContent);
   outputFiles.push({file:variantFile,rows:inventory.variants.length,sha256:sha(variantContent)});
+  for(const [file,data] of [
+    ['rule-validation.json',results.ruleValidation],['tradeoff-validation.json',results.tradeoffValidation],
+    ['review.json',exports.review],
+  ]) {
+    const content=JSON.stringify(data,null,2)+'\n';
+    atomic(resolve(outputDirectory,file),content);
+    outputFiles.push({file,sha256:sha(content)});
+  }
   manifest.outputs=outputFiles;
   manifest.buildHash=hashCanonicalJson(manifest);
-  atomic(resolve(outputDirectory,'rule-validation.json'),JSON.stringify(results.ruleValidation,null,2)+'\n');
-  atomic(resolve(outputDirectory,'review.json'),JSON.stringify(exports.review,null,2)+'\n');
   const summary={manifestHash:manifest.buildHash,coverage:exports.coverage,
     sourceGroupCounts:evidence.sourceGroupCounts,reasonCounts:results.reasonCounts,
-    ruleValidation:results.ruleValidation,uniqueNeedsSim:exports.needsSim.length,
+    ruleValidation:results.ruleValidation,tradeoffValidation:results.tradeoffValidation,
+    uniqueNeedsSim:exports.needsSim.length,
     groupedRequirements:exports.requirements.length,
     roots:results.roots,simulationJobsRun:0};
   atomic(resolve(outputDirectory,'summary.json'),JSON.stringify(summary,null,2)+'\n');
@@ -524,6 +619,8 @@ export function buildPhaseOne(outputDirectory) {
     `Distinct profile pairs: ${inventory.pairs.size}; expanded civ-unit cells: ${exports.cellRows.length}.`,
     `Observed: ${results.decisions.filter(d=>d.evidenceType==='observed').length}; inferred: ${results.decisions.filter(d=>d.evidenceType==='inferred').length}; equivalent: ${results.decisions.filter(d=>d.evidenceType==='identity').length}; unresolved: ${exports.needsSim.length}.`,
     `R1 held-out validation: ${results.ruleValidation.correct} correct predictions against ${results.ruleValidation.heldOutTargetPairs} distinct targets; ${results.ruleValidation.wrong} wrong; ${results.ruleValidation.closePredictedDecisively} close fights predicted decisively.`,
+    `R2 stronger-winner validation: ${results.tradeoffValidation.modes.stronger_winner.originalTargets} original-engine and ${results.tradeoffValidation.modes.stronger_winner.correctedTargets} corrected-engine targets; ${results.tradeoffValidation.modes.stronger_winner.wrong} wrong.`,
+    `R2 weaker-loser validation: ${results.tradeoffValidation.modes.weaker_loser.originalTargets} original-engine and ${results.tradeoffValidation.modes.weaker_loser.correctedTargets} corrected-engine targets; ${results.tradeoffValidation.modes.weaker_loser.wrong} wrong.`,
     '',
     '## Britons against Aztecs',
     '',

@@ -68,8 +68,16 @@ for record in rows('profile-matchups'):
                 assert {r['winnerHash'] for r in runs} == {winner}
         elif record['evidenceType'] == 'inferred':
             assert record['ruleId'] and record['rootAnchorIds']
-            assert all(any(r['corrected'] for r in by_matchup[mid]) for mid in record['rootAnchorIds'])
+            for mid in record['rootAnchorIds']:
+                roots = [r for r in by_matchup[mid] if r['corrected']]
+                assert {0, 1, 2} <= {r['seed'] for r in roots}
+                assert len({r['winnerHash'] for r in roots}) == 1
             assert 'unitRemainingHp' not in record and 'winProbability' not in record
+            if record['ruleId'] == 'R2_ROBUST_TRADEOFF':
+                mode = record['tradeoffFamily'].split(':')[-1]
+                assert summary['tradeoffValidation']['modes'][mode]['enabled']
+                family = summary['tradeoffValidation']['families'].get(record['tradeoffFamily'])
+                assert family is None or family['enabled']
         else:
             raise AssertionError('decisive pair missing evidence')
     elif record['outcome'] == 'unresolved':
@@ -123,9 +131,9 @@ assert len(requirements) == summary['groupedRequirements']
 review = json.loads((OUT / 'review.json').read_text())
 britons = review['britonsAztecs']
 assert len(britons) == 6
-assert all(r['outcome'] == 'unresolved' for r in britons)
-assert all(r['candidateOutcome'] == 'b_win' for r in britons if r['nameA'] == 'Pikeman')
-assert all(r['candidateOutcome'] is None for r in britons if r['nameA'] != 'Pikeman')
+assert all(r['outcome'] == 'b_win' and r['evidenceType'] == 'inferred'
+           for r in britons if r['nameA'] == 'Pikeman')
+assert all(r['outcome'] == 'unresolved' for r in britons if r['nameA'] != 'Pikeman')
 
 print(json.dumps({'status': 'passed', 'manifestHash': manifest['buildHash'],
                   'profilePairs': len(profiles), 'cells': len(seen),

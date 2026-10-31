@@ -1,0 +1,357 @@
+{
+  "ruleId": "R2_ROBUST_TRADEOFF",
+  "ruleVersion": "phase1-static-direction-and-tradeoff-v2",
+  "requirement": "per directional mode: at least 50 independent original-engine and 5 corrected-engine held-out targets, zero wrong predictions in either stratum; disable any family with a known counterexample",
+  "modes": {
+    "stronger_winner": {
+      "enabled": true,
+      "originalTargets": 99,
+      "correctedTargets": 7,
+      "originalRoots": 59,
+      "correctedRoots": 6,
+      "wrong": 0
+    },
+    "weaker_loser": {
+      "enabled": true,
+      "originalTargets": 203,
+      "correctedTargets": 6,
+      "originalRoots": 193,
+      "correctedRoots": 6,
+      "wrong": 0
+    }
+  },
+  "families": {
+    "spear_vs_light_cav:stronger_winner": {
+      "corrected": {
+        "targets": 7,
+        "independentRoots": 6,
+        "correct": 7,
+        "wrong": 0
+      },
+      "original": {
+        "targets": 11,
+        "independentRoots": 8,
+        "correct": 11,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "spear_vs_archer:weaker_loser": {
+      "corrected": {
+        "targets": 6,
+        "independentRoots": 6,
+        "correct": 6,
+        "wrong": 0
+      },
+      "original": {
+        "targets": 9,
+        "independentRoots": 10,
+        "correct": 9,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "archer_vs_cav_archer:weaker_loser": {
+      "original": {
+        "targets": 21,
+        "independentRoots": 17,
+        "correct": 21,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "archer_vs_gunpowder:stronger_winner": {
+      "original": {
+        "targets": 14,
+        "independentRoots": 4,
+        "correct": 14,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "archer_vs_light_cav:weaker_loser": {
+      "original": {
+        "targets": 8,
+        "independentRoots": 7,
+        "correct": 8,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "archer_vs_skirmisher:weaker_loser": {
+      "original": {
+        "targets": 23,
+        "independentRoots": 21,
+        "correct": 23,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "cav_archer_vs_cav_archer:weaker_loser": {
+      "original": {
+        "targets": 12,
+        "independentRoots": 13,
+        "correct": 12,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "cav_archer_vs_skirmisher:weaker_loser": {
+      "original": {
+        "targets": 24,
+        "independentRoots": 23,
+        "correct": 24,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "light_cav_vs_spear:weaker_loser": {
+      "original": {
+        "targets": 27,
+        "independentRoots": 27,
+        "correct": 27,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "light_cav_vs_camel:weaker_loser": {
+      "original": {
+        "targets": 29,
+        "independentRoots": 29,
+        "correct": 29,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "light_cav_vs_cav_archer:weaker_loser": {
+      "original": {
+        "targets": 17,
+        "independentRoots": 13,
+        "correct": 17,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "skirmisher_vs_archer:stronger_winner": {
+      "original": {
+        "targets": 12,
+        "independentRoots": 10,
+        "correct": 12,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "skirmisher_vs_gunpowder:stronger_winner": {
+      "original": {
+        "targets": 12,
+        "independentRoots": 7,
+        "correct": 12,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "skirmisher_vs_light_cav:weaker_loser": {
+      "original": {
+        "targets": 15,
+        "independentRoots": 18,
+        "correct": 15,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "cav_archer_vs_light_cav:stronger_winner": {
+      "original": {
+        "targets": 11,
+        "independentRoots": 4,
+        "correct": 11,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "light_cav_vs_archer:stronger_winner": {
+      "original": {
+        "targets": 13,
+        "independentRoots": 9,
+        "correct": 13,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "archer_vs_archer:weaker_loser": {
+      "original": {
+        "targets": 5,
+        "independentRoots": 3,
+        "correct": 5,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "cav_archer_vs_archer:weaker_loser": {
+      "original": {
+        "targets": 2,
+        "independentRoots": 1,
+        "correct": 2,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "cav_archer_vs_gunpowder:stronger_winner": {
+      "original": {
+        "targets": 9,
+        "independentRoots": 5,
+        "correct": 9,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "steppe_lancer_vs_archer:stronger_winner": {
+      "original": {
+        "targets": 3,
+        "independentRoots": 2,
+        "correct": 3,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "steppe_lancer_vs_cav_archer:stronger_winner": {
+      "original": {
+        "targets": 2,
+        "independentRoots": 1,
+        "correct": 2,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "gunpowder_vs_archer:weaker_loser": {
+      "original": {
+        "targets": 2,
+        "independentRoots": 2,
+        "correct": 2,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "gunpowder_vs_cav_archer:weaker_loser": {
+      "original": {
+        "targets": 4,
+        "independentRoots": 5,
+        "correct": 4,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "camel_vs_cav_archer:stronger_winner": {
+      "original": {
+        "targets": 4,
+        "independentRoots": 3,
+        "correct": 4,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "knight_vs_archer:stronger_winner": {
+      "original": {
+        "targets": 2,
+        "independentRoots": 2,
+        "correct": 2,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "knight_vs_cav_archer:stronger_winner": {
+      "original": {
+        "targets": 2,
+        "independentRoots": 2,
+        "correct": 2,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "skirmisher_vs_cav_archer:stronger_winner": {
+      "original": {
+        "targets": 2,
+        "independentRoots": 1,
+        "correct": 2,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "light_cav_vs_archer:weaker_loser": {
+      "original": {
+        "targets": 2,
+        "independentRoots": 1,
+        "correct": 2,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "militia_vs_archer:stronger_winner": {
+      "original": {
+        "targets": 2,
+        "independentRoots": 1,
+        "correct": 2,
+        "wrong": 0
+      },
+      "mode": "stronger_winner",
+      "enabled": true
+    },
+    "gunpowder_vs_light_cav:weaker_loser": {
+      "original": {
+        "targets": 1,
+        "independentRoots": 1,
+        "correct": 1,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "gunpowder_vs_skirmisher:weaker_loser": {
+      "original": {
+        "targets": 1,
+        "independentRoots": 1,
+        "correct": 1,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    },
+    "cav_archer_vs_light_cav:weaker_loser": {
+      "original": {
+        "targets": 1,
+        "independentRoots": 1,
+        "correct": 1,
+        "wrong": 0
+      },
+      "mode": "weaker_loser",
+      "enabled": true
+    }
+  }
+}

@@ -13,6 +13,10 @@ const LARGE_BODY_PAIR_GROWTH_WEIGHT = 48;
 const LARGE_BODY_TRIPLE_GROWTH_WEIGHT = 768;
 const STANDARD_RANGED_BODY_RADIUS = 0.2;
 const RANGED_TRANSIT_BODY_CORE_FRACTION = 0.025;
+// collision.js treats deeper starting overlaps as invalid beyond this slop.
+// The core may be inherited at a smaller separation only on that error path;
+// successful old paths inside the tolerance retain their exact reservation.
+const COLLISION_START_SLOP = 1e-4;
 // A committed siege body is a path obstacle to later ingress. Classification
 // comes from AoE2's own Siege Weapon armor class (20), not body radius: large
 // mobile ranged units remain compliant, while every present and future siege
@@ -265,10 +269,13 @@ function crowdReservation(
   // row cannot manufacture fresh penetration through the established firing
   // rank. Publishing the exact inherited separation is also important: a
   // reservation cannot retroactively declare the current geometry invalid.
+  const coreExtent = fullExtent * RANGED_TRANSIT_BODY_CORE_FRACTION;
   const collisionExtent = committedSiegeBody
     ? Math.min(fullExtent, current)
+    : current < coreExtent - COLLISION_START_SLOP
+      ? current
     : Math.max(
-      fullExtent * RANGED_TRANSIT_BODY_CORE_FRACTION,
+      coreExtent,
       Math.min(fullExtent, current, projected),
     );
   const [leftId, rightId] = left.referenceId < right.referenceId

@@ -10,6 +10,7 @@ import {
   createPairInteractionSnapshot,
   resolvePairInteraction,
 } from "../src/combat/pair-interactions.js";
+import { resolveMovementProposals } from "../src/combat/collision.js";
 
 
 const mechanics = Object.freeze({
@@ -79,6 +80,38 @@ test("an isolated ranged pair keeps its desired compliant compression step", () 
   assert.equal(result.steered.length, 0);
   assert.equal(result.contactReservations.get("1:2").kind, "ranged-crowd");
   assert.ok(result.contactReservations.get("1:2").collisionExtent < 0.4);
+});
+
+
+test("a newly acquired ranged crowd core resolves inherited sub-core geometry", () => {
+  const units = [
+    unit(9509, 1, 1, { mechanics: largeRangedMechanics, unitMaster: 279 }),
+    unit(9518, 1.0245290465384098, 1, { mechanics: largeRangedMechanics, unitMaster: 279 }),
+  ];
+  const proposals = units.map(({ referenceId }) => proposal(referenceId, 0));
+  const crowd = planRangedCrowding(units, proposals, 2345);
+  const contact = crowd.contactReservations.get("9509:9518");
+  assert.equal(contact.collisionExtent, units[1].x - units[0].x);
+  const moved = resolveMovementProposals(units, crowd.proposals,
+    { width: 10, height: 10 },
+    { pairInteractions: createPairInteractionSnapshot({
+      contactReservations: crowd.contactReservations,
+    }) });
+  const separation = Math.max(
+    Math.abs(moved[1].x - moved[0].x),
+    Math.abs(moved[1].y - moved[0].y),
+  );
+  assert.ok(separation >= contact.collisionExtent - 1e-12);
+});
+
+
+test("a sub-core overlap within the old collision slop keeps its original core", () => {
+  const units = [
+    unit(1, 1, 1, { mechanics: largeRangedMechanics }),
+    unit(2, 1.02495, 1, { mechanics: largeRangedMechanics }),
+  ];
+  const crowd = planRangedCrowding(units, units.map(x => proposal(x.referenceId, 0)), 2345);
+  assert.equal(crowd.contactReservations.get("1:2").collisionExtent, 0.025);
 });
 
 

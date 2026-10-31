@@ -309,6 +309,12 @@ function tradeoffFor(targetContext,root,profiles) {
   if(!staticSafe(previous)||!staticSafe(replacement)||!staticSafe(enemy))return null;
   const oldCount=root.counts[root.profiles.indexOf(oldHash)];
   const newCount=targetContext.counts[targetContext.profiles.indexOf(newHash)];
+  const oldOpponentCount=root.counts[root.profiles.indexOf(fixed)];
+  const newOpponentCount=targetContext.counts[targetContext.profiles.indexOf(fixed)];
+  // Cost balancing recalculates both armies. A supposed stronger winner cannot
+  // inherit a win against more opponents; a weaker loser cannot inherit a loss
+  // against fewer opponents, regardless of the replacement's nominal ratios.
+  if(replacingWinner ? newOpponentCount>oldOpponentCount : newOpponentCount<oldOpponentCount)return null;
   if(replacingWinner) {
     if(replacement.attack_range_tiles<previous.attack_range_tiles
       ||replacement.speed_tiles_per_second<0.9*previous.speed_tiles_per_second
@@ -453,19 +459,30 @@ function buildDecisions(inventory,evidence) {
         if(!tradeoffCheck.has(k))tradeoffCheck.set(k,{rootPairs:new Set(),targets:new Map()});
         const entry=tradeoffCheck.get(k);
         entry.rootPairs.add(root.pairKey);
-        if(!entry.targets.has(target.pairKey))entry.targets.set(target.pairKey,{actual:target.outcome,predictions:new Set()});
-        entry.targets.get(target.pairKey).predictions.add(proposal.winnerHash);
+        if(!entry.targets.has(target.pairKey))entry.targets.set(target.pairKey,
+          {actual:target.outcome,predictions:new Set(),roots:new Map()});
+        const heldOut=entry.targets.get(target.pairKey);
+        heldOut.predictions.add(proposal.winnerHash);
+        heldOut.roots.set(root.matchupId,{rootPair:root.pairKey,winnerHash:proposal.winnerHash});
       }
     }
   }
   const tradeoffFamilies={};
+  const tradeoffCounterexamples=[];
   for(const [key,entry] of tradeoffCheck) {
     const n=key.lastIndexOf('|'),family=key.slice(0,n),engine=key.slice(n+1);
     tradeoffFamilies[family]??={};
     const wrong=[...entry.targets.values()].filter(t=>t.predictions.size!==1||!t.predictions.has(t.actual)).length;
+    for(const [targetPair,target] of entry.targets){
+      if(target.predictions.size===1&&target.predictions.has(target.actual))continue;
+      tradeoffCounterexamples.push({family,engine,targetPair,actualWinner:target.actual,
+        proposedWinners:[...target.predictions].sort(),roots:[...target.roots].map(([matchupId,root])=>
+          ({matchupId,...root})).sort((a,b)=>a.matchupId.localeCompare(b.matchupId))});
+    }
     tradeoffFamilies[family][engine]={targets:entry.targets.size,independentRoots:entry.rootPairs.size,
       correct:entry.targets.size-wrong,wrong};
   }
+  tradeoffCounterexamples.sort((a,b)=>a.family.localeCompare(b.family)||a.targetPair.localeCompare(b.targetPair));
   const modes=['stronger_winner','weaker_loser'];
   const tradeoffModeStats=Object.fromEntries(modes.map(mode=>[mode,{
     targets:{corrected:new Set(),original:new Set()},roots:{corrected:new Set(),original:new Set()},wrong:0}]));
@@ -495,7 +512,7 @@ function buildDecisions(inventory,evidence) {
   }
   const tradeoffValidation={ruleId:'R2_ROBUST_TRADEOFF',ruleVersion:RULE_VERSION,
     requirement:'per directional mode: at least 50 independent original-engine and 5 corrected-engine held-out targets, zero wrong predictions in either stratum; disable any family with a known counterexample',
-    modes:tradeoffModeValidation,
+    modes:tradeoffModeValidation,counterexamples:tradeoffCounterexamples,
     families:tradeoffFamilies};
   const decisions=[];const reasonCounts={};
   const priorByPair=new Map();for(const p of evidence.prior)if(pairs.has(p.pairKey)){
@@ -541,14 +558,19 @@ function buildDecisions(inventory,evidence) {
       if(!reasonCodes.length)reasonCodes.push('no_eligible_anchor');
       const allProposedWinners=new Set([...rootsHere,...tradeoffs].map(x=>x.winnerHash));
       const resolvable=eligibleWinners.size===1 && allProposedWinners.size===1 && !priorConflict && !s.partial?.length;
+      // Publish roots for the selected rule family only. Different validated
+      // tradeoff modes can agree on a winner but require opposite count guards.
+      const supporting=validatedProposals.length?validatedProposals:
+        validatedTradeoffs.filter(x=>x.family===validatedTradeoffs[0]?.family);
       decision={...base,outcome:resolvable?candidateOutcome:'unresolved',evidenceType:resolvable?'inferred':'none',
         needsSim:!resolvable,reasonCodes:resolvable?[]:reasonCodes,candidateOutcome:resolvable?null:candidateOutcome,
         ruleId:validatedProposals.length?'R1_STATIC_DIRECTION':validatedTradeoffs.length?'R2_ROBUST_TRADEOFF':
           rootsHere.length?'R1_STATIC_DIRECTION':tradeoffs.length?'R2_ROBUST_TRADEOFF':null,
-        rootAnchorIds:[...new Set([...rootsHere.map(x=>x.rootId),...tradeoffs.map(x=>x.rootId),...boundaries.map(x=>x.rootId)])].sort(),
-        tradeoffFamily:tradeoffs.length?tradeoffs[0].family:null,
+        rootAnchorIds:[...new Set((resolvable?supporting:[...rootsHere,...tradeoffs,...boundaries]).map(x=>x.rootId))].sort(),
+        tradeoffFamily:resolvable?(validatedProposals.length?null:validatedTradeoffs[0]?.family??null):
+          tradeoffs.length?tradeoffs[0].family:null,
         priorMatchups:prior.map(x=>x.matchupId).sort(),
-        explanation:resolvable?(validatedProposals[0]??validatedTradeoffs[0]).explanation:
+        explanation:resolvable?supporting[0].explanation:
           rootsHere.length?`${rootsHere.length} static directional transfer(s) proposed; applicable family validation or evidence is insufficient.`:
           tradeoffs.length?tradeoffs[0].explanation:
           boundaries.length?'The benchmark opponent wins against a related unit; the replacement may cross the win boundary.':

@@ -79,6 +79,19 @@ for record in rows('profile-matchups'):
                 assert summary['tradeoffValidation']['modes'][mode]['enabled']
                 family = summary['tradeoffValidation']['families'].get(record['tradeoffFamily'])
                 assert family is None or family['enabled']
+                target = record['context']
+                for mid in record['rootAnchorIds']:
+                    root = next(r for r in by_matchup[mid] if r['corrected'])
+                    fixed = set(target['profiles']) & set(root['profileHashes'])
+                    assert len(fixed) == 1
+                    fixed = fixed.pop()
+                    target_index = target['profiles'].index(fixed)
+                    root_index = root['profileHashes'].index(fixed)
+                    assert target_index == root_index
+                    if mode == 'stronger_winner':
+                        assert target['counts'][target_index] <= root['counts'][root_index]
+                    else:
+                        assert target['counts'][target_index] >= root['counts'][root_index]
         else:
             raise AssertionError('decisive pair missing evidence')
     elif record['outcome'] == 'unresolved':

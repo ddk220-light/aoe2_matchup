@@ -20,6 +20,7 @@ INTEGRITY_ERRORS = (
     "hash mismatch", "source changed", "duplicate saved seed", "exact replay failed",
     "coverage mismatch", "inventory hash mismatch", "environment changed",
     "campaign manifest hash", "phase has unaccounted missing seeds",
+    "validate_civ_matchups_phase_one.py",
 )
 
 

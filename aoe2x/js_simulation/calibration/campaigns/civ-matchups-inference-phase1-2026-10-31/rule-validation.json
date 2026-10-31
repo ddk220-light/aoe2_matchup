@@ -1,0 +1,29 @@
+{
+  "ruleId": "R1_STATIC_DIRECTION",
+  "ruleVersion": "phase1-static-direction-v1",
+  "candidatePredictions": 13,
+  "independentRootPairs": 8,
+  "heldOutTargetPairs": 8,
+  "correct": 13,
+  "wrong": 0,
+  "closePredictedDecisively": 0,
+  "families": {
+    "spear_vs_archer:weaker_loser": {
+      "heldOutTargetPairs": 4,
+      "independentRootPairs": 4,
+      "correct": 6,
+      "wrong": 0,
+      "closePredictedDecisively": 0,
+      "enabled": true
+    },
+    "spear_vs_light_cav:stronger_winner": {
+      "heldOutTargetPairs": 4,
+      "independentRootPairs": 4,
+      "correct": 7,
+      "wrong": 0,
+      "closePredictedDecisively": 0,
+      "enabled": true
+    }
+  },
+  "requirement": "per family: at least 3 distinct held-out target pairs, 2 independent root pairs, zero wrong winners, zero decisive predictions of close fights"
+}

@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 1,
+  "phase": "infer-only",
+  "sourceDatasetHash": "17a91c8fa14553abbce1f894cbeb4e637d9fe9a82977fc2da2b0bc824cfade3c",
+  "correctedCampaignHash": "1ac49a6abf1f3a1a104c7bcf675a3a327b6939d49273ae49c51eb6157264693d",
+  "ruleVersion": "phase1-static-direction-v1",
+  "engineSourceCommit": "6ee3f32cff6bc99751408905f4415ed324c5ce3c",
+  "engineRuntimeFiles": [
+    {
+      "path": "aoe2x/js_simulation/fixtures/current_ranged_golden_formations.json",
+      "sha256": "fe42ae448fc426f1cdc28a3530c30fddd201abeeb17548c1b0aaf6973d0c9c53"
+    },
+    {
+      "path": "aoe2x/js_simulation/fixtures/golden_formation_27v27.json",
+      "sha256": "1ff57fdf49cf9a6a4c9fd2e329f28f7122e7f0799798ec463ec5bc66d108715a"
+    },
+    {
+      "path": "aoe2x/js_simulation/fixtures/golden_map.json",
+      "sha256": "721457e8507e9e4e47714445d658a6dfffae1cb9e502637cd4467e4c339ed6b3"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/campaign-worker.mjs",
+      "sha256": "66cee5426ac87c90974ac4dafe0e2c8533bc5d9a152d3ce3d726399bb5b29075"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/collision-validation-worker.mjs",
+      "sha256": "8837857409a030e928d7b47f83984dc3c4cc6b5397b613893d09b5892bc8295b"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/full-ranking-campaign.mjs",
+      "sha256": "feded33bc46427ea0a5cd40801f3bf97a5fb5cf79549e614285bcb45eb5eb6a0"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/ranking-campaign.mjs",
+      "sha256": "387f606cb4f09ae368076ba69c821bde091a4f2f8725c146232cb297c26c8cf7"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/ranking-equivalence.mjs",
+      "sha256": "c13a860cb78a0ffc7fa112e154997d355801e6d5f780f55ff943f001f515a462"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/ranking-pool-worker.mjs",
+      "sha256": "63c3084f46734bee45826841b6cb51cb89f01ae93749a3f4f1eaf9b0ba6dc4cc"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/ranking-worker-pool.mjs",
+      "sha256": "b22ddfe7ee070bf52f18ab99bac0319772464c787aa988b66f498abcc760f64a"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/refresh-ranking-campaign.mjs",
+      "sha256": "3ec688a30a7b9216cb2ec73a59bab2c8b9e8a9e0b3b550e7756e9788c8ce31d0"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/run-job.mjs",
+      "sha256": "24d336124c8286f2a27aaaba3bc950a8d5cb9a425b1c0bc84187a5a78531f1d9"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/verify-ranking-refresh.mjs",
+      "sha256": "425b601593280a6e0e1a47a29bce24ed706f68a5500a741198ba5d4c70180a6e"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/arena-physics-map.js",
+      "sha256": "7a4cdb06eb275c38f0fd76f8f00bbdfdb492d89e228a69e6f0f2bcdec47078bd"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/battle-setup.js",
+      "sha256": "e3fe43c18a94545f6300410234df88274704e7dfc16c25c55cdb89a179c19318"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/canonical-json.js",
+      "sha256": "ebffd58076b4fa7811697f4ff93e0da2a55b95fbfefa9ad6fff4a254965d14f0"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/champion-comparison.js",
+      "sha256": "38f895eacd2a182e24c39a2d699601162a6368f6511f7ba140f22a085f8abdc9"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/champion-scenarios.js",
+      "sha256": "2c149421aaed39f2dce265f51ded730560b3c7fc08323548b09beae5af55d132"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/ai-orders.js",
+      "sha256": "419304d06e005449f3f62c1dfa62144b26e4ef85a55dc2bc62822fe9810b0d4e"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/attacks.js",
+      "sha256": "496782759dc9540355626f3ab5718db19e2964f1003b4adbd0747088a33f00e6"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/chase-path.js",
+      "sha256": "502a9567b736941ef8f63765b36aef18abba84b91131c886dc16060077ed28c4"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/cohort-motion.js",
+      "sha256": "93db572f1be894693c86f8cd6449522fe6531fdd1db6270a45422611cbf98161"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/collision.js",
+      "sha256": "3e4bc576462051826cef72eccdcfd112e77212c2718f9cc465ea6bf217948aa3"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/contact-graph-steering.js",
+      "sha256": "3e04ec8c0b9301b91be3c3b2dc2a080551b43e5e833268b6784bdafca7a19469"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/contact-reservations.js",
+      "sha256": "28a0fb292776e3857d380e5bdff5f2bf2eeffdb17012a4d21de85fdd295b2975"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/diplomacy.js",
+      "sha256": "dfa46fde46f83f09a52e3818a495a9c3373eba1c59ee7f93de87ec0a6389844a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/experiments.js",
+      "sha256": "65be7ae497bf3bed48e74d73e3a7e47f9aea0273913cbe46bac132e620d8058c"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/kite-timing.js",
+      "sha256": "f86ed7caca423911190a7aa98cfff93ec9420fefdf0afbceddcbe4ab2f83853f"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/local-avoidance.js",
+      "sha256": "3ec1de33580cd0738d29fc1627b8d6d4aacbbc02962df49ab1e4c817ff86c5ec"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/matchup-summary.js",
+      "sha256": "c4d6ddf08d160b561e298cef2b7a02522db2aa8ee839583f0c45b1054cf50081"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/movement.js",
+      "sha256": "613b9db05a2713ce3cf444b5e29b3cba5f0fc9d7d570efe702350d2b18fe1c97"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/pair-interactions.js",
+      "sha256": "23a1579a6e9b93dd7097fb6a8bb1c1ed7209d2a7ee7b445e0d7317d6f58ac716"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/projectile-mechanics.js",
+      "sha256": "77c0c9d58fda17872cee1f1e2010be4a5e602f970a9550930b847f69de13bf96"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/ranged-crowding.js",
+      "sha256": "6c4b98c52601da822a13042ea8bfb84ef52ff6a19cb8e0b617f4ef49aeb561e9"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/reach-melee.js",
+      "sha256": "e1aba17836c00a01908c7381200194beafbff5a1f96c78e475b1f1a6c168dfc7"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/solo-navigation.js",
+      "sha256": "c4adb8087f1ff4a2851b193516620972d4cbcda70357d5e45badd8815e4503f0"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/targeting.js",
+      "sha256": "d97c0f3a6d80c070943c983148802714866ceb4e4b672965daf309cf29ee9adf"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/unit-defenses.js",
+      "sha256": "1e90c38a8a3a23ecdb870162b5b2e493b38cd005cd6dbe84c15539493a155f4a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/unit-state.js",
+      "sha256": "f9aa4196e0a62de16b08cdda29736e060698d2abe219f68ec81bf3c598492e3a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/world.js",
+      "sha256": "ee4f333822df501cb47135fb3f5a198d9ff8c2b16e6a376b26efa9d5488d1915"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/dedicated-benchmark-rig.js",
+      "sha256": "8bf88c46a58905e9f8c9f5e8e07ab595424ce3d4bc9a0f8d1870af1806be39ee"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/dedicated-golden-comparison.js",
+      "sha256": "310b96fa55a37670c208ecf4aa3fbbc4227ca0b19e100dc95e17b9b5320dd3ea"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/dedicated-golden-corpus.js",
+      "sha256": "e1cc7bdc1b5e465df063d8dafd0f00149107e3b4dc61ad27f246ae25b727642a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/engine-config.js",
+      "sha256": "1636b7c15b8088114d6b709af4500f8f3825d36d1367f13c7625efff58c1dc89"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/fight.js",
+      "sha256": "c6cdc76c76d5f7ae3d12810cd7ace410624ef8e4b657104d4366e2444563de94"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/formation-model.js",
+      "sha256": "8f1b7ca80879c2ee732dea7171e3e69ed8f97c1b2f239ec08079bff011f47276"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/kite-profiles.js",
+      "sha256": "f45e9ec67850427eb50dddc461f9d422b9c6db5a99b00cc47fae567bd71208b9"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/kiting-observation-matchups.js",
+      "sha256": "0dbd2c4a80f085fb68ff689370d0facae05e2466c3af59a6a939a5df7d63bd0d"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/kiting-observation-placement.js",
+      "sha256": "4e85983caea8b7b22f37d3bc9a9dc9fff3dbd5f511ade62c274bfbf2a821450d"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/lab-scenario.js",
+      "sha256": "9d87d64a6d6ebfedff67a33b0f587e2caa13860f8d62cbf885f2bee724b40acb"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/map-model.js",
+      "sha256": "5689f3f360c699e20cb256d1a70eb29f3db13a2dca5653e673527ad16ab99936"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/matchup-playback.js",
+      "sha256": "d2a2d9d25be073f77c2d0aaeabcdab8f0df3c990da32480e15dd41f2c2e718be"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/mechanics-schema.js",
+      "sha256": "9a6d0902add6d434da9b74d08e05496b9c1c0733da9ad15e0ae2b8e594ca6f56"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/phase2-batch1-comparison.js",
+      "sha256": "a2933507b035ef6bb91e33ffd821574a1052ef2852319bb1df9ec5bd1802b64a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/phase2-wrong-winner-review.js",
+      "sha256": "452c3d2adc33be3ca72df2ac4a6e2fb5265fa2324a8e8da8ee0d807aa583af85"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/placement-table.js",
+      "sha256": "38d1566c3f18373703db1a2584b6551376a9b1a50703ba2cadf79c01b19954be"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/placement.js",
+      "sha256": "c1b42b95b1de138b54f37c3f5aa78f3280aed1cf7f3de87ee73f794eaa58cda2"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/purchase.js",
+      "sha256": "92050e141c098b420808289fa164d496c7ea8ce7c998fb32af255d4947801239"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/simulation-clock.js",
+      "sha256": "b2abb7591762f625803c616f82fd8d9ae09c8c4f24f1b2a8db7f2923ef7013d5"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/standard-units-comparison.js",
+      "sha256": "253313a4916a105277000938dbadaaef770334d8e58935b06b59c164c2668d63"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/unit-registry.js",
+      "sha256": "260d19ddcf9a8cecf027de965ead841829cd23069e87a1664fe56bfeefbb1325"
+    },
+    {
+      "path": "aoe2x/js_simulation/tools/export_ranking_roster.py",
+      "sha256": "2bd63aa80780f7e7d9eb96b6f7a88877427c84027b9242f66ff47e52dd00eac0"
+    }
+  ],
+  "engineConfig": {
+    "engagement": "pursuit",
+    "pursuit": "",
+    "orders": true,
+    "avoid": "",
+    "step": "chaser",
+    "minRange": "",
+    "kiteEngage": "",
+    "chasePath": "grid"
+  },
+  "policy": {
+    "cap": 27,
+    "weights": {
+      "food": 1,
+      "wood": 0.9,
+      "gold": 1.1
+    },
+    "countFormula": "round(27 * sqrt(cheaperWeightedCost / expensiveWeightedCost)); cheaper side 27",
+    "costBasis": "runtime cost per physical unit, full civilization discounts and batch division",
+    "bufferUnits": 0,
+    "disableKiting": true,
+    "disableAiOrders": true,
+    "initialSeeds": [
+      0,
+      1,
+      2
+    ],
+    "extraSeeds": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "expansionRule": "different completed win/loss/draw outcomes among the first three seeds",
+    "maxSimulationTicks": 9007199254740991,
+    "wallTimeoutSeconds": 120,
+    "checkpointEveryRuns": 250,
+    "checkpointEverySeconds": 600,
+    "groupConvention": "existing ranking groups; Jarl is Ranged",
+    "scoring": "deferred",
+    "workers": 4,
+    "chunkMatchups": 120,
+    "playbackPolicy": "results and replay inputs for every run; no per-tick animation export",
+    "phasesAdvanceAutomatically": true,
+    "reusePilotRuns": false
+  },
+  "sourceFiles": [
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/unit-rankings-consolidated-2026-10-29/runs.jsonl",
+      "sha256": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8",
+      "records": 7600
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/unit-rankings-consolidated-2026-10-29/additional-recorded-runs.jsonl",
+      "sha256": "775f41f0e6e3bcbe52041186cc774ff96c060543e8d9a58ecacfa8bf595d0515",
+      "records": 77
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/unit-rankings-path-recovery-2026-10-29/manifest.json",
+      "sha256": "f66273e29420d79909efe434e100987f2bee6d8c9e301f467cb97de5c3461920"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/unit-ranking-scores-final-2026-10-29/scores.json",
+      "sha256": "477e799e40e08b082593485a7a9715ca3d2aee044a1eaee4b66867b899b11211"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/unit-rankings-consolidated-2026-10-29/manifest.json",
+      "sha256": "78ee6f95bf94af296e9da790dfdc4b8b10d8230b284f4c10d4bae1554cdc415c"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/civ-matchups/phase-one.mjs",
+      "sha256": "7f9bf627cf53412cc656d7b495f6e1e9e05c5987141c78be5433abd1128df82c"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/build-civ-matchup-inference.mjs",
+      "sha256": "a8fc9e515bf700460962c0d26181448c0682122d6c8208e6746abe1e6ed8d061"
+    }
+  ],
+  "counts": {
+    "civilizations": 56,
+    "civilizationPairs": 1540,
+    "variants": 555,
+    "profiles": 374,
+    "variantCells": 151223,
+    "profilePairs": 68916,
+    "sourceRuns": 7677
+  },
+  "simulationJobsRun": 0,
+  "outputs": [
+    {
+      "file": "profile-matchups.jsonl.gz",
+      "rows": 68916,
+      "sha256": "068742b6124689db9ad664460ab4df4276bc9ae44cf1390172237ac3eebb5a1a"
+    },
+    {
+      "file": "civ-matchups.jsonl.gz",
+      "rows": 151223,
+      "sha256": "59023eb6d5f5c13617398dd70e83761780c2d8a90444615182ce2ee858395eb9"
+    },
+    {
+      "file": "needs-sim.jsonl.gz",
+      "rows": 68680,
+      "sha256": "9edc445ab53193ab085eaa686abf2523f339d01ed65b97bd5451285595a4cf5b"
+    },
+    {
+      "file": "requirements.jsonl.gz",
+      "rows": 68411,
+      "sha256": "58d180725cb07ff1fdfa6b12cfda96c12aa9c1b9cecbde4a1115eb23c820a530"
+    },
+    {
+      "file": "evidence-ledger.jsonl.gz",
+      "rows": 7677,
+      "sha256": "6b993734d2736d2c10f3ab165114cc73c097f5687d7f8093c012a66be7a73028"
+    },
+    {
+      "file": "variant-profiles.json",
+      "rows": 555,
+      "sha256": "91fe53a3c8b7a6ef65d1dcc0a3c4041c65cfd81193f30fad8564093cbd3e40c6"
+    }
+  ],
+  "buildHash": "b1b6cdc1f2f62cd17dd6f7758d70426d58ff42cb03d0e080996d9f4e5459704c"
+}

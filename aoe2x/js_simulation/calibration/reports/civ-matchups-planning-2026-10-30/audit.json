@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "scope": "Planning only; no new simulations, classifications or UI changes",
+  "approved": {
+    "variants": 555,
+    "civilizations": 56,
+    "countPolicy": "round(27 * sqrt(cheaperWeightedCost / expensiveWeightedCost)); cheaper side 27",
+    "cap": 27,
+    "weights": {
+      "food": 1,
+      "wood": 0.9,
+      "gold": 1.1
+    },
+    "bufferUnits": 0,
+    "disableKiting": true,
+    "allowCloseUncertain": true
+  },
+  "sourceDatasetHash": "17a91c8fa14553abbce1f894cbeb4e637d9fe9a82977fc2da2b0bc824cfade3c",
+  "sourceManifestSha256": "78ee6f95bf94af296e9da790dfdc4b8b10d8230b284f4c10d4bae1554cdc415c",
+  "variantPairs": 151223,
+  "distinctProfiles": 374,
+  "distinctCrossCivProfilePairs": 68916,
+  "crossCivIdenticalProfilePairs": 45,
+  "historicalCrossCivPairsWithRecords": 2373,
+  "acceptedHistoricalProfilePairs": 0,
+  "profilePairsPendingBeforeFreshInference": 68916,
+  "historicalDataPolicy": "Exclude old Advisor outcomes. Use current unit-ranking opponent results as anchor evidence after per-run engine, setup and input checks. No blanket acceptance of the mixed-engine dataset; revalidate only incompatible anchors that are needed.",
+  "selectedRuns": 7600,
+  "canonicalSourceGroups": 2398,
+  "canonicalCrossCivGroups": 2393,
+  "sourceGroupsWithSeedVariation": 58,
+  "crossCivPairsWithSeedVariation": 58,
+  "overlappingCrossCivPairs": 20,
+  "overlappingMajorityDisagreements": 1,
+  "engineCounts": {
+    "original": 6768,
+    "corrected": 832
+  },
+  "requirements": [
+    "Do not automatically accept historical pairs. Audit current ranking records as possible inference anchors; exclude legacy Advisor outcomes.",
+    "Share newly generated or independently eligible ranking results only with exact mechanics, scenario, orientation, counts, seed and engine identity.",
+    "One newly generated orientation can define both UI views; that does not prove physical side-swap invariance.",
+    "Overlapping orientations and seed-sensitive pairs need explicit reconciliation before assigning a single table verdict.",
+    "Identical-profile fights have no profile-level advantage; do not convert a particular seeded victory into a civ advantage.",
+    "Inference is not yet validated. Unknown, timeout and error remain distinct from close/uncertain."
+  ],
+  "validation": {
+    "allSelectedSeedSetsComplete": true,
+    "allSelectedCountsMatch": true,
+    "allSelectedScenarioHashesMatch": true,
+    "allSelectedProfileHashesMatch": true,
+    "duplicateSelectedRuns": 0,
+    "newSimulationsRun": 0
+  }
+}

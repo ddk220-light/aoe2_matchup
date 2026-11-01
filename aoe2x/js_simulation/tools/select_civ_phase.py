@@ -46,6 +46,17 @@ def main():
         CIV_HARD_PRIORITY_REPORT=str(RULES / "phase020-inference-potential.json"))
     subprocess.run(["python3", str(ROOT / "tools/build_civ_matchup_estimates.py")],
         env=common, check=True, stdout=subprocess.DEVNULL)
+    priority_report = inference / "adaptive-test-priority.json"
+    priority_status = "recomputed"
+    try:
+        subprocess.run(["node", str(ROOT / "node/civ-matchups/plan-active-tests.mjs"),
+            str(inference), str(priority_report)], env={**common,
+                "CIV_TEST_PLAN_LIMIT": os.environ.get("CIV_ADAPTIVE_PRIORITY_LIMIT", "600")},
+            check=True, stdout=subprocess.DEVNULL, timeout=180)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+        priority_report = RULES / "phase020-inference-potential.json"
+        priority_status = f"frozen_phase020_fallback:{type(error).__name__}"
+    common["CIV_HARD_PRIORITY_REPORT"] = str(priority_report)
     subprocess.run(["python3", str(ROOT / "tools/plan_civ_hard_cases.py")],
         env=common, check=True, stdout=subprocess.DEVNULL)
     proposal = json.loads((selection / "proposed-phase.json").read_text())
@@ -74,16 +85,28 @@ def main():
                 kept += 1
     assert kept == len(skipped_keys)
     shutil.copyfile(estimates / "summary.json", archive / "estimate-summary.json")
+    priority = json.loads(priority_report.read_text())
+    compact_priority = {"status": priority_status,
+        "sourceSha256": sha(priority_report),
+        "evaluatedCandidates": priority.get("evaluatedCandidates"),
+        "top": [{"pairKey": row["pairKey"], "possibleByWinner": [
+            {key: side[key] for key in ("r1Cells", "r2CellsIfWinnerHpAtLeast50Percent",
+                                   "r3CellsIfWinnerHpAtLeast25Percent")}
+            for side in row["possibleByWinner"]]} for row in priority["top"]]}
+    (archive / "priority.json").write_text(json.dumps(compact_priority, sort_keys=True, indent=2) + "\n")
     archive_manifest = {"policyVersion": frozen["version"], "sourcePhase": args.phase,
         "frozenRuleManifestSha256": sha(RULES / "manifest.json"),
         "sourceInferenceManifestSha256": sha(inference / "manifest.json"),
         "estimateSummarySha256": sha(archive / "estimate-summary.json"),
         "verifiedEstimatesSha256": sha(archive / "verified-estimates.jsonl.gz"),
+        "prioritySha256": sha(archive / "priority.json"),
+        "priorityPlannerSha256": sha(ROOT / "node/civ-matchups/plan-active-tests.mjs"),
         "selectedPairs": len(proposal["selected"]), "skippedVerifiedEstimates": kept}
     (archive / "manifest.json").write_text(json.dumps(archive_manifest, sort_keys=True, indent=2) + "\n")
     print(json.dumps({"policyVersion": frozen["version"], "sourcePhase": args.phase,
         "selected": proposal["selected"], "skippedVerifiedEstimateKeys": proposal["skippedVerifiedEstimateKeys"],
         "archiveManifestSha256": sha(archive / "manifest.json"),
+        "priorityStatus": priority_status,
         "verifiedFamilies": estimate_summary["prospectivePhase"]["verifiedFamilies"],
         "disabledFamilies": estimate_summary["prospectivePhase"]["disabledFamilies"]}))
 

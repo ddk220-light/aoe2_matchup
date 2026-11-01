@@ -252,6 +252,36 @@ def select_probes(candidates, tests, limit=32):
     return selected
 
 
+def frozen_forecast_context(pred, row):
+    """Keep an approved forecast's physical setup when derived suggestions flip.
+
+    This does not transfer a winner to a reversed fight. The exported forecast
+    retains its original context; only an exact-context observation can test it.
+    Actual count/cost/settings changes still abstain.
+    """
+    context = pred.get('context', row['context'])
+    if pred['contextHash'] != sha(canonical(context)):
+        return None
+    current = row['context']
+    if context == current:
+        return context
+    if (context.get('family') == current.get('family') and
+            context.get('scenarioHash') != current.get('scenarioHash')):
+        return None
+    reversed_context = dict(context)
+    for key in ('profiles', 'counts', 'weightedCosts'):
+        if key in context:
+            reversed_context[key] = list(reversed(context[key]))
+    for key in ('family', 'scenarioHash'):
+        reversed_context[key] = current.get(key)
+    if reversed_context != current:
+        return None
+    families = {context.get('family'), current.get('family')}
+    if len(families) > 1 and families != {'melee_vs_ranged', 'ranged_vs_melee'}:
+        return None
+    return context
+
+
 def plan(campaign, policy, phase, output, forbidden=()):
     _, variants, provenance = load_reviewed_phase(campaign, phase)
     root = campaign / 'latest-inference'
@@ -266,6 +296,12 @@ def plan(campaign, policy, phase, output, forbidden=()):
     by_key = {r['pairKey']: r for r in matrix}
     predictions = {r['pairKey']: r for r in map(json.loads, gzip.decompress(frozen).splitlines())}
     assert len(predictions) == manifest['predictionCount']
+    inventory = {}
+    inventory_path = campaign / 'adaptive/inventory.jsonl.gz'
+    if inventory_path.exists():
+        adaptive_manifest = load(campaign / 'adaptive/manifest.json')
+        assert sha(inventory_path.read_bytes()) == adaptive_manifest['matchupInventory']['sha256']
+        inventory = {r['pairKey']: r for r in read_rows(inventory_path)}
     tests, failures = compare(predictions, by_key, manifest['introducedAfterPhase'])
     # First-pass guesses remain explicitly unvalidated even after a related
     # counterexample. Mark the precise stratum contested and prioritize its
@@ -285,11 +321,15 @@ def plan(campaign, policy, phase, output, forbidden=()):
     eligible, overlay = [], []
     for row in matrix:
         pred = predictions.get(row['pairKey'])
-        matches = bool(pred and pred['contextHash'] == sha(canonical(row['context'])))
+        forecast_context = frozen_forecast_context(pred, row) if pred else None
+        matches = forecast_context is not None
         guessed = row['outcome'] == 'unresolved' and matches and row['pairKey'] not in blocked
         result = dict(row, sourceOutcome=row['outcome'], sourceEvidenceType=row['evidenceType'])
         if guessed:
             result.update(outcome=pred['predictedOutcome'], evidenceType='predicted_unvalidated',
+                context=forecast_context, sourceContext=row['context'],
+                predictionContextPreserved=forecast_context != row['context'],
+                contextPolicy='preserve-approved-forecast-context-v1',
                 needsSim=False, needsValidation=True, verified=False,
                 predictionPolicy=VERSION, predictionRuleHash=pred['ruleHash'],
                 predictionTier=pred['tier'], predictionSourceSha256=manifest['predictionsSha256'],
@@ -299,11 +339,25 @@ def plan(campaign, policy, phase, output, forbidden=()):
                     if pred['tier']=='weak_model_agreement' else
                     'Unvalidated forecast from frozen ranking/common-opponent/model features; requires later validation.'),
                 sourceReasonCodes=row.get('reasonCodes', []), reasonCodes=['unvalidated_prediction'])
-            if row['pairKey'] not in forbidden:
+            job = inventory.get(row['pairKey'])
+            probe_matches = (forecast_context == row['context'] if job is None else
+                forecast_context['profiles'] == job['profileHashes'] and
+                forecast_context['counts'] == job['counts'] and
+                forecast_context['scenarioHash'] == job['scenarioHash'])
+            if row['pairKey'] not in forbidden and probe_matches:
                 eligible.append(dict(pred, aliases=row['aliases'],
                     estimatedSeconds=medians.get(row['context']['scenarioHash'], 60)))
         else:
             result['needsValidation'] = False
+        if pred:
+            result['originalPrediction'] = {'outcome': pred['predictedOutcome'],
+                'contextHash': pred['contextHash'], 'ruleHash': pred['ruleHash'],
+                'sourceSha256': manifest['predictionsSha256'],
+                'validationStatus': ('different_context_not_validation'
+                    if row['evidenceType'] == 'observed' and pred['contextHash'] != sha(canonical(row['context']))
+                    else 'confirmed_by_observation' if row['evidenceType'] == 'observed' and row['outcome'] == pred['predictedOutcome']
+                    else 'observed_close' if row['evidenceType'] == 'observed' and row['outcome'] == 'close_uncertain'
+                    else 'wrong_winner' if row['evidenceType'] == 'observed' else 'not_observed')}
         overlay.append(result)
     # The first pass ends after the non-predicted gaps, not after validating
     # every deferred prediction. Stop sampling when only blocked recovery
@@ -340,6 +394,7 @@ def plan(campaign, policy, phase, output, forbidden=()):
         'predictedClosePairs': sum(r['evidenceType']=='predicted_unvalidated'
             and r['outcome']=='close_uncertain' for r in overlay),
         'contestedPredictions': sum(r.get('predictionContested', False) for r in overlay),
+        'preservedForecastContexts': sum(r.get('predictionContextPreserved', False) for r in overlay),
         'screenByTier': {tier: {'checked':sum(t.get('tier')==tier and not t['independent'] for t in tests),
             'wrongOrClose':sum(t.get('tier')==tier and not t['independent'] and not t['correct'] for t in tests)}
             for tier in sorted({t.get('tier') for t in tests if t.get('tier')})},
@@ -368,6 +423,7 @@ def plan(campaign, policy, phase, output, forbidden=()):
             winner = (pair['profiles'][0 if pair['outcome']=='a_win' else 1]
                       if pair['outcome'] in ('a_win','b_win') else None)
             cell.update(outcome=('a_win' if owner_a==winner else 'b_win') if winner else 'close_uncertain',
+                context=pair['context'], sourceContext=pair['sourceContext'],
                 sourceOutcome=source_outcome, sourceEvidenceType=cell['evidenceType'],
                 evidenceType='predicted_unvalidated', needsSim=False,
                 needsValidation=True, verified=False, explanation=pair['explanation'],
@@ -378,6 +434,7 @@ def plan(campaign, policy, phase, output, forbidden=()):
                     'ruleHash': pair['predictionRuleHash']})
         else:
             cell['prediction'] = None
+        cell['originalPrediction'] = pair.get('originalPrediction')
     write_rows(output / 'civilization-table.jsonl.gz', cells)
     write_json(output / 'summary.json', summary)
     write_json(output / 'validation.json', {'tests': tests, 'failures': failures,

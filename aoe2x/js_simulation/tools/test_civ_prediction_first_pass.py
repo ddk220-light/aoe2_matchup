@@ -5,10 +5,23 @@ import tempfile
 import unittest
 
 from civ_prediction_first_pass import (VERSION, canonical, choose, choose_extended, compare, plan,
-    read_rows, select_probes, sha, write_json, write_rows)
+    read_rows, select_probes, sha, write_json, write_rows, frozen_forecast_context)
 
 
 class PredictionPolicyTests(unittest.TestCase):
+    def test_refresh_cannot_silently_reverse_a_frozen_forecast(self):
+        original = {'profiles':['a','b'], 'counts':[27,23], 'weightedCosts':[72,102],
+            'family':'melee_vs_ranged','scenarioHash':'left','engineFamily':'kite','policy':'fixed'}
+        reversed_view = dict(original, profiles=['b','a'], counts=[23,27], weightedCosts=[102,72],
+            family='ranged_vs_melee',scenarioHash='right')
+        pred = {'context':original,'contextHash':sha(canonical(original))}
+        result=frozen_forecast_context(pred, {'context':reversed_view})
+        self.assertEqual(result,original)
+        self.assertNotEqual(result,reversed_view)
+        changed=dict(reversed_view,counts=[24,27])
+        self.assertIsNone(frozen_forecast_context(pred,{'context':changed}))
+        self.assertIsNone(frozen_forecast_context(pred,{'context':dict(reversed_view,policy='changed')}))
+
     def model(self, a=.82, b=.08, other_a=.8, other_b=.1):
         return {'histGradientBoostingProbabilities': {'aWin': a, 'bWin': b, 'close': 1-a-b},
                 'extraTreesProbabilities': {'aWin': other_a, 'bWin': other_b, 'close': 1-other_a-other_b}}

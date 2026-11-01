@@ -29,8 +29,26 @@ and event-log hash. Its 100-second HP samples show that 26 of 27 skirmishers
 die by game second 100; one remains at its full 50 HP until after second 2,900
 while slowly damaging Paladins. The event log contains 2,536,676 `blocked`
 events, 1,024,647 persistent contact reservations, and 294,829 pursuit
-retarget requests. A further isolated replay will sample positions and target
-state to identify the prolonged movement lock. Neither diagnostic result
-belongs in a frozen campaign journal. Any
-later campaign using this output version must record its runtime hashes and
-validate evidence provenance.
+retarget requests. A third replay with position and target samples again
+matched the same winner, tick, final-state hash, and event-log hash exactly.
+The last skirmisher (9009) remains at (15, 6.0101) from game second 100
+through 2,900, alternating attack and reload while its HP stays at 50/50.
+The nearest Paladin (9514) remains near (14.768, 5.338), targets that
+skirmisher, and is idle over the same interval. The forest fixture places
+0.5-radius trees at (15.5, 5.5), (14.5, 6.5), and (15.5, 6.5), creating a
+narrow pocket. At the sampled positions, the Chebyshev center separation is
+0.672 tiles. The Paladin's 0.4 outline plus the skirmisher's 0.2 outline puts
+it within the 0.1-tile engagement envelope (outline gap 0.072), but their
+0.25 + 0.2 collision extents leave a 0.222-tile physical gap, beyond the
+0.1-tile stop distance required to start a range-zero swing. The Paladin
+therefore retains an engagement yet cannot start an attack; trees and crowded
+bodies keep it from closing. This geometry explains why one healthy
+skirmisher consumes roughly 2,800 extra game seconds while the simulation
+logs millions of blocked/contact events. The exact replays establish
+determinism, not that the forest-pocket behavior matches the game. A pathing
+or scenario change would require separate physics validation and versioning.
+
+All three diagnostic reports are read-only evidence, not frozen campaign
+records. The V3 seed remains missing. A future campaign using this output
+version must record its runtime hashes, validate evidence provenance, and
+handle the remaining long seeds without classifying a timeout as a result.

@@ -1,0 +1,5266 @@
+{
+  "kind": "offline common-C subset search by unit-line pair",
+  "source": "original ranking seeds as features; verified V3 civ profile pairs as labels",
+  "validation": "five pair-key hash folds; select C and threshold on four folds, test untouched fifth; close is an error",
+  "rules": {
+    "archer|archer": {
+      "observedPairs": 46,
+      "selectedStandardsC": [
+        "Saracens|hand_cannoneer"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 29,
+        "correct": 29
+      },
+      "crossValidation": {
+        "predicted": 29,
+        "correct": 29
+      },
+      "foldSelections": {
+        "Saracens|hand_cannoneer": 5
+      },
+      "unresolvedCandidates": 389,
+      "candidatesWithUnsupportedEffect": 187,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 30,
+            "correct": 24,
+            "wrong": 6,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 9,
+            "correct": 9
+          },
+          "0.5": {
+            "predicted": 3,
+            "correct": 3
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 9,
+            "correct": 9
+          },
+          "0.25": {
+            "predicted": 3,
+            "correct": 3
+          },
+          "0.5": {}
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 29,
+            "correct": 29
+          },
+          "0.25": {
+            "predicted": 16,
+            "correct": 16
+          },
+          "0.5": {
+            "predicted": 6,
+            "correct": 6
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 11,
+            "correct": 11
+          },
+          "0.25": {
+            "predicted": 7,
+            "correct": 7
+          },
+          "0.5": {
+            "predicted": 1,
+            "correct": 1
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 20,
+            "correct": 18,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 5,
+            "correct": 4,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 3,
+            "correct": 2,
+            "wrong": 1
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 29,
+            "correct": 28,
+            "wrong": 1
+          },
+          "0.25": {
+            "predicted": 10,
+            "correct": 9,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 3,
+            "correct": 3
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 33,
+            "correct": 29,
+            "wrong": 4
+          },
+          "0.25": {
+            "predicted": 17,
+            "correct": 16,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 3,
+            "correct": 2,
+            "wrong": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Saracens|hand_cannoneer",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 23,
+          "correct": 23
+        },
+        "crossValidation": {
+          "predicted": 23,
+          "correct": 22,
+          "wrong": 1
+        },
+        "unresolvedCandidates": 290
+      },
+      "namedSetTrials": {
+        "Chinese|arbalester+Saracens|hand_cannoneer": {
+          "0.1": {
+            "observed": {
+              "predicted": 10,
+              "correct": 10
+            },
+            "unresolvedCandidates": 309
+          },
+          "0.25": {
+            "observed": {
+              "predicted": 6,
+              "correct": 6
+            },
+            "unresolvedCandidates": 150
+          },
+          "0.5": {
+            "observed": {},
+            "unresolvedCandidates": 52
+          }
+        },
+        "Chinese|arbalester+Spanish|imp_elite_skirm": {
+          "0.1": {
+            "observed": {
+              "predicted": 8,
+              "correct": 8
+            },
+            "unresolvedCandidates": 255
+          },
+          "0.25": {
+            "observed": {
+              "predicted": 4,
+              "correct": 4
+            },
+            "unresolvedCandidates": 123
+          },
+          "0.5": {
+            "observed": {},
+            "unresolvedCandidates": 38
+          }
+        },
+        "Chinese|arbalester+Spanish|champion": {
+          "0.1": {
+            "observed": {
+              "predicted": 9,
+              "correct": 9
+            },
+            "unresolvedCandidates": 276
+          },
+          "0.25": {
+            "observed": {
+              "predicted": 6,
+              "correct": 6
+            },
+            "unresolvedCandidates": 143
+          },
+          "0.5": {
+            "observed": {},
+            "unresolvedCandidates": 40
+          }
+        },
+        "Chinese|arbalester+Saracens|hand_cannoneer+Spanish|imp_elite_skirm": {
+          "0.1": {
+            "observed": {
+              "predicted": 8,
+              "correct": 8
+            },
+            "unresolvedCandidates": 219
+          },
+          "0.25": {
+            "observed": {
+              "predicted": 4,
+              "correct": 4
+            },
+            "unresolvedCandidates": 82
+          },
+          "0.5": {
+            "observed": {},
+            "unresolvedCandidates": 11
+          }
+        }
+      }
+    },
+    "archer|camel": {
+      "observedPairs": 32,
+      "selectedStandardsC": [
+        "Chinese|arbalester"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 23,
+        "correct": 23
+      },
+      "crossValidation": {
+        "predicted": 23,
+        "correct": 22,
+        "wrong": 1,
+        "closeCalledDecisive": 1
+      },
+      "foldSelections": {
+        "Chinese|arbalester": 4,
+        "Spanish|champion": 1
+      },
+      "unresolvedCandidates": 228,
+      "candidatesWithUnsupportedEffect": 108,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 23,
+            "correct": 9,
+            "wrong": 14
+          },
+          "0.25": {
+            "predicted": 23,
+            "correct": 9,
+            "wrong": 14
+          },
+          "0.5": {
+            "predicted": 23,
+            "correct": 9,
+            "wrong": 14
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 23,
+            "correct": 23
+          },
+          "0.25": {
+            "predicted": 23,
+            "correct": 23
+          },
+          "0.5": {
+            "predicted": 16,
+            "correct": 16
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 32,
+            "correct": 13,
+            "wrong": 19,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 32,
+            "correct": 13,
+            "wrong": 19,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 30,
+            "correct": 13,
+            "wrong": 17,
+            "closeCalledDecisive": 2
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 25,
+            "correct": 24,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 13,
+            "correct": 13
+          },
+          "0.5": {
+            "predicted": 4,
+            "correct": 4
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 19,
+          "correct": 19
+        },
+        "crossValidation": {
+          "predicted": 19,
+          "correct": 19
+        },
+        "unresolvedCandidates": 210
+      }
+    },
+    "archer|cav_archer": {
+      "observedPairs": 140,
+      "selectedStandardsC": [
+        "Chinese|arbalester"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 83,
+        "correct": 83
+      },
+      "crossValidation": {
+        "predicted": 78,
+        "correct": 77,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Chinese|arbalester": 4,
+        "Saracens|heavy_cav_archer": 1
+      },
+      "unresolvedCandidates": 1212,
+      "candidatesWithUnsupportedEffect": 522,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 95,
+            "correct": 93,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 37,
+            "correct": 37
+          },
+          "0.5": {
+            "predicted": 14,
+            "correct": 14
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 68,
+            "correct": 67,
+            "wrong": 1
+          },
+          "0.25": {
+            "predicted": 53,
+            "correct": 52,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 23,
+            "correct": 23
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 88,
+            "correct": 83,
+            "wrong": 5
+          },
+          "0.25": {
+            "predicted": 61,
+            "correct": 61
+          },
+          "0.5": {
+            "predicted": 28,
+            "correct": 28
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 83,
+            "correct": 83
+          },
+          "0.25": {
+            "predicted": 77,
+            "correct": 77
+          },
+          "0.5": {
+            "predicted": 46,
+            "correct": 46
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 107,
+            "correct": 74,
+            "wrong": 33
+          },
+          "0.25": {
+            "predicted": 95,
+            "correct": 65,
+            "wrong": 30
+          },
+          "0.5": {
+            "predicted": 80,
+            "correct": 64,
+            "wrong": 16
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 84,
+            "correct": 83,
+            "wrong": 1
+          },
+          "0.25": {
+            "predicted": 54,
+            "correct": 53,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 15,
+            "correct": 15
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 118,
+            "correct": 105,
+            "wrong": 13
+          },
+          "0.25": {
+            "predicted": 89,
+            "correct": 82,
+            "wrong": 7
+          },
+          "0.5": {
+            "predicted": 64,
+            "correct": 61,
+            "wrong": 3
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Spanish|imp_elite_skirm",
+          "Saracens|heavy_cav_archer"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 75,
+          "correct": 75
+        },
+        "crossValidation": {
+          "predicted": 76,
+          "correct": 75,
+          "wrong": 1
+        },
+        "unresolvedCandidates": 784
+      }
+    },
+    "archer|gunpowder": {
+      "observedPairs": 60,
+      "selectedStandardsC": [
+        "Turks|paladin"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 13,
+        "correct": 13
+      },
+      "crossValidation": {
+        "predicted": 13,
+        "correct": 13
+      },
+      "foldSelections": {
+        "Turks|paladin": 5
+      },
+      "unresolvedCandidates": 291,
+      "candidatesWithUnsupportedEffect": 163,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 47,
+            "wrong": 21,
+            "correct": 26,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 31,
+            "correct": 22,
+            "wrong": 9,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 15,
+            "correct": 12,
+            "wrong": 3
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 26,
+            "correct": 19,
+            "wrong": 7,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 13,
+            "correct": 13
+          },
+          "0.5": {
+            "predicted": 3,
+            "correct": 3
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 25,
+            "correct": 22,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 22,
+            "correct": 19,
+            "wrong": 3
+          },
+          "0.5": {
+            "predicted": 13,
+            "correct": 11,
+            "wrong": 2
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 9,
+            "correct": 9
+          },
+          "0.25": {
+            "predicted": 7,
+            "correct": 7
+          },
+          "0.5": {
+            "predicted": 2,
+            "correct": 2
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 32,
+            "wrong": 13,
+            "correct": 19,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 18,
+            "correct": 16,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 11,
+            "correct": 9,
+            "wrong": 2
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 14,
+            "correct": 10,
+            "wrong": 4
+          },
+          "0.25": {
+            "predicted": 9,
+            "correct": 8,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 5,
+            "correct": 5
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 57,
+            "wrong": 38,
+            "correct": 19,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 57,
+            "wrong": 38,
+            "correct": 19,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 54,
+            "wrong": 35,
+            "correct": 19,
+            "closeCalledDecisive": 2
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Spanish|imp_elite_skirm",
+          "Turks|paladin"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 11,
+          "correct": 11
+        },
+        "crossValidation": {
+          "predicted": 4,
+          "correct": 4
+        },
+        "unresolvedCandidates": 219
+      }
+    },
+    "archer|knight": {
+      "observedPairs": 110,
+      "selectedStandardsC": [
+        "Saracens|heavy_cav_archer",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 82,
+        "correct": 82
+      },
+      "crossValidation": {
+        "predicted": 83,
+        "correct": 81,
+        "wrong": 2
+      },
+      "foldSelections": {
+        "Saracens|heavy_cav_archer+Spanish|champion": 4,
+        "Saracens|heavy_cav_archer": 1
+      },
+      "unresolvedCandidates": 998,
+      "candidatesWithUnsupportedEffect": 495,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 28,
+            "correct": 26,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 22,
+            "correct": 21,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 9,
+            "correct": 9
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 61,
+            "correct": 57,
+            "wrong": 4
+          },
+          "0.25": {
+            "predicted": 54,
+            "correct": 53,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 38,
+            "correct": 38
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 92,
+            "correct": 89,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 84,
+            "correct": 82,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 71,
+            "correct": 69,
+            "wrong": 2
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 102,
+            "correct": 95,
+            "wrong": 7,
+            "closeCalledDecisive": 3
+          },
+          "0.25": {
+            "predicted": 99,
+            "correct": 93,
+            "wrong": 6,
+            "closeCalledDecisive": 3
+          },
+          "0.5": {
+            "predicted": 96,
+            "correct": 91,
+            "wrong": 5,
+            "closeCalledDecisive": 2
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Saracens|heavy_cav_archer",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 82,
+          "correct": 82
+        },
+        "crossValidation": {
+          "predicted": 82,
+          "correct": 82
+        },
+        "unresolvedCandidates": 998
+      }
+    },
+    "archer|light_cav": {
+      "observedPairs": 93,
+      "selectedStandardsC": [
+        "Chinese|arbalester",
+        "Saracens|heavy_cav_archer"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 48,
+        "correct": 48
+      },
+      "crossValidation": {
+        "predicted": 48,
+        "correct": 48
+      },
+      "foldSelections": {
+        "Chinese|arbalester+Saracens|heavy_cav_archer": 5
+      },
+      "unresolvedCandidates": 414,
+      "candidatesWithUnsupportedEffect": 198,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 41,
+            "correct": 34,
+            "wrong": 7
+          },
+          "0.25": {
+            "predicted": 21,
+            "correct": 21
+          },
+          "0.5": {
+            "predicted": 2,
+            "correct": 2
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 65,
+            "correct": 61,
+            "wrong": 4,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 57,
+            "correct": 55,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 40,
+            "correct": 39,
+            "wrong": 1
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 67,
+            "correct": 64,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 48,
+            "correct": 47,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 6,
+            "correct": 5,
+            "wrong": 1
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 73,
+            "correct": 43,
+            "wrong": 30
+          },
+          "0.25": {
+            "predicted": 44,
+            "correct": 37,
+            "wrong": 7
+          },
+          "0.5": {
+            "predicted": 14,
+            "correct": 13,
+            "wrong": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Saracens|heavy_cav_archer"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 48,
+          "correct": 48
+        },
+        "crossValidation": {
+          "predicted": 48,
+          "correct": 48
+        },
+        "unresolvedCandidates": 414
+      }
+    },
+    "archer|militia": {
+      "observedPairs": 158,
+      "crossValidation": {
+        "predicted": 3,
+        "correct": 2,
+        "wrong": 1
+      },
+      "status": "no error-free training rule with 8 predictions"
+    },
+    "archer|scorpion": {
+      "observedPairs": 67,
+      "selectedStandardsC": [
+        "Saracens|hand_cannoneer",
+        "Saracens|heavy_cav_archer",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 13,
+        "correct": 13
+      },
+      "crossValidation": {
+        "predicted": 15,
+        "correct": 14,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Spanish|hussar+Saracens|heavy_cav_archer": 1,
+        "Saracens|hand_cannoneer+Saracens|heavy_cav_archer+Spanish|champion": 4
+      },
+      "unresolvedCandidates": 155,
+      "candidatesWithUnsupportedEffect": 155,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 27,
+            "wrong": 13,
+            "correct": 14,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 25,
+            "wrong": 11,
+            "correct": 14,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 24,
+            "wrong": 11,
+            "correct": 13,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 40,
+            "correct": 27,
+            "wrong": 13,
+            "closeCalledDecisive": 4
+          },
+          "0.25": {
+            "predicted": 21,
+            "correct": 17,
+            "wrong": 4,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 4,
+            "wrong": 2,
+            "correct": 2
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 43,
+            "correct": 31,
+            "wrong": 12,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 31,
+            "correct": 22,
+            "wrong": 9,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 11,
+            "correct": 9,
+            "wrong": 2
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 40,
+            "correct": 33,
+            "wrong": 7,
+            "closeCalledDecisive": 3
+          },
+          "0.25": {
+            "predicted": 30,
+            "correct": 25,
+            "wrong": 5,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 21,
+            "correct": 18,
+            "wrong": 3,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 48,
+            "correct": 38,
+            "wrong": 10,
+            "closeCalledDecisive": 3
+          },
+          "0.25": {
+            "predicted": 37,
+            "correct": 31,
+            "wrong": 6,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 14,
+            "wrong": 3,
+            "correct": 11
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 32,
+            "correct": 30,
+            "wrong": 2,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 28,
+            "correct": 26,
+            "wrong": 2,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 25,
+            "correct": 23,
+            "wrong": 2,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 60,
+            "wrong": 19,
+            "correct": 41,
+            "closeCalledDecisive": 4
+          },
+          "0.25": {
+            "predicted": 49,
+            "correct": 38,
+            "wrong": 11,
+            "closeCalledDecisive": 3
+          },
+          "0.5": {
+            "predicted": 40,
+            "correct": 34,
+            "wrong": 6,
+            "closeCalledDecisive": 2
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Saracens|hand_cannoneer",
+          "Saracens|heavy_cav_archer",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 13,
+          "correct": 13
+        },
+        "crossValidation": {
+          "predicted": 15,
+          "correct": 14,
+          "wrong": 1
+        },
+        "unresolvedCandidates": 155
+      }
+    },
+    "archer|skirmisher": {
+      "observedPairs": 58,
+      "selectedStandardsC": [
+        "Saracens|heavy_cav_archer"
+      ],
+      "minimumSignedMarginGapPerC": 0.5,
+      "training": {
+        "predicted": 34,
+        "correct": 34
+      },
+      "crossValidation": {
+        "predicted": 35,
+        "correct": 34,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Saracens|heavy_cav_archer": 5
+      },
+      "unresolvedCandidates": 346,
+      "candidatesWithUnsupportedEffect": 175,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 25,
+            "correct": 23,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 21,
+            "correct": 21
+          },
+          "0.5": {
+            "predicted": 10,
+            "correct": 10
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 40,
+            "wrong": 33,
+            "correct": 7
+          },
+          "0.25": {
+            "predicted": 24,
+            "wrong": 17,
+            "correct": 7
+          },
+          "0.5": {
+            "predicted": 9,
+            "correct": 3,
+            "wrong": 6
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 36,
+            "correct": 33,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 20,
+            "correct": 20
+          },
+          "0.5": {
+            "predicted": 8,
+            "correct": 8
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 39,
+            "correct": 38,
+            "wrong": 1
+          },
+          "0.25": {
+            "predicted": 36,
+            "correct": 35,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 24,
+            "correct": 24
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 44,
+            "wrong": 34,
+            "correct": 10
+          },
+          "0.25": {
+            "predicted": 40,
+            "wrong": 30,
+            "correct": 10
+          },
+          "0.5": {
+            "predicted": 13,
+            "correct": 6,
+            "wrong": 7
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 50,
+            "correct": 47,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 40,
+            "correct": 39,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 34,
+            "correct": 34
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 57,
+            "wrong": 45,
+            "correct": 12
+          },
+          "0.25": {
+            "predicted": 53,
+            "wrong": 41,
+            "correct": 12
+          },
+          "0.5": {
+            "predicted": 30,
+            "correct": 11,
+            "wrong": 19
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Saracens|hand_cannoneer",
+          "Chinese|arbalester"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 28,
+          "correct": 28
+        },
+        "crossValidation": {
+          "predicted": 28,
+          "correct": 27,
+          "wrong": 1
+        },
+        "unresolvedCandidates": 353
+      }
+    },
+    "archer|spear": {
+      "observedPairs": 35,
+      "selectedStandardsC": [
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 9,
+        "correct": 9
+      },
+      "crossValidation": {
+        "predicted": 4,
+        "correct": 4
+      },
+      "foldSelections": {
+        "Spanish|champion": 4
+      },
+      "unresolvedCandidates": 556,
+      "candidatesWithUnsupportedEffect": 284,
+      "singleBenchmarkTrials": {
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 9,
+            "wrong": 9
+          },
+          "0.25": {
+            "predicted": 9,
+            "wrong": 9
+          },
+          "0.5": {
+            "predicted": 9,
+            "wrong": 9
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 9,
+            "correct": 9
+          },
+          "0.25": {
+            "predicted": 7,
+            "correct": 7
+          },
+          "0.5": {
+            "predicted": 1,
+            "correct": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "status": "no eligible two-or-more-C rule",
+        "crossValidation": {}
+      }
+    },
+    "camel|knight": {
+      "observedPairs": 78,
+      "selectedStandardsC": [
+        "Spanish|paladin"
+      ],
+      "minimumSignedMarginGapPerC": 0.5,
+      "training": {
+        "predicted": 38,
+        "correct": 38
+      },
+      "crossValidation": {
+        "predicted": 39,
+        "correct": 38,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Spanish|paladin": 5
+      },
+      "unresolvedCandidates": 160,
+      "candidatesWithUnsupportedEffect": 122,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 54,
+            "correct": 51,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 32,
+            "correct": 32
+          },
+          "0.5": {
+            "predicted": 18,
+            "correct": 18
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 55,
+            "correct": 52,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 49,
+            "correct": 48,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 38,
+            "correct": 38
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 73,
+            "correct": 11,
+            "wrong": 62
+          },
+          "0.25": {
+            "predicted": 64,
+            "wrong": 55,
+            "correct": 9
+          },
+          "0.5": {
+            "predicted": 29,
+            "wrong": 24,
+            "correct": 5
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 52,
+            "correct": 36,
+            "wrong": 16
+          },
+          "0.25": {
+            "predicted": 30,
+            "correct": 29,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 16,
+            "correct": 15,
+            "wrong": 1
+          }
+        },
+        "Spanish|halberdier": {
+          "0.1": {
+            "predicted": 58,
+            "wrong": 49,
+            "correct": 9
+          },
+          "0.25": {
+            "predicted": 35,
+            "wrong": 31,
+            "correct": 4
+          },
+          "0.5": {
+            "predicted": 27,
+            "wrong": 23,
+            "correct": 4
+          }
+        },
+        "Turks|heavy_camel": {
+          "0.1": {
+            "predicted": 29,
+            "correct": 28,
+            "wrong": 1
+          },
+          "0.25": {
+            "predicted": 28,
+            "correct": 28
+          },
+          "0.5": {
+            "predicted": 19,
+            "correct": 19
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 77,
+            "wrong": 72,
+            "correct": 5
+          },
+          "0.25": {
+            "predicted": 76,
+            "wrong": 71,
+            "correct": 5
+          },
+          "0.5": {
+            "predicted": 71,
+            "wrong": 66,
+            "correct": 5
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|paladin"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 29,
+          "correct": 29
+        },
+        "crossValidation": {
+          "predicted": 31,
+          "correct": 30,
+          "wrong": 1
+        },
+        "unresolvedCandidates": 173
+      }
+    },
+    "cav_archer|cav_archer": {
+      "observedPairs": 48,
+      "selectedStandardsC": [
+        "Turks|paladin",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 25,
+        "correct": 25
+      },
+      "crossValidation": {
+        "predicted": 24,
+        "correct": 22,
+        "wrong": 2,
+        "closeCalledDecisive": 1
+      },
+      "foldSelections": {
+        "Turks|paladin+Spanish|champion": 2,
+        "Turks|paladin+Chinese|arbalester": 1,
+        "Turks|paladin+Spanish|hussar+Spanish|champion": 2
+      },
+      "unresolvedCandidates": 501,
+      "candidatesWithUnsupportedEffect": 213,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 13,
+            "wrong": 1,
+            "closeCalledDecisive": 1,
+            "correct": 12
+          },
+          "0.25": {
+            "predicted": 11,
+            "wrong": 1,
+            "closeCalledDecisive": 1,
+            "correct": 10
+          },
+          "0.5": {
+            "predicted": 8,
+            "wrong": 1,
+            "closeCalledDecisive": 1,
+            "correct": 7
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 44,
+            "correct": 38,
+            "wrong": 6,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 29,
+            "correct": 28,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 9,
+            "correct": 9
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 3,
+            "wrong": 1,
+            "closeCalledDecisive": 1,
+            "correct": 2
+          },
+          "0.25": {
+            "predicted": 1,
+            "correct": 1
+          },
+          "0.5": {}
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 38,
+            "correct": 35,
+            "wrong": 3,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 25,
+            "correct": 24,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 12,
+            "correct": 12
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 29,
+            "correct": 28,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 15,
+            "correct": 15
+          },
+          "0.5": {
+            "predicted": 8,
+            "correct": 8
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 6,
+            "correct": 6
+          },
+          "0.25": {
+            "predicted": 6,
+            "correct": 6
+          },
+          "0.5": {
+            "predicted": 6,
+            "correct": 6
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 35,
+            "correct": 33,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 26,
+            "correct": 25,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 17,
+            "correct": 16,
+            "wrong": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 25,
+          "correct": 25
+        },
+        "crossValidation": {
+          "predicted": 24,
+          "correct": 22,
+          "wrong": 2,
+          "closeCalledDecisive": 1
+        },
+        "unresolvedCandidates": 501
+      }
+    },
+    "cav_archer|gunpowder": {
+      "observedPairs": 85,
+      "selectedStandardsC": [
+        "Chinese|arbalester"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 37,
+        "correct": 37
+      },
+      "crossValidation": {
+        "predicted": 39,
+        "correct": 38,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Chinese|arbalester": 4,
+        "Turks|paladin": 1
+      },
+      "unresolvedCandidates": 748,
+      "candidatesWithUnsupportedEffect": 325,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 52,
+            "wrong": 21,
+            "closeCalledDecisive": 3,
+            "correct": 31
+          },
+          "0.25": {
+            "predicted": 37,
+            "wrong": 8,
+            "closeCalledDecisive": 2,
+            "correct": 29
+          },
+          "0.5": {
+            "predicted": 15,
+            "correct": 15
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 68,
+            "wrong": 2,
+            "closeCalledDecisive": 1,
+            "correct": 66
+          },
+          "0.25": {
+            "predicted": 41,
+            "correct": 40,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 24,
+            "correct": 24
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 18,
+            "correct": 18
+          },
+          "0.25": {
+            "predicted": 15,
+            "correct": 15
+          },
+          "0.5": {
+            "predicted": 10,
+            "correct": 10
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 37,
+            "correct": 37
+          },
+          "0.25": {
+            "predicted": 31,
+            "correct": 31
+          },
+          "0.5": {
+            "predicted": 19,
+            "correct": 19
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 54,
+            "wrong": 5,
+            "closeCalledDecisive": 2,
+            "correct": 49
+          },
+          "0.25": {
+            "predicted": 45,
+            "correct": 43,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 38,
+            "correct": 36,
+            "wrong": 2
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 12,
+            "correct": 12
+          },
+          "0.25": {
+            "predicted": 9,
+            "correct": 9
+          },
+          "0.5": {
+            "predicted": 7,
+            "correct": 7
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 77,
+            "wrong": 45,
+            "closeCalledDecisive": 3,
+            "correct": 32
+          },
+          "0.25": {
+            "predicted": 60,
+            "wrong": 32,
+            "closeCalledDecisive": 3,
+            "correct": 28
+          },
+          "0.5": {
+            "predicted": 47,
+            "wrong": 25,
+            "closeCalledDecisive": 3,
+            "correct": 22
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Chinese|arbalester"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 30,
+          "correct": 30
+        },
+        "crossValidation": {
+          "predicted": 30,
+          "correct": 29,
+          "wrong": 1,
+          "closeCalledDecisive": 1
+        },
+        "unresolvedCandidates": 489
+      }
+    },
+    "cav_archer|knight": {
+      "observedPairs": 128,
+      "selectedStandardsC": [
+        "Chinese|arbalester",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 75,
+        "correct": 75
+      },
+      "crossValidation": {
+        "predicted": 75,
+        "correct": 75
+      },
+      "foldSelections": {
+        "Chinese|arbalester+Spanish|champion": 5
+      },
+      "unresolvedCandidates": 1269,
+      "candidatesWithUnsupportedEffect": 644,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 73,
+            "correct": 59,
+            "wrong": 14,
+            "closeCalledDecisive": 6
+          },
+          "0.25": {
+            "predicted": 54,
+            "correct": 50,
+            "wrong": 4,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 25,
+            "correct": 24,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 93,
+            "correct": 91,
+            "wrong": 2,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 70,
+            "correct": 69,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 35,
+            "correct": 35
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 65,
+            "correct": 55,
+            "wrong": 10,
+            "closeCalledDecisive": 4
+          },
+          "0.25": {
+            "predicted": 57,
+            "correct": 50,
+            "wrong": 7,
+            "closeCalledDecisive": 4
+          },
+          "0.5": {
+            "predicted": 46,
+            "correct": 42,
+            "wrong": 4,
+            "closeCalledDecisive": 2
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 102,
+            "correct": 92,
+            "wrong": 10,
+            "closeCalledDecisive": 4
+          },
+          "0.25": {
+            "predicted": 67,
+            "correct": 60,
+            "wrong": 7,
+            "closeCalledDecisive": 4
+          },
+          "0.5": {
+            "predicted": 42,
+            "correct": 39,
+            "wrong": 3,
+            "closeCalledDecisive": 2
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 75,
+          "correct": 75
+        },
+        "crossValidation": {
+          "predicted": 75,
+          "correct": 75
+        },
+        "unresolvedCandidates": 1269
+      }
+    },
+    "cav_archer|light_cav": {
+      "observedPairs": 129,
+      "selectedStandardsC": [
+        "Saracens|heavy_cav_archer"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 66,
+        "correct": 66
+      },
+      "crossValidation": {
+        "predicted": 66,
+        "correct": 66
+      },
+      "foldSelections": {
+        "Saracens|heavy_cav_archer": 5
+      },
+      "unresolvedCandidates": 670,
+      "candidatesWithUnsupportedEffect": 327,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 86,
+            "correct": 55,
+            "wrong": 31,
+            "closeCalledDecisive": 6
+          },
+          "0.25": {
+            "predicted": 50,
+            "correct": 44,
+            "wrong": 6,
+            "closeCalledDecisive": 3
+          },
+          "0.5": {
+            "predicted": 20,
+            "correct": 20
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 105,
+            "correct": 89,
+            "wrong": 16,
+            "closeCalledDecisive": 3
+          },
+          "0.25": {
+            "predicted": 85,
+            "correct": 77,
+            "wrong": 8,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 64,
+            "correct": 62,
+            "wrong": 2,
+            "closeCalledDecisive": 2
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 87,
+            "correct": 83,
+            "wrong": 4,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 66,
+            "correct": 66
+          },
+          "0.5": {
+            "predicted": 23,
+            "correct": 23
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 99,
+            "correct": 62,
+            "wrong": 37,
+            "closeCalledDecisive": 6
+          },
+          "0.25": {
+            "predicted": 70,
+            "correct": 51,
+            "wrong": 19,
+            "closeCalledDecisive": 5
+          },
+          "0.5": {
+            "predicted": 50,
+            "correct": 44,
+            "wrong": 6,
+            "closeCalledDecisive": 3
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Saracens|heavy_cav_archer"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 53,
+          "correct": 53
+        },
+        "crossValidation": {
+          "predicted": 53,
+          "correct": 53
+        },
+        "unresolvedCandidates": 426
+      }
+    },
+    "cav_archer|militia": {
+      "observedPairs": 107,
+      "crossValidation": {
+        "predicted": 1,
+        "wrong": 1
+      },
+      "status": "no error-free training rule with 8 predictions"
+    },
+    "cav_archer|scorpion": {
+      "observedPairs": 61,
+      "selectedStandardsC": [
+        "Turks|paladin",
+        "Spanish|hussar",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 18,
+        "correct": 18
+      },
+      "crossValidation": {
+        "predicted": 15,
+        "correct": 14,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Saracens|hand_cannoneer+Spanish|champion": 1,
+        "Turks|paladin+Spanish|hussar+Spanish|champion": 2,
+        "Chinese|arbalester+Saracens|heavy_cav_archer+Spanish|champion": 1,
+        "Saracens|heavy_cav_archer+Spanish|champion": 1
+      },
+      "unresolvedCandidates": 242,
+      "candidatesWithUnsupportedEffect": 242,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 21,
+            "correct": 8,
+            "wrong": 13,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 18,
+            "correct": 7,
+            "wrong": 11,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 12,
+            "wrong": 9,
+            "closeCalledDecisive": 1,
+            "correct": 3
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 48,
+            "correct": 33,
+            "wrong": 15,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 25,
+            "correct": 19,
+            "wrong": 6,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 12,
+            "correct": 9,
+            "wrong": 3
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 34,
+            "correct": 26,
+            "wrong": 8,
+            "closeCalledDecisive": 3
+          },
+          "0.25": {
+            "predicted": 22,
+            "correct": 20,
+            "wrong": 2,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 13,
+            "correct": 12,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 48,
+            "correct": 39,
+            "wrong": 9,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 38,
+            "correct": 31,
+            "wrong": 7,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 21,
+            "correct": 19,
+            "wrong": 2,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 48,
+            "correct": 29,
+            "wrong": 19,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 44,
+            "correct": 28,
+            "wrong": 16,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 37,
+            "correct": 24,
+            "wrong": 13,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 26,
+            "correct": 21,
+            "wrong": 5,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 16,
+            "correct": 15,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 10,
+            "correct": 9,
+            "wrong": 1
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 52,
+            "wrong": 9,
+            "correct": 43,
+            "closeCalledDecisive": 3
+          },
+          "0.25": {
+            "predicted": 37,
+            "wrong": 4,
+            "correct": 33,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 23,
+            "wrong": 2,
+            "correct": 21
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|hussar",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 18,
+          "correct": 18
+        },
+        "crossValidation": {
+          "predicted": 15,
+          "correct": 14,
+          "wrong": 1
+        },
+        "unresolvedCandidates": 242
+      }
+    },
+    "cav_archer|skirmisher": {
+      "observedPairs": 95,
+      "selectedStandardsC": [
+        "Saracens|heavy_cav_archer"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 53,
+        "correct": 53
+      },
+      "crossValidation": {
+        "predicted": 60,
+        "correct": 58,
+        "wrong": 2
+      },
+      "foldSelections": {
+        "Saracens|heavy_cav_archer": 4,
+        "Chinese|arbalester": 1
+      },
+      "unresolvedCandidates": 517,
+      "candidatesWithUnsupportedEffect": 253,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 39,
+            "correct": 39
+          },
+          "0.25": {
+            "predicted": 32,
+            "correct": 32
+          },
+          "0.5": {
+            "predicted": 23,
+            "correct": 23
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 82,
+            "wrong": 52,
+            "correct": 30,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 82,
+            "wrong": 52,
+            "correct": 30,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 75,
+            "wrong": 45,
+            "correct": 30,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 42,
+            "correct": 39,
+            "wrong": 3,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 12,
+            "correct": 12
+          },
+          "0.5": {
+            "predicted": 2,
+            "correct": 2
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 77,
+            "correct": 75,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 51,
+            "correct": 50,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 15,
+            "correct": 15
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 74,
+            "wrong": 37,
+            "correct": 37
+          },
+          "0.25": {
+            "predicted": 74,
+            "wrong": 37,
+            "correct": 37
+          },
+          "0.5": {
+            "predicted": 74,
+            "wrong": 37,
+            "correct": 37
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 59,
+            "correct": 57,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 53,
+            "correct": 53
+          },
+          "0.5": {
+            "predicted": 44,
+            "correct": 44
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 89,
+            "wrong": 52,
+            "correct": 37,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 89,
+            "wrong": 52,
+            "correct": 37,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 85,
+            "wrong": 48,
+            "correct": 37,
+            "closeCalledDecisive": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Saracens|heavy_cav_archer"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 40,
+          "correct": 40
+        },
+        "crossValidation": {
+          "predicted": 45,
+          "correct": 44,
+          "wrong": 1
+        },
+        "unresolvedCandidates": 408
+      }
+    },
+    "elephant|knight": {
+      "observedPairs": 37,
+      "selectedStandardsC": [
+        "Turks|heavy_camel"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 37,
+        "correct": 37
+      },
+      "crossValidation": {
+        "predicted": 36,
+        "correct": 36
+      },
+      "foldSelections": {
+        "Turks|heavy_camel": 5
+      },
+      "unresolvedCandidates": 261,
+      "candidatesWithUnsupportedEffect": 261,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 27,
+            "correct": 27
+          },
+          "0.25": {
+            "predicted": 21,
+            "correct": 21
+          },
+          "0.5": {
+            "predicted": 14,
+            "correct": 14
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 29,
+            "correct": 29
+          },
+          "0.25": {
+            "predicted": 29,
+            "correct": 29
+          },
+          "0.5": {
+            "predicted": 24,
+            "correct": 24
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 28,
+            "correct": 26,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 18,
+            "correct": 18
+          },
+          "0.5": {
+            "predicted": 8,
+            "correct": 8
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 28,
+            "correct": 28
+          },
+          "0.25": {
+            "predicted": 21,
+            "correct": 21
+          },
+          "0.5": {
+            "predicted": 15,
+            "correct": 15
+          }
+        },
+        "Spanish|halberdier": {
+          "0.1": {
+            "predicted": 30,
+            "correct": 22,
+            "wrong": 8
+          },
+          "0.25": {
+            "predicted": 23,
+            "correct": 18,
+            "wrong": 5
+          },
+          "0.5": {
+            "predicted": 15,
+            "correct": 13,
+            "wrong": 2
+          }
+        },
+        "Turks|heavy_camel": {
+          "0.1": {
+            "predicted": 37,
+            "correct": 37
+          },
+          "0.25": {
+            "predicted": 37,
+            "correct": 37
+          },
+          "0.5": {
+            "predicted": 36,
+            "correct": 36
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 35,
+            "correct": 35
+          },
+          "0.25": {
+            "predicted": 22,
+            "correct": 22
+          },
+          "0.5": {
+            "predicted": 5,
+            "correct": 5
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|heavy_camel",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 35,
+          "correct": 35
+        },
+        "crossValidation": {
+          "predicted": 35,
+          "correct": 35
+        },
+        "unresolvedCandidates": 228
+      }
+    },
+    "elephant|militia": {
+      "observedPairs": 41,
+      "crossValidation": {},
+      "status": "no error-free training rule with 8 predictions"
+    },
+    "gunpowder|gunpowder": {
+      "observedPairs": 27,
+      "selectedStandardsC": [
+        "Spanish|imp_elite_skirm",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 12,
+        "correct": 12
+      },
+      "crossValidation": {
+        "predicted": 11,
+        "wrong": 1,
+        "correct": 10
+      },
+      "foldSelections": {
+        "Spanish|hussar": 1,
+        "Spanish|imp_elite_skirm+Spanish|champion": 4
+      },
+      "unresolvedCandidates": 88,
+      "candidatesWithUnsupportedEffect": 53,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 20,
+            "correct": 16,
+            "wrong": 4,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 17,
+            "correct": 15,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 8,
+            "correct": 7,
+            "wrong": 1
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 16,
+            "correct": 14,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 10,
+            "correct": 10
+          },
+          "0.5": {
+            "predicted": 4,
+            "correct": 4
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 8,
+            "correct": 8
+          },
+          "0.25": {
+            "predicted": 8,
+            "correct": 8
+          },
+          "0.5": {
+            "predicted": 3,
+            "correct": 3
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 8,
+            "correct": 8
+          },
+          "0.25": {
+            "predicted": 4,
+            "correct": 4
+          },
+          "0.5": {
+            "predicted": 1,
+            "correct": 1
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 17,
+            "correct": 14,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 12,
+            "correct": 11,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 9,
+            "correct": 8,
+            "wrong": 1
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 4,
+            "correct": 4
+          },
+          "0.25": {
+            "predicted": 4,
+            "correct": 4
+          },
+          "0.5": {}
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 17,
+            "correct": 14,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 12,
+            "correct": 9,
+            "wrong": 3
+          },
+          "0.5": {
+            "predicted": 6,
+            "correct": 4,
+            "wrong": 2
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Spanish|imp_elite_skirm",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 12,
+          "correct": 12
+        },
+        "crossValidation": {
+          "predicted": 7,
+          "correct": 7
+        },
+        "unresolvedCandidates": 88
+      }
+    },
+    "gunpowder|knight": {
+      "observedPairs": 46,
+      "selectedStandardsC": [
+        "Chinese|arbalester",
+        "Saracens|heavy_cav_archer"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 23,
+        "correct": 23
+      },
+      "crossValidation": {
+        "predicted": 24,
+        "correct": 23,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Chinese|arbalester+Saracens|heavy_cav_archer": 5
+      },
+      "unresolvedCandidates": 538,
+      "candidatesWithUnsupportedEffect": 255,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 21,
+            "correct": 19,
+            "wrong": 2,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 17,
+            "correct": 15,
+            "wrong": 2,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 12,
+            "correct": 11,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 33,
+            "wrong": 3,
+            "closeCalledDecisive": 1,
+            "correct": 30
+          },
+          "0.25": {
+            "predicted": 28,
+            "wrong": 2,
+            "closeCalledDecisive": 1,
+            "correct": 26
+          },
+          "0.5": {
+            "predicted": 21,
+            "correct": 21
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 32,
+            "correct": 30,
+            "wrong": 2,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 29,
+            "correct": 28,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 19,
+            "correct": 19
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 32,
+            "correct": 14,
+            "wrong": 18,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 21,
+            "wrong": 8,
+            "closeCalledDecisive": 2,
+            "correct": 13
+          },
+          "0.5": {
+            "predicted": 9,
+            "correct": 8,
+            "wrong": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Saracens|heavy_cav_archer"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 23,
+          "correct": 23
+        },
+        "crossValidation": {
+          "predicted": 24,
+          "correct": 23,
+          "wrong": 1
+        },
+        "unresolvedCandidates": 538
+      }
+    },
+    "gunpowder|light_cav": {
+      "observedPairs": 37,
+      "selectedStandardsC": [
+        "Chinese|arbalester"
+      ],
+      "minimumSignedMarginGapPerC": 0.5,
+      "training": {
+        "predicted": 12,
+        "correct": 12
+      },
+      "crossValidation": {
+        "predicted": 8,
+        "correct": 8
+      },
+      "foldSelections": {
+        "Chinese|arbalester": 3,
+        "Turks|paladin": 1,
+        "Turks|paladin+Spanish|champion": 1
+      },
+      "unresolvedCandidates": 297,
+      "candidatesWithUnsupportedEffect": 126,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 25,
+            "wrong": 7,
+            "closeCalledDecisive": 1,
+            "correct": 18
+          },
+          "0.25": {
+            "predicted": 12,
+            "correct": 12
+          },
+          "0.5": {
+            "predicted": 5,
+            "correct": 5
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 21,
+            "correct": 14,
+            "wrong": 7
+          },
+          "0.25": {
+            "predicted": 17,
+            "correct": 14,
+            "wrong": 3
+          },
+          "0.5": {
+            "predicted": 12,
+            "correct": 12
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 22,
+            "correct": 18,
+            "wrong": 4
+          },
+          "0.25": {
+            "predicted": 15,
+            "correct": 11,
+            "wrong": 4
+          },
+          "0.5": {
+            "predicted": 4,
+            "wrong": 2,
+            "correct": 2
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 37,
+            "wrong": 20,
+            "closeCalledDecisive": 1,
+            "correct": 17
+          },
+          "0.25": {
+            "predicted": 37,
+            "wrong": 20,
+            "closeCalledDecisive": 1,
+            "correct": 17
+          },
+          "0.5": {
+            "predicted": 35,
+            "wrong": 18,
+            "closeCalledDecisive": 1,
+            "correct": 17
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 11,
+          "correct": 11
+        },
+        "crossValidation": {
+          "predicted": 7,
+          "correct": 7
+        },
+        "unresolvedCandidates": 247
+      }
+    },
+    "gunpowder|militia": {
+      "observedPairs": 67,
+      "crossValidation": {},
+      "status": "no error-free training rule with 8 predictions"
+    },
+    "gunpowder|scorpion": {
+      "observedPairs": 43,
+      "crossValidation": {
+        "predicted": 3,
+        "wrong": 1,
+        "correct": 2
+      },
+      "status": "no error-free training rule with 8 predictions"
+    },
+    "gunpowder|skirmisher": {
+      "observedPairs": 47,
+      "selectedStandardsC": [
+        "Chinese|arbalester",
+        "Saracens|heavy_cav_archer"
+      ],
+      "minimumSignedMarginGapPerC": 0.5,
+      "training": {
+        "predicted": 12,
+        "correct": 12
+      },
+      "crossValidation": {
+        "predicted": 13,
+        "correct": 12,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Chinese|arbalester+Saracens|heavy_cav_archer": 4,
+        "Chinese|arbalester": 1
+      },
+      "unresolvedCandidates": 141,
+      "candidatesWithUnsupportedEffect": 74,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 23,
+            "correct": 21,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 13,
+            "correct": 12,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 8,
+            "correct": 8
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 43,
+            "wrong": 28,
+            "correct": 15
+          },
+          "0.25": {
+            "predicted": 41,
+            "wrong": 26,
+            "correct": 15
+          },
+          "0.5": {
+            "predicted": 13,
+            "wrong": 3,
+            "correct": 10
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 23,
+            "correct": 20,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 18,
+            "correct": 15,
+            "wrong": 3
+          },
+          "0.5": {
+            "predicted": 10,
+            "correct": 8,
+            "wrong": 2
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 26,
+            "correct": 17,
+            "wrong": 9
+          },
+          "0.25": {
+            "predicted": 22,
+            "correct": 16,
+            "wrong": 6
+          },
+          "0.5": {
+            "predicted": 17,
+            "correct": 16,
+            "wrong": 1
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 37,
+            "wrong": 26,
+            "correct": 11
+          },
+          "0.25": {
+            "predicted": 35,
+            "wrong": 24,
+            "correct": 11
+          },
+          "0.5": {
+            "predicted": 17,
+            "wrong": 7,
+            "correct": 10
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 24,
+            "correct": 19,
+            "wrong": 5
+          },
+          "0.25": {
+            "predicted": 19,
+            "correct": 15,
+            "wrong": 4
+          },
+          "0.5": {
+            "predicted": 15,
+            "correct": 12,
+            "wrong": 3
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 45,
+            "wrong": 30,
+            "correct": 15
+          },
+          "0.25": {
+            "predicted": 45,
+            "wrong": 30,
+            "correct": 15
+          },
+          "0.5": {
+            "predicted": 45,
+            "wrong": 30,
+            "correct": 15
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Saracens|heavy_cav_archer"
+        ],
+        "minimumSignedMarginGapPerC": 0.5,
+        "training": {
+          "predicted": 12,
+          "correct": 12
+        },
+        "crossValidation": {
+          "predicted": 12,
+          "correct": 12
+        },
+        "unresolvedCandidates": 141
+      }
+    },
+    "knight|knight": {
+      "observedPairs": 200,
+      "selectedStandardsC": [
+        "Saracens|heavy_cav_archer",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 89,
+        "correct": 89
+      },
+      "crossValidation": {
+        "predicted": 97,
+        "correct": 91,
+        "wrong": 6,
+        "closeCalledDecisive": 1
+      },
+      "foldSelections": {
+        "Chinese|arbalester+Spanish|champion": 1,
+        "Turks|paladin+Spanish|champion": 1,
+        "Saracens|heavy_cav_archer+Spanish|champion": 1,
+        "Turks|paladin+Spanish|halberdier": 1,
+        "Spanish|champion": 1
+      },
+      "unresolvedCandidates": 354,
+      "candidatesWithUnsupportedEffect": 161,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 131,
+            "correct": 128,
+            "wrong": 3,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 95,
+            "correct": 94,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 61,
+            "correct": 61
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 125,
+            "correct": 122,
+            "wrong": 3,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 79,
+            "correct": 79
+          },
+          "0.5": {
+            "predicted": 38,
+            "correct": 38
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 149,
+            "correct": 131,
+            "wrong": 18,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 96,
+            "correct": 90,
+            "wrong": 6,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 41,
+            "correct": 40,
+            "wrong": 1
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 156,
+            "correct": 140,
+            "wrong": 16,
+            "closeCalledDecisive": 3
+          },
+          "0.25": {
+            "predicted": 121,
+            "correct": 110,
+            "wrong": 11,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 83,
+            "correct": 77,
+            "wrong": 6,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Spanish|halberdier": {
+          "0.1": {
+            "predicted": 157,
+            "correct": 144,
+            "wrong": 13,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 113,
+            "correct": 107,
+            "wrong": 6
+          },
+          "0.5": {
+            "predicted": 71,
+            "correct": 69,
+            "wrong": 2
+          }
+        },
+        "Turks|heavy_camel": {
+          "0.1": {
+            "predicted": 126,
+            "correct": 121,
+            "wrong": 5
+          },
+          "0.25": {
+            "predicted": 58,
+            "correct": 56,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 6,
+            "correct": 4,
+            "wrong": 2
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 118,
+            "correct": 114,
+            "wrong": 4
+          },
+          "0.25": {
+            "predicted": 52,
+            "correct": 52
+          },
+          "0.5": {
+            "predicted": 14,
+            "correct": 14
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Saracens|heavy_cav_archer",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 89,
+          "correct": 89
+        },
+        "crossValidation": {
+          "predicted": 90,
+          "correct": 86,
+          "wrong": 4,
+          "closeCalledDecisive": 1
+        },
+        "unresolvedCandidates": 354
+      }
+    },
+    "knight|light_cav": {
+      "observedPairs": 96,
+      "selectedStandardsC": [
+        "Spanish|halberdier"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 91,
+        "correct": 91
+      },
+      "crossValidation": {
+        "predicted": 88,
+        "correct": 88
+      },
+      "foldSelections": {
+        "Spanish|halberdier": 4,
+        "Spanish|champion": 1
+      },
+      "unresolvedCandidates": 1473,
+      "candidatesWithUnsupportedEffect": 605,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 58,
+            "correct": 58
+          },
+          "0.25": {
+            "predicted": 55,
+            "correct": 55
+          },
+          "0.5": {
+            "predicted": 46,
+            "correct": 46
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 54,
+            "correct": 54
+          },
+          "0.25": {
+            "predicted": 41,
+            "correct": 41
+          },
+          "0.5": {
+            "predicted": 8,
+            "correct": 8
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 78,
+            "correct": 64,
+            "wrong": 14
+          },
+          "0.25": {
+            "predicted": 51,
+            "correct": 47,
+            "wrong": 4
+          },
+          "0.5": {
+            "predicted": 28,
+            "correct": 26,
+            "wrong": 2
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 91,
+            "correct": 87,
+            "wrong": 4
+          },
+          "0.25": {
+            "predicted": 83,
+            "correct": 82,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 70,
+            "correct": 70
+          }
+        },
+        "Spanish|halberdier": {
+          "0.1": {
+            "predicted": 91,
+            "correct": 91
+          },
+          "0.25": {
+            "predicted": 60,
+            "correct": 60
+          },
+          "0.5": {
+            "predicted": 44,
+            "correct": 44
+          }
+        },
+        "Turks|heavy_camel": {
+          "0.1": {
+            "predicted": 87,
+            "correct": 87
+          },
+          "0.25": {
+            "predicted": 45,
+            "correct": 45
+          },
+          "0.5": {
+            "predicted": 2,
+            "correct": 2
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 91,
+            "correct": 89,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 88,
+            "correct": 88
+          },
+          "0.5": {
+            "predicted": 85,
+            "correct": 85
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Spanish|halberdier",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 84,
+          "correct": 84
+        },
+        "crossValidation": {
+          "predicted": 81,
+          "correct": 81
+        },
+        "unresolvedCandidates": 1381
+      }
+    },
+    "knight|militia": {
+      "observedPairs": 496,
+      "selectedStandardsC": [
+        "Turks|paladin",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 118,
+        "correct": 118
+      },
+      "crossValidation": {
+        "predicted": 118,
+        "correct": 118
+      },
+      "foldSelections": {
+        "Turks|paladin+Spanish|champion": 5
+      },
+      "unresolvedCandidates": 822,
+      "candidatesWithUnsupportedEffect": 568,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 145,
+            "correct": 143,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 113,
+            "correct": 112,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 81,
+            "correct": 81
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 130,
+            "correct": 123,
+            "wrong": 7
+          },
+          "0.25": {
+            "predicted": 78,
+            "correct": 78
+          },
+          "0.5": {
+            "predicted": 32,
+            "correct": 32
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 170,
+            "correct": 141,
+            "wrong": 29,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 118,
+            "correct": 107,
+            "wrong": 11,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 64,
+            "correct": 61,
+            "wrong": 3
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 174,
+            "correct": 158,
+            "wrong": 16,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 128,
+            "correct": 119,
+            "wrong": 9,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 83,
+            "correct": 75,
+            "wrong": 8,
+            "closeCalledDecisive": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 118,
+          "correct": 118
+        },
+        "crossValidation": {
+          "predicted": 118,
+          "correct": 118
+        },
+        "unresolvedCandidates": 822
+      }
+    },
+    "knight|scorpion": {
+      "observedPairs": 172,
+      "selectedStandardsC": [
+        "Turks|paladin",
+        "Chinese|arbalester"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 82,
+        "correct": 82
+      },
+      "crossValidation": {
+        "predicted": 95,
+        "correct": 93,
+        "wrong": 2,
+        "closeCalledDecisive": 2
+      },
+      "foldSelections": {
+        "Turks|paladin+Chinese|arbalester": 4,
+        "Turks|paladin": 1
+      },
+      "unresolvedCandidates": 258,
+      "candidatesWithUnsupportedEffect": 258,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 134,
+            "correct": 128,
+            "wrong": 6,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 112,
+            "correct": 111,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 83,
+            "correct": 82,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 147,
+            "correct": 128,
+            "wrong": 19,
+            "closeCalledDecisive": 5
+          },
+          "0.25": {
+            "predicted": 107,
+            "correct": 99,
+            "wrong": 8,
+            "closeCalledDecisive": 3
+          },
+          "0.5": {
+            "predicted": 64,
+            "correct": 57,
+            "wrong": 7,
+            "closeCalledDecisive": 3
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 76,
+            "wrong": 31,
+            "correct": 45,
+            "closeCalledDecisive": 5
+          },
+          "0.25": {
+            "predicted": 54,
+            "wrong": 24,
+            "correct": 30,
+            "closeCalledDecisive": 5
+          },
+          "0.5": {
+            "predicted": 33,
+            "wrong": 18,
+            "correct": 15,
+            "closeCalledDecisive": 3
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 125,
+            "wrong": 53,
+            "correct": 72,
+            "closeCalledDecisive": 4
+          },
+          "0.25": {
+            "predicted": 85,
+            "correct": 65,
+            "wrong": 20,
+            "closeCalledDecisive": 4
+          },
+          "0.5": {
+            "predicted": 56,
+            "correct": 55,
+            "wrong": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Chinese|arbalester"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 82,
+          "correct": 82
+        },
+        "crossValidation": {
+          "predicted": 87,
+          "correct": 86,
+          "wrong": 1,
+          "closeCalledDecisive": 1
+        },
+        "unresolvedCandidates": 258
+      }
+    },
+    "knight|shock_infantry": {
+      "observedPairs": 41,
+      "selectedStandardsC": [
+        "Spanish|paladin"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 19,
+        "correct": 19
+      },
+      "crossValidation": {
+        "predicted": 19,
+        "correct": 19
+      },
+      "foldSelections": {
+        "Spanish|paladin": 5
+      },
+      "unresolvedCandidates": 248,
+      "candidatesWithUnsupportedEffect": 225,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 15,
+            "correct": 15
+          },
+          "0.25": {
+            "predicted": 12,
+            "correct": 12
+          },
+          "0.5": {
+            "predicted": 11,
+            "correct": 11
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 19,
+            "correct": 19
+          },
+          "0.25": {
+            "predicted": 16,
+            "correct": 16
+          },
+          "0.5": {
+            "predicted": 14,
+            "correct": 14
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 23,
+            "wrong": 17,
+            "correct": 6
+          },
+          "0.25": {
+            "predicted": 19,
+            "wrong": 15,
+            "correct": 4
+          },
+          "0.5": {
+            "predicted": 7,
+            "wrong": 4,
+            "correct": 3
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 29,
+            "wrong": 22,
+            "correct": 7
+          },
+          "0.25": {
+            "predicted": 29,
+            "wrong": 22,
+            "correct": 7
+          },
+          "0.5": {
+            "predicted": 28,
+            "wrong": 21,
+            "correct": 7
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|paladin"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 10,
+          "correct": 10
+        },
+        "crossValidation": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "unresolvedCandidates": 150
+      }
+    },
+    "knight|skirmisher": {
+      "observedPairs": 74,
+      "selectedStandardsC": [
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.5,
+      "training": {
+        "predicted": 72,
+        "correct": 72
+      },
+      "crossValidation": {
+        "predicted": 72,
+        "correct": 72
+      },
+      "foldSelections": {
+        "Spanish|champion": 5
+      },
+      "unresolvedCandidates": 890,
+      "candidatesWithUnsupportedEffect": 392,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 52,
+            "correct": 52
+          },
+          "0.25": {
+            "predicted": 52,
+            "correct": 52
+          },
+          "0.5": {
+            "predicted": 45,
+            "correct": 45
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 58,
+            "wrong": 46,
+            "correct": 12
+          },
+          "0.25": {
+            "predicted": 32,
+            "wrong": 25,
+            "correct": 7
+          },
+          "0.5": {
+            "predicted": 14,
+            "wrong": 10,
+            "correct": 4
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 61,
+            "wrong": 49,
+            "correct": 12
+          },
+          "0.25": {
+            "predicted": 46,
+            "wrong": 37,
+            "correct": 9
+          },
+          "0.5": {
+            "predicted": 31,
+            "wrong": 25,
+            "correct": 6
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 72,
+            "correct": 72
+          },
+          "0.25": {
+            "predicted": 72,
+            "correct": 72
+          },
+          "0.5": {
+            "predicted": 72,
+            "correct": 72
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 51,
+          "correct": 51
+        },
+        "crossValidation": {
+          "predicted": 51,
+          "correct": 51
+        },
+        "unresolvedCandidates": 760
+      }
+    },
+    "knight|spear": {
+      "observedPairs": 165,
+      "selectedStandardsC": [
+        "Spanish|paladin"
+      ],
+      "minimumSignedMarginGapPerC": 0.5,
+      "training": {
+        "predicted": 19,
+        "correct": 19
+      },
+      "crossValidation": {
+        "predicted": 22,
+        "correct": 20,
+        "wrong": 2
+      },
+      "foldSelections": {
+        "Spanish|paladin": 5
+      },
+      "unresolvedCandidates": 189,
+      "candidatesWithUnsupportedEffect": 136,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 33,
+            "correct": 27,
+            "wrong": 6
+          },
+          "0.25": {
+            "predicted": 19,
+            "correct": 17,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 12,
+            "correct": 12
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 42,
+            "correct": 37,
+            "wrong": 5
+          },
+          "0.25": {
+            "predicted": 35,
+            "correct": 33,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 19,
+            "correct": 19
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 63,
+            "wrong": 43,
+            "correct": 20
+          },
+          "0.25": {
+            "predicted": 63,
+            "wrong": 43,
+            "correct": 20
+          },
+          "0.5": {
+            "predicted": 62,
+            "wrong": 42,
+            "correct": 20
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 63,
+            "wrong": 43,
+            "correct": 20
+          },
+          "0.25": {
+            "predicted": 63,
+            "wrong": 43,
+            "correct": 20
+          },
+          "0.5": {
+            "predicted": 63,
+            "wrong": 43,
+            "correct": 20
+          }
+        }
+      },
+      "multiStandard": {
+        "status": "no eligible two-or-more-C rule",
+        "crossValidation": {
+          "predicted": 2,
+          "correct": 1,
+          "wrong": 1
+        }
+      }
+    },
+    "light_cav|militia": {
+      "observedPairs": 138,
+      "selectedStandardsC": [
+        "Turks|paladin"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 39,
+        "correct": 39
+      },
+      "crossValidation": {
+        "predicted": 39,
+        "correct": 39
+      },
+      "foldSelections": {
+        "Turks|paladin": 5
+      },
+      "unresolvedCandidates": 855,
+      "candidatesWithUnsupportedEffect": 591,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 39,
+            "correct": 39
+          },
+          "0.25": {
+            "predicted": 25,
+            "correct": 25
+          },
+          "0.5": {
+            "predicted": 10,
+            "correct": 10
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 27,
+            "correct": 27
+          },
+          "0.25": {
+            "predicted": 12,
+            "correct": 12
+          },
+          "0.5": {
+            "predicted": 4,
+            "correct": 4
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 38,
+            "correct": 13,
+            "wrong": 25
+          },
+          "0.25": {
+            "predicted": 22,
+            "correct": 7,
+            "wrong": 15
+          },
+          "0.5": {
+            "predicted": 13,
+            "wrong": 7,
+            "correct": 6
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 35,
+            "correct": 34,
+            "wrong": 1
+          },
+          "0.25": {
+            "predicted": 26,
+            "correct": 26
+          },
+          "0.5": {
+            "predicted": 19,
+            "correct": 19
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 33,
+          "correct": 33
+        },
+        "crossValidation": {
+          "predicted": 33,
+          "correct": 33
+        },
+        "unresolvedCandidates": 679
+      }
+    },
+    "light_cav|scorpion": {
+      "observedPairs": 49,
+      "selectedStandardsC": [
+        "Chinese|arbalester"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 24,
+        "correct": 24
+      },
+      "crossValidation": {
+        "predicted": 24,
+        "correct": 24
+      },
+      "foldSelections": {
+        "Chinese|arbalester": 5
+      },
+      "unresolvedCandidates": 323,
+      "candidatesWithUnsupportedEffect": 323,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 35,
+            "correct": 15,
+            "wrong": 20,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 31,
+            "correct": 13,
+            "wrong": 18,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 7,
+            "correct": 7
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 37,
+            "correct": 33,
+            "wrong": 4,
+            "closeCalledDecisive": 3
+          },
+          "0.25": {
+            "predicted": 24,
+            "correct": 24
+          },
+          "0.5": {
+            "predicted": 14,
+            "correct": 14
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 24,
+            "correct": 10,
+            "wrong": 14,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 24,
+            "correct": 10,
+            "wrong": 14,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 19,
+            "correct": 7,
+            "wrong": 12,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 44,
+            "correct": 11,
+            "wrong": 33,
+            "closeCalledDecisive": 3
+          },
+          "0.25": {
+            "predicted": 38,
+            "correct": 11,
+            "wrong": 27,
+            "closeCalledDecisive": 3
+          },
+          "0.5": {
+            "predicted": 28,
+            "correct": 11,
+            "wrong": 17,
+            "closeCalledDecisive": 3
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Saracens|heavy_cav_archer"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 8,
+          "correct": 8
+        },
+        "crossValidation": {
+          "predicted": 3,
+          "wrong": 1,
+          "closeCalledDecisive": 1,
+          "correct": 2
+        },
+        "unresolvedCandidates": 190
+      }
+    },
+    "light_cav|spear": {
+      "observedPairs": 53,
+      "selectedStandardsC": [
+        "Spanish|paladin"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 10,
+        "correct": 10
+      },
+      "crossValidation": {
+        "predicted": 3,
+        "correct": 3
+      },
+      "foldSelections": {
+        "Turks|paladin+Spanish|paladin": 1,
+        "Spanish|paladin": 2
+      },
+      "unresolvedCandidates": 530,
+      "candidatesWithUnsupportedEffect": 281,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 9,
+            "correct": 9
+          },
+          "0.25": {
+            "predicted": 9,
+            "correct": 9
+          },
+          "0.5": {
+            "predicted": 7,
+            "correct": 7
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 10,
+            "correct": 10
+          },
+          "0.25": {
+            "predicted": 7,
+            "correct": 7
+          },
+          "0.5": {
+            "predicted": 6,
+            "correct": 6
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 16,
+            "correct": 8,
+            "wrong": 8
+          },
+          "0.25": {
+            "predicted": 16,
+            "correct": 8,
+            "wrong": 8
+          },
+          "0.5": {
+            "predicted": 16,
+            "correct": 8,
+            "wrong": 8
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 15,
+            "correct": 8,
+            "wrong": 7
+          },
+          "0.25": {
+            "predicted": 13,
+            "correct": 8,
+            "wrong": 5
+          },
+          "0.5": {
+            "predicted": 5,
+            "correct": 5
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|paladin"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 9,
+          "correct": 9
+        },
+        "crossValidation": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "unresolvedCandidates": 528
+      }
+    },
+    "militia|militia": {
+      "observedPairs": 370,
+      "selectedStandardsC": [
+        "Turks|paladin",
+        "Spanish|paladin",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 16,
+        "correct": 16
+      },
+      "crossValidation": {
+        "predicted": 18,
+        "correct": 17,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Turks|paladin+Spanish|paladin+Spanish|champion": 4,
+        "Spanish|paladin+Spanish|champion": 1
+      },
+      "unresolvedCandidates": 219,
+      "candidatesWithUnsupportedEffect": 177,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 30,
+            "correct": 23,
+            "wrong": 7
+          },
+          "0.25": {
+            "predicted": 20,
+            "correct": 14,
+            "wrong": 6
+          },
+          "0.5": {
+            "predicted": 7,
+            "correct": 6,
+            "wrong": 1
+          }
+        },
+        "Spanish|paladin": {
+          "0.1": {
+            "predicted": 31,
+            "correct": 26,
+            "wrong": 5
+          },
+          "0.25": {
+            "predicted": 18,
+            "correct": 17,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 3,
+            "correct": 3
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 19,
+            "correct": 9,
+            "wrong": 10,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 15,
+            "correct": 8,
+            "wrong": 7,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 8,
+            "correct": 7,
+            "wrong": 1
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 24,
+            "correct": 18,
+            "wrong": 6
+          },
+          "0.25": {
+            "predicted": 8,
+            "correct": 6,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 3,
+            "correct": 3
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 24,
+            "correct": 21,
+            "wrong": 3,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 20,
+            "correct": 19,
+            "wrong": 1
+          },
+          "0.5": {
+            "predicted": 17,
+            "correct": 16,
+            "wrong": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|paladin",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 16,
+          "correct": 16
+        },
+        "crossValidation": {
+          "predicted": 18,
+          "correct": 17,
+          "wrong": 1
+        },
+        "unresolvedCandidates": 219
+      }
+    },
+    "militia|scorpion": {
+      "observedPairs": 310,
+      "selectedStandardsC": [
+        "Chinese|arbalester",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 57,
+        "correct": 57
+      },
+      "crossValidation": {
+        "predicted": 48,
+        "correct": 48
+      },
+      "foldSelections": {
+        "Chinese|arbalester+Spanish|champion": 4,
+        "Chinese|arbalester": 1
+      },
+      "unresolvedCandidates": 197,
+      "candidatesWithUnsupportedEffect": 197,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 104,
+            "correct": 66,
+            "wrong": 38,
+            "closeCalledDecisive": 8
+          },
+          "0.25": {
+            "predicted": 55,
+            "correct": 36,
+            "wrong": 19,
+            "closeCalledDecisive": 3
+          },
+          "0.5": {
+            "predicted": 25,
+            "wrong": 11,
+            "correct": 14,
+            "closeCalledDecisive": 2
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 98,
+            "correct": 82,
+            "wrong": 16,
+            "closeCalledDecisive": 5
+          },
+          "0.25": {
+            "predicted": 69,
+            "correct": 62,
+            "wrong": 7,
+            "closeCalledDecisive": 3
+          },
+          "0.5": {
+            "predicted": 50,
+            "correct": 50
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 126,
+            "correct": 48,
+            "wrong": 78,
+            "closeCalledDecisive": 9
+          },
+          "0.25": {
+            "predicted": 119,
+            "correct": 46,
+            "wrong": 73,
+            "closeCalledDecisive": 9
+          },
+          "0.5": {
+            "predicted": 100,
+            "correct": 43,
+            "wrong": 57,
+            "closeCalledDecisive": 8
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 109,
+            "correct": 91,
+            "wrong": 18,
+            "closeCalledDecisive": 8
+          },
+          "0.25": {
+            "predicted": 93,
+            "correct": 83,
+            "wrong": 10,
+            "closeCalledDecisive": 7
+          },
+          "0.5": {
+            "predicted": 61,
+            "correct": 55,
+            "wrong": 6,
+            "closeCalledDecisive": 6
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 57,
+          "correct": 57
+        },
+        "crossValidation": {
+          "predicted": 57,
+          "correct": 57
+        },
+        "unresolvedCandidates": 197
+      }
+    },
+    "militia|shock_infantry": {
+      "observedPairs": 44,
+      "crossValidation": {},
+      "status": "no error-free training rule with 8 predictions"
+    },
+    "militia|skirmisher": {
+      "observedPairs": 84,
+      "selectedStandardsC": [
+        "Turks|paladin",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 26,
+        "correct": 26
+      },
+      "crossValidation": {
+        "predicted": 26,
+        "correct": 26
+      },
+      "foldSelections": {
+        "Turks|paladin+Spanish|champion": 5
+      },
+      "unresolvedCandidates": 506,
+      "candidatesWithUnsupportedEffect": 335,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 26,
+            "correct": 26
+          },
+          "0.25": {
+            "predicted": 26,
+            "correct": 26
+          },
+          "0.5": {
+            "predicted": 20,
+            "correct": 20
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 23,
+            "wrong": 22,
+            "correct": 1
+          },
+          "0.25": {
+            "predicted": 19,
+            "wrong": 19
+          },
+          "0.5": {
+            "predicted": 9,
+            "wrong": 9
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 4,
+            "correct": 4
+          },
+          "0.25": {
+            "predicted": 4,
+            "correct": 4
+          },
+          "0.5": {
+            "predicted": 4,
+            "correct": 4
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 26,
+            "correct": 26
+          },
+          "0.25": {
+            "predicted": 26,
+            "correct": 26
+          },
+          "0.5": {
+            "predicted": 23,
+            "correct": 23
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 26,
+          "correct": 26
+        },
+        "crossValidation": {
+          "predicted": 26,
+          "correct": 26
+        },
+        "unresolvedCandidates": 506
+      }
+    },
+    "militia|spear": {
+      "observedPairs": 109,
+      "crossValidation": {},
+      "status": "no error-free training rule with 8 predictions"
+    },
+    "scorpion|scorpion": {
+      "observedPairs": 48,
+      "selectedStandardsC": [
+        "Chinese|arbalester",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 27,
+        "correct": 27
+      },
+      "crossValidation": {
+        "predicted": 26,
+        "correct": 26
+      },
+      "foldSelections": {
+        "Chinese|arbalester+Spanish|champion": 4,
+        "Turks|paladin+Chinese|arbalester+Spanish|hussar": 1
+      },
+      "unresolvedCandidates": 42,
+      "candidatesWithUnsupportedEffect": 42,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 11,
+            "correct": 10,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 8,
+            "correct": 8
+          },
+          "0.5": {
+            "predicted": 7,
+            "correct": 7
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 30,
+            "correct": 26,
+            "wrong": 4,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 24,
+            "correct": 24
+          },
+          "0.5": {
+            "predicted": 12,
+            "correct": 12
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 32,
+            "correct": 27,
+            "wrong": 5,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 23,
+            "correct": 20,
+            "wrong": 3
+          },
+          "0.5": {
+            "predicted": 13,
+            "correct": 12,
+            "wrong": 1
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 36,
+            "correct": 33,
+            "wrong": 3
+          },
+          "0.25": {
+            "predicted": 30,
+            "correct": 27,
+            "wrong": 3
+          },
+          "0.5": {
+            "predicted": 23,
+            "correct": 22,
+            "wrong": 1
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 35,
+            "correct": 28,
+            "wrong": 7,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 34,
+            "correct": 27,
+            "wrong": 7,
+            "closeCalledDecisive": 2
+          },
+          "0.5": {
+            "predicted": 20,
+            "correct": 15,
+            "wrong": 5,
+            "closeCalledDecisive": 2
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 11,
+            "correct": 9,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 11,
+            "correct": 9,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 3,
+            "correct": 3
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 32,
+            "correct": 30,
+            "wrong": 2,
+            "closeCalledDecisive": 2
+          },
+          "0.25": {
+            "predicted": 22,
+            "correct": 22
+          },
+          "0.5": {
+            "predicted": 16,
+            "correct": 16
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 27,
+          "correct": 27
+        },
+        "crossValidation": {
+          "predicted": 26,
+          "correct": 26
+        },
+        "unresolvedCandidates": 42
+      }
+    },
+    "scorpion|shock_infantry": {
+      "observedPairs": 25,
+      "selectedStandardsC": [
+        "Chinese|arbalester",
+        "Spanish|hussar"
+      ],
+      "minimumSignedMarginGapPerC": 0.25,
+      "training": {
+        "predicted": 10,
+        "correct": 10
+      },
+      "crossValidation": {
+        "predicted": 2,
+        "correct": 2
+      },
+      "foldSelections": {
+        "Chinese|arbalester+Spanish|hussar": 3
+      },
+      "unresolvedCandidates": 22,
+      "candidatesWithUnsupportedEffect": 22,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 19,
+            "wrong": 8,
+            "correct": 11
+          },
+          "0.25": {
+            "predicted": 17,
+            "wrong": 8,
+            "correct": 9
+          },
+          "0.5": {
+            "predicted": 15,
+            "wrong": 8,
+            "correct": 7
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 17,
+            "correct": 15,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 16,
+            "correct": 14,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 8,
+            "correct": 8
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 21,
+            "wrong": 10,
+            "correct": 11
+          },
+          "0.25": {
+            "predicted": 19,
+            "wrong": 8,
+            "correct": 11
+          },
+          "0.5": {
+            "predicted": 19,
+            "wrong": 8,
+            "correct": 11
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 20,
+            "correct": 11,
+            "wrong": 9
+          },
+          "0.25": {
+            "predicted": 17,
+            "correct": 10,
+            "wrong": 7
+          },
+          "0.5": {
+            "predicted": 13,
+            "correct": 10,
+            "wrong": 3
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Spanish|hussar"
+        ],
+        "minimumSignedMarginGapPerC": 0.25,
+        "training": {
+          "predicted": 10,
+          "correct": 10
+        },
+        "crossValidation": {
+          "predicted": 2,
+          "correct": 2
+        },
+        "unresolvedCandidates": 22
+      }
+    },
+    "scorpion|skirmisher": {
+      "observedPairs": 54,
+      "selectedStandardsC": [
+        "Turks|paladin"
+      ],
+      "minimumSignedMarginGapPerC": 0.5,
+      "training": {
+        "predicted": 31,
+        "correct": 31
+      },
+      "crossValidation": {
+        "predicted": 30,
+        "correct": 30
+      },
+      "foldSelections": {
+        "Turks|paladin": 4,
+        "Turks|paladin+Spanish|champion": 1
+      },
+      "unresolvedCandidates": 228,
+      "candidatesWithUnsupportedEffect": 228,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 12,
+            "correct": 10,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 10,
+            "correct": 10
+          },
+          "0.5": {
+            "predicted": 5,
+            "correct": 5
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 52,
+            "correct": 48,
+            "wrong": 4,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 51,
+            "correct": 47,
+            "wrong": 4,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 31,
+            "correct": 31
+          }
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 34,
+            "wrong": 26,
+            "correct": 8
+          },
+          "0.25": {
+            "predicted": 24,
+            "wrong": 21,
+            "correct": 3
+          },
+          "0.5": {
+            "predicted": 13,
+            "wrong": 12,
+            "correct": 1
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 46,
+            "wrong": 38,
+            "correct": 8,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 34,
+            "wrong": 28,
+            "correct": 6,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 22,
+            "wrong": 19,
+            "correct": 3,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 34,
+            "correct": 31,
+            "wrong": 3,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 32,
+            "correct": 30,
+            "wrong": 2,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 20,
+            "correct": 20
+          }
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 22,
+            "wrong": 12,
+            "correct": 10,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 17,
+            "wrong": 9,
+            "correct": 8,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 9,
+            "wrong": 4,
+            "correct": 5,
+            "closeCalledDecisive": 1
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 52,
+            "correct": 47,
+            "wrong": 5,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 52,
+            "correct": 47,
+            "wrong": 5,
+            "closeCalledDecisive": 1
+          },
+          "0.5": {
+            "predicted": 50,
+            "correct": 46,
+            "wrong": 4,
+            "closeCalledDecisive": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Turks|paladin",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.5,
+        "training": {
+          "predicted": 30,
+          "correct": 30
+        },
+        "crossValidation": {
+          "predicted": 30,
+          "correct": 30
+        },
+        "unresolvedCandidates": 196
+      }
+    },
+    "scorpion|spear": {
+      "observedPairs": 66,
+      "selectedStandardsC": [
+        "Chinese|arbalester",
+        "Spanish|champion"
+      ],
+      "minimumSignedMarginGapPerC": 0.5,
+      "training": {
+        "predicted": 19,
+        "correct": 19
+      },
+      "crossValidation": {
+        "predicted": 20,
+        "correct": 19,
+        "wrong": 1
+      },
+      "foldSelections": {
+        "Chinese|arbalester+Spanish|champion": 4,
+        "Spanish|champion": 1
+      },
+      "unresolvedCandidates": 220,
+      "candidatesWithUnsupportedEffect": 220,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 32,
+            "wrong": 30,
+            "correct": 2
+          },
+          "0.25": {
+            "predicted": 32,
+            "wrong": 30,
+            "correct": 2
+          },
+          "0.5": {
+            "predicted": 32,
+            "wrong": 30,
+            "correct": 2
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 32,
+            "correct": 30,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 32,
+            "correct": 30,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 19,
+            "correct": 19
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 32,
+            "wrong": 30,
+            "correct": 2
+          },
+          "0.25": {
+            "predicted": 32,
+            "wrong": 30,
+            "correct": 2
+          },
+          "0.5": {
+            "predicted": 32,
+            "wrong": 30,
+            "correct": 2
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 32,
+            "correct": 30,
+            "wrong": 2
+          },
+          "0.25": {
+            "predicted": 31,
+            "correct": 29,
+            "wrong": 2
+          },
+          "0.5": {
+            "predicted": 24,
+            "correct": 23,
+            "wrong": 1
+          }
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Chinese|arbalester",
+          "Spanish|champion"
+        ],
+        "minimumSignedMarginGapPerC": 0.5,
+        "training": {
+          "predicted": 19,
+          "correct": 19
+        },
+        "crossValidation": {
+          "predicted": 19,
+          "correct": 19
+        },
+        "unresolvedCandidates": 220
+      }
+    },
+    "skirmisher|skirmisher": {
+      "observedPairs": 40,
+      "selectedStandardsC": [
+        "Saracens|hand_cannoneer",
+        "Chinese|arbalester"
+      ],
+      "minimumSignedMarginGapPerC": 0.1,
+      "training": {
+        "predicted": 10,
+        "correct": 10
+      },
+      "crossValidation": {
+        "predicted": 8,
+        "correct": 7,
+        "wrong": 1,
+        "closeCalledDecisive": 1
+      },
+      "foldSelections": {
+        "Saracens|hand_cannoneer+Chinese|arbalester+Saracens|heavy_cav_archer": 1,
+        "Saracens|hand_cannoneer": 1,
+        "Saracens|hand_cannoneer+Chinese|arbalester": 2
+      },
+      "unresolvedCandidates": 95,
+      "candidatesWithUnsupportedEffect": 38,
+      "singleBenchmarkTrials": {
+        "Spanish|imp_elite_skirm": {
+          "0.1": {
+            "predicted": 8,
+            "correct": 8
+          },
+          "0.25": {
+            "predicted": 5,
+            "correct": 5
+          },
+          "0.5": {
+            "predicted": 2,
+            "correct": 2
+          }
+        },
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 2,
+            "correct": 1,
+            "wrong": 1
+          },
+          "0.25": {},
+          "0.5": {}
+        },
+        "Saracens|hand_cannoneer": {
+          "0.1": {
+            "predicted": 24,
+            "correct": 23,
+            "wrong": 1,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 3,
+            "correct": 3
+          },
+          "0.5": {
+            "predicted": 1,
+            "correct": 1
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 22,
+            "correct": 16,
+            "wrong": 6
+          },
+          "0.25": {
+            "predicted": 13,
+            "correct": 10,
+            "wrong": 3
+          },
+          "0.5": {
+            "predicted": 4,
+            "correct": 4
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 3,
+            "correct": 2,
+            "wrong": 1
+          },
+          "0.25": {},
+          "0.5": {}
+        },
+        "Saracens|heavy_cav_archer": {
+          "0.1": {
+            "predicted": 31,
+            "correct": 24,
+            "wrong": 7,
+            "closeCalledDecisive": 1
+          },
+          "0.25": {
+            "predicted": 19,
+            "correct": 13,
+            "wrong": 6
+          },
+          "0.5": {
+            "predicted": 10,
+            "correct": 9,
+            "wrong": 1
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 2,
+            "correct": 1,
+            "wrong": 1
+          },
+          "0.25": {},
+          "0.5": {}
+        }
+      },
+      "multiStandard": {
+        "selectedStandardsC": [
+          "Saracens|hand_cannoneer",
+          "Chinese|arbalester"
+        ],
+        "minimumSignedMarginGapPerC": 0.1,
+        "training": {
+          "predicted": 10,
+          "correct": 10
+        },
+        "crossValidation": {
+          "predicted": 8,
+          "correct": 7,
+          "wrong": 1,
+          "closeCalledDecisive": 1
+        },
+        "unresolvedCandidates": 95
+      }
+    },
+    "skirmisher|spear": {
+      "observedPairs": 35,
+      "selectedStandardsC": [
+        "Chinese|arbalester"
+      ],
+      "minimumSignedMarginGapPerC": 0.5,
+      "training": {
+        "predicted": 10,
+        "correct": 10
+      },
+      "crossValidation": {
+        "predicted": 7,
+        "correct": 7
+      },
+      "foldSelections": {
+        "Chinese|arbalester": 4
+      },
+      "unresolvedCandidates": 414,
+      "candidatesWithUnsupportedEffect": 205,
+      "singleBenchmarkTrials": {
+        "Turks|paladin": {
+          "0.1": {
+            "predicted": 10,
+            "wrong": 10
+          },
+          "0.25": {
+            "predicted": 10,
+            "wrong": 10
+          },
+          "0.5": {
+            "predicted": 10,
+            "wrong": 10
+          }
+        },
+        "Chinese|arbalester": {
+          "0.1": {
+            "predicted": 10,
+            "correct": 10
+          },
+          "0.25": {
+            "predicted": 10,
+            "correct": 10
+          },
+          "0.5": {
+            "predicted": 10,
+            "correct": 10
+          }
+        },
+        "Spanish|hussar": {
+          "0.1": {
+            "predicted": 5,
+            "wrong": 5
+          },
+          "0.25": {
+            "predicted": 5,
+            "wrong": 5
+          },
+          "0.5": {
+            "predicted": 5,
+            "wrong": 5
+          }
+        },
+        "Spanish|champion": {
+          "0.1": {
+            "predicted": 6,
+            "wrong": 6
+          },
+          "0.25": {},
+          "0.5": {}
+        }
+      },
+      "multiStandard": {
+        "status": "no eligible two-or-more-C rule",
+        "crossValidation": {}
+      }
+    },
+    "spear|spear": {
+      "observedPairs": 33,
+      "crossValidation": {},
+      "status": "no error-free training rule with 8 predictions"
+    }
+  },
+  "simulationJobsRun": 0
+}

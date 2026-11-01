@@ -1,0 +1,1466 @@
+{
+  "kind": "offline holdout of ranking-outcome fingerprints against direct V3 civ fights",
+  "holdout": "adaptive phases 015-019; whole profile pair and all its seeds held out",
+  "rankingSource": "original-engine ranking records only; predictive features, not eligible current-engine measurements",
+  "directHoldoutPairs": 1275,
+  "metrics": {
+    "common_mean_n1_gap0.25": {
+      "predicted": 452,
+      "correct": 417,
+      "wrong": 35,
+      "close_called_decisive": 6
+    },
+    "common_mean_n1_gap0.5": {
+      "predicted": 210,
+      "correct": 204,
+      "wrong": 6,
+      "close_called_decisive": 2
+    },
+    "common_mean_n1_gap1.0": {
+      "predicted": 18,
+      "correct": 18
+    },
+    "common_mean_n2_gap0.25": {
+      "predicted": 451,
+      "correct": 416,
+      "wrong": 35,
+      "close_called_decisive": 6
+    },
+    "common_mean_n2_gap0.5": {
+      "predicted": 209,
+      "correct": 203,
+      "wrong": 6,
+      "close_called_decisive": 2
+    },
+    "common_mean_n2_gap1.0": {
+      "predicted": 18,
+      "correct": 18
+    },
+    "common_mean_n3_gap0.25": {
+      "predicted": 443,
+      "correct": 409,
+      "wrong": 34,
+      "close_called_decisive": 6
+    },
+    "common_mean_n3_gap0.5": {
+      "predicted": 205,
+      "correct": 199,
+      "wrong": 6,
+      "close_called_decisive": 2
+    },
+    "common_mean_n3_gap1.0": {
+      "predicted": 18,
+      "correct": 18
+    },
+    "common_seed_interval_n3_gap25": {
+      "predicted": 108,
+      "correct": 107,
+      "wrong": 1,
+      "close_called_decisive": 1
+    },
+    "common_seed_interval_n3_gap50": {
+      "predicted": 30,
+      "correct": 30
+    },
+    "common_unanimous_n1_gap0.25": {
+      "predicted": 123,
+      "correct": 122,
+      "wrong": 1,
+      "close_called_decisive": 1
+    },
+    "common_unanimous_n1_gap0.5": {
+      "predicted": 35,
+      "correct": 35
+    },
+    "common_unanimous_n1_gap1.0": {
+      "predicted": 2,
+      "correct": 2
+    },
+    "common_unanimous_n2_gap0.25": {
+      "predicted": 122,
+      "correct": 121,
+      "wrong": 1,
+      "close_called_decisive": 1
+    },
+    "common_unanimous_n2_gap0.5": {
+      "predicted": 34,
+      "correct": 34
+    },
+    "common_unanimous_n2_gap1.0": {
+      "predicted": 2,
+      "correct": 2
+    },
+    "common_unanimous_n3_gap0.25": {
+      "predicted": 118,
+      "correct": 117,
+      "wrong": 1,
+      "close_called_decisive": 1
+    },
+    "common_unanimous_n3_gap0.5": {
+      "predicted": 33,
+      "correct": 33
+    },
+    "common_unanimous_n3_gap1.0": {
+      "predicted": 2,
+      "correct": 2
+    },
+    "common_winner_vs_loser_margin25": {
+      "predicted": 443,
+      "correct": 363,
+      "wrong": 80,
+      "close_called_decisive": 8
+    },
+    "cost_neutral_exact_physics": {
+      "predicted": 2,
+      "correct": 2
+    },
+    "global_score_gap_ge_0": {
+      "predicted": 1275,
+      "correct": 926,
+      "wrong": 349,
+      "close_called_decisive": 34
+    },
+    "global_score_gap_ge_10": {
+      "predicted": 831,
+      "correct": 661,
+      "wrong": 170,
+      "close_called_decisive": 18
+    },
+    "global_score_gap_ge_20": {
+      "predicted": 444,
+      "correct": 386,
+      "wrong": 58,
+      "close_called_decisive": 11
+    },
+    "global_score_gap_ge_5": {
+      "predicted": 1054,
+      "correct": 808,
+      "wrong": 246,
+      "close_called_decisive": 25
+    },
+    "relevant_line_mean_gap50": {
+      "predicted": 312,
+      "correct": 304,
+      "wrong": 8,
+      "close_called_decisive": 5
+    },
+    "relevant_line_unanimous_gap25": {
+      "predicted": 420,
+      "correct": 405,
+      "wrong": 15,
+      "close_called_decisive": 6
+    },
+    "same_line_common_mean_gap50": {
+      "predicted": 34,
+      "correct": 34
+    },
+    "same_line_common_unanimous_gap25": {
+      "predicted": 21,
+      "correct": 21
+    },
+    "same_line_score_gap_ge_0": {
+      "predicted": 280,
+      "correct": 224,
+      "wrong": 56,
+      "close_called_decisive": 10
+    },
+    "same_line_score_gap_ge_10": {
+      "predicted": 169,
+      "correct": 149,
+      "wrong": 20,
+      "close_called_decisive": 2
+    },
+    "same_line_score_gap_ge_20": {
+      "predicted": 84,
+      "correct": 78,
+      "wrong": 6
+    },
+    "same_line_score_gap_ge_5": {
+      "predicted": 221,
+      "correct": 188,
+      "wrong": 33,
+      "close_called_decisive": 4
+    }
+  },
+  "wrongExamples": {
+    "global_score_gap_ge_0": [
+      {
+        "pairKey": "906a046b88ad3578cb53c97910cbe7d954854d2fa77f0f4cfedae94942e3424f|c5f14ecd82ea97cab01437264adcb0cdce03a8a44e8c7b9811d52eb37243a191",
+        "units": [
+          "Celts|paladin",
+          "Armenians|champion"
+        ],
+        "predicted": "Armenians|champion",
+        "actual": "Celts|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "096fb515c11d8802e0f48476be78e74e8efe0a68ed675a79d370879242e798ae|c5f14ecd82ea97cab01437264adcb0cdce03a8a44e8c7b9811d52eb37243a191",
+        "units": [
+          "Cumans|paladin",
+          "Armenians|champion"
+        ],
+        "predicted": "Armenians|champion",
+        "actual": "Cumans|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14|cd69760ed16c0c0bfe87bb87dfdca3eb0695c4dc868d25c8a0220d245bbfc5e3",
+        "units": [
+          "Armenians|elite_composite_bowman_armenians",
+          "Byzantines|paladin"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Byzantines|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14|906a046b88ad3578cb53c97910cbe7d954854d2fa77f0f4cfedae94942e3424f",
+        "units": [
+          "Armenians|elite_composite_bowman_armenians",
+          "Celts|paladin"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Celts|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "096fb515c11d8802e0f48476be78e74e8efe0a68ed675a79d370879242e798ae|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Cumans|paladin",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Cumans|paladin",
+        "close": false
+      }
+    ],
+    "global_score_gap_ge_5": [
+      {
+        "pairKey": "906a046b88ad3578cb53c97910cbe7d954854d2fa77f0f4cfedae94942e3424f|c5f14ecd82ea97cab01437264adcb0cdce03a8a44e8c7b9811d52eb37243a191",
+        "units": [
+          "Celts|paladin",
+          "Armenians|champion"
+        ],
+        "predicted": "Armenians|champion",
+        "actual": "Celts|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14|cd69760ed16c0c0bfe87bb87dfdca3eb0695c4dc868d25c8a0220d245bbfc5e3",
+        "units": [
+          "Armenians|elite_composite_bowman_armenians",
+          "Byzantines|paladin"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Byzantines|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14|906a046b88ad3578cb53c97910cbe7d954854d2fa77f0f4cfedae94942e3424f",
+        "units": [
+          "Armenians|elite_composite_bowman_armenians",
+          "Celts|paladin"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Celts|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "03b980ead5f9f2bca58dbf67010122dcabff623a7d95e2da474cc7f332f14960|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Gurjaras|elite_shrivamsha_rider_gurjaras",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Gurjaras|elite_shrivamsha_rider_gurjaras",
+        "close": false
+      },
+      {
+        "pairKey": "526f7c89aa6d30c30cbb3b93eca82d6a1b738e46c086d799d4afec25d0a5ceeb|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Mapuche|elite_kona_mapuche",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Mapuche|elite_kona_mapuche",
+        "close": false
+      }
+    ],
+    "global_score_gap_ge_10": [
+      {
+        "pairKey": "8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14|cd69760ed16c0c0bfe87bb87dfdca3eb0695c4dc868d25c8a0220d245bbfc5e3",
+        "units": [
+          "Armenians|elite_composite_bowman_armenians",
+          "Byzantines|paladin"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Byzantines|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "03b980ead5f9f2bca58dbf67010122dcabff623a7d95e2da474cc7f332f14960|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Gurjaras|elite_shrivamsha_rider_gurjaras",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Gurjaras|elite_shrivamsha_rider_gurjaras",
+        "close": false
+      },
+      {
+        "pairKey": "526f7c89aa6d30c30cbb3b93eca82d6a1b738e46c086d799d4afec25d0a5ceeb|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Mapuche|elite_kona_mapuche",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Mapuche|elite_kona_mapuche",
+        "close": false
+      },
+      {
+        "pairKey": "242bac234ddf0838249ab7ed13af04d1f3f063811605d5f0c9b0d01970c373da|b0ef79e04cbb3ac132cc32c3d48f11f2ccb8f240bb06c1db128c5b20cbe632b9",
+        "units": [
+          "Georgians|hand_cannoneer",
+          "Varangians|halberdier"
+        ],
+        "predicted": "Varangians|halberdier",
+        "actual": "Georgians|hand_cannoneer",
+        "close": false
+      },
+      {
+        "pairKey": "0341568e4a401b0a14996cddb352902811b2f4a149dc08cbae9157d4489a140b|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Burmese|champion",
+          "Mongols|paladin"
+        ],
+        "predicted": "Burmese|champion",
+        "actual": "Mongols|paladin",
+        "close": false
+      }
+    ],
+    "global_score_gap_ge_20": [
+      {
+        "pairKey": "03b980ead5f9f2bca58dbf67010122dcabff623a7d95e2da474cc7f332f14960|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Gurjaras|elite_shrivamsha_rider_gurjaras",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Gurjaras|elite_shrivamsha_rider_gurjaras",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|b21848bddbe33923bfe88d70a5e62d9b2ac199cd5f8ca5e5d1d8079b83014214",
+        "units": [
+          "Mongols|paladin",
+          "Chinese|heavy_scorpion"
+        ],
+        "predicted": "Chinese|heavy_scorpion",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Mongols|paladin",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "8adc61e15cca6379e6a1a7cf67e7f6a61e4f3b77f344a16eb57d586d2e70ac25|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Sicilians|heavy_scorpion",
+          "Mongols|paladin"
+        ],
+        "predicted": "Sicilians|heavy_scorpion",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "0f19225caa882e8aac0a6844a2270fb4fe8c598634cbfb5e2f116135f0b09f02|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Slavs|heavy_scorpion",
+          "Mongols|paladin"
+        ],
+        "predicted": "Slavs|heavy_scorpion",
+        "actual": "Mongols|paladin",
+        "close": false
+      }
+    ],
+    "common_mean_n1_gap0.25": [
+      {
+        "pairKey": "03b980ead5f9f2bca58dbf67010122dcabff623a7d95e2da474cc7f332f14960|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Gurjaras|elite_shrivamsha_rider_gurjaras",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Gurjaras|elite_shrivamsha_rider_gurjaras",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Mongols|paladin",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "516180b67cf3c08c7caa03db8ea25410b472807f404daf866d610d8b261f229e|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Khitans|halberdier",
+          "Mongols|paladin"
+        ],
+        "predicted": "Mongols|paladin",
+        "actual": "Khitans|halberdier",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b",
+        "units": [
+          "Mongols|paladin",
+          "Khitans|mounted_trebuchet_khitans"
+        ],
+        "predicted": "Khitans|mounted_trebuchet_khitans",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|e4748ed043f0ccefea18190c7b9a49e49f3fbde86ca02af9af1a97c1f7781201",
+        "units": [
+          "Mongols|paladin",
+          "Lithuanians|halberdier"
+        ],
+        "predicted": "Mongols|paladin",
+        "actual": "Lithuanians|halberdier",
+        "close": false
+      }
+    ],
+    "common_mean_n2_gap0.25": [
+      {
+        "pairKey": "03b980ead5f9f2bca58dbf67010122dcabff623a7d95e2da474cc7f332f14960|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Gurjaras|elite_shrivamsha_rider_gurjaras",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Gurjaras|elite_shrivamsha_rider_gurjaras",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Mongols|paladin",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "516180b67cf3c08c7caa03db8ea25410b472807f404daf866d610d8b261f229e|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Khitans|halberdier",
+          "Mongols|paladin"
+        ],
+        "predicted": "Mongols|paladin",
+        "actual": "Khitans|halberdier",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b",
+        "units": [
+          "Mongols|paladin",
+          "Khitans|mounted_trebuchet_khitans"
+        ],
+        "predicted": "Khitans|mounted_trebuchet_khitans",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|e4748ed043f0ccefea18190c7b9a49e49f3fbde86ca02af9af1a97c1f7781201",
+        "units": [
+          "Mongols|paladin",
+          "Lithuanians|halberdier"
+        ],
+        "predicted": "Mongols|paladin",
+        "actual": "Lithuanians|halberdier",
+        "close": false
+      }
+    ],
+    "common_mean_n3_gap0.25": [
+      {
+        "pairKey": "03b980ead5f9f2bca58dbf67010122dcabff623a7d95e2da474cc7f332f14960|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Gurjaras|elite_shrivamsha_rider_gurjaras",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Gurjaras|elite_shrivamsha_rider_gurjaras",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Mongols|paladin",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "516180b67cf3c08c7caa03db8ea25410b472807f404daf866d610d8b261f229e|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Khitans|halberdier",
+          "Mongols|paladin"
+        ],
+        "predicted": "Mongols|paladin",
+        "actual": "Khitans|halberdier",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|e4748ed043f0ccefea18190c7b9a49e49f3fbde86ca02af9af1a97c1f7781201",
+        "units": [
+          "Mongols|paladin",
+          "Lithuanians|halberdier"
+        ],
+        "predicted": "Mongols|paladin",
+        "actual": "Lithuanians|halberdier",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|e2a3d77c27a8f61a60af2e69a79eb9442aadd05949d1364049217831cf8d9e63",
+        "units": [
+          "Mongols|paladin",
+          "Shu|halberdier"
+        ],
+        "predicted": "Mongols|paladin",
+        "actual": "Shu|halberdier",
+        "close": false
+      }
+    ],
+    "common_winner_vs_loser_margin25": [
+      {
+        "pairKey": "03b980ead5f9f2bca58dbf67010122dcabff623a7d95e2da474cc7f332f14960|8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+        "units": [
+          "Gurjaras|elite_shrivamsha_rider_gurjaras",
+          "Armenians|elite_composite_bowman_armenians"
+        ],
+        "predicted": "Armenians|elite_composite_bowman_armenians",
+        "actual": "Gurjaras|elite_shrivamsha_rider_gurjaras",
+        "close": false
+      },
+      {
+        "pairKey": "34e0cdbf5f0d7127b99de3112696b3e2b500b86bf4c772e5b642a1fea72f3747|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Burmese|paladin",
+          "Mongols|paladin"
+        ],
+        "predicted": "Burmese|paladin",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Mongols|paladin",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "516180b67cf3c08c7caa03db8ea25410b472807f404daf866d610d8b261f229e|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Khitans|halberdier",
+          "Mongols|paladin"
+        ],
+        "predicted": "Mongols|paladin",
+        "actual": "Khitans|halberdier",
+        "close": false
+      },
+      {
+        "pairKey": "4672b0513d8a8c46edb2f4e5a32ed11a2d0d2c620780db3baac7d6c4bce360e9|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Khitans|imp_elite_skirm",
+          "Mongols|paladin"
+        ],
+        "predicted": "Khitans|imp_elite_skirm",
+        "actual": "Mongols|paladin",
+        "close": false
+      }
+    ],
+    "same_line_score_gap_ge_0": [
+      {
+        "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|edde455f26d12a57bc23bfc3c6a90b00c829140690b8628d0f5a5b343c5f2261",
+        "units": [
+          "Mongols|paladin",
+          "Britons|paladin"
+        ],
+        "predicted": "Britons|paladin",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "34e0cdbf5f0d7127b99de3112696b3e2b500b86bf4c772e5b642a1fea72f3747|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Burmese|paladin",
+          "Mongols|paladin"
+        ],
+        "predicted": "Burmese|paladin",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "7ffad25b13bd49156182d61d056aa5f38329ebe18b97c71317bd23db9b9f9030|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Romans|paladin",
+          "Mongols|paladin"
+        ],
+        "predicted": "Romans|paladin",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "3f05becedee4dafd6a810414d6bdc16f6f33cf9f76960891d47681cbbd98fd5d|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Vietnamese|paladin",
+          "Mongols|paladin"
+        ],
+        "predicted": "Vietnamese|paladin",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "1464e310f6123dc35ce5dcd264b4c151e508b646e0be3208b93f513e8ff06972|ed1ec0d3d0b2fd36e815bbc591f8c77abdcc0770b273798d77400b09e6fd817e",
+        "units": [
+          "Aztecs|champion",
+          "Byzantines|elite_varangian_guard"
+        ],
+        "predicted": "Byzantines|elite_varangian_guard",
+        "actual": "Aztecs|champion",
+        "close": false
+      }
+    ],
+    "same_line_score_gap_ge_5": [
+      {
+        "pairKey": "34e0cdbf5f0d7127b99de3112696b3e2b500b86bf4c772e5b642a1fea72f3747|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Burmese|paladin",
+          "Mongols|paladin"
+        ],
+        "predicted": "Burmese|paladin",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "7ffad25b13bd49156182d61d056aa5f38329ebe18b97c71317bd23db9b9f9030|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Romans|paladin",
+          "Mongols|paladin"
+        ],
+        "predicted": "Romans|paladin",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "1464e310f6123dc35ce5dcd264b4c151e508b646e0be3208b93f513e8ff06972|f6464da2df38036c7f91949bec7b279bfba3d4bf9f2bd84d6f93f60074de3023",
+        "units": [
+          "Aztecs|champion",
+          "Danes|elite_jomsviking_danes"
+        ],
+        "predicted": "Danes|elite_jomsviking_danes",
+        "actual": "Aztecs|champion",
+        "close": false
+      },
+      {
+        "pairKey": "1464e310f6123dc35ce5dcd264b4c151e508b646e0be3208b93f513e8ff06972|f4b4f88ce3d393403ee3c5fc0697c1744f6a747ef32735ea09f6f6430f958529",
+        "units": [
+          "Aztecs|champion",
+          "Vikings|elite_berserk_vikings"
+        ],
+        "predicted": "Vikings|elite_berserk_vikings",
+        "actual": "Aztecs|champion",
+        "close": false
+      },
+      {
+        "pairKey": "14b1d2cf2c7bff9e0b5bd1ed27f55f48767e2c33fd9eb67968a20999411a0a7a|ed1ec0d3d0b2fd36e815bbc591f8c77abdcc0770b273798d77400b09e6fd817e",
+        "units": [
+          "Bengalis|champion",
+          "Byzantines|elite_varangian_guard"
+        ],
+        "predicted": "Byzantines|elite_varangian_guard",
+        "actual": "Bengalis|champion",
+        "close": false
+      }
+    ],
+    "same_line_score_gap_ge_10": [
+      {
+        "pairKey": "34e0cdbf5f0d7127b99de3112696b3e2b500b86bf4c772e5b642a1fea72f3747|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Burmese|paladin",
+          "Mongols|paladin"
+        ],
+        "predicted": "Burmese|paladin",
+        "actual": "Mongols|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "7ffad25b13bd49156182d61d056aa5f38329ebe18b97c71317bd23db9b9f9030|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Romans|paladin",
+          "Mongols|paladin"
+        ],
+        "predicted": "Romans|paladin",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "1464e310f6123dc35ce5dcd264b4c151e508b646e0be3208b93f513e8ff06972|f6464da2df38036c7f91949bec7b279bfba3d4bf9f2bd84d6f93f60074de3023",
+        "units": [
+          "Aztecs|champion",
+          "Danes|elite_jomsviking_danes"
+        ],
+        "predicted": "Danes|elite_jomsviking_danes",
+        "actual": "Aztecs|champion",
+        "close": false
+      },
+      {
+        "pairKey": "14b1d2cf2c7bff9e0b5bd1ed27f55f48767e2c33fd9eb67968a20999411a0a7a|ed1ec0d3d0b2fd36e815bbc591f8c77abdcc0770b273798d77400b09e6fd817e",
+        "units": [
+          "Bengalis|champion",
+          "Byzantines|elite_varangian_guard"
+        ],
+        "predicted": "Byzantines|elite_varangian_guard",
+        "actual": "Bengalis|champion",
+        "close": false
+      },
+      {
+        "pairKey": "14b1d2cf2c7bff9e0b5bd1ed27f55f48767e2c33fd9eb67968a20999411a0a7a|fcffd9030c23f11e29c0231712980ccd5d9fbea30141c08e257f9f3244ce3281",
+        "units": [
+          "Bengalis|champion",
+          "Saxons|elite_varangian_guard"
+        ],
+        "predicted": "Saxons|elite_varangian_guard",
+        "actual": "Bengalis|champion",
+        "close": false
+      }
+    ],
+    "relevant_line_unanimous_gap25": [
+      {
+        "pairKey": "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1|9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b",
+        "units": [
+          "Portuguese|elite_organ_gun_portuguese",
+          "Mongols|paladin"
+        ],
+        "predicted": "Mongols|paladin",
+        "actual": "Portuguese|elite_organ_gun_portuguese",
+        "close": false
+      },
+      {
+        "pairKey": "fba9b52d9ba3d8662e9893090a0a883932592a2fb34d9ae55150d02dba46de88|fd21ff70a5f9d1886d004493a32128936c19380de4fb2f675d6da2380aa64ade",
+        "units": [
+          "Bengalis|elite_ratha_(ranged)_bengalis",
+          "Saxons|champion"
+        ],
+        "predicted": "Bengalis|elite_ratha_(ranged)_bengalis",
+        "actual": "Saxons|champion",
+        "close": false
+      },
+      {
+        "pairKey": "fba9b52d9ba3d8662e9893090a0a883932592a2fb34d9ae55150d02dba46de88|fcffd9030c23f11e29c0231712980ccd5d9fbea30141c08e257f9f3244ce3281",
+        "units": [
+          "Bengalis|elite_ratha_(ranged)_bengalis",
+          "Saxons|elite_varangian_guard"
+        ],
+        "predicted": "Bengalis|elite_ratha_(ranged)_bengalis",
+        "actual": "Saxons|elite_varangian_guard",
+        "close": false
+      },
+      {
+        "pairKey": "04639f5cc7eef4bc991e9a43e31f704241f973e5e2b6384f638ff2cf4f72233f|fcffd9030c23f11e29c0231712980ccd5d9fbea30141c08e257f9f3244ce3281",
+        "units": [
+          "Berbers|elite_camel_archer_berbers",
+          "Saxons|elite_varangian_guard"
+        ],
+        "predicted": "Berbers|elite_camel_archer_berbers",
+        "actual": "Saxons|elite_varangian_guard",
+        "close": false
+      },
+      {
+        "pairKey": "8685a7b9065d713d7c631b312bab0c772413fda625670cfd16e08a3e88265f4e|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Saxons|elite_hearth_troop_saxons",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": null,
+        "close": true
+      }
+    ],
+    "relevant_line_mean_gap50": [
+      {
+        "pairKey": "fba9b52d9ba3d8662e9893090a0a883932592a2fb34d9ae55150d02dba46de88|fcffd9030c23f11e29c0231712980ccd5d9fbea30141c08e257f9f3244ce3281",
+        "units": [
+          "Bengalis|elite_ratha_(ranged)_bengalis",
+          "Saxons|elite_varangian_guard"
+        ],
+        "predicted": "Bengalis|elite_ratha_(ranged)_bengalis",
+        "actual": "Saxons|elite_varangian_guard",
+        "close": false
+      },
+      {
+        "pairKey": "04639f5cc7eef4bc991e9a43e31f704241f973e5e2b6384f638ff2cf4f72233f|fcffd9030c23f11e29c0231712980ccd5d9fbea30141c08e257f9f3244ce3281",
+        "units": [
+          "Berbers|elite_camel_archer_berbers",
+          "Saxons|elite_varangian_guard"
+        ],
+        "predicted": "Berbers|elite_camel_archer_berbers",
+        "actual": "Saxons|elite_varangian_guard",
+        "close": false
+      },
+      {
+        "pairKey": "8685a7b9065d713d7c631b312bab0c772413fda625670cfd16e08a3e88265f4e|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Saxons|elite_hearth_troop_saxons",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed|d9e6c38132ae55d852f44694f8a06aef4e096fd051941cefde305e3f7e19c9ed",
+        "units": [
+          "Danes|heavy_scorpion",
+          "Vikings|elite_varangian_guard"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "79b0958adbec2f3f63e1664ede422c789ceb6f36a815e75fac3ddda76211f6f0|fa8761f1751d4449eea54afa315ab342e253698f4203c5b5a129c1faef8d92a1",
+        "units": [
+          "Magyars|champion",
+          "Mapuche|elite_bolas_rider_mapuche"
+        ],
+        "predicted": "Magyars|champion",
+        "actual": null,
+        "close": true
+      }
+    ],
+    "same_line_score_gap_ge_20": [
+      {
+        "pairKey": "2a146afdb1c29d4e32bf33004c10d0c2320dc6d782db7c4568bc76b6d7bcaca8|7ab49029c5eb883770b5eacf2e12aa14567878a9bef7ca42df3deb7fb81c950c",
+        "units": [
+          "Mayans|champion",
+          "Danes|elite_varangian_guard"
+        ],
+        "predicted": "Danes|elite_varangian_guard",
+        "actual": "Mayans|champion",
+        "close": false
+      },
+      {
+        "pairKey": "15a59798cb83cd8d4f0d92143ec7be6aafdc5dbc1cb89382f473204ae49882a5|7ab49029c5eb883770b5eacf2e12aa14567878a9bef7ca42df3deb7fb81c950c",
+        "units": [
+          "Wei|champion",
+          "Danes|elite_varangian_guard"
+        ],
+        "predicted": "Danes|elite_varangian_guard",
+        "actual": "Wei|champion",
+        "close": false
+      },
+      {
+        "pairKey": "7ab49029c5eb883770b5eacf2e12aa14567878a9bef7ca42df3deb7fb81c950c|da802dd33dca6911a04563c6f2322f903cfa8c06e05e474d1871a43ad37568c1",
+        "units": [
+          "Danes|elite_varangian_guard",
+          "Vietnamese|champion"
+        ],
+        "predicted": "Danes|elite_varangian_guard",
+        "actual": "Vietnamese|champion",
+        "close": false
+      },
+      {
+        "pairKey": "7ab49029c5eb883770b5eacf2e12aa14567878a9bef7ca42df3deb7fb81c950c|af705fa739a900f84823c078a940899bc1f6bdccb080330eace9b05bcc5937cc",
+        "units": [
+          "Danes|elite_varangian_guard",
+          "Malay|champion"
+        ],
+        "predicted": "Danes|elite_varangian_guard",
+        "actual": "Malay|champion",
+        "close": false
+      },
+      {
+        "pairKey": "2a146afdb1c29d4e32bf33004c10d0c2320dc6d782db7c4568bc76b6d7bcaca8|bb1995238f983249ba9d043cbee65846981e467ecf9fbae43524c0cf9668c65f",
+        "units": [
+          "Mayans|champion",
+          "Varangians|elite_varangian_guard"
+        ],
+        "predicted": "Varangians|elite_varangian_guard",
+        "actual": "Mayans|champion",
+        "close": false
+      }
+    ],
+    "common_mean_n1_gap0.5": [
+      {
+        "pairKey": "bbdb3cc6a8cd716cc4caed687f574ce844c5b89ca8c804b5f9bfce3441397399|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Sicilians|hussar",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": "Sicilians|hussar",
+        "close": false
+      },
+      {
+        "pairKey": "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1|fd1364bf3da6c499e2c5a8f614ac796b1624ed045e0d6ccc8a6f5b8b6a1774d2",
+        "units": [
+          "Portuguese|elite_organ_gun_portuguese",
+          "Georgians|hussar"
+        ],
+        "predicted": "Portuguese|elite_organ_gun_portuguese",
+        "actual": "Georgians|hussar",
+        "close": false
+      },
+      {
+        "pairKey": "e9ff80e1cfd8957a8663985348d7b5c924cd7ef8ece233f1ff3b3b27e5bed46d|fd1364bf3da6c499e2c5a8f614ac796b1624ed045e0d6ccc8a6f5b8b6a1774d2",
+        "units": [
+          "Teutons|heavy_scorpion",
+          "Georgians|hussar"
+        ],
+        "predicted": "Teutons|heavy_scorpion",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "1b074887aa8a79fb799c84414b4db68c6c84dfdb27bb4c2ea745b9d8611f8feb|1bca0d666e907a97271200a1d24890d73e5c0556fcf44da56c1c53c0e08f31d8",
+        "units": [
+          "Malay|paladin",
+          "Mongols|heavy_scorpion"
+        ],
+        "predicted": "Mongols|heavy_scorpion",
+        "actual": "Malay|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "06b8876bb352c7f5953bece647dcfc93efa0b4b29943b02cf83f0cce2b32b239|0c254863f65fee9bfa7202da68ed26878f21c3a9a9864a932ed02865b9143c89",
+        "units": [
+          "Mapuche|imp_slinger",
+          "Poles|elite_obuch_poles"
+        ],
+        "predicted": "Poles|elite_obuch_poles",
+        "actual": null,
+        "close": true
+      }
+    ],
+    "common_mean_n2_gap0.5": [
+      {
+        "pairKey": "bbdb3cc6a8cd716cc4caed687f574ce844c5b89ca8c804b5f9bfce3441397399|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Sicilians|hussar",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": "Sicilians|hussar",
+        "close": false
+      },
+      {
+        "pairKey": "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1|fd1364bf3da6c499e2c5a8f614ac796b1624ed045e0d6ccc8a6f5b8b6a1774d2",
+        "units": [
+          "Portuguese|elite_organ_gun_portuguese",
+          "Georgians|hussar"
+        ],
+        "predicted": "Portuguese|elite_organ_gun_portuguese",
+        "actual": "Georgians|hussar",
+        "close": false
+      },
+      {
+        "pairKey": "e9ff80e1cfd8957a8663985348d7b5c924cd7ef8ece233f1ff3b3b27e5bed46d|fd1364bf3da6c499e2c5a8f614ac796b1624ed045e0d6ccc8a6f5b8b6a1774d2",
+        "units": [
+          "Teutons|heavy_scorpion",
+          "Georgians|hussar"
+        ],
+        "predicted": "Teutons|heavy_scorpion",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "1b074887aa8a79fb799c84414b4db68c6c84dfdb27bb4c2ea745b9d8611f8feb|1bca0d666e907a97271200a1d24890d73e5c0556fcf44da56c1c53c0e08f31d8",
+        "units": [
+          "Malay|paladin",
+          "Mongols|heavy_scorpion"
+        ],
+        "predicted": "Mongols|heavy_scorpion",
+        "actual": "Malay|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "06b8876bb352c7f5953bece647dcfc93efa0b4b29943b02cf83f0cce2b32b239|0c254863f65fee9bfa7202da68ed26878f21c3a9a9864a932ed02865b9143c89",
+        "units": [
+          "Mapuche|imp_slinger",
+          "Poles|elite_obuch_poles"
+        ],
+        "predicted": "Poles|elite_obuch_poles",
+        "actual": null,
+        "close": true
+      }
+    ],
+    "common_mean_n3_gap0.5": [
+      {
+        "pairKey": "bbdb3cc6a8cd716cc4caed687f574ce844c5b89ca8c804b5f9bfce3441397399|d2a12484777428634b42ed1874fbee652c348c94f120cb4766ee50d868b836ed",
+        "units": [
+          "Sicilians|hussar",
+          "Danes|heavy_scorpion"
+        ],
+        "predicted": "Danes|heavy_scorpion",
+        "actual": "Sicilians|hussar",
+        "close": false
+      },
+      {
+        "pairKey": "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1|fd1364bf3da6c499e2c5a8f614ac796b1624ed045e0d6ccc8a6f5b8b6a1774d2",
+        "units": [
+          "Portuguese|elite_organ_gun_portuguese",
+          "Georgians|hussar"
+        ],
+        "predicted": "Portuguese|elite_organ_gun_portuguese",
+        "actual": "Georgians|hussar",
+        "close": false
+      },
+      {
+        "pairKey": "e9ff80e1cfd8957a8663985348d7b5c924cd7ef8ece233f1ff3b3b27e5bed46d|fd1364bf3da6c499e2c5a8f614ac796b1624ed045e0d6ccc8a6f5b8b6a1774d2",
+        "units": [
+          "Teutons|heavy_scorpion",
+          "Georgians|hussar"
+        ],
+        "predicted": "Teutons|heavy_scorpion",
+        "actual": null,
+        "close": true
+      },
+      {
+        "pairKey": "1b074887aa8a79fb799c84414b4db68c6c84dfdb27bb4c2ea745b9d8611f8feb|1bca0d666e907a97271200a1d24890d73e5c0556fcf44da56c1c53c0e08f31d8",
+        "units": [
+          "Malay|paladin",
+          "Mongols|heavy_scorpion"
+        ],
+        "predicted": "Mongols|heavy_scorpion",
+        "actual": "Malay|paladin",
+        "close": false
+      },
+      {
+        "pairKey": "06b8876bb352c7f5953bece647dcfc93efa0b4b29943b02cf83f0cce2b32b239|0c254863f65fee9bfa7202da68ed26878f21c3a9a9864a932ed02865b9143c89",
+        "units": [
+          "Mapuche|imp_slinger",
+          "Poles|elite_obuch_poles"
+        ],
+        "predicted": "Poles|elite_obuch_poles",
+        "actual": null,
+        "close": true
+      }
+    ],
+    "common_seed_interval_n3_gap25": [
+      {
+        "pairKey": "06b8876bb352c7f5953bece647dcfc93efa0b4b29943b02cf83f0cce2b32b239|0c254863f65fee9bfa7202da68ed26878f21c3a9a9864a932ed02865b9143c89",
+        "units": [
+          "Mapuche|imp_slinger",
+          "Poles|elite_obuch_poles"
+        ],
+        "predicted": "Poles|elite_obuch_poles",
+        "actual": null,
+        "close": true
+      }
+    ],
+    "common_unanimous_n1_gap0.25": [
+      {
+        "pairKey": "06b8876bb352c7f5953bece647dcfc93efa0b4b29943b02cf83f0cce2b32b239|0c254863f65fee9bfa7202da68ed26878f21c3a9a9864a932ed02865b9143c89",
+        "units": [
+          "Mapuche|imp_slinger",
+          "Poles|elite_obuch_poles"
+        ],
+        "predicted": "Poles|elite_obuch_poles",
+        "actual": null,
+        "close": true
+      }
+    ],
+    "common_unanimous_n2_gap0.25": [
+      {
+        "pairKey": "06b8876bb352c7f5953bece647dcfc93efa0b4b29943b02cf83f0cce2b32b239|0c254863f65fee9bfa7202da68ed26878f21c3a9a9864a932ed02865b9143c89",
+        "units": [
+          "Mapuche|imp_slinger",
+          "Poles|elite_obuch_poles"
+        ],
+        "predicted": "Poles|elite_obuch_poles",
+        "actual": null,
+        "close": true
+      }
+    ],
+    "common_unanimous_n3_gap0.25": [
+      {
+        "pairKey": "06b8876bb352c7f5953bece647dcfc93efa0b4b29943b02cf83f0cce2b32b239|0c254863f65fee9bfa7202da68ed26878f21c3a9a9864a932ed02865b9143c89",
+        "units": [
+          "Mapuche|imp_slinger",
+          "Poles|elite_obuch_poles"
+        ],
+        "predicted": "Poles|elite_obuch_poles",
+        "actual": null,
+        "close": true
+      }
+    ]
+  },
+  "candidateUnresolvedProfilePairs": {
+    "common_mean_gap50": 17181,
+    "common_unanimous_n3_gap25": 9121,
+    "trained_family_common_unanimous_n3_gap25": 3907,
+    "common_seed_interval_n3_gap25": 7951,
+    "common_unanimous_gap50": 4503,
+    "common_unanimous_n3_gap50": 4149,
+    "common_seed_interval_n3_gap50": 3573,
+    "trained_family_common_unanimous_n3_gap50": 1469,
+    "trained_family_common_unanimous_n3_gap75": 519,
+    "same_line_common_mean_gap50": 911,
+    "same_line_common_unanimous_gap25": 551
+  },
+  "familyFilteredRules": {
+    "0.25": {
+      "train": {
+        "archer|camel": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "archer|cav_archer": {
+          "predicted": 33,
+          "correct": 33
+        },
+        "archer|gunpowder": {
+          "predicted": 7,
+          "correct": 7
+        },
+        "archer|knight": {
+          "predicted": 31,
+          "correct": 31
+        },
+        "archer|light_cav": {
+          "predicted": 15,
+          "correct": 15
+        },
+        "archer|scorpion": {
+          "predicted": 12,
+          "wrong": 2,
+          "correct": 10
+        },
+        "archer|steppe_lancer": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "camel|camel": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "camel|elephant": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "cav_archer|cav_archer": {
+          "predicted": 15,
+          "correct": 15
+        },
+        "cav_archer|elephant": {
+          "predicted": 4,
+          "correct": 4
+        },
+        "cav_archer|gunpowder": {
+          "predicted": 9,
+          "correct": 9
+        },
+        "cav_archer|knight": {
+          "predicted": 28,
+          "correct": 28
+        },
+        "cav_archer|light_cav": {
+          "predicted": 12,
+          "correct": 12
+        },
+        "cav_archer|scorpion": {
+          "predicted": 8,
+          "correct": 8
+        },
+        "cav_archer|skirmisher": {
+          "predicted": 14,
+          "correct": 13,
+          "wrong": 1
+        },
+        "cav_archer|steppe_lancer": {
+          "predicted": 5,
+          "correct": 5
+        },
+        "elephant|knight": {
+          "predicted": 5,
+          "correct": 5
+        },
+        "elephant|scorpion": {
+          "predicted": 10,
+          "correct": 10
+        },
+        "gunpowder|gunpowder": {
+          "predicted": 5,
+          "correct": 5
+        },
+        "gunpowder|knight": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "gunpowder|light_cav": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "gunpowder|scorpion": {
+          "predicted": 6,
+          "wrong": 1,
+          "correct": 5
+        },
+        "gunpowder|skirmisher": {
+          "predicted": 1,
+          "wrong": 1
+        },
+        "knight|knight": {
+          "predicted": 5,
+          "correct": 5
+        },
+        "knight|light_cav": {
+          "predicted": 27,
+          "correct": 27
+        },
+        "knight|militia": {
+          "predicted": 24,
+          "correct": 24
+        },
+        "knight|scorpion": {
+          "predicted": 39,
+          "correct": 39
+        },
+        "knight|skirmisher": {
+          "predicted": 6,
+          "correct": 6
+        },
+        "knight|spear": {
+          "predicted": 6,
+          "correct": 5,
+          "wrong": 1
+        },
+        "light_cav|militia": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "light_cav|scorpion": {
+          "predicted": 6,
+          "correct": 6
+        },
+        "militia|scorpion": {
+          "predicted": 19,
+          "correct": 19
+        },
+        "scorpion|scorpion": {
+          "predicted": 17,
+          "correct": 17
+        },
+        "scorpion|skirmisher": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "scorpion|steppe_lancer": {
+          "predicted": 2,
+          "correct": 2
+        }
+      },
+      "enabledFamilies": [
+        "archer|cav_archer",
+        "archer|knight",
+        "archer|light_cav",
+        "cav_archer|cav_archer",
+        "cav_archer|knight",
+        "cav_archer|light_cav",
+        "elephant|scorpion",
+        "knight|light_cav",
+        "knight|militia",
+        "knight|scorpion",
+        "militia|scorpion",
+        "scorpion|scorpion"
+      ],
+      "laterPhaseHoldout": {
+        "predicted": 64,
+        "correct": 64
+      }
+    },
+    "0.5": {
+      "train": {
+        "archer|camel": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "archer|cav_archer": {
+          "predicted": 9,
+          "correct": 9
+        },
+        "archer|knight": {
+          "predicted": 22,
+          "correct": 22
+        },
+        "archer|scorpion": {
+          "predicted": 2,
+          "wrong": 1,
+          "correct": 1
+        },
+        "archer|steppe_lancer": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "cav_archer|cav_archer": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "cav_archer|gunpowder": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "cav_archer|knight": {
+          "predicted": 16,
+          "correct": 16
+        },
+        "cav_archer|light_cav": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "cav_archer|skirmisher": {
+          "predicted": 6,
+          "wrong": 1,
+          "correct": 5
+        },
+        "cav_archer|steppe_lancer": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "elephant|scorpion": {
+          "predicted": 8,
+          "correct": 8
+        },
+        "gunpowder|knight": {
+          "predicted": 2,
+          "correct": 2
+        },
+        "gunpowder|scorpion": {
+          "predicted": 2,
+          "correct": 2
+        },
+        "knight|militia": {
+          "predicted": 11,
+          "correct": 11
+        },
+        "knight|scorpion": {
+          "predicted": 33,
+          "correct": 33
+        },
+        "knight|skirmisher": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "knight|spear": {
+          "predicted": 3,
+          "correct": 3
+        },
+        "light_cav|scorpion": {
+          "predicted": 2,
+          "correct": 2
+        },
+        "militia|scorpion": {
+          "predicted": 5,
+          "correct": 5
+        },
+        "scorpion|scorpion": {
+          "predicted": 7,
+          "correct": 7
+        },
+        "scorpion|steppe_lancer": {
+          "predicted": 2,
+          "correct": 2
+        }
+      },
+      "enabledFamilies": [
+        "archer|knight",
+        "cav_archer|knight",
+        "knight|militia",
+        "knight|scorpion"
+      ],
+      "laterPhaseHoldout": {
+        "predicted": 19,
+        "correct": 19
+      }
+    },
+    "0.75": {
+      "train": {
+        "archer|cav_archer": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "archer|knight": {
+          "predicted": 13,
+          "correct": 13
+        },
+        "archer|steppe_lancer": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "cav_archer|knight": {
+          "predicted": 8,
+          "correct": 8
+        },
+        "cav_archer|skirmisher": {
+          "predicted": 2,
+          "wrong": 1,
+          "correct": 1
+        },
+        "elephant|scorpion": {
+          "predicted": 8,
+          "correct": 8
+        },
+        "gunpowder|scorpion": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "knight|militia": {
+          "predicted": 8,
+          "correct": 8
+        },
+        "knight|scorpion": {
+          "predicted": 24,
+          "correct": 24
+        },
+        "knight|spear": {
+          "predicted": 1,
+          "correct": 1
+        },
+        "scorpion|scorpion": {
+          "predicted": 1,
+          "correct": 1
+        }
+      },
+      "enabledFamilies": [
+        "archer|knight",
+        "knight|scorpion"
+      ],
+      "laterPhaseHoldout": {
+        "predicted": 5,
+        "correct": 5
+      }
+    }
+  },
+  "simulationJobsRun": 0
+}

@@ -17,7 +17,7 @@ const ROOT = resolve(SIM, '../..');
 const SOURCE = resolve(SIM, 'calibration/campaigns/unit-rankings-consolidated-2026-10-29');
 const DEFINITION = resolve(SIM, 'calibration/campaigns/unit-rankings-path-recovery-2026-10-29/manifest.json');
 const SCORES = resolve(SIM, 'calibration/reports/unit-ranking-scores-final-2026-10-29/scores.json');
-const RULE_VERSION = 'phase1-direct-root-two-sided-v4';
+const RULE_VERSION = 'phase1-direct-root-inert-group-v5c';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
 const key2 = (a,b) => a <= b ? `${a}|${b}` : `${b}|${a}`;
@@ -223,6 +223,9 @@ function staticSafe(mechanics) {
   const ordinary=new Set(['base_accuracy','pass_through_count','splash_on_hit_fraction',
     'combat_gold_per_animation_second','gold_per_kill','death_resource_refund_fraction']);
   if(!mechanics.effects?.speed_attack_aura_group)ordinary.add('speed_attack_aura_recipient');
+  // The group tag is only consulted by a source with attack_bonus_nearby.
+  // In homogeneous armies, a unit with the tag but no source has no bonus.
+  if(!mechanics.effects?.attack_bonus_nearby)ordinary.add('nearby_attack_group');
   for(const [k,v] of Object.entries(mechanics.effects??{})) if(!ordinary.has(k) && v!==null && v!==0 && v!==false) return false;
   return true;
 }
@@ -243,6 +246,9 @@ function comparable(a,b) {
 function relation(candidate,baseline,opponent,candidateContext,baselineContext,candidateIndex,baselineIndex) {
   const c=candidate.mechanics,b=baseline.mechanics,x=opponent.mechanics;
   if(!comparable(c,b)||!staticSafe(x)) return 0;
+  // The saved Paladin mirrors contain directional counterexamples, so do not
+  // transfer through a same-group mirror until that family is understood.
+  if(c.effects?.nearby_attack_group && x.effects?.nearby_attack_group) return 0;
   if(candidateContext.scenarioHash!==baselineContext.scenarioHash || candidateIndex!==baselineIndex) return 0;
   const other=1-candidateIndex;
   const countMore=candidateContext.counts[candidateIndex]>=baselineContext.counts[baselineIndex];
@@ -312,6 +318,7 @@ export function tradeoffFor(targetContext,root,profiles) {
   const oldProfile=profiles.get(oldHash),newProfile=profiles.get(newHash);
   if(!oldProfile||!newProfile || oldProfile.group!==newProfile.group || oldProfile.line!==newProfile.line)return null;
   const previous=oldProfile.mechanics,replacement=newProfile.mechanics,enemy=profiles.get(fixed).mechanics;
+  if([previous,replacement,enemy].some(m=>m.effects?.nearby_attack_group))return null;
   if(!staticSafe(previous)||!staticSafe(replacement)||!staticSafe(enemy))return null;
   const oldCount=root.counts[root.profiles.indexOf(oldHash)];
   const newCount=targetContext.counts[targetContext.profiles.indexOf(newHash)];
@@ -363,6 +370,7 @@ export function twoSidedFor(targetContext,root,profiles,context) {
   const loserIndex=1-winnerIndex;
   const oldWinner=root.profiles[winnerIndex],oldLoser=root.profiles[loserIndex];
   const newWinner=targetContext.profiles[winnerIndex],newLoser=targetContext.profiles[loserIndex];
+  if([oldWinner,oldLoser,newWinner,newLoser].some(h=>profiles.get(h).mechanics.effects?.nearby_attack_group))return null;
   if(newWinner===oldWinner||newLoser===oldLoser)return null;
   const rootContext=context(...root.profiles);
   const winnerChanged=[...root.profiles];winnerChanged[winnerIndex]=newWinner;

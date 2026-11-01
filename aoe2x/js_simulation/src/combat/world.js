@@ -3067,6 +3067,30 @@ function resolveMovement(planned, byReference, map, kiteState = null, movementOp
 function moveUnits(units, map, tick, events, kiteState = null,
   contactReservationState = null, contactSteeringStates = new Map(),
   pursuitRecoveryState = null) {
+  // A trigger-issued PATROL travels between its command point and each
+  // member's formation origin. Combat pursuit suspends that path. Once an
+  // unengaged survivor reaches an endpoint, reverse the leg so separated
+  // survivors can meet again; otherwise both armies can idle forever at the
+  // opposite command points with living enemies out of sight.
+  for (const unit of units) {
+    const order = unit.moveOrder;
+    if (!unit.alive || order?.kind !== "scenario-patrol"
+        || unit.action === "attacking"
+        || Number.isSafeInteger(unit.pursuitTargetId)
+        || Number.isSafeInteger(unit.engagedTargetId)
+        || Number.isSafeInteger(unit.attackTargetId)
+        || !Number.isFinite(order.formationStartX)
+        || !Number.isFinite(order.formationStartY)
+        || Math.hypot(unit.x - order.x, unit.y - order.y) > ZERO_STEP_EPSILON) continue;
+    const returning = order.patrolReturning === true;
+    const x = returning ? order.commandX : order.formationStartX;
+    const y = returning ? order.commandY : order.formationStartY;
+    if (!Number.isFinite(x) || !Number.isFinite(y)
+        || Math.hypot(unit.x - x, unit.y - y) <= ZERO_STEP_EPSILON) continue;
+    unit.moveOrder = Object.freeze({ ...order, x, y, patrolReturning: !returning });
+    events.push(event(tick, "patrol-endpoint-reversed", unit.referenceId, null,
+      { x, y, returning: !returning }));
+  }
   const live = units.filter(({ alive }) => alive).map(freezeUnit);
   const allowedStartingOverlapReferenceIds = new Set(live.filter((unit) => (
     unit.specialState?.dismountCollisionRecovery === true

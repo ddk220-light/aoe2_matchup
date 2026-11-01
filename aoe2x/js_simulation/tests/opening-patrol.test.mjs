@@ -272,6 +272,37 @@ test("opening patrol honors command reaction then moves at sourced speed", () =>
   assert.notDeepEqual(world.units.map(({ x, y }) => [x, y]), initial);
 });
 
+test("scenario patrol reverses at its endpoint while a distant enemy survives", () => {
+  let world = createWorld({
+    ratio: "patrol-loop-test",
+    map: { width: 30, height: 30, obstacles: [] },
+    units: [
+      createUnitState({ referenceId: 1, owner: 2, x: 4, y: 4, facing: 0,
+        mechanics, acquisitionRank: 0, acquisitionCount: 1 }),
+      createUnitState({ referenceId: 2, owner: 3, x: 25, y: 25, facing: 0,
+        mechanics, acquisitionRank: 0, acquisitionCount: 1 }),
+    ],
+    triggers: [{ trigger_index: 0, name: "Starting", looping: false,
+      conditions: [], effects: [{ type: "patrol", owner: 2, x: 8, y: 4,
+        area: { x1: 3, y1: 3, x2: 5, y2: 5 }, effect_index: 1 }] }],
+    disableAiOrders: true,
+  });
+  let outward = false,returning = false,outwardAgain = false;
+  for (let tick = 0; tick < 1500; tick += 1) {
+    world = stepWorld(world);
+    const unit = world.units.find(({ referenceId }) => referenceId === 1);
+    if (unit.moveOrder?.kind !== "scenario-patrol") continue;
+    if (unit.x > 7.9 && unit.moveOrder.patrolReturning !== true) outward = true;
+    if (unit.moveOrder.patrolReturning === true && unit.x < 7.5) returning = true;
+    if (returning && unit.moveOrder.patrolReturning === false && unit.x > 4.5) {
+      outwardAgain = true; break;
+    }
+  }
+  assert.equal(outward, true);
+  assert.equal(returning, true);
+  assert.equal(outwardAgain, true);
+});
+
 
 test("ordinary acquisition ends each unit's opening patrol", () => {
   let world = patrolWorld();

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "name": "civ-matchups-patrol-repair-candidate-2026-11-01",
+  "baseCommit": "9b3c7de4",
+  "baseV2StreamCompatibilityCampaignHash": "8451ea6afd61f01bfc4015a58588303a6659d13c316158121b49ad8bafde76f1",
+  "frozenRankingCampaignHash": "1ac49a6abf1f3a1a104c7bcf675a3a327b6939d49273ae49c51eb6157264693d",
+  "changedPhysicsFiles": [
+    {
+      "path": "aoe2x/js_simulation/src/combat/world.js",
+      "streamSha256": "ee4f333822df501cb47135fb3f5a198d9ff8c2b16e6a376b26efa9d5488d1915",
+      "candidateSha256": "aef02a398a5a29fc0c8d5a026d60dd0ab720a62fa142f6c600cf553193e6201b"
+    }
+  ],
+  "unchangedRuntimeFiles": 61,
+  "sourceFiles": [
+    {
+      "path": "aoe2x/js_simulation/src/combat/world.js",
+      "sha256": "aef02a398a5a29fc0c8d5a026d60dd0ab720a62fa142f6c600cf553193e6201b"
+    },
+    {
+      "path": "aoe2x/js_simulation/tools/diagnose_slow_civ_pair.mjs",
+      "sha256": "2ad53af58994d2b8d5b08b450c1e025f92f68883aca7a7e02562ca631d6783f3"
+    },
+    {
+      "path": "aoe2x/js_simulation/tests/opening-patrol.test.mjs",
+      "sha256": "6c8996a9bd48444cf891fe7b5bdb28e724e78eb0111583c0245bcb890f261263"
+    }
+  ],
+  "diagnosticFiles": [
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/cm_040842e102cbf2cf8dafbc86-seed0.json",
+      "sha256": "6f0910edfff15d2de7ddf93bab010b3b519cbb55cc52422e8949b71f49bde402"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/cm_0c71f568721b54764d4347ac-seed0.json",
+      "sha256": "4a82469ced9d31b974f59efe58ce6f0847f336ecc41a489010e49fb6931074ca"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/cm_0c71f568721b54764d4347ac-v2-control.json",
+      "sha256": "c8dad3e4599ac930e2d68f477c8fdc8db22eddd45a4f0e8711bbe268a6abe8e3"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/cm_121303b8834f03876e8092a9-seed0.json",
+      "sha256": "b695f5ed8db625ac6f3263fe47af09af75624b43271ad26db248e8d13baed88f"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/cm_2ebc52f409dca0816077aa77-seed0.json",
+      "sha256": "4ac7af55009879daae8659d055d78930689193e598fe2ecb1d680b5ca552583b"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/cm_2ebc52f409dca0816077aa77-v2-control.json",
+      "sha256": "3aee31463ee2fb4691f5f5762f0747da3e3fd1f288a9d6f5473636e4f2daa0d9"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/guecha-seed0-current-repaired.json",
+      "sha256": "b7352658fd410f2ce24150b86fe89e21b903567f60df08420fe2af9c8b3f8e5f"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/guecha-seed0-full-repaired.json",
+      "sha256": "c08d2185dbeaddcf6401ef695ea7960628f6d6c5ad6ce062163082b43c6f7450"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/guecha-seed0-repeat-repaired.json",
+      "sha256": "1ca7aa93f09f1ec119ec79a156eab3c9581582d5f5e640323bab32b9c95bd8a5"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/guecha-seed1-repaired.json",
+      "sha256": "0053b7da7790750279418a543e7e5f2b08f9001cbd48c4efdfcbd2b2e9e6cf97"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-patrol-repair-2026-11-01/guecha-seed2-repaired.json",
+      "sha256": "b941bfc897e33838be95a067227d2d746434b4f0deb652d6cafc5a3de0ba72fe"
+    }
+  ],
+  "blockedSeedRepaired": {
+    "matchupId": "cm_d9a8fa39591693259171e783",
+    "seed0WinnerOwner": 2,
+    "seed0Ticks": 4627,
+    "allFirstThreeSeedsOwner2Wins": true,
+    "repeatedSeed0Exact": true
+  },
+  "validation": {
+    "focusedTestsPassed": 49,
+    "fourControlFightsExact": 2,
+    "fourControlFightsChanged": 2
+  },
+  "evidencePolicy": "candidate physics only; diagnostics are not campaign records; replay all eligible source seeds in a separately versioned journal before combining outcomes",
+  "candidateHash": "02b909ebadb475c134773dcf6eb3765fd22c9be67fefc5b4c8dda17e9291d861"
+}

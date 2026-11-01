@@ -6,6 +6,7 @@ import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {gunzipSync} from 'node:zlib';
 import {RankingWorkerPool} from '../node/ranking-worker-pool.mjs';
+import {hashCanonicalJson} from '../src/canonical-json.js';
 
 const sim=resolve(import.meta.dirname,'..');
 const root=resolve(sim,'../..');
@@ -26,7 +27,11 @@ if(!process.env.SLOW_PAIR_MATCHUP_ID){
   assert.deepEqual(job.counts,[27,17]);
 }
 const sha=path=>createHash('sha256').update(readFileSync(path)).digest('hex');
-const scenario=frozen.scenarios[job.scenarioHash];assert(scenario);
+const scenario=frozen.scenarios[job.scenarioHash]??{
+  ...Object.values(frozen.scenarios).find(value=>value.family===job.family),
+  engineFamily:job.engineFamily,
+};
+assert.equal(hashCanonicalJson(scenario),job.scenarioHash);
 const payload={jobId:id,seed,
   teams:job.teamKeys.map((key,index)=>({mechanics:frozen.profiles[key].mechanics,count:job.counts[index]})),
   scenario,disableAiOrders:true,disableKiting:true,preserveOwnerOrientation:true,retainSnapshots:false};

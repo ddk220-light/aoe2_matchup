@@ -1,0 +1,544 @@
+{
+  "auditSha256": "5149ca2bcfa012af67b84b710fe1c0e6b5b0bf629f723e1ba3b03f9438614c2a",
+  "policyVersion": "common-c-refinement-v1",
+  "previousSnapshotSha256": "269c2543d663655c9bce5527574e401cfa261f1881d7469a99cd6757424b6440",
+  "promotionPolicy": "20 historical zero-error predictions and 60 independent post-introduction prospective predictions across 12 profiles, with zero wrong winners or close-as-decisive errors; no inferred roots",
+  "rules": {
+    "archer|archer": {
+      "counterexampleCount": 6,
+      "excludedModes": [],
+      "historical": {
+        "correct": 20,
+        "predicted": 20
+      },
+      "introducedAfterPhase": 25,
+      "newDistinctProfiles": 8,
+      "newProspective": {
+        "correct": 4,
+        "predicted": 4
+      },
+      "ruleHash": "ffddf6aed1f1f26b6917eab9c96f4820c3ba8b4b4dd6244915545b6865a3af62",
+      "seenProspective": {
+        "correct": 8,
+        "predicted": 8
+      },
+      "standards": [
+        "Saracens|hand_cannoneer"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.2,
+      "unresolvedEligiblePredictions": 108
+    },
+    "archer|gunpowder": {
+      "counterexampleCount": 1,
+      "excludedModes": [],
+      "historical": {
+        "correct": 11,
+        "predicted": 11
+      },
+      "introducedAfterPhase": 26,
+      "newDistinctProfiles": 0,
+      "newProspective": {},
+      "ruleHash": "052aae7e4647eb33eb27bc9272334e7a247ce5a2b83cf4eaa095ec7f9cb6a3c8",
+      "seenProspective": {
+        "correct": 4,
+        "predicted": 4
+      },
+      "standards": [
+        "Saracens|hand_cannoneer",
+        "Spanish|imp_elite_skirm"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.1,
+      "unresolvedEligiblePredictions": 71
+    },
+    "archer|light_cav": {
+      "counterexampleCount": 4,
+      "excludedModes": [
+        "repeating_volley"
+      ],
+      "historical": {
+        "correct": 54,
+        "predicted": 54
+      },
+      "introducedAfterPhase": 25,
+      "newDistinctProfiles": 8,
+      "newProspective": {
+        "correct": 4,
+        "predicted": 4
+      },
+      "ruleHash": "da8d3b1eeb732483505a513b3bf5ba70cd75e7da974b03a95b2e043ffccd4b66",
+      "seenProspective": {
+        "correct": 7,
+        "predicted": 7
+      },
+      "standards": [
+        "Chinese|arbalester"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.35,
+      "unresolvedEligiblePredictions": 213
+    },
+    "cav_archer|knight": {
+      "counterexampleCount": 3,
+      "excludedModes": [],
+      "historical": {
+        "correct": 45,
+        "predicted": 45
+      },
+      "introducedAfterPhase": 25,
+      "newDistinctProfiles": 8,
+      "newProspective": {
+        "correct": 4,
+        "predicted": 4
+      },
+      "ruleHash": "02df74d404ec592e81f0acc10bbeb3cd55c1b36daae09148da37c69f2ad1e124",
+      "seenProspective": {
+        "correct": 6,
+        "predicted": 6
+      },
+      "standards": [
+        "Chinese|arbalester"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.35,
+      "unresolvedEligiblePredictions": 528
+    },
+    "cav_archer|light_cav": {
+      "counterexampleCount": 1,
+      "excludedModes": [],
+      "historical": {
+        "correct": 38,
+        "predicted": 38
+      },
+      "introducedAfterPhase": 26,
+      "newDistinctProfiles": 0,
+      "newProspective": {},
+      "ruleHash": "33b9314062924d9880f71dcee9fa20c2b091edd254864d42ad36d0544f4003d6",
+      "seenProspective": {
+        "correct": 26,
+        "predicted": 26
+      },
+      "standards": [
+        "Saracens|heavy_cav_archer",
+        "Spanish|champion"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.1,
+      "unresolvedEligiblePredictions": 306
+    },
+    "gunpowder|light_cav": {
+      "counterexampleCount": 1,
+      "excludedModes": [],
+      "historical": {
+        "correct": 12,
+        "predicted": 12
+      },
+      "introducedAfterPhase": 26,
+      "newDistinctProfiles": 0,
+      "newProspective": {},
+      "ruleHash": "98f99190d9dca4268a9df2aff39b4275e56922e5e836cf3593edfb26b8e2f38a",
+      "seenProspective": {
+        "correct": 5,
+        "predicted": 5
+      },
+      "standards": [
+        "Turks|paladin"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.25,
+      "unresolvedEligiblePredictions": 118
+    },
+    "knight|light_cav": {
+      "counterexampleCount": 1,
+      "excludedModes": [],
+      "historical": {
+        "correct": 58,
+        "predicted": 58
+      },
+      "introducedAfterPhase": 26,
+      "newDistinctProfiles": 0,
+      "newProspective": {},
+      "ruleHash": "0e8757fe6113196e39fe83d0532c792d3fffd5f5352d3a55ef81041634e46005",
+      "seenProspective": {
+        "correct": 37,
+        "predicted": 37
+      },
+      "standards": [
+        "Turks|paladin"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.1,
+      "unresolvedEligiblePredictions": 508
+    },
+    "knight|militia": {
+      "counterexampleCount": 1,
+      "excludedModes": [],
+      "historical": {
+        "correct": 94,
+        "predicted": 94
+      },
+      "introducedAfterPhase": 25,
+      "newDistinctProfiles": 8,
+      "newProspective": {
+        "correct": 4,
+        "predicted": 4
+      },
+      "ruleHash": "8f732558fbed5bf81728283927d3129ffc15cbe109893ae1bb63d90ee5b1f113",
+      "seenProspective": {
+        "correct": 11,
+        "predicted": 11
+      },
+      "standards": [
+        "Spanish|paladin",
+        "Turks|paladin"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.1,
+      "unresolvedEligiblePredictions": 229
+    },
+    "light_cav|militia": {
+      "counterexampleCount": 4,
+      "excludedModes": [],
+      "historical": {
+        "correct": 27,
+        "predicted": 27
+      },
+      "introducedAfterPhase": 26,
+      "newDistinctProfiles": 0,
+      "newProspective": {},
+      "ruleHash": "ff39b46d1bbbf22b09384d5c3c9c8ecc5acbc7f9d872903a135a5bc2b2046b72",
+      "seenProspective": {
+        "correct": 4,
+        "predicted": 4
+      },
+      "standards": [
+        "Spanish|paladin"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.1,
+      "unresolvedEligiblePredictions": 128
+    },
+    "militia|skirmisher": {
+      "counterexampleCount": 1,
+      "excludedModes": [],
+      "historical": {
+        "correct": 25,
+        "predicted": 25
+      },
+      "introducedAfterPhase": 25,
+      "newDistinctProfiles": 7,
+      "newProspective": {
+        "correct": 4,
+        "predicted": 4
+      },
+      "ruleHash": "703a6c35ecf85c556352d1abc222f91569030b95709f4dc8d8561732ff91432d",
+      "seenProspective": {
+        "correct": 29,
+        "predicted": 29
+      },
+      "standards": [
+        "Turks|paladin"
+      ],
+      "status": "unvalidated_candidate_keep_probing",
+      "threshold": 0.35,
+      "unresolvedEligiblePredictions": 46
+    }
+  },
+  "selected": [
+    {
+      "family": "archer|archer",
+      "kind": "refinement_probe",
+      "pairKey": "2a68fcfa4ac847ede892378d7f36a92f9987e3e9ff798890a453712229e0c3e4|8fc167879c4686305d385f2949cd4d0d6b690172e9b329272d3bade4e2850496",
+      "ruleHash": "ffddf6aed1f1f26b6917eab9c96f4820c3ba8b4b4dd6244915545b6865a3af62"
+    },
+    {
+      "family": "archer|gunpowder",
+      "kind": "refinement_probe",
+      "pairKey": "149624b0e43edd910b85d0e5014e9d709449c3059b67162ddd322f343abb0d07|57d876f7e01d17d7eca21909859d91a9b68c49c524602b12c7100ea24f4dc25e",
+      "ruleHash": "052aae7e4647eb33eb27bc9272334e7a247ce5a2b83cf4eaa095ec7f9cb6a3c8"
+    },
+    {
+      "family": "archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "4c242d4a70940960bbbe5251dfc5f996d9c5af4fecdbaf7e150f1841283096ca|ed098be5f3ecd7c97e08867f212ff62f36460f02b44fda87f5c0d6b220ec518f",
+      "ruleHash": "da8d3b1eeb732483505a513b3bf5ba70cd75e7da974b03a95b2e043ffccd4b66"
+    },
+    {
+      "family": "cav_archer|knight",
+      "kind": "refinement_probe",
+      "pairKey": "c340ca49e159e0e62ba8c9a4790697769c89fb8beba903f7fe09ad1169d9cfcb|c888f83349f471b25cf7f52a92494633ff4ad115f62f180108cfa359fb4bc73f",
+      "ruleHash": "02df74d404ec592e81f0acc10bbeb3cd55c1b36daae09148da37c69f2ad1e124"
+    },
+    {
+      "family": "cav_archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "774ab7fc90b2e52de21a2045acde6e40bc460af5f94d589f9edca6ea69b9e360|fe1d063caa3ed8584ab53c0f5b8e37e597da8f05d2c6836df1f4a24aa23de312",
+      "ruleHash": "33b9314062924d9880f71dcee9fa20c2b091edd254864d42ad36d0544f4003d6"
+    },
+    {
+      "family": "gunpowder|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "2d3299d1869a45664458f28ffb66283613ed556481ec22c12cb268e90603e035|df79c5184ff8c8c09bc91c0795073367abe95edf0a389f19f37c7d5165d4f818",
+      "ruleHash": "98f99190d9dca4268a9df2aff39b4275e56922e5e836cf3593edfb26b8e2f38a"
+    },
+    {
+      "family": "knight|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "85091acb2291fdab73440565c861c8ff519043bc9052261c59641b1f787d3e15|eb3983b3a46200be5ec3a61a9976b3f5144628b6fe63e67299dfaddc96be1033",
+      "ruleHash": "0e8757fe6113196e39fe83d0532c792d3fffd5f5352d3a55ef81041634e46005"
+    },
+    {
+      "family": "knight|militia",
+      "kind": "refinement_probe",
+      "pairKey": "574ed6f2a96b9ca1b45a8f61d52f1c5f147afd18f813a9e549276335a334b137|89edb3de1db9002cf434550819a265eed4772d717d4509b1b6994b33bf87abb0",
+      "ruleHash": "8f732558fbed5bf81728283927d3129ffc15cbe109893ae1bb63d90ee5b1f113"
+    },
+    {
+      "family": "light_cav|militia",
+      "kind": "refinement_probe",
+      "pairKey": "664675b856796becf6510b096973a7346adf315f8a793d0d81b43fce7e23c62d|de0a9dffb13d3829b5a718b2c80ed809c7b4fbcff845dee8f57964371ab2ac92",
+      "ruleHash": "ff39b46d1bbbf22b09384d5c3c9c8ecc5acbc7f9d872903a135a5bc2b2046b72"
+    },
+    {
+      "family": "militia|skirmisher",
+      "kind": "refinement_probe",
+      "pairKey": "79b0958adbec2f3f63e1664ede422c789ceb6f36a815e75fac3ddda76211f6f0|a96538e6b6b2d4678f6f52762f36388e19b25fe703871a996da9d218693a7b68",
+      "ruleHash": "703a6c35ecf85c556352d1abc222f91569030b95709f4dc8d8561732ff91432d"
+    },
+    {
+      "family": "archer|archer",
+      "kind": "refinement_probe",
+      "pairKey": "4c60af8af6109733a5c475e978ce81c9f5ac77a6e9a87a006e9c59d2b5c43e2c|a1df487164b913aafaf778919cdc35b238124d9069db773c569f48dc39290a72",
+      "ruleHash": "ffddf6aed1f1f26b6917eab9c96f4820c3ba8b4b4dd6244915545b6865a3af62"
+    },
+    {
+      "family": "archer|gunpowder",
+      "kind": "refinement_probe",
+      "pairKey": "5ede90b71dda795c52cc22de87bc15e1f0f2e34c98138763bd1a553e37f10aa8|e64df2c18823099bb38a2eddd727813cbc40b10f0f114c9569467a536d1d3c6e",
+      "ruleHash": "052aae7e4647eb33eb27bc9272334e7a247ce5a2b83cf4eaa095ec7f9cb6a3c8"
+    },
+    {
+      "family": "archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "d49f3bec7f38622b3f4b941186fb08a2591d68849d41a13cddb80ca7b2017aa2|fe0c29b64aadaabc1d9441c45896f5f3fd985ef51e5ede375e751588ff0be667",
+      "ruleHash": "da8d3b1eeb732483505a513b3bf5ba70cd75e7da974b03a95b2e043ffccd4b66"
+    },
+    {
+      "family": "cav_archer|knight",
+      "kind": "refinement_probe",
+      "pairKey": "aa664bc0ad9db5f86841e099e215910ac08b40aaf87c20195c2923c13909ea08|f72145ce1f97451102d153938998ccd9b41bc0b0eca721a404b4057df62e515d",
+      "ruleHash": "02df74d404ec592e81f0acc10bbeb3cd55c1b36daae09148da37c69f2ad1e124"
+    },
+    {
+      "family": "cav_archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "4958e7edbf3c4db9fa221a53a4fbec450bf0cbaf560d04547ef742fe8e41f334|68cffbc029f5a17f179e7121608623343f9e5b80e9163256ceb7f5f70d90f119",
+      "ruleHash": "33b9314062924d9880f71dcee9fa20c2b091edd254864d42ad36d0544f4003d6"
+    },
+    {
+      "family": "gunpowder|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "346c2a42810006eaf69ac98d3a71134fb2e4f3becbf6ae6f6efbb03e04b1bd82|de0a9dffb13d3829b5a718b2c80ed809c7b4fbcff845dee8f57964371ab2ac92",
+      "ruleHash": "98f99190d9dca4268a9df2aff39b4275e56922e5e836cf3593edfb26b8e2f38a"
+    },
+    {
+      "family": "knight|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "7044d63ae86cbda6c51e3c10c4d0205b4128267a19cd25624f23946e9f585151|e023ff834ec8fe7ac2ba60f83e1b9d28727aea1350973ced3c3a8661a6a6629b",
+      "ruleHash": "0e8757fe6113196e39fe83d0532c792d3fffd5f5352d3a55ef81041634e46005"
+    },
+    {
+      "family": "knight|militia",
+      "kind": "refinement_probe",
+      "pairKey": "1a480caf4b70c4f1c44fd576780cdb37d8fc8287c4d246c4f4dccd4a04afd2d2|79b0958adbec2f3f63e1664ede422c789ceb6f36a815e75fac3ddda76211f6f0",
+      "ruleHash": "8f732558fbed5bf81728283927d3129ffc15cbe109893ae1bb63d90ee5b1f113"
+    },
+    {
+      "family": "light_cav|militia",
+      "kind": "refinement_probe",
+      "pairKey": "948660f0f92a258546c4190119f3163d153399a9b098a36054705bde8d01ff3d|b16283f103e02c511ea69495e16205eecb923fde3b569dfee78fea5fa54e3283",
+      "ruleHash": "ff39b46d1bbbf22b09384d5c3c9c8ecc5acbc7f9d872903a135a5bc2b2046b72"
+    },
+    {
+      "family": "militia|skirmisher",
+      "kind": "refinement_probe",
+      "pairKey": "d9e6c38132ae55d852f44694f8a06aef4e096fd051941cefde305e3f7e19c9ed|f3aadef129b6108337dff2d0771e14d0c8889ff31812e9763eae4bb39a7499f6",
+      "ruleHash": "703a6c35ecf85c556352d1abc222f91569030b95709f4dc8d8561732ff91432d"
+    },
+    {
+      "family": "archer|archer",
+      "kind": "refinement_probe",
+      "pairKey": "815d09c55ad016f8c2ccbe32b440fccde4ee8c85630c2bef5eccf8150ae7be71|c433a96e547cb1e22418fefcafb32a069762f8ee2de7216cddb00ae2fc67e17c",
+      "ruleHash": "ffddf6aed1f1f26b6917eab9c96f4820c3ba8b4b4dd6244915545b6865a3af62"
+    },
+    {
+      "family": "archer|gunpowder",
+      "kind": "refinement_probe",
+      "pairKey": "6e846b9343f764dc078d469f43cd9de4a97e2d83f4e854eee5552ab207440e94|fe0c29b64aadaabc1d9441c45896f5f3fd985ef51e5ede375e751588ff0be667",
+      "ruleHash": "052aae7e4647eb33eb27bc9272334e7a247ce5a2b83cf4eaa095ec7f9cb6a3c8"
+    },
+    {
+      "family": "archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "4549109e49654b5939b19a7324e878203b1e7afdd13507e81e0afac3b7386f9f|b272f2def969b021ae6f9ca0f9663e8eb7c0ee81fc151aceab552fa7fe9e7906",
+      "ruleHash": "da8d3b1eeb732483505a513b3bf5ba70cd75e7da974b03a95b2e043ffccd4b66"
+    },
+    {
+      "family": "cav_archer|knight",
+      "kind": "refinement_probe",
+      "pairKey": "8d3db82bd1460b916993992cb747ee82a0aafdfd9ad4f2262ae306aaba28681b|e3d4350b242f8b741c05aad5f2e55e456fb76c25f88fb37e1a93360a5423cccf",
+      "ruleHash": "02df74d404ec592e81f0acc10bbeb3cd55c1b36daae09148da37c69f2ad1e124"
+    },
+    {
+      "family": "cav_archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "8d3db82bd1460b916993992cb747ee82a0aafdfd9ad4f2262ae306aaba28681b|cb0f45d9f61539a6d1d4f9e69ab371d816ce5a949f1dd1cd93db83ee3a3a9550",
+      "ruleHash": "33b9314062924d9880f71dcee9fa20c2b091edd254864d42ad36d0544f4003d6"
+    },
+    {
+      "family": "gunpowder|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "ee4b0f3217d39ce3be924834dbac80ec4939735f6a8ffd77c2e392db916b7673|f1d42e36ce0b6a42652fabc2d6c4cd9cdaed68adbc136c0497443b77ed480a94",
+      "ruleHash": "98f99190d9dca4268a9df2aff39b4275e56922e5e836cf3593edfb26b8e2f38a"
+    },
+    {
+      "family": "knight|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "269546dde68aa295134a8ab1788239529b7d30c68d626676284b37888d241e79|b7c0c600b1ec0fa3f4c4769ece010255905c9a0b7ecacc67488f12d7eedbc3e4",
+      "ruleHash": "0e8757fe6113196e39fe83d0532c792d3fffd5f5352d3a55ef81041634e46005"
+    },
+    {
+      "family": "knight|militia",
+      "kind": "refinement_probe",
+      "pairKey": "0d93c37ad607125ca3870b56b77eb234ac8e05388840abb59c99f93d6712addd|664675b856796becf6510b096973a7346adf315f8a793d0d81b43fce7e23c62d",
+      "ruleHash": "8f732558fbed5bf81728283927d3129ffc15cbe109893ae1bb63d90ee5b1f113"
+    },
+    {
+      "family": "light_cav|militia",
+      "kind": "refinement_probe",
+      "pairKey": "2350538d457d98ac90de093d145a60b685632514dbf9aca516365a1eb2752b10|ed098be5f3ecd7c97e08867f212ff62f36460f02b44fda87f5c0d6b220ec518f",
+      "ruleHash": "ff39b46d1bbbf22b09384d5c3c9c8ecc5acbc7f9d872903a135a5bc2b2046b72"
+    },
+    {
+      "family": "militia|skirmisher",
+      "kind": "refinement_probe",
+      "pairKey": "b109d71d647970729b64ae9f6b22c2ee8dd361d58fae81fdc4bd136a14273029|d9e6c38132ae55d852f44694f8a06aef4e096fd051941cefde305e3f7e19c9ed",
+      "ruleHash": "703a6c35ecf85c556352d1abc222f91569030b95709f4dc8d8561732ff91432d"
+    },
+    {
+      "family": "archer|archer",
+      "kind": "refinement_probe",
+      "pairKey": "0edaff9ec9a4af15a174a4820c18f4b854904f6652a784e29a9bf7656bd141c1|9443858356adb882d86de358f3919958af81ff79a12e4b24e6ae85fa1b42555e",
+      "ruleHash": "ffddf6aed1f1f26b6917eab9c96f4820c3ba8b4b4dd6244915545b6865a3af62"
+    },
+    {
+      "family": "archer|gunpowder",
+      "kind": "refinement_probe",
+      "pairKey": "5e691b18d32e76f105912a67c6790b865653b3250a4e3d334b5cb1a4f4bd5f73|c433a96e547cb1e22418fefcafb32a069762f8ee2de7216cddb00ae2fc67e17c",
+      "ruleHash": "052aae7e4647eb33eb27bc9272334e7a247ce5a2b83cf4eaa095ec7f9cb6a3c8"
+    },
+    {
+      "family": "archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "256cc4ef0867385b3499a801174451ca3575dbba368ee84a7d18f8e7eb7d75e9|9dd4dc1591eb8fb60be8482cd2cfa69c4913e01a3f4c674d56915c14363e7c34",
+      "ruleHash": "da8d3b1eeb732483505a513b3bf5ba70cd75e7da974b03a95b2e043ffccd4b66"
+    },
+    {
+      "family": "cav_archer|knight",
+      "kind": "refinement_probe",
+      "pairKey": "7a67e980a7bea8d3d05587d8ac0088fefe30d46bcf2e8ea912781744073c3351|cfddac8c7f9832383ae4a60e164f3bb0aaf4b5dd11de53f96cc4b644b6605a21",
+      "ruleHash": "02df74d404ec592e81f0acc10bbeb3cd55c1b36daae09148da37c69f2ad1e124"
+    },
+    {
+      "family": "cav_archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "64726827d66b01d1b8911f10a9f519948a320924cc5b697b07d542498df3aaef|a5caf39da5217be6a7bf02446f2807cbc4223042b17aa59ca01ecbaebc326024",
+      "ruleHash": "33b9314062924d9880f71dcee9fa20c2b091edd254864d42ad36d0544f4003d6"
+    },
+    {
+      "family": "gunpowder|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "71aaec67381852f61b6873ee3aab741be1ecd3dd24aeca5ed7a49f27c7d187ed|d49f3bec7f38622b3f4b941186fb08a2591d68849d41a13cddb80ca7b2017aa2",
+      "ruleHash": "98f99190d9dca4268a9df2aff39b4275e56922e5e836cf3593edfb26b8e2f38a"
+    },
+    {
+      "family": "knight|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "1a480caf4b70c4f1c44fd576780cdb37d8fc8287c4d246c4f4dccd4a04afd2d2|1ffea80be7cbe711552c09cbbed35d899207dd9792e87e740d14a8f3bc85d460",
+      "ruleHash": "0e8757fe6113196e39fe83d0532c792d3fffd5f5352d3a55ef81041634e46005"
+    },
+    {
+      "family": "knight|militia",
+      "kind": "refinement_probe",
+      "pairKey": "06366fbeeabb9d1b706c13f2853d567f425d014d5fa935867c931bc26d54b221|1b074887aa8a79fb799c84414b4db68c6c84dfdb27bb4c2ea745b9d8611f8feb",
+      "ruleHash": "8f732558fbed5bf81728283927d3129ffc15cbe109893ae1bb63d90ee5b1f113"
+    },
+    {
+      "family": "light_cav|militia",
+      "kind": "refinement_probe",
+      "pairKey": "a249cc042c20b30dce8f58b835c686963350eb7555f5304387cdc6931fce0885|f975d199e21c1562c0d4d8bad008298db2bb491ec270053abbc3146e11e022c2",
+      "ruleHash": "ff39b46d1bbbf22b09384d5c3c9c8ecc5acbc7f9d872903a135a5bc2b2046b72"
+    },
+    {
+      "family": "militia|skirmisher",
+      "kind": "refinement_probe",
+      "pairKey": "8b7ca2dba60271513f27cb656e81a8e204a6391e6d15a86818b6b87eb097a6cb|af705fa739a900f84823c078a940899bc1f6bdccb080330eace9b05bcc5937cc",
+      "ruleHash": "703a6c35ecf85c556352d1abc222f91569030b95709f4dc8d8561732ff91432d"
+    },
+    {
+      "family": "archer|archer",
+      "kind": "refinement_probe",
+      "pairKey": "8140eed58649f6b04233f321255ac1ce775ae56ede5e45e805d2d353ac005d8b|a1df487164b913aafaf778919cdc35b238124d9069db773c569f48dc39290a72",
+      "ruleHash": "ffddf6aed1f1f26b6917eab9c96f4820c3ba8b4b4dd6244915545b6865a3af62"
+    },
+    {
+      "family": "archer|gunpowder",
+      "kind": "refinement_probe",
+      "pairKey": "346c2a42810006eaf69ac98d3a71134fb2e4f3becbf6ae6f6efbb03e04b1bd82|8140eed58649f6b04233f321255ac1ce775ae56ede5e45e805d2d353ac005d8b",
+      "ruleHash": "052aae7e4647eb33eb27bc9272334e7a247ce5a2b83cf4eaa095ec7f9cb6a3c8"
+    },
+    {
+      "family": "archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "b7c0c600b1ec0fa3f4c4769ece010255905c9a0b7ecacc67488f12d7eedbc3e4|f348df4c589fde6d4ff90e7acc0c26fa9b6210fb4baa35654dc04685ad86dbe8",
+      "ruleHash": "da8d3b1eeb732483505a513b3bf5ba70cd75e7da974b03a95b2e043ffccd4b66"
+    },
+    {
+      "family": "cav_archer|knight",
+      "kind": "refinement_probe",
+      "pairKey": "0d93c37ad607125ca3870b56b77eb234ac8e05388840abb59c99f93d6712addd|8008345dfef05ea3a097d2b74a0e1068b7e3d02a811899bca38bf893a9b83be2",
+      "ruleHash": "02df74d404ec592e81f0acc10bbeb3cd55c1b36daae09148da37c69f2ad1e124"
+    },
+    {
+      "family": "cav_archer|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "8008345dfef05ea3a097d2b74a0e1068b7e3d02a811899bca38bf893a9b83be2|cb0f45d9f61539a6d1d4f9e69ab371d816ce5a949f1dd1cd93db83ee3a3a9550",
+      "ruleHash": "33b9314062924d9880f71dcee9fa20c2b091edd254864d42ad36d0544f4003d6"
+    },
+    {
+      "family": "gunpowder|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "2d3299d1869a45664458f28ffb66283613ed556481ec22c12cb268e90603e035|ef4bb570253a3ff7d860cececdb3cc40a01f3ea1d079c9620acd0286de3cd720",
+      "ruleHash": "98f99190d9dca4268a9df2aff39b4275e56922e5e836cf3593edfb26b8e2f38a"
+    },
+    {
+      "family": "knight|light_cav",
+      "kind": "refinement_probe",
+      "pairKey": "76c6e8cfbf62cf6a235831481237b4a69934a1a36c14e63f801ab06475e61ca3|dcd918e91c65ef7ee47e048c0c940df7954dccf55ff02c533bd1d4a1dd014b30",
+      "ruleHash": "0e8757fe6113196e39fe83d0532c792d3fffd5f5352d3a55ef81041634e46005"
+    },
+    {
+      "family": "knight|militia",
+      "kind": "refinement_probe",
+      "pairKey": "6e298c31cbbc09208e224da410a7813952d410b58e3b966a80484234116d5deb|948660f0f92a258546c4190119f3163d153399a9b098a36054705bde8d01ff3d",
+      "ruleHash": "8f732558fbed5bf81728283927d3129ffc15cbe109893ae1bb63d90ee5b1f113"
+    }
+  ],
+  "skipPairKeys": [],
+  "sourcePhase": 26,
+  "sourceReviewSha256": "d2ff0eeb7c14534c3ace03b39187c9635db92f34d6987ce8440e57fe6aa5ed04",
+  "v2ReplayReadyForPromotion": false,
+  "v2ReplayStateSha256": "41cdd15bd8914414aca61f1fbfe2d826ddb3098a4a6a856d96f90bae32f203f6",
+  "verifiedRules": {}
+}

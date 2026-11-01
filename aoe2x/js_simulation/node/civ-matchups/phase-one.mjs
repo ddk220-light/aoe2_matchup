@@ -17,7 +17,7 @@ const ROOT = resolve(SIM, '../..');
 const SOURCE = resolve(SIM, 'calibration/campaigns/unit-rankings-consolidated-2026-10-29');
 const DEFINITION = resolve(SIM, 'calibration/campaigns/unit-rankings-path-recovery-2026-10-29/manifest.json');
 const SCORES = resolve(SIM, 'calibration/reports/unit-ranking-scores-final-2026-10-29/scores.json');
-const RULE_VERSION = 'phase1-static-direction-and-tradeoff-v2';
+const RULE_VERSION = 'phase1-inert-metadata-family-validated-v3';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
 const key2 = (a,b) => a <= b ? `${a}|${b}` : `${b}|${a}`;
@@ -216,7 +216,13 @@ function staticSafe(mechanics) {
   if(mechanics.blast?.width_tiles>0 || mechanics.ranged?.pass_through || mechanics.ranged?.extra_projectile_count>0
     || mechanics.ranged?.secondary_projectile_count>0 || mechanics.ranged?.impact_splash_radius_tiles>0
     || mechanics.ranged?.first_attack_extra_projectiles>0 || mechanics.ranged?.extra_projectile_attacks) return false;
-  const ordinary=new Set(['base_accuracy','pass_through_count','splash_on_hit_fraction']);
+  // Resource totals do not feed back into combat. The recipient flag needs
+  // an allied source that a homogeneous same-type army cannot supply unless
+  // that same profile also has the source flag. This changes inference
+  // eligibility only, never combat physics.
+  const ordinary=new Set(['base_accuracy','pass_through_count','splash_on_hit_fraction',
+    'combat_gold_per_animation_second','gold_per_kill','death_resource_refund_fraction']);
+  if(!mechanics.effects?.speed_attack_aura_group)ordinary.add('speed_attack_aura_recipient');
   for(const [k,v] of Object.entries(mechanics.effects??{})) if(!ordinary.has(k) && v!==null && v!==0 && v!==false) return false;
   return true;
 }
@@ -541,8 +547,19 @@ function buildDecisions(inventory,evidence) {
       const candidateOutcome=predicted.size===1?[...predicted][0]:tradeoffWinners.size===1?[...tradeoffWinners][0]:
         priorWinners.size===1?[...priorWinners][0]:null;
       const validatedProposals=rootsHere.filter(x=>familyValidation[x.family]?.enabled);
-      const validatedTradeoffs=tradeoffs.filter(x=>tradeoffModeValidation[x.mode]?.enabled
-        &&tradeoffFamilies[x.family]?.enabled!==false);
+      const validatedTradeoffs=tradeoffs.filter(x=>{
+        if(!tradeoffModeValidation[x.mode]?.enabled
+          ||tradeoffFamilies[x.family]?.enabled===false)return false;
+        const newlyEligible=[x.fixedHash,x.oldHash,x.newHash].some(h=>{
+          const e=profiles.get(h)?.mechanics.effects??{};
+          return Boolean(e.speed_attack_aura_recipient
+            ||e.combat_gold_per_animation_second||e.gold_per_kill
+            ||e.death_resource_refund_fraction);
+        });
+        if(!newlyEligible)return true;
+        const heldOut=tradeoffFamilies[x.family]?.corrected;
+        return (heldOut?.targets??0)>=3 && (heldOut?.independentRoots??0)>=2;
+      });
       const eligibleWinners=new Set([...validatedProposals,...validatedTradeoffs].map(x=>x.winnerHash));
       const priorConflict=priorWinners.size && eligibleWinners.size===1 && !priorWinners.has([...eligibleWinners][0]);
       const reasonCodes=[];

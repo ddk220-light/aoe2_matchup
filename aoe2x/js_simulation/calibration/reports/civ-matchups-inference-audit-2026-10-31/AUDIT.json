@@ -1,0 +1,138 @@
+{
+  "checkpointCommit": "6686ba0e",
+  "baselineBuildHash": "b3bf0054a3e721c1569c820a23020e4bf2b551021e342a4e97b1f1359b367aa1",
+  "auditedBuildHash": "fe53980192505e006e3e6a4821936efeae362033aa33faf6f32f5791e7d5f9a7",
+  "sourceCampaignHash": "a864a8c45955478fc6010d149ad87b8b697342ce99c39ccb99bdfe43c1d471a5",
+  "inputs": [
+    {
+      "path": "adaptive/inventory.jsonl.gz",
+      "sha256": "5d6ca522df48015e01440c2031a10d1966bb8a1969fbe1371b2d5062250eb6e1"
+    },
+    {
+      "path": "adaptive/manifest.json",
+      "sha256": "7c84dc2698fd0ff707a917ac01647708b13790990ceb6d221b26ac117fde1207"
+    },
+    {
+      "path": "pilot/manifest.json",
+      "sha256": "a43c5f60f40c505be63c237d7d762e4d86c35c8e8c5edd07d036d340fe9f7b9d"
+    },
+    {
+      "path": "adaptive/runs/001.jsonl",
+      "sha256": "7956d0b9be5cf756a6b330ca826f6ea5e534710b0307b7661967fb7bdb8cf3df"
+    },
+    {
+      "path": "adaptive/runs/002.jsonl",
+      "sha256": "cc23dabb08f4f542f194d5a48a9a743c9ab30ad4a1ba0b6e5b93a31c97af63cc"
+    },
+    {
+      "path": "adaptive/runs/003.jsonl",
+      "sha256": "755b9c05e68f0a663ded09f82838fd037ef15dd579e0bf748fa41cc0221ce2dd"
+    },
+    {
+      "path": "adaptive/runs/004.jsonl",
+      "sha256": "4731b7bdf9bf97a59dcd625e44168838b71428a5ad27739d75d5fd86a709efdf"
+    },
+    {
+      "path": "adaptive/runs/005.jsonl",
+      "sha256": "f5b21bc8b1126743bf9c2bb2121d815594510fef2602cf5ec805ae3a5c3ecc04"
+    },
+    {
+      "path": "adaptive/runs/006.jsonl",
+      "sha256": "ea3220298f10f9ce3d1607a04382db98763d3ed7a895de32ecc37656fc27b1e1"
+    },
+    {
+      "path": "adaptive/runs/007.jsonl",
+      "sha256": "c09981afe0b452498f027c23d8d94a624f639d195987a3268efea56ece9eedd3"
+    },
+    {
+      "path": "adaptive/runs/008.jsonl",
+      "sha256": "d185b5e93e188fd917bd8a417ff00e5584793c715daef03998cffd63fae468eb"
+    },
+    {
+      "path": "adaptive/runs/009.jsonl",
+      "sha256": "b1335a895d9b42156f0b77a486ea63a47b7204efac76f5afd9f828d77321d525"
+    },
+    {
+      "path": "adaptive/runs/010.jsonl",
+      "sha256": "394bc29160b1783b3d47947005a132997fff3ccd7a637770a499c92eac5df2e9"
+    },
+    {
+      "path": "adaptive/runs/011.jsonl",
+      "sha256": "9f06a56925ac658963633225a3685f1f2308e9dba3183a0d00dd65d28247cd34"
+    },
+    {
+      "path": "adaptive/runs/012.jsonl",
+      "sha256": "c428d6d95ce8a621d435379f3c26dd82e384a7614788ce7f22c32f874b13f043"
+    },
+    {
+      "path": "adaptive/runs/013.jsonl",
+      "sha256": "c21487330134d018b9153e0a6b3444e56865f1c8086bd947eade6046ab5a3809"
+    },
+    {
+      "path": "adaptive/runs/014.jsonl",
+      "sha256": "efb5098603fdb45f4e96ccecdc9a7b6a6ea924fd6d386c094acfad7b140aad9e"
+    },
+    {
+      "path": "adaptive/runs/015.jsonl",
+      "sha256": "7ee124e3fa84843eb81588ad2041dda496d5d2c1e404a1025cfb606eaca1eacc"
+    },
+    {
+      "path": "adaptive/runs/016.jsonl",
+      "sha256": "2178bea9232ed098fa973b6ec6b32bd4903ce5637cdeec43b5b7343cc96d7cd7"
+    },
+    {
+      "path": "adaptive/runs/017.jsonl",
+      "sha256": "3fd2ff48c88481c0ee4af3dbe27a538496323f197a7f3982548c3c7f8efd029c"
+    },
+    {
+      "path": "pilot/runs/00-pilot.jsonl",
+      "sha256": "97f0bf176d773ddade25057f16d7ede17edc195afcb9307cdada3b3718d89b28"
+    }
+  ],
+  "baseline": {
+    "observed": 4423,
+    "inferred": 4520,
+    "equivalent": 45,
+    "close": 107,
+    "unresolved": 59928
+  },
+  "audited": {
+    "observed": 4423,
+    "inferred": 6330,
+    "equivalent": 45,
+    "close": 107,
+    "unresolved": 58118
+  },
+  "newInferred": 1810,
+  "newDisplayedCells": 3992,
+  "newByRule": {
+    "R1_STATIC_DIRECTION": 927,
+    "R2_ROBUST_TRADEOFF": 883
+  },
+  "distinctCorrectedRoots": 257,
+  "heldout": {
+    "r1": {
+      "candidatePredictions": 1493,
+      "heldOutTargetPairs": 706,
+      "correct": 1493,
+      "wrong": 0,
+      "closePredictedDecisively": 0
+    },
+    "r2Modes": {
+      "stronger_winner": {
+        "correctedTargets": 246,
+        "wrong": 0
+      },
+      "weaker_loser": {
+        "correctedTargets": 199,
+        "wrong": 0
+      }
+    }
+  },
+  "newInferencesSha256": "1d78f7eb7b2653f9b311284fef91fa0b4c2d3d8234ec905f0c80b00fd42240a2",
+  "simulationJobsRun": 0,
+  "validationFileSha256": {
+    "rule-validation.json": "14e68853e616337b0e1af3f05ed68af796d0bef82220c3d2feeed35e7398041d",
+    "tradeoff-validation.json": "4262142e230351aefc074bba8f52efdd2510444c82bfc905796ec91ec6a6af52"
+  }
+}

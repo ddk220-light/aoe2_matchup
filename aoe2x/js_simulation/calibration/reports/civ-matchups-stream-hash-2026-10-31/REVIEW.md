@@ -52,3 +52,19 @@ All three diagnostic reports are read-only evidence, not frozen campaign
 records. The V3 seed remains missing. A future campaign using this output
 version must record its runtime hashes, validate evidence provenance, and
 handle the remaining long seeds without classifying a timeout as a result.
+
+## Consistent completion path
+
+The streaming hash has the same collision and combat source as repaired V2;
+only canonical JSON delivery to SHA-256 differs. Keep already completed V2
+replays and their source hashes intact. A future compatibility manifest should
+hash the physics files, record the two output implementations separately,
+prove their hashes agree on representative replayed fights, and permit both
+sources in one **V2-physics** evidence ledger without relabeling an old run.
+The long/missing seeds can then be run in a separately journaled V2-stream
+campaign with durable checkpoints, the same counts/scenarios/seeds, and full
+event/final-state hashes. Final decisions must still require the complete
+three-seed or ten-seed set; one isolated diagnostic cannot fill a missing seed.
+The forest-pocket result is a separate fidelity question. If it warrants a
+pathing or scenario fix, that is a new physics version requiring its own
+validation and consistent evidence, not a silent repair to either live runner.

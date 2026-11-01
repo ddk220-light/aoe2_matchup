@@ -269,9 +269,10 @@ def main():
     y_test = np.asarray([outcome(r) for r in test])
     models = {
         "hist_gradient_boosting": HistGradientBoostingClassifier(
-            max_iter=120, max_leaf_nodes=15, learning_rate=0.05, l2_regularization=5,
+            max_iter=60, max_leaf_nodes=11, max_bins=63,
+            learning_rate=0.05, l2_regularization=5,
             random_state=42),
-        "extra_trees": ExtraTreesClassifier(n_estimators=160, min_samples_leaf=4,
+        "extra_trees": ExtraTreesClassifier(n_estimators=96, min_samples_leaf=4,
             max_features=0.6, n_jobs=2, random_state=42)}
     results = {}
     probabilities = {}
@@ -362,6 +363,7 @@ def main():
                   "calibration": len(calibration), "test": len(test),
                   "unresolved": len(unresolved)},
         "profiles": len(index), "benchmarks": standards,
+        "modelParameters": {name: model.get_params() for name, model in models.items()},
         "compatibleTrainingMarginPairs": margin_pairs,
         "rankingFeatureSource": "original ranking runs; predictive features only, never compatible measurements",
         "commonOpponentWitnessBaseline": baseline, "models": results,

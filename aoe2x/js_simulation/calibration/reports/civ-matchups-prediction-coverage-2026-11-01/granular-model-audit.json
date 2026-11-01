@@ -1,0 +1,1173 @@
+{
+  "benchmarks": [
+    "Chinese|arbalester",
+    "Saracens|hand_cannoneer",
+    "Saracens|heavy_cav_archer",
+    "Spanish|champion",
+    "Spanish|halberdier",
+    "Spanish|hussar",
+    "Spanish|imp_elite_skirm",
+    "Spanish|paladin",
+    "Turks|heavy_camel",
+    "Turks|paladin"
+  ],
+  "commonOpponentWitnessBaseline": {
+    "calibration": {
+      "closeCalledDecisive": 16,
+      "coverage": 0.41291585127201563,
+      "selected": 211,
+      "wrongOrClose": 42
+    },
+    "test": {
+      "closeCalledDecisive": 7,
+      "coverage": 0.2974559686888454,
+      "selected": 152,
+      "wrongOrClose": 28
+    }
+  },
+  "compatibleTrainingMarginPairs": 5190,
+  "kind": "offline exploratory selective winner prediction; no fights or accepted skips",
+  "modelParameters": {
+    "extra_trees": {
+      "bootstrap": false,
+      "ccp_alpha": 0.0,
+      "class_weight": null,
+      "criterion": "gini",
+      "max_depth": null,
+      "max_features": 0.6,
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 4,
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 96,
+      "n_jobs": 2,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "hist_gradient_boosting": {
+      "categorical_features": "from_dtype",
+      "class_weight": null,
+      "early_stopping": "auto",
+      "interaction_cst": null,
+      "l2_regularization": 5,
+      "learning_rate": 0.05,
+      "loss": "log_loss",
+      "max_bins": 63,
+      "max_depth": null,
+      "max_features": 1.0,
+      "max_iter": 60,
+      "max_leaf_nodes": 11,
+      "min_samples_leaf": 20,
+      "monotonic_cst": null,
+      "n_iter_no_change": 10,
+      "random_state": 42,
+      "scoring": "loss",
+      "tol": 1e-07,
+      "validation_fraction": 0.1,
+      "verbose": 0,
+      "warm_start": false
+    }
+  },
+  "models": {
+    "ensemble_agreement": {
+      "calibration": [
+        {
+          "closeCalledDecisive": 34,
+          "coverage": 0.9197651663405088,
+          "precision": 0.8574468085106383,
+          "selected": 470,
+          "threshold": 0.5,
+          "wrongOrClose": 67
+        },
+        {
+          "closeCalledDecisive": 31,
+          "coverage": 0.898238747553816,
+          "precision": 0.8736383442265795,
+          "selected": 459,
+          "threshold": 0.55,
+          "wrongOrClose": 58
+        },
+        {
+          "closeCalledDecisive": 30,
+          "coverage": 0.8747553816046967,
+          "precision": 0.8769574944071589,
+          "selected": 447,
+          "threshold": 0.6,
+          "wrongOrClose": 55
+        },
+        {
+          "closeCalledDecisive": 29,
+          "coverage": 0.8277886497064579,
+          "precision": 0.8865248226950354,
+          "selected": 423,
+          "threshold": 0.65,
+          "wrongOrClose": 48
+        },
+        {
+          "closeCalledDecisive": 24,
+          "coverage": 0.7847358121330724,
+          "precision": 0.9002493765586035,
+          "selected": 401,
+          "threshold": 0.7,
+          "wrongOrClose": 40
+        },
+        {
+          "closeCalledDecisive": 19,
+          "coverage": 0.7397260273972602,
+          "precision": 0.9206349206349206,
+          "selected": 378,
+          "threshold": 0.75,
+          "wrongOrClose": 30
+        },
+        {
+          "closeCalledDecisive": 17,
+          "coverage": 0.6692759295499021,
+          "precision": 0.9239766081871345,
+          "selected": 342,
+          "threshold": 0.8,
+          "wrongOrClose": 26
+        },
+        {
+          "closeCalledDecisive": 13,
+          "coverage": 0.5812133072407045,
+          "precision": 0.9427609427609428,
+          "selected": 297,
+          "threshold": 0.85,
+          "wrongOrClose": 17
+        },
+        {
+          "closeCalledDecisive": 10,
+          "coverage": 0.4755381604696673,
+          "precision": 0.9547325102880658,
+          "selected": 243,
+          "threshold": 0.9,
+          "wrongOrClose": 11
+        },
+        {
+          "closeCalledDecisive": 2,
+          "coverage": 0.2896281800391389,
+          "precision": 0.9797297297297297,
+          "selected": 148,
+          "threshold": 0.95,
+          "wrongOrClose": 3
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.2446183953033268,
+          "precision": 1.0,
+          "selected": 125,
+          "threshold": 0.96,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.1780821917808219,
+          "precision": 1.0,
+          "selected": 91,
+          "threshold": 0.97,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.11545988258317025,
+          "precision": 1.0,
+          "selected": 59,
+          "threshold": 0.98,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.029354207436399216,
+          "precision": 1.0,
+          "selected": 15,
+          "threshold": 0.99,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.005870841487279843,
+          "precision": 1.0,
+          "selected": 3,
+          "threshold": 0.995,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ],
+      "test": [
+        {
+          "closeCalledDecisive": 13,
+          "coverage": 0.923679060665362,
+          "precision": 0.9152542372881356,
+          "selected": 472,
+          "threshold": 0.5,
+          "wrongOrClose": 40
+        },
+        {
+          "closeCalledDecisive": 13,
+          "coverage": 0.9119373776908023,
+          "precision": 0.9184549356223176,
+          "selected": 466,
+          "threshold": 0.55,
+          "wrongOrClose": 38
+        },
+        {
+          "closeCalledDecisive": 12,
+          "coverage": 0.8864970645792564,
+          "precision": 0.9249448123620309,
+          "selected": 453,
+          "threshold": 0.6,
+          "wrongOrClose": 34
+        },
+        {
+          "closeCalledDecisive": 9,
+          "coverage": 0.8473581213307241,
+          "precision": 0.9376443418013857,
+          "selected": 433,
+          "threshold": 0.65,
+          "wrongOrClose": 27
+        },
+        {
+          "closeCalledDecisive": 9,
+          "coverage": 0.8023483365949119,
+          "precision": 0.9560975609756097,
+          "selected": 410,
+          "threshold": 0.7,
+          "wrongOrClose": 18
+        },
+        {
+          "closeCalledDecisive": 7,
+          "coverage": 0.7534246575342466,
+          "precision": 0.9636363636363636,
+          "selected": 385,
+          "threshold": 0.75,
+          "wrongOrClose": 14
+        },
+        {
+          "closeCalledDecisive": 7,
+          "coverage": 0.6986301369863014,
+          "precision": 0.9663865546218487,
+          "selected": 357,
+          "threshold": 0.8,
+          "wrongOrClose": 12
+        },
+        {
+          "closeCalledDecisive": 3,
+          "coverage": 0.6105675146771037,
+          "precision": 0.9807692307692307,
+          "selected": 312,
+          "threshold": 0.85,
+          "wrongOrClose": 6
+        },
+        {
+          "closeCalledDecisive": 1,
+          "coverage": 0.5107632093933464,
+          "precision": 0.9923371647509579,
+          "selected": 261,
+          "threshold": 0.9,
+          "wrongOrClose": 2
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.37573385518590996,
+          "precision": 1.0,
+          "selected": 192,
+          "threshold": 0.95,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.3111545988258317,
+          "precision": 1.0,
+          "selected": 159,
+          "threshold": 0.96,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.21526418786692758,
+          "precision": 1.0,
+          "selected": 110,
+          "threshold": 0.97,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.14285714285714285,
+          "precision": 1.0,
+          "selected": 73,
+          "threshold": 0.98,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.060665362035225046,
+          "precision": 1.0,
+          "selected": 31,
+          "threshold": 0.99,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0019569471624266144,
+          "precision": 1.0,
+          "selected": 1,
+          "threshold": 0.995,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ],
+      "unresolvedPredictedCoverageUsingTrainingGraph": [
+        {
+          "selected": 50274,
+          "threshold": 0.5
+        },
+        {
+          "selected": 49450,
+          "threshold": 0.55
+        },
+        {
+          "selected": 48096,
+          "threshold": 0.6
+        },
+        {
+          "selected": 46324,
+          "threshold": 0.65
+        },
+        {
+          "selected": 44097,
+          "threshold": 0.7
+        },
+        {
+          "selected": 41543,
+          "threshold": 0.75
+        },
+        {
+          "selected": 38467,
+          "threshold": 0.8
+        },
+        {
+          "selected": 34714,
+          "threshold": 0.85
+        },
+        {
+          "selected": 29732,
+          "threshold": 0.9
+        },
+        {
+          "selected": 21922,
+          "threshold": 0.95
+        },
+        {
+          "selected": 19556,
+          "threshold": 0.96
+        },
+        {
+          "selected": 16664,
+          "threshold": 0.97
+        },
+        {
+          "selected": 12785,
+          "threshold": 0.98
+        },
+        {
+          "selected": 6601,
+          "threshold": 0.99
+        },
+        {
+          "selected": 1351,
+          "threshold": 0.995
+        },
+        {
+          "selected": 0,
+          "threshold": 1.0
+        }
+      ]
+    },
+    "extra_trees": {
+      "calibration": [
+        {
+          "closeCalledDecisive": 37,
+          "coverage": 0.9510763209393346,
+          "precision": 0.8436213991769548,
+          "selected": 486,
+          "threshold": 0.5,
+          "wrongOrClose": 76
+        },
+        {
+          "closeCalledDecisive": 34,
+          "coverage": 0.9041095890410958,
+          "precision": 0.8636363636363636,
+          "selected": 462,
+          "threshold": 0.55,
+          "wrongOrClose": 63
+        },
+        {
+          "closeCalledDecisive": 32,
+          "coverage": 0.8473581213307241,
+          "precision": 0.8683602771362586,
+          "selected": 433,
+          "threshold": 0.6,
+          "wrongOrClose": 57
+        },
+        {
+          "closeCalledDecisive": 27,
+          "coverage": 0.8062622309197651,
+          "precision": 0.8810679611650486,
+          "selected": 412,
+          "threshold": 0.65,
+          "wrongOrClose": 49
+        },
+        {
+          "closeCalledDecisive": 20,
+          "coverage": 0.7416829745596869,
+          "precision": 0.9050131926121372,
+          "selected": 379,
+          "threshold": 0.7,
+          "wrongOrClose": 36
+        },
+        {
+          "closeCalledDecisive": 19,
+          "coverage": 0.6947162426614482,
+          "precision": 0.9126760563380282,
+          "selected": 355,
+          "threshold": 0.75,
+          "wrongOrClose": 31
+        },
+        {
+          "closeCalledDecisive": 18,
+          "coverage": 0.6144814090019569,
+          "precision": 0.9235668789808917,
+          "selected": 314,
+          "threshold": 0.8,
+          "wrongOrClose": 24
+        },
+        {
+          "closeCalledDecisive": 11,
+          "coverage": 0.5185909980430529,
+          "precision": 0.9471698113207547,
+          "selected": 265,
+          "threshold": 0.85,
+          "wrongOrClose": 14
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.39921722113502933,
+          "precision": 0.9558823529411765,
+          "selected": 204,
+          "threshold": 0.9,
+          "wrongOrClose": 9
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.2700587084148728,
+          "precision": 1.0,
+          "selected": 138,
+          "threshold": 0.95,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.2309197651663405,
+          "precision": 1.0,
+          "selected": 118,
+          "threshold": 0.96,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.18786692759295498,
+          "precision": 1.0,
+          "selected": 96,
+          "threshold": 0.97,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.13111545988258316,
+          "precision": 1.0,
+          "selected": 67,
+          "threshold": 0.98,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.07632093933463796,
+          "precision": 1.0,
+          "selected": 39,
+          "threshold": 0.99,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.04500978473581213,
+          "precision": 1.0,
+          "selected": 23,
+          "threshold": 0.995,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.011741682974559686,
+          "precision": 1.0,
+          "selected": 6,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ],
+      "test": [
+        {
+          "closeCalledDecisive": 19,
+          "coverage": 0.9647749510763209,
+          "precision": 0.8985801217038539,
+          "selected": 493,
+          "threshold": 0.5,
+          "wrongOrClose": 50
+        },
+        {
+          "closeCalledDecisive": 14,
+          "coverage": 0.9041095890410958,
+          "precision": 0.9155844155844156,
+          "selected": 462,
+          "threshold": 0.55,
+          "wrongOrClose": 39
+        },
+        {
+          "closeCalledDecisive": 10,
+          "coverage": 0.8610567514677103,
+          "precision": 0.9295454545454546,
+          "selected": 440,
+          "threshold": 0.6,
+          "wrongOrClose": 31
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.7964774951076321,
+          "precision": 0.941031941031941,
+          "selected": 407,
+          "threshold": 0.65,
+          "wrongOrClose": 24
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.7475538160469667,
+          "precision": 0.9502617801047121,
+          "selected": 382,
+          "threshold": 0.7,
+          "wrongOrClose": 19
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.6986301369863014,
+          "precision": 0.957983193277311,
+          "selected": 357,
+          "threshold": 0.75,
+          "wrongOrClose": 15
+        },
+        {
+          "closeCalledDecisive": 5,
+          "coverage": 0.6183953033268101,
+          "precision": 0.9715189873417721,
+          "selected": 316,
+          "threshold": 0.8,
+          "wrongOrClose": 9
+        },
+        {
+          "closeCalledDecisive": 2,
+          "coverage": 0.5440313111545988,
+          "precision": 0.9892086330935251,
+          "selected": 278,
+          "threshold": 0.85,
+          "wrongOrClose": 3
+        },
+        {
+          "closeCalledDecisive": 1,
+          "coverage": 0.4657534246575342,
+          "precision": 0.9915966386554622,
+          "selected": 238,
+          "threshold": 0.9,
+          "wrongOrClose": 2
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.29549902152641877,
+          "precision": 1.0,
+          "selected": 151,
+          "threshold": 0.95,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.25048923679060664,
+          "precision": 1.0,
+          "selected": 128,
+          "threshold": 0.96,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.18395303326810175,
+          "precision": 1.0,
+          "selected": 94,
+          "threshold": 0.97,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.13307240704500978,
+          "precision": 1.0,
+          "selected": 68,
+          "threshold": 0.98,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.08023483365949119,
+          "precision": 1.0,
+          "selected": 41,
+          "threshold": 0.99,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.05675146771037182,
+          "precision": 1.0,
+          "selected": 29,
+          "threshold": 0.995,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.011741682974559686,
+          "precision": 1.0,
+          "selected": 6,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ],
+      "testMistakesAt90Percent": [
+        {
+          "actual": 1,
+          "confidence": 0.9134672619047618,
+          "family": "archer|scorpion",
+          "pairKey": "a1df487164b913aafaf778919cdc35b238124d9069db773c569f48dc39290a72|b268516967bc84a4d915dc41d17f2cabbfc2715133af8c9e6746cec572d595a6",
+          "phase": 23,
+          "predicted": -1,
+          "units": [
+            "Britons|elite_longbowman_britons",
+            "Bengalis|heavy_scorpion"
+          ]
+        },
+        {
+          "actual": 0,
+          "confidence": 0.9221478174603175,
+          "family": "archer|gunpowder",
+          "pairKey": "242bac234ddf0838249ab7ed13af04d1f3f063811605d5f0c9b0d01970c373da|7bebce0d4c42a54a4ab930cc2c770667915a5c17c121894fa01f9b50011b4c01",
+          "phase": 24,
+          "predicted": 1,
+          "units": [
+            "Franks|hand_cannoneer",
+            "Celts|arbalester"
+          ]
+        }
+      ],
+      "unresolvedPredictedCoverageUsingTrainingGraph": [
+        {
+          "selected": 51894,
+          "threshold": 0.5
+        },
+        {
+          "selected": 49262,
+          "threshold": 0.55
+        },
+        {
+          "selected": 46696,
+          "threshold": 0.6
+        },
+        {
+          "selected": 44060,
+          "threshold": 0.65
+        },
+        {
+          "selected": 41187,
+          "threshold": 0.7
+        },
+        {
+          "selected": 38123,
+          "threshold": 0.75
+        },
+        {
+          "selected": 34897,
+          "threshold": 0.8
+        },
+        {
+          "selected": 31202,
+          "threshold": 0.85
+        },
+        {
+          "selected": 26634,
+          "threshold": 0.9
+        },
+        {
+          "selected": 19904,
+          "threshold": 0.95
+        },
+        {
+          "selected": 17938,
+          "threshold": 0.96
+        },
+        {
+          "selected": 15675,
+          "threshold": 0.97
+        },
+        {
+          "selected": 12824,
+          "threshold": 0.98
+        },
+        {
+          "selected": 9027,
+          "threshold": 0.99
+        },
+        {
+          "selected": 6247,
+          "threshold": 0.995
+        },
+        {
+          "selected": 3691,
+          "threshold": 1.0
+        }
+      ]
+    },
+    "hist_gradient_boosting": {
+      "calibration": [
+        {
+          "closeCalledDecisive": 38,
+          "coverage": 0.9726027397260274,
+          "precision": 0.8350100603621731,
+          "selected": 497,
+          "threshold": 0.5,
+          "wrongOrClose": 82
+        },
+        {
+          "closeCalledDecisive": 36,
+          "coverage": 0.9393346379647749,
+          "precision": 0.8520833333333333,
+          "selected": 480,
+          "threshold": 0.55,
+          "wrongOrClose": 71
+        },
+        {
+          "closeCalledDecisive": 33,
+          "coverage": 0.9041095890410958,
+          "precision": 0.8658008658008658,
+          "selected": 462,
+          "threshold": 0.6,
+          "wrongOrClose": 62
+        },
+        {
+          "closeCalledDecisive": 29,
+          "coverage": 0.8610567514677103,
+          "precision": 0.884090909090909,
+          "selected": 440,
+          "threshold": 0.65,
+          "wrongOrClose": 51
+        },
+        {
+          "closeCalledDecisive": 26,
+          "coverage": 0.8199608610567515,
+          "precision": 0.8997613365155132,
+          "selected": 419,
+          "threshold": 0.7,
+          "wrongOrClose": 42
+        },
+        {
+          "closeCalledDecisive": 23,
+          "coverage": 0.7847358121330724,
+          "precision": 0.9102244389027432,
+          "selected": 401,
+          "threshold": 0.75,
+          "wrongOrClose": 36
+        },
+        {
+          "closeCalledDecisive": 21,
+          "coverage": 0.7416829745596869,
+          "precision": 0.9155672823218998,
+          "selected": 379,
+          "threshold": 0.8,
+          "wrongOrClose": 32
+        },
+        {
+          "closeCalledDecisive": 13,
+          "coverage": 0.6731898238747553,
+          "precision": 0.9418604651162791,
+          "selected": 344,
+          "threshold": 0.85,
+          "wrongOrClose": 20
+        },
+        {
+          "closeCalledDecisive": 13,
+          "coverage": 0.5968688845401174,
+          "precision": 0.9442622950819672,
+          "selected": 305,
+          "threshold": 0.9,
+          "wrongOrClose": 17
+        },
+        {
+          "closeCalledDecisive": 6,
+          "coverage": 0.3816046966731898,
+          "precision": 0.958974358974359,
+          "selected": 195,
+          "threshold": 0.95,
+          "wrongOrClose": 8
+        },
+        {
+          "closeCalledDecisive": 4,
+          "coverage": 0.324853228962818,
+          "precision": 0.9698795180722891,
+          "selected": 166,
+          "threshold": 0.96,
+          "wrongOrClose": 5
+        },
+        {
+          "closeCalledDecisive": 2,
+          "coverage": 0.25244618395303325,
+          "precision": 0.9767441860465116,
+          "selected": 129,
+          "threshold": 0.97,
+          "wrongOrClose": 3
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.14481409001956946,
+          "precision": 1.0,
+          "selected": 74,
+          "threshold": 0.98,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.009784735812133072,
+          "precision": 1.0,
+          "selected": 5,
+          "threshold": 0.99,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 0.995,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ],
+      "test": [
+        {
+          "closeCalledDecisive": 17,
+          "coverage": 0.9823874755381604,
+          "precision": 0.8804780876494024,
+          "selected": 502,
+          "threshold": 0.5,
+          "wrongOrClose": 60
+        },
+        {
+          "closeCalledDecisive": 15,
+          "coverage": 0.9471624266144814,
+          "precision": 0.8966942148760331,
+          "selected": 484,
+          "threshold": 0.55,
+          "wrongOrClose": 50
+        },
+        {
+          "closeCalledDecisive": 15,
+          "coverage": 0.9256360078277887,
+          "precision": 0.9090909090909091,
+          "selected": 473,
+          "threshold": 0.6,
+          "wrongOrClose": 43
+        },
+        {
+          "closeCalledDecisive": 15,
+          "coverage": 0.8864970645792564,
+          "precision": 0.9227373068432672,
+          "selected": 453,
+          "threshold": 0.65,
+          "wrongOrClose": 35
+        },
+        {
+          "closeCalledDecisive": 12,
+          "coverage": 0.8571428571428571,
+          "precision": 0.9337899543378996,
+          "selected": 438,
+          "threshold": 0.7,
+          "wrongOrClose": 29
+        },
+        {
+          "closeCalledDecisive": 9,
+          "coverage": 0.812133072407045,
+          "precision": 0.9518072289156626,
+          "selected": 415,
+          "threshold": 0.75,
+          "wrongOrClose": 20
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.7690802348336595,
+          "precision": 0.9592875318066157,
+          "selected": 393,
+          "threshold": 0.8,
+          "wrongOrClose": 16
+        },
+        {
+          "closeCalledDecisive": 5,
+          "coverage": 0.6966731898238747,
+          "precision": 0.9691011235955056,
+          "selected": 356,
+          "threshold": 0.85,
+          "wrongOrClose": 11
+        },
+        {
+          "closeCalledDecisive": 2,
+          "coverage": 0.6105675146771037,
+          "precision": 0.9839743589743589,
+          "selected": 312,
+          "threshold": 0.9,
+          "wrongOrClose": 5
+        },
+        {
+          "closeCalledDecisive": 1,
+          "coverage": 0.4774951076320939,
+          "precision": 0.9959016393442623,
+          "selected": 244,
+          "threshold": 0.95,
+          "wrongOrClose": 1
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.4187866927592955,
+          "precision": 1.0,
+          "selected": 214,
+          "threshold": 0.96,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.36203522504892366,
+          "precision": 1.0,
+          "selected": 185,
+          "threshold": 0.97,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.25048923679060664,
+          "precision": 1.0,
+          "selected": 128,
+          "threshold": 0.98,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.011741682974559686,
+          "precision": 1.0,
+          "selected": 6,
+          "threshold": 0.99,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 0.995,
+          "wrongOrClose": 0
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ],
+      "testMistakesAt90Percent": [
+        {
+          "actual": 1,
+          "confidence": 0.9350603807886669,
+          "family": "archer|scorpion",
+          "pairKey": "a1df487164b913aafaf778919cdc35b238124d9069db773c569f48dc39290a72|b268516967bc84a4d915dc41d17f2cabbfc2715133af8c9e6746cec572d595a6",
+          "phase": 23,
+          "predicted": -1,
+          "units": [
+            "Britons|elite_longbowman_britons",
+            "Bengalis|heavy_scorpion"
+          ]
+        },
+        {
+          "actual": 0,
+          "confidence": 0.9421705569881873,
+          "family": "archer|scorpion",
+          "pairKey": "9f663f9285e1b4276b458a80e065047a819de90772d1b19816e321af8a9554d5|b268516967bc84a4d915dc41d17f2cabbfc2715133af8c9e6746cec572d595a6",
+          "phase": 23,
+          "predicted": -1,
+          "units": [
+            "Ethiopians|arbalester",
+            "Bengalis|heavy_scorpion"
+          ]
+        },
+        {
+          "actual": 1,
+          "confidence": 0.9130747453221454,
+          "family": "cav_archer|scorpion",
+          "pairKey": "28dd154d4bdbf0b9e4914f02251c7ad87afbfe15291d22e5feb31b6f43c68e94|b268516967bc84a4d915dc41d17f2cabbfc2715133af8c9e6746cec572d595a6",
+          "phase": 23,
+          "predicted": -1,
+          "units": [
+            "Varangians|heavy_mounted_crossbowman",
+            "Bengalis|heavy_scorpion"
+          ]
+        },
+        {
+          "actual": -1,
+          "confidence": 0.906644663384431,
+          "family": "gunpowder|light_cav",
+          "pairKey": "3aced82627591538f08744556501d5511e9e05188d7d52f251c7f85ce014cf32|ed098be5f3ecd7c97e08867f212ff62f36460f02b44fda87f5c0d6b220ec518f",
+          "phase": 23,
+          "predicted": 1,
+          "units": [
+            "Berbers|hand_cannoneer",
+            "Franks|hussar"
+          ]
+        },
+        {
+          "actual": 0,
+          "confidence": 0.9590000018943551,
+          "family": "archer|gunpowder",
+          "pairKey": "242bac234ddf0838249ab7ed13af04d1f3f063811605d5f0c9b0d01970c373da|7bebce0d4c42a54a4ab930cc2c770667915a5c17c121894fa01f9b50011b4c01",
+          "phase": 24,
+          "predicted": 1,
+          "units": [
+            "Franks|hand_cannoneer",
+            "Celts|arbalester"
+          ]
+        }
+      ],
+      "unresolvedPredictedCoverageUsingTrainingGraph": [
+        {
+          "selected": 52562,
+          "threshold": 0.5
+        },
+        {
+          "selected": 51157,
+          "threshold": 0.55
+        },
+        {
+          "selected": 49726,
+          "threshold": 0.6
+        },
+        {
+          "selected": 48198,
+          "threshold": 0.65
+        },
+        {
+          "selected": 46581,
+          "threshold": 0.7
+        },
+        {
+          "selected": 44690,
+          "threshold": 0.75
+        },
+        {
+          "selected": 42419,
+          "threshold": 0.8
+        },
+        {
+          "selected": 39478,
+          "threshold": 0.85
+        },
+        {
+          "selected": 35431,
+          "threshold": 0.9
+        },
+        {
+          "selected": 27800,
+          "threshold": 0.95
+        },
+        {
+          "selected": 25196,
+          "threshold": 0.96
+        },
+        {
+          "selected": 21421,
+          "threshold": 0.97
+        },
+        {
+          "selected": 15522,
+          "threshold": 0.98
+        },
+        {
+          "selected": 3074,
+          "threshold": 0.99
+        },
+        {
+          "selected": 0,
+          "threshold": 0.995
+        },
+        {
+          "selected": 0,
+          "threshold": 1.0
+        }
+      ]
+    }
+  },
+  "profiles": 374,
+  "rankingFeatureSource": "original ranking runs; predictive features only, never compatible measurements",
+  "sourceHashes": {
+    "damageFeatures": "78d3481310f0621781c63225e3c0942b155825e047ed9dd6e27c6ee3cabcbbc5",
+    "inference": "edf9b2e58e9616102512e99d709d3dc90d1c15e4b84db559384ff67eec84f666",
+    "ranking": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8",
+    "variants": "91fe53a3c8b7a6ef65d1dcc0a3c4041c65cfd81193f30fad8564093cbd3e40c6"
+  },
+  "split": {
+    "calibration": 511,
+    "calibrationPhases": [
+      21,
+      22
+    ],
+    "test": 511,
+    "testPhases": [
+      23,
+      24
+    ],
+    "train": 5190,
+    "trainThroughPhase": 20,
+    "unresolved": 53301
+  }
+}

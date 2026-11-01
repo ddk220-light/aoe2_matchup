@@ -70,12 +70,66 @@ def main():
     assert not set(proposal["deferredPathingHazardKeys"]).intersection(
         r["pairKey"] for r in proposal["selected"])
 
+    # A wrong common-C prediction starts a narrower, versioned experiment.
+    # Preserve the original hard-case selection as the fallback; give the
+    # refinement probes a small share of this phase, never a winner shortcut.
+    refinement_path = None
+    refined_skip_rows = []
+    if args.phase >= 24:
+        refinement_root = Path(os.environ.get("CIV_REFINEMENT_ARCHIVE_ROOT",
+            str(CAMPAIGN / "adaptive/refinement")))
+        subprocess.run(["python3", str(ROOT / "tools/plan_civ_refinement_loop.py"),
+            "--source", str(CAMPAIGN), "--phase", str(args.phase),
+            "--archive-root", str(refinement_root)], check=True,
+            stdout=subprocess.DEVNULL)
+        refinement_path = refinement_root / f"{args.phase:03d}.json"
+        refinement = json.loads(refinement_path.read_text())
+        assert refinement["policyVersion"] == "common-c-refinement-v1"
+        assert refinement["sourcePhase"] == args.phase
+        refined_skip_rows = [dict(row, family=family, ruleHash=result["ruleHash"])
+            for family, result in sorted(refinement["verifiedRules"].items())
+            for row in result["eligibleSkipDecisions"]]
+        assert len({row["pairKey"] for row in refined_skip_rows}) == len(refined_skip_rows)
+        original_size = len(proposal["selected"])
+        forbidden = set(proposal["skippedVerifiedEstimateKeys"])
+        forbidden.update(proposal["deferredPathingHazardKeys"])
+        forbidden.update(row["pairKey"] for row in refined_skip_rows)
+        seen = set()
+        combined = []
+        for item in refinement["selected"] + proposal["selected"]:
+            key = item["pairKey"]
+            if key in forbidden or key in seen:
+                continue
+            combined.append(item)
+            seen.add(key)
+            if len(combined) == original_size:
+                break
+        if len(combined) < original_size:
+            with gzip.open(selection / "hard-queue.jsonl.gz", "rt") as source:
+                for raw in source:
+                    row = json.loads(raw)
+                    key = row["pairKey"]
+                    if key in forbidden or key in seen:
+                        continue
+                    combined.append({"pairKey": key, "family": row["family"],
+                        "kind": "hard_case_fill", "priorityCellsPerWorkerSecond":
+                        row["priorityCellsPerWorkerSecond"]})
+                    seen.add(key)
+                    if len(combined) == original_size:
+                        break
+        assert len(combined) == original_size
+        proposal["selected"] = combined
+        proposal["skippedVerifiedEstimateKeys"] = sorted(
+            set(proposal["skippedVerifiedEstimateKeys"]) |
+            {row["pairKey"] for row in refined_skip_rows})
+
     # Every skipped winner remains an explicit, reviewable estimate with root
     # benchmark margins and a rule validation record. Historical snapshots are
     # kept if a later counterexample causes the rule to be disabled/requeued.
     archive = CAMPAIGN / "adaptive/estimates" / f"{args.phase:03d}"
     archive.mkdir(parents=True, exist_ok=True)
-    skipped_keys = set(proposal["skippedVerifiedEstimateKeys"])
+    skipped_keys = set(proposal["skippedVerifiedEstimateKeys"]) - {
+        row["pairKey"] for row in refined_skip_rows}
     with gzip.open(estimates / "estimated.jsonl.gz", "rt") as source, (
             archive / "verified-estimates.jsonl.gz").open("wb") as target, gzip.GzipFile(
             filename="", mode="wb", fileobj=target, compresslevel=6, mtime=0) as out:
@@ -86,8 +140,14 @@ def main():
                 out.write((json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n").encode())
                 kept += 1
     assert kept == len(skipped_keys)
+    with (archive / "verified-refinements.jsonl.gz").open("wb") as target, gzip.GzipFile(
+            filename="", mode="wb", fileobj=target, compresslevel=6, mtime=0) as out:
+        for row in sorted(refined_skip_rows, key=lambda item: item["pairKey"]):
+            out.write((json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n").encode())
     shutil.copyfile(estimates / "summary.json", archive / "estimate-summary.json")
     shutil.copyfile(selection / "summary.json", archive / "selection-summary.json")
+    (archive / "selected.json").write_text(json.dumps(proposal["selected"],
+        sort_keys=True, indent=2) + "\n")
     priority = json.loads(priority_report.read_text())
     compact_priority = {"status": priority_status,
         "sourceSha256": sha(priority_report),
@@ -102,15 +162,20 @@ def main():
         "sourceInferenceManifestSha256": sha(inference / "manifest.json"),
         "estimateSummarySha256": sha(archive / "estimate-summary.json"),
         "selectionSummarySha256": sha(archive / "selection-summary.json"),
+        "selectedSha256": sha(archive / "selected.json"),
         "verifiedEstimatesSha256": sha(archive / "verified-estimates.jsonl.gz"),
+        "verifiedRefinementsSha256": sha(archive / "verified-refinements.jsonl.gz"),
         "prioritySha256": sha(archive / "priority.json"),
         "priorityPlannerSha256": sha(ROOT / "node/civ-matchups/plan-active-tests.mjs"),
-        "selectedPairs": len(proposal["selected"]), "skippedVerifiedEstimates": kept}
+        "selectedPairs": len(proposal["selected"]), "skippedVerifiedEstimates": kept,
+        "skippedVerifiedRefinements": len(refined_skip_rows),
+        "refinementSnapshotSha256": sha(refinement_path) if refinement_path else None}
     (archive / "manifest.json").write_text(json.dumps(archive_manifest, sort_keys=True, indent=2) + "\n")
     print(json.dumps({"policyVersion": frozen["version"], "sourcePhase": args.phase,
         "selected": proposal["selected"], "skippedVerifiedEstimateKeys": proposal["skippedVerifiedEstimateKeys"],
         "deferredPathingHazardCount": len(proposal["deferredPathingHazardKeys"]),
         "archiveManifestSha256": sha(archive / "manifest.json"),
+        "refinementSnapshotSha256": sha(refinement_path) if refinement_path else None,
         "priorityStatus": priority_status,
         "verifiedFamilies": estimate_summary["prospectivePhase"]["verifiedFamilies"],
         "disabledFamilies": estimate_summary["prospectivePhase"]["disabledFamilies"]}))

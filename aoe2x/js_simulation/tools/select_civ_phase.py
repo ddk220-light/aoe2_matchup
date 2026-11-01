@@ -129,7 +129,7 @@ def main():
     # Keep only a small validation sample in the fight queue; spend the remaining
     # budget on hard gaps. The frozen V3 journals and outcomes stay unchanged.
     prediction_result = None
-    prediction_policy = ROOT / 'calibration/campaigns/civ-matchups-prediction-first-pass-v1-2026-11-01'
+    prediction_policy = ROOT / 'calibration/campaigns/civ-matchups-prediction-first-pass-v2-2026-11-01'
     if (prediction_policy / 'manifest.json').exists():
         from civ_prediction_first_pass import plan as plan_predictions
         prediction_result = plan_predictions(CAMPAIGN, prediction_policy, args.phase,

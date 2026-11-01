@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from civ_prediction_first_pass import (VERSION, canonical, choose, compare, plan,
+from civ_prediction_first_pass import (VERSION, canonical, choose, choose_extended, compare, plan,
     read_rows, select_probes, sha, write_json, write_rows)
 
 
@@ -28,6 +28,27 @@ class PredictionPolicyTests(unittest.TestCase):
         result = choose(self.model(), prior, cavalry_guard=False)
         self.assertEqual(result['predictedOutcome'], 'a_win')
         self.assertNotIn('two_benchmark_rule', result['supportingMethods'])
+
+    def test_weaker_agreement_is_explicit_and_not_percentage_capped(self):
+        result = choose_extended(self.model(a=.51, b=.4, other_a=.52, other_b=.4), None, {})
+        self.assertEqual(result['tier'], 'weak_model_agreement')
+        self.assertEqual(result['predictedOutcome'], 'a_win')
+
+    def test_shared_opponents_resolve_model_disagreement(self):
+        witness = {'common':[{},{}], 'medianGap':.2, 'agreement':1, 'neighbors':[]}
+        result = choose_extended(self.model(a=.65,b=.25,other_a=.25,other_b=.65), None, witness)
+        self.assertEqual(result['tier'], 'opponent_specific_forecast')
+        self.assertEqual(result['predictedOutcome'], 'a_win')
+
+    def test_conflicting_observed_witnesses_remain_unresolved(self):
+        witness = {'common':[{},{}], 'medianGap':.2, 'agreement':1,
+            'neighbors':[{'predictedOutcome':'b_win','anchorPairKey':k,'distance':.1} for k in ['p','q']]}
+        self.assertIsNone(choose_extended(self.model(a=.65,b=.25,other_a=.25,other_b=.65), None, witness))
+
+    def test_close_forecast_requires_both_models_to_favor_close(self):
+        result = choose_extended(self.model(a=.2,b=.2,other_a=.2,other_b=.2), None, {})
+        self.assertEqual(result['predictedOutcome'], 'close_uncertain')
+        self.assertEqual(result['tier'], 'predicted_close')
 
     def test_no_inferred_labels_or_retroactive_prospective_credit(self):
         context = {'counts': [27, 25]}
@@ -98,6 +119,19 @@ class PredictionPolicyTests(unittest.TestCase):
             self.assertEqual(cell['sourceOutcome'],'unresolved')
             self.assertEqual(result['summary']['predictedPairs'],1)
             self.assertEqual(source_hashes,{name:sha((inf/name).read_bytes()) for name in names})
+            # A related forecast failure is visible and prioritized, not
+            # silently converted into proof or a family-wide deletion.
+            predictions[0]['predictedOutcome']='b_win'
+            write_rows(policy/'predictions.jsonl.gz', predictions)
+            metadata=json.loads((policy/'manifest.json').read_bytes())
+            metadata.update(introducedAfterPhase=25,
+                predictionsSha256=sha((policy/'predictions.jsonl.gz').read_bytes()))
+            write_json(policy/'manifest.json',metadata)
+            plan(campaign,policy,26,output)
+            generated={r['pairKey']:r for r in read_rows(output/'profile-table.jsonl.gz')}
+            self.assertTrue(generated['prediction']['predictionContested'])
+            self.assertEqual(generated['prediction']['evidenceType'],'predicted_unvalidated')
+            self.assertEqual(generated['observed']['outcome'],'a_win')
 
 
 if __name__ == '__main__':

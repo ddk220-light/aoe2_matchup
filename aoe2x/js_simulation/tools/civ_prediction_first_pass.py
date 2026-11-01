@@ -14,7 +14,7 @@ from pathlib import Path
 
 from civ_reviewed_phase import load_reviewed_phase
 
-VERSION = 'prediction-first-pass-v1'
+VERSION = 'prediction-first-pass-v2'
 
 
 def sha(data):
@@ -68,6 +68,38 @@ def choose(model, old, cavalry_guard=True):
             'tier': 'stronger_support' if any(k != 'model_agreement' for k in methods) else 'broader_agreement'}
 
 
+def choose_extended(model, old, witness, cavalry_guard=True):
+    """Extend coverage without a percentage quota; retain every support tier."""
+    from civ_prediction_witnesses import witness_directions
+    base = choose(model, old, cavalry_guard)
+    corroboration = witness_directions(witness)
+    h, e = model['histGradientBoostingProbabilities'], model['extraTreesProbabilities']
+    if base is not None:
+        base['conflictingWitnessMethods'] = [name for name, item in corroboration.items()
+            if item['predictedOutcome'] != base['predictedOutcome']]
+        return base
+    if (direction(h) == direction(e) and max(h['aWin'], h['bWin']) > h['close']
+            and max(e['aWin'], e['bWin']) > e['close']):
+        predicted = direction(h)
+        return {'predictedOutcome': predicted, 'tier': 'weak_model_agreement',
+            'supportingMethods': {'weak_model_agreement': {'predictedOutcome': predicted,
+                'meanModelScore': (max(h['aWin'], h['bWin']) + max(e['aWin'], e['bWin'])) / 2,
+                'explanation': 'Both models favor this winner over the other winner and close class; weaker forecast, not a validated result.'}},
+            'conflictingWitnessMethods': [name for name, item in corroboration.items()
+                if item['predictedOutcome'] != predicted]}
+    directions = {m['predictedOutcome'] for m in corroboration.values()}
+    if len(directions) == 1:
+        return {'predictedOutcome': directions.pop(), 'tier': 'opponent_specific_forecast',
+            'supportingMethods': corroboration, 'conflictingWitnessMethods': []}
+    if (not directions and h['close'] > max(h['aWin'], h['bWin'])
+            and e['close'] > max(e['aWin'], e['bWin'])):
+        return {'predictedOutcome': 'close_uncertain', 'tier': 'predicted_close',
+            'supportingMethods': {'close_agreement': {'predictedOutcome': 'close_uncertain',
+                'explanation': 'Both models favor seed disagreement/close outcomes; unvalidated close forecast.'}},
+            'conflictingWitnessMethods': []}
+    return None
+
+
 def phase_of(row):
     phases = [int(s.rsplit('/', 1)[1].split('.')[0]) for s in row.get('sourceRunIds', [])
               if '/adaptive/runs/' in s]
@@ -100,8 +132,16 @@ def freeze(args):
     mechanics = {v['profileHash']: definition['profiles'][v['key']]['mechanics'] for v in variants}
     old = {r['pairKey']: r for r in read_rows(args.audit / 'fifty-percent-v2-candidate-guesses.jsonl.gz')}
     source = args.audit / 'granular-model-predictions.jsonl.gz'
+    models = read_rows(source)
+    from civ_prediction_witnesses import build_witnesses
+    ledger_path = root / 'evidence-ledger.jsonl.gz'
+    expected_ledger = next(r['sha256'] for r in load(root/'manifest.json')['outputs']
+                           if r['file'] == ledger_path.name)
+    assert sha(ledger_path.read_bytes()) == expected_ledger, 'witness ledger source hash mismatch'
+    witnesses, anchors = build_witnesses(models, list(matrix.values()), variants, definition,
+                                         load(args.audit/'static-damage.json'), ledger_path)
     predictions, revisions = [], []
-    for model in read_rows(source):
+    for model in models:
         key = model['pairKey']
         row = matrix[key]
         a, b = row['profiles']
@@ -116,13 +156,14 @@ def freeze(args):
             guard = bool(melee) and all(sign * (c['aHpMargin'] - c['bHpMargin']) >= .1 for c in melee)
             if not guard:
                 revisions.append({'pairKey': key, 'reason': 'ranged benchmarks conflict with or lack confirming shared melee benchmarks', 'sharedC': shared})
-        chosen = choose(model, prior, guard)
+        chosen = choose_extended(model, prior, witnesses[key], guard)
         if chosen is None:
             continue
         pred = {'pairKey': key, 'profiles': row['profiles'], 'family': model['family'],
                 **chosen, 'status': 'predicted_unvalidated', 'verified': False,
                 'contextHash': sha(canonical(row['context'])), 'context': row['context'],
                 'rankingCommonC': shared, 'sourcePredictionHash': sha(canonical(model)),
+                'opponentWitnesses': witnesses[key],
                 'modelScores': {'hgb': model['histGradientBoostingProbabilities'],
                                 'extraTrees': model['extraTreesProbabilities']}}
         stratum = context_key(row, pred, mechanics, lines)
@@ -134,10 +175,18 @@ def freeze(args):
     write_rows(args.output / 'predictions.jsonl.gz', sorted(predictions, key=lambda r: r['pairKey']))
     write_json(args.output / 'revisions.json', revisions)
     (args.output / 'generator-source.py').write_bytes(Path(__file__).read_bytes())
+    witness_source = Path(__file__).with_name('civ_prediction_witnesses.py')
+    (args.output / 'witness-source.py').write_bytes(witness_source.read_bytes())
+    write_rows(args.output / 'observed-witness-anchors.jsonl.gz', anchors)
     manifest = {'policyVersion': VERSION, 'introducedAfterPhase': args.first_untouched_phase - 1,
         'reviewedThroughPhase': args.phase, 'sourceReview': provenance,
         'predictionsSha256': sha((args.output / 'predictions.jsonl.gz').read_bytes()),
         'generatorSha256': sha(Path(__file__).read_bytes()),
+        'witnessGeneratorSha256': sha(witness_source.read_bytes()),
+        'observedWitnessAnchorsSha256': sha((args.output/'observed-witness-anchors.jsonl.gz').read_bytes()),
+        'witnessLedgerSha256': expected_ledger,
+        'staticDamageSha256': sha((args.audit/'static-damage.json').read_bytes()),
+        'coveragePolicy': 'No percentage ceiling; preserve stronger calls, add explicitly weak model agreement, resolve disagreements with observed common opponents or close same-opponent neighbors, abstain on conflicting witness directions.',
         'modelPredictionsSha256': sha(source.read_bytes()),
         'parentPoolSha256': sha((args.audit / 'fifty-percent-v2-candidate-guesses.jsonl.gz').read_bytes()),
         'status': 'User-approved provisional first pass; deferred predictions are not validated or simulated results',
@@ -163,6 +212,8 @@ def compare(predictions, observed, introduced):
                 'correct': pred['predictedOutcome'] == row['outcome'],
                 'sourceRunIds': row['sourceRunIds'], 'context': row['context'],
                 'supportingMethods': pred['supportingMethods'], 'rankingCommonC': pred['rankingCommonC']}
+        test['tier'] = pred.get('tier')
+        test['opponentWitnesses'] = pred.get('opponentWitnesses', {})
         tests.append(test)
         if not test['correct']:
             failures.append(test)
@@ -207,14 +258,18 @@ def plan(campaign, policy, phase, output, forbidden=()):
     manifest = load(policy / 'manifest.json')
     frozen = (policy / 'predictions.jsonl.gz').read_bytes()
     assert sha(frozen) == manifest['predictionsSha256'], 'prediction source hash mismatch'
+    if manifest.get('observedWitnessAnchorsSha256'):
+        assert sha((policy/'observed-witness-anchors.jsonl.gz').read_bytes()) == manifest[
+            'observedWitnessAnchorsSha256'], 'observed witness source hash mismatch'
     assert manifest['policyVersion'] == VERSION
     matrix = read_rows(root / 'profile-matchups.jsonl.gz')
     by_key = {r['pairKey']: r for r in matrix}
     predictions = {r['pairKey']: r for r in map(json.loads, gzip.decompress(frozen).splitlines())}
     assert len(predictions) == manifest['predictionCount']
     tests, failures = compare(predictions, by_key, manifest['introducedAfterPhase'])
-    # A newly falsified *precise* stratum returns to direct fights. Other
-    # strata remain active; failures are retained for the next rule revision.
+    # First-pass guesses remain explicitly unvalidated even after a related
+    # counterexample. Mark the precise stratum contested and prioritize its
+    # checks rather than silently deleting the whole family of forecasts.
     contested = {t['ruleHash'] for t in failures if t['independent']}
     blocked = set(load(campaign / 'adaptive/state.json')['blockedPairs'])
     forbidden = set(forbidden) | blocked
@@ -231,15 +286,18 @@ def plan(campaign, policy, phase, output, forbidden=()):
     for row in matrix:
         pred = predictions.get(row['pairKey'])
         matches = bool(pred and pred['contextHash'] == sha(canonical(row['context'])))
-        guessed = (row['outcome'] == 'unresolved' and matches and row['pairKey'] not in blocked
-                   and pred['ruleHash'] not in contested)
+        guessed = row['outcome'] == 'unresolved' and matches and row['pairKey'] not in blocked
         result = dict(row, sourceOutcome=row['outcome'], sourceEvidenceType=row['evidenceType'])
         if guessed:
             result.update(outcome=pred['predictedOutcome'], evidenceType='predicted_unvalidated',
                 needsSim=False, needsValidation=True, verified=False,
                 predictionPolicy=VERSION, predictionRuleHash=pred['ruleHash'],
                 predictionTier=pred['tier'], predictionSourceSha256=manifest['predictionsSha256'],
-                explanation='Provisional winner from frozen ranking/common-opponent/model features; requires later validation.',
+                predictionConflicts=pred.get('conflictingWitnessMethods', []),
+                predictionContested=pred['ruleHash'] in contested,
+                explanation=('Low-support directional lean; either side may win. This is not a measured result.'
+                    if pred['tier']=='weak_model_agreement' else
+                    'Unvalidated forecast from frozen ranking/common-opponent/model features; requires later validation.'),
                 sourceReasonCodes=row.get('reasonCodes', []), reasonCodes=['unvalidated_prediction'])
             if row['pairKey'] not in forbidden:
                 eligible.append(dict(pred, aliases=row['aliases'],
@@ -263,6 +321,16 @@ def plan(campaign, policy, phase, output, forbidden=()):
         'remainingNeedsDirectResult': source_unresolved - predicted,
         'blockedPairs': len(blocked), 'selectedValidationSamples': len(selected),
         'observedPairs': counts['observed'], 'inferredPairs': counts['inferred'],
+        'predictedByTier': dict(collections.Counter(r['predictionTier'] for r in overlay
+            if r['evidenceType']=='predicted_unvalidated')),
+        'predictedWinnerPairs': sum(r['evidenceType']=='predicted_unvalidated'
+            and r['outcome'] in ('a_win','b_win') for r in overlay),
+        'predictedClosePairs': sum(r['evidenceType']=='predicted_unvalidated'
+            and r['outcome']=='close_uncertain' for r in overlay),
+        'contestedPredictions': sum(r.get('predictionContested', False) for r in overlay),
+        'screenByTier': {tier: {'checked':sum(t.get('tier')==tier and not t['independent'] for t in tests),
+            'wrongOrClose':sum(t.get('tier')==tier and not t['independent'] and not t['correct'] for t in tests)}
+            for tier in sorted({t.get('tier') for t in tests if t.get('tier')})},
         'screenedPredictions': sum(not t['independent'] for t in tests),
         'screenWrongOrClose': sum(not t['independent'] and not t['correct'] for t in tests),
         'prospectivePredictions': sum(t['independent'] for t in tests),
@@ -285,13 +353,16 @@ def plan(campaign, policy, phase, output, forbidden=()):
         if pair['evidenceType'] == 'predicted_unvalidated':
             source_outcome = cell['outcome']
             owner_a = profile_for_variant[cell['civA'] + '|' + cell['unitA']]
-            winner = pair['profiles'][0 if pair['outcome']=='a_win' else 1]
-            cell.update(outcome='a_win' if owner_a==winner else 'b_win',
+            winner = (pair['profiles'][0 if pair['outcome']=='a_win' else 1]
+                      if pair['outcome'] in ('a_win','b_win') else None)
+            cell.update(outcome=('a_win' if owner_a==winner else 'b_win') if winner else 'close_uncertain',
                 sourceOutcome=source_outcome, sourceEvidenceType=cell['evidenceType'],
                 evidenceType='predicted_unvalidated', needsSim=False,
                 needsValidation=True, verified=False, explanation=pair['explanation'],
                 prediction={'canonicalOutcome': pair['outcome'], 'canonicalProfiles': pair['profiles'],
                     'status': 'predicted_unvalidated', 'verified': False,
+                    'tier': pair['predictionTier'], 'conflicts': pair.get('predictionConflicts', []),
+                    'contested': pair.get('predictionContested', False),
                     'ruleHash': pair['predictionRuleHash']})
         else:
             cell['prediction'] = None

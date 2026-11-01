@@ -1,0 +1,1656 @@
+{
+  "startedAt": "2026-11-01T23:44:47.198Z",
+  "finishedAt": "2026-11-01T23:45:56.256Z",
+  "wallSeconds": 69.032301018,
+  "sourceCampaignHash": "a864a8c45955478fc6010d149ad87b8b697342ce99c39ccb99bdfe43c1d471a5",
+  "rankingInputCampaignHash": "1ac49a6abf1f3a1a104c7bcf675a3a327b6939d49273ae49c51eb6157264693d",
+  "matchupId": "cm_6827d25d70a06f758cc82ff9",
+  "seed": 2,
+  "teamKeys": [
+    "Muisca|elite_guecha_warrior_muisca",
+    "Khitans|champion"
+  ],
+  "counts": [
+    22,
+    27
+  ],
+  "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+  "maxTicks": 36000,
+  "runtimeSha256": {
+    "src/combat/ranged-crowding.js": "57221d37abe1cc7c7bd446c2a55a5fc0c53737a637414d8f504a4fbf515fcc72",
+    "src/canonical-json.js": "42bad3857c5db81b31ba1c05b219f62563367731c54b8b2f8c4186d548e19cdb",
+    "src/fight.js": "16de86e793d0af68bde5b2cb49b17b396bbd80e7725203719a45d488c8fb28ab",
+    "node/slow-fight-diagnostic-worker.mjs": "41b4894b5d3a3cc602fca68279ed2e1f9163441e9be0ff0b058e274c0033f2b4"
+  },
+  "result": {
+    "jobId": "cm_6827d25d70a06f758cc82ff9",
+    "seed": 2,
+    "outcome": "timeout",
+    "winnerOwner": null,
+    "winnerHp": 0,
+    "startingHpByOwner": {
+      "2": 1320,
+      "3": 1890
+    },
+    "remainingByOwner": {
+      "2": {
+        "units": 1,
+        "hp": 31.722222222222896
+      },
+      "3": {
+        "units": 15,
+        "hp": 702
+      }
+    },
+    "ticks": 36000,
+    "family": "kite",
+    "side2": {
+      "slug": "elite_guecha_warrior_muisca",
+      "label": "Elite Guecha Warrior",
+      "civ": "Muisca",
+      "count": 22,
+      "class": "mobile_ranged"
+    },
+    "side3": {
+      "slug": "champion",
+      "label": "Champion",
+      "civ": "Khitans",
+      "count": 27,
+      "class": "melee"
+    },
+    "finalStateHash": "273245417552fd8ae33b4eda4d822bcb7342afd48e9b27a50c583b67df475aa2",
+    "eventLogHash": "371d314e91e5d59011aac41fe6fec2b4f0f080d575b2ee33fbd12a6873b53314"
+  },
+  "error": null,
+  "watchdog": false,
+  "lastProgress": {
+    "tick": 36000,
+    "simulationSeconds": 600
+  },
+  "diagnostic": {
+    "timeline": [
+      {
+        "tick": 0,
+        "seconds": 0,
+        "byOwner": {
+          "2": {
+            "units": 22,
+            "hp": 1320
+          },
+          "3": {
+            "units": 27,
+            "hp": 1890
+          }
+        },
+        "positions": [
+          {
+            "id": 9000,
+            "owner": 2,
+            "x": 14.5,
+            "y": 3.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9001,
+            "owner": 2,
+            "x": 10.5,
+            "y": 1.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9002,
+            "owner": 2,
+            "x": 10.5,
+            "y": 2.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9003,
+            "owner": 2,
+            "x": 10.5,
+            "y": 3.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9004,
+            "owner": 2,
+            "x": 11.5,
+            "y": 4.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9005,
+            "owner": 2,
+            "x": 12.5,
+            "y": 5.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9006,
+            "owner": 2,
+            "x": 13.5,
+            "y": 6.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9007,
+            "owner": 2,
+            "x": 14.5,
+            "y": 5.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9008,
+            "owner": 2,
+            "x": 13.5,
+            "y": 5.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9009,
+            "owner": 2,
+            "x": 14.5,
+            "y": 4.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9010,
+            "owner": 2,
+            "x": 12.5,
+            "y": 4.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9011,
+            "owner": 2,
+            "x": 13.5,
+            "y": 4.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9012,
+            "owner": 2,
+            "x": 11.5,
+            "y": 3.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9013,
+            "owner": 2,
+            "x": 11.5,
+            "y": 2.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9014,
+            "owner": 2,
+            "x": 11.5,
+            "y": 1.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9015,
+            "owner": 2,
+            "x": 12.5,
+            "y": 1.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9016,
+            "owner": 2,
+            "x": 12.5,
+            "y": 2.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9017,
+            "owner": 2,
+            "x": 12.5,
+            "y": 3.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9018,
+            "owner": 2,
+            "x": 13.5,
+            "y": 3.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9019,
+            "owner": 2,
+            "x": 13.5,
+            "y": 2.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9020,
+            "owner": 2,
+            "x": 13.5,
+            "y": 1.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9021,
+            "owner": 2,
+            "x": 14.5,
+            "y": 2.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9500,
+            "owner": 3,
+            "x": 1.5,
+            "y": 13.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9501,
+            "owner": 3,
+            "x": 2.5,
+            "y": 14.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9502,
+            "owner": 3,
+            "x": 3.5,
+            "y": 14.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9503,
+            "owner": 3,
+            "x": 2.5,
+            "y": 13.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9504,
+            "owner": 3,
+            "x": 1.5,
+            "y": 12.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9505,
+            "owner": 3,
+            "x": 1.5,
+            "y": 11.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9506,
+            "owner": 3,
+            "x": 2.5,
+            "y": 12.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9507,
+            "owner": 3,
+            "x": 3.5,
+            "y": 13.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9508,
+            "owner": 3,
+            "x": 4.5,
+            "y": 14.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9509,
+            "owner": 3,
+            "x": 5.5,
+            "y": 14.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9510,
+            "owner": 3,
+            "x": 4.5,
+            "y": 13.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9511,
+            "owner": 3,
+            "x": 3.5,
+            "y": 12.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9512,
+            "owner": 3,
+            "x": 2.5,
+            "y": 11.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9513,
+            "owner": 3,
+            "x": 1.5,
+            "y": 10.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9514,
+            "owner": 3,
+            "x": 2.5,
+            "y": 10.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9515,
+            "owner": 3,
+            "x": 3.5,
+            "y": 11.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9516,
+            "owner": 3,
+            "x": 4.5,
+            "y": 12.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9517,
+            "owner": 3,
+            "x": 5.5,
+            "y": 13.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9518,
+            "owner": 3,
+            "x": 6.5,
+            "y": 13.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9519,
+            "owner": 3,
+            "x": 5.5,
+            "y": 12.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9520,
+            "owner": 3,
+            "x": 4.5,
+            "y": 11.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9521,
+            "owner": 3,
+            "x": 3.5,
+            "y": 10.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9522,
+            "owner": 3,
+            "x": 2.5,
+            "y": 9.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9523,
+            "owner": 3,
+            "x": 3.5,
+            "y": 9.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9524,
+            "owner": 3,
+            "x": 4.5,
+            "y": 10.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9525,
+            "owner": 3,
+            "x": 5.5,
+            "y": 11.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9526,
+            "owner": 3,
+            "x": 6.5,
+            "y": 12.5,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          }
+        ],
+        "eventCounts": {
+          "scenario-trigger-fired": 1,
+          "patrol-issued": 2
+        }
+      },
+      {
+        "tick": 6000,
+        "seconds": 100,
+        "byOwner": {
+          "2": {
+            "units": 1,
+            "hp": 31.722222222222896
+          },
+          "3": {
+            "units": 15,
+            "hp": 702
+          }
+        },
+        "positions": [
+          {
+            "id": 9011,
+            "owner": 2,
+            "x": 2,
+            "y": 13,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9500,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9503,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9504,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9505,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9506,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9507,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9509,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9510,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9511,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9512,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9513,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9515,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9516,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9517,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9521,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          }
+        ],
+        "eventCounts": {
+          "scenario-trigger-fired": 1,
+          "patrol-issued": 2,
+          "move": 57144,
+          "pursuit-acquired": 1292,
+          "engagement-started": 591,
+          "attack-start": 359,
+          "damage": 329,
+          "death": 33,
+          "engagement-ended": 562,
+          "pursuit-invalidated": 146,
+          "contact-reservation-acquired": 157,
+          "blocked": 29571,
+          "contact-reservation-persisted": 13420,
+          "contact-release-published": 14,
+          "contact-release-persisted": 3457,
+          "pursuit-route-planned": 456,
+          "pursuit-retarget-requested": 362,
+          "contact-reservation-released": 157,
+          "pursuit-route-invalidated": 249,
+          "attack-canceled": 13,
+          "pursuit-route-advanced": 261
+        }
+      },
+      {
+        "tick": 12000,
+        "seconds": 200,
+        "byOwner": {
+          "2": {
+            "units": 1,
+            "hp": 31.722222222222896
+          },
+          "3": {
+            "units": 15,
+            "hp": 702
+          }
+        },
+        "positions": [
+          {
+            "id": 9011,
+            "owner": 2,
+            "x": 2,
+            "y": 13,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9500,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9503,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9504,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9505,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9506,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9507,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9509,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9510,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9511,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9512,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9513,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9515,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9516,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9517,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9521,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          }
+        ],
+        "eventCounts": {
+          "scenario-trigger-fired": 1,
+          "patrol-issued": 2,
+          "move": 57144,
+          "pursuit-acquired": 1292,
+          "engagement-started": 591,
+          "attack-start": 359,
+          "damage": 329,
+          "death": 33,
+          "engagement-ended": 562,
+          "pursuit-invalidated": 146,
+          "contact-reservation-acquired": 157,
+          "blocked": 29571,
+          "contact-reservation-persisted": 13420,
+          "contact-release-published": 14,
+          "contact-release-persisted": 3457,
+          "pursuit-route-planned": 456,
+          "pursuit-retarget-requested": 362,
+          "contact-reservation-released": 157,
+          "pursuit-route-invalidated": 249,
+          "attack-canceled": 13,
+          "pursuit-route-advanced": 261
+        }
+      },
+      {
+        "tick": 18000,
+        "seconds": 300,
+        "byOwner": {
+          "2": {
+            "units": 1,
+            "hp": 31.722222222222896
+          },
+          "3": {
+            "units": 15,
+            "hp": 702
+          }
+        },
+        "positions": [
+          {
+            "id": 9011,
+            "owner": 2,
+            "x": 2,
+            "y": 13,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9500,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9503,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9504,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9505,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9506,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9507,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9509,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9510,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9511,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9512,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9513,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9515,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9516,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9517,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9521,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          }
+        ],
+        "eventCounts": {
+          "scenario-trigger-fired": 1,
+          "patrol-issued": 2,
+          "move": 57144,
+          "pursuit-acquired": 1292,
+          "engagement-started": 591,
+          "attack-start": 359,
+          "damage": 329,
+          "death": 33,
+          "engagement-ended": 562,
+          "pursuit-invalidated": 146,
+          "contact-reservation-acquired": 157,
+          "blocked": 29571,
+          "contact-reservation-persisted": 13420,
+          "contact-release-published": 14,
+          "contact-release-persisted": 3457,
+          "pursuit-route-planned": 456,
+          "pursuit-retarget-requested": 362,
+          "contact-reservation-released": 157,
+          "pursuit-route-invalidated": 249,
+          "attack-canceled": 13,
+          "pursuit-route-advanced": 261
+        }
+      },
+      {
+        "tick": 24000,
+        "seconds": 400,
+        "byOwner": {
+          "2": {
+            "units": 1,
+            "hp": 31.722222222222896
+          },
+          "3": {
+            "units": 15,
+            "hp": 702
+          }
+        },
+        "positions": [
+          {
+            "id": 9011,
+            "owner": 2,
+            "x": 2,
+            "y": 13,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9500,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9503,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9504,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9505,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9506,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9507,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9509,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9510,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9511,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9512,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9513,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9515,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9516,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9517,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9521,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          }
+        ],
+        "eventCounts": {
+          "scenario-trigger-fired": 1,
+          "patrol-issued": 2,
+          "move": 57144,
+          "pursuit-acquired": 1292,
+          "engagement-started": 591,
+          "attack-start": 359,
+          "damage": 329,
+          "death": 33,
+          "engagement-ended": 562,
+          "pursuit-invalidated": 146,
+          "contact-reservation-acquired": 157,
+          "blocked": 29571,
+          "contact-reservation-persisted": 13420,
+          "contact-release-published": 14,
+          "contact-release-persisted": 3457,
+          "pursuit-route-planned": 456,
+          "pursuit-retarget-requested": 362,
+          "contact-reservation-released": 157,
+          "pursuit-route-invalidated": 249,
+          "attack-canceled": 13,
+          "pursuit-route-advanced": 261
+        }
+      },
+      {
+        "tick": 30000,
+        "seconds": 500,
+        "byOwner": {
+          "2": {
+            "units": 1,
+            "hp": 31.722222222222896
+          },
+          "3": {
+            "units": 15,
+            "hp": 702
+          }
+        },
+        "positions": [
+          {
+            "id": 9011,
+            "owner": 2,
+            "x": 2,
+            "y": 13,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9500,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9503,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9504,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9505,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9506,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9507,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9509,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9510,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9511,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9512,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9513,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9515,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9516,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9517,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9521,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          }
+        ],
+        "eventCounts": {
+          "scenario-trigger-fired": 1,
+          "patrol-issued": 2,
+          "move": 57144,
+          "pursuit-acquired": 1292,
+          "engagement-started": 591,
+          "attack-start": 359,
+          "damage": 329,
+          "death": 33,
+          "engagement-ended": 562,
+          "pursuit-invalidated": 146,
+          "contact-reservation-acquired": 157,
+          "blocked": 29571,
+          "contact-reservation-persisted": 13420,
+          "contact-release-published": 14,
+          "contact-release-persisted": 3457,
+          "pursuit-route-planned": 456,
+          "pursuit-retarget-requested": 362,
+          "contact-reservation-released": 157,
+          "pursuit-route-invalidated": 249,
+          "attack-canceled": 13,
+          "pursuit-route-advanced": 261
+        }
+      },
+      {
+        "tick": 36000,
+        "seconds": 600,
+        "byOwner": {
+          "2": {
+            "units": 1,
+            "hp": 31.722222222222896
+          },
+          "3": {
+            "units": 15,
+            "hp": 702
+          }
+        },
+        "positions": [
+          {
+            "id": 9011,
+            "owner": 2,
+            "x": 2,
+            "y": 13,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9500,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9503,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9504,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9505,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9506,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9507,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9509,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9510,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9511,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9512,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9513,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9515,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9516,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9517,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          },
+          {
+            "id": 9521,
+            "owner": 3,
+            "x": 13,
+            "y": 2,
+            "action": "idle",
+            "pursuitTargetId": null,
+            "engagedTargetId": null
+          }
+        ],
+        "eventCounts": {
+          "scenario-trigger-fired": 1,
+          "patrol-issued": 2,
+          "move": 57144,
+          "pursuit-acquired": 1292,
+          "engagement-started": 591,
+          "attack-start": 359,
+          "damage": 329,
+          "death": 33,
+          "engagement-ended": 562,
+          "pursuit-invalidated": 146,
+          "contact-reservation-acquired": 157,
+          "blocked": 29571,
+          "contact-reservation-persisted": 13420,
+          "contact-release-published": 14,
+          "contact-release-persisted": 3457,
+          "pursuit-route-planned": 456,
+          "pursuit-retarget-requested": 362,
+          "contact-reservation-released": 157,
+          "pursuit-route-invalidated": 249,
+          "attack-canceled": 13,
+          "pursuit-route-advanced": 261
+        }
+      }
+    ],
+    "eventCounts": {
+      "scenario-trigger-fired": 1,
+      "patrol-issued": 2,
+      "move": 57144,
+      "pursuit-acquired": 1292,
+      "engagement-started": 591,
+      "attack-start": 359,
+      "damage": 329,
+      "death": 33,
+      "engagement-ended": 562,
+      "pursuit-invalidated": 146,
+      "contact-reservation-acquired": 157,
+      "blocked": 29571,
+      "contact-reservation-persisted": 13420,
+      "contact-release-published": 14,
+      "contact-release-persisted": 3457,
+      "pursuit-route-planned": 456,
+      "pursuit-retarget-requested": 362,
+      "contact-reservation-released": 157,
+      "pursuit-route-invalidated": 249,
+      "attack-canceled": 13,
+      "pursuit-route-advanced": 261
+    }
+  }
+}

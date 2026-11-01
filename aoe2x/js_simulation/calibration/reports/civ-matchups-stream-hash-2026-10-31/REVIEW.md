@@ -68,3 +68,14 @@ three-seed or ten-seed set; one isolated diagnostic cannot fill a missing seed.
 The forest-pocket result is a separate fidelity question. If it warrants a
 pathing or scenario fix, that is a new physics version requiring its own
 validation and consistent evidence, not a silent repair to either live runner.
+
+The compatibility certificate at
+`calibration/campaigns/civ-matchups-v2-stream-compatibility-2026-11-01/manifest.json`
+has now verified the repaired V2 manifest and all 62 frozen runtime files in
+both worktrees. Sixty files are byte-identical; only `canonical-json.js` and
+`fight.js` differ. The certificate records both versions' SHA-256 hashes, the
+shared-runtime hash, frozen inputs, engine settings, and the seed-completion
+policy. Its verification command reruns these checks without starting a fight.
+The streaming-hash and read-only worker tests pass (3/3). This certificate
+establishes source compatibility for evidence accounting, while the existing
+exact replay checks establish observed output parity.

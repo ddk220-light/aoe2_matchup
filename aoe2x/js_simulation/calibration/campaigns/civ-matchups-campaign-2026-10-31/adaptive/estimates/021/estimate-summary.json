@@ -1,0 +1,144 @@
+{
+  "byFamily": {
+    "archer|archer": {
+      "count_extrapolation": 4,
+      "effect_and_count_extrapolation": 12,
+      "effect_extrapolation": 174,
+      "supported_context_estimate": 198
+    },
+    "archer|light_cav": {
+      "count_extrapolation": 4,
+      "effect_and_count_extrapolation": 3,
+      "effect_extrapolation": 195,
+      "supported_context_estimate": 211
+    },
+    "cav_archer|knight": {
+      "count_extrapolation": 5,
+      "effect_and_count_extrapolation": 20,
+      "effect_extrapolation": 622,
+      "supported_context_estimate": 619
+    },
+    "cav_archer|light_cav": {
+      "count_extrapolation": 22,
+      "effect_and_count_extrapolation": 9,
+      "effect_extrapolation": 317,
+      "supported_context_estimate": 321
+    },
+    "elephant|knight": {
+      "effect_and_count_extrapolation": 30,
+      "effect_extrapolation": 222
+    },
+    "knight|light_cav": {
+      "count_extrapolation": 32,
+      "effect_and_count_extrapolation": 99,
+      "effect_extrapolation": 498,
+      "supported_context_estimate": 836
+    },
+    "knight|militia": {
+      "count_extrapolation": 1,
+      "effect_and_count_extrapolation": 6,
+      "effect_extrapolation": 560,
+      "supported_context_estimate": 246
+    },
+    "knight|skirmisher": {
+      "count_extrapolation": 12,
+      "effect_and_count_extrapolation": 31,
+      "effect_extrapolation": 361,
+      "supported_context_estimate": 482
+    },
+    "light_cav|militia": {
+      "count_extrapolation": 6,
+      "effect_and_count_extrapolation": 4,
+      "effect_extrapolation": 586,
+      "supported_context_estimate": 262
+    },
+    "light_cav|scorpion": {
+      "effect_and_count_extrapolation": 11,
+      "effect_extrapolation": 311
+    },
+    "militia|scorpion": {
+      "effect_and_count_extrapolation": 10,
+      "effect_extrapolation": 183
+    },
+    "militia|skirmisher": {
+      "count_extrapolation": 19,
+      "effect_and_count_extrapolation": 11,
+      "effect_extrapolation": 321,
+      "supported_context_estimate": 151
+    },
+    "scorpion|scorpion": {
+      "effect_and_count_extrapolation": 5,
+      "effect_extrapolation": 34
+    },
+    "scorpion|skirmisher": {
+      "effect_and_count_extrapolation": 26,
+      "effect_extrapolation": 198
+    }
+  },
+  "estimateTiers": {
+    "count_extrapolation": 105,
+    "effect_and_count_extrapolation": 277,
+    "effect_extrapolation": 4582,
+    "supported_context_estimate": 3326
+  },
+  "estimatedDisplayedCells": 13330,
+  "estimatedProfilePairs": 8290,
+  "kind": "provisional common-opponent estimates; not current-engine observations or decisive inferred conclusions",
+  "noEstimateReasons": {
+    "common_c_disagreement_or_small_margin": 2764,
+    "common_c_rule_failed_minimum_validation": 19401,
+    "missing_independent_common_c": 3830,
+    "no_calibrated_common_c_rule": 21313,
+    "source_conflict_or_missing_seeds": 55
+  },
+  "prospectivePhase": {
+    "baselineObservedShapes": "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-adaptive-rule-v1-2026-11-01/baseline-count-shapes.json",
+    "byFamily": {
+      "knight|militia": {
+        "correct": 2,
+        "predicted": 2
+      },
+      "knight|skirmisher": {
+        "correct": 1,
+        "predicted": 1
+      }
+    },
+    "completedPairKeys": 512,
+    "disabledFamilies": [],
+    "distinctProfilesByFamily": {
+      "knight|militia": 3,
+      "knight|skirmisher": 2
+    },
+    "journals": [
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/020.jsonl",
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/021.jsonl"
+    ],
+    "minimumDistinctProfilesForVerification": 12,
+    "minimumIndependentPairsForVerification": 60,
+    "verifiedFamilies": []
+  },
+  "rules": "unit-line rule must have >=20 pair-level CV predictions, zero wrong winners and zero close-as-decisive errors",
+  "simulationJobsRun": 0,
+  "skippableProfilePairs": 0,
+  "sourceHashes": {
+    "commonCSelection": "175ca98a58dd8826888ee22464f20c58f8be7638f95174745e5aa666655a3f8f",
+    "definition": "f66273e29420d79909efe434e100987f2bee6d8c9e301f467cb97de5c3461920",
+    "inferenceSummary": "e40d44e94b1760ac6eb70a015995a3004d80ba673119446fb7103671ab635bf7",
+    "profileMatchups": "8ab47d39cb2aa005bf83d71c4af57ae781e5ad37ccdb6a300b71502bacb6e8ae",
+    "prospectiveJournals": {
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/020.jsonl": "a3847b6fe31758601fa9881846379b99935b58b633bdc8d5e33c8856eff18db0",
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/021.jsonl": "8026e0eb89cb015d8b12a364dc410d87a026d0e1813144f5308a4410a7817c88"
+    },
+    "rankingExtraRuns": "775f41f0e6e3bcbe52041186cc774ff96c060543e8d9a58ecacfa8bf595d0515",
+    "rankingRuns": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8",
+    "validationBaseline": "648b12d1ae6e6788808539ec2ea7037a4fb76f8d2066ea97f64a51aa909119a4",
+    "validationBaselineSupportedPairs": "8548d7c1c03d4b20f5ab9c58ec0a4ac7ac188e79939f88663847fe2bd48e20b4",
+    "variantProfiles": "91fe53a3c8b7a6ef65d1dcc0a3c4041c65cfd81193f30fad8564093cbd3e40c6"
+  },
+  "sourcePhase": 21,
+  "sourceUnresolvedProfilePairs": 55653,
+  "stillUnestimatedDisplayedCells": 76397,
+  "stillUnestimatedProfilePairs": 47363,
+  "supportedCandidateProspectivePool": 3320,
+  "totalProfilePairs": 68916
+}

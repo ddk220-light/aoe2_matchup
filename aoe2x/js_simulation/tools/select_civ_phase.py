@@ -125,6 +125,46 @@ def main():
             set(proposal["skippedVerifiedEstimateKeys"]) |
             {row["pairKey"] for row in refined_skip_rows})
 
+    # User-approved first-pass predictions are separate from verified inference.
+    # Keep only a small validation sample in the fight queue; spend the remaining
+    # budget on hard gaps. The frozen V3 journals and outcomes stay unchanged.
+    prediction_result = None
+    prediction_policy = ROOT / 'calibration/campaigns/civ-matchups-prediction-first-pass-v1-2026-11-01'
+    if (prediction_policy / 'manifest.json').exists():
+        from civ_prediction_first_pass import plan as plan_predictions
+        prediction_result = plan_predictions(CAMPAIGN, prediction_policy, args.phase,
+            CAMPAIGN / 'adaptive/predictions' / f'{args.phase:03d}',
+            forbidden=proposal['deferredPathingHazardKeys'])
+        proposal['pendingV2CompatibilityEstimateKeys'] = proposal['skippedVerifiedEstimateKeys']
+        # The earlier V3-only estimates did not check the V2 replay gate. They
+        # may be deferred as *predictions*, but cannot be labelled verified skips.
+        proposal['skippedVerifiedEstimateKeys'] = []
+        refined_skip_rows = []
+        deferred_predictions = set(prediction_result['deferredPredictionKeys'])
+        blocked = set(json.loads((CAMPAIGN/'adaptive/state.json').read_text())['blockedPairs'])
+        excluded = deferred_predictions | blocked | set(proposal['deferredPathingHazardKeys'])
+        size = len(proposal['selected'])
+        combined, seen = [], set()
+        for row in prediction_result['selected'] + proposal['selected']:
+            if row['pairKey'] in excluded or row['pairKey'] in seen:
+                continue
+            combined.append(row); seen.add(row['pairKey'])
+            if len(combined) >= size:
+                break
+        if len(combined) < size:
+            with gzip.open(selection / 'hard-queue.jsonl.gz', 'rt') as source:
+                for raw in source:
+                    row = json.loads(raw)
+                    if row['pairKey'] in excluded or row['pairKey'] in seen:
+                        continue
+                    combined.append({'pairKey':row['pairKey'], 'family':row['family'],
+                        'kind':'prediction_first_pass_hard_gap'})
+                    seen.add(row['pairKey'])
+                    if len(combined) >= size:
+                        break
+        proposal['selected'] = combined
+        proposal['deferredPredictionKeys'] = sorted(deferred_predictions)
+
     # Every skipped winner remains an explicit, reviewable estimate with root
     # benchmark margins and a rule validation record. Historical snapshots are
     # kept if a later counterexample causes the rule to be disabled/requeued.
@@ -171,10 +211,16 @@ def main():
         "priorityPlannerSha256": sha(ROOT / "node/civ-matchups/plan-active-tests.mjs"),
         "selectedPairs": len(proposal["selected"]), "skippedVerifiedEstimates": kept,
         "skippedVerifiedRefinements": len(refined_skip_rows),
-        "refinementSnapshotSha256": sha(refinement_path) if refinement_path else None}
+        "refinementSnapshotSha256": sha(refinement_path) if refinement_path else None,
+        "predictionSnapshotSha256": prediction_result['manifestSha256'] if prediction_result else None,
+        "predictionPolicyVersion": prediction_result['summary']['policyVersion'] if prediction_result else None,
+        "pendingV2CompatibilityEstimates": len(proposal.get('pendingV2CompatibilityEstimateKeys', [])),
+        "deferredUnvalidatedPredictions": len(proposal.get('deferredPredictionKeys', []))}
     (archive / "manifest.json").write_text(json.dumps(archive_manifest, sort_keys=True, indent=2) + "\n")
     print(json.dumps({"policyVersion": frozen["version"], "sourcePhase": args.phase,
         "selected": proposal["selected"], "skippedVerifiedEstimateKeys": proposal["skippedVerifiedEstimateKeys"],
+        "deferredPredictionKeys": proposal.get('deferredPredictionKeys', []),
+        "predictionPolicyVersion": prediction_result['summary']['policyVersion'] if prediction_result else None,
         "deferredPathingHazardCount": len(proposal["deferredPathingHazardKeys"]),
         "archiveManifestSha256": sha(archive / "manifest.json"),
         "refinementSnapshotSha256": sha(refinement_path) if refinement_path else None,

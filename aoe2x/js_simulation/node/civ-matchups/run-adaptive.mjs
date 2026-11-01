@@ -127,7 +127,7 @@ function selectPhase(state,jobs,saved){
   const degree=new Map();
   for(const p of unresolved)for(const h of p.profiles)degree.set(h,(degree.get(h)??0)+1);
   let policy=null,proposed=[];
-  let skipped=new Set();
+  let skipped=new Set(),deferredPredictions=new Set();
   if(state.completedPhases.length>=20){
     const result=JSON.parse(command('python3',['aoe2x/js_simulation/tools/select_civ_phase.py',
       '--phase',String(state.completedPhases.length)],{maxBuffer:16*1024*1024}));
@@ -135,16 +135,23 @@ function selectPhase(state,jobs,saved){
     assert.equal(result.policyVersion,'common-c-adaptive-v1');
     const unresolvedKeys=new Set(unresolved.map(p=>p.pairKey));
     skipped=new Set(result.skippedVerifiedEstimateKeys);
+    deferredPredictions=new Set(result.deferredPredictionKeys??[]);
     assert.equal(skipped.size,result.skippedVerifiedEstimateKeys.length);
+    assert.equal(deferredPredictions.size,(result.deferredPredictionKeys??[]).length);
     assert([...skipped].every(k=>unresolvedKeys.has(k)));
-    assert(result.selected.every(r=>unresolvedKeys.has(r.pairKey)&&!skipped.has(r.pairKey)));
+    assert([...deferredPredictions].every(k=>unresolvedKeys.has(k)));
+    assert(result.selected.every(r=>unresolvedKeys.has(r.pairKey)&&!skipped.has(r.pairKey)
+      &&!deferredPredictions.has(r.pairKey)));
     proposed=result.selected;
     policy={version:result.policyVersion,sourcePhase:result.sourcePhase,
       archiveManifestSha256:result.archiveManifestSha256,
       skippedVerifiedEstimates:skipped.size,
+      deferredUnvalidatedPredictions:deferredPredictions.size,
+      predictionPolicyVersion:result.predictionPolicyVersion??null,
       verifiedFamilies:result.verifiedFamilies,disabledFamilies:result.disabledFamilies};
   }
   const candidates=unresolved.filter(p=>!blocked.has(p.pairKey)&&!skipped.has(p.pairKey)
+    &&!deferredPredictions.has(p.pairKey)
     &&required(jobs.get(p.pairKey),saved).length).sort((a,b)=>{
     const value=p=>(p.candidateOutcome?100000:0)+(degree.get(p.profiles[0])??0)
       +(degree.get(p.profiles[1])??0)+p.aliases*10;

@@ -1,0 +1,64 @@
+{
+  "checkedAt": "2026-11-01T23:58:18.580880+00:00",
+  "scope": "in-progress preview, not final delivery",
+  "summary": {
+    "bulkEngineReplayRequiredForThisProvisionalExport": false,
+    "civPairs": 1540,
+    "displayedCells": 151223,
+    "evidenceCounts": {
+      "identity": 45,
+      "inferred": 11470,
+      "none": 1332,
+      "observed": 8513,
+      "predicted_unvalidated": 47556
+    },
+    "fullyValidated": false,
+    "predictionTiers": {
+      "broader_agreement": 11443,
+      "opponent_specific_forecast": 879,
+      "predicted_close": 1,
+      "repaired_engine_projection": 2,
+      "stronger_support": 25702,
+      "weak_model_agreement": 9529
+    },
+    "predictionValidation": {
+      "contestedPredictions": 1756,
+      "prospectivePredictions": 272,
+      "prospectiveWrongOrClose": 30,
+      "screenWrongOrClose": 133,
+      "screenedPredictions": 880
+    },
+    "profilePairs": 68916,
+    "remainingPredictionValidation": 47556,
+    "repairedEngineProjections": 2,
+    "repairedProjectionPhysicsCounts": {
+      "collision-repair-v2-patrol-candidate-v1": 2
+    },
+    "scope": "Frozen V3 measurements/inferences and unvalidated predictions. Supporting repaired-engine measurements remain in separate physics-specific ledgers; their projections are not V3 measurements. Patrol-candidate projections also retain an explicit independent game-fidelity validation gap.",
+    "sourcePhase": 33,
+    "status": "first_pass_in_progress",
+    "unresolvedPairs": 1332,
+    "variants": 555
+  },
+  "builderSha256": "6de5e27c0e89d63fc90830ea65e3590aec1dcdd40a8da2eb3385d17baca001a6",
+  "predictionArchiveManifestSha256": "99a37f33d767b0bf844ea6e673f51cf939816859a8bb1b1fce8413f9ce748597",
+  "sourcePhaseReviewSha256": "3638c995d2e2cb1442b45015f93a4233a1fca598503ca5c23bd9c0b91092c926",
+  "patrolRecovery": {
+    "campaignHash": "2a259f17dc155cb0a9c39967cb8e44087ab810b2f8f8c4dbea1449fa55511bf6",
+    "fidelityStatus": "candidate_late_patrol_behavior_not_independently_game_validated",
+    "manifestSha256": "93953ece63fe379281cb90c77d4274e86e5d64eaf8e7ef762c2ceb06ec179470",
+    "physicsVersion": "collision-repair-v2-patrol-candidate-v1"
+  },
+  "checksPassed": [
+    "source hashes",
+    "complete candidate seed sets",
+    "exact replay references",
+    "separate physics ledgers",
+    "555 variants",
+    "1540 civilization pairs",
+    "151223 unique cells",
+    "68916 profile pairs",
+    "display orientation",
+    "unvalidated projection flags"
+  ]
+}

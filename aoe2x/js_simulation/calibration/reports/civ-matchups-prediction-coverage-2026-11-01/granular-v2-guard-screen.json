@@ -1,0 +1,199 @@
+{
+  "kind": "post-hoc guard screen; not prospective validation",
+  "sourceHashes": {
+    "rankingDefinition": "f66273e29420d79909efe434e100987f2bee6d8c9e301f467cb97de5c3461920",
+    "rankingPredictiveFeatures": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8",
+    "validationPredictions": "b572cba68f7cc2d53089fd515af2159887ef875cf4c12438821020f4e7cb3fff",
+    "variantProfiles": "91fe53a3c8b7a6ef65d1dcc0a3c4041c65cfd81193f30fad8564093cbd3e40c6"
+  },
+  "splits": {
+    "calibration": {
+      "excludedErrors": [
+        {
+          "actual": -1,
+          "closeProbability": 0.009267765178997113,
+          "confidence": 0.9741584492583085,
+          "family": "gunpowder|scorpion",
+          "pairKey": "b268516967bc84a4d915dc41d17f2cabbfc2715133af8c9e6746cec572d595a6|ef4bb570253a3ff7d860cececdb3cc40a01f3ea1d079c9620acd0286de3cd720",
+          "phase": 22,
+          "predicted": 1,
+          "units": [
+            "Bengalis|heavy_scorpion",
+            "Incas|imp_slinger"
+          ]
+        },
+        {
+          "actual": 0,
+          "closeProbability": 0.005301401923173984,
+          "confidence": 0.9714618393705364,
+          "family": "gunpowder|scorpion",
+          "pairKey": "57d876f7e01d17d7eca21909859d91a9b68c49c524602b12c7100ea24f4dc25e|b268516967bc84a4d915dc41d17f2cabbfc2715133af8c9e6746cec572d595a6",
+          "phase": 22,
+          "predicted": -1,
+          "units": [
+            "Tupi|imp_slinger",
+            "Bengalis|heavy_scorpion"
+          ]
+        },
+        {
+          "actual": 0,
+          "closeProbability": 0.00865187603777286,
+          "confidence": 0.9576397891942003,
+          "family": "archer|scorpion",
+          "pairKey": "815d09c55ad016f8c2ccbe32b440fccde4ee8c85630c2bef5eccf8150ae7be71|b268516967bc84a4d915dc41d17f2cabbfc2715133af8c9e6746cec572d595a6",
+          "phase": 22,
+          "predicted": -1,
+          "units": [
+            "Vietnamese|arbalester",
+            "Bengalis|heavy_scorpion"
+          ]
+        },
+        {
+          "actual": 0,
+          "closeProbability": 0.007891391766802425,
+          "confidence": 0.9596580160282421,
+          "family": "archer|skirmisher",
+          "pairKey": "161f7afc151a0ae3def6dfe427359374b641c7903ee7880326c0df0496d0853e|fe0c29b64aadaabc1d9441c45896f5f3fd985ef51e5ede375e751588ff0be667",
+          "phase": 22,
+          "predicted": -1,
+          "units": [
+            "Berbers|imp_elite_skirm",
+            "Vietnamese|elite_rattan_archer_vietnamese"
+          ]
+        },
+        {
+          "actual": 0,
+          "closeProbability": 0.005705525907148172,
+          "confidence": 0.9603032163256691,
+          "family": "militia|militia",
+          "pairKey": "0341568e4a401b0a14996cddb352902811b2f4a149dc08cbae9157d4489a140b|a4ec5df9786e49533bf03c099f3054682a148b6a4f3b8d2d765054295952e740",
+          "phase": 21,
+          "predicted": -1,
+          "units": [
+            "Burmese|champion",
+            "Romans|champion"
+          ]
+        },
+        {
+          "actual": -1,
+          "closeProbability": 0.014901194986563903,
+          "confidence": 0.9508634120072719,
+          "family": "archer|scorpion",
+          "pairKey": "b21848bddbe33923bfe88d70a5e62d9b2ac199cd5f8ca5e5d1d8079b83014214|df2b56e68f789abb4ad55e28945b36c23602c852a154b46834a90fe135a502ab",
+          "phase": 21,
+          "predicted": 1,
+          "units": [
+            "Chinese|heavy_scorpion",
+            "Shu|arbalester"
+          ]
+        },
+        {
+          "actual": 0,
+          "closeProbability": 0.007761392141630697,
+          "confidence": 0.9756936211546525,
+          "family": "militia|militia",
+          "pairKey": "567983fbfc833cba9752c50dbb3b4f31c7a97f76efe1483cf75004efa22a2ec8|bb55167bade53b7d55a3ee9f8d9896776ba384da900f43017142d1f8f75fb447",
+          "phase": 21,
+          "predicted": -1,
+          "units": [
+            "Danes|champion",
+            "Sicilians|elite_serjeant_sicilians"
+          ]
+        },
+        {
+          "actual": 0,
+          "closeProbability": 0.011556213160927009,
+          "confidence": 0.9695563637255399,
+          "family": "archer|light_cav",
+          "pairKey": "8e8052b9d4fa3456157f595a5cf71724ded32206882d3e2b8d09b24215fc32b5|ae798f60d4cf930555150d0f6c0777e9fa87808d8117881601133ad950802b4a",
+          "phase": 22,
+          "predicted": -1,
+          "units": [
+            "Saxons|hussar",
+            "Vikings|arbalester"
+          ]
+        }
+      ],
+      "originalSelectedAt95": 195,
+      "originalWrongOrClose": 8,
+      "remainingErrors": [],
+      "selectedAfterGuards": 116,
+      "selectedByFamily": {
+        "archer|archer": 1,
+        "archer|camel": 2,
+        "archer|elephant": 1,
+        "archer|knight": 5,
+        "archer|light_cav": 4,
+        "archer|militia": 3,
+        "archer|spear": 7,
+        "cav_archer|cav_archer": 1,
+        "cav_archer|gunpowder": 1,
+        "cav_archer|knight": 3,
+        "cav_archer|light_cav": 5,
+        "cav_archer|militia": 2,
+        "elephant|knight": 2,
+        "elephant|militia": 6,
+        "gunpowder|militia": 1,
+        "gunpowder|spear": 8,
+        "knight|knight": 3,
+        "knight|light_cav": 5,
+        "knight|militia": 23,
+        "knight|skirmisher": 5,
+        "light_cav|militia": 7,
+        "militia|shock_infantry": 3,
+        "militia|skirmisher": 3,
+        "militia|spear": 14,
+        "shock_infantry|skirmisher": 1
+      },
+      "wrongOrCloseAfterGuards": 0
+    },
+    "test": {
+      "excludedErrors": [
+        {
+          "actual": 0,
+          "closeProbability": 0.01363022866954472,
+          "confidence": 0.9590000018943551,
+          "family": "archer|gunpowder",
+          "pairKey": "242bac234ddf0838249ab7ed13af04d1f3f063811605d5f0c9b0d01970c373da|7bebce0d4c42a54a4ab930cc2c770667915a5c17c121894fa01f9b50011b4c01",
+          "phase": 24,
+          "predicted": 1,
+          "units": [
+            "Franks|hand_cannoneer",
+            "Celts|arbalester"
+          ]
+        }
+      ],
+      "originalSelectedAt95": 244,
+      "originalWrongOrClose": 1,
+      "remainingErrors": [],
+      "selectedAfterGuards": 205,
+      "selectedByFamily": {
+        "archer|archer": 3,
+        "archer|cav_archer": 1,
+        "archer|knight": 1,
+        "archer|light_cav": 1,
+        "archer|skirmisher": 4,
+        "archer|spear": 3,
+        "camel|skirmisher": 2,
+        "cav_archer|light_cav": 9,
+        "cav_archer|skirmisher": 11,
+        "elephant|gunpowder": 7,
+        "elephant|skirmisher": 7,
+        "gunpowder|knight": 15,
+        "gunpowder|light_cav": 4,
+        "gunpowder|militia": 2,
+        "gunpowder|skirmisher": 4,
+        "gunpowder|spear": 17,
+        "knight|light_cav": 9,
+        "knight|militia": 5,
+        "knight|skirmisher": 43,
+        "light_cav|skirmisher": 4,
+        "militia|skirmisher": 39,
+        "shock_infantry|skirmisher": 7,
+        "skirmisher|spear": 3,
+        "skirmisher|steppe_lancer": 4
+      },
+      "wrongOrCloseAfterGuards": 0
+    }
+  }
+}

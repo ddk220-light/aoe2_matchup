@@ -1,0 +1,599 @@
+{
+  "benchmarks": [
+    "Chinese|arbalester",
+    "Saracens|hand_cannoneer",
+    "Saracens|heavy_cav_archer",
+    "Spanish|champion",
+    "Spanish|halberdier",
+    "Spanish|hussar",
+    "Spanish|imp_elite_skirm",
+    "Spanish|paladin",
+    "Turks|heavy_camel",
+    "Turks|paladin"
+  ],
+  "commonOpponentWitnessBaseline": {
+    "calibration": {
+      "closeCalledDecisive": 16,
+      "coverage": 0.41291585127201563,
+      "selected": 211,
+      "wrongOrClose": 42
+    },
+    "test": {
+      "closeCalledDecisive": 7,
+      "coverage": 0.2974559686888454,
+      "selected": 152,
+      "wrongOrClose": 28
+    }
+  },
+  "kind": "offline exploratory selective winner prediction; no fights or accepted skips",
+  "models": {
+    "extra_trees": {
+      "calibration": [
+        {
+          "closeCalledDecisive": 40,
+          "coverage": 0.9510763209393346,
+          "precision": 0.7530864197530864,
+          "selected": 486,
+          "threshold": 0.5,
+          "wrongOrClose": 120
+        },
+        {
+          "closeCalledDecisive": 33,
+          "coverage": 0.8825831702544031,
+          "precision": 0.7804878048780488,
+          "selected": 451,
+          "threshold": 0.55,
+          "wrongOrClose": 99
+        },
+        {
+          "closeCalledDecisive": 30,
+          "coverage": 0.8238747553816047,
+          "precision": 0.7980997624703088,
+          "selected": 421,
+          "threshold": 0.6,
+          "wrongOrClose": 85
+        },
+        {
+          "closeCalledDecisive": 30,
+          "coverage": 0.7553816046966731,
+          "precision": 0.8186528497409327,
+          "selected": 386,
+          "threshold": 0.65,
+          "wrongOrClose": 70
+        },
+        {
+          "closeCalledDecisive": 24,
+          "coverage": 0.675146771037182,
+          "precision": 0.8463768115942029,
+          "selected": 345,
+          "threshold": 0.7,
+          "wrongOrClose": 53
+        },
+        {
+          "closeCalledDecisive": 21,
+          "coverage": 0.5831702544031311,
+          "precision": 0.8825503355704698,
+          "selected": 298,
+          "threshold": 0.75,
+          "wrongOrClose": 35
+        },
+        {
+          "closeCalledDecisive": 17,
+          "coverage": 0.4774951076320939,
+          "precision": 0.9139344262295082,
+          "selected": 244,
+          "threshold": 0.8,
+          "wrongOrClose": 21
+        },
+        {
+          "closeCalledDecisive": 13,
+          "coverage": 0.38747553816046965,
+          "precision": 0.9191919191919192,
+          "selected": 198,
+          "threshold": 0.85,
+          "wrongOrClose": 16
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.2876712328767123,
+          "precision": 0.9387755102040817,
+          "selected": 147,
+          "threshold": 0.9,
+          "wrongOrClose": 9
+        },
+        {
+          "closeCalledDecisive": 3,
+          "coverage": 0.16634050880626222,
+          "precision": 0.9647058823529412,
+          "selected": 85,
+          "threshold": 0.95,
+          "wrongOrClose": 3
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ],
+      "test": [
+        {
+          "closeCalledDecisive": 18,
+          "coverage": 0.9530332681017613,
+          "precision": 0.811088295687885,
+          "selected": 487,
+          "threshold": 0.5,
+          "wrongOrClose": 92
+        },
+        {
+          "closeCalledDecisive": 15,
+          "coverage": 0.8845401174168297,
+          "precision": 0.8429203539823009,
+          "selected": 452,
+          "threshold": 0.55,
+          "wrongOrClose": 71
+        },
+        {
+          "closeCalledDecisive": 14,
+          "coverage": 0.7945205479452054,
+          "precision": 0.8571428571428571,
+          "selected": 406,
+          "threshold": 0.6,
+          "wrongOrClose": 58
+        },
+        {
+          "closeCalledDecisive": 12,
+          "coverage": 0.7181996086105675,
+          "precision": 0.8828337874659401,
+          "selected": 367,
+          "threshold": 0.65,
+          "wrongOrClose": 43
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.639921722113503,
+          "precision": 0.9113149847094801,
+          "selected": 327,
+          "threshold": 0.7,
+          "wrongOrClose": 29
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.5753424657534246,
+          "precision": 0.9387755102040817,
+          "selected": 294,
+          "threshold": 0.75,
+          "wrongOrClose": 18
+        },
+        {
+          "closeCalledDecisive": 3,
+          "coverage": 0.512720156555773,
+          "precision": 0.9656488549618321,
+          "selected": 262,
+          "threshold": 0.8,
+          "wrongOrClose": 9
+        },
+        {
+          "closeCalledDecisive": 1,
+          "coverage": 0.410958904109589,
+          "precision": 0.9761904761904762,
+          "selected": 210,
+          "threshold": 0.85,
+          "wrongOrClose": 5
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.3013698630136986,
+          "precision": 0.987012987012987,
+          "selected": 154,
+          "threshold": 0.9,
+          "wrongOrClose": 2
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.17416829745596868,
+          "precision": 0.9887640449438202,
+          "selected": 89,
+          "threshold": 0.95,
+          "wrongOrClose": 1
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ]
+    },
+    "hist_gradient_boosting": {
+      "calibration": [
+        {
+          "closeCalledDecisive": 39,
+          "coverage": 0.974559686888454,
+          "precision": 0.7670682730923695,
+          "selected": 498,
+          "threshold": 0.5,
+          "wrongOrClose": 116
+        },
+        {
+          "closeCalledDecisive": 37,
+          "coverage": 0.9217221135029354,
+          "precision": 0.7855626326963907,
+          "selected": 471,
+          "threshold": 0.55,
+          "wrongOrClose": 101
+        },
+        {
+          "closeCalledDecisive": 34,
+          "coverage": 0.8767123287671232,
+          "precision": 0.7991071428571429,
+          "selected": 448,
+          "threshold": 0.6,
+          "wrongOrClose": 90
+        },
+        {
+          "closeCalledDecisive": 34,
+          "coverage": 0.8336594911937377,
+          "precision": 0.812206572769953,
+          "selected": 426,
+          "threshold": 0.65,
+          "wrongOrClose": 80
+        },
+        {
+          "closeCalledDecisive": 29,
+          "coverage": 0.776908023483366,
+          "precision": 0.836272040302267,
+          "selected": 397,
+          "threshold": 0.7,
+          "wrongOrClose": 65
+        },
+        {
+          "closeCalledDecisive": 26,
+          "coverage": 0.7240704500978473,
+          "precision": 0.8540540540540541,
+          "selected": 370,
+          "threshold": 0.75,
+          "wrongOrClose": 54
+        },
+        {
+          "closeCalledDecisive": 23,
+          "coverage": 0.6594911937377691,
+          "precision": 0.8724035608308606,
+          "selected": 337,
+          "threshold": 0.8,
+          "wrongOrClose": 43
+        },
+        {
+          "closeCalledDecisive": 20,
+          "coverage": 0.5772994129158513,
+          "precision": 0.8779661016949153,
+          "selected": 295,
+          "threshold": 0.85,
+          "wrongOrClose": 36
+        },
+        {
+          "closeCalledDecisive": 13,
+          "coverage": 0.4520547945205479,
+          "precision": 0.9090909090909091,
+          "selected": 231,
+          "threshold": 0.9,
+          "wrongOrClose": 21
+        },
+        {
+          "closeCalledDecisive": 3,
+          "coverage": 0.2876712328767123,
+          "precision": 0.9659863945578231,
+          "selected": 147,
+          "threshold": 0.95,
+          "wrongOrClose": 5
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ],
+      "test": [
+        {
+          "closeCalledDecisive": 19,
+          "coverage": 0.9843444227005871,
+          "precision": 0.8429423459244533,
+          "selected": 503,
+          "threshold": 0.5,
+          "wrongOrClose": 79
+        },
+        {
+          "closeCalledDecisive": 17,
+          "coverage": 0.9510763209393346,
+          "precision": 0.8580246913580247,
+          "selected": 486,
+          "threshold": 0.55,
+          "wrongOrClose": 69
+        },
+        {
+          "closeCalledDecisive": 16,
+          "coverage": 0.9158512720156555,
+          "precision": 0.8696581196581197,
+          "selected": 468,
+          "threshold": 0.6,
+          "wrongOrClose": 61
+        },
+        {
+          "closeCalledDecisive": 16,
+          "coverage": 0.8688845401174168,
+          "precision": 0.8851351351351351,
+          "selected": 444,
+          "threshold": 0.65,
+          "wrongOrClose": 51
+        },
+        {
+          "closeCalledDecisive": 10,
+          "coverage": 0.8023483365949119,
+          "precision": 0.9048780487804878,
+          "selected": 410,
+          "threshold": 0.7,
+          "wrongOrClose": 39
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.7338551859099804,
+          "precision": 0.9226666666666666,
+          "selected": 375,
+          "threshold": 0.75,
+          "wrongOrClose": 29
+        },
+        {
+          "closeCalledDecisive": 6,
+          "coverage": 0.675146771037182,
+          "precision": 0.9420289855072463,
+          "selected": 345,
+          "threshold": 0.8,
+          "wrongOrClose": 20
+        },
+        {
+          "closeCalledDecisive": 4,
+          "coverage": 0.598825831702544,
+          "precision": 0.9673202614379085,
+          "selected": 306,
+          "threshold": 0.85,
+          "wrongOrClose": 10
+        },
+        {
+          "closeCalledDecisive": 2,
+          "coverage": 0.5009784735812133,
+          "precision": 0.98046875,
+          "selected": 256,
+          "threshold": 0.9,
+          "wrongOrClose": 5
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.38747553816046965,
+          "precision": 0.9949494949494949,
+          "selected": 198,
+          "threshold": 0.95,
+          "wrongOrClose": 1
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ]
+    },
+    "logistic": {
+      "calibration": [
+        {
+          "closeCalledDecisive": 37,
+          "coverage": 0.9667318982387475,
+          "precision": 0.7105263157894737,
+          "selected": 494,
+          "threshold": 0.5,
+          "wrongOrClose": 143
+        },
+        {
+          "closeCalledDecisive": 36,
+          "coverage": 0.913894324853229,
+          "precision": 0.7259100642398287,
+          "selected": 467,
+          "threshold": 0.55,
+          "wrongOrClose": 128
+        },
+        {
+          "closeCalledDecisive": 32,
+          "coverage": 0.8512720156555773,
+          "precision": 0.7310344827586207,
+          "selected": 435,
+          "threshold": 0.6,
+          "wrongOrClose": 117
+        },
+        {
+          "closeCalledDecisive": 28,
+          "coverage": 0.761252446183953,
+          "precision": 0.7506426735218509,
+          "selected": 389,
+          "threshold": 0.65,
+          "wrongOrClose": 97
+        },
+        {
+          "closeCalledDecisive": 17,
+          "coverage": 0.6536203522504892,
+          "precision": 0.7754491017964071,
+          "selected": 334,
+          "threshold": 0.7,
+          "wrongOrClose": 75
+        },
+        {
+          "closeCalledDecisive": 15,
+          "coverage": 0.5714285714285714,
+          "precision": 0.7808219178082192,
+          "selected": 292,
+          "threshold": 0.75,
+          "wrongOrClose": 64
+        },
+        {
+          "closeCalledDecisive": 13,
+          "coverage": 0.48140900195694714,
+          "precision": 0.8089430894308943,
+          "selected": 246,
+          "threshold": 0.8,
+          "wrongOrClose": 47
+        },
+        {
+          "closeCalledDecisive": 6,
+          "coverage": 0.3542074363992172,
+          "precision": 0.8176795580110497,
+          "selected": 181,
+          "threshold": 0.85,
+          "wrongOrClose": 33
+        },
+        {
+          "closeCalledDecisive": 4,
+          "coverage": 0.2583170254403131,
+          "precision": 0.8409090909090909,
+          "selected": 132,
+          "threshold": 0.9,
+          "wrongOrClose": 21
+        },
+        {
+          "closeCalledDecisive": 3,
+          "coverage": 0.15655577299412915,
+          "precision": 0.8625,
+          "selected": 80,
+          "threshold": 0.95,
+          "wrongOrClose": 11
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ],
+      "test": [
+        {
+          "closeCalledDecisive": 18,
+          "coverage": 0.9667318982387475,
+          "precision": 0.7186234817813765,
+          "selected": 494,
+          "threshold": 0.5,
+          "wrongOrClose": 139
+        },
+        {
+          "closeCalledDecisive": 16,
+          "coverage": 0.9119373776908023,
+          "precision": 0.7253218884120172,
+          "selected": 466,
+          "threshold": 0.55,
+          "wrongOrClose": 128
+        },
+        {
+          "closeCalledDecisive": 15,
+          "coverage": 0.8532289628180039,
+          "precision": 0.7454128440366973,
+          "selected": 436,
+          "threshold": 0.6,
+          "wrongOrClose": 111
+        },
+        {
+          "closeCalledDecisive": 14,
+          "coverage": 0.7945205479452054,
+          "precision": 0.7733990147783252,
+          "selected": 406,
+          "threshold": 0.65,
+          "wrongOrClose": 92
+        },
+        {
+          "closeCalledDecisive": 13,
+          "coverage": 0.7318982387475538,
+          "precision": 0.786096256684492,
+          "selected": 374,
+          "threshold": 0.7,
+          "wrongOrClose": 80
+        },
+        {
+          "closeCalledDecisive": 8,
+          "coverage": 0.6262230919765166,
+          "precision": 0.81875,
+          "selected": 320,
+          "threshold": 0.75,
+          "wrongOrClose": 58
+        },
+        {
+          "closeCalledDecisive": 5,
+          "coverage": 0.5518590998043053,
+          "precision": 0.8297872340425532,
+          "selected": 282,
+          "threshold": 0.8,
+          "wrongOrClose": 48
+        },
+        {
+          "closeCalledDecisive": 3,
+          "coverage": 0.46966731898238745,
+          "precision": 0.8708333333333333,
+          "selected": 240,
+          "threshold": 0.85,
+          "wrongOrClose": 31
+        },
+        {
+          "closeCalledDecisive": 1,
+          "coverage": 0.3679060665362035,
+          "precision": 0.9148936170212766,
+          "selected": 188,
+          "threshold": 0.9,
+          "wrongOrClose": 16
+        },
+        {
+          "closeCalledDecisive": 1,
+          "coverage": 0.2583170254403131,
+          "precision": 0.9545454545454546,
+          "selected": 132,
+          "threshold": 0.95,
+          "wrongOrClose": 6
+        },
+        {
+          "closeCalledDecisive": 0,
+          "coverage": 0.0,
+          "precision": null,
+          "selected": 0,
+          "threshold": 1.0,
+          "wrongOrClose": 0
+        }
+      ]
+    }
+  },
+  "profiles": 374,
+  "rankingFeatureSource": "original ranking runs; predictive features only, never compatible measurements",
+  "sourceHashes": {
+    "inference": "edf9b2e58e9616102512e99d709d3dc90d1c15e4b84db559384ff67eec84f666",
+    "ranking": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8",
+    "variants": "91fe53a3c8b7a6ef65d1dcc0a3c4041c65cfd81193f30fad8564093cbd3e40c6"
+  },
+  "split": {
+    "calibration": 511,
+    "calibrationPhases": [
+      21,
+      22
+    ],
+    "test": 511,
+    "testPhases": [
+      23,
+      24
+    ],
+    "train": 5190,
+    "trainThroughPhase": 20,
+    "unresolved": 53301
+  }
+}

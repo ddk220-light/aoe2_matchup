@@ -1,0 +1,219 @@
+{
+  "kind": "exploratory, interpreted benchmark rules, no accepted skips",
+  "ruleVersion": "708350ded66a87d361487501e9706ab57d31b0577785b69803708cd9037240c9",
+  "rules": [
+    {
+      "benchmarks": [
+        "Saracens|heavy_cav_archer",
+        "Spanish|champion"
+      ],
+      "calibration": {
+        "selected": 6,
+        "wrongOrClose": 0
+      },
+      "family": "archer|knight",
+      "minimumHpMarginGap": 0.1,
+      "ruleHash": "e3ed51bbda038d07f9803c8c655a4edb477366c125b3be15d3d4bff58b66dbcf",
+      "subtypeFilter": null,
+      "test": {
+        "selected": 1,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 82,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 981
+    },
+    {
+      "benchmarks": [
+        "Chinese|arbalester",
+        "Saracens|heavy_cav_archer"
+      ],
+      "calibration": {
+        "selected": 5,
+        "wrongOrClose": 0
+      },
+      "family": "cav_archer|light_cav",
+      "minimumHpMarginGap": 0.2,
+      "ruleHash": "03af5fc9b76f36f48976931d2f1d365a3c6a88136a23315091933502adcba2de",
+      "subtypeFilter": null,
+      "test": {
+        "selected": 11,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 63,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 479
+    },
+    {
+      "benchmarks": [
+        "Spanish|halberdier",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 8,
+        "wrongOrClose": 0
+      },
+      "family": "knight|light_cav",
+      "minimumHpMarginGap": 0.1,
+      "ruleHash": "d204951a89487544cf990811ce5b65c34f172ab7c25f1cfaadc24f4c41e3c5fc",
+      "subtypeFilter": null,
+      "test": {
+        "selected": 16,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 98,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 1126
+    },
+    {
+      "benchmarks": [
+        "Spanish|paladin",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 7,
+        "wrongOrClose": 0
+      },
+      "family": "knight|militia",
+      "minimumHpMarginGap": 0.1,
+      "ruleHash": "9dd168e77fe66783dbb7b3b4beee8829c6cba0c1f7b688550bf3bdc689bbf357",
+      "subtypeFilter": null,
+      "test": {
+        "selected": 5,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 154,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 852
+    },
+    {
+      "benchmarks": [
+        "Chinese|arbalester",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 11,
+        "wrongOrClose": 0
+      },
+      "family": "knight|scorpion",
+      "minimumHpMarginGap": 0.2,
+      "ruleHash": "1455ae70d8d5f33881b7ecdc30b61036d98e30742a8a06cb7c12be3db317ac8a",
+      "subtypeFilter": null,
+      "test": {
+        "selected": 0,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 99,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 269
+    },
+    {
+      "benchmarks": [
+        "Spanish|champion",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 7,
+        "wrongOrClose": 0
+      },
+      "family": "knight|skirmisher",
+      "minimumHpMarginGap": 0.1,
+      "ruleHash": "6df544e8b7ee8a00b24c2be876a97e571bb5f5cd21a5cdb0968aeb0020424eba",
+      "subtypeFilter": null,
+      "test": {
+        "selected": 42,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 72,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 619
+    },
+    {
+      "benchmarks": [
+        "Spanish|champion",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 8,
+        "wrongOrClose": 0
+      },
+      "family": "militia|skirmisher",
+      "minimumHpMarginGap": 0.1,
+      "ruleHash": "a097ee6549bb504eb1507182984d126b6304901819a2965422c78919256926b4",
+      "subtypeFilter": "skirmisher.unit_class=0",
+      "test": {
+        "selected": 30,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 29,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 408
+    },
+    {
+      "benchmarks": [
+        "Spanish|champion",
+        "Spanish|hussar"
+      ],
+      "calibration": {
+        "selected": 13,
+        "wrongOrClose": 0
+      },
+      "family": "scorpion|skirmisher",
+      "minimumHpMarginGap": 0.4,
+      "ruleHash": "06d5efdd6a12ed454a49a5af70dcaf795e6046136483209c73b92770cc4551a2",
+      "subtypeFilter": null,
+      "test": {
+        "selected": 13,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 21,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 203
+    }
+  ],
+  "selection": "per-family benchmark set chosen using train and calibration; test held out",
+  "sourceHashes": {
+    "originalRankingPredictiveFeatures": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8",
+    "profileMatchups": "edf9b2e58e9616102512e99d709d3dc90d1c15e4b84db559384ff67eec84f666",
+    "rankingDefinition": "f66273e29420d79909efe434e100987f2bee6d8c9e301f467cb97de5c3461920",
+    "variantProfiles": "91fe53a3c8b7a6ef65d1dcc0a3c4041c65cfd81193f30fad8564093cbd3e40c6"
+  },
+  "total": {
+    "calibration": {
+      "rows": 511,
+      "selected": 65,
+      "wrongOrClose": 0
+    },
+    "test": {
+      "rows": 511,
+      "selected": 118,
+      "wrongOrClose": 0
+    },
+    "train": {
+      "rows": 5190,
+      "selected": 618,
+      "wrongOrClose": 0
+    },
+    "unresolved": {
+      "rows": 53301,
+      "selected": 4937,
+      "wrongOrClose": null
+    }
+  }
+}

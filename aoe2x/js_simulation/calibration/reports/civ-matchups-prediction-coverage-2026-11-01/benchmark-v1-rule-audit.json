@@ -1,0 +1,203 @@
+{
+  "kind": "exploratory, interpreted benchmark rules, no accepted skips",
+  "ruleVersion": "2a9d2dc499a0c681c5b508ab7ac9dd5d792d3adb30275827a84c9f3229bf5a3f",
+  "rules": [
+    {
+      "benchmarks": [
+        "Saracens|heavy_cav_archer",
+        "Spanish|champion"
+      ],
+      "calibration": {
+        "selected": 6,
+        "wrongOrClose": 0
+      },
+      "family": "archer|knight",
+      "minimumHpMarginGap": 0.1,
+      "test": {
+        "selected": 1,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 82,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 981
+    },
+    {
+      "benchmarks": [
+        "Chinese|arbalester",
+        "Saracens|heavy_cav_archer"
+      ],
+      "calibration": {
+        "selected": 5,
+        "wrongOrClose": 0
+      },
+      "family": "cav_archer|light_cav",
+      "minimumHpMarginGap": 0.2,
+      "test": {
+        "selected": 11,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 63,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 479
+    },
+    {
+      "benchmarks": [
+        "Spanish|halberdier",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 8,
+        "wrongOrClose": 0
+      },
+      "family": "knight|light_cav",
+      "minimumHpMarginGap": 0.1,
+      "test": {
+        "selected": 16,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 98,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 1126
+    },
+    {
+      "benchmarks": [
+        "Spanish|paladin",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 7,
+        "wrongOrClose": 0
+      },
+      "family": "knight|militia",
+      "minimumHpMarginGap": 0.1,
+      "test": {
+        "selected": 5,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 154,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 852
+    },
+    {
+      "benchmarks": [
+        "Chinese|arbalester",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 11,
+        "wrongOrClose": 0
+      },
+      "family": "knight|scorpion",
+      "minimumHpMarginGap": 0.2,
+      "test": {
+        "selected": 0,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 99,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 269
+    },
+    {
+      "benchmarks": [
+        "Spanish|champion",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 7,
+        "wrongOrClose": 0
+      },
+      "family": "knight|skirmisher",
+      "minimumHpMarginGap": 0.1,
+      "test": {
+        "selected": 42,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 72,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 619
+    },
+    {
+      "benchmarks": [
+        "Spanish|champion",
+        "Turks|paladin"
+      ],
+      "calibration": {
+        "selected": 8,
+        "wrongOrClose": 0
+      },
+      "family": "militia|skirmisher",
+      "minimumHpMarginGap": 0.1,
+      "test": {
+        "selected": 32,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 29,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 435
+    },
+    {
+      "benchmarks": [
+        "Spanish|champion",
+        "Spanish|hussar"
+      ],
+      "calibration": {
+        "selected": 13,
+        "wrongOrClose": 0
+      },
+      "family": "scorpion|skirmisher",
+      "minimumHpMarginGap": 0.4,
+      "test": {
+        "selected": 13,
+        "wrongOrClose": 0
+      },
+      "train": {
+        "selected": 21,
+        "wrongOrClose": 0
+      },
+      "unresolvedCandidateGuesses": 203
+    }
+  ],
+  "selection": "per-family benchmark set chosen using train and calibration; test held out",
+  "sourceHashes": {
+    "originalRankingPredictiveFeatures": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8",
+    "profileMatchups": "edf9b2e58e9616102512e99d709d3dc90d1c15e4b84db559384ff67eec84f666",
+    "rankingDefinition": "f66273e29420d79909efe434e100987f2bee6d8c9e301f467cb97de5c3461920",
+    "variantProfiles": "91fe53a3c8b7a6ef65d1dcc0a3c4041c65cfd81193f30fad8564093cbd3e40c6"
+  },
+  "total": {
+    "calibration": {
+      "rows": 511,
+      "selected": 65,
+      "wrongOrClose": 0
+    },
+    "test": {
+      "rows": 511,
+      "selected": 120,
+      "wrongOrClose": 0
+    },
+    "train": {
+      "rows": 5190,
+      "selected": 618,
+      "wrongOrClose": 0
+    },
+    "unresolved": {
+      "rows": 53301,
+      "selected": 4964,
+      "wrongOrClose": null
+    }
+  }
+}

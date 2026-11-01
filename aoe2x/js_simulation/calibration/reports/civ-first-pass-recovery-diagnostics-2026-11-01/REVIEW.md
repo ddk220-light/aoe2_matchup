@@ -43,11 +43,27 @@ belongs to the earlier fully validated scope, not the present first pass.
 
 ## Skirmisher versus Kona
 
-`cm_b49b88761f519d9bd7d20a07:0` remained on its final retry when this
-review was written. The one-shot watcher collects a bounded timeline only
-after that retry fails and the key is no longer active. Its final diagnostic
-must be reviewed separately; the patrol diagnosis above is not assumed to
-apply to it.
+`cm_b49b88761f519d9bd7d20a07:0` exhausted its final 7,200-second retry
+at tick 133,916 (2,231.93 game seconds). Its subsequent bounded diagnostic
+also hit its 300-wall-second ceiling before the first 100-game-second
+timeline sample. The report preserves the watchdog and last progress, but
+contains no useful HP/position timeline. This does not establish the patrol
+cause, a winner, or a draw. Further diagnosis needs more frequent or streamed
+read-only snapshots, or a shorter game-duration probe; repeating long wall
+retries without that evidence is not justified.
 
 The watcher has its own PID lock and writes only this report directory. It
 never restarts a campaign, writes a run journal or duplicates an active seed.
+
+## Targeted patrol recovery follow-through
+
+The separate `civ-matchups-patrol-first-pass-2026-11-01` campaign on the
+patrol-repair branch now contains six fresh valid seed records (three per
+pair), with one additional exact replay per pair. Its hash is
+`2a259f17dc155cb0a9c39967cb8e44087ab810b2f8f8c4dbea1449fa55511bf6`.
+Both reviews passed, with the melee side winning all seeds. Original V2/V3
+records and these diagnostic files were not imported as measurements.
+The delivery builder can use the reviewed records only as unvalidated
+cross-engine projections, with a separate patrol-candidate evidence ledger
+and explicit game-fidelity limitations. This settles two provisional table
+gaps; it does not certify the prototype as a faithful replacement engine.

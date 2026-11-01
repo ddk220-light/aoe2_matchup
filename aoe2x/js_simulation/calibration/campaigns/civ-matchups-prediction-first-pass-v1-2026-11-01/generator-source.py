@@ -1,0 +1,328 @@
+#!/usr/bin/env python3
+"""Versioned, explicitly provisional table and a small targeted validation queue.
+
+No prediction is combat evidence. The source matrix and run journals are read
+only. All predictions are frozen before their prospective test phase.
+"""
+import argparse
+import collections
+import gzip
+import hashlib
+import json
+import math
+from pathlib import Path
+
+from civ_reviewed_phase import load_reviewed_phase
+
+VERSION = 'prediction-first-pass-v1'
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+
+
+def load(path):
+    return json.loads(path.read_bytes())
+
+
+def read_rows(path):
+    return [json.loads(line) for line in gzip.decompress(path.read_bytes()).splitlines()]
+
+
+def write_json(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(canonical(value) + b'\n')
+
+
+def write_rows(path, rows):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('wb') as raw, gzip.GzipFile(filename='', fileobj=raw, mode='wb', mtime=0) as out:
+        for row in rows:
+            out.write(canonical(row) + b'\n')
+
+
+def direction(scores):
+    return 'a_win' if scores['aWin'] > scores['bWin'] else 'b_win'
+
+
+def choose(model, old, cavalry_guard=True):
+    """A transparent forecast policy, not a calibrated probability or proof."""
+    methods = dict(old.get('supportingMethods', {})) if old else {}
+    if not cavalry_guard:
+        methods.pop('two_benchmark_rule', None)
+    h, e = model['histGradientBoostingProbabilities'], model['extraTreesProbabilities']
+    hc, ec = max(h['aWin'], h['bWin']), max(e['aWin'], e['bWin'])
+    if (direction(h) == direction(e) and (hc + ec) / 2 >= .775
+            and min(hc, ec) >= .6 and max(h['close'], e['close']) <= .15):
+        methods['model_agreement'] = {'predictedOutcome': direction(h),
+            'meanModelScore': (hc + ec) / 2,
+            'explanation': 'Two frozen models agree; mean score >=0.775, each >=0.60, close score <=0.15. Scores are not win probabilities.'}
+    if not methods or len({x['predictedOutcome'] for x in methods.values()}) != 1:
+        return None
+    return {'predictedOutcome': next(iter(methods.values()))['predictedOutcome'],
+            'supportingMethods': methods,
+            'tier': 'stronger_support' if any(k != 'model_agreement' for k in methods) else 'broader_agreement'}
+
+
+def phase_of(row):
+    phases = [int(s.rsplit('/', 1)[1].split('.')[0]) for s in row.get('sourceRunIds', [])
+              if '/adaptive/runs/' in s]
+    return max(phases, default=0)
+
+
+def context_key(row, pred, mechanics, lines):
+    # This is a sampling/refinement stratum, never a license to transfer a win.
+    ordered = sorted(row['profiles'], key=lambda h: (lines[h], mechanics[h]['unit_class'], h))
+    return {'family': pred['family'], 'tier': pred['tier'],
+        'scenarioHash': row['context']['scenarioHash'],
+        'subtypes': [{'line': lines[h], 'class': mechanics[h]['unit_class'],
+            'mode': mechanics[h]['mode'],
+            'effectKeys': sorted((mechanics[h].get('effects') or {}).keys()),
+            'armorClasses': sorted((mechanics[h].get('armor_classes') or {}).keys())}
+            for h in ordered]}
+
+
+def freeze(args):
+    # Import the old-engine ranking HP values only as predictive features.
+    from evaluate_civ_prediction_coverage import rank_fingerprints, DEFINITION
+    _, variants, provenance = load_reviewed_phase(args.campaign, args.phase)
+    root = args.campaign / 'latest-inference'
+    matrix = {r['pairKey']: r for r in read_rows(root / 'profile-matchups.jsonl.gz')}
+    definition = load(DEFINITION)
+    hashes = sorted({v['profileHash'] for v in variants})
+    index = {h: i for i, h in enumerate(hashes)}
+    standards, rank = rank_fingerprints(variants, definition, index)
+    lines = {v['profileHash']: v['line'] for v in variants}
+    mechanics = {v['profileHash']: definition['profiles'][v['key']]['mechanics'] for v in variants}
+    old = {r['pairKey']: r for r in read_rows(args.audit / 'fifty-percent-v2-candidate-guesses.jsonl.gz')}
+    source = args.audit / 'granular-model-predictions.jsonl.gz'
+    predictions, revisions = [], []
+    for model in read_rows(source):
+        key = model['pairKey']
+        row = matrix[key]
+        a, b = row['profiles']
+        shared = [{'unitC': name, 'aHpMargin': float(rank[index[a], i]),
+                   'bHpMargin': float(rank[index[b], i])} for i, name in enumerate(standards)
+                  if math.isfinite(rank[index[a], i]) and math.isfinite(rank[index[b], i])]
+        guard = True
+        prior = old.get(key)
+        if model['family'] == 'cav_archer|light_cav' and prior and 'two_benchmark_rule' in prior['supportingMethods']:
+            melee = [c for c in shared if c['unitC'] in ('Spanish|champion', 'Turks|paladin')]
+            sign = 1 if prior['predictedOutcome'] == 'a_win' else -1
+            guard = bool(melee) and all(sign * (c['aHpMargin'] - c['bHpMargin']) >= .1 for c in melee)
+            if not guard:
+                revisions.append({'pairKey': key, 'reason': 'ranged benchmarks conflict with or lack confirming shared melee benchmarks', 'sharedC': shared})
+        chosen = choose(model, prior, guard)
+        if chosen is None:
+            continue
+        pred = {'pairKey': key, 'profiles': row['profiles'], 'family': model['family'],
+                **chosen, 'status': 'predicted_unvalidated', 'verified': False,
+                'contextHash': sha(canonical(row['context'])), 'context': row['context'],
+                'rankingCommonC': shared, 'sourcePredictionHash': sha(canonical(model)),
+                'modelScores': {'hgb': model['histGradientBoostingProbabilities'],
+                                'extraTrees': model['extraTreesProbabilities']}}
+        stratum = context_key(row, pred, mechanics, lines)
+        pred['stratum'] = stratum
+        pred['ruleHash'] = sha(canonical({'policy': VERSION, 'context': stratum}))
+        predictions.append(pred)
+    if (args.output / 'manifest.json').exists():
+        raise ValueError('freeze output already exists; use a separately versioned directory')
+    write_rows(args.output / 'predictions.jsonl.gz', sorted(predictions, key=lambda r: r['pairKey']))
+    write_json(args.output / 'revisions.json', revisions)
+    (args.output / 'generator-source.py').write_bytes(Path(__file__).read_bytes())
+    manifest = {'policyVersion': VERSION, 'introducedAfterPhase': args.first_untouched_phase - 1,
+        'reviewedThroughPhase': args.phase, 'sourceReview': provenance,
+        'predictionsSha256': sha((args.output / 'predictions.jsonl.gz').read_bytes()),
+        'generatorSha256': sha(Path(__file__).read_bytes()),
+        'modelPredictionsSha256': sha(source.read_bytes()),
+        'parentPoolSha256': sha((args.audit / 'fifty-percent-v2-candidate-guesses.jsonl.gz').read_bytes()),
+        'status': 'User-approved provisional first pass; deferred predictions are not validated or simulated results',
+        'physicsBasis': 'Frozen V3; V2 physics compatibility is still pending. No V2 outcomes are mixed in.',
+        'rankingUsage': 'Old-engine HP margins are features only, never measurements for this dataset',
+        'validationSamplePerPhase': 32, 'predictionCount': len(predictions)}
+    write_json(args.output / 'manifest.json', manifest)
+    print(json.dumps({'frozenPredictions': len(predictions), 'firstUntouchedPhase': args.first_untouched_phase}))
+
+
+def compare(predictions, observed, introduced):
+    tests, failures = [], []
+    for key, pred in predictions.items():
+        row = observed.get(key)
+        if not row or row['evidenceType'] != 'observed':
+            continue
+        if pred['contextHash'] != sha(canonical(row['context'])):
+            continue
+        phase = phase_of(row)
+        test = {'pairKey': key, 'ruleHash': pred['ruleHash'], 'family': pred['family'],
+                'phase': phase, 'independent': phase > introduced,
+                'prediction': pred['predictedOutcome'], 'actual': row['outcome'],
+                'correct': pred['predictedOutcome'] == row['outcome'],
+                'sourceRunIds': row['sourceRunIds'], 'context': row['context'],
+                'supportingMethods': pred['supportingMethods'], 'rankingCommonC': pred['rankingCommonC']}
+        tests.append(test)
+        if not test['correct']:
+            failures.append(test)
+    return tests, failures
+
+
+def select_probes(candidates, tests, limit=32):
+    """Half representative hash samples, half boundary/diversity probes."""
+    pools = collections.defaultdict(list)
+    history = collections.Counter(t['ruleHash'] for t in tests if t['independent'])
+    failures = collections.Counter(t['ruleHash'] for t in tests if t['independent'] and not t['correct'])
+    for item in candidates:
+        pools[item['ruleHash']].append(item)
+    used, profiles, selected = set(), set(), []
+    for position in range(min(limit, len(candidates))):
+        available = {k: [r for r in rows if r['pairKey'] not in used] for k, rows in pools.items()}
+        available = {k: rows for k, rows in available.items() if rows}
+        if not available:
+            break
+        rule = max(available, key=lambda k: (sum(r['aliases'] for r in available[k])
+             * (2 if failures[k] else 1) / (1 + history[k])
+             / max(1, sum(r['estimatedSeconds'] for r in available[k]) / len(available[k])), k))
+        items = available[rule]
+        if position % 2 == 0:
+            chosen = min(items, key=lambda r: sha((VERSION + r['pairKey']).encode()))
+            purpose = 'representative_sample'
+        else:
+            chosen = max(items, key=lambda r: (
+                len(set(r['profiles']) - profiles),
+                -max(r['modelScores']['hgb']['aWin'], r['modelScores']['hgb']['bWin']), r['pairKey']))
+            purpose = 'boundary_and_new_profiles'
+        used.add(chosen['pairKey']); profiles.update(chosen['profiles']); history[rule] += 1
+        selected.append({'pairKey': chosen['pairKey'], 'family': chosen['family'],
+                         'kind': 'prediction_validation_probe', 'ruleHash': rule,
+                         'purpose': purpose, 'predictedOutcome': chosen['predictedOutcome']})
+    return selected
+
+
+def plan(campaign, policy, phase, output, forbidden=()):
+    _, variants, provenance = load_reviewed_phase(campaign, phase)
+    root = campaign / 'latest-inference'
+    manifest = load(policy / 'manifest.json')
+    frozen = (policy / 'predictions.jsonl.gz').read_bytes()
+    assert sha(frozen) == manifest['predictionsSha256'], 'prediction source hash mismatch'
+    assert manifest['policyVersion'] == VERSION
+    matrix = read_rows(root / 'profile-matchups.jsonl.gz')
+    by_key = {r['pairKey']: r for r in matrix}
+    predictions = {r['pairKey']: r for r in map(json.loads, gzip.decompress(frozen).splitlines())}
+    assert len(predictions) == manifest['predictionCount']
+    tests, failures = compare(predictions, by_key, manifest['introducedAfterPhase'])
+    # A newly falsified *precise* stratum returns to direct fights. Other
+    # strata remain active; failures are retained for the next rule revision.
+    contested = {t['ruleHash'] for t in failures if t['independent']}
+    blocked = set(load(campaign / 'adaptive/state.json')['blockedPairs'])
+    forbidden = set(forbidden) | blocked
+    costs = collections.defaultdict(list)
+    for p in (campaign / 'adaptive/runs').glob('*.jsonl'):
+        if int(p.stem) > phase:
+            continue
+        for raw in p.read_bytes().splitlines():
+            run = json.loads(raw)
+            costs[run['scenarioHash']].append(run['wallSeconds'])
+    import statistics
+    medians = {k: statistics.median(v) * 3 for k, v in costs.items()}
+    eligible, overlay = [], []
+    for row in matrix:
+        pred = predictions.get(row['pairKey'])
+        matches = bool(pred and pred['contextHash'] == sha(canonical(row['context'])))
+        guessed = (row['outcome'] == 'unresolved' and matches and row['pairKey'] not in blocked
+                   and pred['ruleHash'] not in contested)
+        result = dict(row, sourceOutcome=row['outcome'], sourceEvidenceType=row['evidenceType'])
+        if guessed:
+            result.update(outcome=pred['predictedOutcome'], evidenceType='predicted_unvalidated',
+                needsSim=False, needsValidation=True, verified=False,
+                predictionPolicy=VERSION, predictionRuleHash=pred['ruleHash'],
+                predictionTier=pred['tier'], predictionSourceSha256=manifest['predictionsSha256'],
+                explanation='Provisional winner from frozen ranking/common-opponent/model features; requires later validation.',
+                sourceReasonCodes=row.get('reasonCodes', []), reasonCodes=['unvalidated_prediction'])
+            if row['pairKey'] not in forbidden:
+                eligible.append(dict(pred, aliases=row['aliases'],
+                    estimatedSeconds=medians.get(row['context']['scenarioHash'], 60)))
+        else:
+            result['needsValidation'] = False
+        overlay.append(result)
+    selected = select_probes(eligible, tests, manifest['validationSamplePerPhase'])
+    probe_keys = {r['pairKey'] for r in selected}
+    deferred = [r['pairKey'] for r in overlay if r['evidenceType'] == 'predicted_unvalidated'
+                and r['pairKey'] not in probe_keys]
+    counts = collections.Counter(r['evidenceType'] for r in overlay)
+    source_unresolved = sum(r['outcome'] == 'unresolved' for r in matrix)
+    predicted = counts['predicted_unvalidated']
+    summary = {'policyVersion': VERSION, 'sourcePhase': phase,
+        'status': 'provisional first pass; not a validated final dataset',
+        'profiles': len(matrix), 'displayedCells': sum(r['aliases'] for r in matrix),
+        'sourceUnresolved': source_unresolved, 'predictedPairs': predicted,
+        'predictedCells': sum(r['aliases'] for r in overlay if r['evidenceType']=='predicted_unvalidated'),
+        'predictionCoverageOfRemaining': predicted / source_unresolved if source_unresolved else 0,
+        'remainingNeedsDirectResult': source_unresolved - predicted,
+        'blockedPairs': len(blocked), 'selectedValidationSamples': len(selected),
+        'observedPairs': counts['observed'], 'inferredPairs': counts['inferred'],
+        'screenedPredictions': sum(not t['independent'] for t in tests),
+        'screenWrongOrClose': sum(not t['independent'] and not t['correct'] for t in tests),
+        'prospectivePredictions': sum(t['independent'] for t in tests),
+        'prospectiveWrongOrClose': sum(t['independent'] and not t['correct'] for t in tests),
+        'contestedRuleHashes': sorted(contested), 'sourceReview': provenance,
+        'predictionManifestSha256': sha((policy / 'manifest.json').read_bytes()),
+        'plannerSha256': sha(Path(__file__).read_bytes())}
+    write_rows(output / 'profile-table.jsonl.gz', overlay)
+    overlay_by_key = {r['pairKey']: r for r in overlay}
+    cell_path = root / 'civ-matchups.jsonl.gz'
+    cells_bytes = cell_path.read_bytes()
+    source_manifest = load(root / 'manifest.json')
+    expected = next(x['sha256'] for x in source_manifest['outputs'] if x['file']==cell_path.name)
+    assert sha(cells_bytes) == expected, 'displayed cells source hash mismatch'
+    cells = [json.loads(raw) for raw in gzip.decompress(cells_bytes).splitlines()]
+    profile_for_variant = {v['key']: v['profileHash'] for v in variants}
+    # Cells retain their source orientation; the pair-level table is canonical.
+    for cell in cells:
+        pair = overlay_by_key[cell['pairKey']]
+        if pair['evidenceType'] == 'predicted_unvalidated':
+            source_outcome = cell['outcome']
+            owner_a = profile_for_variant[cell['civA'] + '|' + cell['unitA']]
+            winner = pair['profiles'][0 if pair['outcome']=='a_win' else 1]
+            cell.update(outcome='a_win' if owner_a==winner else 'b_win',
+                sourceOutcome=source_outcome, sourceEvidenceType=cell['evidenceType'],
+                evidenceType='predicted_unvalidated', needsSim=False,
+                needsValidation=True, verified=False, explanation=pair['explanation'],
+                prediction={'canonicalOutcome': pair['outcome'], 'canonicalProfiles': pair['profiles'],
+                    'status': 'predicted_unvalidated', 'verified': False,
+                    'ruleHash': pair['predictionRuleHash']})
+        else:
+            cell['prediction'] = None
+    write_rows(output / 'civilization-table.jsonl.gz', cells)
+    write_json(output / 'summary.json', summary)
+    write_json(output / 'validation.json', {'tests': tests, 'failures': failures,
+        'warning': 'Screening results informed the policy; only post-introduction phases are prospective.'})
+    write_json(output / 'selection.json', {'selected': selected, 'deferredPredictionKeys': deferred})
+    write_json(output / 'manifest.json', {'policyVersion': VERSION, 'sourcePhase': phase,
+        'files': {name:sha((output/name).read_bytes()) for name in ['profile-table.jsonl.gz',
+          'civilization-table.jsonl.gz', 'summary.json', 'validation.json', 'selection.json']}})
+    return {'selected': selected, 'deferredPredictionKeys': deferred, 'summary': summary,
+            'manifestSha256': sha((output / 'manifest.json').read_bytes())}
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('mode', choices=['freeze', 'plan'])
+    parser.add_argument('--campaign', type=Path, required=True)
+    parser.add_argument('--phase', type=int, required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--audit', type=Path)
+    parser.add_argument('--policy', type=Path)
+    parser.add_argument('--first-untouched-phase', type=int)
+    args = parser.parse_args()
+    if args.mode == 'freeze':
+        freeze(args)
+    else:
+        result = plan(args.campaign, args.policy, args.phase, args.output)
+        print(json.dumps(result['summary']))
+
+
+if __name__ == '__main__':
+    main()

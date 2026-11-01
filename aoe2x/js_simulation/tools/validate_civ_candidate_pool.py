@@ -6,7 +6,8 @@ import collections
 import json
 from pathlib import Path
 
-from evaluate_civ_prediction_coverage import phase_of, records, sha
+from evaluate_civ_prediction_coverage import records, sha
+from civ_reviewed_phase import load_reviewed_phase
 
 
 def main():
@@ -15,11 +16,14 @@ def main():
     parser.add_argument('--predictions', type=Path, required=True)
     parser.add_argument('--phase', type=int, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--inference-dir', type=Path,
+                        help='Immutable inference snapshot matching the phase review')
     args = parser.parse_args()
-    root = args.campaign / 'latest-inference'
-    predictions = {r['pairKey']: r for r in records(args.predictions)}
-    observed = [r for r in records(root / 'profile-matchups.jsonl.gz')
-                if r['evidenceType'] == 'observed' and phase_of(r) == args.phase]
+    observed, _, provenance = load_reviewed_phase(args.campaign, args.phase, args.inference_dir)
+    prediction_rows = list(records(args.predictions))
+    predictions = {r['pairKey']: r for r in prediction_rows}
+    if len(predictions) != len(prediction_rows):
+        raise ValueError('duplicate predictions for a profile pair')
     selected = []
     by_family = collections.Counter()
     by_method = collections.Counter()
@@ -39,11 +43,17 @@ def main():
     report = {'kind': 'reviewed-phase validation of provisional candidate pool',
         'phase': args.phase, 'phaseObservedRows': len(observed),
         'selected': len(selected), 'wrongOrClose': len(failures),
+        'plannedCandidatePairs': len(selected) + sum(
+            key in predictions for key in provenance['blockedPairs']),
+        'blockedCandidatePairs': [key for key in provenance['blockedPairs'] if key in predictions],
+        'completeForPlannedCandidates': not any(
+            key in predictions for key in provenance['blockedPairs']),
         'selectedByFamily': dict(sorted(by_family.items())),
         'selectedByMethod': dict(sorted(by_method.items())),
         'failures': failures,
+        'reviewedEvidence': provenance,
         'sourceHashes': {'predictions': sha(args.predictions),
-            'profileMatchups': sha(root / 'profile-matchups.jsonl.gz')}}
+            'profileMatchups': provenance['profileMatchups']}}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
     print(json.dumps({k: report[k] for k in ('phase','phaseObservedRows','selected','wrongOrClose')}))

@@ -8,8 +8,9 @@ from pathlib import Path
 import numpy as np
 
 from evaluate_civ_prediction_coverage import (
-    DEFINITION, load, outcome, phase_of, rank_fingerprints, records, sha,
+    DEFINITION, load, outcome, rank_fingerprints, sha,
 )
+from civ_reviewed_phase import load_reviewed_phase
 
 
 def main():
@@ -18,12 +19,11 @@ def main():
     parser.add_argument('--rules', type=Path, required=True)
     parser.add_argument('--phase', type=int, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--inference-dir', type=Path,
+                        help='Immutable inference snapshot matching the phase review')
     args = parser.parse_args()
     rules = load(args.rules)
-    root = args.campaign / 'latest-inference'
-    rows = [r for r in records(root / 'profile-matchups.jsonl.gz')
-            if r['evidenceType'] == 'observed' and phase_of(r) == args.phase]
-    variants = load(root / 'variant-profiles.json')
+    rows, variants, provenance = load_reviewed_phase(args.campaign, args.phase, args.inference_dir)
     hashes = sorted({v['profileHash'] for v in variants})
     index = {h: i for i, h in enumerate(hashes)}
     lines = {v['profileHash']: v['line'] for v in variants}
@@ -59,14 +59,15 @@ def main():
         selected.append(record)
         if predicted != outcome(row):
             failures.append(record)
-    report = {'kind': 'independent next-phase validation of frozen benchmark rules',
+    report = {'kind': 'reviewed-phase comparison of frozen benchmark rules',
               'ruleVersion': rules['ruleVersion'], 'phase': args.phase,
               'phaseRows': len(rows), 'selected': len(selected),
               'wrongOrClose': len(failures), 'selectedByFamily': by_family_count,
               'failures': failures,
+              'reviewedEvidence': provenance,
               'sourceHashes': {'rules': sha(args.rules),
-                               'profileMatchups': sha(root / 'profile-matchups.jsonl.gz'),
-                               'variantProfiles': sha(root / 'variant-profiles.json')}}
+                               'profileMatchups': provenance['profileMatchups'],
+                               'variantProfiles': provenance['variantProfiles']}}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
     print(json.dumps({k: report[k] for k in ('phase', 'phaseRows', 'selected', 'wrongOrClose')}, indent=2))

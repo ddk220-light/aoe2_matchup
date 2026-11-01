@@ -55,8 +55,23 @@ global_median = statistics.median([v for values in scenario_wall.values() for v 
 
 variant_profiles = json.loads((INFERENCE / "variant-profiles.json").read_text())
 line = {v["profileHash"]: v["line"] for v in variant_profiles}
+variant_keys = collections.defaultdict(set)
+for variant in variant_profiles:
+    variant_keys[variant["profileHash"]].add(variant["key"])
 def family_from_hashes(hashes):
     return "|".join(sorted(line[h] for h in hashes))
+
+def known_pathing_hazard(row):
+    """Defer repeatedly stalled geometry families without assigning outcomes."""
+    a, b = row["context"]["profiles"]
+    for ranged_hash, opponent_hash in ((a, b), (b, a)):
+        keys = variant_keys[ranged_hash]
+        if "Mapuche|imp_elite_skirm" in keys and line[opponent_hash] in {"knight", "elephant"}:
+            return "mapuche_skirm_vs_heavy_cavalry_pathing"
+        if ("Muisca|elite_guecha_warrior_muisca" in keys
+                and any(key.endswith("|champion") for key in variant_keys[opponent_hash])):
+            return "guecha_vs_champion_pathing"
+    return None
 
 # A winner-margin condition in R2/R3 must hold across every saved seed.
 # Estimate those conditions from complete current-engine observed groups only.
@@ -113,12 +128,18 @@ hard = [row for row in estimated if not row["skippable"]] + unestimated
 assert len(deferred) + len(hard) == estimate_summary["sourceUnresolvedProfilePairs"]
 queue = []
 blocked_or_partial = []
+hazard_deferred = []
 category = collections.Counter()
 for row in hard:
     reason = row.get("whyNoEstimate", row.get("tier"))
     if row["pairKey"] in blocked or reason == "source_conflict_or_missing_seeds":
         blocked_or_partial.append({"pairKey": row["pairKey"], "reason": reason,
                                    "blockedInFrozenV3": row["pairKey"] in blocked})
+        continue
+    hazard = known_pathing_hazard(row)
+    if hazard:
+        hazard_deferred.append({"pairKey": row["pairKey"], "hazard": hazard,
+                                "aliases": row["aliases"]})
         continue
     pair_family = row["family"]
     cost = worker_cost(row)
@@ -137,6 +158,7 @@ for row in hard:
         "mustUseConsistentEngine": True})
     category[reason] += 1
 queue.sort(key=lambda row: (-row["priorityCellsPerWorkerSecond"], row["pairKey"]))
+assert len(queue) + len(blocked_or_partial) + len(hazard_deferred) == len(hard)
 
 # Spend part of each phase on independent checks of promising common-C rules.
 # These are real fights until the family passes the prospective gate. A skipped
@@ -149,6 +171,8 @@ for row in estimated:
     if row["tier"] != "supported_context_estimate" or not row["eligibleForProspectiveValidation"]:
         continue
     if row["pairKey"] in blocked:
+        continue
+    if known_pathing_hazard(row):
         continue
     threshold = row["minimumSignedMarginGapPerC"]
     smallest_gap = min(abs(c["delta"]) for c in row["commonOpponents"])
@@ -237,6 +261,7 @@ assert len(selected_keys) == len(selected)
 write_json(OUTPUT / "proposed-phase.json", {"policyVersion": "common-c-adaptive-v1",
     "sourcePhase": estimate_summary["sourcePhase"], "selected": selected,
     "skippedVerifiedEstimateKeys": [row["pairKey"] for row in deferred if row["pairKey"] not in selected_keys],
+    "deferredPathingHazardKeys": [row["pairKey"] for row in hazard_deferred],
     "estimateSummarySha256": sha(SOURCE / "summary.json"),
     "inferenceSummarySha256": sha(INFERENCE / "summary.json")})
 summary = {"kind": "offline proposed hard-case queue; no combat run or live selection change",
@@ -247,6 +272,8 @@ summary = {"kind": "offline proposed hard-case queue; no combat run or live sele
     "deferredThreeSeedMedianWorkerHours": sum(worker_cost(row) for row in deferred) / 3600,
     "mustRunOrValidateProfilePairs": len(hard),
     "ordinaryRunnableQueue": len(queue), "blockedOrPartial": len(blocked_or_partial),
+    "deferredPathingHazards": len(hazard_deferred),
+    "pathingHazardKinds": dict(collections.Counter(r["hazard"] for r in hazard_deferred)),
     "hardCategories": dict(category),
     "firstReviewCandidateCount": len(first),
     "validationProbeCount": len(validation_batch),
@@ -255,7 +282,8 @@ summary = {"kind": "offline proposed hard-case queue; no combat run or live sele
     "prospectiveCandidatesScanned": len(priority),
     "scenarios": scenario_stats,
     "blockedOrPartialPairs": blocked_or_partial,
+    "pathingHazardPairs": hazard_deferred,
     "simulationJobsRun": 0,
-    "note": "Only prospective-verified, supported-context estimates are deferred. Candidate rules remain in the simulation queue and supply explicit validation probes. Current frozen V3 jobs are not altered. Conditional inference gains are estimated from existing corrected-engine winner margins and are not guaranteed."}
+    "note": "Only prospective-verified, supported-context estimates are deferred as predictions. Known repeatedly stalled pathing families are separately deferred for V2-stream/physics review, never called wins or close fights. Candidate rules remain in the simulation queue and supply explicit validation probes. Conditional inference gains are estimated from existing corrected-engine winner margins and are not guaranteed."}
 write_json(OUTPUT / "summary.json", summary)
 print(json.dumps({k: v for k, v in summary.items() if k not in ("scenarios", "blockedOrPartialPairs")}, indent=2))

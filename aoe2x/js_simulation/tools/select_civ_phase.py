@@ -67,6 +67,8 @@ def main():
     assert len(proposal["skippedVerifiedEstimateKeys"]) <= estimate_summary["skippableProfilePairs"]
     assert not set(proposal["skippedVerifiedEstimateKeys"]).intersection(
         r["pairKey"] for r in proposal["selected"])
+    assert not set(proposal["deferredPathingHazardKeys"]).intersection(
+        r["pairKey"] for r in proposal["selected"])
 
     # Every skipped winner remains an explicit, reviewable estimate with root
     # benchmark margins and a rule validation record. Historical snapshots are
@@ -85,6 +87,7 @@ def main():
                 kept += 1
     assert kept == len(skipped_keys)
     shutil.copyfile(estimates / "summary.json", archive / "estimate-summary.json")
+    shutil.copyfile(selection / "summary.json", archive / "selection-summary.json")
     priority = json.loads(priority_report.read_text())
     compact_priority = {"status": priority_status,
         "sourceSha256": sha(priority_report),
@@ -98,6 +101,7 @@ def main():
         "frozenRuleManifestSha256": sha(RULES / "manifest.json"),
         "sourceInferenceManifestSha256": sha(inference / "manifest.json"),
         "estimateSummarySha256": sha(archive / "estimate-summary.json"),
+        "selectionSummarySha256": sha(archive / "selection-summary.json"),
         "verifiedEstimatesSha256": sha(archive / "verified-estimates.jsonl.gz"),
         "prioritySha256": sha(archive / "priority.json"),
         "priorityPlannerSha256": sha(ROOT / "node/civ-matchups/plan-active-tests.mjs"),
@@ -105,6 +109,7 @@ def main():
     (archive / "manifest.json").write_text(json.dumps(archive_manifest, sort_keys=True, indent=2) + "\n")
     print(json.dumps({"policyVersion": frozen["version"], "sourcePhase": args.phase,
         "selected": proposal["selected"], "skippedVerifiedEstimateKeys": proposal["skippedVerifiedEstimateKeys"],
+        "deferredPathingHazardCount": len(proposal["deferredPathingHazardKeys"]),
         "archiveManifestSha256": sha(archive / "manifest.json"),
         "priorityStatus": priority_status,
         "verifiedFamilies": estimate_summary["prospectivePhase"]["verifiedFamilies"],

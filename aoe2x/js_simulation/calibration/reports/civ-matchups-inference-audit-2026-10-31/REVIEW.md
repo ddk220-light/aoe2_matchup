@@ -1,5 +1,64 @@
 # Civilization-matchup inference audit (phase 17 snapshot)
 
+## Two-sided rule and next-test scheduling (v4)
+
+The same frozen phase-17 evidence now supports a second, stricter transfer:
+one completed direct fight may cover a target where **both** armies have
+changed. The root stays a direct corrected-engine result. The replacement
+winner must be no weaker and the replacement loser no stronger against both
+opposing profiles, with the actual 27-unit cost-balanced army counts and
+scenario checked at all four corners. A root must have at least 25% winner HP
+in every recorded seed. No inferred intermediate becomes evidence.
+
+Held-out validation requires three measured target pairs and two independent
+roots per family, with zero wrong winners and zero close fights called
+decisive. Families without that support remain unresolved. The enabled
+two-sided families made no wrong or close-as-decisive calls on the saved
+phase-17 evidence. Its 119 added decisions use 68 distinct direct roots and
+cover 176 displayed cells. Combining this with the earlier narrow-effect
+rule yields 6,449 inferred profile pairs, 45 equivalent, 107 close, 4,423
+observed, and 57,999 unresolved. The original 4,520 inferred decisions are
+unchanged. The full versioned table, evidence ledger, validation files, and
+needs-simulation list are in
+`calibration/campaigns/civ-matchups-inference-two-sided-audit-2026-11-01/`.
+`AUDIT_V4.json` hashes those outputs, and
+`new-two-sided-inferences.jsonl.gz` isolates the 119 new decisions.
+
+`test-priority.json` evaluates each unresolved profile pair as a hypothetical
+direct test with either side winning. For each outcome, it counts currently
+unresolved targets that could pass the validated R1 rule. It counts R2 and R3
+targets only on the **conditional** assumption that every winning seed retains
+at least 50% and 25% of starting HP respectively. These are prospective gains,
+never results or guaranteed savings: a close fight transfers nothing, and
+future evidence can conflict. The scheduler's shortlist uses marginal coverage across both
+possible winners, limits repeated unit-line pairings, and defers same-line
+ranking gaps under five points as possible close fights. The ranking score
+affects test order only; it never supplies a winner or substitutes for a
+compatible corrected-engine seed set.
+
+The scan evaluated all 57,999 unresolved profile pairs. Its first five
+diversified candidates, shown as the two possible decisive-winner gains, are:
+
+| Candidate fight (balanced counts) | Additional profile pairs if either side wins |
+| --- | ---: |
+| Hindustani Hussar 27 vs Bulgarian Hussar 27 | 16 / 18 |
+| Lithuanian Elite Skirmisher 27 vs Briton Light Cavalry 23 | 14 / 14 |
+| Bulgarian Elite Skirmisher 27 vs Lithuanian Halberdier 27 | 15 / 13 |
+| Cuman Heavy Cavalry Archer 20 vs Bohemian Halberdier 27 | 13 / 14 |
+| Goth Hussar 27 vs Jurchen Hussar 27 | 14 / 13 |
+
+The 20-candidate diverse shortlist has 244 marginal prospective transfers
+under the decisive, robust-margin assumptions. It is a **priority list**, not
+a claim that those 244 fights are already settled or that 20 new fights can
+replace the remaining simulation campaign. Most added opportunity is the R2
+tradeoff rule and requires at least 50% winner HP; the list should be
+recomputed after each phase because new direct results change its value.
+
+This audit branch does not change the running frozen V3 selector or its run
+journals. Use the audited rules and priority list in a separately versioned
+selection pass after validation on the compatible V2 replay records. Preserve
+existing V3 and V2 seeds, counts, orientation, and provenance.
+
 This is an **offline inference experiment**, not a change to the live campaign.
 It reads the immutable phase-17 checkpoint `6686ba0e` and its ranking anchors;
 no combat simulation or replay was run. `AUDIT.json` lists the SHA-256 of every
@@ -67,8 +126,9 @@ only when the replacement's actual balanced count, damage against that exact
 opponent, incoming damage, durability, timing, mobility, geometry, and effects
 support the direction. If a known loser is replaced by a stronger unit, the
 fight may cross the win boundary and remains unresolved. If both armies
-change, a separate two-sided rule needs its own corrected-engine held-out
-validation; an inferred intermediate result cannot serve as a new root.
+change, the audited two-sided rule applies only in families with independent
+corrected-engine held-out support; an inferred intermediate result cannot
+serve as a new root.
 
 Three families merit such work. In the phase-17 direct evidence, knights beat
 skirmishers in all 67 completed profile pairs, militia-line units beat

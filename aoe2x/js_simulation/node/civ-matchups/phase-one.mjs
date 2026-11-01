@@ -17,7 +17,7 @@ const ROOT = resolve(SIM, '../..');
 const SOURCE = resolve(SIM, 'calibration/campaigns/unit-rankings-consolidated-2026-10-29');
 const DEFINITION = resolve(SIM, 'calibration/campaigns/unit-rankings-path-recovery-2026-10-29/manifest.json');
 const SCORES = resolve(SIM, 'calibration/reports/unit-ranking-scores-final-2026-10-29/scores.json');
-const RULE_VERSION = 'phase1-inert-metadata-family-validated-v3';
+const RULE_VERSION = 'phase1-direct-root-two-sided-v4';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = path => JSON.parse(readFileSync(path, 'utf8'));
 const key2 = (a,b) => a <= b ? `${a}|${b}` : `${b}|${a}`;
@@ -26,7 +26,7 @@ const small = value => JSON.stringify(value);
 const statusCount = (counter,key) => {counter[key]=(counter[key]??0)+1;};
 const entity = mechanics => ({mechanics, hp:mechanics.hp, maxHp:mechanics.hp, specialState:{}});
 
-function canonicalInputs() {
+export function canonicalInputs() {
   const sourceManifest=json(resolve(SOURCE,'manifest.json'));
   const definition=json(DEFINITION);
   const scoring=json(SCORES);
@@ -36,7 +36,7 @@ function canonicalInputs() {
   return {sourceManifest,definition,scoring};
 }
 
-function profilesAndPairs(sourceManifest,definition) {
+export function profilesAndPairs(sourceManifest,definition) {
   const variants=sourceManifest.roster.units.map((row,index)=>{
     const key=`${row.civilization}|${row.slug}`;
     const entry=definition.profiles[key];
@@ -276,7 +276,7 @@ function selectContext(pair,context) {
   return {context:context(...ordered),partial};
 }
 
-function proposalFor(pair,selected,root,profiles,context) {
+export function proposalFor(pair,selected,root,profiles,context) {
   const candidateHashes=selected.context.profiles,rootHashes=root.profiles;
   const unchanged=candidateHashes.filter(h=>rootHashes.includes(h));
   if(unchanged.length!==1)return null;
@@ -299,7 +299,7 @@ function proposalFor(pair,selected,root,profiles,context) {
   return null;
 }
 
-function tradeoffFor(targetContext,root,profiles) {
+export function tradeoffFor(targetContext,root,profiles) {
   if(!root.complete||root.close||root.minWinnerHpFraction<0.5)return null;
   const common=targetContext.profiles.filter(h=>root.profiles.includes(h));
   if(common.length!==1)return null;
@@ -351,6 +351,43 @@ function tradeoffFor(targetContext,root,profiles) {
     explanation:`${oldProfile.mechanics.unit_name} ${replacingWinner?'wins':'loses'} decisively against ${enemy.unit_name}; ${replacement.unit_name} fields ${newCount} units, with nominal sustained-damage ratio ${nominalRatio.toFixed(2)} and durability ratio ${defenseRatio.toFixed(2)} against that opponent. This is a validated directional transfer, not a simulated fight.`};
 }
 
+// A single direct result is the root. Both replacements are checked against
+// both possible fixed opponents, with the cost-balanced counts recalculated
+// at every corner. The intermediate corners are inequalities, not outcomes or
+// new evidence; no inferred result is ever used as a root.
+export function twoSidedFor(targetContext,root,profiles,context) {
+  if(!root.complete||root.close||root.minWinnerHpFraction<0.25
+    ||targetContext.scenarioHash!==root.scenarioHash)return null;
+  const winnerIndex=root.profiles.indexOf(root.outcome);
+  if(winnerIndex<0)return null;
+  const loserIndex=1-winnerIndex;
+  const oldWinner=root.profiles[winnerIndex],oldLoser=root.profiles[loserIndex];
+  const newWinner=targetContext.profiles[winnerIndex],newLoser=targetContext.profiles[loserIndex];
+  if(newWinner===oldWinner||newLoser===oldLoser)return null;
+  const rootContext=context(...root.profiles);
+  const winnerChanged=[...root.profiles];winnerChanged[winnerIndex]=newWinner;
+  const loserChanged=[...root.profiles];loserChanged[loserIndex]=newLoser;
+  const winnerContext=context(...winnerChanged),loserContext=context(...loserChanged);
+  if(winnerContext.scenarioHash!==root.scenarioHash
+    ||loserContext.scenarioHash!==root.scenarioHash)return null;
+  const profile=h=>profiles.get(h);
+  const checks=[
+    relation(profile(newWinner),profile(oldWinner),profile(oldLoser),
+      winnerContext,rootContext,winnerIndex,winnerIndex)===1,
+    relation(profile(newLoser),profile(oldLoser),profile(newWinner),
+      targetContext,winnerContext,loserIndex,loserIndex)===-1,
+    relation(profile(newLoser),profile(oldLoser),profile(oldWinner),
+      loserContext,rootContext,loserIndex,loserIndex)===-1,
+    relation(profile(newWinner),profile(oldWinner),profile(newLoser),
+      targetContext,loserContext,winnerIndex,winnerIndex)===1,
+  ];
+  if(checks.some(value=>!value))return null;
+  return {rootId:root.matchupId,rootPair:root.pairKey,winnerHash:newWinner,
+    oldWinner,oldLoser,newWinner,newLoser,ruleId:'R3_TWO_SIDED_STATIC',
+    family:`${profile(newWinner).line}_vs_${profile(newLoser).line}`,
+    explanation:`Direct result ${profile(oldWinner).mechanics.unit_name} beats ${profile(oldLoser).mechanics.unit_name}; both replacements pass the static directional checks against both opponent profiles with all four cost-balanced army setups recalculated.`};
+}
+
 function buildDecisions(inventory,evidence) {
   const {pairs,profiles,context}=inventory;
   const selected=new Map();
@@ -392,6 +429,29 @@ function buildDecisions(inventory,evidence) {
   const proposals=new Map();
   const tradeoffCandidates=new Map();
   const boundaryCandidates=new Map();
+  const twoSidedCandidates=new Map();
+  const masterKey=hashes=>hashes.map(h=>profiles.get(h).mechanics.unit_master).sort().join('|');
+  const pairsByMaster=new Map();
+  for(const pair of pairs.values()){
+    const key=masterKey(pair.profiles);
+    if(!pairsByMaster.has(key))pairsByMaster.set(key,[]);
+    pairsByMaster.get(key).push(pair);
+  }
+  const rootsByMaster=new Map();
+  for(const root of roots){
+    const key=masterKey(root.profiles);
+    if(!rootsByMaster.has(key))rootsByMaster.set(key,[]);
+    rootsByMaster.get(key).push(root);
+  }
+  for(const root of roots)for(const target of pairsByMaster.get(masterKey(root.profiles))??[]){
+    if(target.key===root.pairKey)continue;
+    const s=selected.get(target.key);
+    if(s.direct||s.conflict||!s.context)continue;
+    const proposal=twoSidedFor(s.context,root,profiles,context);
+    if(!proposal)continue;
+    if(!twoSidedCandidates.has(target.key))twoSidedCandidates.set(target.key,[]);
+    twoSidedCandidates.get(target.key).push(proposal);
+  }
   for(const root of roots) for(const fixed of root.profiles) for(const target of index.get(fixed)??[]) {
     if(target.key===root.pairKey || target.profiles[0]===target.profiles[1])continue;
     const s=selected.get(target.key);if(!s.context||s.direct||s.conflict)continue;
@@ -448,6 +508,30 @@ function buildDecisions(inventory,evidence) {
     heldOutTargetPairs:validation.targetPairs.size,correct:validation.correct,wrong:validation.wrong,
     closePredictedDecisively:validation.closePredictedDecisively,families:familyValidation,
     requirement:'per family: at least 3 distinct held-out target pairs, 2 independent root pairs, zero wrong winners, zero decisive predictions of close fights'};
+  const jointChecks=new Map();
+  for(const target of directByPair.values()){
+    const targetContext=context(...target.profiles);
+    for(const root of rootsByMaster.get(masterKey(target.profiles))??[]){
+      if(root.pairKey===target.pairKey)continue;
+      const candidate=twoSidedFor(targetContext,root,profiles,context);
+      if(!candidate)continue;
+      if(!jointChecks.has(candidate.family))jointChecks.set(candidate.family,
+        {rootPairs:new Set(),targetPairs:new Set(),correct:0,wrong:0,closePredictedDecisively:0});
+      const entry=jointChecks.get(candidate.family);
+      entry.rootPairs.add(root.pairKey);entry.targetPairs.add(target.pairKey);
+      if(target.close)entry.closePredictedDecisively++;
+      else if(candidate.winnerHash===target.outcome)entry.correct++;
+      else entry.wrong++;
+    }
+  }
+  const twoSidedFamilies=Object.fromEntries([...jointChecks].map(([name,f])=>[name,{
+    heldOutTargetPairs:f.targetPairs.size,independentRootPairs:f.rootPairs.size,
+    correct:f.correct,wrong:f.wrong,closePredictedDecisively:f.closePredictedDecisively,
+    enabled:f.targetPairs.size>=3&&f.rootPairs.size>=2&&f.wrong===0&&f.closePredictedDecisively===0,
+  }]));
+  const twoSidedValidation={ruleId:'R3_TWO_SIDED_STATIC',ruleVersion:RULE_VERSION,
+    requirement:'per family: at least 3 distinct corrected-engine held-out target pairs, 2 independent direct roots, zero wrong winners and zero close fights predicted decisively',
+    families:twoSidedFamilies};
   const tradeoffCheck=new Map();
   for(const [engine,source] of [['corrected',evidence.anchors],['original',evidence.prior]]) {
     const complete=source.filter(x=>x.complete&&!x.close&&pairs.has(x.pairKey));
@@ -527,6 +611,7 @@ function buildDecisions(inventory,evidence) {
   for(const pair of pairs.values()) {
     const s=selected.get(pair.key),rootsHere=proposals.get(pair.key)??[];
     const tradeoffs=tradeoffCandidates.get(pair.key)??[];
+    const joint=twoSidedCandidates.get(pair.key)??[];
     const boundaries=boundaryCandidates.get(pair.key)??[];
     const prior=priorByPair.get(pair.key)??[];
     const base={pairKey:pair.key,profiles:pair.profiles,context:s.context??null,aliases:pair.aliases.length,
@@ -543,9 +628,10 @@ function buildDecisions(inventory,evidence) {
     else {
       const predicted=new Set(rootsHere.map(x=>x.winnerHash));
       const tradeoffWinners=new Set(tradeoffs.map(x=>x.winnerHash));
+      const jointWinners=new Set(joint.map(x=>x.winnerHash));
       const priorWinners=new Set(prior.filter(x=>x.complete&&!x.close).map(x=>x.outcome));
       const candidateOutcome=predicted.size===1?[...predicted][0]:tradeoffWinners.size===1?[...tradeoffWinners][0]:
-        priorWinners.size===1?[...priorWinners][0]:null;
+        jointWinners.size===1?[...jointWinners][0]:priorWinners.size===1?[...priorWinners][0]:null;
       const validatedProposals=rootsHere.filter(x=>familyValidation[x.family]?.enabled);
       const validatedTradeoffs=tradeoffs.filter(x=>{
         if(!tradeoffModeValidation[x.mode]?.enabled
@@ -560,7 +646,10 @@ function buildDecisions(inventory,evidence) {
         const heldOut=tradeoffFamilies[x.family]?.corrected;
         return (heldOut?.targets??0)>=3 && (heldOut?.independentRoots??0)>=2;
       });
-      const eligibleWinners=new Set([...validatedProposals,...validatedTradeoffs].map(x=>x.winnerHash));
+      const priorEligible=[...validatedProposals,...validatedTradeoffs];
+      const validatedJoint=priorEligible.length?[]:
+        joint.filter(x=>twoSidedFamilies[x.family]?.enabled);
+      const eligibleWinners=new Set([...priorEligible,...validatedJoint].map(x=>x.winnerHash));
       const priorConflict=priorWinners.size && eligibleWinners.size===1 && !priorWinners.has([...eligibleWinners][0]);
       const reasonCodes=[];
       if(s.partial?.length)reasonCodes.push('incomplete_current_seeds');
@@ -568,28 +657,33 @@ function buildDecisions(inventory,evidence) {
       if(rootsHere.length && predicted.size>1)reasonCodes.push('conflicting_inferences');
       else if(rootsHere.length && !validatedProposals.length)reasonCodes.push('rule_needs_validation');
       if(tradeoffs.length && !validatedTradeoffs.length)reasonCodes.push('unvalidated_tradeoff');
+      if(joint.length && !validatedJoint.length && !priorEligible.length)
+        reasonCodes.push('two_sided_needs_validation');
       if(boundaries.length)reasonCodes.push('possible_win_boundary');
       if(priorConflict)reasonCodes.push('prior_engine_conflict');
-      if(!rootsHere.length && !tradeoffs.length && !boundaries.length && !s.partial?.length && !prior.length)reasonCodes.push('no_eligible_anchor');
+      if(!rootsHere.length && !tradeoffs.length && !joint.length && !boundaries.length && !s.partial?.length && !prior.length)reasonCodes.push('no_eligible_anchor');
       if(pair.profiles.some(h=>!staticSafe(profiles.get(h).mechanics)))reasonCodes.push('unsupported_effect');
       if(!reasonCodes.length)reasonCodes.push('no_eligible_anchor');
-      const allProposedWinners=new Set([...rootsHere,...tradeoffs].map(x=>x.winnerHash));
+      const allProposedWinners=new Set([...rootsHere,...tradeoffs,...joint].map(x=>x.winnerHash));
       const resolvable=eligibleWinners.size===1 && allProposedWinners.size===1 && !priorConflict && !s.partial?.length;
       // Publish roots for the selected rule family only. Different validated
       // tradeoff modes can agree on a winner but require opposite count guards.
       const supporting=validatedProposals.length?validatedProposals:
-        validatedTradeoffs.filter(x=>x.family===validatedTradeoffs[0]?.family);
+        validatedTradeoffs.length?validatedTradeoffs.filter(x=>x.family===validatedTradeoffs[0]?.family):
+        validatedJoint.filter(x=>x.family===validatedJoint[0]?.family);
       decision={...base,outcome:resolvable?candidateOutcome:'unresolved',evidenceType:resolvable?'inferred':'none',
         needsSim:!resolvable,reasonCodes:resolvable?[]:reasonCodes,candidateOutcome:resolvable?null:candidateOutcome,
         ruleId:validatedProposals.length?'R1_STATIC_DIRECTION':validatedTradeoffs.length?'R2_ROBUST_TRADEOFF':
-          rootsHere.length?'R1_STATIC_DIRECTION':tradeoffs.length?'R2_ROBUST_TRADEOFF':null,
-        rootAnchorIds:[...new Set((resolvable?supporting:[...rootsHere,...tradeoffs,...boundaries]).map(x=>x.rootId))].sort(),
+          validatedJoint.length?'R3_TWO_SIDED_STATIC':rootsHere.length?'R1_STATIC_DIRECTION':
+          tradeoffs.length?'R2_ROBUST_TRADEOFF':joint.length?'R3_TWO_SIDED_STATIC':null,
+        rootAnchorIds:[...new Set((resolvable?supporting:[...rootsHere,...tradeoffs,...joint,...boundaries]).map(x=>x.rootId))].sort(),
         tradeoffFamily:resolvable?(validatedProposals.length?null:validatedTradeoffs[0]?.family??null):
           tradeoffs.length?tradeoffs[0].family:null,
         priorMatchups:prior.map(x=>x.matchupId).sort(),
         explanation:resolvable?supporting[0].explanation:
           rootsHere.length?`${rootsHere.length} static directional transfer(s) proposed; applicable family validation or evidence is insufficient.`:
           tradeoffs.length?tradeoffs[0].explanation:
+          joint.length?joint[0].explanation:
           boundaries.length?'The benchmark opponent wins against a related unit; the replacement may cross the win boundary.':
           prior.length?'Only prior-engine ranking evidence or an unvalidated boundary is available.':'No validated direct anchor or transfer resolves this pair.'};
     }
@@ -604,7 +698,8 @@ function buildDecisions(inventory,evidence) {
     }
     decisions.push(decision);
   }
-  return {decisions,proposals,ruleValidation,tradeoffValidation,reasonCounts,roots:roots.length};
+  return {decisions,proposals,ruleValidation,tradeoffValidation,twoSidedValidation,
+    reasonCounts,roots:roots.length};
 }
 
 function buildExports(inventory,evidence,results) {
@@ -698,6 +793,7 @@ export function buildPhaseOne(outputDirectory,{campaignDirectories=[]}={}) {
   outputFiles.push({file:variantFile,rows:inventory.variants.length,sha256:sha(variantContent)});
   for(const [file,data] of [
     ['rule-validation.json',results.ruleValidation],['tradeoff-validation.json',results.tradeoffValidation],
+    ['two-sided-validation.json',results.twoSidedValidation],
     ['review.json',exports.review],
   ]) {
     const content=JSON.stringify(data,null,2)+'\n';
@@ -709,6 +805,7 @@ export function buildPhaseOne(outputDirectory,{campaignDirectories=[]}={}) {
   const summary={manifestHash:manifest.buildHash,coverage:exports.coverage,
     sourceGroupCounts:evidence.sourceGroupCounts,reasonCounts:results.reasonCounts,
     ruleValidation:results.ruleValidation,tradeoffValidation:results.tradeoffValidation,
+    twoSidedValidation:results.twoSidedValidation,
     uniqueNeedsSim:exports.needsSim.length,
     groupedRequirements:exports.requirements.length,
     roots:results.roots,simulationJobsRun:0};
@@ -722,6 +819,7 @@ export function buildPhaseOne(outputDirectory,{campaignDirectories=[]}={}) {
     `R1 held-out validation: ${results.ruleValidation.correct} correct predictions against ${results.ruleValidation.heldOutTargetPairs} distinct targets; ${results.ruleValidation.wrong} wrong; ${results.ruleValidation.closePredictedDecisively} close fights predicted decisively.`,
     `R2 stronger-winner validation: ${results.tradeoffValidation.modes.stronger_winner.originalTargets} original-engine and ${results.tradeoffValidation.modes.stronger_winner.correctedTargets} corrected-engine targets; ${results.tradeoffValidation.modes.stronger_winner.wrong} wrong.`,
     `R2 weaker-loser validation: ${results.tradeoffValidation.modes.weaker_loser.originalTargets} original-engine and ${results.tradeoffValidation.modes.weaker_loser.correctedTargets} corrected-engine targets; ${results.tradeoffValidation.modes.weaker_loser.wrong} wrong.`,
+    `R3 validated families: ${Object.values(results.twoSidedValidation.families).filter(x=>x.enabled).length}; wrong held-out winners: ${Object.values(results.twoSidedValidation.families).reduce((sum,x)=>sum+x.wrong,0)}.`,
     '',
     '## Britons against Aztecs',
     '',

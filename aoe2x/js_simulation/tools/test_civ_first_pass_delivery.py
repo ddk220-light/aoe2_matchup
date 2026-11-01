@@ -1,5 +1,5 @@
 import unittest
-from build_civ_first_pass_delivery import project,validate_recovery_review
+from build_civ_first_pass_delivery import project,validate_recovery_review,PATROL_PHYSICS
 from civ_prediction_first_pass import sha,canonical
 
 class DeliveryTests(unittest.TestCase):
@@ -34,5 +34,21 @@ class DeliveryTests(unittest.TestCase):
     def test_recovery_review_must_match_all_recorded_outcomes(self):
         job,records,review,row=self.fixture()
         with self.assertRaises(AssertionError):validate_recovery_review(dict(review,outcome='loss'),job,records)
+
+    def test_patrol_candidate_requires_own_physics_and_preserves_fidelity_warning(self):
+        job,records,review,row=self.fixture()
+        review.update(physicsVersion=PATROL_PHYSICS,fidelityStatus='not_game_validated')
+        with self.assertRaises(AssertionError):validate_recovery_review(review,job,records)
+        validate_recovery_review(review,job,records,PATROL_PHYSICS)
+        result=project(row,job,review)
+        self.assertEqual(result['evidenceType'],'predicted_unvalidated')
+        self.assertEqual(result['recoveryProjection']['measurementPhysicsVersion'],PATROL_PHYSICS)
+        self.assertEqual(result['recoveryProjection']['fidelityStatus'],'not_game_validated')
+        self.assertFalse(result['verified'])
+
+    def test_unknown_projection_physics_is_rejected(self):
+        job,records,review,row=self.fixture()
+        with self.assertRaises(AssertionError):project(row,job,dict(review,physicsVersion='unknown'))
+        with self.assertRaises(AssertionError):validate_recovery_review(review,job,records,'unknown')
 
 if __name__=='__main__':unittest.main()

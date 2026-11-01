@@ -14,15 +14,19 @@ from civ_prediction_first_pass import read_rows, write_rows, write_json, canonic
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RECOVERY = Path('/workspace/aoe2_civ_first_pass_parallel/aoe2x/js_simulation/calibration/campaigns/civ-matchups-first-pass-parallel-2026-11-01')
+DEFAULT_PATROL_RECOVERY = Path('/workspace/aoe2_civ_patrol_repair/aoe2x/js_simulation/calibration/campaigns/civ-matchups-patrol-first-pass-2026-11-01')
+PATROL_PHYSICS = 'collision-repair-v2-patrol-candidate-v1'
+SUPPORTED_PHYSICS = {'collision-repair-v2', PATROL_PHYSICS}
 
 
 def read_json(path):
     return json.loads(path.read_bytes())
 
 
-def validate_recovery_review(review, job, records):
+def validate_recovery_review(review, job, records, physics_version='collision-repair-v2'):
     assert review['pairKey'] == job['pairKey']
-    assert review['physicsVersion'] == 'collision-repair-v2'
+    assert physics_version in SUPPORTED_PHYSICS
+    assert review['physicsVersion'] == physics_version
     assert review['exactReplay']['passed'] is True
     assert review['inputHash'] == sha(canonical(review['seedReferences']))
     by_seed = {r['seed']: r for r in records}
@@ -48,24 +52,77 @@ def project(row, job, review):
     outcome = review['outcome']
     winner = job['profileHashes'][0 if outcome == 'win' else 1] if outcome in ('win', 'loss') else None
     canonical_outcome = ('a_win' if winner == row['profiles'][0] else 'b_win') if winner else 'close_uncertain'
+    physics = review['physicsVersion']
+    assert physics in SUPPORTED_PHYSICS
     result = dict(row, sourceOutcome=row['outcome'], sourceEvidenceType=row['evidenceType'],
         sourceContext=row.get('context'), outcome=canonical_outcome,
         evidenceType='predicted_unvalidated', verified=False, needsSim=False, needsValidation=True,
         predictionTier='repaired_engine_projection', targetPhysicsVersion='frozen-v3',
         context={'profiles':job['profileHashes'], 'counts':job['counts'],
             **{k:job[k] for k in ['weightedCosts','scenarioHash','family','engineFamily','policy']}},
-        explanation='Unvalidated V3 projection of a completed repaired-engine fight. The supporting measurements use collision-repair V2 and are stored separately.',
+        explanation=f'Unvalidated V3 projection of a completed {physics} fight. Supporting measurements are stored in a separate ledger for their own physics version.',
         reasonCodes=['unvalidated_prediction','different_engine_projection'],
         recoveryProjection={'status':'predicted_unvalidated', 'verified':False,
-            'measurementPhysicsVersion':'collision-repair-v2', 'targetPhysicsVersion':'frozen-v3',
+            'measurementPhysicsVersion':physics, 'targetPhysicsVersion':'frozen-v3',
             'ruleVersion':'first-pass-repaired-engine-projection-v1',
             'reviewSha256':sha(canonical(review)), 'seedReferences':review['seedReferences'],
             'exactRepairedReplay':review['exactReplay'],
-            'validationStatus':'not_validated_under_target_engine'})
+            'validationStatus':'not_validated_under_target_engine',
+            **({'fidelityStatus':review['fidelityStatus']} if physics==PATROL_PHYSICS else {})})
     return result
 
 
-def build(campaign, prediction_dir, recovery, output, require_complete=False):
+def load_patrol_candidate(recovery):
+    """Read only complete, reviewed own-engine seeds; diagnostics are ineligible."""
+    if not (recovery/'manifest.json').exists() or not (recovery/'pair-reviews.jsonl').exists():
+        return [], [], None
+    m=read_json(recovery/'manifest.json');repo=recovery.parents[4]
+    assert m['physicsVersion']==PATROL_PHYSICS
+    assert sha(canonical({k:v for k,v in m.items() if k!='campaignHash'}))==m['campaignHash']
+    assert m['compatibleSourceCampaigns']==[], 'candidate cannot import older physics results'
+    assert m['policy']['initialSeeds']==[0,1,2]
+    assert m['policy']['extraSeedsOnDisagreement']==list(range(3,10))
+    assert sha((recovery/'jobs.json').read_bytes())==m['jobsSha256']
+    sim=repo/'aoe2x/js_simulation'
+    fixed=[(sim/'calibration/campaigns/unit-rankings-path-recovery-2026-10-29/manifest.json','frozenInputsSha256'),
+        (sim/'calibration/campaigns/civ-matchups-v2-stream-compatibility-2026-11-01/manifest.json','parentCertificateSha256'),
+        (sim/'calibration/reports/civ-matchups-patrol-repair-2026-11-01/CANDIDATE.json','candidateSha256')]
+    for path,key in fixed:assert sha(path.read_bytes())==m[key], f'candidate source changed: {path}'
+    cert=read_json(fixed[1][0]);candidate=read_json(fixed[2][0])
+    parent_files={f['path']:f['streamSha256'] for f in cert['sharedRuntimeFiles']+cert['changedOutputFiles']}
+    assert {f['path']:f['parentV2StreamSha256'] for f in m['runtimeFiles']}==parent_files
+    for f in m['runtimeFiles']:assert sha((repo/f['path']).read_bytes())==f['sha256']
+    for f in m['orchestrationFiles']:assert sha((sim/f['path']).read_bytes())==f['sha256']
+    assert [f['path'] for f in m['runtimeFiles'] if f['sha256']!=f['parentV2StreamSha256']]==['aoe2x/js_simulation/src/combat/world.js']
+    assert next(f['sha256'] for f in m['runtimeFiles'] if f['path'].endswith('/src/combat/world.js'))==candidate['changedPhysicsFiles'][0]['candidateSha256']
+    jobs={j['id']:j for j in read_json(recovery/'jobs.json')}
+    raw=(recovery/'runs.jsonl').read_bytes();assert raw.endswith(b'\n')
+    lines=raw.splitlines();all_records=[json.loads(line) for line in lines]
+    assert len({(r['matchupId'],r['seed']) for r in all_records})==len(all_records), 'duplicate candidate seed'
+    for r in all_records:
+        assert r['campaignHash']==m['campaignHash'] and r['physicsVersion']==PATROL_PHYSICS
+        assert r['matchupId'] in jobs
+    raw=(recovery/'pair-reviews.jsonl').read_bytes();assert raw.endswith(b'\n')
+    reviews={r['matchupId']:r for r in map(json.loads,raw.splitlines())}
+    entries=[];ledger=[]
+    for review in reviews.values():
+        job=jobs[review['matchupId']];saved=[]
+        assert review['fidelityStatus']==m['fidelityStatus']
+        for reference in review['seedReferences']:
+            ref=reference['sourceReference'];assert Path(ref['path'])==recovery/'runs.jsonl', 'diagnostic/imported reference forbidden'
+            text=lines[ref['line']-1];assert sha(text)==ref['recordSha256']
+            record=json.loads(text)
+            assert record['campaignHash']==reference['campaignHash']==ref['campaignHash']==m['campaignHash']
+            assert all(record[k]==reference[k] for k in ['seed','outcome','finalStateHash','eventLogHash'])
+            saved.append(record);ledger.append({'physicsVersion':PATROL_PHYSICS,'record':record,'sourceReference':ref})
+        assert {r['seed'] for r in saved}=={r['seed'] for r in all_records if r['matchupId']==job['id']}, 'review omits saved seed'
+        validate_recovery_review(review,job,saved,PATROL_PHYSICS)
+        entries.append((job,review))
+    return entries,ledger,{'manifestSha256':sha((recovery/'manifest.json').read_bytes()),
+        'campaignHash':m['campaignHash'],'physicsVersion':PATROL_PHYSICS,'fidelityStatus':m['fidelityStatus']}
+
+
+def build(campaign, prediction_dir, recovery, output, require_complete=False, patrol_recovery=DEFAULT_PATROL_RECOVERY):
     source_manifest = read_json(prediction_dir/'manifest.json')
     for name, checksum in source_manifest['files'].items():
         assert sha((prediction_dir/name).read_bytes()) == checksum, f'prediction archive changed: {name}'
@@ -129,6 +186,12 @@ def build(campaign, prediction_dir, recovery, output, require_complete=False):
             row = by_key[job['pairKey']]
             if row['outcome'] == 'unresolved':
                 projections[row['pairKey']] = project(row, job, review)
+    patrol_entries,patrol_ledger,patrol_meta=load_patrol_candidate(patrol_recovery)
+    for job,review in patrol_entries:
+        row=by_key[job['pairKey']]
+        # Never overwrite an observed result, approved forecast or completed V2 projection.
+        if row['outcome']=='unresolved' and row['pairKey'] not in projections:
+            projections[row['pairKey']]=project(row,job,review)
     by_key.update(projections)
     for cell in cells:
         projection = projections.get(cell['pairKey'])
@@ -158,25 +221,27 @@ def build(campaign, prediction_dir, recovery, output, require_complete=False):
         'fullyValidated':False,'sourcePhase':phase,'variants':len(variants),'civPairs':1540,
         'profilePairs':len(by_key),'displayedCells':len(cells),'evidenceCounts':dict(counts),
         'unresolvedPairs':unresolved,'repairedEngineProjections':len(projections),
+        'repairedProjectionPhysicsCounts':dict(collections.Counter(r['recoveryProjection']['measurementPhysicsVersion'] for r in projections.values())),
         'remainingPredictionValidation':counts['predicted_unvalidated'],
         'predictionTiers':dict(collections.Counter(r.get('predictionTier','unspecified')
             for r in by_key.values() if r['evidenceType']=='predicted_unvalidated')),
         'predictionValidation':{k:source_summary.get(k) for k in ['screenedPredictions',
             'screenWrongOrClose','prospectivePredictions','prospectiveWrongOrClose','contestedPredictions']},
-        'scope':'Frozen V3 measurements/inferences and unvalidated predictions. Supporting repaired-engine measurements are in a separate ledger; their projection into this table is not validated under V3.',
+        'scope':'Frozen V3 measurements/inferences and unvalidated predictions. Supporting repaired-engine measurements remain in separate physics-specific ledgers; their projections are not V3 measurements. Patrol-candidate projections also retain an explicit independent game-fidelity validation gap.',
         'bulkEngineReplayRequiredForThisProvisionalExport':False}
     if require_complete:
         assert unresolved == 0, f'{unresolved} unresolved pairs remain'
     write_rows(output/'profile-table.jsonl.gz',list(by_key.values()))
     write_rows(output/'civilization-table.jsonl.gz',cells)
     write_rows(output/'repaired-evidence-ledger.jsonl.gz',[ledger[k] for k in sorted(ledger)])
+    write_rows(output/'patrol-candidate-evidence-ledger.jsonl.gz',patrol_ledger)
     write_json(output/'variant-profiles.json',variants)
     write_json(output/'summary.json',summary)
-    write_json(output/'manifest.json',{'version':'provisional-first-pass-delivery-v1',
+    write_json(output/'manifest.json',{'version':'provisional-first-pass-delivery-v2',
         'predictionArchiveManifestSha256':sha((prediction_dir/'manifest.json').read_bytes()),
-        'sourcePhaseReviewSha256':sha(review_path.read_bytes()),'recovery':recovery_meta,
+        'sourcePhaseReviewSha256':sha(review_path.read_bytes()),'recovery':recovery_meta,'patrolRecovery':patrol_meta,
         'builderSha256':sha(Path(__file__).read_bytes()),'files':{name:sha((output/name).read_bytes()) for name in
-        ['profile-table.jsonl.gz','civilization-table.jsonl.gz','repaired-evidence-ledger.jsonl.gz','variant-profiles.json','summary.json']}})
+        ['profile-table.jsonl.gz','civilization-table.jsonl.gz','repaired-evidence-ledger.jsonl.gz','patrol-candidate-evidence-ledger.jsonl.gz','variant-profiles.json','summary.json']}})
     return summary
 
 
@@ -184,4 +249,5 @@ if __name__ == '__main__':
     p=argparse.ArgumentParser();p.add_argument('--campaign',type=Path,required=True)
     p.add_argument('--prediction-dir',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--recovery',type=Path,default=DEFAULT_RECOVERY);p.add_argument('--require-complete',action='store_true')
-    args=p.parse_args();print(json.dumps(build(args.campaign,args.prediction_dir,args.recovery,args.output,args.require_complete)))
+    p.add_argument('--patrol-recovery',type=Path,default=DEFAULT_PATROL_RECOVERY)
+    args=p.parse_args();print(json.dumps(build(args.campaign,args.prediction_dir,args.recovery,args.output,args.require_complete,args.patrol_recovery)))

@@ -27,6 +27,23 @@ original campaign hashes. The projection into the V3 first-pass table is
 source/target physics versions. It is never a measured V3 result. Failed or
 missing seeds cannot produce a projection.
 
+Two Guecha matchups also expose a separate patrol endpoint bug: survivors
+reach opposite destinations and idle out of sight indefinitely. The existing
+generic patrol-loop prototype is frozen in the targeted campaign
+`civ-matchups-patrol-first-pass-2026-11-01` on branch
+`simulations/civ-matchups-patrol-repair-2026-11-01`. It recomputes the complete
+required seed sets for only those two pairs and independently repeats one
+seed per pair. It imports no V2/V3 outcomes or diagnostic results.
+
+This is a distinct physics version, `collision-repair-v2-patrol-candidate-v1`.
+Its records are bundled separately in `patrol-candidate-evidence-ledger.jsonl.gz`;
+they never enter the V2 ledger. Its table projections remain
+`predicted_unvalidated` and retain the explicit limitation that late-patrol
+behavior has not been independently validated against game captures. The
+exporter checks all 62 source files against the parent certificate and frozen
+candidate; only `world.js` is allowed to differ. This targeted recovery does
+not retrain forecasts or require bulk engine replay.
+
 The forecast model, frozen prediction file, and rule hashes are unchanged.
 Some derived inference suggestions reversed physical orientation between
 phases. Dropping an existing forecast merely because that suggestion changed
@@ -55,3 +72,5 @@ distinct physics ledgers, all 555 variants / 1,540 civ pairs / 151,223 cells /
 referenced source checkpoints, report its evidence counts and unvalidated
 forecast work, and disable the first-pass automation. Do not start exhaustive
 prediction validation or resume bulk engine replay without the next discussion.
+The default `--patrol-recovery` reads the separately versioned two-pair
+campaign. Unfinished or unreviewed candidate pairs cannot fill a table gap.

@@ -37,7 +37,13 @@ parentPort.on('message',async({id,job,maxTicks})=>{
       byOwner[owner].units++;
       byOwner[owner].hp+=unit.hp;
     }
-    timeline.push({tick:current.tick,seconds:current.tick/60,byOwner});
+    const positions=current.units.filter(unit=>unit.alive).map(unit=>({
+      id:unit.referenceId,owner:unit.owner,x:unit.x,y:unit.y,
+      action:unit.action,pursuitTargetId:unit.pursuitTargetId,
+      engagedTargetId:unit.engagedTargetId,
+    }));
+    timeline.push({tick:current.tick,seconds:current.tick/60,byOwner,
+      positions,eventCounts:{...eventCounts}});
     parentPort.postMessage({id,progress:{tick:current.tick,simulationSeconds:current.tick/60}});
   };
   try{parentPort.postMessage({id,result:await runHeadlessJob(job),diagnostic:{timeline,eventCounts}});}

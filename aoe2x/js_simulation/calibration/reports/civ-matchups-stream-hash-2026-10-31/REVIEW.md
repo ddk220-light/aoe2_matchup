@@ -24,8 +24,13 @@ collision-repair plus streaming-hash source: Celtic Paladins won at tick
 2,720 starting HP remaining. The run took 2,013.7 wall seconds. Its
 final-state hash is `bf4af0b3912023ab83f9771339aa4112d78902fdc8ebc503e73f7bc40f20a279`
 and event-log hash is `7c7fd690aee9127c8900677dea991f02e42bb7de15173323daf4e6cf69da54eb`.
-A second replay with read-only HP and event-count samples is in progress to
-confirm exact hashes and explain why this otherwise decisive fight lasts so
-long. Neither diagnostic result belongs in a frozen campaign journal. Any
+A second replay confirmed the exact same winner, tick count, final-state hash,
+and event-log hash. Its 100-second HP samples show that 26 of 27 skirmishers
+die by game second 100; one remains at its full 50 HP until after second 2,900
+while slowly damaging Paladins. The event log contains 2,536,676 `blocked`
+events, 1,024,647 persistent contact reservations, and 294,829 pursuit
+retarget requests. A further isolated replay will sample positions and target
+state to identify the prolonged movement lock. Neither diagnostic result
+belongs in a frozen campaign journal. Any
 later campaign using this output version must record its runtime hashes and
 validate evidence provenance.

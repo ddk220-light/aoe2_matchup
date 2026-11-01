@@ -126,15 +126,46 @@ function selectPhase(state,jobs,saved){
   const blocked=new Set(state.blockedPairs??[]);
   const degree=new Map();
   for(const p of unresolved)for(const h of p.profiles)degree.set(h,(degree.get(h)??0)+1);
-  const candidates=unresolved.filter(p=>!blocked.has(p.pairKey)&&required(jobs.get(p.pairKey),saved).length).sort((a,b)=>{
+  let policy=null,proposed=[];
+  let skipped=new Set();
+  if(state.completedPhases.length>=20){
+    const result=JSON.parse(command('python3',['aoe2x/js_simulation/tools/select_civ_phase.py',
+      '--phase',String(state.completedPhases.length)],{maxBuffer:16*1024*1024}));
+    assert.equal(result.sourcePhase,state.completedPhases.length);
+    assert.equal(result.policyVersion,'common-c-adaptive-v1');
+    const unresolvedKeys=new Set(unresolved.map(p=>p.pairKey));
+    skipped=new Set(result.skippedVerifiedEstimateKeys);
+    assert.equal(skipped.size,result.skippedVerifiedEstimateKeys.length);
+    assert([...skipped].every(k=>unresolvedKeys.has(k)));
+    assert(result.selected.every(r=>unresolvedKeys.has(r.pairKey)&&!skipped.has(r.pairKey)));
+    proposed=result.selected;
+    policy={version:result.policyVersion,sourcePhase:result.sourcePhase,
+      archiveManifestSha256:result.archiveManifestSha256,
+      skippedVerifiedEstimates:skipped.size,
+      verifiedFamilies:result.verifiedFamilies,disabledFamilies:result.disabledFamilies};
+  }
+  const candidates=unresolved.filter(p=>!blocked.has(p.pairKey)&&!skipped.has(p.pairKey)
+    &&required(jobs.get(p.pairKey),saved).length).sort((a,b)=>{
     const value=p=>(p.candidateOutcome?100000:0)+(degree.get(p.profiles[0])??0)
       +(degree.get(p.profiles[1])??0)+p.aliases*10;
     return value(b)-value(a)||a.pairKey.localeCompare(b.pairKey);
   });
-  if(!candidates.length)return {unresolved:unresolved.length,selected:[]};
+  if(!candidates.length)return {unresolved:unresolved.length,selected:[],policy};
   const size=state.completedPhases.length?256:128;
-  const selected=candidates.slice(0,size).map(p=>p.pairKey);
-  return {unresolved:unresolved.length,selected};
+  const eligible=new Set(candidates.map(p=>p.pairKey));
+  const selected=[],kinds={};
+  for(const row of proposed){
+    if(!eligible.has(row.pairKey)||selected.includes(row.pairKey))continue;
+    selected.push(row.pairKey);kinds[row.pairKey]=row.kind;
+    if(selected.length===size)break;
+  }
+  for(const row of candidates){
+    if(selected.length===size)break;
+    if(!selected.includes(row.pairKey)){
+      selected.push(row.pairKey);kinds[row.pairKey]='fallback_unresolved';
+    }
+  }
+  return {unresolved:unresolved.length,selected,policy,kinds};
 }
 async function pushCheckpoint(state,saved,phaseLabel,{final=false}={}){
   const branch='simulations/civ-matchups-campaign-2026-10-31';
@@ -305,7 +336,7 @@ async function main(){
         }
         const id=String(state.completedPhases.length+1).padStart(3,'0');
         plan={id,pairKeys:next.selected,selectedAt:now(),sourceInferenceHash:load(resolve(INFERENCE,'manifest.json')).buildHash,
-          unresolvedBefore:next.unresolved};
+          unresolvedBefore:next.unresolved,...(next.policy?{selectionPolicy:next.policy,selectionKinds:next.kinds}:{})};
         json(resolve(DIR,'phases',`${id}.json`),plan);
         state.activePhase=id;progress(state,saved,0);
       }

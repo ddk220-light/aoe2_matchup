@@ -118,6 +118,12 @@ class PredictionPolicyTests(unittest.TestCase):
             self.assertEqual(cell['outcome'],'b_win')
             self.assertEqual(cell['sourceOutcome'],'unresolved')
             self.assertEqual(result['summary']['predictedPairs'],1)
+            # A remaining blocked case must not trigger endless sampling of
+            # already covered forecasts while the recovery campaign works.
+            self.assertEqual(result['summary']['completionState'],'waiting_blocked_recovery')
+            self.assertEqual(result['summary']['predictionSampleBudget'],0)
+            self.assertEqual(result['selected'],[])
+            self.assertEqual(result['deferredPredictionKeys'],['prediction'])
             self.assertEqual(source_hashes,{name:sha((inf/name).read_bytes()) for name in names})
             # A related forecast failure is visible and prioritized, not
             # silently converted into proof or a family-wide deletion.

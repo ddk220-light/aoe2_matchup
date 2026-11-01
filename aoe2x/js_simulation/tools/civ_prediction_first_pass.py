@@ -305,7 +305,14 @@ def plan(campaign, policy, phase, output, forbidden=()):
         else:
             result['needsValidation'] = False
         overlay.append(result)
-    selected = select_probes(eligible, tests, manifest['validationSamplePerPhase'])
+    # The first pass ends after the non-predicted gaps, not after validating
+    # every deferred prediction. Stop sampling when only blocked recovery
+    # cases remain, and scale down the sample in the final partial phase.
+    direct_gaps = [r for r in overlay if r['outcome'] == 'unresolved']
+    runnable_gaps = [r for r in direct_gaps if r['pairKey'] not in blocked]
+    sample_budget = min(manifest['validationSamplePerPhase'],
+                        (len(runnable_gaps) + 6) // 7)
+    selected = select_probes(eligible, tests, sample_budget)
     probe_keys = {r['pairKey'] for r in selected}
     deferred = [r['pairKey'] for r in overlay if r['evidenceType'] == 'predicted_unvalidated'
                 and r['pairKey'] not in probe_keys]
@@ -319,6 +326,11 @@ def plan(campaign, policy, phase, output, forbidden=()):
         'predictedCells': sum(r['aliases'] for r in overlay if r['evidenceType']=='predicted_unvalidated'),
         'predictionCoverageOfRemaining': predicted / source_unresolved if source_unresolved else 0,
         'remainingNeedsDirectResult': source_unresolved - predicted,
+        'runnableDirectGaps': len(runnable_gaps),
+        'selectionVersion': 'first-pass-completion-v1',
+        'predictionSampleBudget': sample_budget,
+        'completionState': ('running_gaps' if runnable_gaps else
+            'waiting_blocked_recovery' if direct_gaps else 'ready_for_final_checks'),
         'blockedPairs': len(blocked), 'selectedValidationSamples': len(selected),
         'observedPairs': counts['observed'], 'inferredPairs': counts['inferred'],
         'predictedByTier': dict(collections.Counter(r['predictionTier'] for r in overlay

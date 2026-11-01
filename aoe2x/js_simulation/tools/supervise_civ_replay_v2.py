@@ -55,6 +55,9 @@ def main():
         while not (CAMPAIGN / ".stop-supervisor").exists():
             state = read_json(CAMPAIGN / "state.json")
             source = read_json(SOURCE / "state.json")
+            if state.get("status") == "paused_for_first_pass":
+                event("deferredByUser", savedReplays=state.get("savedReplays"))
+                return
             pid = state.get("pid")
             lock_pid = None
             if (CAMPAIGN / ".runner.lock").exists():

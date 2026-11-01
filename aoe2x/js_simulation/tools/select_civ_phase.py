@@ -90,6 +90,8 @@ def main():
             for family, result in sorted(refinement["verifiedRules"].items())
             for row in result["eligibleSkipDecisions"]]
         assert len({row["pairKey"] for row in refined_skip_rows}) == len(refined_skip_rows)
+        refined_skip_rows = [row for row in refined_skip_rows
+            if row["pairKey"] not in proposal["skippedVerifiedEstimateKeys"]]
         original_size = len(proposal["selected"])
         forbidden = set(proposal["skippedVerifiedEstimateKeys"])
         forbidden.update(proposal["deferredPathingHazardKeys"])

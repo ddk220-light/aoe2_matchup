@@ -41,13 +41,18 @@ for (const entry of v2.runtimeFiles) {
 assert.deepEqual(new Set(changed.map(x => x.path)), outputPaths,
   'unexpected runtime change beyond canonical JSON and fight output hashing');
 const sharedRuntimeSha256 = hashCanonicalJson(shared);
+const saved = process.argv.includes('--verify') ? readJson(out) : null;
+if (saved) {
+  assert.equal(execFileSync('git', ['merge-base', '--is-ancestor',
+    saved.streamSourceCommit, 'HEAD'], {cwd: root}).length, 0);
+}
 const body = {
   schemaVersion: 1,
   name: 'civ-matchups-v2-stream-compatibility-2026-11-01',
   v2ManifestPath: relative(v2Root, v2ManifestPath),
   v2CampaignHash: v2Hash,
   v2SourceCommit: v2.sourceCommit,
-  streamSourceCommit: git('rev-parse', 'HEAD'),
+  streamSourceCommit: saved?.streamSourceCommit ?? git('rev-parse', 'HEAD'),
   referenceDbSha256: v2.referenceDbSha256,
   engineConfig: v2.engineConfig,
   simulationEnvironment: v2.simulationEnvironment,
@@ -66,7 +71,6 @@ const body = {
 const manifest = {...body, campaignHash: hashCanonicalJson(body)};
 if (process.argv.includes('--verify')) {
   assert(existsSync(out), 'compatibility manifest missing');
-  const saved = readJson(out);
   assert.deepEqual(saved, manifest, 'compatibility manifest drift');
   console.log(JSON.stringify({verified: true, campaignHash: manifest.campaignHash,
     sharedRuntimeFiles: shared.length, changedOutputFiles: changed.length}));

@@ -17,3 +17,9 @@ Separate performance experiments are on `simulations/civ-matchups-path-cache-202
 ## Artifacts and limits
 
 `kona-seed0-stream.jsonl` records 10-game-second snapshots through second 80 before its 180-wall-second watchdog. `kona-seed0-profile40.*` records the bounded CPU profile. `kona-seed1-control.*` is the completed exact-output observer control. None belongs in the frozen campaign journal. The full failed seed remains unresolved.
+
+## Elephant recovery, seed 1
+
+The failed Mapuche Imperial Elite Skirmisher versus Bengali Elite Elephant seed received a fresh, read-only, bounded diagnostic through 150 game seconds (`elephant-seed1-stream.*`). By game second 60, skirmisher 9008 is alone at 16 HP near (15.0101, 6), against 15 elephants. The skirmisher stays at 16 HP through second150, while elephant total HP decreases from 4,575.3 to 4,536.9. It can fire out of the forest pocket while elephants repeatedly replan routes; this is an extremely slow ongoing fight, not a demonstrated stalemate. At second150 the closest inspected elephant has physical gap0.369 and outline gap0.119, outside the attack envelope. The observation ends at the diagnostic tick cap, with no combat result. Both prior 3600/7200 wall watchdogs remain failed attempts.
+
+The independent static-memo Kona attempt later failed with ERR_WORKER_OUT_OF_MEMORY at tick196284 (3,271.4 game seconds) after6,971.6 wall seconds. It retained the full event object array despite streaming the final JSON hash. An isolated incremental event-hash implementation is being tested on branch `simulations/civ-matchups-event-stream-2026-11-02`; no old outcomes are imported and no failed seed is relabeled.

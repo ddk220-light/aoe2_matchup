@@ -127,3 +127,9 @@ The phase-044 full-grid preview reconciles 555 variants, 1,540 civilization pair
 Phase 045 passed all 256 pairs, 803 valid seed records, zero missing seeds and its independent exact replay. It introduced no new errors or recovery inventory. The main runner and existing supervisor continue phase 046 without a restart.
 
 The phase-045 full-grid preview reconciles 555 variants, 1,540 civilization pairs, 151,223 cells and 68,916 profile pairs: 11,579 observed, 11,155 inferred, 45 equivalent, 45,993 flagged predictions and 144 unresolved gaps. The 19 reviewed repaired projections account for all recorded source blockers, preserving separate native physics ledgers and explicit fidelity limitations. Phase 046 includes all 144 current ordinary gaps plus the existing sample scaled down to 21 prediction checks. It is not a sampling-only second pass. Forecast rules, physical contexts, failures and validation flags remain unchanged; no recovery is active and completion is not yet claimed.
+
+## Phase 046 passed; phase 047 running
+
+Phase 046 passed all 165 planned pairs, 516 valid seed records, zero missing seeds and its independent exact replay. The frozen evidence rebuild left 24 ordinary direct gaps; phase 047 is simulating those with four existing prediction checks. No forecast rule was expanded and no new blocker or recovery inventory was introduced.
+
+The phase-046 full-grid preview reconciles 555 variants, 1,540 civilization pairs, 151,223 cells and 68,916 profile pairs: 11,744 observed, 11,192 inferred, 45 equivalent, 45,911 flagged predictions and 24 unresolved gaps. All 46 phase reviews and required seed sets passed source accounting. The 31 historical missing V3 seeds remain explicitly missing in their original journals; their 19 source pairs have complete reviewed recovery support only as flagged cross-engine projections. Native physics and game-fidelity limitations remain separate. This is still an in-progress provisional preview.

@@ -44,6 +44,29 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def phase_provenance(source, phase, latest_eligible_phase):
+    metadata = {"sourcePhase": latest_eligible_phase,
+                "latestEligibleObservationPhase": latest_eligible_phase}
+    if phase is None:
+        return metadata
+    state = load(source / "adaptive/state.json")
+    assert f"{phase:03d}" in state["completedPhases"], "source phase is not reviewed"
+    review_path = source / "adaptive/phases" / f"{phase:03d}-review.json"
+    review = load(review_path)
+    assert review["status"] in ("passed", "complete_with_blocked")
+    manifest_path = source / "latest-inference/manifest.json"
+    snapshot_phases = [int(Path(item["path"]).stem)
+                       for item in load(manifest_path)["sourceFiles"]
+                       if "/adaptive/runs/" in item["path"]
+                       and Path(item["path"]).suffix == ".jsonl"
+                       and Path(item["path"]).stem.isdigit()]
+    assert max(snapshot_phases, default=0) == phase, "inference snapshot phase mismatch"
+    assert latest_eligible_phase is None or latest_eligible_phase <= phase
+    metadata.update(sourcePhase=phase, sourceReviewSha256=sha(review_path),
+                    sourceInferenceManifestSha256=sha(manifest_path))
+    return metadata
+
+
 def rows(path):
     with gzip.open(path, "rt") as source:
         yield from map(json.loads, source)
@@ -101,6 +124,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, default=CAMPAIGN)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--phase", type=int, help="fully reviewed source snapshot phase")
     args = parser.parse_args()
     source = args.source
     definition = load(DEFINITION)
@@ -177,9 +201,11 @@ def main():
         elif row["outcome"] == "unresolved":
             unresolved_rows[family].append(item)
 
+    latest_eligible_phase = max(
+        (r["phase"] for group in family_rows.values() for r in group), default=None)
     report = {"kind": "read-only conditional common-C rule refinement audit",
         "status": "candidate rules only; never skip live fights from this report",
-        "sourcePhase": max((r["phase"] for group in family_rows.values() for r in group), default=None),
+        **phase_provenance(source, args.phase, latest_eligible_phase),
         "families": {}, "sourceHashes": {
             "inference": sha(source / "latest-inference/profile-matchups.jsonl.gz"),
             "rankingRuns": sha(RANK / "runs.jsonl"),

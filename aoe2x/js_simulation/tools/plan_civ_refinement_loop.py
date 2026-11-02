@@ -73,9 +73,12 @@ def main():
                           "verifiedRules": len(saved["verifiedRules"]), "reused": True}))
         return
     subprocess.run(["python3", str(AUDIT), "--source", str(args.source),
-                    "--output", str(audit_path)], check=True, stdout=subprocess.DEVNULL)
+                    "--output", str(audit_path), "--phase", str(args.phase)],
+                   check=True, stdout=subprocess.DEVNULL)
     audit = load(audit_path)
     assert audit["sourcePhase"] == args.phase, (audit["sourcePhase"], args.phase)
+    assert audit["sourceReviewSha256"] == sha(
+        args.source / "adaptive/phases" / f"{args.phase:03d}-review.json")
     previous_path = args.archive_root / f"{args.phase-1:03d}.json"
     previous = load(previous_path)["rules"] if previous_path.exists() else {}
     rules = {}

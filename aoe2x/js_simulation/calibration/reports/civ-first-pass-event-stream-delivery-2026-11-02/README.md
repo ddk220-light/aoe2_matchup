@@ -137,3 +137,9 @@ The phase-046 full-grid preview reconciles 555 variants, 1,540 civilization pair
 ## Phase 047 passed; phase 048 running
 
 Phase 047 passed all 28 planned pairs, 84 valid seed records, zero missing seeds and its exact replay. The full-grid preview contains 11,772 observed, 11,197 inferred, 45 equivalent, 45,897 flagged predictions and five unresolved profile pairs, with all matrix dimensions unchanged. All 47 phase reviews pass required-seed accounting, and the independent inference source/coverage validator passes. Phase 048 is simulating the five remaining ordinary gaps and one existing prediction check; no model expansion or second validation pass was started. Historical missing V3 seeds and the 19 separate reviewed projections remain preserved.
+
+## Phase-048 audit provenance repair
+
+Phase 048 passed all six pairs, 18 valid seeds, zero missing seeds and its exact replay. Its common-opponent audit had no eligible observations from phase 048, so it incorrectly labeled the reviewed snapshot with its latest eligible observation phase, 047. The planner correctly rejected that mismatch. The existing supervisor resumed the saved runner; no completed fight was rerun and all 38,405 source seeds remained preserved.
+
+The audit now accepts the reviewed phase explicitly, verifies its completed review and inference source-file snapshot, and records `latestEligibleObservationPhase` separately. The planner still enforces the phase and review hashes. Four regression tests cover a phase with no eligible observations, an empty eligible set, and rejected unreviewed, stale or future sources; the ten delivery tests also pass. No family rule, forecast pool or physics file changes. The failed audit is retained in `phase048-audit-before-metadata-fix.json.gz`, with hashes and repair scope in `phase048-audit-metadata-repair.json`.

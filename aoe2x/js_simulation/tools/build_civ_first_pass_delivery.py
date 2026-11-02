@@ -26,6 +26,7 @@ DEFAULT_EXTRA_EVENT_STREAM_RECOVERIES = (
     Path('/workspace/aoe2_civ_phase038_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase038-stream-first-pass-2026-11-02'),
     Path('/workspace/aoe2_civ_phase039_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase039-stream-first-pass-2026-11-02'),
     Path('/workspace/aoe2_civ_phase040_early_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase040-early-stream-first-pass-2026-11-02'),
+    Path('/workspace/aoe2_civ_phase040_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase040-stream-first-pass-2026-11-02'),
 )
 DEFAULT_STATIC_MEMO_RECOVERY = Path('/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/calibration/campaigns/civ-matchups-static-memo-first-pass-2026-11-02')
 SUPPORTED_PHYSICS = {'collision-repair-v2', PATROL_PHYSICS, STATIC_MEMO_PHYSICS, EVENT_STREAM_PHYSICS, TERMINAL_GOAL_PHYSICS}

@@ -1,7 +1,8 @@
 // Read-only snapshots persisted during execution, including before a watchdog.
 import {parentPort} from 'node:worker_threads';
 import {registerHooks} from 'node:module';
-import {openSync,appendFileSync,fsyncSync,closeSync} from 'node:fs';
+import {openSync,appendFileSync,fsyncSync,closeSync,writeFileSync} from 'node:fs';
+import {Session} from 'node:inspector';
 
 registerHooks({load(url,context,nextLoad){
   const result=nextLoad(url,context);
@@ -21,6 +22,9 @@ registerHooks({load(url,context,nextLoad){
 const {runHeadlessJob}=await import('./run-job.mjs');
 const {collisionRadius,outlineRadius,isWithinReach}=await import('../src/combat/targeting.js');
 parentPort.on('message',async({id,job,maxTicks})=>{
+  let profiler=null;
+  const post=(method)=>new Promise((resolve,reject)=>profiler.post(method,(error,result)=>error?reject(error):resolve(result)));
+  if(job.diagnostic.profilePath){profiler=new Session();profiler.connect();await post('Profiler.enable');await post('Profiler.start');}
   const fd=openSync(job.diagnostic.timelinePath,'wx'),eventCounts={};
   const start=performance.now();let samples=0;
   globalThis.__recoveryDiagnosticMaxTicks=maxTicks;
@@ -49,7 +53,11 @@ parentPort.on('message',async({id,job,maxTicks})=>{
     fsyncSync(fd);samples++;
     parentPort.postMessage({id,progress:{tick:current.tick,simulationSeconds:current.tick/60,samples}});
   };
-  try{parentPort.postMessage({id,result:await runHeadlessJob(job),diagnostic:{samples,eventCounts}});}
-  catch(e){parentPort.postMessage({id,error:{name:e.name,message:e.message,stack:e.stack},diagnostic:{samples,eventCounts}});}
-  finally{closeSync(fd);}
+  let message;
+  try{message={id,result:await runHeadlessJob(job),diagnostic:{samples,eventCounts}};}
+  catch(e){message={id,error:{name:e.name,message:e.message,stack:e.stack},diagnostic:{samples,eventCounts}};}
+  finally{closeSync(fd);
+    if(profiler){const {profile}=await post('Profiler.stop');writeFileSync(job.diagnostic.profilePath,JSON.stringify(profile)+'\n');profiler.disconnect();}
+  }
+  parentPort.postMessage(message);
 });

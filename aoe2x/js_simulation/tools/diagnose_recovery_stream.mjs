@@ -10,7 +10,7 @@ import {hashCanonicalJson as digest} from '../src/canonical-json.js';
 
 const {values:a}=parseArgs({options:{matchup:{type:'string'},seed:{type:'string',default:'0'},
   name:{type:'string'},ticks:{type:'string',default:'9000'},wall:{type:'string',default:'180'},
-  'sample-ticks':{type:'string',default:'600'},'completed-control':{type:'boolean',default:false}}});
+  'sample-ticks':{type:'string',default:'600'},profile:{type:'boolean',default:false},'completed-control':{type:'boolean',default:false}}});
 const sim=resolve(import.meta.dirname,'..'),root=resolve(sim,'../..');
 const campaign=resolve(sim,'calibration/campaigns/civ-matchups-first-pass-parallel-2026-11-01');
 const out=resolve(sim,'calibration/reports/civ-recovery-stream-diagnostics-2026-11-02');
@@ -42,6 +42,7 @@ let pool;
 try{
   const stem=a.name??`${job.id}-seed${seed}`;assert(/^[a-zA-Z0-9_-]+$/.test(stem));
   const timelinePath=resolve(out,stem+'.jsonl'),reportPath=resolve(out,stem+'.json');
+  const profilePath=a.profile?resolve(out,stem+'.cpuprofile'):null;
   assert(!existsSync(timelinePath)&&!existsSync(reportPath),'never overwrite a diagnostic');
   const frozen=load(frozenPath),scenario=frozen.scenarios[job.scenarioHash];assert(scenario);
   assert.equal(digest(scenario),job.scenarioHash);
@@ -49,7 +50,7 @@ try{
   const startedAt=new Date().toISOString(),start=performance.now();
   const message=await pool.run({jobId:job.id,seed,teams:job.teamKeys.map((k,i)=>({mechanics:frozen.profiles[k].mechanics,count:job.counts[i]})),
     scenario,disableAiOrders:true,disableKiting:true,preserveOwnerOrientation:true,retainSnapshots:false,
-    diagnostic:{timelinePath,sampleTicks}},wall);
+    diagnostic:{timelinePath,sampleTicks,profilePath}},wall);
   await pool.close();pool=null;
   const timeline=existsSync(timelinePath)?readFileSync(timelinePath,'utf8'):'';
   const samples=timeline.trim()?timeline.trimEnd().split('\n').map(JSON.parse):[];
@@ -61,6 +62,7 @@ try{
     matchupId:job.id,seed,teamKeys:job.teamKeys,counts:job.counts,scenarioHash:job.scenarioHash,
     maxTicks,sampleTicks,wallLimit:wall,timelinePath,timelineSha256:existsSync(timelinePath)?sha(timelinePath):null,
     samples:samples.length,lastSample:samples.at(-1)?.seconds??null,message,exactControlParity:parity};
+  report.profilePath=profilePath;report.profileSha256=profilePath&&existsSync(profilePath)?sha(profilePath):null;
   writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify({reportPath,samples:report.samples,lastSample:report.lastSample,
     watchdog:message.watchdog??false,error:message.error??null,exactControlParity:parity}));

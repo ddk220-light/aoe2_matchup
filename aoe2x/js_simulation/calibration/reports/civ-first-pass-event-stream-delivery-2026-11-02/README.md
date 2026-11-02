@@ -23,3 +23,11 @@ The full-grid preview reconciles555 variants,1540 civilization pairs,151223 cell
 `phase036-classification-transitions.json` explains why the gap count grew: the normal evidence rebuild returned1672 previously inferred rows to unresolved;473 other formerly inferred rows are now flagged predictions under the existing frozen policy. New measurements covered224 previous gaps and32 existing predictions. No rules were retrained or expanded to reverse these changes. Previously unsupported conclusions are not promoted merely to reduce the queue.
 
 Only the preview summary and file hashes are published; full preview tables remain disposable local outputs reproducible from immutable phase036 sources. The final complete bundle must be published after zero gaps and all required reviews, without starting exhaustive forecast validation or modifying the web app.
+
+## Phase037 reviewed checkpoint
+
+Phase 037 passed all 256 pairs and 796 valid seeds, with zero missing seeds and an exact replay. The read-only `phase037-check.json` verifies all 62 frozen runtime files, inventory hashes and 31,353 unique valid pilot/adaptive journal records at its snapshot. Phase 038 continues through the existing supervisor.
+
+The original parallel recovery has now stopped safely as blocked after its final 7,200-wall-second patrol timeout. Its nine complete repaired-V2 pairs passed exact replay review; the other four missing seeds are not measurements. The separate completed patrol candidate covers two of those pairs only as provisional projections. The event-memory campaign is still recomputing the remaining Kona/Elephant pairs and contributes nothing until each complete seed set passes review.
+
+`preview-phase037/summary.json` reconciles 555 variants, 1,540 civilization pairs, 151,223 displayed cells and 68,916 profile pairs: 9,537 observed, 10,173 inferred, 45 equivalent, 47,203 flagged predictions and 1,958 unresolved gaps. The predictions include nine repaired-V2 and two patrol-candidate projections. All measurements stay in their own physics ledgers. This is a progress preview, not a completed or fully validated dataset. Its summary and file hashes are published; full disposable preview tables remain local until the final complete bundle is built.

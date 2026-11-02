@@ -9,3 +9,9 @@ Prototype v1 checked continuous start positions against rounded grid cells; 24 r
 The minimal candidate passes 25 routing tests, covering the melee and projectile stop metrics and unchanged ordinary waypoint smoothing. Its nine world-tick failures exactly match the frozen baseline; there are no new failures in that suite. Complete Kona and Elephant controls preserve winners but change ticks/hashes; this is intentionally different physics and must stay separate from old V2/V3 records. The initial bounded Kona result and all controls are diagnostics only.
 
 The separately frozen `civ-matchups-terminal-goal-first-pass-2026-11-02` campaign recomputes all required Kona seeds, followed by an exact replay of seed 0. Only a complete reviewed set can support an explicitly unvalidated first-pass cross-engine projection. Independent game-fidelity validation remains open.
+
+## Completed targeted recovery
+
+All three fresh Kona seeds completed as Mapuche wins at ticks 1785, 2159 and 1742. Seed 0 passed its independent exact replay; its final-state and event-log hashes also match the earlier bounded v3 diagnostic. The diagnostic is not a campaign record. All 62 frozen runtime hashes pass verification. Campaign hash: `ad724f10cc4d74e11d53e43ebd4e6860a29c247fa6c4b21161f080afff63c2aa`.
+
+This completes only the targeted candidate inventory. Its single table projection must remain `predicted_unvalidated`, with native observations in the separate terminal-goal ledger. Independent game-fidelity validation remains open; no broad replay or forecast validation is authorized by this result. Do not restart the completed runner.

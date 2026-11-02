@@ -47,7 +47,7 @@ parentPort.on('message',async({id,job,maxTicks})=>{
     });
     appendFileSync(fd,JSON.stringify({tick:current.tick,seconds:current.tick/60,
       wallSeconds:(performance.now()-start)/1000,byOwner,positions,eventCounts:{...eventCounts},
-      cacheStatistics:chasePath.persistentNoRouteCacheStats?.()??null})+'\n');
+      reachabilityStatistics:chasePath.persistentReachabilityStats?.()??null})+'\n');
     fsyncSync(fd);samples++;
     parentPort.postMessage({id,progress:{tick:current.tick,simulationSeconds:current.tick/60,samples}});
   };

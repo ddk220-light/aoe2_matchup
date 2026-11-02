@@ -30,10 +30,10 @@ import {
   resolvePairInteraction,
 } from "./pair-interactions.js";
 import { areAllies, areOpponents } from "./diplomacy.js";
-import { ExactNoRouteCache } from "./no-route-cache.js";
+import { gridReachability } from "./grid-reachability.js";
 
-const noRouteCache = new ExactNoRouteCache();
-export function persistentNoRouteCacheStats() { return noRouteCache.statistics(); }
+const reachabilityStats = {checks:0,rejected:0,expanded:0};
+export function persistentReachabilityStats() { return {...reachabilityStats}; }
 
 const CELL_TILES = 0.25;
 // One waypoint this far along the path (in cells) is handed to the walker.
@@ -587,20 +587,6 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
     blocked, congestion, cols, startX, startY, targetX, targetY,
   )) return null;
 
-  // Reuse only an exhaustive negative search over the identical directed
-  // reachability graph and goal set. Never cache positive paths, budget exits,
-  // rounded physical positions, or approximated collision clearances.
-  let noRouteKey = null;
-  if (cols * rows <= MAX_EXPANSIONS) {
-    const goals = new Uint8Array(cols * rows);
-    for (let index = 0; index < goals.length; index += 1) {
-      goals[index] = Number(inGoalEnvelope(index % cols, Math.floor(index / cols), target, stopSpec));
-    }
-    noRouteKey = noRouteCache.key(cols, rows, startIndex,
-      [hardBlocked, crowdBlocked, alliedOccupancy, alliedHardOccupancy, goals]);
-    if (noRouteCache.has(noRouteKey)) return Object.freeze({ stand: true });
-  }
-
   const gScore = new Map([[startIndex, 0]]);
   const cameFrom = new Map();
   const closed = new Set();
@@ -620,6 +606,19 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
     if (!crowdBlocked[fromIndex]) return false;
     return crowdPressure(toIndex) <= crowdPressure(fromIndex);
   };
+  // A linear graph traversal proves impossible routes without heap/Map cost.
+  // It uses the original goal-cell predicate, directed crowd constraints and
+  // diagonal corner rules. Positive cases still run the unchanged weighted
+  // A* below, preserving its exact tie breaking and chosen waypoint sequence.
+  if (cols * rows <= MAX_EXPANSIONS) {
+    const goals = new Uint8Array(cols * rows);
+    for (let index=0;index<goals.length;index++) {
+      goals[index]=Number(inGoalEnvelope(index%cols,Math.floor(index/cols),target,stopSpec));
+    }
+    const check=gridReachability(cols,rows,startIndex,goals,canEnterFrom);
+    reachabilityStats.checks++;reachabilityStats.expanded+=check.expanded;
+    if(!check.reachable){reachabilityStats.rejected++;return Object.freeze({stand:true});}
+  }
   while (heap.length > 0 && expansions < MAX_EXPANSIONS) {
     const current = heapPop(heap);
     if (closed.has(current.index)) continue;
@@ -649,10 +648,7 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
       heapPush(heap, { index: nIndex, g: tentative, h, f: tentative + h });
     }
   }
-  if (goalIndex === null) {
-    if (heap.length === 0) noRouteCache.rememberExhausted(noRouteKey);
-    return Object.freeze({ stand: true });
-  }
+  if (goalIndex === null) return Object.freeze({ stand: true });
   const path = [];
   for (let index = goalIndex; index !== undefined; index = cameFrom.get(index)) {
     path.push(index);

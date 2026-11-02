@@ -6,22 +6,22 @@ import {
   planChaseAim,
   planMoveAim,
   planPersistentChaseRoute,
-  persistentNoRouteCacheStats,
+  persistentReachabilityStats,
 } from "../src/combat/chase-path.js";
 import { createPairInteractionSnapshot } from "../src/combat/pair-interactions.js";
 import { resolveMovementProposals } from "../src/combat/collision.js";
 
 const map = Object.freeze({ width: 8, height: 8, obstacles: Object.freeze([]) });
 
-test("cached unreachable pursuit reopens when a distant wall gap appears", () => {
+test("unreachable pursuit reopens when a distant wall gap appears", () => {
   const mover=dynamicBody(7001,1,4,0.2,3,75);
   const target=dynamicBody(7002,7,4,0.2,2,4);
   const wall=Array.from({length:16},(_,i)=>({referenceId:8000+i,x:4,y:0.25+i*0.5,radius:0.25}));
   const sealed={...map,obstacles:wall};
   assert.deepEqual(planPersistentChaseRoute(mover,target,[],sealed),{stand:true});
-  const before=persistentNoRouteCacheStats();
+  const before=persistentReachabilityStats();
   assert.deepEqual(planPersistentChaseRoute(mover,target,[],sealed),{stand:true});
-  assert.equal(persistentNoRouteCacheStats().hits,before.hits+1);
+  assert.equal(persistentReachabilityStats().rejected,before.rejected+1);
   const opened={...map,obstacles:wall.filter(o=>o.y<5.7||o.y>6.3)};
   const route=planPersistentChaseRoute(mover,target,[],opened);
   assert.ok(route&&route.stand!==true&&route.waypoints.length>0);

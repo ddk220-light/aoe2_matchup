@@ -8,7 +8,8 @@ import {RankingWorkerPool} from '../node/ranking-worker-pool.mjs';
 
 const sim=resolve(import.meta.dirname,'..');
 const base='/workspace/aoe2_civ_first_pass_parallel/aoe2x/js_simulation';
-const out=resolve(sim,'calibration/reports/civ-no-route-cache-2026-11-02');mkdirSync(out,{recursive:true});
+const prior=resolve(sim,'calibration/reports/civ-no-route-cache-2026-11-02');
+const out=resolve(sim,'calibration/reports/civ-grid-reachability-2026-11-02');mkdirSync(out,{recursive:true});
 const load=p=>JSON.parse(readFileSync(p,'utf8')),sha=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
 const campaign=resolve(base,'calibration/campaigns/civ-matchups-first-pass-parallel-2026-11-01');
 const m=load(resolve(campaign,'manifest.json'));
@@ -18,8 +19,10 @@ const state=load(resolve(campaign,'state.json'));assert(!state.active.includes(`
 for(const f of m.runtimeFiles){const suffix=f.path.replace('aoe2x/js_simulation/','');
   assert.equal(sha(resolve(base,suffix)),f.sha256);
   if(suffix!=='src/combat/chase-path.js')assert.equal(sha(resolve(sim,suffix)),f.sha256);}
-const results=[];
-for(const [label,engine,seed,maxTicks] of [['baseline40',base,0,2400],['candidate40',sim,0,2400],['candidate-control',sim,1,9000]]){
+const results=[load(resolve(prior,'baseline40.json'))];
+assert.equal(results[0].sourceCampaignHash,m.campaignHash);
+assert.equal(results[0].chasePathSha256,sha(resolve(base,'src/combat/chase-path.js')));
+for(const [label,engine,seed,maxTicks] of [['candidate40',sim,0,2400],['candidate-control',sim,1,9000]]){
   const report=resolve(out,label+'.json'),timelinePath=resolve(out,label+'.jsonl');
   assert(!existsSync(report)&&!existsSync(timelinePath),'never overwrite benchmark evidence');
   const pool=new RankingWorkerPool(1,{workerUrl:pathToFileURL(resolve(engine,'node/recovery-stream-diagnostic-worker.mjs')),maxTicks});
@@ -31,7 +34,7 @@ for(const [label,engine,seed,maxTicks] of [['baseline40',base,0,2400],['candidat
   finally{await pool.close();}
   const value={diagnosticOnly:true,label,seed,maxTicks,wallSeconds:(performance.now()-start)/1000,
     sourceCampaignHash:m.campaignHash,chasePathSha256:sha(resolve(engine,'src/combat/chase-path.js')),
-    cacheSha256:engine===sim?sha(resolve(sim,'src/combat/no-route-cache.js')):null,
+    reachabilitySha256:sha(resolve(sim,'src/combat/grid-reachability.js')),
     workerSha256:sha(resolve(engine,'node/recovery-stream-diagnostic-worker.mjs')),message};
   writeFileSync(report,JSON.stringify(value,null,2)+'\n');results.push(value);
   console.log(JSON.stringify({label,wallSeconds:value.wallSeconds,ticks:message.result?.ticks,watchdog:message.watchdog??false,error:message.error??null}));
@@ -48,4 +51,4 @@ const summary={diagnosticOnly:true,boundedExactParity:true,completeControlExactP
   candidateLastSample:JSON.parse(readFileSync(resolve(out,'candidate40.jsonl'),'utf8').trimEnd().split('\n').at(-1))};
 writeFileSync(resolve(out,'summary.json'),JSON.stringify(summary,null,2)+'\n');
 console.log(JSON.stringify({boundedExactParity:true,completeControlExactParity:true,observedSpeedRatio:summary.observedSpeedRatio,
-  cacheStatistics:summary.candidateLastSample.cacheStatistics}));
+  reachabilityStatistics:summary.candidateLastSample.reachabilityStatistics}));

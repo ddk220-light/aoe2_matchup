@@ -1,5 +1,8 @@
 import unittest
-from build_civ_first_pass_delivery import merge_candidate_batches,project,validate_recovery_review,PATROL_PHYSICS,STATIC_MEMO_PHYSICS,EVENT_STREAM_PHYSICS,TERMINAL_GOAL_PHYSICS
+import tempfile
+import json
+from pathlib import Path
+from build_civ_first_pass_delivery import validate_exhausted_hash_failure,merge_candidate_batches,project,validate_recovery_review,PATROL_PHYSICS,STATIC_MEMO_PHYSICS,EVENT_STREAM_PHYSICS,TERMINAL_GOAL_PHYSICS
 from civ_prediction_first_pass import sha,canonical
 
 class DeliveryTests(unittest.TestCase):
@@ -101,5 +104,20 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(result['recoveryProjection']['fidelityStatus'],'independent_game_fidelity_open')
         self.assertEqual(result['context']['profiles'],job['profileHashes'])
         self.assertFalse(result['verified'])
+
+    def test_early_recovery_rejects_watchdogs_changed_records_and_unknown_jobs(self):
+        record={'matchupId':'j','seed':0,'attempt':4,'watchdog':False,'resultOutcome':None,
+                'error':{'name':'RangeError','message':'Invalid string length','stack':'hashCanonicalJson at runFight'}}
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'attempts.jsonl'
+            text=json.dumps(record).encode();path.write_bytes(text+b'\n')
+            reference={'path':str(path),'line':1,'recordSha256':sha(text),'matchupId':'j','seed':0}
+            self.assertEqual(validate_exhausted_hash_failure(reference,{'j':{}}),record)
+            with self.assertRaises(AssertionError):validate_exhausted_hash_failure(reference,{})
+            changed=dict(record,watchdog=True);text=json.dumps(changed).encode();path.write_bytes(text+b'\n')
+            with self.assertRaises(AssertionError):validate_exhausted_hash_failure(reference,{'j':{}})
+            with self.assertRaises(AssertionError):validate_exhausted_hash_failure(dict(reference,recordSha256=sha(text)),{'j':{}})
+            changed=dict(record,attempt=1);text=json.dumps(changed).encode();path.write_bytes(text+b'\n')
+            with self.assertRaises(AssertionError):validate_exhausted_hash_failure(dict(reference,recordSha256=sha(text)),{'j':{}})
 
 if __name__=='__main__':unittest.main()

@@ -7,6 +7,7 @@ complete same-context repaired seed set and an exact replay review.
 """
 import argparse
 import collections
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -24,6 +25,7 @@ DEFAULT_EVENT_STREAM_RECOVERY = Path('/workspace/aoe2_civ_event_stream/aoe2x/js_
 DEFAULT_EXTRA_EVENT_STREAM_RECOVERIES = (
     Path('/workspace/aoe2_civ_phase038_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase038-stream-first-pass-2026-11-02'),
     Path('/workspace/aoe2_civ_phase039_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase039-stream-first-pass-2026-11-02'),
+    Path('/workspace/aoe2_civ_phase040_early_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase040-early-stream-first-pass-2026-11-02'),
 )
 DEFAULT_STATIC_MEMO_RECOVERY = Path('/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/calibration/campaigns/civ-matchups-static-memo-first-pass-2026-11-02')
 SUPPORTED_PHYSICS = {'collision-repair-v2', PATROL_PHYSICS, STATIC_MEMO_PHYSICS, EVENT_STREAM_PHYSICS, TERMINAL_GOAL_PHYSICS}
@@ -82,6 +84,43 @@ def project(row, job, review):
     return result
 
 
+
+def validate_exhausted_hash_failure(reference, jobs):
+    raw=Path(reference['path']).read_bytes().splitlines()
+    line=reference['line']
+    assert isinstance(line,int) and 0 < line <= len(raw), 'missing source failure line'
+    text=raw[line-1]
+    assert sha(text)==reference['recordSha256'], 'source failure changed'
+    record=json.loads(text);error=record.get('error') or {}
+    assert record['matchupId']==reference['matchupId'] and record['matchupId'] in jobs
+    assert record['seed']==reference['seed'] and record['attempt']==4
+    assert record.get('watchdog') is False and record.get('resultOutcome') is None
+    assert error.get('name')=='RangeError' and error.get('message')=='Invalid string length'
+    assert 'hashCanonicalJson' in error.get('stack',''), 'not the diagnosed final hashing failure'
+    return record
+
+
+def validate_early_source(manifest, jobs):
+    reference=manifest.get('sourcePhasePlanReference')
+    if reference is None:
+        return
+    path=Path(reference['path']);raw=path.read_bytes()
+    assert sha(raw)==reference['sha256'], 'source phase plan changed'
+    plan=json.loads(raw);source=path.parent.parent
+    parent=read_json(source/'manifest.json')
+    assert parent['campaignHash']==manifest['sourceInventoryCampaignHash']
+    assert sha(canonical({k:v for k,v in parent.items() if k!='campaignHash'}))==parent['campaignHash']
+    inventory=(source/parent['matchupInventory']['file']).read_bytes()
+    assert sha(inventory)==manifest['sourceJobsSha256']==parent['matchupInventory']['sha256']
+    source_jobs={j['id']:j for j in map(json.loads,gzip.decompress(inventory).splitlines())}
+    for job in jobs.values():
+        assert job==source_jobs[job['id']] and job['pairKey'] in plan['pairKeys']
+    references=manifest.get('sourceFailureReferences',[])
+    assert {r['matchupId'] for r in references}==set(jobs), 'unaccounted early recovery job'
+    for item in references:
+        validate_exhausted_hash_failure(item,jobs)
+
+
 def load_candidate(recovery, physics, candidate_report, changed_file, changed_field):
     """Read only complete, reviewed own-engine seeds; diagnostics are ineligible."""
     if not (recovery/'manifest.json').exists() or not (recovery/'pair-reviews.jsonl').exists():
@@ -108,6 +147,7 @@ def load_candidate(recovery, physics, candidate_report, changed_file, changed_fi
     assert set(actual_changes)==set(expected_changes)
     assert actual_changes=={f['path']:f['candidateSha256'] for f in candidate[changed_field]}
     jobs={j['id']:j for j in read_json(recovery/'jobs.json')}
+    validate_early_source(m,jobs)
     raw=(recovery/'runs.jsonl').read_bytes();assert raw.endswith(b'\n')
     lines=raw.splitlines();all_records=[json.loads(line) for line in lines]
     assert len({(r['matchupId'],r['seed']) for r in all_records})==len(all_records), 'duplicate candidate seed'

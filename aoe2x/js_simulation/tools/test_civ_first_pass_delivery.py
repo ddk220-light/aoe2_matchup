@@ -1,5 +1,5 @@
 import unittest
-from build_civ_first_pass_delivery import project,validate_recovery_review,PATROL_PHYSICS,STATIC_MEMO_PHYSICS
+from build_civ_first_pass_delivery import project,validate_recovery_review,PATROL_PHYSICS,STATIC_MEMO_PHYSICS,EVENT_STREAM_PHYSICS
 from civ_prediction_first_pass import sha,canonical
 
 class DeliveryTests(unittest.TestCase):
@@ -59,6 +59,19 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(result['recoveryProjection']['measurementPhysicsVersion'],STATIC_MEMO_PHYSICS)
         self.assertEqual(result['recoveryProjection']['fidelityStatus'],'source_engine_fidelity_open')
         self.assertFalse(result['verified'])
+
+    def test_event_stream_revision_is_separate_and_incomplete_or_mixed_seeds_do_not_fill_gap(self):
+        job,records,review,row=self.fixture()
+        review.update(physicsVersion=EVENT_STREAM_PHYSICS,fidelityStatus='source_geometry_fidelity_open')
+        with self.assertRaises(AssertionError):validate_recovery_review(review,job,records[:2],EVENT_STREAM_PHYSICS)
+        validate_recovery_review(review,job,records,EVENT_STREAM_PHYSICS)
+        result=project(row,job,review)
+        self.assertEqual(result['evidenceType'],'predicted_unvalidated')
+        self.assertEqual(result['recoveryProjection']['measurementPhysicsVersion'],EVENT_STREAM_PHYSICS)
+        self.assertEqual(result['sourceContext'],row['context'])
+        self.assertFalse(result['verified'])
+        records[2]['outcome']='loss'
+        with self.assertRaises(AssertionError):validate_recovery_review(review,job,records,EVENT_STREAM_PHYSICS)
 
     def test_unknown_projection_physics_is_rejected(self):
         job,records,review,row=self.fixture()

@@ -17,8 +17,10 @@ DEFAULT_RECOVERY = Path('/workspace/aoe2_civ_first_pass_parallel/aoe2x/js_simula
 DEFAULT_PATROL_RECOVERY = Path('/workspace/aoe2_civ_patrol_repair/aoe2x/js_simulation/calibration/campaigns/civ-matchups-patrol-first-pass-2026-11-01')
 PATROL_PHYSICS = 'collision-repair-v2-patrol-candidate-v1'
 STATIC_MEMO_PHYSICS = 'collision-repair-v2-static-memo-candidate-v1'
+EVENT_STREAM_PHYSICS = 'collision-repair-v2-static-memo-event-stream-candidate-v1'
+DEFAULT_EVENT_STREAM_RECOVERY = Path('/workspace/aoe2_civ_event_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-event-stream-first-pass-2026-11-02')
 DEFAULT_STATIC_MEMO_RECOVERY = Path('/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/calibration/campaigns/civ-matchups-static-memo-first-pass-2026-11-02')
-SUPPORTED_PHYSICS = {'collision-repair-v2', PATROL_PHYSICS, STATIC_MEMO_PHYSICS}
+SUPPORTED_PHYSICS = {'collision-repair-v2', PATROL_PHYSICS, STATIC_MEMO_PHYSICS, EVENT_STREAM_PHYSICS}
 
 
 def read_json(path):
@@ -70,7 +72,7 @@ def project(row, job, review):
             'reviewSha256':sha(canonical(review)), 'seedReferences':review['seedReferences'],
             'exactRepairedReplay':review['exactReplay'],
             'validationStatus':'not_validated_under_target_engine',
-            **({'fidelityStatus':review['fidelityStatus']} if physics in (PATROL_PHYSICS, STATIC_MEMO_PHYSICS) else {})})
+            **({'fidelityStatus':review['fidelityStatus']} if physics in (PATROL_PHYSICS, STATIC_MEMO_PHYSICS, EVENT_STREAM_PHYSICS) else {})})
     return result
 
 
@@ -95,8 +97,10 @@ def load_candidate(recovery, physics, candidate_report, changed_file, changed_fi
     assert {f['path']:f['parentV2StreamSha256'] for f in m['runtimeFiles']}==parent_files
     for f in m['runtimeFiles']:assert sha((repo/f['path']).read_bytes())==f['sha256']
     for f in m['orchestrationFiles']:assert sha((sim/f['path']).read_bytes())==f['sha256']
-    assert [f['path'] for f in m['runtimeFiles'] if f['sha256']!=f['parentV2StreamSha256']]==[changed_file]
-    assert next(f['sha256'] for f in m['runtimeFiles'] if f['path']==changed_file)==candidate[changed_field][0]['candidateSha256']
+    expected_changes=[changed_file] if isinstance(changed_file,str) else changed_file
+    actual_changes={f['path']:f['sha256'] for f in m['runtimeFiles'] if f['sha256']!=f['parentV2StreamSha256']}
+    assert set(actual_changes)==set(expected_changes)
+    assert actual_changes=={f['path']:f['candidateSha256'] for f in candidate[changed_field]}
     jobs={j['id']:j for j in read_json(recovery/'jobs.json')}
     raw=(recovery/'runs.jsonl').read_bytes();assert raw.endswith(b'\n')
     lines=raw.splitlines();all_records=[json.loads(line) for line in lines]
@@ -135,7 +139,14 @@ def load_static_memo_candidate(recovery):
         'aoe2x/js_simulation/src/combat/collision.js', 'changedRuntimeFiles')
 
 
-def build(campaign, prediction_dir, recovery, output, require_complete=False, patrol_recovery=DEFAULT_PATROL_RECOVERY, static_memo_recovery=DEFAULT_STATIC_MEMO_RECOVERY):
+def load_event_stream_candidate(recovery):
+    return load_candidate(recovery, EVENT_STREAM_PHYSICS,
+        'calibration/reports/civ-event-stream-2026-11-02/CANDIDATE.json',
+        ['aoe2x/js_simulation/'+p for p in ['src/combat/collision.js','src/combat/world.js','src/fight.js','src/canonical-json.js']],
+        'changedRuntimeFiles')
+
+
+def build(campaign, prediction_dir, recovery, output, require_complete=False, patrol_recovery=DEFAULT_PATROL_RECOVERY, static_memo_recovery=DEFAULT_STATIC_MEMO_RECOVERY, event_stream_recovery=DEFAULT_EVENT_STREAM_RECOVERY):
     source_manifest = read_json(prediction_dir/'manifest.json')
     for name, checksum in source_manifest['files'].items():
         assert sha((prediction_dir/name).read_bytes()) == checksum, f'prediction archive changed: {name}'
@@ -201,7 +212,8 @@ def build(campaign, prediction_dir, recovery, output, require_complete=False, pa
                 projections[row['pairKey']] = project(row, job, review)
     patrol_entries,patrol_ledger,patrol_meta=load_patrol_candidate(patrol_recovery)
     memo_entries,memo_ledger,memo_meta=load_static_memo_candidate(static_memo_recovery)
-    for job,review in patrol_entries+memo_entries:
+    stream_entries,stream_ledger,stream_meta=load_event_stream_candidate(event_stream_recovery)
+    for job,review in patrol_entries+memo_entries+stream_entries:
         row=by_key[job['pairKey']]
         # Never overwrite an observed result, approved forecast or completed V2 projection.
         if row['outcome']=='unresolved' and row['pairKey'] not in projections:
@@ -250,13 +262,14 @@ def build(campaign, prediction_dir, recovery, output, require_complete=False, pa
     write_rows(output/'repaired-evidence-ledger.jsonl.gz',[ledger[k] for k in sorted(ledger)])
     write_rows(output/'patrol-candidate-evidence-ledger.jsonl.gz',patrol_ledger)
     write_rows(output/'static-memo-candidate-evidence-ledger.jsonl.gz',memo_ledger)
+    write_rows(output/'event-stream-candidate-evidence-ledger.jsonl.gz',stream_ledger)
     write_json(output/'variant-profiles.json',variants)
     write_json(output/'summary.json',summary)
-    write_json(output/'manifest.json',{'version':'provisional-first-pass-delivery-v3',
+    write_json(output/'manifest.json',{'version':'provisional-first-pass-delivery-v4',
         'predictionArchiveManifestSha256':sha((prediction_dir/'manifest.json').read_bytes()),
-        'sourcePhaseReviewSha256':sha(review_path.read_bytes()),'recovery':recovery_meta,'patrolRecovery':patrol_meta,'staticMemoRecovery':memo_meta,
+        'sourcePhaseReviewSha256':sha(review_path.read_bytes()),'recovery':recovery_meta,'patrolRecovery':patrol_meta,'staticMemoRecovery':memo_meta,'eventStreamRecovery':stream_meta,
         'builderSha256':sha(Path(__file__).read_bytes()),'files':{name:sha((output/name).read_bytes()) for name in
-        ['profile-table.jsonl.gz','civilization-table.jsonl.gz','repaired-evidence-ledger.jsonl.gz','patrol-candidate-evidence-ledger.jsonl.gz','static-memo-candidate-evidence-ledger.jsonl.gz','variant-profiles.json','summary.json']}})
+        ['profile-table.jsonl.gz','civilization-table.jsonl.gz','repaired-evidence-ledger.jsonl.gz','patrol-candidate-evidence-ledger.jsonl.gz','static-memo-candidate-evidence-ledger.jsonl.gz','event-stream-candidate-evidence-ledger.jsonl.gz','variant-profiles.json','summary.json']}})
     return summary
 
 
@@ -266,4 +279,5 @@ if __name__ == '__main__':
     p.add_argument('--recovery',type=Path,default=DEFAULT_RECOVERY);p.add_argument('--require-complete',action='store_true')
     p.add_argument('--patrol-recovery',type=Path,default=DEFAULT_PATROL_RECOVERY)
     p.add_argument('--static-memo-recovery',type=Path,default=DEFAULT_STATIC_MEMO_RECOVERY)
-    args=p.parse_args();print(json.dumps(build(args.campaign,args.prediction_dir,args.recovery,args.output,args.require_complete,args.patrol_recovery,args.static_memo_recovery)))
+    p.add_argument('--event-stream-recovery',type=Path,default=DEFAULT_EVENT_STREAM_RECOVERY)
+    args=p.parse_args();print(json.dumps(build(args.campaign,args.prediction_dir,args.recovery,args.output,args.require_complete,args.patrol_recovery,args.static_memo_recovery,args.event_stream_recovery)))

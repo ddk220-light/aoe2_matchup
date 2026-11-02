@@ -18,9 +18,12 @@ DEFAULT_PATROL_RECOVERY = Path('/workspace/aoe2_civ_patrol_repair/aoe2x/js_simul
 PATROL_PHYSICS = 'collision-repair-v2-patrol-candidate-v1'
 STATIC_MEMO_PHYSICS = 'collision-repair-v2-static-memo-candidate-v1'
 EVENT_STREAM_PHYSICS = 'collision-repair-v2-static-memo-event-stream-candidate-v1'
+TERMINAL_GOAL_PHYSICS = 'collision-repair-v2-terminal-goal-candidate-v1'
+DEFAULT_TERMINAL_GOAL_RECOVERY = Path('/workspace/aoe2_civ_subcell_route/aoe2x/js_simulation/calibration/campaigns/civ-matchups-terminal-goal-first-pass-2026-11-02')
 DEFAULT_EVENT_STREAM_RECOVERY = Path('/workspace/aoe2_civ_event_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-event-stream-first-pass-2026-11-02')
+DEFAULT_EXTRA_EVENT_STREAM_RECOVERIES = (Path('/workspace/aoe2_civ_phase038_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase038-stream-first-pass-2026-11-02'),)
 DEFAULT_STATIC_MEMO_RECOVERY = Path('/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/calibration/campaigns/civ-matchups-static-memo-first-pass-2026-11-02')
-SUPPORTED_PHYSICS = {'collision-repair-v2', PATROL_PHYSICS, STATIC_MEMO_PHYSICS, EVENT_STREAM_PHYSICS}
+SUPPORTED_PHYSICS = {'collision-repair-v2', PATROL_PHYSICS, STATIC_MEMO_PHYSICS, EVENT_STREAM_PHYSICS, TERMINAL_GOAL_PHYSICS}
 
 
 def read_json(path):
@@ -72,7 +75,7 @@ def project(row, job, review):
             'reviewSha256':sha(canonical(review)), 'seedReferences':review['seedReferences'],
             'exactRepairedReplay':review['exactReplay'],
             'validationStatus':'not_validated_under_target_engine',
-            **({'fidelityStatus':review['fidelityStatus']} if physics in (PATROL_PHYSICS, STATIC_MEMO_PHYSICS, EVENT_STREAM_PHYSICS) else {})})
+            **({'fidelityStatus':review['fidelityStatus']} if physics in (PATROL_PHYSICS, STATIC_MEMO_PHYSICS, EVENT_STREAM_PHYSICS, TERMINAL_GOAL_PHYSICS) else {})})
     return result
 
 
@@ -146,7 +149,37 @@ def load_event_stream_candidate(recovery):
         'changedRuntimeFiles')
 
 
-def build(campaign, prediction_dir, recovery, output, require_complete=False, patrol_recovery=DEFAULT_PATROL_RECOVERY, static_memo_recovery=DEFAULT_STATIC_MEMO_RECOVERY, event_stream_recovery=DEFAULT_EVENT_STREAM_RECOVERY):
+
+def load_terminal_goal_candidate(recovery):
+    return load_candidate(recovery, TERMINAL_GOAL_PHYSICS,
+        'calibration/reports/civ-subcell-route-2026-11-02/CANDIDATE.json',
+        ['aoe2x/js_simulation/'+p for p in ['src/combat/collision.js','src/combat/world.js',
+          'src/fight.js','src/canonical-json.js','src/combat/chase-path.js']],
+        'changedRuntimeFiles')
+
+
+def merge_candidate_batches(batches):
+    """Keep source campaigns distinct and reject conflicting complete evidence."""
+    entries,ledger,metadata=[],[],[]
+    pair_contexts={};seed_keys=set();campaigns=set()
+    for batch_entries,batch_ledger,meta in batches:
+        if meta is not None:
+            assert meta['campaignHash'] not in campaigns, 'duplicate candidate campaign'
+            campaigns.add(meta['campaignHash']);metadata.append(meta)
+        for job,review in batch_entries:
+            context=(job['profileHashes'],job['counts'],job['scenarioHash'],review['physicsVersion'],review['outcome'])
+            if job['pairKey'] in pair_contexts:
+                assert pair_contexts[job['pairKey']]==context, 'conflicting candidate contexts or outcomes'
+            else:
+                pair_contexts[job['pairKey']]=context;entries.append((job,review))
+        for row in batch_ledger:
+            r=row['record'];key=(row['physicsVersion'],r['campaignHash'],r['matchupId'],r['seed'])
+            assert key not in seed_keys, 'duplicate candidate seed provenance'
+            seed_keys.add(key);ledger.append(row)
+    return entries,ledger,metadata
+
+
+def build(campaign, prediction_dir, recovery, output, require_complete=False, patrol_recovery=DEFAULT_PATROL_RECOVERY, static_memo_recovery=DEFAULT_STATIC_MEMO_RECOVERY, event_stream_recovery=DEFAULT_EVENT_STREAM_RECOVERY, extra_event_stream_recoveries=DEFAULT_EXTRA_EVENT_STREAM_RECOVERIES, terminal_goal_recovery=DEFAULT_TERMINAL_GOAL_RECOVERY):
     source_manifest = read_json(prediction_dir/'manifest.json')
     for name, checksum in source_manifest['files'].items():
         assert sha((prediction_dir/name).read_bytes()) == checksum, f'prediction archive changed: {name}'
@@ -212,8 +245,11 @@ def build(campaign, prediction_dir, recovery, output, require_complete=False, pa
                 projections[row['pairKey']] = project(row, job, review)
     patrol_entries,patrol_ledger,patrol_meta=load_patrol_candidate(patrol_recovery)
     memo_entries,memo_ledger,memo_meta=load_static_memo_candidate(static_memo_recovery)
-    stream_entries,stream_ledger,stream_meta=load_event_stream_candidate(event_stream_recovery)
-    for job,review in patrol_entries+memo_entries+stream_entries:
+    stream_entries,stream_ledger,stream_metadata=merge_candidate_batches([
+        load_event_stream_candidate(path)
+        for path in (event_stream_recovery, *extra_event_stream_recoveries)])
+    terminal_entries,terminal_ledger,terminal_meta=load_terminal_goal_candidate(terminal_goal_recovery)
+    for job,review in patrol_entries+memo_entries+stream_entries+terminal_entries:
         row=by_key[job['pairKey']]
         # Never overwrite an observed result, approved forecast or completed V2 projection.
         if row['outcome']=='unresolved' and row['pairKey'] not in projections:
@@ -253,7 +289,7 @@ def build(campaign, prediction_dir, recovery, output, require_complete=False, pa
             for r in by_key.values() if r['evidenceType']=='predicted_unvalidated')),
         'predictionValidation':{k:source_summary.get(k) for k in ['screenedPredictions',
             'screenWrongOrClose','prospectivePredictions','prospectiveWrongOrClose','contestedPredictions']},
-        'scope':'Frozen V3 measurements/inferences and unvalidated predictions. Supporting repaired-engine measurements remain in separate physics-specific ledgers; their projections are not V3 measurements. Patrol-candidate projections also retain an explicit independent game-fidelity validation gap.',
+        'scope':'Frozen V3 measurements/inferences and unvalidated predictions. Supporting repaired-engine measurements remain in separate physics-specific ledgers; their projections are not V3 measurements. Candidate projections retain explicit independent game-fidelity validation gaps.',
         'bulkEngineReplayRequiredForThisProvisionalExport':False}
     if require_complete:
         assert unresolved == 0, f'{unresolved} unresolved pairs remain'
@@ -263,13 +299,14 @@ def build(campaign, prediction_dir, recovery, output, require_complete=False, pa
     write_rows(output/'patrol-candidate-evidence-ledger.jsonl.gz',patrol_ledger)
     write_rows(output/'static-memo-candidate-evidence-ledger.jsonl.gz',memo_ledger)
     write_rows(output/'event-stream-candidate-evidence-ledger.jsonl.gz',stream_ledger)
+    write_rows(output/'terminal-goal-candidate-evidence-ledger.jsonl.gz',terminal_ledger)
     write_json(output/'variant-profiles.json',variants)
     write_json(output/'summary.json',summary)
-    write_json(output/'manifest.json',{'version':'provisional-first-pass-delivery-v4',
+    write_json(output/'manifest.json',{'version':'provisional-first-pass-delivery-v6',
         'predictionArchiveManifestSha256':sha((prediction_dir/'manifest.json').read_bytes()),
-        'sourcePhaseReviewSha256':sha(review_path.read_bytes()),'recovery':recovery_meta,'patrolRecovery':patrol_meta,'staticMemoRecovery':memo_meta,'eventStreamRecovery':stream_meta,
+        'sourcePhaseReviewSha256':sha(review_path.read_bytes()),'recovery':recovery_meta,'patrolRecovery':patrol_meta,'staticMemoRecovery':memo_meta,'eventStreamRecoveries':stream_metadata,'terminalGoalRecovery':terminal_meta,
         'builderSha256':sha(Path(__file__).read_bytes()),'files':{name:sha((output/name).read_bytes()) for name in
-        ['profile-table.jsonl.gz','civilization-table.jsonl.gz','repaired-evidence-ledger.jsonl.gz','patrol-candidate-evidence-ledger.jsonl.gz','static-memo-candidate-evidence-ledger.jsonl.gz','event-stream-candidate-evidence-ledger.jsonl.gz','variant-profiles.json','summary.json']}})
+        ['profile-table.jsonl.gz','civilization-table.jsonl.gz','repaired-evidence-ledger.jsonl.gz','patrol-candidate-evidence-ledger.jsonl.gz','static-memo-candidate-evidence-ledger.jsonl.gz','event-stream-candidate-evidence-ledger.jsonl.gz','terminal-goal-candidate-evidence-ledger.jsonl.gz','variant-profiles.json','summary.json']}})
     return summary
 
 
@@ -280,4 +317,6 @@ if __name__ == '__main__':
     p.add_argument('--patrol-recovery',type=Path,default=DEFAULT_PATROL_RECOVERY)
     p.add_argument('--static-memo-recovery',type=Path,default=DEFAULT_STATIC_MEMO_RECOVERY)
     p.add_argument('--event-stream-recovery',type=Path,default=DEFAULT_EVENT_STREAM_RECOVERY)
-    args=p.parse_args();print(json.dumps(build(args.campaign,args.prediction_dir,args.recovery,args.output,args.require_complete,args.patrol_recovery,args.static_memo_recovery,args.event_stream_recovery)))
+    p.add_argument('--extra-event-stream-recovery',type=Path,action='append',default=None)
+    p.add_argument('--terminal-goal-recovery',type=Path,default=DEFAULT_TERMINAL_GOAL_RECOVERY)
+    args=p.parse_args();print(json.dumps(build(args.campaign,args.prediction_dir,args.recovery,args.output,args.require_complete,args.patrol_recovery,args.static_memo_recovery,args.event_stream_recovery,DEFAULT_EXTRA_EVENT_STREAM_RECOVERIES if args.extra_event_stream_recovery is None else tuple(args.extra_event_stream_recovery),args.terminal_goal_recovery)))

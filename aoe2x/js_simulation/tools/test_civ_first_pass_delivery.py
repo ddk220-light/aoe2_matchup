@@ -1,5 +1,5 @@
 import unittest
-from build_civ_first_pass_delivery import project,validate_recovery_review,PATROL_PHYSICS,STATIC_MEMO_PHYSICS,EVENT_STREAM_PHYSICS
+from build_civ_first_pass_delivery import merge_candidate_batches,project,validate_recovery_review,PATROL_PHYSICS,STATIC_MEMO_PHYSICS,EVENT_STREAM_PHYSICS,TERMINAL_GOAL_PHYSICS
 from civ_prediction_first_pass import sha,canonical
 
 class DeliveryTests(unittest.TestCase):
@@ -77,5 +77,29 @@ class DeliveryTests(unittest.TestCase):
         job,records,review,row=self.fixture()
         with self.assertRaises(AssertionError):project(row,job,dict(review,physicsVersion='unknown'))
         with self.assertRaises(AssertionError):validate_recovery_review(review,job,records,'unknown')
+
+    def test_separate_campaigns_keep_provenance_and_conflicting_contexts_fail(self):
+        job,records,review,row=self.fixture()
+        def batch(hash_value, new_review=review, new_job=job):
+            return [(new_job,new_review)],[{'physicsVersion':EVENT_STREAM_PHYSICS,'record':{'campaignHash':hash_value,'matchupId':'j','seed':0}}],{'campaignHash':hash_value}
+        entries,ledger,metadata=merge_candidate_batches([batch('one'),batch('two')])
+        self.assertEqual(len(entries),1)
+        self.assertEqual([x['record']['campaignHash'] for x in ledger],['one','two'])
+        self.assertEqual(len(metadata),2)
+        with self.assertRaises(AssertionError):merge_candidate_batches([batch('one'),batch('one')])
+        with self.assertRaises(AssertionError):merge_candidate_batches([batch('one'),batch('two',dict(review,outcome='loss'))])
+        with self.assertRaises(AssertionError):merge_candidate_batches([batch('one'),batch('two',new_job=dict(job,profileHashes=['a','b']))])
+
+    def test_terminal_goal_candidate_requires_complete_own_seed_set_and_retains_fidelity_gap(self):
+        job,records,review,row=self.fixture()
+        review.update(physicsVersion=TERMINAL_GOAL_PHYSICS,fidelityStatus='independent_game_fidelity_open')
+        with self.assertRaises(AssertionError):validate_recovery_review(review,job,records[:2],TERMINAL_GOAL_PHYSICS)
+        validate_recovery_review(review,job,records,TERMINAL_GOAL_PHYSICS)
+        result=project(row,job,review)
+        self.assertEqual(result['evidenceType'],'predicted_unvalidated')
+        self.assertEqual(result['recoveryProjection']['measurementPhysicsVersion'],TERMINAL_GOAL_PHYSICS)
+        self.assertEqual(result['recoveryProjection']['fidelityStatus'],'independent_game_fidelity_open')
+        self.assertEqual(result['context']['profiles'],job['profileHashes'])
+        self.assertFalse(result['verified'])
 
 if __name__=='__main__':unittest.main()

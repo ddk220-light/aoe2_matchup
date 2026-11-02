@@ -1,0 +1,38 @@
+{
+  "version": "static-memo-event-stream-candidate-v1",
+  "changedRuntimeFiles": [
+    {
+      "path": "aoe2x/js_simulation/src/combat/collision.js",
+      "parentSha256": "3e4bc576462051826cef72eccdcfd112e77212c2718f9cc465ea6bf217948aa3",
+      "candidateSha256": "221b81ac5ad50cb83901b63915389d38e321e341f91ce4d3b7a8c805899954e6"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/world.js",
+      "parentSha256": "ee4f333822df501cb47135fb3f5a198d9ff8c2b16e6a376b26efa9d5488d1915",
+      "candidateSha256": "1c9965475ef338f7a8398efba882a6db64e907c480e2e8c5171862a1a5135b76"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/canonical-json.js",
+      "parentSha256": "42bad3857c5db81b31ba1c05b219f62563367731c54b8b2f8c4186d548e19cdb",
+      "candidateSha256": "8ce2d530940e45c7914a2883f27cc7acf95934cbc79a27dc31672a084c3a8af7"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/fight.js",
+      "parentSha256": "16de86e793d0af68bde5b2cb49b17b396bbd80e7725203719a45d488c8fb28ab",
+      "candidateSha256": "ae0a31f29f0a666816529b2af4f9d23bab176cdc602a2d591a8cdfd70b879c03"
+    }
+  ],
+  "scope": "Non-physics event output retention fix on the existing static-geometry memo candidate. No attack, damage, path, collision tolerance, randomization or combat termination changes.",
+  "semantics": "In compact Node fights, hash each tick event batch immediately using the exact canonical array byte sequence; retain no historical event objects. Normal snapshot-retaining and browser calls preserve previous behavior.",
+  "validation": {
+    "canonicalAndStreamingTestsPassed": 5,
+    "millionEventsAt32MiBHeap": true,
+    "exactParityCases": 5,
+    "worldRegressionBaselineFailures": 9,
+    "worldRegressionNewFailures": 0,
+    "paritySummarySha256": "67e381f3248a0af7690de70ebc1997d696565d6000f827094ed6d1cdd27499b2",
+    "focusedTestsPassed": 6,
+    "progressWorkerExactControlPassed": true
+  },
+  "limitations": "This is not a completed long seed. Forest-pocket and source-engine fidelity questions remain. Keep separate journals and unvalidated projections to frozen V3; no bulk replay."
+}

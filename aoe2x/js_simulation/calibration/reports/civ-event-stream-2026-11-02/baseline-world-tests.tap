@@ -1,0 +1,421 @@
+TAP version 13
+# Subtest: both sides decide from the same start-of-tick snapshot
+ok 1 - both sides decide from the same start-of-tick snapshot
+  ---
+  duration_ms: 80.992173
+  type: 'test'
+  ...
+# Subtest: world publication preserves blocker-aware local route state
+ok 2 - world publication preserves blocker-aware local route state
+  ---
+  duration_ms: 3.377247
+  type: 'test'
+  ...
+# Subtest: persistent melee pursuit keeps a multi-waypoint route across ticks
+ok 3 - persistent melee pursuit keeps a multi-waypoint route across ticks
+  ---
+  duration_ms: 57.481862
+  type: 'test'
+  ...
+# Subtest: persistent melee pursuit requires a kiting world
+ok 4 - persistent melee pursuit requires a kiting world
+  ---
+  duration_ms: 0.832995
+  type: 'test'
+  ...
+# Subtest: melee contact state is mechanics-derived rather than selected by owner
+ok 5 - melee contact state is mechanics-derived rather than selected by owner
+  ---
+  duration_ms: 0.423988
+  type: 'test'
+  ...
+# Subtest: contact state includes range-one melee and ranged-ingress worlds
+ok 6 - contact state includes range-one melee and ranged-ingress worlds
+  ---
+  duration_ms: 0.447293
+  type: 'test'
+  ...
+# Subtest: a world tick reserves a non-target enemy in a melee pursuit corridor
+ok 7 - a world tick reserves a non-target enemy in a melee pursuit corridor
+  ---
+  duration_ms: 1.835635
+  type: 'test'
+  ...
+# Subtest: a minimum-range retreat routes sideways when an allied siege unit blocks directly away
+ok 8 - a minimum-range retreat routes sideways when an allied siege unit blocks directly away
+  ---
+  duration_ms: 1.192956
+  type: 'test'
+  ...
+# Subtest: avoidance clears only after resolved contact and survives a target moving away
+not ok 9 - avoidance clears only after resolved contact and survives a target moving away
+  ---
+  duration_ms: 8.697281
+  type: 'test'
+  location: '/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:331:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + null
+    - {
+    -   blockerReferenceId: 2,
+    -   side: 1,
+    -   targetReferenceId: 3
+    - }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    blockerReferenceId: 2
+    targetReferenceId: 3
+    side: 1
+  actual: ~
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:388:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: resolved movement updates facing for later symmetric route choices
+ok 10 - resolved movement updates facing for later symmetric route choices
+  ---
+  duration_ms: 28.85336
+  type: 'test'
+  ...
+# Subtest: same-tick attacks use a repeatable seeded shuffle independent of input order
+ok 11 - same-tick attacks use a repeatable seeded shuffle independent of input order
+  ---
+  duration_ms: 0.79685
+  type: 'test'
+  ...
+# Subtest: ready attack ordering randomizes only ties within each damage tick
+ok 12 - ready attack ordering randomizes only ties within each damage tick
+  ---
+  duration_ms: 0.367674
+  type: 'test'
+  ...
+# Subtest: Champion attack timing is converted once to integer ticks
+not ok 13 - Champion attack timing is converted once to integer ticks
+  ---
+  duration_ms: 0.41151
+  type: 'test'
+  location: '/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:455:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    45 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 45
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:458:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: movement stop range compares collision surfaces with max(range, 0.1)
+ok 14 - movement stop range compares collision surfaces with max(range, 0.1)
+  ---
+  duration_ms: 0.230507
+  type: 'test'
+  ...
+# Subtest: damage is derived from attack and armor classes
+ok 15 - damage is derived from attack and armor classes
+  ---
+  duration_ms: 0.477079
+  type: 'test'
+  ...
+# Subtest: attack event constructors publish frozen reference-ID records
+ok 16 - attack event constructors publish frozen reference-ID records
+  ---
+  duration_ms: 0.370798
+  type: 'test'
+  ...
+# Subtest: movement contact and zero-delay attacks publish in phase order
+not ok 17 - movement contact and zero-delay attacks publish in phase order
+  ---
+  duration_ms: 3.894316
+  type: 'test'
+  location: '/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:525:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(Math.abs(next.units[0].x - 4.01) < 1e-12)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:534:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: attack delay and reload advance only on integer ticks
+not ok 18 - attack delay and reload advance only on integer ticks
+  ---
+  duration_ms: 53.42412
+  type: 'test'
+  location: '/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:560:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+    +   119,
+    +   119
+    -   1,
+    -   1
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 1
+    1: 1
+  actual:
+    0: 119
+    1: 119
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:598:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: a lethal attack selected by the seed cancels the attacker it kills
+ok 19 - a lethal attack selected by the seed cancels the attacker it kills
+  ---
+  duration_ms: 46.903338
+  type: 'test'
+  ...
+# Subtest: later ready attacks do not damage a target that is already dead
+not ok 20 - later ready attacks do not damage a target that is already dead
+  ---
+  duration_ms: 9.697296
+  type: 'test'
+  location: '/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:637:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + []
+    - [
+    -   [
+    -     1628,
+    -     1699
+    -   ]
+    - ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0:
+      0: 1628
+      1: 1699
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:645:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: death-tick publication preserves a non-ready attack on the new corpse
+not ok 21 - death-tick publication preserves a non-ready attack on the new corpse
+  ---
+  duration_ms: 1.097573
+  type: 'test'
+  location: '/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:658:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+        action: 'attacking',
+        attackTargetId: 1699,
+    +   engagedTargetId: 1699,
+    -   engagedTargetId: null,
+        pursuitTargetId: 1699,
+    +   windup: NaN
+    -   windup: 2
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    pursuitTargetId: 1699
+    engagedTargetId: ~
+    attackTargetId: 1699
+    action: 'attacking'
+    windup: 2
+  actual:
+    pursuitTargetId: 1699
+    engagedTargetId: 1699
+    attackTargetId: 1699
+    action: 'attacking'
+    windup: NaN
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:671:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: the next validation tick invalidates and cancels a preserved windup
+not ok 22 - the next validation tick invalidates and cancels a preserved windup
+  ---
+  duration_ms: 1.027107
+  type: 'test'
+  location: '/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:706:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + []
+    - [
+    -   [
+    -     'pursuit-invalidated',
+    -     1699,
+    -     undefined,
+    -     'target-dead'
+    -   ],
+    -   [
+    -     'attack-canceled',
+    -     1699,
+    -     3,
+    -     'target-dead'
+    -   ]
+    - ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0:
+      0: 'pursuit-invalidated'
+      1: 1699
+      3: 'target-dead'
+    1:
+      0: 'attack-canceled'
+      1: 1699
+      2: 3
+      3: 'target-dead'
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:721:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: validation cancellation projects the scheduled readiness from windup
+not ok 23 - validation cancellation projects the scheduled readiness from windup
+  ---
+  duration_ms: 1.949356
+  type: 'test'
+  location: '/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:754:1'
+  failureType: 'testCodeFailure'
+  error: "Cannot read properties of undefined (reading 'readyTick')"
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:781:25)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: a friendly pursuit lock is rejected as invalid world state
+not ok 24 - a friendly pursuit lock is rejected as invalid world state
+  ---
+  duration_ms: 0.469797
+  type: 'test'
+  location: '/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:785:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /friendly pursuit target/i. Input:
+    
+    'Error: unit 1628 has friendly/non-hostile pursuit target 1629'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: 'unit 1628 has friendly/non-hostile pursuit target 1629'
+  stack: |-
+    validatePursuitTargets (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/src/combat/world.js:1713:15)
+    stepWorld (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/src/combat/world.js:5903:3)
+    file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:793:23
+    getActual (node:assert:611:5)
+    strict.throws (node:assert:759:24)
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:793:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/aoe2_civ_path_cache/aoe2x/js_simulation/tests/world-tick.test.mjs:793:10)
+    async Test.run (node:internal/test_runner/test:1389:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+  ...
+# Subtest: a dead pursuit invalidates before same-tick reacquisition
+ok 25 - a dead pursuit invalidates before same-tick reacquisition
+  ---
+  duration_ms: 0.77051
+  type: 'test'
+  ...
+# Subtest: the runner returns a timeout outcome with no winner at its safety ceiling
+ok 26 - the runner returns a timeout outcome with no winner at its safety ceiling
+  ---
+  duration_ms: 0.739624
+  type: 'test'
+  ...
+# Subtest: the runner reports an all-dead world as a draw
+ok 27 - the runner reports an all-dead world as a draw
+  ---
+  duration_ms: 4.529763
+  type: 'test'
+  ...
+# Subtest: the runner rejects safety ceilings above 9000 ticks
+ok 28 - the runner rejects safety ceilings above 9000 ticks
+  ---
+  duration_ms: 0.515456
+  type: 'test'
+  ...
+# Subtest: runWorld preserves snapshots without friendly live locks
+ok 29 - runWorld preserves snapshots without friendly live locks
+  ---
+  duration_ms: 107.249844
+  type: 'test'
+  ...
+# Subtest: compact runWorld keeps final combat and event order without tick snapshots
+ok 30 - compact runWorld keeps final combat and event order without tick snapshots
+  ---
+  duration_ms: 190.502813
+  type: 'test'
+  ...
+# Subtest: complete fights are invariant to reversing scenario arrays
+ok 31 - complete fights are invariant to reversing scenario arrays
+  ---
+  duration_ms: 175.138166
+  type: 'test'
+  ...
+# Subtest: published worlds snapshots events and nested state are immutable
+ok 32 - published worlds snapshots events and nested state are immutable
+  ---
+  duration_ms: 8.029395
+  type: 'test'
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 23
+# fail 9
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1072.883675

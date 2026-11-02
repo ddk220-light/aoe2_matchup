@@ -119,6 +119,33 @@ export function hashCanonicalJson(value) {
     : browserSha256(serialized);
 }
 
+// Headless combat needs the hash, not a retained array of millions of events.
+// Each batch contributes the exact canonical array interior and separators.
+// Return null in browsers so existing callers can keep their retained path.
+export function createCanonicalJsonArrayHasher() {
+  if (!createNodeHash) return null;
+  const hash = createNodeHash("sha256");
+  hash.update("[");
+  let count = 0;
+  let finished = false;
+  return Object.freeze({
+    append(values) {
+      if (finished) throw new Error("canonical array hash already finished");
+      if (!Array.isArray(values)) throw new TypeError("canonical array batch must be an array");
+      if (values.length === 0) return;
+      const text = canonicalJson(values);
+      if (count) hash.update(",");
+      hash.update(text.slice(1, -1));
+      count += values.length;
+    },
+    finish() {
+      if (finished) throw new Error("canonical array hash already finished");
+      finished = true;
+      return hash.update("]").digest("hex");
+    },
+  });
+}
+
 // Node batch fights can emit millions of movement events. Hash the same
 // canonical byte sequence in bounded chunks so V8 never has to create a
 // single string larger than its maximum string length. Browser fights retain

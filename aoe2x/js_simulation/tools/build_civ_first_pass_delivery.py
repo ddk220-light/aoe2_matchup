@@ -16,7 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RECOVERY = Path('/workspace/aoe2_civ_first_pass_parallel/aoe2x/js_simulation/calibration/campaigns/civ-matchups-first-pass-parallel-2026-11-01')
 DEFAULT_PATROL_RECOVERY = Path('/workspace/aoe2_civ_patrol_repair/aoe2x/js_simulation/calibration/campaigns/civ-matchups-patrol-first-pass-2026-11-01')
 PATROL_PHYSICS = 'collision-repair-v2-patrol-candidate-v1'
-SUPPORTED_PHYSICS = {'collision-repair-v2', PATROL_PHYSICS}
+STATIC_MEMO_PHYSICS = 'collision-repair-v2-static-memo-candidate-v1'
+DEFAULT_STATIC_MEMO_RECOVERY = Path('/workspace/aoe2_civ_path_cache/aoe2x/js_simulation/calibration/campaigns/civ-matchups-static-memo-first-pass-2026-11-02')
+SUPPORTED_PHYSICS = {'collision-repair-v2', PATROL_PHYSICS, STATIC_MEMO_PHYSICS}
 
 
 def read_json(path):
@@ -68,16 +70,16 @@ def project(row, job, review):
             'reviewSha256':sha(canonical(review)), 'seedReferences':review['seedReferences'],
             'exactRepairedReplay':review['exactReplay'],
             'validationStatus':'not_validated_under_target_engine',
-            **({'fidelityStatus':review['fidelityStatus']} if physics==PATROL_PHYSICS else {})})
+            **({'fidelityStatus':review['fidelityStatus']} if physics in (PATROL_PHYSICS, STATIC_MEMO_PHYSICS) else {})})
     return result
 
 
-def load_patrol_candidate(recovery):
+def load_candidate(recovery, physics, candidate_report, changed_file, changed_field):
     """Read only complete, reviewed own-engine seeds; diagnostics are ineligible."""
     if not (recovery/'manifest.json').exists() or not (recovery/'pair-reviews.jsonl').exists():
         return [], [], None
     m=read_json(recovery/'manifest.json');repo=recovery.parents[4]
-    assert m['physicsVersion']==PATROL_PHYSICS
+    assert m['physicsVersion']==physics
     assert sha(canonical({k:v for k,v in m.items() if k!='campaignHash'}))==m['campaignHash']
     assert m['compatibleSourceCampaigns']==[], 'candidate cannot import older physics results'
     assert m['policy']['initialSeeds']==[0,1,2]
@@ -86,21 +88,21 @@ def load_patrol_candidate(recovery):
     sim=repo/'aoe2x/js_simulation'
     fixed=[(sim/'calibration/campaigns/unit-rankings-path-recovery-2026-10-29/manifest.json','frozenInputsSha256'),
         (sim/'calibration/campaigns/civ-matchups-v2-stream-compatibility-2026-11-01/manifest.json','parentCertificateSha256'),
-        (sim/'calibration/reports/civ-matchups-patrol-repair-2026-11-01/CANDIDATE.json','candidateSha256')]
+        (sim/candidate_report,'candidateSha256')]
     for path,key in fixed:assert sha(path.read_bytes())==m[key], f'candidate source changed: {path}'
     cert=read_json(fixed[1][0]);candidate=read_json(fixed[2][0])
     parent_files={f['path']:f['streamSha256'] for f in cert['sharedRuntimeFiles']+cert['changedOutputFiles']}
     assert {f['path']:f['parentV2StreamSha256'] for f in m['runtimeFiles']}==parent_files
     for f in m['runtimeFiles']:assert sha((repo/f['path']).read_bytes())==f['sha256']
     for f in m['orchestrationFiles']:assert sha((sim/f['path']).read_bytes())==f['sha256']
-    assert [f['path'] for f in m['runtimeFiles'] if f['sha256']!=f['parentV2StreamSha256']]==['aoe2x/js_simulation/src/combat/world.js']
-    assert next(f['sha256'] for f in m['runtimeFiles'] if f['path'].endswith('/src/combat/world.js'))==candidate['changedPhysicsFiles'][0]['candidateSha256']
+    assert [f['path'] for f in m['runtimeFiles'] if f['sha256']!=f['parentV2StreamSha256']]==[changed_file]
+    assert next(f['sha256'] for f in m['runtimeFiles'] if f['path']==changed_file)==candidate[changed_field][0]['candidateSha256']
     jobs={j['id']:j for j in read_json(recovery/'jobs.json')}
     raw=(recovery/'runs.jsonl').read_bytes();assert raw.endswith(b'\n')
     lines=raw.splitlines();all_records=[json.loads(line) for line in lines]
     assert len({(r['matchupId'],r['seed']) for r in all_records})==len(all_records), 'duplicate candidate seed'
     for r in all_records:
-        assert r['campaignHash']==m['campaignHash'] and r['physicsVersion']==PATROL_PHYSICS
+        assert r['campaignHash']==m['campaignHash'] and r['physicsVersion']==physics
         assert r['matchupId'] in jobs
     raw=(recovery/'pair-reviews.jsonl').read_bytes();assert raw.endswith(b'\n')
     reviews={r['matchupId']:r for r in map(json.loads,raw.splitlines())}
@@ -114,15 +116,26 @@ def load_patrol_candidate(recovery):
             record=json.loads(text)
             assert record['campaignHash']==reference['campaignHash']==ref['campaignHash']==m['campaignHash']
             assert all(record[k]==reference[k] for k in ['seed','outcome','finalStateHash','eventLogHash'])
-            saved.append(record);ledger.append({'physicsVersion':PATROL_PHYSICS,'record':record,'sourceReference':ref})
+            saved.append(record);ledger.append({'physicsVersion':physics,'record':record,'sourceReference':ref})
         assert {r['seed'] for r in saved}=={r['seed'] for r in all_records if r['matchupId']==job['id']}, 'review omits saved seed'
-        validate_recovery_review(review,job,saved,PATROL_PHYSICS)
+        validate_recovery_review(review,job,saved,physics)
         entries.append((job,review))
     return entries,ledger,{'manifestSha256':sha((recovery/'manifest.json').read_bytes()),
-        'campaignHash':m['campaignHash'],'physicsVersion':PATROL_PHYSICS,'fidelityStatus':m['fidelityStatus']}
+        'campaignHash':m['campaignHash'],'physicsVersion':physics,'fidelityStatus':m['fidelityStatus']}
+
+def load_patrol_candidate(recovery):
+    return load_candidate(recovery, PATROL_PHYSICS,
+        'calibration/reports/civ-matchups-patrol-repair-2026-11-01/CANDIDATE.json',
+        'aoe2x/js_simulation/src/combat/world.js', 'changedPhysicsFiles')
 
 
-def build(campaign, prediction_dir, recovery, output, require_complete=False, patrol_recovery=DEFAULT_PATROL_RECOVERY):
+def load_static_memo_candidate(recovery):
+    return load_candidate(recovery, STATIC_MEMO_PHYSICS,
+        'calibration/reports/civ-static-geometry-cache-2026-11-02/CANDIDATE.json',
+        'aoe2x/js_simulation/src/combat/collision.js', 'changedRuntimeFiles')
+
+
+def build(campaign, prediction_dir, recovery, output, require_complete=False, patrol_recovery=DEFAULT_PATROL_RECOVERY, static_memo_recovery=DEFAULT_STATIC_MEMO_RECOVERY):
     source_manifest = read_json(prediction_dir/'manifest.json')
     for name, checksum in source_manifest['files'].items():
         assert sha((prediction_dir/name).read_bytes()) == checksum, f'prediction archive changed: {name}'
@@ -187,7 +200,8 @@ def build(campaign, prediction_dir, recovery, output, require_complete=False, pa
             if row['outcome'] == 'unresolved':
                 projections[row['pairKey']] = project(row, job, review)
     patrol_entries,patrol_ledger,patrol_meta=load_patrol_candidate(patrol_recovery)
-    for job,review in patrol_entries:
+    memo_entries,memo_ledger,memo_meta=load_static_memo_candidate(static_memo_recovery)
+    for job,review in patrol_entries+memo_entries:
         row=by_key[job['pairKey']]
         # Never overwrite an observed result, approved forecast or completed V2 projection.
         if row['outcome']=='unresolved' and row['pairKey'] not in projections:
@@ -235,13 +249,14 @@ def build(campaign, prediction_dir, recovery, output, require_complete=False, pa
     write_rows(output/'civilization-table.jsonl.gz',cells)
     write_rows(output/'repaired-evidence-ledger.jsonl.gz',[ledger[k] for k in sorted(ledger)])
     write_rows(output/'patrol-candidate-evidence-ledger.jsonl.gz',patrol_ledger)
+    write_rows(output/'static-memo-candidate-evidence-ledger.jsonl.gz',memo_ledger)
     write_json(output/'variant-profiles.json',variants)
     write_json(output/'summary.json',summary)
-    write_json(output/'manifest.json',{'version':'provisional-first-pass-delivery-v2',
+    write_json(output/'manifest.json',{'version':'provisional-first-pass-delivery-v3',
         'predictionArchiveManifestSha256':sha((prediction_dir/'manifest.json').read_bytes()),
-        'sourcePhaseReviewSha256':sha(review_path.read_bytes()),'recovery':recovery_meta,'patrolRecovery':patrol_meta,
+        'sourcePhaseReviewSha256':sha(review_path.read_bytes()),'recovery':recovery_meta,'patrolRecovery':patrol_meta,'staticMemoRecovery':memo_meta,
         'builderSha256':sha(Path(__file__).read_bytes()),'files':{name:sha((output/name).read_bytes()) for name in
-        ['profile-table.jsonl.gz','civilization-table.jsonl.gz','repaired-evidence-ledger.jsonl.gz','patrol-candidate-evidence-ledger.jsonl.gz','variant-profiles.json','summary.json']}})
+        ['profile-table.jsonl.gz','civilization-table.jsonl.gz','repaired-evidence-ledger.jsonl.gz','patrol-candidate-evidence-ledger.jsonl.gz','static-memo-candidate-evidence-ledger.jsonl.gz','variant-profiles.json','summary.json']}})
     return summary
 
 
@@ -250,4 +265,5 @@ if __name__ == '__main__':
     p.add_argument('--prediction-dir',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--recovery',type=Path,default=DEFAULT_RECOVERY);p.add_argument('--require-complete',action='store_true')
     p.add_argument('--patrol-recovery',type=Path,default=DEFAULT_PATROL_RECOVERY)
-    args=p.parse_args();print(json.dumps(build(args.campaign,args.prediction_dir,args.recovery,args.output,args.require_complete,args.patrol_recovery)))
+    p.add_argument('--static-memo-recovery',type=Path,default=DEFAULT_STATIC_MEMO_RECOVERY)
+    args=p.parse_args();print(json.dumps(build(args.campaign,args.prediction_dir,args.recovery,args.output,args.require_complete,args.patrol_recovery,args.static_memo_recovery)))

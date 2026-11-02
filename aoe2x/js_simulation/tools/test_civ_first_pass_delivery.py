@@ -1,5 +1,5 @@
 import unittest
-from build_civ_first_pass_delivery import project,validate_recovery_review,PATROL_PHYSICS
+from build_civ_first_pass_delivery import project,validate_recovery_review,PATROL_PHYSICS,STATIC_MEMO_PHYSICS
 from civ_prediction_first_pass import sha,canonical
 
 class DeliveryTests(unittest.TestCase):
@@ -44,6 +44,20 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(result['evidenceType'],'predicted_unvalidated')
         self.assertEqual(result['recoveryProjection']['measurementPhysicsVersion'],PATROL_PHYSICS)
         self.assertEqual(result['recoveryProjection']['fidelityStatus'],'not_game_validated')
+        self.assertFalse(result['verified'])
+
+    def test_static_memo_candidate_is_separate_and_requires_complete_seed_review(self):
+        job,records,review,row=self.fixture()
+        review.update(physicsVersion=STATIC_MEMO_PHYSICS,fidelityStatus='source_engine_fidelity_open')
+        with self.assertRaises(AssertionError):validate_recovery_review(review,job,records)
+        with self.assertRaises(AssertionError):validate_recovery_review(review,job,records[:2],STATIC_MEMO_PHYSICS)
+        validate_recovery_review(review,job,records,STATIC_MEMO_PHYSICS)
+        result=project(row,job,review)
+        self.assertEqual(result['context']['profiles'],['b','a'])
+        self.assertEqual(result['outcome'],'b_win')
+        self.assertEqual(result['evidenceType'],'predicted_unvalidated')
+        self.assertEqual(result['recoveryProjection']['measurementPhysicsVersion'],STATIC_MEMO_PHYSICS)
+        self.assertEqual(result['recoveryProjection']['fidelityStatus'],'source_engine_fidelity_open')
         self.assertFalse(result['verified'])
 
     def test_unknown_projection_physics_is_rejected(self):

@@ -1,0 +1,18 @@
+{
+  "version": "static-geometry-memo-candidate-v1",
+  "changedRuntimeFiles": [
+    {
+      "path": "aoe2x/js_simulation/src/combat/collision.js",
+      "parentSha256": "3e4bc576462051826cef72eccdcfd112e77212c2718f9cc465ea6bf217948aa3",
+      "candidateSha256": "221b81ac5ad50cb83901b63915389d38e321e341f91ce4d3b7a8c805899954e6"
+    }
+  ],
+  "semantics": "Memoize the exact first static violation or null for identical body displacement and tolerance inside one movement solve. Body origin, obstacles and bounds are fixed within that solve; cached objects never enter world state. No arithmetic, collision tolerance, ordering, fallback or attack rule changes.",
+  "validation": {
+    "collisionTests": 32,
+    "boundedKonaSeed0ExactParity": true,
+    "completeKonaSeed1ExactParity": true,
+    "benchmarkSummarySha256": "67f3241da2f6a477f16967693ca836e4a9989b55881f0ae66cd3d1d3f16ff94a"
+  },
+  "limitations": "Not yet a full failed-seed result or universal empirical equivalence proof. Preserve separate candidate-native journals; projection to frozen V3 is always predicted_unvalidated. No bulk replay."
+}

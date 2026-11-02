@@ -526,9 +526,20 @@ function restoreInvalidMovement(bodies, obstacles, bounds, pairInteractions) {
 }
 
 
-function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON,
-  pairInteractions = createPairInteractionSnapshot()) {
-  for (const body of bodies) {
+// These temporary bodies exist only for one movement solve. Static validation
+// is pure for the same exact displacement and tolerance; cache that answer
+// locally, preserving obstacle order, arithmetic, and the original first error.
+function staticGeometryViolation(body, obstacles, bounds, tolerance) {
+  const slot = tolerance === EPSILON ? 'strictGeometry' : 'slopGeometry';
+  const cached = body[slot];
+  if (cached && Object.is(cached.dx, body.dx) && Object.is(cached.dy, body.dy)
+      && Object.is(cached.tolerance, tolerance)) return cached.violation;
+  const violation = computeStaticGeometryViolation(body, obstacles, bounds, tolerance);
+  body[slot] = {dx: body.dx, dy: body.dy, tolerance, violation};
+  return violation;
+}
+
+function computeStaticGeometryViolation(body, obstacles, bounds, tolerance) {
     const x = body.x + body.dx;
     const y = body.y + body.dy;
     if (
@@ -544,6 +555,15 @@ function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON,
         return `reference ${body.referenceId} overlaps obstacle ${obstacle.label} by ${-gap}`;
       }
     }
+  return null;
+}
+
+
+function finalGeometryViolation(bodies, obstacles, bounds, tolerance = EPSILON,
+  pairInteractions = createPairInteractionSnapshot()) {
+  for (const body of bodies) {
+    const violation = staticGeometryViolation(body, obstacles, bounds, tolerance);
+    if (violation !== null) return violation;
   }
   for (let i = 0; i < bodies.length; i += 1) {
     for (let j = i + 1; j < bodies.length; j += 1) {

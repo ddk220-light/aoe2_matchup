@@ -30,6 +30,10 @@ import {
   resolvePairInteraction,
 } from "./pair-interactions.js";
 import { areAllies, areOpponents } from "./diplomacy.js";
+import { ExactNoRouteCache } from "./no-route-cache.js";
+
+const noRouteCache = new ExactNoRouteCache();
+export function persistentNoRouteCacheStats() { return noRouteCache.statistics(); }
 
 const CELL_TILES = 0.25;
 // One waypoint this far along the path (in cells) is handed to the walker.
@@ -583,6 +587,20 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
     blocked, congestion, cols, startX, startY, targetX, targetY,
   )) return null;
 
+  // Reuse only an exhaustive negative search over the identical directed
+  // reachability graph and goal set. Never cache positive paths, budget exits,
+  // rounded physical positions, or approximated collision clearances.
+  let noRouteKey = null;
+  if (cols * rows <= MAX_EXPANSIONS) {
+    const goals = new Uint8Array(cols * rows);
+    for (let index = 0; index < goals.length; index += 1) {
+      goals[index] = Number(inGoalEnvelope(index % cols, Math.floor(index / cols), target, stopSpec));
+    }
+    noRouteKey = noRouteCache.key(cols, rows, startIndex,
+      [hardBlocked, crowdBlocked, alliedOccupancy, alliedHardOccupancy, goals]);
+    if (noRouteCache.has(noRouteKey)) return Object.freeze({ stand: true });
+  }
+
   const gScore = new Map([[startIndex, 0]]);
   const cameFrom = new Map();
   const closed = new Set();
@@ -631,7 +649,10 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
       heapPush(heap, { index: nIndex, g: tentative, h, f: tentative + h });
     }
   }
-  if (goalIndex === null) return Object.freeze({ stand: true });
+  if (goalIndex === null) {
+    if (heap.length === 0) noRouteCache.rememberExhausted(noRouteKey);
+    return Object.freeze({ stand: true });
+  }
   const path = [];
   for (let index = goalIndex; index !== undefined; index = cameFrom.get(index)) {
     path.push(index);

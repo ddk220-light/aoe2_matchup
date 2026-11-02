@@ -1,0 +1,1057 @@
+{
+  "diagnosticOnly": true,
+  "boundedExactParity": true,
+  "completeControlExactParity": true,
+  "baselineWallSeconds": 70.10120843199999,
+  "candidateWallSeconds": 76.42086459200002,
+  "observedSpeedRatio": 0.9173045712877006,
+  "candidateLastSample": {
+    "tick": 2400,
+    "seconds": 40,
+    "wallSeconds": 75.54164584899999,
+    "byOwner": {
+      "2": {
+        "units": 1,
+        "hp": 23
+      },
+      "3": {
+        "units": 18,
+        "hp": 2460
+      }
+    },
+    "positions": [
+      {
+        "id": 9021,
+        "owner": 2,
+        "hp": 23,
+        "x": 15.006135405200784,
+        "y": 4.00388778649639,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9516,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 2,
+          "y": 13,
+          "commandX": 2,
+          "commandY": 13,
+          "cohortOriginX": 12.314814814814815,
+          "cohortOriginY": 3.685185185185185,
+          "formationStartX": 14.5,
+          "formationStartY": 2.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 194
+        },
+        "avoidance": null,
+        "radius": 0.2,
+        "outlineRadius": 0.2,
+        "range": 8,
+        "minimumRange": 1,
+        "targetGeometry": [
+          {
+            "id": 9516,
+            "centerDistance": 0.6173414182579207,
+            "physicalChebyshevGap": 0.11279435158434054,
+            "outlineChebyshevGap": -0.03720564841565949,
+            "withinAttackReach": false
+          }
+        ]
+      },
+      {
+        "id": 9500,
+        "owner": 3,
+        "hp": 145,
+        "x": 14.774758299398794,
+        "y": 2.691105271816429,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 1.5,
+          "formationStartY": 13.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 336
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.3330166150272655,
+            "physicalChebyshevGap": 0.8627825146799617,
+            "outlineChebyshevGap": 0.7127825146799616,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 3
+        },
+        "recoveryFailures": 1
+      },
+      {
+        "id": 9501,
+        "owner": 3,
+        "hp": 143,
+        "x": 13.60378704665009,
+        "y": 4.871159454794896,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 2.5,
+          "formationStartY": 14.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 336
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.6488605354495864,
+            "physicalChebyshevGap": 0.9523483585506931,
+            "outlineChebyshevGap": 0.8023483585506932,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryRoute": {
+          "targetReferenceId": 9021,
+          "targetX": 15.006135405200784,
+          "targetY": 4.00388778649639,
+          "waypoints": [
+            {
+              "x": 13.117128630975088,
+              "y": 4.756426780927785
+            }
+          ],
+          "waypointIndex": 0,
+          "recoveryKind": "local-escape"
+        }
+      },
+      {
+        "id": 9502,
+        "owner": 3,
+        "hp": 143,
+        "x": 14.373139445648027,
+        "y": 4.357067118463742,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": 9021,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 3.5,
+          "formationStartY": 14.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 336
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 0.7248582794857348,
+            "physicalChebyshevGap": 0.18299595955275655,
+            "outlineChebyshevGap": 0.032995959552756526,
+            "withinAttackReach": true
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 3
+        },
+        "recoveryFailures": 99
+      },
+      {
+        "id": 9503,
+        "owner": 3,
+        "hp": 145,
+        "x": 14.00241716675317,
+        "y": 3.8570671184637417,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 2.5,
+          "formationStartY": 13.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 336
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.0143996306948915,
+            "physicalChebyshevGap": 0.5537182384476129,
+            "outlineChebyshevGap": 0.40371823844761284,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 4
+        },
+        "recoveryFailures": 66
+      },
+      {
+        "id": 9504,
+        "owner": 3,
+        "hp": 143,
+        "x": 14.00241716675218,
+        "y": 3.3570671184637417,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 1.5,
+          "formationStartY": 12.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 336
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.194080097308623,
+            "physicalChebyshevGap": 0.5537182384486041,
+            "outlineChebyshevGap": 0.40371823844860405,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 4
+        },
+        "recoveryFailures": 5
+      },
+      {
+        "id": 9505,
+        "owner": 3,
+        "hp": 145,
+        "x": 14.806611215338194,
+        "y": 3.19109343491205,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 1.5,
+          "formationStartY": 11.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 288
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 0.8369256599649286,
+            "physicalChebyshevGap": 0.36279435158434054,
+            "outlineChebyshevGap": 0.2127943515843405,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 4
+        },
+        "recoveryFailures": 3
+      },
+      {
+        "id": 9506,
+        "owner": 3,
+        "hp": 143,
+        "x": 14.10378704665009,
+        "y": 5.109010800568384,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 2.5,
+          "formationStartY": 12.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 288
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.4267198170666504,
+            "physicalChebyshevGap": 0.6551230140719932,
+            "outlineChebyshevGap": 0.5051230140719931,
+            "withinAttackReach": false
+          }
+        ]
+      },
+      {
+        "id": 9507,
+        "owner": 3,
+        "hp": 145,
+        "x": 13.641109924626692,
+        "y": 4.609010800568384,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 3.5,
+          "formationStartY": 13.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 288
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.4931404571493276,
+            "physicalChebyshevGap": 0.9150254805740918,
+            "outlineChebyshevGap": 0.7650254805740917,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryRoute": {
+          "targetReferenceId": 9021,
+          "targetX": 15.006135405200784,
+          "targetY": 4.00388778649639,
+          "waypoints": [
+            {
+              "x": 13.625070256619754,
+              "y": 4.829073524679322
+            }
+          ],
+          "waypointIndex": 0,
+          "recoveryKind": "local-escape"
+        },
+        "recoveryFailures": 66
+      },
+      {
+        "id": 9508,
+        "owner": 3,
+        "hp": 141,
+        "x": 14.35378704665009,
+        "y": 5.107067118463741,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 4.5,
+          "formationStartY": 14.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 288
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.2816251477650216,
+            "physicalChebyshevGap": 0.6531793319673505,
+            "outlineChebyshevGap": 0.5031793319673503,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryFailures": 1
+      },
+      {
+        "id": 9509,
+        "owner": 3,
+        "hp": 135,
+        "x": 14.253741929755027,
+        "y": 4.607067118463741,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 5.5,
+          "formationStartY": 14.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 288
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 0.9643242444354099,
+            "physicalChebyshevGap": 0.30239347544575707,
+            "outlineChebyshevGap": 0.15239347544575704,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 3
+        },
+        "recoveryFailures": 39
+      },
+      {
+        "id": 9510,
+        "owner": 3,
+        "hp": 140,
+        "x": 14.25241716675317,
+        "y": 3.887569052652105,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 4.5,
+          "formationStartY": 13.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 288
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 0.7626409579951173,
+            "physicalChebyshevGap": 0.30371823844761286,
+            "outlineChebyshevGap": 0.15371823844761284,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 2
+        },
+        "recoveryFailures": 103
+      },
+      {
+        "id": 9511,
+        "owner": 3,
+        "hp": 128,
+        "x": 14.25241716675218,
+        "y": 3.3570671184637417,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 3.5,
+          "formationStartY": 12.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 240
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 0.9932110347576031,
+            "physicalChebyshevGap": 0.30371823844860407,
+            "outlineChebyshevGap": 0.15371823844860405,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 4
+        },
+        "recoveryFailures": 57
+      },
+      {
+        "id": 9512,
+        "owner": 3,
+        "hp": 145,
+        "x": 13.50241716675317,
+        "y": 3.893320118512806,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 2.5,
+          "formationStartY": 11.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 240
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.5077777521383315,
+            "physicalChebyshevGap": 1.053718238447613,
+            "outlineChebyshevGap": 0.903718238447613,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryFailures": 3
+      },
+      {
+        "id": 9513,
+        "owner": 3,
+        "hp": 136,
+        "x": 14.055454015313485,
+        "y": 2.7930018082294956,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 1.5,
+          "formationStartY": 10.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 240
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.5394934093530317,
+            "physicalChebyshevGap": 0.7608859782668949,
+            "outlineChebyshevGap": 0.6108859782668947,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryRoute": {
+          "targetReferenceId": 9021,
+          "targetX": 15.005938577130634,
+          "targetY": 3.9959188160789383,
+          "waypoints": [
+            {
+              "x": 13.820493198060992,
+              "y": 2.7364669328531392
+            }
+          ],
+          "waypointIndex": 0,
+          "recoveryKind": "local-escape"
+        }
+      },
+      {
+        "id": 9514,
+        "owner": 3,
+        "hp": 139,
+        "x": 13.50241716675317,
+        "y": 3.632686166897796,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 2.5,
+          "formationStartY": 10.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 192
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 1.5488573798231429,
+            "physicalChebyshevGap": 1.053718238447613,
+            "outlineChebyshevGap": 0.903718238447613,
+            "withinAttackReach": false
+          }
+        ]
+      },
+      {
+        "id": 9515,
+        "owner": 3,
+        "hp": 145,
+        "x": 14.85378704664909,
+        "y": 4.880668909843575,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": null,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 3.5,
+          "formationStartY": 11.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 240
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 0.8899186258368489,
+            "physicalChebyshevGap": 0.42678112334718427,
+            "outlineChebyshevGap": 0.27678112334718424,
+            "withinAttackReach": false
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 4
+        },
+        "recoveryFailures": 2
+      },
+      {
+        "id": 9516,
+        "owner": 3,
+        "hp": 90,
+        "x": 14.75241716675218,
+        "y": 3.44109343491205,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 60,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": 9021,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 4.5,
+          "formationStartY": 12.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 240
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 0.6173414182579207,
+            "physicalChebyshevGap": 0.11279435158434054,
+            "outlineChebyshevGap": -0.03720564841565949,
+            "withinAttackReach": true
+          }
+        ],
+        "recoveryAttempt": {
+          "targetReferenceId": 9021,
+          "count": 3
+        },
+        "recoveryFailures": 1
+      },
+      {
+        "id": 9518,
+        "owner": 3,
+        "hp": 109,
+        "x": 14.753741929755027,
+        "y": 4.574621574521666,
+        "action": "idle",
+        "actionTimers": {
+          "windup": 0,
+          "reload": 0,
+          "swing": 0,
+          "acquire": 0
+        },
+        "pursuitTargetId": 9021,
+        "engagedTargetId": 9021,
+        "attackTargetId": null,
+        "moveOrder": {
+          "kind": "scenario-patrol",
+          "x": 13,
+          "y": 2,
+          "commandX": 13,
+          "commandY": 2,
+          "cohortOriginX": 3.3421052631578947,
+          "cohortOriginY": 12.868421052631579,
+          "formationStartX": 6.5,
+          "formationStartY": 13.5,
+          "issuedTick": 0,
+          "triggerId": 0,
+          "openingSeed": 0,
+          "sharedVisionPrimed": false,
+          "motionStartTick": 60,
+          "nextOpeningScanTick": 192
+        },
+        "avoidance": null,
+        "radius": 0.25,
+        "outlineRadius": 0.4,
+        "range": 0,
+        "minimumRange": 0,
+        "targetGeometry": [
+          {
+            "id": 9021,
+            "centerDistance": 0.6240508979572648,
+            "physicalChebyshevGap": 0.12073378802527585,
+            "outlineChebyshevGap": -0.029266211974724177,
+            "withinAttackReach": true
+          }
+        ]
+      }
+    ],
+    "eventCounts": {
+      "scenario-trigger-fired": 1,
+      "patrol-issued": 2,
+      "move": 33980,
+      "pursuit-acquired": 1580,
+      "engagement-started": 263,
+      "attack-start": 258,
+      "damage": 235,
+      "contact-reservation-acquired": 123,
+      "contact-reservation-persisted": 12012,
+      "blocked": 27044,
+      "engagement-ended": 233,
+      "contact-reservation-released": 116,
+      "pursuit-retarget-requested": 887,
+      "pursuit-route-planned": 749,
+      "pursuit-route-invalidated": 575,
+      "contact-release-persisted": 5034,
+      "pursuit-route-advanced": 232,
+      "death": 27,
+      "pursuit-invalidated": 111,
+      "attack-canceled": 20,
+      "contact-release-published": 1
+    },
+    "cacheStatistics": {
+      "hits": 109,
+      "misses": 1495,
+      "entries": 128
+    }
+  }
+}

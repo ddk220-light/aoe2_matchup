@@ -55,3 +55,9 @@ Builder v6 accepts additional separately frozen campaigns with the identical eve
 The targeted terminal-goal campaign completed all three fresh seeds at ticks 1785, 2159 and 1742, with Mapuche winning each. Its independent exact replay of seed 0 passed, including final-state/event-log parity with the diagnostic v3 control. Final review documentation is pushed at `4bfe02ed`. The completed runner must not be restarted.
 
 The refreshed builder-v6 phase-038 preview contains 9,792 observed, 10,535 inferred, 45 equivalent, 46,909 flagged predictions and 1,635 unresolved gaps. The 13 repaired projections include the one completed terminal-goal pair, whose three native records stay in their own ledger. Phase-038 stream recovery is still running and contributes nothing until its own complete review. No first-pass completion is claimed.
+
+## All targeted inventories through phase 038 accounted for
+
+The phase-038 hashing recovery also completed: three Hussar wins and its independent exact replay passed. Final review documentation is pushed at `6109d06a`. No recovery runner remains active, and all completed inventories must stay stopped. The main phase-039 runner is still live.
+
+The refreshed phase-038 preview now has 46,910 flagged predictions and 1,634 unresolved gaps, with the observed/inferred/equivalent counts unchanged. All 14 previously blocked profile pairs have explicit projections linked to completed reviewed inventories, including two separate event-memory inventories sharing an identical runtime. This does not complete ordinary remaining simulation gaps or validate the forecasts. Full tables remain disposable previews until the final zero-gap bundle is published.

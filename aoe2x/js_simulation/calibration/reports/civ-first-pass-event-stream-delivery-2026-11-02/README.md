@@ -81,3 +81,9 @@ While phase 040 continues, Aztec Imperial Elite Skirmisher versus Lithuanian Hus
 Worktree `/workspace/aoe2_civ_phase040_early_stream`, branch `simulations/civ-matchups-phase040-early-stream-2026-11-02`, script `node/civ-matchups/recover-phase040-early-stream-first-pass.mjs`, hash `29ac37c8445fe6972199a79c641cadfc2e260665b5c8ef01cfe5600de5fc5921`, source `c9dc0b57`, log `/workspace/aoe2_civ_phase040_early_stream.log`. All runtime files are byte-identical to the completed event-memory campaigns; no physics, forecast or scoring change is introduced. This inventory contributes no table projection until its full seed set and exact replay pass.
 
 Builder v6 now checks early-inventory source plans, original campaign/inventory hashes, exact job contexts and the specific exhausted hashing-error records. Missing/changed source records, unknown jobs, initial attempts and watchdogs are rejected. Ten delivery tests pass. The native ledgers, cross-engine flags and fidelity limits remain unchanged.
+
+## Exhausted phase-040 recovery completed
+
+The early phase-040 inventory completed all three fresh seeds as Lithuanian Hussar wins at ticks 123929, 1588 and 1673; its independent exact replay of seed 1 passed. All source-plan, inventory, exhausted-error and runtime hashes passed validation. The final native checkpoint is `b715013b`, with completed review documentation at `ffee4401`. Do not restart this completed runner.
+
+The refreshed phase-039 preview now contains 46,773 flagged predictions and 1,428 unresolved profile pairs. The 17 reviewed repaired projections include this source-phase-040 result only as an explicit cross-engine forecast. Its native observations stay in the separate event-memory ledger. Existing V3 observations, inferences, contexts, failure journals and frozen forecast rules are unchanged. Main phase 040 still has active normal retries and is not complete; no new recovery runner is active.

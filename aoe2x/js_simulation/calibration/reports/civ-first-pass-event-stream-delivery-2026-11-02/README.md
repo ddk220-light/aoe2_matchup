@@ -103,3 +103,9 @@ The builder's default additional event-memory inventories include this new froze
 The remaining phase-040 inventory completed all six fresh seeds, with both independent exact replay reviews passing. Both Varangian Hussar pairs won at ticks 2052, 124076 and 1988. Final native checkpoint `df71b217` and review documentation `1cea1cca` are pushed. The completed runner must stay stopped; no recovery runner is active.
 
 The refreshed phase-041 preview has 46,594 flagged predictions, 1,054 unresolved profile pairs and 19 completed repaired projections. Those keys exactly match all 19 currently recorded blocked source pairs. Observed/inferred/equivalent counts remain 10,555 / 10,668 / 45. Supporting native measurements stay in their separate physics ledgers, and no V3 failed or missing seed is promoted into a measurement. Full coverage and orientation checks pass, while remaining ordinary gaps await main phase 042 and subsequent phases. The first pass is still in progress.
+
+## Phase 042 passed; phase 043 running
+
+Phase 042 passed all 256 pairs, 824 valid seed records, zero missing seeds and its independent exact replay. No new failure or recovery inventory was introduced. The main runner continues phase 043 through its existing supervisor.
+
+The full-grid phase-042 preview reconciles 555 variants, 1,540 civilization pairs, 151,223 cells and 68,916 profiles: 10,811 observed, 10,872 inferred, 45 equivalent, 46,406 flagged predictions and 782 unresolved gaps. The 19 completed repaired projections still account for all recorded source blockers, with native observations and fidelity limits preserved separately. No recovery runner is active. This remains an in-progress provisional preview; no first-pass completion or forecast validation is claimed.

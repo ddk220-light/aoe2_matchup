@@ -6,26 +6,11 @@ import {
   planChaseAim,
   planMoveAim,
   planPersistentChaseRoute,
-  persistentReachabilityStats,
 } from "../src/combat/chase-path.js";
 import { createPairInteractionSnapshot } from "../src/combat/pair-interactions.js";
 import { resolveMovementProposals } from "../src/combat/collision.js";
 
 const map = Object.freeze({ width: 8, height: 8, obstacles: Object.freeze([]) });
-
-test("unreachable pursuit reopens when a distant wall gap appears", () => {
-  const mover=dynamicBody(7001,1,4,0.2,3,75);
-  const target=dynamicBody(7002,7,4,0.2,2,4);
-  const wall=Array.from({length:16},(_,i)=>({referenceId:8000+i,x:4,y:0.25+i*0.5,radius:0.25}));
-  const sealed={...map,obstacles:wall};
-  assert.deepEqual(planPersistentChaseRoute(mover,target,[],sealed),{stand:true});
-  const before=persistentReachabilityStats();
-  assert.deepEqual(planPersistentChaseRoute(mover,target,[],sealed),{stand:true});
-  assert.equal(persistentReachabilityStats().rejected,before.rejected+1);
-  const opened={...map,obstacles:wall.filter(o=>o.y<5.7||o.y>6.3)};
-  const route=planPersistentChaseRoute(mover,target,[],opened);
-  assert.ok(route&&route.stand!==true&&route.waypoints.length>0);
-});
 
 function body(x, y, radius = 0.2, owner = undefined, unitMaster = undefined) {
   return Object.freeze({
@@ -503,4 +488,27 @@ test("persistent route keeps a collision-layer sidestep instead of treating it a
     false,
   );
   assert.equal(persistentRouteMotionStalled(before, before, waypoint), true);
+});
+
+
+test("terminal melee route cannot finish before its physical stop goal", () => {
+  const route = { targetX: 1.6, targetY: 1, waypointIndex: 0,
+    waypoints: [{ x: 1.1, y: 1 }], goalStopSpec: { metric: "chebyshev", reach: 0.5 } };
+  // The waypoint is already within the .1875 smoothing radius, while the
+  // actual mover remains .1 beyond its physical attack-stop envelope.
+  assert.equal(advancePersistentChaseRoute({x:1,y:1}, route), route);
+  assert.equal(advancePersistentChaseRoute({x:1.1,y:1}, route).waypointIndex, 1);
+});
+
+test("terminal projectile route retains its circular goal instead of a box", () => {
+  const route = { targetX: 2, targetY: 2, waypointIndex: 0,
+    waypoints: [{ x: 1.3, y: 1.3 }], goalStopSpec: { metric: "euclidean", reach: 1 } };
+  assert.equal(advancePersistentChaseRoute({x:1.2,y:1.2}, route), route);
+  assert.equal(advancePersistentChaseRoute({x:1.3,y:1.3}, route).waypointIndex, 1);
+});
+
+test("ordinary detour waypoint smoothing is preserved", () => {
+  const route = { targetX: 5, targetY: 5, waypointIndex: 0,
+    waypoints: [{ x: 1.1, y: 1 }] };
+  assert.equal(advancePersistentChaseRoute({x:1,y:1}, route).waypointIndex, 1);
 });

@@ -1,0 +1,160 @@
+TAP version 13
+# Subtest: coordinate path keeps a clear move order on its exact direct route
+ok 1 - coordinate path keeps a clear move order on its exact direct route
+  ---
+  duration_ms: 2.485795
+  type: 'test'
+  ...
+# Subtest: path planning and movement agree beside a circular map-obstacle corner
+ok 2 - path planning and movement agree beside a circular map-obstacle corner
+  ---
+  duration_ms: 6.802281
+  type: 'test'
+  ...
+# Subtest: dynamic unit corners keep their box obstruction
+ok 3 - dynamic unit corners keep their box obstruction
+  ---
+  duration_ms: 12.557821
+  type: 'test'
+  ...
+# Subtest: coordinate path deterministically routes around a blocking body
+ok 4 - coordinate path deterministically routes around a blocking body
+  ---
+  duration_ms: 5.963818
+  type: 'test'
+  ...
+# Subtest: coordinate path routes around a static map obstacle
+ok 5 - coordinate path routes around a static map obstacle
+  ---
+  duration_ms: 0.672827
+  type: 'test'
+  ...
+# Subtest: coordinate path stands when surrounding bodies leave no reachable progress
+ok 6 - coordinate path stands when surrounding bodies leave no reachable progress
+  ---
+  duration_ms: 0.43166
+  type: 'test'
+  ...
+# Subtest: coordinate path keeps moving when only dynamic enemies temporarily box in the mover
+ok 7 - coordinate path keeps moving when only dynamic enemies temporarily box in the mover
+  ---
+  duration_ms: 0.46547
+  type: 'test'
+  ...
+# Subtest: chase path leaves friendly crowd bodies to the local collision layers
+ok 8 - chase path leaves friendly crowd bodies to the local collision layers
+  ---
+  duration_ms: 0.275338
+  type: 'test'
+  ...
+# Subtest: chase path falls back to live pursuit when only dynamic enemies box in the mover
+ok 9 - chase path falls back to live pursuit when only dynamic enemies box in the mover
+  ---
+  duration_ms: 0.327515
+  type: 'test'
+  ...
+# Subtest: chase path can leave a coarse start cell whose center is blocked but mover position is legal
+ok 10 - chase path can leave a coarse start cell whose center is blocked but mover position is legal
+  ---
+  duration_ms: 0.427363
+  type: 'test'
+  ...
+# Subtest: chase path omits only a reserved enemy-transit blocker
+ok 11 - chase path omits only a reserved enemy-transit blocker
+  ---
+  duration_ms: 4.914934
+  type: 'test'
+  ...
+# Subtest: persistent chase route ends at clear egress and returns to live target tracking
+ok 12 - persistent chase route ends at clear egress and returns to live target tracking
+  ---
+  duration_ms: 5.063695
+  type: 'test'
+  ...
+# Subtest: persistent ranged pursuit stops at the projectile attack envelope
+ok 13 - persistent ranged pursuit stops at the projectile attack envelope
+  ---
+  duration_ms: 0.714549
+  type: 'test'
+  ...
+# Subtest: persistent chase keeps the direct line through one transit-eligible ally
+ok 14 - persistent chase keeps the direct line through one transit-eligible ally
+  ---
+  duration_ms: 0.339353
+  type: 'test'
+  ...
+# Subtest: blocked-pursuit recovery routes around a demonstrated soft contact surface
+ok 15 - blocked-pursuit recovery routes around a demonstrated soft contact surface
+  ---
+  duration_ms: 26.014144
+  type: 'test'
+  ...
+# Subtest: persistent routing can leave an already-compressed allied basin
+ok 16 - persistent routing can leave an already-compressed allied basin
+  ---
+  duration_ms: 1.180169
+  type: 'test'
+  ...
+# Subtest: persistent chase route accumulates geometric congestion across an allied pack
+ok 17 - persistent chase route accumulates geometric congestion across an allied pack
+  ---
+  duration_ms: 6.939966
+  type: 'test'
+  ...
+# Subtest: persistent chase route gives attacking and idle allies the same geometry
+ok 18 - persistent chase route gives attacking and idle allies the same geometry
+  ---
+  duration_ms: 0.577536
+  type: 'test'
+  ...
+# Subtest: persistent chase route respects the one-allied-transit slot while routing
+ok 19 - persistent chase route respects the one-allied-transit slot while routing
+  ---
+  duration_ms: 1.020302
+  type: 'test'
+  ...
+# Subtest: persistent chase routes are deterministic under a vertical mirror
+ok 20 - persistent chase routes are deterministic under a vertical mirror
+  ---
+  duration_ms: 5.203102
+  type: 'test'
+  ...
+# Subtest: persistent chase route advances without returning to direct target aim
+ok 21 - persistent chase route advances without returning to direct target aim
+  ---
+  duration_ms: 0.453302
+  type: 'test'
+  ...
+# Subtest: persistent route keeps a collision-layer sidestep instead of treating it as a stall
+ok 22 - persistent route keeps a collision-layer sidestep instead of treating it as a stall
+  ---
+  duration_ms: 0.389918
+  type: 'test'
+  ...
+# Subtest: terminal melee route cannot finish before its physical stop goal
+ok 23 - terminal melee route cannot finish before its physical stop goal
+  ---
+  duration_ms: 0.139086
+  type: 'test'
+  ...
+# Subtest: terminal projectile route retains its circular goal instead of a box
+ok 24 - terminal projectile route retains its circular goal instead of a box
+  ---
+  duration_ms: 0.120889
+  type: 'test'
+  ...
+# Subtest: ordinary detour waypoint smoothing is preserved
+ok 25 - ordinary detour waypoint smoothing is preserved
+  ---
+  duration_ms: 0.147739
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 319.505644

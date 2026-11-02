@@ -513,7 +513,7 @@ function envelopeHeuristic(cx, cy, target, stopSpec) {
 }
 
 
-function freezePersistentRoute(target, path, cols) {
+function freezePersistentRoute(target, path, cols, stopSpec = null) {
   const waypoints = Object.freeze(path.slice(1).map((index) => Object.freeze({
     x: (index % cols + 0.5) * CELL_TILES,
     y: (Math.floor(index / cols) + 0.5) * CELL_TILES,
@@ -524,6 +524,9 @@ function freezePersistentRoute(target, path, cols) {
     targetY: target.y,
     waypoints,
     waypointIndex: 0,
+    ...(stopSpec && waypoints.length && inGoalEnvelope(
+      path.at(-1) % cols, Math.floor(path.at(-1) / cols), target, stopSpec,
+    ) ? { goalStopSpec: stopSpec } : {}),
   });
 }
 
@@ -642,6 +645,7 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
     target,
     detourPrefix(path, blocked, congestion, cols, targetX, targetY),
     cols,
+    stopSpec,
   );
 }
 
@@ -655,6 +659,15 @@ export function advancePersistentChaseRoute(mover, route) {
     const waypoint = route.waypoints[waypointIndex];
     if (Math.hypot(waypoint.x - mover.x, waypoint.y - mover.y)
         > ROUTE_WAYPOINT_REACHED_TILES + 1e-12) break;
+    // Ordinary waypoint smoothing must not discard the terminal attack goal
+    // while the mover is still outside its physical stop envelope.
+    if (waypointIndex === route.waypoints.length - 1 && route.goalStopSpec) {
+      const dx = Math.abs(mover.x - route.targetX);
+      const dy = Math.abs(mover.y - route.targetY);
+      const distance = route.goalStopSpec.metric === "euclidean"
+        ? Math.hypot(dx, dy) : Math.max(dx, dy);
+      if (distance > route.goalStopSpec.reach + 1e-12) break;
+    }
     waypointIndex += 1;
   }
   if (waypointIndex === route.waypointIndex) return route;

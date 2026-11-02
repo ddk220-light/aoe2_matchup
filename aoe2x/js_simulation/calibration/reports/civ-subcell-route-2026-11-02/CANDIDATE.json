@@ -1,0 +1,41 @@
+{
+  "version": "terminal-goal-candidate-v1",
+  "physicsVersion": "collision-repair-v2-terminal-goal-candidate-v1",
+  "changedRuntimeFiles": [
+    {
+      "path": "aoe2x/js_simulation/src/combat/chase-path.js",
+      "parentSha256": "502a9567b736941ef8f63765b36aef18abba84b91131c886dc16060077ed28c4",
+      "candidateSha256": "3bcd25827682d25bccba126e8503de7563fc1d8a4e0f49b3bcb27b5d6322e5a0"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/collision.js",
+      "parentSha256": "3e4bc576462051826cef72eccdcfd112e77212c2718f9cc465ea6bf217948aa3",
+      "candidateSha256": "221b81ac5ad50cb83901b63915389d38e321e341f91ce4d3b7a8c805899954e6"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/world.js",
+      "parentSha256": "ee4f333822df501cb47135fb3f5a198d9ff8c2b16e6a376b26efa9d5488d1915",
+      "candidateSha256": "1c9965475ef338f7a8398efba882a6db64e907c480e2e8c5171862a1a5135b76"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/canonical-json.js",
+      "parentSha256": "42bad3857c5db81b31ba1c05b219f62563367731c54b8b2f8c4186d548e19cdb",
+      "candidateSha256": "8ce2d530940e45c7914a2883f27cc7acf95934cbc79a27dc31672a084c3a8af7"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/fight.js",
+      "parentSha256": "16de86e793d0af68bde5b2cb49b17b396bbd80e7725203719a45d488c8fb28ab",
+      "candidateSha256": "ae0a31f29f0a666816529b2af4f9d23bab176cdc602a2d591a8cdfd70b879c03"
+    }
+  ],
+  "scope": "Only chase-path.js changes versus the separately frozen memory-safe event-stream candidate. Never clear a terminal chase waypoint solely because the mover is within waypoint-smoothing distance while it remains outside that route physical stop goal. Exact collision, attack reach, damage, counts, orders, seeds and combat termination are unchanged.",
+  "validation": {
+    "routingTestsPassed": 25,
+    "worldBaselineFailures": 9,
+    "worldNewFailures": 0,
+    "boundedKonaSeed0Completed": true,
+    "boundedKonaSeed0Ticks": 1785,
+    "probeSummarySha256": "b7d8dbb0933d50fe2f97d4c0824d823c07490811a73dd1d292b8bdbeab42a9d8"
+  },
+  "limitations": "Independent game-fidelity validation of forest pockets remains open. The bounded probes are diagnostics only; run fresh complete seed sets and exact replays in the separate campaign before any flagged first-pass projection."
+}

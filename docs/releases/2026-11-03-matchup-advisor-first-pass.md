@@ -22,4 +22,11 @@ Rebuild the serving database from the published source bundle with:
 python scripts/build_advisor_first_pass.py --source /path/to/civ-matchups-first-pass-provisional-2026-11-02
 ```
 
-Release verification and production deployment details are recorded after the staging gates pass.
+Verified application/data revision: `121d2bcc2d7be94c97bab97c0248a15ceb1a48a2`.
+
+- [CI run 41571442932](https://github.com/ddk220-light/aoe2_matchup/actions/runs/41571442932): both `test` and `vercel-build` succeeded, including the complete clean service build and Astro compilation.
+- Staging deployment `dpl_2doNsJb6jBiLqQDC7wmyoQ3qhHxf` reached READY for that exact revision.
+- Protected-preview checks returned 200 for the advisor, its versioned Danes slice, the Varangians API, home, rankings, civilizations, militia rankings and Franks' unit API.
+- The deployed advisor contains 56 civilizations, 555 unit variants, all 57 static advisor files, zero unresolved profile pairs, the pinned source dataset and the canonical new-civilization emblems.
+
+Promotion uses the same application and serving-data bytes; subsequent release-note edits do not change those bytes.

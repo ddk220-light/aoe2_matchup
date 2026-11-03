@@ -11,7 +11,6 @@ export function mountAdvisor(config) {
     const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const icon = unit => config.icons?.[config.icon_names?.[unit.name]] || unit.icon;
     const image = (unit, cls = 'ma-unit-icon') => `<img class="${cls}" src="${esc(icon(unit))}" alt="${esc(unit.name)}" loading="lazy" width="44" height="44">`;
-    const evidence = row => row[3] === 'predicted_unvalidated' ? 'Estimated' : row[3] === 'inferred' ? 'Inferred' : row[3] === 'identity' ? 'Equivalent' : 'Observed';
     const invert = row => [row[1], row[0], row[2] === 'a_win' ? 'b_win' : row[2] === 'b_win' ? 'a_win' : row[2], row[3], row[5], row[4], ...row.slice(6)];
     const costs = unit => Object.entries(unit.costs).filter(([,v]) => v > 0).map(([key,v]) => `<span class="ma-cost ma-cost-${key}"><span aria-hidden="true">${{food:'●',wood:'◆',gold:'●'}[key]}</span> ${Number(v.toFixed(1))}<span class="ma-cost-name"> ${key}</span></span>`).join('');
     function choose(name) {
@@ -76,12 +75,12 @@ export function mountAdvisor(config) {
     const ordered = entries => entries.sort((a,b) => b.wins.length - a.wins.length || a.unit.name.localeCompare(b.unit.name));
     function summary(entries, side, name) {
         const best = ordered([...entries])[0];
-        return `<article class="ma-feature ma-feature-${side}"><span class="ma-kicker">${esc(name)} · broadest coverage</span><div class="ma-feature-body">${image(best.unit, 'ma-feature-icon')}<div><h2>${esc(best.unit.name)}</h2><p>${best.wins.length} favorable matchups <span>of ${best.matches.length}</span></p></div></div><div class="ma-feature-foot">${best.wins.filter(r => r[3] !== 'predicted_unvalidated').length} observed / inferred · ${best.wins.filter(r => r[3] === 'predicted_unvalidated').length} estimated</div></article>`;
+        return `<article class="ma-feature ma-feature-${side}"><span class="ma-kicker">${esc(name)} · broadest coverage</span><div class="ma-feature-body">${image(best.unit, 'ma-feature-icon')}<div><h2>${esc(best.unit.name)}</h2><p>${best.wins.length} favorable matchups <span>of ${best.matches.length}</span></p></div></div><div class="ma-feature-foot ma-costs">${costs(best.unit)}</div></article>`;
     }
     function renderComparison(rows) {
         const mine = unitRows(rows), theirs = unitRows(rows.map(invert));
-        top.innerHTML = `<div class="ma-evidence-banner"><span class="ma-provisional">PROVISIONAL</span><div><strong>${rows.length} saved unit matchups</strong><span>Fully upgraded land units · cost-adjusted armies, up to 27 units</span></div><a href="${esc(config.dataset.source_url)}" target="_blank" rel="noopener">Data &amp; methodology ↗</a></div><div class="ma-features">${summary(mine,'left',left)}${summary(theirs,'right',right)}</div>`;
-        results.innerHTML = `<div class="ma-legend"><span><i class="ma-dot ma-dot-win"></i>Favorable</span><span><i class="ma-dot ma-dot-loss"></i>Difficult</span><span><i class="ma-dot ma-dot-close"></i>Close / equal</span><span class="ma-legend-note"><b>Est.</b> is an unvalidated forecast; dashed icons show estimates.</span></div><div class="ma-team-columns"><section class="ma-team ma-team-left"><header><span>Your options</span><h2>${esc(left)}</h2></header><div id="ma-left-units"></div></section><section class="ma-team ma-team-right"><header><span>Opponent's options</span><h2>${esc(right)}</h2></header><div id="ma-right-units"></div></section></div>`;
+        top.innerHTML = `<div class="ma-result-banner"><div><strong>${rows.length} unit matchups</strong><span>Fully upgraded land units · cost-adjusted armies, up to 27 units</span></div></div><div class="ma-features">${summary(mine,'left',left)}${summary(theirs,'right',right)}</div>`;
+        results.innerHTML = `<div class="ma-legend"><span><i class="ma-dot ma-dot-win"></i>Favorable</span><span><i class="ma-dot ma-dot-loss"></i>Difficult</span><span><i class="ma-dot ma-dot-close"></i>Close / equal</span></div><div class="ma-team-columns"><section class="ma-team ma-team-left"><header><span>Your options</span><h2>${esc(left)}</h2></header><div id="ma-left-units"></div></section><section class="ma-team ma-team-right"><header><span>Opponent's options</span><h2>${esc(right)}</h2></header><div id="ma-right-units"></div></section></div>`;
         fillSide(document.getElementById('ma-left-units'), mine);
         fillSide(document.getElementById('ma-right-units'), theirs);
         fillSiege(document.getElementById('ma-left-units'), left);
@@ -116,11 +115,11 @@ export function mountAdvisor(config) {
                     const heading = document.createElement('span'); heading.className = 'ma-match-label'; heading.textContent = label; line.appendChild(heading);
                     const icons = document.createElement('div'); icons.className = 'ma-opponents';
                     for (const row of matches) {
-                        const other = units.get(row[1]); const estimated = row[3] === 'predicted_unvalidated';
-                        const button = document.createElement('button'); button.type = 'button'; button.className = `ma-match ma-match-${cls}${estimated ? ' is-estimated' : ''}${row[7] & 2 ? ' is-low-support' : ''}`;
-                        button.title = `${other.name}: ${label.toLowerCase()} · ${evidence(row)} · ${row[4]} vs ${row[5]} units${row[7] & 1 ? ' · Estimate has conflicting validation examples' : ''}`;
+                        const other = units.get(row[1]);
+                        const button = document.createElement('button'); button.type = 'button'; button.className = `ma-match ma-match-${cls}`;
+                        button.title = `${other.name}: ${label.toLowerCase()} · ${row[4]} vs ${row[5]} units`;
                         button.setAttribute('aria-label', button.title);
-                        button.innerHTML = `${image(other, 'ma-opponent-icon')}<span class="ma-evidence-mark">${estimated ? 'Est.' : row[3] === 'inferred' ? 'Inf.' : row[3] === 'identity' ? '=' : 'Obs.'}</span>`;
+                        button.innerHTML = image(other, 'ma-opponent-icon');
                         button.addEventListener('click', () => showDetail(row)); icons.appendChild(button);
                     }
                     line.appendChild(icons); card.appendChild(line);
@@ -132,8 +131,8 @@ export function mountAdvisor(config) {
     }
     function showDetail(row) {
         const a = units.get(row[0]), b = units.get(row[1]), detail = document.getElementById('ma-detail');
-        const result = row[2] === 'a_win' ? `${a.name} is favored` : row[2] === 'b_win' ? `${b.name} is favored` : row[2] === 'equivalent' ? 'Equivalent combat profiles' : 'Close / uncertain outcome';
-        detail.innerHTML = `<button type="button" class="ma-detail-close" aria-label="Close matchup details">×</button><div class="ma-detail-armies">${image(a)}<span>${row[4]} ${esc(a.name)}<small>${esc(a.civilization)}</small></span><b>vs</b>${image(b)}<span>${row[5]} ${esc(b.name)}<small>${esc(b.civilization)}</small></span></div><strong>${esc(result)}</strong><p><span class="ma-detail-badge">${evidence(row)}</span> ${row[3] === 'predicted_unvalidated' ? 'A first-pass estimate, not a verified winner.' : row[3] === 'inferred' ? 'Inferred from the recorded matchup evidence.' : 'Saved combat evidence for these army counts.'}${row[7] & 2 ? ' Low-support estimate.' : ''}${row[7] & 1 ? ' Related validation examples disagree; treat this estimate cautiously.' : ''}</p>`;
+        const result = row[2] === 'a_win' ? `${a.name} is favored` : row[2] === 'b_win' ? `${b.name} is favored` : row[2] === 'equivalent' ? 'Equivalent combat profiles' : 'Close matchup';
+        detail.innerHTML = `<button type="button" class="ma-detail-close" aria-label="Close matchup details">×</button><div class="ma-detail-armies">${image(a)}<span>${row[4]} ${esc(a.name)}<small>${esc(a.civilization)}</small></span><b>vs</b>${image(b)}<span>${row[5]} ${esc(b.name)}<small>${esc(b.civilization)}</small></span></div><strong>${esc(result)}</strong><p>Fully upgraded land units · cost-adjusted armies.</p>`;
         detail.hidden = false; detail.querySelector('button').addEventListener('click', () => { detail.hidden = true; });
     }
     renderPicker();

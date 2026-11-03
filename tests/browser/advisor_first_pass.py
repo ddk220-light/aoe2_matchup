@@ -1,6 +1,7 @@
 from playwright.sync_api import sync_playwright
 import json
 import os
+import re
 from pathlib import Path
 
 base = os.environ.get("QA_URL", "http://127.0.0.1:5107")
@@ -17,19 +18,41 @@ with sync_playwright() as p:
   page.wait_for_selector('#civ-grid .ma-civ-card');assert page.locator('#civ-grid .ma-civ-card').count()==56
   page.locator('[data-civ="Danes"]').click();page.locator('[data-civ="Saxons"]').click()
   page.wait_for_selector('.ma-team-columns')
-  assert page.locator('.ma-provisional').inner_text()=='PROVISIONAL'
+  assert page.locator('.ma-result-banner').is_visible()
   assert page.locator('.ma-unit-card[data-unit]').count()>10
-  assert page.locator('.ma-match.is-estimated').count()>0
+  assert page.locator('.ma-match').count()>0
+  assert page.locator('.ma-provisional, .ma-evidence-mark, .ma-detail-badge, .is-estimated, .is-low-support').count()==0
+  assert not re.search(r'\b(provisional|observed|inferred|estimated|forecast|unvalidated|low.support)\b',page.locator('.ma-advisor').inner_text(),re.I)
+  assert all(re.fullmatch(r'ma-match ma-match-(win|loss|close)',cls) for cls in page.locator('.ma-match').evaluate_all('(buttons)=>buttons.map(button=>button.className)'))
   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
   page.screenshot(path=str(output/f'{name}-advisor.png'),full_page=True)
-  page.locator('.ma-match.is-estimated').first.click();assert page.locator('#ma-detail').is_visible()
-  assert 'first-pass estimate' in page.locator('#ma-detail').inner_text()
+  page.locator('.ma-match').first.click();assert page.locator('#ma-detail').is_visible()
+  assert 'cost-adjusted armies' in page.locator('#ma-detail').inner_text()
+  original_detail=page.locator('#ma-detail').inner_html()
   page.locator('.ma-detail-close').click();assert not page.locator('#ma-detail').is_visible()
   assert not any('/api/matchup-sims' in url or '/cached-advisor/' in url for url in requests)
   assert not errors,errors
   visible=page.locator('.ma-unit-card[data-unit] .ma-unit-icon').first
   assert visible.evaluate('(img)=>img.complete && img.naturalWidth>0')
-  print(name,'PASS',json.dumps({'civs':56,'cards':page.locator('.ma-unit-card[data-unit]').count(),'estimates':page.locator('.ma-match.is-estimated').count(),'overflow':False,'errors':errors}))
+  if name=='desktop':
+   original_top=page.locator('#top-units').inner_html();original_results=page.locator('#results').inner_html()
+   def change_provenance(route):
+    response=route.fetch();data=response.json()
+    kinds={row[3] for rows in data['opponents'].values() for row in rows}
+    assert 'observed' in kinds and 'predicted_unvalidated' in kinds
+    for rows in data['opponents'].values():
+     for row in rows:
+      row[3]='observed' if row[3]=='predicted_unvalidated' else 'predicted_unvalidated'
+      row[6]='test-source-tier';row[7]=3;row[8]=-1
+    route.fulfill(response=response,json=data)
+   page.route('**/api/advisor-matchups/Danes',change_provenance)
+   page.reload(wait_until='domcontentloaded')
+   page.locator('[data-civ="Danes"]').click();page.locator('[data-civ="Saxons"]').click();page.wait_for_selector('.ma-team-columns')
+   assert page.locator('#top-units').inner_html()==original_top
+   assert page.locator('#results').inner_html()==original_results
+   page.locator('.ma-match').first.click();assert page.locator('#ma-detail').inner_html()==original_detail
+   page.locator('.ma-detail-close').click()
+  print(name,'PASS',json.dumps({'civs':56,'cards':page.locator('.ma-unit-card[data-unit]').count(),'matchups':page.locator('.ma-match').count(),'uniform_presentation':True,'overflow':False,'errors':errors}))
   page.locator('#themeToggle').click()
   assert page.evaluate("document.documentElement.getAttribute('data-theme')")=='dark'
   page.locator('[data-civ=Danes]').click();assert page.locator('.ma-team-columns').count()==0

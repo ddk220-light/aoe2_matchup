@@ -1536,8 +1536,34 @@ def _validate_age(age):
 @app.route("/matchup-advisor")
 def matchup_advisor():
     """Matchup Advisor — civ vs civ comparison."""
-    civs = _get_ref_civs()
-    return render_template("matchup_advisor.html", civs=civs, active_nav="matchup")
+    from apps.website.services.advisor import advisor_catalog
+    catalog = advisor_catalog()
+    return render_template("matchup_advisor.html", civs=catalog['civilizations'],
+                           advisor_catalog=catalog, active_nav="matchup")
+
+
+@app.get('/api/advisor-catalog')
+def api_advisor_catalog():
+    from apps.website.services.advisor import advisor_catalog
+    return jsonify(advisor_catalog())
+
+
+@app.get('/api/advisor-matchups/<civilization>')
+def api_advisor_matchups(civilization):
+    from apps.website.services.advisor import advisor_matchups
+    try:
+        return jsonify(advisor_matchups(civilization))
+    except LookupError:
+        return jsonify(error='Unknown civilization'), 404
+
+
+@app.get('/api/advisor-evidence/<int:identifier>')
+def api_advisor_evidence(identifier):
+    from apps.website.services.advisor import advisor_evidence
+    try:
+        return jsonify(advisor_evidence(identifier))
+    except LookupError:
+        return jsonify(error='Unknown matchup'), 404
 
 
 @app.route("/api/civ-power-units/<civ_name>")

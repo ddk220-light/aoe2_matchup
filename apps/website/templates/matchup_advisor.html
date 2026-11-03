@@ -1,47 +1,14 @@
 {% extends 'base.html' %}
-
 {% block title %}AoE2 Matchup Advisor — Pick the right counter for every civ matchup{% endblock %}
 {% block meta_description %}Civ-vs-civ matchup advisor for Age of Empires II. Enter your civ and your opponent, see which units to build based on simulated combat results, costs, and counters.{% endblock %}
-
-{% block page_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/matchup_advisor.css') }}" />
-{% endblock %}
-
+{% block page_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/matchup_advisor.css') }}" />{% endblock %}
 {% block content %}
-<div class="page-header">
-    <h1>Matchup Advisor</h1>
-    <p class="subtitle">Compare two civilizations side by side</p>
+<div class="page-header"><h1>Matchup Advisor</h1><p class="subtitle">Compare two civilizations side by side</p></div>
+<div class="container-wide ma-advisor">
+ <div class="ma-picker"><button type="button" class="ma-slot ma-slot-left" id="slot-left"></button><div class="ma-vs">vs</div><button type="button" class="ma-slot ma-slot-right" id="slot-right"></button></div>
+ <div class="ma-civ-grid" id="civ-grid" aria-label="Choose a civilization">{% for civ in civs %}<button type="button" class="ma-civ-card" data-civ="{{ civ }}"><img class="ma-civ-emblem" src="{{ advisor_catalog.emblems[civ] }}" alt="" loading="lazy" width="30" height="30"><span class="ma-civ-card-name">{{ civ }}</span></button>{% endfor %}</div>
+ <div id="top-units"></div><div id="results"><div class="ma-empty">Choose your civilization and an opponent to explore their matchups.</div></div>
 </div>
-
-<div class="container-wide">
-    <!-- Civ Picker -->
-    <div class="ma-picker">
-        <div class="ma-slot ma-slot-left" id="slot-left">
-            <span class="ma-slot-placeholder">Your Civ</span>
-        </div>
-        <div class="ma-vs">vs</div>
-        <div class="ma-slot ma-slot-right" id="slot-right">
-            <span class="ma-slot-placeholder">Opponent</span>
-        </div>
-    </div>
-
-    <div class="ma-civ-grid" id="civ-grid"></div>
-
-    <!-- Imperial-only (fully upgraded). Age toggle removed. -->
-    <div class="ma-controls" id="controls" style="display:none;"></div>
-
-    <!-- Top Units Summary (populated after sim data loads) -->
-    <div id="top-units"></div>
-
-    <!-- Results -->
-    <div id="results"></div>
-</div>
+<div id="ma-detail" class="ma-detail" role="dialog" aria-label="Matchup details" hidden></div>
 {% endblock %}
-
-{% block page_js %}
-<script>
-    const CIVS = {{ civs | tojson }};
-</script>
-<script src="{{ url_for('static', filename='js/constants.js') }}"></script>
-<script src="{{ url_for('static', filename='js/matchup_advisor.js') }}"></script>
-{% endblock %}
+{% block page_js %}<script id="advisor-config" type="application/json">{{ advisor_catalog | tojson }}</script><script type="module" src="{{ url_for('static', filename='js/matchup_advisor.js') }}"></script>{% endblock %}

@@ -15,8 +15,8 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'apps/website'),str(ROOT)]
 import app as website
 from aoe2x.sim.unit_lines import UNIT_LINES
-from aoe2x.advisor.best_units import load_advisor_power_units
 from apps.website.services.release import release_metadata
+from apps.website.services.advisor import advisor_catalog
 
 def encode(value): return json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode()
 def sha(data): return hashlib.sha256(data).hexdigest()
@@ -47,13 +47,13 @@ def export(destination):
     for line in sorted(UNIT_LINES): api('rankings',line,'/api/ref/unit-line/'+line)
     for name in sim_names: api('simulator',name.lower(),'/api/ref/civ/'+name)
     groups['simulator']['search']=encode(website._unit_search_index())
-    calculation=load_advisor_power_units(build_number=website.current_build())
-    groups['advisor']['calculation-roster']=encode(sorted(calculation))
-    # Private computation inputs remain packaged read-only in Python; publish
-    # only the displayed API projection and eligibility information here.
-    for name in ranking_names: api('advisor',name.lower(),'/api/civ-power-units/'+name)
+    advisor = advisor_catalog()
+    calculation = advisor['civilizations']
+    api('advisor', 'catalog', '/api/advisor-catalog')
+    for name in calculation:
+        api('advisor', name.lower(), '/api/advisor-matchups/' + name)
     rosters={'civilizations':page_names,'rankings':ranking_names,'simulator':sim_names,
-             'advisor':ranking_names}
+             'advisor':calculation}
     components={}
     for group,files in groups.items():
         inputs={name:sha(data) for name,data in sorted(files.items())}
@@ -79,6 +79,8 @@ def export(destination):
                            'files':records,'source':'frozen public API and page projections'}
         if configuration_inputs:components[group]['configuration_inputs']=configuration_inputs
     components['advisor']['calculation_civilizations']=sorted(calculation)
+    components['advisor']['schema_version']=2
+    components['advisor']['source']='Saved provisional first-pass matchup evidence; no live simulations'
     legacy=release_metadata(ROOT,ROOT/'data/golden')
     components['rankings']['published_metadata']=legacy['rankings']
     components['simulator']['reference_sha256']=sha((ROOT/'data/golden/aoe2_reference_simulation.db').read_bytes())

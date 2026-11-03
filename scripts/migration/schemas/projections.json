@@ -6,7 +6,20 @@
       "type": "object", "required": ["civ_name", "age", "power_units"],
       "properties": {"civ_name": {"type": "string"}, "age": {"const": "imperial"}, "power_units": {"type": "object"}}
     },
-    "advisor": {"$ref": "#/$defs/civilizations"},
+    "advisor": {"oneOf": [
+      {"type":"object","required":["civilizations","units","emblems","dataset"],"properties":{
+        "civilizations":{"type":"array","minItems":56,"maxItems":56,"uniqueItems":true,"items":{"type":"string"}},
+        "units":{"type":"array","minItems":555,"maxItems":555,"items":{"type":"object","required":["id","name","civilization","profileHash","costs","icon"]}},
+        "dataset":{"type":"object","required":["source_commit","source_files","unresolvedPairs"],"properties":{"unresolvedPairs":{"const":0}}}}},
+      {"type":"object","required":["civilization","opponents","source_commit"],"properties":{
+        "civilization":{"type":"string"},"source_commit":{"type":"string","pattern":"^[a-f0-9]{40}$"},
+        "opponents":{"type":"object","minProperties":55,"maxProperties":55,"additionalProperties":{"type":"array","minItems":1,"items":{
+          "type":"array","minItems":9,"maxItems":9,"prefixItems":[
+            {"type":"integer","minimum":0,"maximum":554},{"type":"integer","minimum":0,"maximum":554},
+            {"enum":["a_win","b_win","close_uncertain","equivalent"]},{"enum":["observed","inferred","identity","predicted_unvalidated"]},
+            {"type":"integer","minimum":1,"maximum":27},{"type":"integer","minimum":1,"maximum":27},
+            {"type":"string"},{"type":"integer","minimum":0,"maximum":3},{"type":"integer","minimum":0,"maximum":68915}]}}}}}
+    ]},
     "rankings": {
       "type": "object", "required": ["line_name", "building", "imperial"],
       "properties": {"line_name": {"type": "string"}, "building": {"type": "string"},

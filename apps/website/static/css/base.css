@@ -704,10 +704,8 @@ a:hover {
 .site-nav.nav-open .nav-hamburger-bars::after  { transform: translateY(-6px) rotate(-45deg); }
 
 /* ---------- Responsive navigation ----------
-   NOTE: 900px is the ONE documented off-scale breakpoint in the whole site.
-   It exists only to relieve the single-row nav squeeze before the tab strip
-   kicks in at 768px — keeping the desc lines from wrapping mid-tablet. */
-@media (max-width: 900px) {
+   Condense the four tabs on tablets before the compact mobile row at 768px. */
+@media (max-width: 1024px) {
     .site-nav {
         gap: 8px;
     }
@@ -766,7 +764,9 @@ a:hover {
         margin-left: auto;       /* push the icon row + controls to the right */
         display: flex;
         flex-wrap: nowrap;
-        gap: 4px;
+        flex: 1;
+        min-width: 0;
+        gap: 0;
         overflow: visible;       /* no scroll strip */
     }
     /* When the row detaches into the drop-down, keep the controls right-aligned. */
@@ -774,19 +774,19 @@ a:hover {
 
     /* Icon-only tab button */
     .nav-tab {
-        flex: 0 0 auto;
+        flex: 1 1 0;
         flex-direction: row;
         gap: 0;
         min-width: 0;
         min-height: 40px;
         justify-content: center;
-        padding: 6px 7px;
+        padding: 6px 0;
         border-radius: 8px;
         border-bottom: 1px solid transparent;
     }
     .nav-tab-icon {
         margin-bottom: 0;
-        width: 30px;
+        width: 24px;
         height: 30px;
     }
     .nav-tab-icon svg {

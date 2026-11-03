@@ -15,6 +15,15 @@ with sync_playwright() as p:
   page.on('pageerror',lambda e:errors.append(str(e)))
   page.on('request',lambda r:requests.append(r.url))
   page.goto(base+'/matchup-advisor',wait_until='domcontentloaded')
+  advisor_tab=page.locator('#navLinks a[href="/matchup-advisor"]')
+  assert page.locator('#navLinks .nav-tab').count()==4
+  assert advisor_tab.get_attribute('aria-current')=='page'
+  assert advisor_tab.is_visible()
+  if name=='mobile':
+   page.locator('#navHamburger').click()
+   assert advisor_tab.locator('.nav-tab-label').is_visible()
+   assert advisor_tab.locator('.nav-tab-label').inner_text()=='Matchup Advisor'
+   page.locator('#navHamburger').click()
   page.wait_for_selector('#civ-grid .ma-civ-card');assert page.locator('#civ-grid .ma-civ-card').count()==56
   page.locator('[data-civ="Danes"]').click();page.locator('[data-civ="Saxons"]').click()
   page.wait_for_selector('.ma-team-columns')

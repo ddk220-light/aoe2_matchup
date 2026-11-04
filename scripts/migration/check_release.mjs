@@ -17,6 +17,7 @@ for (const [path, expected] of Object.entries(manifest.source_sha256)) {
   const owned = service === 'frontend'
     ? path.startsWith('apps/web/') || path === 'scripts/migration/check_release.mjs'
       || path === 'apps/website/static/js/advisor-first-pass.js'
+      || path === 'apps/website/static/js/advisor-model.mjs'
       || path === 'apps/website/static/css/matchup_advisor.css'
     : path.startsWith('apps/backend/');
   if (owned && hash(resolve(root, path)) !== expected) throw new Error(`Source changed after sealing: ${path}`);

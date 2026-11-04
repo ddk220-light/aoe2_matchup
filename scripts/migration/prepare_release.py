@@ -118,7 +118,7 @@ backend_sources.update((ROOT/'apps/website/templates').glob('*.html'))
 public_sources = {}
 for name in ['css/base.css', 'css/matchup_advisor.css', 'img/favicon.png', 'img/og-default.png',
              'js/constants.js', 'js/unit_sprites.js', 'js/api_client.js', 'js/v3_sim_worker.js',
-             'js/matchup_advisor.js', 'js/advisor-first-pass.js']:
+             'js/matchup_advisor.js', 'js/advisor-first-pass.js', 'js/advisor-model.mjs']:
     public_sources['static/'+name] = ROOT/'apps/website/static'/name
 engine = ROOT/'aoe2x/js_simulation'
 for path in (engine/'src').rglob('*.js'):

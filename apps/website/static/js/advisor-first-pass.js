@@ -1,3 +1,5 @@
+import {buildAdvisorRecommendations} from './advisor-model.mjs';
+
 /** Shared advisor UI: saved first-pass evidence, never on-demand simulations. */
 export function mountAdvisor(config) {
     const units = new Map(config.units.map(unit => [unit.id, unit]));
@@ -11,7 +13,6 @@ export function mountAdvisor(config) {
     const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const icon = unit => config.icons?.[config.icon_names?.[unit.name]] || unit.icon;
     const image = (unit, cls = 'ma-unit-icon') => `<img class="${cls}" src="${esc(icon(unit))}" alt="${esc(unit.name)}" loading="lazy" width="44" height="44">`;
-    const invert = row => [row[1], row[0], row[2] === 'a_win' ? 'b_win' : row[2] === 'b_win' ? 'a_win' : row[2], row[3], row[5], row[4], ...row.slice(6)];
     const costs = unit => Object.entries(unit.costs).filter(([,v]) => v > 0).map(([key,v]) => `<span class="ma-cost ma-cost-${key}"><span aria-hidden="true">${{food:'●',wood:'◆',gold:'●'}[key]}</span> ${Number(v.toFixed(1))}<span class="ma-cost-name"> ${key}</span></span>`).join('');
     function choose(name) {
         if (name === left) { left = null; active = 'left'; }
@@ -67,67 +68,88 @@ export function mountAdvisor(config) {
             if (ticket === sequence) results.innerHTML = '<div class="ma-loading" role="alert">Could not load this comparison. Choose the civilizations again to retry.</div>';
         }
     }
-    function unitRows(rows) {
-        const grouped = new Map();
-        for (const row of rows) { if (!grouped.has(row[0])) grouped.set(row[0], []); grouped.get(row[0]).push(row); }
-        return [...grouped].map(([id, matches]) => ({unit: units.get(id), matches, wins: matches.filter(r => r[2] === 'a_win')}));
+    const scoreText = value => value.toLocaleString(undefined, {maximumFractionDigits: 2});
+    function matchLine(card, rows, label, cls, named = false) {
+        if (!rows.length) return;
+        const line = document.createElement('div'); line.className = `ma-match-line ma-line-${cls}`;
+        const heading = document.createElement('span'); heading.className = 'ma-match-label'; heading.textContent = label; line.appendChild(heading);
+        const icons = document.createElement('div'); icons.className = 'ma-opponents';
+        for (const row of rows) {
+            const other = units.get(row[1]);
+            const button = document.createElement('button'); button.type = 'button';
+            button.className = `ma-match ma-match-${cls}${named ? ' ma-match-named' : ''}`;
+            button.dataset.opponent = String(other.id);
+            button.title = `${other.name}: ${label.toLowerCase()} · ${row[4]} vs ${row[5]} units`;
+            button.setAttribute('aria-label', button.title);
+            button.innerHTML = image(other, 'ma-opponent-icon') + (named ? `<span>${esc(other.name)}</span>` : '');
+            button.addEventListener('click', () => showDetail(row)); icons.appendChild(button);
+        }
+        line.appendChild(icons); card.appendChild(line);
     }
-    const ordered = entries => entries.sort((a,b) => b.wins.length - a.wins.length || a.unit.name.localeCompare(b.unit.name));
-    function summary(entries, side, name) {
-        const best = ordered([...entries])[0];
-        return `<article class="ma-feature ma-feature-${side}"><span class="ma-kicker">${esc(name)} · broadest coverage</span><div class="ma-feature-body">${image(best.unit, 'ma-feature-icon')}<div><h2>${esc(best.unit.name)}</h2><p>${best.wins.length} favorable matchups <span>of ${best.matches.length}</span></p></div></div><div class="ma-feature-foot ma-costs">${costs(best.unit)}</div></article>`;
+    function unitHeading(entry, metric, caption, featured = false) {
+        return `<div class="ma-unit-heading">${image(entry.unit)}<div><${featured ? 'h3' : 'h4'}>${esc(entry.unit.name)}</${featured ? 'h3' : 'h4'}><div class="ma-costs">${costs(entry.unit)}</div></div><div class="ma-coverage"${caption === 'value score' ? ' title="Sum of enemy weight × (1 + its weighted wins) for every enemy this unit counters. Gold = 1; no gold = ½."' : ''}><strong>${metric}</strong><small>${caption}</small></div></div>`;
+    }
+    function recommendation(plan, role) {
+        const entry = role === 'main' ? plan.main : plan.sidekick;
+        const card = document.createElement('article'); card.className = `ma-unit-card ma-recommendation ma-${role}`; card.dataset.role = role;
+        if (!entry) { card.innerHTML = '<span class="ma-kicker">Trash sidekick</span><p>No no-gold unit is available.</p>'; return card; }
+        card.dataset.unit = entry.unit.key;
+        const heading = role === 'main' ? 'Main unit' : !entry.wins.length && !entry.holdsClose.length ? 'Trash fallback' : 'Trash sidekick';
+        const metric = role === 'main' ? scoreText(entry.score) : (plan.main.losses.length ? `${entry.covers.length}<span>/${plan.main.losses.length}</span>` : '—');
+        const caption = role === 'main' ? 'value score' : plan.main.losses.length ? 'threats covered' : 'no main losses';
+        card.innerHTML = `<span class="ma-role">${heading}</span>${unitHeading(entry, metric, caption, true)}`;
+        if (role === 'main') {
+            card.insertAdjacentHTML('beforeend', `<p class="ma-recommendation-note">Counters ${entry.wins.length} of ${entry.matches.length} enemy unit options, prioritizing their biggest threats.</p>`);
+            matchLine(card, entry.wins, 'Counters', 'win', true);
+        } else {
+            let note;
+            if (entry.covers.length) note = `Pair with ${plan.main.unit.name} to counter ${entry.covers.length} of the ${plan.main.losses.length} enemy units that beat it, without spending gold.`;
+            else if (!entry.wins.length && !entry.holdsClose.length) note = `${entry.unit.name} has no winning matchups here and adds no winning coverage to ${plan.main.unit.name}.`;
+            else if (!plan.main.losses.length) note = `${plan.main.unit.name} has no losing matchups here. ${entry.unit.name} is a no-gold alternative against the units below.`;
+            else if (entry.holdsClose.length) note = `No trash unit beats these counters to ${plan.main.unit.name}. ${entry.unit.name} keeps ${entry.holdsClose.length} of them close.`;
+            else note = `No trash unit beats the counters to ${plan.main.unit.name}. ${entry.wins.length ? `${entry.unit.name} offers other no-gold counter options below.` : `${entry.unit.name} also has no winning matchups here.`}`;
+            card.insertAdjacentHTML('beforeend', `<p class="ma-recommendation-note">${esc(note)}</p>`);
+            matchLine(card, entry.covers, 'Protects main from', 'win', true);
+            const protectedIds = new Set(entry.covers.map(row => row[1]));
+            matchLine(card, entry.wins.filter(row => !protectedIds.has(row[1])), 'Other counters', 'win', true);
+        }
+        matchLine(card, entry.losses, 'Loses to', 'loss', true);
+        matchLine(card, entry.close, 'Close / equal', 'close', true);
+        return card;
+    }
+    function fillPlan(element, plan, civilization, side) {
+        element.innerHTML = `<header class="ma-plan-header"><span class="ma-kicker">${side === 'left' ? 'Your composition' : "Opponent's composition"}</span><h2>${esc(civilization)}</h2></header>`;
+        element.appendChild(recommendation(plan, 'main'));
+        element.appendChild(recommendation(plan, 'sidekick'));
+        if (plan.uncovered.length) {
+            const gap = document.createElement('div'); gap.className = 'ma-pair-gap';
+            gap.innerHTML = '<p>Remaining threats</p>';
+            matchLine(gap, plan.uncovered, 'Not covered', 'loss', true);
+            element.appendChild(gap);
+        }
     }
     function renderComparison(rows) {
-        const mine = unitRows(rows), theirs = unitRows(rows.map(invert));
-        top.innerHTML = `<div class="ma-result-banner"><div><strong>${rows.length} unit matchups</strong><span>Fully upgraded land units · cost-adjusted armies, up to 27 units</span></div></div><div class="ma-features">${summary(mine,'left',left)}${summary(theirs,'right',right)}</div>`;
-        results.innerHTML = `<div class="ma-legend"><span><i class="ma-dot ma-dot-win"></i>Favorable</span><span><i class="ma-dot ma-dot-loss"></i>Difficult</span><span><i class="ma-dot ma-dot-close"></i>Close / equal</span></div><div class="ma-team-columns"><section class="ma-team ma-team-left"><header><span>Your options</span><h2>${esc(left)}</h2></header><div id="ma-left-units"></div></section><section class="ma-team ma-team-right"><header><span>Opponent's options</span><h2>${esc(right)}</h2></header><div id="ma-right-units"></div></section></div>`;
-        fillSide(document.getElementById('ma-left-units'), mine);
-        fillSide(document.getElementById('ma-right-units'), theirs);
-        fillSiege(document.getElementById('ma-left-units'), left);
-        fillSiege(document.getElementById('ma-right-units'), right);
+        const plans = buildAdvisorRecommendations(rows, units);
+        top.innerHTML = `<div class="ma-result-banner"><div><strong>${rows.length} unit matchups</strong><span>Fully upgraded land units · cost-adjusted armies, up to 27 units</span><p class="ma-score-note">Counters to dangerous enemy units rank higher. Gold units weigh 1; no-gold units weigh ½. Sidekicks target the main unit’s weaknesses.</p></div></div><div class="ma-compositions"><section class="ma-plan ma-plan-left" id="ma-left-plan"></section><section class="ma-plan ma-plan-right" id="ma-right-plan"></section></div>`;
+        fillPlan(document.getElementById('ma-left-plan'), plans.left, left, 'left');
+        fillPlan(document.getElementById('ma-right-plan'), plans.right, right, 'right');
+        results.innerHTML = `<div class="ma-legend"><span><i class="ma-dot ma-dot-win"></i>Favorable</span><span><i class="ma-dot ma-dot-loss"></i>Difficult</span><span><i class="ma-dot ma-dot-close"></i>Close / equal</span></div><div class="ma-team-columns"><section class="ma-team ma-team-left"><header><span>Other candidates</span><h2>${esc(left)}</h2></header><div id="ma-left-units"></div></section><section class="ma-team ma-team-right"><header><span>Other candidates</span><h2>${esc(right)}</h2></header><div id="ma-right-units"></div></section></div>`;
+        fillAlternatives(document.getElementById('ma-left-units'), plans.left.alternatives);
+        fillAlternatives(document.getElementById('ma-right-units'), plans.right.alternatives);
     }
-    function fillSiege(element, civilization) {
-        const entries = config.reference_units?.[civilization] || [];
-        if (!entries.length) return;
-        const section = document.createElement('div'); section.className = 'ma-unit-group ma-reference';
-        section.innerHTML = '<h3>Siege · reference</h3><p class="ma-reference-note">Outside the land-unit matchup table. Existing published ranks are shown where available.</p>';
-        for (const unit of entries) {
-            const card = document.createElement('article'); card.className = 'ma-unit-card';
-            card.innerHTML = `<div class="ma-unit-heading">${image(unit)}<div><h4>${esc(unit.name)}</h4><div class="ma-costs">${costs(unit)}</div></div>${unit.rank != null ? `<div class="ma-coverage"><strong>#${unit.rank}</strong><small>published rank</small></div>` : ''}</div>`;
+    function fillAlternatives(element, entries) {
+        if (!entries.length) { element.innerHTML = '<p class="ma-candidate-note">No other unit has a favorable matchup here.</p>'; return; }
+        const section = document.createElement('div'); section.className = 'ma-unit-group';
+        section.innerHTML = `<h3>Top ${entries.length} alternatives</h3>`;
+        for (const entry of entries) {
+            const card = document.createElement('article'); card.className = 'ma-unit-card'; card.dataset.unit = entry.unit.key;
+            card.innerHTML = unitHeading(entry, scoreText(entry.score), 'value score');
+            matchLine(card, entry.wins, 'Counters', 'win');
+            matchLine(card, entry.losses, 'Loses to', 'loss');
+            matchLine(card, entry.close, 'Close / equal', 'close');
             section.appendChild(card);
         }
         element.appendChild(section);
-    }
-    function fillSide(element, entries) {
-        for (const group of ['Cavalry','Ranged','Infantry']) {
-            const available = ordered(entries.filter(entry => entry.unit.group === group));
-            if (!available.length) continue;
-            const section = document.createElement('div'); section.className = 'ma-unit-group';
-            section.innerHTML = `<h3>${group}</h3>`;
-            for (const entry of available) {
-                const card = document.createElement('article'); card.className = 'ma-unit-card'; card.dataset.unit = entry.unit.key;
-                card.innerHTML = `<div class="ma-unit-heading">${image(entry.unit)}<div><h4>${esc(entry.unit.name)}</h4><div class="ma-costs">${costs(entry.unit)}</div></div><div class="ma-coverage"><strong>${entry.wins.length}<span>/${entry.matches.length}</span></strong><small>favorable</small></div></div>`;
-                const groups = [['a_win','Favorable','win'],['b_win','Difficult','loss'],['close','Close / equal','close']];
-                for (const [outcome,label,cls] of groups) {
-                    const matches = entry.matches.filter(r => outcome === 'close' ? ['equivalent','close_uncertain'].includes(r[2]) : r[2] === outcome);
-                    if (!matches.length) continue;
-                    const line = document.createElement('div'); line.className = `ma-match-line ma-line-${cls}`;
-                    const heading = document.createElement('span'); heading.className = 'ma-match-label'; heading.textContent = label; line.appendChild(heading);
-                    const icons = document.createElement('div'); icons.className = 'ma-opponents';
-                    for (const row of matches) {
-                        const other = units.get(row[1]);
-                        const button = document.createElement('button'); button.type = 'button'; button.className = `ma-match ma-match-${cls}`;
-                        button.title = `${other.name}: ${label.toLowerCase()} · ${row[4]} vs ${row[5]} units`;
-                        button.setAttribute('aria-label', button.title);
-                        button.innerHTML = image(other, 'ma-opponent-icon');
-                        button.addEventListener('click', () => showDetail(row)); icons.appendChild(button);
-                    }
-                    line.appendChild(icons); card.appendChild(line);
-                }
-                section.appendChild(card);
-            }
-            element.appendChild(section);
-        }
     }
     function showDetail(row) {
         const a = units.get(row[0]), b = units.get(row[1]), detail = document.getElementById('ma-detail');

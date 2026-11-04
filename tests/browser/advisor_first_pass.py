@@ -28,11 +28,25 @@ with sync_playwright() as p:
   page.locator('[data-civ="Danes"]').click();page.locator('[data-civ="Saxons"]').click()
   page.wait_for_selector('.ma-team-columns')
   assert page.locator('.ma-result-banner').is_visible()
-  assert page.locator('.ma-unit-card[data-unit]').count()>10
+  assert page.locator('.ma-recommendation').count()==4
+  catalog=json.loads(page.locator('#advisor-config').text_content())
+  units={unit['key']:unit for unit in catalog['units']}
+  for side in ['left','right']:
+   plan=page.locator(f'#ma-{side}-plan')
+   main=plan.locator('[data-role="main"]');sidekick=plan.locator('[data-role="sidekick"]')
+   assert main.get_attribute('data-unit')!=sidekick.get_attribute('data-unit')
+   assert units[main.get_attribute('data-unit')]['costs']['gold']>0
+   assert units[sidekick.get_attribute('data-unit')]['costs']['gold']==0
+   alternatives=page.locator(f'#ma-{side}-units .ma-unit-card')
+   assert alternatives.count()==3
+   assert not {main.get_attribute('data-unit'),sidekick.get_attribute('data-unit')} & set(alternatives.evaluate_all('(cards)=>cards.map(card=>card.dataset.unit)'))
+   losses=set(main.locator('.ma-line-loss .ma-match').evaluate_all('(buttons)=>buttons.map(button=>button.dataset.opponent)'))
+   protects=sidekick.locator('.ma-line-win').filter(has=page.locator('.ma-match-label',has_text='Protects main from'))
+   assert set(protects.locator('.ma-match').evaluate_all('(buttons)=>buttons.map(button=>button.dataset.opponent)'))<=losses
   assert page.locator('.ma-match').count()>0
   assert page.locator('.ma-provisional, .ma-evidence-mark, .ma-detail-badge, .is-estimated, .is-low-support').count()==0
   assert not re.search(r'\b(provisional|observed|inferred|estimated|forecast|unvalidated|low.support)\b',page.locator('.ma-advisor').inner_text(),re.I)
-  assert all(re.fullmatch(r'ma-match ma-match-(win|loss|close)',cls) for cls in page.locator('.ma-match').evaluate_all('(buttons)=>buttons.map(button=>button.className)'))
+  assert all(re.fullmatch(r'ma-match ma-match-(win|loss|close)( ma-match-named)?',cls) for cls in page.locator('.ma-match').evaluate_all('(buttons)=>buttons.map(button=>button.className)'))
   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
   page.screenshot(path=str(output/f'{name}-advisor.png'),full_page=True)
   page.locator('.ma-match').first.click();assert page.locator('#ma-detail').is_visible()

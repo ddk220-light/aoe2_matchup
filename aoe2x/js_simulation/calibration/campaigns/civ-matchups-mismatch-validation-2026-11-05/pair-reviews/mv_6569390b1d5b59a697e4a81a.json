@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_6569390b1d5b59a697e4a81a",
+  "reviewedAt": "2026-11-05T20:08:41.272Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      12,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b",
+      "149624b0e43edd910b85d0e5014e9d709449c3059b67162ddd322f343abb0d07"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      367.5,
+      72
+    ]
+  },
+  "contextHash": "6569390b1d5b59a697e4a81a8409358643572a2a9e81a01ca3c31b6b8df3adb4",
+  "pairKey": "149624b0e43edd910b85d0e5014e9d709449c3059b67162ddd322f343abb0d07|b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 2820,
+      "finalStateHash": "d77dca7efc046670f8b9b030b07eeea570879fab68fc80d212eb5c382f4e95f0",
+      "eventLogHash": "7fd68bea0f11bd9db86ceddee4e14509eab95ba855451e5f337516bacec98113",
+      "winnerHpFraction": 0.4766666666666667,
+      "recordHash": "d9d607438404dd50a088e6f250bfe6d0203243d9128e41fd54e5047ce23755f7"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 2440,
+      "finalStateHash": "dbda46b5ce5a5eac5fd7d7a3b7d1310e754d560a0770fd2a9d2aae95d9b5b6e1",
+      "eventLogHash": "dc705bd6a3f8aeba67bd4a8a2359075be3ceea92917fc5434e78a6a87bfb474b",
+      "winnerHpFraction": 0.5222222222222223,
+      "recordHash": "8e7940023548beccc38201cb2d680cf3429844d4d96cac6dee026e409fae7ad4"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 3032,
+      "finalStateHash": "b891f3cc37c25d7ff3933439af5a6aa1d9042f172614332c9c8268eeafc3388a",
+      "eventLogHash": "c71b2973677a22549954b33fd8e383f04c1329cce0e22bb1be2dd10973c5ec4c",
+      "winnerHpFraction": 0.5,
+      "recordHash": "d971cb7cafca096dc9856e86bc313ca4c70462c946d6ebf5ae4ae483932a7317"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "8e7940023548beccc38201cb2d680cf3429844d4d96cac6dee026e409fae7ad4",
+    "result": {
+      "jobId": "mv_6569390b1d5b59a697e4a81a",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 470,
+      "startingHpByOwner": {
+        "2": 900,
+        "3": 1080
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 7,
+          "hp": 470
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 2440,
+      "family": "rvr",
+      "side2": {
+        "slug": "mounted_trebuchet_khitans",
+        "label": "Mounted Trebuchet",
+        "civ": "Khitans",
+        "count": 12,
+        "class": "siege_ranged"
+      },
+      "side3": {
+        "slug": "arbalester",
+        "label": "Arbalester",
+        "civ": "Armenians",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "dbda46b5ce5a5eac5fd7d7a3b7d1310e754d560a0770fd2a9d2aae95d9b5b6e1",
+      "eventLogHash": "dc705bd6a3f8aeba67bd4a8a2359075be3ceea92917fc5434e78a6a87bfb474b"
+    },
+    "wallSeconds": 6.167053910002112,
+    "startedAt": "2026-11-05T20:08:35.104Z",
+    "finishedAt": "2026-11-05T20:08:41.271Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    190
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 190,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 4,
+  "reviewHash": "cf6a452f5c54c0e4871da40f91eedcba1f20db54213d2582625b9ae82fcad386"
+}

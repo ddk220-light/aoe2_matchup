@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_00f1bf060ea9458846943571",
+  "reviewedAt": "2026-11-05T03:35:10.297Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      21,
+      27
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "81455a2b0880f9160f57ef2f280800157fdd81e3dfdba86efe406d646fed876d",
+      "7e8d81810f0b54f0c85ddd3fa4a665aa7bc85b68f901609a0dc3a86693c1691c"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      177,
+      107
+    ]
+  },
+  "contextHash": "00f1bf060ea94588469435710ca9a335ca19e72f818d79203dcba7e5f3a75d11",
+  "pairKey": "7e8d81810f0b54f0c85ddd3fa4a665aa7bc85b68f901609a0dc3a86693c1691c|81455a2b0880f9160f57ef2f280800157fdd81e3dfdba86efe406d646fed876d",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 3363,
+      "finalStateHash": "ccf2dc3db2766d486aa50e5bb557564912a9df6e6006c0a81c294b7e12dca251",
+      "eventLogHash": "4aa680fe3981afa47b99aa064b94e8d906e54a4b3bc88cdbbbe0e571406ad021",
+      "winnerHpFraction": 0.16382275132275131,
+      "recordHash": "e4176b2c26a0eeaa9cc80b4ea136b6f2942a588d82a48c5e61d916c112ef7adc"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 3363,
+      "finalStateHash": "ccf2dc3db2766d486aa50e5bb557564912a9df6e6006c0a81c294b7e12dca251",
+      "eventLogHash": "a284e21ecc52e84d2713b199567c206707caf350031534afa5286012e469fceb",
+      "winnerHpFraction": 0.16382275132275131,
+      "recordHash": "4bf5717786ce2b19529588d8fc2eeb61bfa7d5d33d92153141a0ad0a701c41c7"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 3363,
+      "finalStateHash": "ccf2dc3db2766d486aa50e5bb557564912a9df6e6006c0a81c294b7e12dca251",
+      "eventLogHash": "1e83d7a0f97dbb2a676b63f88748ab46b00e63621105cf16229f09bc568334f6",
+      "winnerHpFraction": 0.16382275132275131,
+      "recordHash": "ae0a83fd4a9de76417fd25fca1d6228611dbdee3dff259dbe88d23ec002c1355"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "ae0a83fd4a9de76417fd25fca1d6228611dbdee3dff259dbe88d23ec002c1355",
+    "result": {
+      "jobId": "mv_00f1bf060ea9458846943571",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 619.25,
+      "startingHpByOwner": {
+        "2": 6720,
+        "3": 3780
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 9,
+          "hp": 619.25
+        }
+      },
+      "ticks": 3363,
+      "family": "waves",
+      "side2": {
+        "slug": "elite_elephant",
+        "label": "Elite Battle Elephant",
+        "civ": "Bengalis",
+        "count": 21,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "heavy_camel",
+        "label": "Heavy Camel Rider",
+        "civ": "Gurjaras",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "ccf2dc3db2766d486aa50e5bb557564912a9df6e6006c0a81c294b7e12dca251",
+      "eventLogHash": "1e83d7a0f97dbb2a676b63f88748ab46b00e63621105cf16229f09bc568334f6"
+    },
+    "wallSeconds": 31.73283173700003,
+    "startedAt": "2026-11-05T03:34:38.564Z",
+    "finishedAt": "2026-11-05T03:35:10.297Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    7025
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 7025,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "d315776b8fe47ae560556ff8555c453d1b8fee314b5169bba353f3d3541fa460"
+}

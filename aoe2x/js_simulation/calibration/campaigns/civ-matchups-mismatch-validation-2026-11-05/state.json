@@ -20,56 +20,49 @@
     "018",
     "019",
     "020",
-    "021"
+    "021",
+    "022"
   ],
   "status": "running",
   "pid": 9546,
-  "updatedAt": "2026-11-05T16:15:50.985Z",
-  "savedFreshSeeds": 9009,
-  "reviewedJobs": 2811,
-  "changedJobs": 453,
-  "remainingJobs": 7416,
+  "updatedAt": "2026-11-05T16:17:16.559Z",
+  "savedFreshSeeds": 9022,
+  "reviewedJobs": 2815,
+  "changedJobs": 456,
+  "remainingJobs": 7412,
   "blockedJobs": [
     "mv_5e1e0d268234acff1d6e9008",
     "mv_306dd795e5f68374d24e2a99"
   ],
   "active": [
     {
-      "jobId": "mv_4f5ece5bb0dff814879509b5",
-      "seed": 9,
+      "jobId": "mv_5009f7bdee4c460a7e12746e",
+      "seed": 2,
+      "purpose": "fresh_measurement",
+      "attempt": 1,
+      "startedAt": "2026-11-05T16:16:42.919Z",
+      "limitSeconds": 180
+    },
+    {
+      "jobId": "mv_50140490b8019ae016be0eac",
+      "seed": 1,
       "purpose": "independent_exact_replay",
       "attempt": 1,
-      "startedAt": "2026-11-05T16:15:31.624Z",
+      "startedAt": "2026-11-05T16:17:15.096Z",
       "limitSeconds": 180
     },
     {
-      "jobId": "mv_4fe77eccb24532035bde8373",
-      "seed": 7,
-      "purpose": "fresh_measurement",
-      "attempt": 1,
-      "startedAt": "2026-11-05T16:15:50.045Z",
-      "limitSeconds": 180
-    },
-    {
-      "jobId": "mv_5005fc5ec2f0c076c40cd9a0",
-      "seed": 1,
-      "purpose": "fresh_measurement",
-      "attempt": 1,
-      "startedAt": "2026-11-05T16:15:50.983Z",
-      "limitSeconds": 180
-    },
-    {
-      "jobId": "mv_5009f7bdee4c460a7e12746e",
+      "jobId": "mv_50189a4f93a3bcf048b5897f",
       "seed": 0,
       "purpose": "fresh_measurement",
       "attempt": 1,
-      "startedAt": "2026-11-05T16:15:30.325Z",
+      "startedAt": "2026-11-05T16:17:14.549Z",
       "limitSeconds": 180
     }
   ],
-  "lastPushedAt": "2026-11-05T15:54:57.705Z",
-  "remotePending": true,
-  "lastPushError": "Error: Command failed: git -c http.extraHeader= -c credential.helper= push origin simulations/civ-matchups-mismatch-validation-2026-11-05\nremote: fatal error in commit_refs_rules        \nTo https://github.com/ddk220-light/aoe2_matchup.git\n ! [remote rejected]   simulations/civ-matchups-mismatch-validation-2026-11-05 -> simulations/civ-matchups-mismatch-validation-2026-11-05 (fatal error in commit_refs_rules\n)\nerror: failed to push some refs to 'https://github.com/ddk220-light/aoe2_matchup.git'\n",
+  "lastPushedAt": "2026-11-05T16:16:01.083Z",
+  "remotePending": false,
+  "lastPushError": null,
   "schedulerVersion": "rolling-phase-queue-v2",
   "queueControlsHash": "18185a84c42ce2b824e690760ee114ee49385e08344e7e2c9060084ba8f89d46"
 }

@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_0832065ba2481b1642cfa31a",
+  "reviewedAt": "2026-11-05T04:23:43.102Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      24,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "a70a4bccf798d91f55778535a287f694dac35b2ef7270bfd3a723bdff21dca6a",
+      "b16283f103e02c511ea69495e16205eecb923fde3b569dfee78fea5fa54e3283"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      102,
+      80
+    ]
+  },
+  "contextHash": "0832065ba2481b1642cfa31a569843a613eecdc4369a57a19f13de427e571f42",
+  "pairKey": "a70a4bccf798d91f55778535a287f694dac35b2ef7270bfd3a723bdff21dca6a|b16283f103e02c511ea69495e16205eecb923fde3b569dfee78fea5fa54e3283",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 2202,
+      "finalStateHash": "03ac0fd8b9ad45347360172e6c4562c11090bd0f3fb9a580dd9b3cd9dc5dda92",
+      "eventLogHash": "b0ae071b12c8c9ed690359fa6a52da21816e1d235dbff78ef7df3e3d7b676ca8",
+      "winnerHpFraction": 0.7083333333333334,
+      "recordHash": "ee9db5ce24cdd8ff3630440401c54bdba612e4bdebd9dfa4133691a9e6622cb2"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 2201,
+      "finalStateHash": "4591697d7effbb69fb3e00c6339e77400e3759ec98320c38faa0df361287a869",
+      "eventLogHash": "e468607f3028ff96e994d5471919b5e32342a6c59747cacb7b09d86ecdc1629e",
+      "winnerHpFraction": 0.6925,
+      "recordHash": "4eb604117a2741090669b4b4af99c9f08ffe82d4c483fc3a7db00a33630c1940"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 2301,
+      "finalStateHash": "98d709949d70ea4f2f13f5facae689a5bd5887429aecffc903600cb597e61caf",
+      "eventLogHash": "3a96b10274e36fc548fc62c2e528905352083fd0f11186f3255c1a6e1003d77a",
+      "winnerHpFraction": 0.6991666666666667,
+      "recordHash": "9d8dee61dce7df21e46df8b02846fabd00c4bda5c9dcb73ac4659b7464c52dae"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "ee9db5ce24cdd8ff3630440401c54bdba612e4bdebd9dfa4133691a9e6622cb2",
+    "result": {
+      "jobId": "mv_0832065ba2481b1642cfa31a",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 1700,
+      "startingHpByOwner": {
+        "2": 2400,
+        "3": 2565
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 20,
+          "hp": 1700
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 2202,
+      "family": "kite",
+      "side2": {
+        "slug": "heavy_cav_archer",
+        "label": "Heavy Cavalry Archer",
+        "civ": "Turks",
+        "count": 24,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "hussar",
+        "label": "Hussar",
+        "civ": "Wei",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "03ac0fd8b9ad45347360172e6c4562c11090bd0f3fb9a580dd9b3cd9dc5dda92",
+      "eventLogHash": "b0ae071b12c8c9ed690359fa6a52da21816e1d235dbff78ef7df3e3d7b676ca8"
+    },
+    "wallSeconds": 9.24233373199962,
+    "startedAt": "2026-11-05T04:23:33.860Z",
+    "finishedAt": "2026-11-05T04:23:43.102Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    68465
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 68465,
+      "outcome": "a_win",
+      "evidenceType": "inferred"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "b1e5d73dc49003aeb3d1da8b876f6018ef9bfc8bf207f5872c8489fd8acc8bbb"
+}

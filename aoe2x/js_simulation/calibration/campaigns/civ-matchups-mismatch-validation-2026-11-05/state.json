@@ -24,52 +24,52 @@
   ],
   "status": "running",
   "pid": 9546,
-  "updatedAt": "2026-11-05T16:05:20.945Z",
-  "savedFreshSeeds": 8932,
-  "reviewedJobs": 2790,
-  "changedJobs": 451,
-  "remainingJobs": 7437,
+  "updatedAt": "2026-11-05T16:15:50.985Z",
+  "savedFreshSeeds": 9009,
+  "reviewedJobs": 2811,
+  "changedJobs": 453,
+  "remainingJobs": 7416,
   "blockedJobs": [
     "mv_5e1e0d268234acff1d6e9008",
     "mv_306dd795e5f68374d24e2a99"
   ],
   "active": [
     {
-      "jobId": "mv_4ed8ec7d221fba430a9d5f96",
-      "seed": 2,
+      "jobId": "mv_4f5ece5bb0dff814879509b5",
+      "seed": 9,
       "purpose": "independent_exact_replay",
       "attempt": 1,
-      "startedAt": "2026-11-05T16:04:59.907Z",
+      "startedAt": "2026-11-05T16:15:31.624Z",
       "limitSeconds": 180
     },
     {
-      "jobId": "mv_4f0317bc9c4a36764bde48e9",
+      "jobId": "mv_4fe77eccb24532035bde8373",
+      "seed": 7,
+      "purpose": "fresh_measurement",
+      "attempt": 1,
+      "startedAt": "2026-11-05T16:15:50.045Z",
+      "limitSeconds": 180
+    },
+    {
+      "jobId": "mv_5005fc5ec2f0c076c40cd9a0",
       "seed": 1,
       "purpose": "fresh_measurement",
       "attempt": 1,
-      "startedAt": "2026-11-05T16:05:13.854Z",
+      "startedAt": "2026-11-05T16:15:50.983Z",
       "limitSeconds": 180
     },
     {
-      "jobId": "mv_4f275c51066dde44e887b3fd",
+      "jobId": "mv_5009f7bdee4c460a7e12746e",
       "seed": 0,
       "purpose": "fresh_measurement",
       "attempt": 1,
-      "startedAt": "2026-11-05T16:05:06.300Z",
-      "limitSeconds": 180
-    },
-    {
-      "jobId": "mv_4f36fb9cf426df11af7d5caf",
-      "seed": 0,
-      "purpose": "fresh_measurement",
-      "attempt": 1,
-      "startedAt": "2026-11-05T16:05:20.513Z",
+      "startedAt": "2026-11-05T16:15:30.325Z",
       "limitSeconds": 180
     }
   ],
   "lastPushedAt": "2026-11-05T15:54:57.705Z",
-  "remotePending": false,
-  "lastPushError": null,
+  "remotePending": true,
+  "lastPushError": "Error: Command failed: git -c http.extraHeader= -c credential.helper= push origin simulations/civ-matchups-mismatch-validation-2026-11-05\nremote: fatal error in commit_refs_rules        \nTo https://github.com/ddk220-light/aoe2_matchup.git\n ! [remote rejected]   simulations/civ-matchups-mismatch-validation-2026-11-05 -> simulations/civ-matchups-mismatch-validation-2026-11-05 (fatal error in commit_refs_rules\n)\nerror: failed to push some refs to 'https://github.com/ddk220-light/aoe2_matchup.git'\n",
   "schedulerVersion": "rolling-phase-queue-v2",
   "queueControlsHash": "18185a84c42ce2b824e690760ee114ee49385e08344e7e2c9060084ba8f89d46"
 }

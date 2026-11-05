@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_52b48e794c136c0a6196c204",
+  "reviewedAt": "2026-11-05T01:40:52.166Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      24
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "5bfb11638e06a54b514adeeff79e1ec0d72bfe8820fa61649382a9d137fefbd5",
+      "9f663f9285e1b4276b458a80e065047a819de90772d1b19816e321af8a9554d5"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      56.5,
+      72
+    ]
+  },
+  "contextHash": "52b48e794c136c0a6196c2044fc6b308f5ea63d96e3a323becb9ded7f2be8f99",
+  "pairKey": "5bfb11638e06a54b514adeeff79e1ec0d72bfe8820fa61649382a9d137fefbd5|9f663f9285e1b4276b458a80e065047a819de90772d1b19816e321af8a9554d5",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 2418,
+      "finalStateHash": "d3e5cacbb5e90b737344387d868dd48c54416cbae55da292e362dd47ebf9b92c",
+      "eventLogHash": "eb9e1fd5e1b4cc76135691445186b72c5a955423b07dd87e33fd770f46d906cb",
+      "winnerHpFraction": 0.1859375,
+      "recordHash": "6d2b7a2db92ef6c60e2c36a828dad7d71aeb13dc465af17c121235fc7dc70026"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 2350,
+      "finalStateHash": "5f3565cb76cefe5bbc83b2d5e97089da999d45cda5103893b162ac60bc1f005e",
+      "eventLogHash": "ec378c3ec60cc2e849f2fa1f35ac66e58065323e33af6f417956cfe2db4138f7",
+      "winnerHpFraction": 0.20416666666666666,
+      "recordHash": "89aed4485912dcf25bd90a4be7a91c47d678c0e4e9b94323efc72dbf795f791f"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 2607,
+      "finalStateHash": "f777d2418c75493ea666f2ea2eb2c9338922edc0d89b8eaf4bb54a0f98b20c12",
+      "eventLogHash": "a051d0a0945c8ef322c44a0bd45441b9fc48d3381748aa203fb6f8319793d08b",
+      "winnerHpFraction": 0.171875,
+      "recordHash": "6f87f33fd4e2fe4acdaacdcc5d916e1669bd9b9b48df252b98854b2249f81252"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "6f87f33fd4e2fe4acdaacdcc5d916e1669bd9b9b48df252b98854b2249f81252",
+    "result": {
+      "jobId": "mv_52b48e794c136c0a6196c204",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 165,
+      "startingHpByOwner": {
+        "2": 945,
+        "3": 960
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 5,
+          "hp": 165
+        }
+      },
+      "ticks": 2607,
+      "family": "rvr",
+      "side2": {
+        "slug": "imp_elite_skirm",
+        "label": "Elite Skirmisher",
+        "civ": "Sicilians",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "arbalester",
+        "label": "Arbalester",
+        "civ": "Ethiopians",
+        "count": 24,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "f777d2418c75493ea666f2ea2eb2c9338922edc0d89b8eaf4bb54a0f98b20c12",
+      "eventLogHash": "a051d0a0945c8ef322c44a0bd45441b9fc48d3381748aa203fb6f8319793d08b"
+    },
+    "wallSeconds": 5.652889035,
+    "startedAt": "2026-11-05T01:40:46.513Z",
+    "finishedAt": "2026-11-05T01:40:52.166Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    38100
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 38100,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "b2d80c94273562a77696bac86358d5fbc5097e65b7328ae2977d2acae05abd5f"
+}

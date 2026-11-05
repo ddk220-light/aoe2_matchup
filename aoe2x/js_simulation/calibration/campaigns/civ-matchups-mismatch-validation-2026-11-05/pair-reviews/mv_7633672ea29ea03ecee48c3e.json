@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_7633672ea29ea03ecee48c3e",
+  "reviewedAt": "2026-11-05T22:30:37.569Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      18
+    ],
+    "engineFamily": "siege",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "d49f3bec7f38622b3f4b941186fb08a2591d68849d41a13cddb80ca7b2017aa2",
+      "72c73189706df329e93e98156f819f01690a3807f1c69ab7e6d52c74ed2588c0"
+    ],
+    "scenarioHash": "68355152c72a621245965a8a10f001b96dbf2b6789cea9e5dff7c7335943029d",
+    "weightedCosts": [
+      80,
+      187
+    ]
+  },
+  "contextHash": "7633672ea29ea03ecee48c3e86c255338748314840c9ea89066626da2206e24f",
+  "pairKey": "72c73189706df329e93e98156f819f01690a3807f1c69ab7e6d52c74ed2588c0|d49f3bec7f38622b3f4b941186fb08a2591d68849d41a13cddb80ca7b2017aa2",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 3561,
+      "finalStateHash": "e6316cced63d8151ed54a38728d8301d4189653f8e31c1caf5bef513bd523a17",
+      "eventLogHash": "f8cd7749b1b12af406ec4921f3d6f42f71f7dc4e996ff384e1a593b0d39eb08f",
+      "winnerHpFraction": 0.5599033816425121,
+      "recordHash": "5408874355c295e953b2c2b921d9204949ca0fb1b9e747ba84e1dcaec2737fde"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 3328,
+      "finalStateHash": "a671e84c490c80dc1ea13da894d591f2e68b630aa14eb9f0236bb550dcc56edf",
+      "eventLogHash": "5ac117aa6dcf8580c6659f22ac3dd3fef6918517478eddf750b2148d759acc10",
+      "winnerHpFraction": 0.5432367149758454,
+      "recordHash": "cb2dea186eb22ee93f45ab9afb624f805a8b5da1579bdf16a9904f0a0d17f13c"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 3427,
+      "finalStateHash": "c7e44bc34bcd26561b9952fce4373a21f8a024d8976e8dfaedbb724062316019",
+      "eventLogHash": "c8b6ecb26452a6442cae1ce63812b9c74b28dd45742b480b3496ed115152fd69",
+      "winnerHpFraction": 0.5379227053140097,
+      "recordHash": "f5b657097e6b9516dd2fa136625a81d2be9387519b845e6b8b327cd96b66a32f"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "f5b657097e6b9516dd2fa136625a81d2be9387519b845e6b8b327cd96b66a32f",
+    "result": {
+      "jobId": "mv_7633672ea29ea03ecee48c3e",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 2227,
+      "startingHpByOwner": {
+        "2": 2160,
+        "3": 4140
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 2227
+        }
+      },
+      "ticks": 3427,
+      "family": "siege",
+      "side2": {
+        "slug": "hussar",
+        "label": "Light Cavalry",
+        "civ": "Malians",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_hussite_wagon_bohemians",
+        "label": "Elite Hussite Wagon",
+        "civ": "Bohemians",
+        "count": 18,
+        "class": "siege_ranged"
+      },
+      "finalStateHash": "c7e44bc34bcd26561b9952fce4373a21f8a024d8976e8dfaedbb724062316019",
+      "eventLogHash": "c8b6ecb26452a6442cae1ce63812b9c74b28dd45742b480b3496ed115152fd69"
+    },
+    "wallSeconds": 9.043862176001072,
+    "startedAt": "2026-11-05T22:30:28.525Z",
+    "finishedAt": "2026-11-05T22:30:37.569Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    12963
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 12963,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "9976289e6e3890a70c313250360f4dcd541459594de163d75feb2771ee0400c4"
+}

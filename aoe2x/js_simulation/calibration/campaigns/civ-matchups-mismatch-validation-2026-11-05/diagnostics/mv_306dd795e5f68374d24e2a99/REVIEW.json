@@ -1,0 +1,281 @@
+{
+  "version": "civ-mismatch-exhausted-seed-diagnosis-v1",
+  "createdAt": "2026-11-05T11:45:57.775697+00:00",
+  "diagnosticOnly": true,
+  "status": "unfinished_no_result",
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "sourceCommit": "324b05b465ae9b09a57d433bb6666e0f5b99f222",
+  "jobId": "mv_306dd795e5f68374d24e2a99",
+  "seed": 1,
+  "originalEvidenceIds": [
+    5982
+  ],
+  "displayPair": [
+    {
+      "civilization": "Aztecs",
+      "unit": "Elite Skirmisher",
+      "key": "Aztecs|imp_elite_skirm"
+    },
+    {
+      "civilization": "Huns",
+      "unit": "Elite Tarkan",
+      "key": "Huns|elite_tarkan_huns"
+    }
+  ],
+  "physicalContext": {
+    "counts": [
+      27,
+      18
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "8082de979bcda18020ed9cc37890813f756afa0f0ead89fed2ac846ca9ad2d4b",
+      "574ed6f2a96b9ca1b45a8f61d52f1c5f147afd18f813a9e549276335a334b137"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      56.5,
+      126
+    ]
+  },
+  "contextHash": "306dd795e5f68374d24e2a991eb3984715be59ac83a1fdc17e5677bb1f7b8d53",
+  "attemptJournal": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/attempts.jsonl",
+  "attemptReferences": [
+    {
+      "line": 9,
+      "sha256IncludingNewline": "d9397c7356339155a45b6ddd2099364716594d153059e41bb2b1e77dd9d936cb",
+      "attempt": 1,
+      "wallLimitSeconds": 180,
+      "finishedAt": "2026-11-05T10:05:11.639Z",
+      "exhausted": false,
+      "watchdog": true
+    },
+    {
+      "line": 10,
+      "sha256IncludingNewline": "43708476e264b79618149179aff13f584b376332e3d4a01a054ae5e21b61f7fa",
+      "attempt": 2,
+      "wallLimitSeconds": 600,
+      "finishedAt": "2026-11-05T10:15:11.655Z",
+      "exhausted": false,
+      "watchdog": true
+    },
+    {
+      "line": 11,
+      "sha256IncludingNewline": "5d4ba5f7099efcbf01df3f176f1500a76fb9fe5999e683b47962aff363544375",
+      "attempt": 3,
+      "wallLimitSeconds": 1800,
+      "finishedAt": "2026-11-05T10:45:11.687Z",
+      "exhausted": false,
+      "watchdog": true
+    },
+    {
+      "line": 14,
+      "sha256IncludingNewline": "2b4953bcff1a528a70405e63fa034652211e9198bc3483d1ea03608c3cd8d94b",
+      "attempt": 4,
+      "wallLimitSeconds": 3600,
+      "finishedAt": "2026-11-05T11:45:11.730Z",
+      "exhausted": true,
+      "watchdog": true
+    }
+  ],
+  "progressTimelines": [
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_306dd795e5f68374d24e2a99-1-fresh_measurement-1793872931639.jsonl",
+      "sha256": "d8e2c79bc149a174a7fcbb1db8adf6abeb4e85f60df49cfab20fc1b17b55259c",
+      "snapshots": 6,
+      "latestGameSeconds": 266.73333333333335,
+      "unchangedCombatSinceGameSeconds": 266.73333333333335,
+      "unchangedCombatGameSeconds": 0.0,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 9
+        },
+        "3": {
+          "units": 18,
+          "hp": 2820
+        }
+      },
+      "eventCounts": {
+        "scenario-trigger-fired": 1,
+        "patrol-issued": 2,
+        "move": 146344,
+        "pursuit-acquired": 1169,
+        "engagement-started": 183,
+        "attack-start": 338,
+        "damage": 320,
+        "contact-reservation-acquired": 412,
+        "contact-reservation-persisted": 118918,
+        "blocked": 261366,
+        "contact-reservation-released": 471,
+        "engagement-ended": 158,
+        "pursuit-retarget-requested": 22643,
+        "pursuit-route-planned": 7923,
+        "pursuit-route-invalidated": 6679,
+        "contact-release-persisted": 49899,
+        "pursuit-route-advanced": 1295,
+        "death": 26,
+        "contact-release-published": 35,
+        "pursuit-invalidated": 82,
+        "attack-canceled": 12
+      },
+      "movesDuringUnchangedCombat": 0,
+      "blockedDuringUnchangedCombat": 0
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_306dd795e5f68374d24e2a99-1-fresh_measurement-1793873111649.jsonl",
+      "sha256": "a8272d354d321571521f35f84c5e5898cdbcee922c0455b9dde054d4a2e2e3a6",
+      "snapshots": 20,
+      "latestGameSeconds": 1525.65,
+      "unchangedCombatSinceGameSeconds": 368.71666666666664,
+      "unchangedCombatGameSeconds": 1156.9333333333334,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 9
+        },
+        "3": {
+          "units": 17,
+          "hp": 2788
+        }
+      },
+      "eventCounts": {
+        "scenario-trigger-fired": 1,
+        "patrol-issued": 2,
+        "move": 745003,
+        "pursuit-acquired": 70929,
+        "engagement-started": 183,
+        "attack-start": 370,
+        "damage": 352,
+        "contact-reservation-acquired": 2227,
+        "contact-reservation-persisted": 651901,
+        "blocked": 1551052,
+        "contact-reservation-released": 2286,
+        "engagement-ended": 159,
+        "pursuit-retarget-requested": 159451,
+        "pursuit-route-planned": 51767,
+        "pursuit-route-invalidated": 45442,
+        "contact-release-persisted": 276504,
+        "pursuit-route-advanced": 6376,
+        "death": 27,
+        "contact-release-published": 35,
+        "pursuit-invalidated": 83,
+        "attack-canceled": 12
+      },
+      "movesDuringUnchangedCombat": 550559,
+      "blockedDuringUnchangedCombat": 1182755
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_306dd795e5f68374d24e2a99-1-fresh_measurement-1793873711657.jsonl",
+      "sha256": "2d582f7d65f42b2889f9e75813e104db01e3d125af29389afc0384e404d9725a",
+      "snapshots": 60,
+      "latestGameSeconds": 4886.766666666666,
+      "unchangedCombatSinceGameSeconds": 385.8333333333333,
+      "unchangedCombatGameSeconds": 4500.933333333333,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 9
+        },
+        "3": {
+          "units": 17,
+          "hp": 2788
+        }
+      },
+      "eventCounts": {
+        "scenario-trigger-fired": 1,
+        "patrol-issued": 2,
+        "move": 2344396,
+        "pursuit-acquired": 272596,
+        "engagement-started": 183,
+        "attack-start": 370,
+        "damage": 352,
+        "contact-reservation-acquired": 7131,
+        "contact-reservation-persisted": 2060884,
+        "blocked": 4987188,
+        "contact-reservation-released": 7190,
+        "engagement-ended": 159,
+        "pursuit-retarget-requested": 524622,
+        "pursuit-route-planned": 168758,
+        "pursuit-route-invalidated": 149167,
+        "contact-release-persisted": 881505,
+        "pursuit-route-advanced": 19641,
+        "death": 27,
+        "contact-release-published": 35,
+        "pursuit-invalidated": 83,
+        "attack-canceled": 12
+      },
+      "movesDuringUnchangedCombat": 2141789,
+      "blockedDuringUnchangedCombat": 4601417
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_306dd795e5f68374d24e2a99-1-fresh_measurement-1793875511689.jsonl",
+      "sha256": "20d89123480b576991271efe7d8193a7981a64d5980f9ed8b7742bae76f9b744",
+      "snapshots": 120,
+      "latestGameSeconds": 9776.383333333333,
+      "unchangedCombatSinceGameSeconds": 428.0833333333333,
+      "unchangedCombatGameSeconds": 9348.3,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 9
+        },
+        "3": {
+          "units": 17,
+          "hp": 2788
+        }
+      },
+      "eventCounts": {
+        "scenario-trigger-fired": 1,
+        "patrol-issued": 2,
+        "move": 4671129,
+        "pursuit-acquired": 565973,
+        "engagement-started": 183,
+        "attack-start": 370,
+        "damage": 352,
+        "contact-reservation-acquired": 14264,
+        "contact-reservation-persisted": 4110608,
+        "blocked": 9985939,
+        "contact-reservation-released": 14323,
+        "engagement-ended": 159,
+        "pursuit-retarget-requested": 1055855,
+        "pursuit-route-planned": 338948,
+        "pursuit-route-invalidated": 300060,
+        "contact-release-persisted": 1761636,
+        "pursuit-route-advanced": 38939,
+        "death": 27,
+        "contact-release-published": 35,
+        "pursuit-invalidated": 83,
+        "attack-canceled": 12
+      },
+      "movesDuringUnchangedCombat": 4448409,
+      "blockedDuringUnchangedCombat": 9556971
+    }
+  ],
+  "validSeedRecords": [
+    {
+      "seed": 0,
+      "sourceFile": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+      "line": 5966,
+      "sha256IncludingNewline": "a30357ea144b42f0ba23ec52b25568b4ef671b1ca3cc121315e74312108ee3d0"
+    }
+  ],
+  "missingSeed": 1,
+  "pairReviewExists": false,
+  "observations": [
+    "After the final combat change, one skirmisher remains at 9 HP against 17 Tarkans with 2788 combined HP.",
+    "Attack, damage, death and remaining-HP counters stop changing for thousands of game seconds while move, pursuit and blocked counters continue increasing.",
+    "All four prescribed wall limits were attempted; the final 3600-second watchdog ended without a native terminal result."
+  ],
+  "diagnosis": "Prolonged no-damage pursuit/nontermination. The precise geometric cause is not established by these snapshots. This is neither a draw nor a winner measurement.",
+  "decision": {
+    "resultAssigned": false,
+    "physicsChanged": false,
+    "automaticRetryAuthorized": false,
+    "retainOriginalServingEvidence": true,
+    "continueOtherInventoryJobs": true,
+    "nextStep": "Keep this context unresolved; require a separately reviewed recovery decision before any further retry."
+  }
+}

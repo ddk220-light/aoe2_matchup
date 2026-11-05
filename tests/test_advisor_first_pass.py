@@ -1,5 +1,6 @@
 """Serving, provenance and orientation contracts for the provisional advisor."""
 from collections import Counter
+import json
 import sqlite3
 
 from apps.website.services.advisor import (
@@ -16,9 +17,13 @@ def test_complete_saved_matrix_and_all_civilizations():
     with sqlite3.connect(DATASET) as db:
         assert db.execute('SELECT COUNT(*) FROM cells').fetchone()[0] == 151223
         assert db.execute('SELECT COUNT(*) FROM evidence').fetchone()[0] == 68916
-        assert dict(db.execute('SELECT evidence_type, COUNT(*) FROM cells GROUP BY evidence_type')) == {
+        dataset = json.loads(db.execute("SELECT value FROM metadata WHERE key='dataset'").fetchone()[0])
+        expected = dataset.get('displayedEvidenceCounts', {
             'observed': 67645, 'inferred': 22730, 'identity': 820, 'predicted_unvalidated': 60028,
-        }
+        })
+        assert dict(db.execute('SELECT evidence_type, COUNT(*) FROM cells GROUP BY evidence_type')) == expected
+        assert set(expected) == {'observed', 'inferred', 'identity', 'predicted_unvalidated'}
+        assert sum(expected.values()) == 151223
         assert db.execute("SELECT COUNT(*) FROM cells WHERE outcome='unresolved'").fetchone()[0] == 0
 
 

@@ -1,7 +1,12 @@
-# Authorized mismatch validation and correction loop
+# Authorized mismatch validation and data collection
 
 Scope: finish the 10,227-context frozen mismatch inventory authorized on
-2026-11-05, update advisor data from reviewed simulations, and publish corrections.
+2026-11-05 and collect independently verified correction data for analysis.
+The owner's latest instruction replaces the recurring release loop: finish
+collecting the data, analyze it together, then make ONE consolidated website
+release after explicit approval. Do not rebuild or deploy the website on
+scheduled runs. Keep the current production site unchanged; preserve the
+already published checkpoints as history.
 Do not retrain/expand forecasts, change ranking scores or UI/recommendation
 weights, run all other forecasts, or resume the old bulk replay campaigns.
 
@@ -47,6 +52,15 @@ The existing supervisor resumed the queue with all 920 valid records preserved.
 No result was assigned, no physics changed, and the full inventory remains
 incomplete until the quarantined context is legitimately resolved.
 
+The exhausted Aztec Elite Skirmisher / Hunnic Elite Tarkan context
+`mv_306dd795e5f68374d24e2a99`, seed 1, also remains unresolved. Its four prescribed
+attempts ended without a terminal result. The diagnosis and exact journal/timeline
+references are in `diagnostics/<jobId>/REVIEW.json`, committed at
+`04077c7de9db686ad356581b1bf6ad79ab4d950d`. A prolonged pursuit loop with no
+further damage is diagnostic evidence, not a draw or winner. Do not blindly
+retry it or use its partial seed set as a correction. Read current state for
+any later changes and other failures.
+
 ## Reviewed correction exports
 
 From the validation worktree, use
@@ -55,10 +69,41 @@ Default requires the entire inventory. While running, explicit `--through-phase 
 exports passed phases, or `--reviewed-only` exports only individually completed,
 reviewed contexts already committed to Git. Every export independently validates
 source hashes, required seeds, winners, orientations and exact replay results.
-Push the referenced validation commit before publishing a snapshot. Do not edit
+Push the referenced validation commit before sharing a snapshot. Do not edit
 or replace an existing snapshot. Keep every failure and old prediction.
 Use `--reviewed-only` when a quarantined context leaves an earlier phase blocked;
 later reviewed contexts are still eligible for cumulative correction snapshots.
+
+Save new snapshots under the validation campaign, for example
+`aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/correction-snapshots/<checkpoint>/`.
+Keep snapshots and source checkpoints durable on the validation branch only.
+Do not import them into the website serving database, regenerate website/data
+exports, run website release CI/previews, push website/staging/main branches,
+or deploy to production on recurring runs. Existing website snapshots remain
+historical releases; do not modify or remove them.
+
+## Data-ready analysis and review
+
+Continue the entire inventory. Every verified context needs all required valid
+seeds and an exact replay; blocked contexts remain unfinished. Once all contexts
+meet those gates, prepare the final cumulative correction snapshot and an
+analysis of coverage, unchanged/changed winners, close calls, original evidence
+types/rules, retained failures and limitations. Include source and full-list links.
+This selected disagreement inventory is not an unbiased sample for estimating
+global forecast accuracy.
+
+Notify once that the data is ready for analysis, then pause the monitor and wait
+for discussion and explicit approval for the single consolidated release. If
+only diagnosed blocked cases remain and no permitted work can advance them,
+report the concrete blockers and available-data analysis for discussion; do not
+claim full completion or blindly retry. Until that review point, give concise
+actual progress only when asked.
+
+## Single release after analysis and explicit approval
+
+The commands and release gates below are retained for the eventual approved
+release. They are NOT instructions to run them during data collection. Earlier
+authorization for recurring production releases has been superseded.
 
 Website worktree: `/workspace/aoe2_advisor_release`, branch
 `website/matchup-advisor-first-pass-2026-11-03`. Check status and current remote main
@@ -77,14 +122,9 @@ updates all exact alias cells, and maintains evidence counts and artifact hashes
 Do not remove already released corrections: use a cumulative snapshot at least
 as complete as the serving metadata's current `mismatch_validation`.
 
-Run correction and advisor tests, migration/export checks and required CI. Follow
+After analysis and explicit approval, run correction and advisor tests,
+migration/export checks and required CI once for the consolidated release. Follow
 `docs/vercel-deployment.md`: publish staging, verify both CI jobs and the exact
-Vercel preview, then fast-forward main and verify production. Production publication
-of these data fixes is authorized. Preserve all public presentation, including
+Vercel preview, then fast-forward main and verify production. Preserve all public
+presentation, including
 the user's choice to display forecasts and observations alike.
-
-Keep processing and publishing reviewed corrections until every inventory job is
-accounted for. When all contexts have complete reviewed seed/replay evidence and
-the final cumulative database is deployed and verified, report corrected counts
-and the full-list/source link once, then disable the mismatch monitor. Until
-then, give concise actual counts when asked; do not claim the whole task finished.

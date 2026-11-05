@@ -175,6 +175,23 @@ and [balance policies](https://github.com/ddk220-light/aoe2_matchup/blob/d6a8ca1
    corrections. Some video scenarios add Hussars and use other count policies.
    Keep historical under-10%-HP editorial draws separate from the raw game winner.
 
+Example on the recording computer in PowerShell, after cloning this branch:
+
+```powershell
+git switch matchup-table-v3
+git pull --ff-only origin matchup-table-v3
+$CaptureIntake = 'aoe2x/js_simulation/calibration/live_observations/video_archive_indexes/2026-11-05-paladin-spanish'
+New-Item -ItemType Directory -Force -Path $CaptureIntake
+Copy-Item -LiteralPath 'E:/AoE2 Renders/knight-line-canonical/paladin-spanish/run.json' -Destination "$CaptureIntake/run.json"
+# Add source-notes.json as described above before committing.
+git add -f -- $CaptureIntake
+git commit -m 'Add original Spanish Paladin recorded-game index for analysis [skip ci]'
+git push origin HEAD:matchup-table-v3
+```
+
+Use a separate intake folder for each archive; the Spanish path is an example,
+not an instruction to substitute Spanish captures for another civilization.
+
 An original index may support analysis even where video is unavailable; say which
 records are metadata-only. New project-local `frames.bin` can be used directly
 for live calibration, with its exact path/run recorded. No archive packaging or

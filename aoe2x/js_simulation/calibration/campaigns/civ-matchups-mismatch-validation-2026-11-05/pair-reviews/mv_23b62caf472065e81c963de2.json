@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_23b62caf472065e81c963de2",
+  "reviewedAt": "2026-11-05T08:03:05.120Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      21
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "f3aadef129b6108337dff2d0771e14d0c8889ff31812e9763eae4bb39a7499f6",
+      "c685efbd62654696ab54feaf602449e4d247ba90a16b8f8606d8a6964f787a14"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      71.5,
+      121
+    ]
+  },
+  "contextHash": "23b62caf472065e81c963de2cdece2aa64a540a816f4680af8d08519009fffad",
+  "pairKey": "c685efbd62654696ab54feaf602449e4d247ba90a16b8f8606d8a6964f787a14|f3aadef129b6108337dff2d0771e14d0c8889ff31812e9763eae4bb39a7499f6",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1528,
+      "finalStateHash": "179b5e2fa4dfbdf8dfe3a2ac2e6f86fad308b9931fc8f75cc46f1e929a9e4e4b",
+      "eventLogHash": "1a67967f266b9aee7460ff3819402848a41a61bb5e26f61afc95ac03dcc5a56a",
+      "winnerHpFraction": 0.8163265306122449,
+      "recordHash": "e27fc1e44e2e7f9f12f943a489a43e1bef9598c9974166e7411a622023cfdebc"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1494,
+      "finalStateHash": "5085ec8dc719fb27065205738536f7ec0e91ecfd69b0ad3bf27da7d6ad2815b1",
+      "eventLogHash": "53e6252a1835d2d05646993524df21b2360b0abdfbf584c721707adad70cf386",
+      "winnerHpFraction": 0.8136054421768707,
+      "recordHash": "d12a952ed4c0bb8b5b28453df7a3a7838c1765356f3cc94e1eacd7485ccc9b72"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1588,
+      "finalStateHash": "37dd80a9b5c475b25d262ebb8e8eeb6a0cd008a660c9592aad7aff458ab903b5",
+      "eventLogHash": "c22dc98d64eae4e08a5b14251aeffcb57a317e5fead5d6148748aa10026785df",
+      "winnerHpFraction": 0.817687074829932,
+      "recordHash": "226eb178b38e15fcaa49d7cec8c5942ed1e64f4e4ada86ed9b031c976d17c8d1"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "226eb178b38e15fcaa49d7cec8c5942ed1e64f4e4ada86ed9b031c976d17c8d1",
+    "result": {
+      "jobId": "mv_23b62caf472065e81c963de2",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 2404,
+      "startingHpByOwner": {
+        "2": 2025,
+        "3": 2940
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 19,
+          "hp": 2404
+        }
+      },
+      "ticks": 1588,
+      "family": "kite",
+      "side2": {
+        "slug": "elite_genitour",
+        "label": "Elite Genitour",
+        "civ": "Berbers",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "heavy_camel",
+        "label": "Heavy Camel Rider",
+        "civ": "Turks",
+        "count": 21,
+        "class": "melee"
+      },
+      "finalStateHash": "37dd80a9b5c475b25d262ebb8e8eeb6a0cd008a660c9592aad7aff458ab903b5",
+      "eventLogHash": "c22dc98d64eae4e08a5b14251aeffcb57a317e5fead5d6148748aa10026785df"
+    },
+    "wallSeconds": 6.206782806999981,
+    "startedAt": "2026-11-05T08:02:58.913Z",
+    "finishedAt": "2026-11-05T08:03:05.120Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    10265
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 10265,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "905ff0c657acfdcf49e78dc7cfab69368c58735c0cd8ec39f86b48ddd42c1300"
+}

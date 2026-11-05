@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_61c4f92e773e619f418e1ee2",
+  "reviewedAt": "2026-11-05T19:32:30.431Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      25,
+      27
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "a60599c8cb409c9595293cb7c20009e4ee827d580a849c235175980ef1078c80",
+      "64f9110d42650d4182a2e7c539e41e91ff337074c34cf25448d29714c444232f"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      90,
+      80
+    ]
+  },
+  "contextHash": "61c4f92e773e619f418e1ee23b8cadd184d1bed0ccf6279404e3aa915fb7d4e1",
+  "pairKey": "64f9110d42650d4182a2e7c539e41e91ff337074c34cf25448d29714c444232f|a60599c8cb409c9595293cb7c20009e4ee827d580a849c235175980ef1078c80",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 1105,
+      "finalStateHash": "b130493d0113c9fec61c5cd595574e4a50087b9a35a54601132c559df7034d97",
+      "eventLogHash": "f6bf6cccbc08e0f990644193faab30c34f8150aaa50b0c0d59897580b8d2d2f2",
+      "winnerHpFraction": 0.8418823529411765,
+      "recordHash": "de20304d218455a1f7c19c77d03ca24871f8d1052b9488bbff89a89ec6d240bd"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 1105,
+      "finalStateHash": "b130493d0113c9fec61c5cd595574e4a50087b9a35a54601132c559df7034d97",
+      "eventLogHash": "83c7856a075e94228ce3392271c35398e2c9b167ba0b11ae289566cea69e5271",
+      "winnerHpFraction": 0.8418823529411765,
+      "recordHash": "3c3a5d8d2dd4db9097d0636dd9f113654f705f278f12bc3311781724c7631ba3"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1105,
+      "finalStateHash": "b130493d0113c9fec61c5cd595574e4a50087b9a35a54601132c559df7034d97",
+      "eventLogHash": "ac24edf9fc6043dec1ed88bc920eb0e99c0d30378691306a843187477175b215",
+      "winnerHpFraction": 0.8418823529411765,
+      "recordHash": "07f2dbc20541a78794cc262fc9bf862b75f65b3050539a117bde01a0bf6af3d1"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "07f2dbc20541a78794cc262fc9bf862b75f65b3050539a117bde01a0bf6af3d1",
+    "result": {
+      "jobId": "mv_61c4f92e773e619f418e1ee2",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 1789,
+      "startingHpByOwner": {
+        "2": 2125,
+        "3": 1620
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 25,
+          "hp": 1789
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1105,
+      "family": "waves",
+      "side2": {
+        "slug": "elite_fire_lancer",
+        "label": "Elite Fire Lancer",
+        "civ": "Khitans",
+        "count": 25,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "hussar",
+        "label": "Light Cavalry",
+        "civ": "Bohemians",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "b130493d0113c9fec61c5cd595574e4a50087b9a35a54601132c559df7034d97",
+      "eventLogHash": "ac24edf9fc6043dec1ed88bc920eb0e99c0d30378691306a843187477175b215"
+    },
+    "wallSeconds": 23.85491130400449,
+    "startedAt": "2026-11-05T19:32:06.576Z",
+    "finishedAt": "2026-11-05T19:32:30.431Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    14250
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 14250,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "a459bd835d5937c3d307bcb6dbdf9aef8dada10bea3591b8ebec65fb1e655959"
+}

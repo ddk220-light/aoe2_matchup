@@ -1,0 +1,44 @@
+{
+  "displayedMismatchCells": 18298,
+  "physicalValidationJobs": 10227,
+  "minimumFreshSeeds": 30681,
+  "categories": {
+    "old_mixed_new_decisive": 5860,
+    "legacy_direction_dependent": 336,
+    "opposite_winner": 1265,
+    "old_decisive_new_close": 655,
+    "old_covered_now_both_lose": 8384,
+    "old_gap_now_winnable": 7664,
+    "yardstick_old_mixed_new_decisive": 486,
+    "yardstick_opposite_winner": 206,
+    "yardstick_old_decisive_new_close": 44
+  },
+  "evidenceTypes": {
+    "observed": 8878,
+    "identity": 123,
+    "predicted_unvalidated": 7882,
+    "inferred": 1415
+  },
+  "yardstickComparisons": 3010,
+  "currentDatabaseSha256": "93e5732f5e1afd08a9be5b292506edb2f4ee41c2be4352a8bc4128184a05ebb8",
+  "sources": {
+    "earlier_multi_civ_unique_pair_comparison.csv": {
+      "sha256": "840fd6a91ed43b467a4e71a68584f5a1773fda4a77a45d2a422eb173272939ff",
+      "kind": "comparison_csv"
+    },
+    "latest_armenians_unique_pair_comparison.csv": {
+      "sha256": "4b233726ef87e8de8315a199a790e61b2612cdd2316e56eca3c47fde3217f320",
+      "kind": "comparison_csv"
+    },
+    "composition_coverage_conflicts.csv": {
+      "sha256": "6de333191954587655110b743f802a60ef7a52fcf4e054abbfe4ac82435bd309",
+      "kind": "comparison_csv"
+    },
+    "legacy_derived_data.db": {
+      "sha256": "c6964e15331bf8b3bd4b09554261f70fe26bca4b940fcb78e263752b248c159e",
+      "kind": "raw_yardstick_margins"
+    }
+  },
+  "frozenProfileManifestSha256": "f66273e29420d79909efe434e100987f2bee6d8c9e301f467cb97de5c3461920",
+  "scope": "All raw winner/decisiveness disagreements, legacy direction conflicts, conflicting composition claims, and raw yardstick-margin disagreements. Recommendation-only formula differences are excluded."
+}

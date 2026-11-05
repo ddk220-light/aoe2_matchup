@@ -118,3 +118,96 @@ export function hashCanonicalJson(value) {
     ? createNodeHash("sha256").update(serialized).digest("hex")
     : browserSha256(serialized);
 }
+
+// Headless combat needs the hash, not a retained array of millions of events.
+// Each batch contributes the exact canonical array interior and separators.
+// Return null in browsers so existing callers can keep their retained path.
+export function createCanonicalJsonArrayHasher() {
+  if (!createNodeHash) return null;
+  const hash = createNodeHash("sha256");
+  hash.update("[");
+  let count = 0;
+  let finished = false;
+  return Object.freeze({
+    append(values) {
+      if (finished) throw new Error("canonical array hash already finished");
+      if (!Array.isArray(values)) throw new TypeError("canonical array batch must be an array");
+      if (values.length === 0) return;
+      const text = canonicalJson(values);
+      if (count) hash.update(",");
+      hash.update(text.slice(1, -1));
+      count += values.length;
+    },
+    finish() {
+      if (finished) throw new Error("canonical array hash already finished");
+      finished = true;
+      return hash.update("]").digest("hex");
+    },
+  });
+}
+
+// Node batch fights can emit millions of movement events. Hash the same
+// canonical byte sequence in bounded chunks so V8 never has to create a
+// single string larger than its maximum string length. Browser fights retain
+// the existing path because their normal tick limit keeps logs small.
+export function hashCanonicalJsonStreaming(value) {
+  if (!createNodeHash) return hashCanonicalJson(value);
+  const hash = createNodeHash("sha256");
+  let chunks = [];
+  let length = 0;
+  const write = (text) => {
+    chunks.push(text);
+    length += text.length;
+    if (length >= 65536) {
+      hash.update(chunks.join(""));
+      chunks = [];
+      length = 0;
+    }
+  };
+  const ancestors = new Set();
+  const visit = (entry) => {
+    if (entry === null || typeof entry === "string" || typeof entry === "boolean") {
+      write(JSON.stringify(entry));
+      return;
+    }
+    if (typeof entry === "number") {
+      if (!Number.isFinite(entry)) throw new TypeError("canonical JSON requires a finite number");
+      write(JSON.stringify(entry));
+      return;
+    }
+    if (!entry || typeof entry !== "object") {
+      throw new TypeError(`canonical JSON does not support ${typeof entry}`);
+    }
+    if (ancestors.has(entry)) throw new TypeError("canonical JSON does not support cycles");
+    ancestors.add(entry);
+    if (Array.isArray(entry)) {
+      write("[");
+      for (let index = 0; index < entry.length; index += 1) {
+        if (index) write(",");
+        // Array.map in canonicalJson skips holes, while join emits their
+        // separators. Preserve that exact (unusual) representation.
+        if (index in entry) visit(entry[index]);
+      }
+      write("]");
+    } else {
+      const prototype = Object.getPrototypeOf(entry);
+      if (prototype !== Object.prototype && prototype !== null) {
+        throw new TypeError("canonical JSON requires plain objects");
+      }
+      write("{");
+      const keys = Object.keys(entry).sort();
+      for (let index = 0; index < keys.length; index += 1) {
+        if (index) write(",");
+        const key = keys[index];
+        write(JSON.stringify(key));
+        write(":");
+        visit(entry[key]);
+      }
+      write("}");
+    }
+    ancestors.delete(entry);
+  };
+  visit(value);
+  if (chunks.length) hash.update(chunks.join(""));
+  return hash.digest("hex");
+}

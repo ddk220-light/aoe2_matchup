@@ -6098,7 +6098,8 @@ function outcome(world) {
 
 export function runWorld(
   world,
-  { maxTicks = DEFAULT_WORLD_TICKS, retainSnapshots = true, onSnapshot } = {},
+  { maxTicks = DEFAULT_WORLD_TICKS, retainSnapshots = true, onSnapshot,
+    retainEvents = true, onEvents } = {},
 ) {
   if (!Number.isSafeInteger(maxTicks) || maxTicks < 0) {
     throw new RangeError("max ticks must be a nonnegative safe integer");
@@ -6112,6 +6113,11 @@ export function runWorld(
   if (onSnapshot !== undefined && typeof onSnapshot !== "function") {
     throw new TypeError("onSnapshot must be a function");
   }
+  if (typeof retainEvents !== "boolean") throw new TypeError("retainEvents must be a boolean");
+  if (!retainEvents && retainSnapshots) throw new Error("event omission requires compact snapshots");
+  if (onEvents !== undefined && typeof onEvents !== "function") throw new TypeError("onEvents must be a function");
+  if (!retainEvents && !onEvents) throw new Error("event omission requires a lossless event consumer");
+  onEvents?.(world.eventLog);
 
   const publish = (current) => {
     if (!onSnapshot) return;
@@ -6126,6 +6132,7 @@ export function runWorld(
     if (initialOutcome !== null) return initialOutcome;
     for (let elapsed = 0; elapsed < maxTicks; elapsed += 1) {
       current = stepWorld(current);
+      onEvents?.(current.events);
       publish(current);
       const result = outcome(current);
       if (result !== null) return result;
@@ -6133,7 +6140,7 @@ export function runWorld(
     return worldResult(current, "timeout");
   }
 
-  const collectedEvents = [...world.eventLog];
+  const collectedEvents = retainEvents ? [...world.eventLog] : null;
   const emptySnapshots = Object.freeze([]);
   const emptyEventLog = Object.freeze([]);
   const compactWorld = (current, eventLog = emptyEventLog) => Object.freeze({
@@ -6142,7 +6149,7 @@ export function runWorld(
     snapshots: emptySnapshots,
   });
   const compactResult = (result, current) => {
-    const eventLog = Object.freeze([...collectedEvents]);
+    const eventLog = collectedEvents === null ? emptyEventLog : Object.freeze([...collectedEvents]);
     const publishedWorld = compactWorld(current, eventLog);
     return Object.freeze({
       ...result,
@@ -6160,7 +6167,8 @@ export function runWorld(
   for (let elapsed = 0; elapsed < maxTicks; elapsed += 1) {
     current = stepWorld(current);
     publish(current);
-    collectedEvents.push(...current.events);
+    onEvents?.(current.events);
+    collectedEvents?.push(...current.events);
     const result = outcome(current);
     if (result !== null) return compactResult(result, current);
     current = compactWorld(current);

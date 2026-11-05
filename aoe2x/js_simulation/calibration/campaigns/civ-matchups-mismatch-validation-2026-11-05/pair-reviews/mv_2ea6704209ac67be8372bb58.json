@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_2ea6704209ac67be8372bb58",
+  "reviewedAt": "2026-11-05T09:48:56.212Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      25,
+      27
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "096fb515c11d8802e0f48476be78e74e8efe0a68ed675a79d370879242e798ae",
+      "66a503b7dc1f545872c440c6de00145af88302c349e239af4c4983d1c10e1176"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      142.5,
+      125
+    ]
+  },
+  "contextHash": "2ea6704209ac67be8372bb5884f194b981cdea85450cece02d071c013c7061fe",
+  "pairKey": "096fb515c11d8802e0f48476be78e74e8efe0a68ed675a79d370879242e798ae|66a503b7dc1f545872c440c6de00145af88302c349e239af4c4983d1c10e1176",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 2697,
+      "finalStateHash": "bb1bae1d0390e111df0c6078a553e94d04235fdfe38526fd4c0e83224ac5e627",
+      "eventLogHash": "70b7a754eda60267fa5eb19277be8b066e1cb95736b1c6f77aa0fbea43cf8404",
+      "winnerHpFraction": 0.4032098765432099,
+      "recordHash": "d0d406b7475f72a4481be010fdad0595ef8eba620fc61e52481fa187d07cebf7"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 2697,
+      "finalStateHash": "bb1bae1d0390e111df0c6078a553e94d04235fdfe38526fd4c0e83224ac5e627",
+      "eventLogHash": "72da4062d44254b4100ad0f995cb6eac256c603acf4e0c502870311676323c88",
+      "winnerHpFraction": 0.4032098765432099,
+      "recordHash": "0172a75d8aa18beb18d1cbb879f1c865060a3132f8b9c59f72d2982a78cc0c77"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 2642,
+      "finalStateHash": "b14b13f8a05140cf309e44b298a5225d1181cb2449adea970db39297ec6ca0db",
+      "eventLogHash": "3b13ff772323dc208fc571072eb0e2debc65ab5d59b0746d3a78c487d5f6b247",
+      "winnerHpFraction": 0.4160493827160494,
+      "recordHash": "f9b90a9c4b597986bffde94ce13c43d488d2ab16cc4204fd0753619b30a81463"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "f9b90a9c4b597986bffde94ce13c43d488d2ab16cc4204fd0753619b30a81463",
+    "result": {
+      "jobId": "mv_2ea6704209ac67be8372bb58",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 1685,
+      "startingHpByOwner": {
+        "2": 4500,
+        "3": 4050
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 16,
+          "hp": 1685
+        }
+      },
+      "ticks": 2642,
+      "family": "waves",
+      "side2": {
+        "slug": "paladin",
+        "label": "Paladin",
+        "civ": "Cumans",
+        "count": 25,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_leitis_lithuanians",
+        "label": "Elite Leitis",
+        "civ": "Lithuanians",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "b14b13f8a05140cf309e44b298a5225d1181cb2449adea970db39297ec6ca0db",
+      "eventLogHash": "3b13ff772323dc208fc571072eb0e2debc65ab5d59b0746d3a78c487d5f6b247"
+    },
+    "wallSeconds": 41.96326621199772,
+    "startedAt": "2026-11-05T09:48:14.248Z",
+    "finishedAt": "2026-11-05T09:48:56.212Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    33903
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 33903,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "8510e80bdae526c733e7050a63796d9cba292e9fc33cf8ddd297621782ba1473"
+}

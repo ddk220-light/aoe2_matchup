@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_03f6063488a99e7c41b19cd5",
+  "reviewedAt": "2026-11-05T04:00:13.881Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      16
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "609b9c904cbf8c867c2d4b81043811e4ba4112f7d2e7fd855a6c721f1d8ba6ab",
+      "44b097bf333b8237240e2cf03363e3899c1d85cb0d196b7c013376d2792962e7"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      42.400000000000006,
+      114
+    ]
+  },
+  "contextHash": "03f6063488a99e7c41b19cd5e14f3f982a322569efe3dc9e1d9ab7bd0739af93",
+  "pairKey": "44b097bf333b8237240e2cf03363e3899c1d85cb0d196b7c013376d2792962e7|609b9c904cbf8c867c2d4b81043811e4ba4112f7d2e7fd855a6c721f1d8ba6ab",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1388,
+      "finalStateHash": "e6ce044e4f94f7124bcbfd57e4cddedb07959a606eeea897d1886d76bde6d63b",
+      "eventLogHash": "62af5a9361b92609cf346b9646d70bf2da4e4db1f4ce78345969dd6d214df9e1",
+      "winnerHpFraction": 0.92375,
+      "recordHash": "27fd3e2c7c38a784964a97960a467915e1157e7b9aa8c37b0b07135cd9055223"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1498,
+      "finalStateHash": "0848135c307f9871950d781ef98b7fea54cbe9a516df32a4a0870bb8425cfd25",
+      "eventLogHash": "655ae55eb828488dd624dcb2e4663be959bf55735577006bc0a93064a7f9d6de",
+      "winnerHpFraction": 0.9225,
+      "recordHash": "94aa06b6c79b56d2486304e2e60b715e23dc499fddadbaa3c492061312e2bf32"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1430,
+      "finalStateHash": "28f4e71230f18959fc4da50de68cd9b7f7b06bde02dd63a57bd4c381c5c073c7",
+      "eventLogHash": "5ae038e05369bd843034e48912fe744d802d5bffc426c0345d5d28daf9efe51c",
+      "winnerHpFraction": 0.924375,
+      "recordHash": "6b5ca4fe8a95e3243ee2dd3fce9620d3fb88dc6acdeb60963f6807850394feee"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "6b5ca4fe8a95e3243ee2dd3fce9620d3fb88dc6acdeb60963f6807850394feee",
+    "result": {
+      "jobId": "mv_03f6063488a99e7c41b19cd5",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 1479,
+      "startingHpByOwner": {
+        "2": 945,
+        "3": 1600
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 16,
+          "hp": 1479
+        }
+      },
+      "ticks": 1430,
+      "family": "kite",
+      "side2": {
+        "slug": "imp_elite_skirm",
+        "label": "Elite Skirmisher",
+        "civ": "Byzantines",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "elite_steppe",
+        "label": "Elite Steppe Lancer",
+        "civ": "Tatars",
+        "count": 16,
+        "class": "melee"
+      },
+      "finalStateHash": "28f4e71230f18959fc4da50de68cd9b7f7b06bde02dd63a57bd4c381c5c073c7",
+      "eventLogHash": "5ae038e05369bd843034e48912fe744d802d5bffc426c0345d5d28daf9efe51c"
+    },
+    "wallSeconds": 4.749304635000415,
+    "startedAt": "2026-11-05T04:00:09.132Z",
+    "finishedAt": "2026-11-05T04:00:13.881Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    27364
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 27364,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "d2bb459bb07a9ab1c2926cb734b7a75c7c7d4c18ccacd7e317a5d45f268df189"
+}

@@ -87,3 +87,13 @@ def test_a_reversed_battle_context_is_not_a_correction_to_the_original(correctio
     with pytest.raises(AssertionError, match='physical context mismatch'):
         apply(f['baseline'], f['snapshot'], f['output'])
     assert not f['output'].exists()
+
+
+def test_later_snapshots_cannot_remove_released_corrections(correction):
+    f = correction
+    apply(f['baseline'], f['snapshot'], f['output'])
+    before = f['output'].read_bytes()
+    f['review']['jobId'] = 'different-synthetic-job'; f['save']()
+    with pytest.raises(AssertionError, match='remove released corrections'):
+        apply(f['baseline'], f['snapshot'], f['output'])
+    assert f['output'].read_bytes() == before

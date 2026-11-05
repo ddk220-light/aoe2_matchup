@@ -33,6 +33,18 @@ def apply(baseline, snapshot, output):
         reviews = [json.loads(line) for line in f]
     assert len(reviews) == manifest['reviewedContexts']
     assert len({r['jobId'] for r in reviews}) == len(reviews)
+    if output.exists():
+        existing = sqlite3.connect(f'file:{output}?mode=ro', uri=True)
+        prior_metadata = json.loads(existing.execute("SELECT value FROM metadata WHERE key='dataset'").fetchone()[0])
+        if prior_metadata.get('mismatch_validation'):
+            prior_dictionary = existing.execute("SELECT value FROM metadata WHERE key='compression_dictionary'").fetchone()[0]
+            prior_jobs = set()
+            for (blob,) in existing.execute('SELECT data FROM evidence'):
+                row = json.loads(zlib.decompressobj(zdict=prior_dictionary).decompress(blob))
+                if row.get('mismatchValidation'):
+                    prior_jobs.add(row['mismatchValidation']['jobId'])
+            assert prior_jobs <= {r['jobId'] for r in reviews}, 'snapshot would remove released corrections'
+        existing.close()
     output.parent.mkdir(parents=True, exist_ok=True)
     metadata_path = output.with_suffix('.metadata.json')
     serving_metadata = json.loads(metadata_path.read_text()) if metadata_path.exists() else {}

@@ -39,7 +39,14 @@ never reverses a physical battle context. Original first-pass files/journals and
 ranking scores are unchanged. Partial seed sets, diagnostics and timeouts cannot
 replace table data. The full targeted validation campaign remains in progress.
 
-Validation includes three import contracts covering reversed physical contexts,
+Validation includes four import contracts covering reversed physical contexts,
 preserved original forecasts, complete seeds, unchanged unrelated cells and
-SQLite integrity, plus the existing complete-grid/orientation/API contracts.
+SQLite integrity, and preventing later snapshots from removing released
+corrections, plus the existing complete-grid/orientation/API contracts.
 The same exported advisor component feeds desktop, mobile and the Flask API.
+
+The 195 public feature export checks passed; civilization, ranking and simulator
+projections are byte-identical to the preceding release. Desktop and mobile
+data-selection checks passed. The existing strict mobile menu/smooth-scroll
+offset test is sensitive to the animated header's intermediate height on both
+old and new datasets; no product presentation changes are included here.

@@ -27,8 +27,17 @@ with sync_playwright() as p:
   page.wait_for_selector('#civ-grid .ma-civ-card');assert page.locator('#civ-grid .ma-civ-card').count()==56
   page.locator('[data-civ="Danes"]').click();page.locator('[data-civ="Saxons"]').click()
   page.wait_for_selector('.ma-team-columns')
-  assert page.locator('.ma-result-banner').is_visible()
-  assert page.locator('.ma-recommendation').count()==4
+  page.wait_for_function("Math.abs(document.querySelector('#top-units').getBoundingClientRect().top - document.querySelector('.site-nav').getBoundingClientRect().bottom - 10) < 4")
+  assert page.locator('.ma-result-banner').count()==0
+  assert page.locator('[data-role=main]').count()==2
+  assert page.locator('[data-role=sidekick]').count()==2
+  assert page.locator('[data-role=additions]').count()==2
+  assert page.locator('.ma-match').evaluate_all('(buttons)=>buttons.every(button=>button.textContent.trim()==="" && button.getAttribute("aria-label") && button.querySelector("img").alt)')
+  source=page.request.get(base+'/api/advisor-matchups/Danes').json()['opponents']['Saxons']
+  outcomes={}
+  for row in source:
+   outcomes[row[0],row[1]]=row[2]
+   outcomes[row[1],row[0]]={'a_win':'b_win','b_win':'a_win','equivalent':'equivalent','close_uncertain':'close_uncertain'}[row[2]]
   catalog=json.loads(page.locator('#advisor-config').text_content())
   units={unit['key']:unit for unit in catalog['units']}
   for side in ['left','right']:
@@ -41,12 +50,19 @@ with sync_playwright() as p:
    assert alternatives.count()==3
    assert not {main.get_attribute('data-unit'),sidekick.get_attribute('data-unit')} & set(alternatives.evaluate_all('(cards)=>cards.map(card=>card.dataset.unit)'))
    losses=set(main.locator('.ma-line-loss .ma-match').evaluate_all('(buttons)=>buttons.map(button=>button.dataset.opponent)'))
-   protects=sidekick.locator('.ma-line-win').filter(has=page.locator('.ma-match-label',has_text='Protects main from'))
+   assert sidekick.locator('.ma-line-loss').count()==0
+   assert 'Other counters' not in sidekick.inner_text()
+   protects=sidekick.locator('.ma-line-win')
    assert set(protects.locator('.ma-match').evaluate_all('(buttons)=>buttons.map(button=>button.dataset.opponent)'))<=losses
+   for group in plan.locator('.ma-counter-group').all():
+    counter=int(group.get_attribute('data-counter'))
+    for target in group.locator('.ma-match').all():
+     assert outcomes[counter,int(target.get_attribute('data-opponent'))]=='a_win'
+   assert plan.bounding_box()['height'] <= viewport['height']-60
   assert page.locator('.ma-match').count()>0
   assert page.locator('.ma-provisional, .ma-evidence-mark, .ma-detail-badge, .is-estimated, .is-low-support').count()==0
   assert not re.search(r'\b(provisional|observed|inferred|estimated|forecast|unvalidated|low.support)\b',page.locator('.ma-advisor').inner_text(),re.I)
-  assert all(re.fullmatch(r'ma-match ma-match-(win|loss|close)( ma-match-named)?',cls) for cls in page.locator('.ma-match').evaluate_all('(buttons)=>buttons.map(button=>button.className)'))
+  assert all(re.fullmatch(r'ma-match ma-match-(win|loss|close)',cls) for cls in page.locator('.ma-match').evaluate_all('(buttons)=>buttons.map(button=>button.className)'))
   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
   page.screenshot(path=str(output/f'{name}-advisor.png'),full_page=True)
   page.locator('.ma-match').first.click();assert page.locator('#ma-detail').is_visible()

@@ -36,7 +36,7 @@ function recommend(own, enemy, units) {
     }
     // Prefer a gold main with actual wins; fall back if no gold unit can win.
     const main = ranked.find(entry => unitWeight(entry.unit) === 1 && entry.wins.length) || ranked[0];
-    if (!main) return {main: null, sidekick: null, alternatives: [], threats};
+    if (!main) return {main: null, sidekick: null, alternatives: [], threats, uncovered: [], additions: [], unanswered: []};
     const weaknesses = new Set(main.losses.map(row => row[1]));
     const mainWins = new Set(main.wins.map(row => row[1]));
     const candidates = ranked.filter(entry => entry.unit.id !== main.unit.id && unitWeight(entry.unit) === 0.5).map(entry => {
@@ -49,8 +49,23 @@ function recommend(own, enemy, units) {
     candidates.sort((a, b) => b.coverScore - a.coverScore || b.closeScore - a.closeScore || b.newScore - a.newScore || compare(a, b));
     const sidekick = candidates[0] || null;
     const covered = new Set(sidekick?.covers.map(row => row[1]) || []);
-    return {main, sidekick, threats,
-        uncovered: main.losses.filter(row => !covered.has(row[1])),
+    const uncovered = main.losses.filter(row => !covered.has(row[1]));
+    const remaining = new Set(uncovered.map(row => row[1]));
+    const additions = [];
+    // Cover remaining threats with useful additions, grouping shared counters.
+    // Every assignment comes from a winning row, never a close or inferred chain.
+    while (remaining.size) {
+        const options = ranked.filter(entry => entry.unit.id !== main.unit.id && entry.unit.id !== sidekick?.unit.id)
+            .map(entry => ({entry, covers: entry.wins.filter(row => remaining.has(row[1]))}))
+            .filter(option => option.covers.length);
+        options.sort((a, b) => sum(b.covers, threat) - sum(a.covers, threat) || b.covers.length - a.covers.length || compare(a.entry, b.entry));
+        if (!options.length) break;
+        const best = options[0];
+        additions.push({unit: best.entry.unit, covers: best.covers});
+        for (const row of best.covers) remaining.delete(row[1]);
+    }
+    return {main, sidekick, threats, uncovered, additions,
+        unanswered: uncovered.filter(row => remaining.has(row[1])),
         alternatives: ranked.filter(entry => entry.unit.id !== main.unit.id && entry.unit.id !== sidekick?.unit.id && entry.wins.length).slice(0, 3)};
 }
 

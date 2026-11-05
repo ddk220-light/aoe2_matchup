@@ -101,3 +101,27 @@ test('evidence labels and flags never affect recommendations or their scores', (
         assert.equal(a[side].sidekick?.coverScore,b[side].sidekick?.coverScore);
     }
 });
+
+test('one additional unit can answer multiple remaining threats using winning matchups', () => {
+    const own = [unit(1),unit(2,0),unit(3),unit(4),unit(5)];
+    const enemy = [unit(101),unit(102,0),unit(103,0)];
+    const wins = new Set(['1:101','3:102','3:103','4:102']);
+    const rows = matrix(own,enemy,(a,b) => wins.has(`${a}:${b}`) ? 'a_win' : 'b_win');
+    const plan = build(rows,[...own,...enemy]).left;
+    assert.equal(plan.main.unit.id,1);
+    assert.equal(plan.sidekick.unit.id,2);
+    assert.equal(plan.additions.length,1);
+    assert.equal(plan.additions[0].unit.id,3);
+    assert.deepEqual(new Set(plan.additions[0].covers.map(row=>row[1])),new Set([102,103]));
+    assert.ok(plan.additions[0].covers.every(row=>row[0]===3 && row[2]==='a_win'));
+    assert.deepEqual(plan.unanswered,[]);
+});
+
+test('a remaining threat with no winning counter stays explicit, including close-only options', () => {
+    const own = [unit(1),unit(2,0),unit(3)],enemy = [unit(101),unit(102)];
+    const rows = matrix(own,enemy,(a,b) => b===101 && a===1 ? 'a_win' : b===102 && a===3 ? 'close_uncertain' : 'b_win');
+    const plan = build(rows,[...own,...enemy]).left;
+    assert.equal(plan.main.unit.id,1);
+    assert.deepEqual(plan.additions,[]);
+    assert.deepEqual(plan.unanswered.map(row=>row[1]),[102]);
+});

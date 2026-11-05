@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_19aecaaddd5fd0916db1bace",
+  "reviewedAt": "2026-11-05T06:38:01.690Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      15
+    ],
+    "engineFamily": "siege",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "37698171ae478a603b5cf15ac86bf5c1e32027848a849386adeaf8d7a00672b0",
+      "b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b"
+    ],
+    "scenarioHash": "68355152c72a621245965a8a10f001b96dbf2b6789cea9e5dff7c7335943029d",
+    "weightedCosts": [
+      121,
+      367.5
+    ]
+  },
+  "contextHash": "19aecaaddd5fd0916db1bace206d52588e9934e4b26236bbe9331d7dc408919f",
+  "pairKey": "37698171ae478a603b5cf15ac86bf5c1e32027848a849386adeaf8d7a00672b0|b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 1962,
+      "finalStateHash": "688844da50d729ec58ed3b37f1d212ae206bb3271a9cbfe8f15dadb9f1dc90fd",
+      "eventLogHash": "8b8a99b0671d955bde5d44693b040bdb92ffe78dc342ac8cc8887269d80ef0ea",
+      "winnerHpFraction": 0.563350970017646,
+      "recordHash": "8ba35939f1b95091fef4c4d621f7b925b3aa953aa8977fd00daada06ca8d877c"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 1981,
+      "finalStateHash": "b10ce59d3b7fd60d642e852ec7bd1d64ef9a18ac9b9d710b2d6ce20c515f3609",
+      "eventLogHash": "914f0fa25f7f40aa43d9b7aee151f1db0b4dc92baab7cd8846a7290aa45c7614",
+      "winnerHpFraction": 0.561172839506184,
+      "recordHash": "e9ce07cef2d0bc7ee36a33e29a126d3d0e135e1daeb8e0b1434eaead64137e14"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1964,
+      "finalStateHash": "6c454341dad7469c2697bbdec450f94c11a8cf6a01619cbfd6c16f106cf10c54",
+      "eventLogHash": "7a4ed029bedd1d72ef828fdab87835629c0c317530506ca29ea53fc8ca86df30",
+      "winnerHpFraction": 0.5835802469135898,
+      "recordHash": "c6bff25fc48719ae3fe1d80d37f281bd4fcf27a909e2dd0f6344593d15aded30"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "8ba35939f1b95091fef4c4d621f7b925b3aa953aa8977fd00daada06ca8d877c",
+    "result": {
+      "jobId": "mv_19aecaaddd5fd0916db1bace",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 2129.4666666667017,
+      "startingHpByOwner": {
+        "2": 3780,
+        "3": 1125
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 25,
+          "hp": 2129.4666666667017
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1962,
+      "family": "siege",
+      "side2": {
+        "slug": "heavy_camel",
+        "label": "Heavy Camel Rider",
+        "civ": "Malians",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "mounted_trebuchet_khitans",
+        "label": "Mounted Trebuchet",
+        "civ": "Khitans",
+        "count": 15,
+        "class": "siege_ranged"
+      },
+      "finalStateHash": "688844da50d729ec58ed3b37f1d212ae206bb3271a9cbfe8f15dadb9f1dc90fd",
+      "eventLogHash": "8b8a99b0671d955bde5d44693b040bdb92ffe78dc342ac8cc8887269d80ef0ea"
+    },
+    "wallSeconds": 55.86680826999992,
+    "startedAt": "2026-11-05T06:37:05.823Z",
+    "finishedAt": "2026-11-05T06:38:01.690Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    53296
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 53296,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "c3a6b85f6bf66c83ed0a4109daaadf26f1ac4287b50c7df7049dd03a1c0613f1"
+}

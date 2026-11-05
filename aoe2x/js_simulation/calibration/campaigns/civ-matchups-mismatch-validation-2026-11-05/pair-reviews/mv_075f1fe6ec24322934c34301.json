@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_075f1fe6ec24322934c34301",
+  "reviewedAt": "2026-11-05T04:19:42.933Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      24,
+      27
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "6b49bea11ff75983dda0a1498b6e0b10363336c12c7c164276b99fb984e31448",
+      "44b097bf333b8237240e2cf03363e3899c1d85cb0d196b7c013376d2792962e7"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      142.5,
+      114
+    ]
+  },
+  "contextHash": "075f1fe6ec24322934c34301214e110eca3b1dbe9646099de646755f6a17c41d",
+  "pairKey": "44b097bf333b8237240e2cf03363e3899c1d85cb0d196b7c013376d2792962e7|6b49bea11ff75983dda0a1498b6e0b10363336c12c7c164276b99fb984e31448",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 3388,
+      "finalStateHash": "7957dc78717890e0cfd7c583c770b294219dc468ba0046fe038c96419602abc2",
+      "eventLogHash": "104161995f8769835c45eb92477680745997c465833322e373b3ccd41fa2694d",
+      "winnerHpFraction": 0.12148148148148148,
+      "recordHash": "de47b91293e33d49a8c704cd50c9e5c2cc2a1463316d08b17ce02ee126b30e3f"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 3388,
+      "finalStateHash": "7957dc78717890e0cfd7c583c770b294219dc468ba0046fe038c96419602abc2",
+      "eventLogHash": "85853cd2009d3d3eb849acc84ea148219a2d812eb2b2096ed9a37aff060bd1fb",
+      "winnerHpFraction": 0.12148148148148148,
+      "recordHash": "5667da2e983fac3ff19ada089605ef1539778514cd5a6473f4b42f7bbc518b40"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 3345,
+      "finalStateHash": "ea730ff4eba3d67bffe44fbd29b6004c5746e542ed0fb064ccdee2285e8b9b98",
+      "eventLogHash": "a8c3e08e60a7f9f7930938d702e340c7da0ca0d671fba711d8d4a0a73329465d",
+      "winnerHpFraction": 0.13037037037037036,
+      "recordHash": "8b818f47d9152efea8f6d4097d426d66523617bed1ea43474cc34089aba51ed0"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "5667da2e983fac3ff19ada089605ef1539778514cd5a6473f4b42f7bbc518b40",
+    "result": {
+      "jobId": "mv_075f1fe6ec24322934c34301",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 328,
+      "startingHpByOwner": {
+        "2": 3360,
+        "3": 2700
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 4,
+          "hp": 328
+        }
+      },
+      "ticks": 3388,
+      "family": "waves",
+      "side2": {
+        "slug": "paladin",
+        "label": "Cavalier",
+        "civ": "Sicilians",
+        "count": 24,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_steppe",
+        "label": "Elite Steppe Lancer",
+        "civ": "Tatars",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "7957dc78717890e0cfd7c583c770b294219dc468ba0046fe038c96419602abc2",
+      "eventLogHash": "85853cd2009d3d3eb849acc84ea148219a2d812eb2b2096ed9a37aff060bd1fb"
+    },
+    "wallSeconds": 20.53869183500018,
+    "startedAt": "2026-11-05T04:19:22.395Z",
+    "finishedAt": "2026-11-05T04:19:42.933Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    67003
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 67003,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "a92bb42399efe772680a95fedd1e148cd09d39722d3b6fb60a009dd566937469"
+}

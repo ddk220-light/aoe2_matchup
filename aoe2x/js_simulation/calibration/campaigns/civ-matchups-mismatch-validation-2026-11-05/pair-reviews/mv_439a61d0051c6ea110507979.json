@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_439a61d0051c6ea110507979",
+  "reviewedAt": "2026-11-05T14:09:35.087Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      24,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "1f5cb1ed977076e4e1c67c9929a53909fe5d68bb91c21d3df9111bb4f6630cbe",
+      "44f1c4a783eda4c1d2baf4a14245b8e82d92ee0f39f73368a81139d6ec36cd77"
+    ],
+    "scenarioHash": "280c1f49d499b78ecaed35ff1b233bbd36380317d621fcd6cbca810b9ba46119",
+    "weightedCosts": [
+      121,
+      97
+    ]
+  },
+  "contextHash": "439a61d0051c6ea110507979f193c6d87f08ef6d2d9ff231d42a8e6e63fa429b",
+  "pairKey": "1f5cb1ed977076e4e1c67c9929a53909fe5d68bb91c21d3df9111bb4f6630cbe|44f1c4a783eda4c1d2baf4a14245b8e82d92ee0f39f73368a81139d6ec36cd77",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 1520,
+      "finalStateHash": "9d4187cf9da7e35c29bb4cb7ebe438159f5ba1f17f408dcebee018886064abc6",
+      "eventLogHash": "c44a0243fbc5efdb9d76faf801f3ff86faa2f0ea74b5815df83420b151cce7e3",
+      "winnerHpFraction": 0.6973809523809524,
+      "recordHash": "1292032342fa279cda4d1949beedc1a1951cb3f5a56482e1695614aa67951212"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 1614,
+      "finalStateHash": "c179b03089c311f3228b3cb4dec28bd8a8ca86691cce84a4e77ff4825f28ee4f",
+      "eventLogHash": "7c121b7463d1c1bb53ef6afcee404d2dd7cc852b4efc9c5b06fdef2d60cb6a6a",
+      "winnerHpFraction": 0.6942857142857143,
+      "recordHash": "c2a421ec8908e4a3cf1a857a9d648bf1b2577ae8f81b0f30352f52be2360e972"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1523,
+      "finalStateHash": "ce003677bcbda171d83cad66acbe9441c49baf1b0a0320c40a88cd126feb9968",
+      "eventLogHash": "409b0eab247978bf15a9e8fcf3f782093d3ffc8cab8752033e6158619bf4442e",
+      "winnerHpFraction": 0.7076190476190476,
+      "recordHash": "ee64af7ed6c0aec10a9278c50472b8bc407c7b37c562d813ad24a9dbace0d89b"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "ee64af7ed6c0aec10a9278c50472b8bc407c7b37c562d813ad24a9dbace0d89b",
+    "result": {
+      "jobId": "mv_439a61d0051c6ea110507979",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 2972,
+      "startingHpByOwner": {
+        "2": 4200,
+        "3": 1620
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 19,
+          "hp": 2972
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1523,
+      "family": "kite",
+      "side2": {
+        "slug": "heavy_camel",
+        "label": "Heavy Camel Rider",
+        "civ": "Saracens",
+        "count": 24,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "xianbei_raider_wei",
+        "label": "Xianbei Raider",
+        "civ": "Wei",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "ce003677bcbda171d83cad66acbe9441c49baf1b0a0320c40a88cd126feb9968",
+      "eventLogHash": "409b0eab247978bf15a9e8fcf3f782093d3ffc8cab8752033e6158619bf4442e"
+    },
+    "wallSeconds": 7.961900032006204,
+    "startedAt": "2026-11-05T14:09:27.125Z",
+    "finishedAt": "2026-11-05T14:09:35.087Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    65147
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 65147,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "fe1adae25ad84bf69834e9fc1aa211e4c1c5872bdb0dbbd564750fbaee579aa4"
+}

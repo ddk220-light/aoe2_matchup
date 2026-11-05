@@ -1,0 +1,103 @@
+{
+  "checkedAt": "2026-11-02T10:43:43.524936+00:00",
+  "status": "first_pass_in_progress",
+  "sourcePhase": 41,
+  "frozenRuntimeFilesChecked": 62,
+  "validUniqueSourceJournalSeeds": 34519,
+  "phaseReviews": {
+    "040": {
+      "phase": "040",
+      "reviewedAt": "2026-11-02T09:53:27.335Z",
+      "status": "complete_with_blocked",
+      "pairs": 256,
+      "validSeeds": 799,
+      "missingSeeds": 4,
+      "blockedPairs": [
+        "8082de979bcda18020ed9cc37890813f756afa0f0ead89fed2ac846ca9ad2d4b|dcd918e91c65ef7ee47e048c0c940df7954dccf55ff02c533bd1d4a1dd014b30",
+        "1ee417076bb439075907dfef5af0465134f4b93897ef70c2add8e39dfa8cd376|8b7ca2dba60271513f27cb656e81a8e204a6391e6d15a86818b6b87eb097a6cb",
+        "1ee417076bb439075907dfef5af0465134f4b93897ef70c2add8e39dfa8cd376|609b9c904cbf8c867c2d4b81043811e4ba4112f7d2e7fd855a6c721f1d8ba6ab"
+      ],
+      "replay": {
+        "matchupId": "cm_063ddfc44090fbe4c7e66be8",
+        "seed": 0,
+        "exact": true,
+        "error": null,
+        "watchdog": false
+      },
+      "inferenceHash": "fe191619c6d1c10d696c782952f2bdac580389403b47a90179724ba071b3d885",
+      "unresolvedAfter": 47930,
+      "reviewSha256": "dff51d571c0e1e6af9acde39d058e0efc4ab157f1973fd9f5e29f7ce601565c2"
+    },
+    "041": {
+      "phase": "041",
+      "reviewedAt": "2026-11-02T10:38:48.796Z",
+      "status": "passed",
+      "pairs": 256,
+      "validSeeds": 908,
+      "missingSeeds": 0,
+      "blockedPairs": [],
+      "replay": {
+        "matchupId": "cm_03b089b7063000978ac8448b",
+        "seed": 0,
+        "exact": true,
+        "error": null,
+        "watchdog": false
+      },
+      "inferenceHash": "1ebc3315504730bd5282defdc5e5705b664a5fd1da6c1350622cc5dc7d4d24c4",
+      "unresolvedAfter": 47648,
+      "reviewSha256": "2ba74addd56082d0f07213a6437de51d00a16c3faab6cd29e0e5a932dff8e7cd"
+    }
+  },
+  "predictionPolicy": "prediction-first-pass-v2",
+  "predictionSummarySha256": "2d0b4a31ee876a85be6e1a35b38de115b9b31cb7ba48d391fb5378787b5e279d",
+  "sourceCounts": {
+    "observedPairs": 10555,
+    "inferredPairs": 10668,
+    "predictedPairs": 46575,
+    "remainingNeedsDirectResult": 1073,
+    "blockedPairs": 19
+  },
+  "newRecoveryInventory": {
+    "hash": "ece39b03b9185b0eb166507ccaada6f299b064203b9f6110a247ae52d9e0bb71",
+    "path": "/workspace/aoe2_civ_phase040_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase040-stream-first-pass-2026-11-02",
+    "pairs": 2,
+    "runtimeIdenticalToCompletedPhase039": true
+  },
+  "note": "Two phase040 Varangian seed1 final hashing failures remain missing in V3. Their separate complete-seed recovery is running. The other phase040 blocked pair is already covered by its completed early inventory. Phase041 passed all seeds/replay with no new blockers. No new forecasts, physics or scoring changes.",
+  "deliveryCounts": {
+    "identity": 45,
+    "inferred": 10668,
+    "none": 1054,
+    "observed": 10555,
+    "predicted_unvalidated": 46594
+  },
+  "deliveryUnresolvedPairs": 1054,
+  "deliverySummarySha256": "c6d43bb470cd45300eb07a28774047768596655de1d4ed8f2bf2233f93db2ae7",
+  "recoveryPhysicalContextAudit": {
+    "campaignInventoriesChecked": 9,
+    "jobContextsChecked": 25,
+    "distinctPairs": 19,
+    "fields": [
+      "profileHashes",
+      "counts",
+      "weightedCosts",
+      "scenarioHash",
+      "family",
+      "engineFamily",
+      "policy"
+    ],
+    "allMatchFrozenMainInventory": true
+  },
+  "completedPhase040Recovery": {
+    "checkedAt": "2026-11-02T11:34:17.038367+00:00",
+    "campaignHash": "ece39b03b9185b0eb166507ccaada6f299b064203b9f6110a247ae52d9e0bb71",
+    "nativeSeeds": 6,
+    "reviewedPairs": 2,
+    "allExactReplaysPassed": true,
+    "finalNativeCheckpoint": "df71b217",
+    "reviewDocumentation": "1cea1cca",
+    "nativePhysics": "collision-repair-v2-static-memo-event-stream-candidate-v1",
+    "targetProjection": "predicted_unvalidated"
+  },
+  "allRecordedBlockedPairKeysCoveredByReviewedProjections": true
+}

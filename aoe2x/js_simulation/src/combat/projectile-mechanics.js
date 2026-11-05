@@ -20,6 +20,31 @@ function compareReference(left, right) {
 }
 
 
+// Earliest intersection with the target's square collision body along this
+// tick's flight segment. Sweeping prevents fast shots from skipping thin units.
+export function projectileSegmentContact(victim, x0, y0, x1, y1, halfWidth = 0) {
+  for (const value of [x0, y0, x1, y1, halfWidth]) requireFinite(value, "flight geometry");
+  if (halfWidth < 0) throw new RangeError("projectile half width must be nonnegative");
+  const reach = collisionRadius(victim) + halfWidth;
+  let enter = 0;
+  let exit = 1;
+  for (const [origin, delta, center] of [
+    [x0, x1 - x0, victim.x], [y0, y1 - y0, victim.y],
+  ]) {
+    if (Math.abs(delta) < EPSILON) {
+      if (Math.abs(origin - center) > reach + EPSILON) return null;
+      continue;
+    }
+    const a = (center - reach - origin) / delta;
+    const b = (center + reach - origin) / delta;
+    enter = Math.max(enter, Math.min(a, b));
+    exit = Math.min(exit, Math.max(a, b));
+    if (enter > exit + EPSILON) return null;
+  }
+  return Math.max(0, Math.min(1, enter));
+}
+
+
 // A failed accuracy roll displaces the aim point by the DAT dispersion. The
 // radial draw is uniform in radius (not uniform in area): this is the launch
 // geometry measured for Hand Cannoneer projectiles in the live tapes.

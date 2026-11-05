@@ -1,0 +1,19 @@
+{
+  "matchupId": "m_5ae9ad79f7d6a5ddeeb8",
+  "seed": 2,
+  "sourceHashes": {
+    "world.js": "ee4f333822df501cb47135fb3f5a198d9ff8c2b16e6a376b26efa9d5488d1915",
+    "contact-reservations.js": "28a0fb292776e3857d380e5bdff5f2bf2eeffdb17012a4d21de85fdd295b2975",
+    "collision.js": "3aab0df60312a8a293e213130b872fb3e532cdef8d95c3ae19f641d236f23952",
+    "chase-path.js": "502a9567b736941ef8f63765b36aef18abba84b91131c886dc16060077ed28c4"
+  },
+  "wallSeconds": 6.243622009,
+  "tick": 1822,
+  "gameSeconds": 30.366666666666667,
+  "result": null,
+  "error": {
+    "name": "Error",
+    "message": "collision constraints produced invalid final geometry: references 9502 and 9515 overlap by 0.004431528569341481",
+    "stack": "Error: collision constraints produced invalid final geometry: references 9502 and 9515 overlap by 0.004431528569341481\n    at resolveMovementProposals (file:///workspace/aoe2_path_recovery/aoe2x/js_simulation/src/combat/collision.js:691:11)\n    at resolveMovement (file:///workspace/aoe2_path_recovery/aoe2x/js_simulation/src/combat/world.js:3024:15)\n    at moveUnits (file:///workspace/aoe2_path_recovery/aoe2x/js_simulation/src/combat/world.js:3585:17)\n    at stepWorld (file:///workspace/aoe2_path_recovery/aoe2x/js_simulation/src/combat/world.js:5946:7)\n    at runWorld (file:///workspace/aoe2_path_recovery/aoe2x/js_simulation/src/combat/world.js:6165:15)\n    at runFight (file:///workspace/aoe2_path_recovery/aoe2x/js_simulation/src/fight.js:457:18)\n    at async runHeadlessJob (file:///workspace/aoe2_path_recovery/aoe2x/js_simulation/node/run-job.mjs:64:18)\n    at async file:///workspace/aoe2_path_recovery/aoe2x/js_simulation/node/trace-ranking-anomaly.mjs:94:16"
+  }
+}

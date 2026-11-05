@@ -409,7 +409,7 @@ test("resolved movement updates facing for later symmetric route choices", async
 });
 
 
-test("same-tick attacks use reference IDs rather than owner or input order", async () => {
+test("same-tick attacks use a repeatable seeded shuffle independent of input order", async () => {
   const { orderReadyAttacks } = await loadAttacks();
   const attackFrom1699 = {
     type: "attack-ready",
@@ -424,13 +424,16 @@ test("same-tick attacks use reference IDs rather than owner or input order", asy
     targetId: 1699,
   };
 
-  const events = orderReadyAttacks([attackFrom1699, attackFrom1628]);
-
-  assert.deepEqual(events.map((event) => event.actorId), [1628, 1699]);
+  const events = orderReadyAttacks([attackFrom1699, attackFrom1628], { seed: 17 });
+  assert.deepEqual(events, orderReadyAttacks([attackFrom1628, attackFrom1699], { seed: 17 }));
+  const firstActors = new Set(Array.from({ length: 32 }, (_, seed) => (
+    orderReadyAttacks([attackFrom1699, attackFrom1628], { seed })[0].actorId
+  )));
+  assert.equal(firstActors.size, 2);
 });
 
 
-test("ready attack ordering uses ready tick, actor, target, then event type", async () => {
+test("ready attack ordering randomizes only ties within each damage tick", async () => {
   const { orderReadyAttacks } = await loadAttacks();
   const attacks = [
     { type: "z", readyTick: 10, actorId: 1, targetId: 2 },
@@ -441,17 +444,11 @@ test("ready attack ordering uses ready tick, actor, target, then event type", as
   ];
 
   assert.deepEqual(
-    orderReadyAttacks(attacks).map(({ readyTick, actorId, targetId, type }) => (
-      [readyTick, actorId, targetId, type]
-    )),
-    [
-      [9, 1, 3, "z"],
-      [9, 2, 2, "a"],
-      [9, 2, 2, "z"],
-      [9, 2, 3, "z"],
-      [10, 1, 2, "z"],
-    ],
+    orderReadyAttacks(attacks).map(({ readyTick }) => readyTick),
+    [9, 9, 9, 9, 10],
   );
+  assert.deepEqual(orderReadyAttacks(attacks), orderReadyAttacks([...attacks].reverse()));
+  assert.deepEqual(new Set(orderReadyAttacks(attacks)), new Set(attacks));
 });
 
 
@@ -610,39 +607,30 @@ test("attack delay and reload advance only on integer ticks", async () => {
 });
 
 
-test("a lower-reference lethal attack cancels a ready attacker killed earlier", async () => {
+test("a lethal attack selected by the seed cancels the attacker it kills", async () => {
   const { createWorld, stepWorld } = await loadWorld();
-  const next = stepWorld(createWorld(scenario([
-    unit({ referenceId: 1699, owner: 3, x: 4.4, y: 4, hp: 14 }),
-    unit({ referenceId: 1628, owner: 2, x: 4, y: 4, hp: 14 }),
-  ])));
-
-  assert.deepEqual(next.units.map(({ referenceId, hp, alive }) => (
-    [referenceId, hp, alive]
-  )), [
-    [1628, 14, true],
-    [1699, 0, false],
-  ]);
-  assert.equal(
-    next.units.find(({ referenceId }) => referenceId === 1628).engagedTargetId,
-    null,
-  );
-  assert.deepEqual(
-    next.events
+  const fast = { ...mechanics, attack_delay_seconds: 0 };
+  const winners = new Set();
+  for (let openingSeed = 0; openingSeed < 32; openingSeed++) {
+    const next = stepWorld(createWorld(scenario([
+      unit({ referenceId: 1699, owner: 3, x: 4.4, y: 4, hp: 1, unitMechanics: fast }),
+      unit({ referenceId: 1628, owner: 2, x: 4, y: 4, hp: 1, unitMechanics: fast }),
+    ], { openingSeed })));
+    const [survivor] = next.units.filter(entry => entry.alive);
+    assert.ok(survivor);
+    assert.equal(next.units.filter(entry => entry.alive).length, 1);
+    winners.add(survivor.referenceId);
+    const casualty = next.units.find(entry => !entry.alive);
+    assert.equal(survivor.engagedTargetId, null);
+    assert.deepEqual(next.events
       .filter(({ type }) => ["damage", "death", "attack-canceled"].includes(type))
-      .map(({ type, actorId, targetId, reason }) => [type, actorId, targetId, reason]),
-    [
-      ["damage", 1628, 1699, undefined],
-      ["death", 1628, 1699, undefined],
-      ["attack-canceled", 1699, 1628, "actor-dead"],
-    ],
-  );
-  const deathIndex = next.events.findIndex(({ type }) => type === "death");
-  const engagementEndIndex = next.events.findIndex(({ type, actorId, targetId }) => (
-    type === "engagement-ended" && actorId === 1628 && targetId === 1699
-  ));
-  assert.ok(engagementEndIndex > deathIndex);
-  assert.equal(next.events.some(({ type, actorId }) => type === "damage" && actorId === 1699), false);
+      .map(({ type, actorId, targetId, reason }) => [type, actorId, targetId, reason]), [
+      ["damage", survivor.referenceId, casualty.referenceId, undefined],
+      ["death", survivor.referenceId, casualty.referenceId, undefined],
+      ["attack-canceled", casualty.referenceId, survivor.referenceId, "actor-dead"],
+    ]);
+  }
+  assert.equal(winners.size, 2);
 });
 
 
@@ -834,36 +822,31 @@ test("a dead pursuit invalidates before same-tick reacquisition", async () => {
 });
 
 
-test("the runner fails rather than returning a timeout outcome", async () => {
+test("the runner returns a timeout outcome with no winner at its safety ceiling", async () => {
   const { createWorld, runWorld } = await loadWorld();
   const stalemate = createWorld(scenario([
     unit({ referenceId: 1628, owner: 2, x: 1, y: 1 }),
     unit({ referenceId: 1699, owner: 3, x: 9, y: 9 }),
   ]));
 
-  let error;
-  try {
-    runWorld(stalemate, { maxTicks: 0 });
-  } catch (caught) {
-    error = caught;
-  }
-  assert.match(error?.message ?? "", /exceeded 0 ticks/);
-  assert.equal(error.world.tick, 0);
-  assert.equal(error.world.units.filter(({ alive }) => alive).length, 2);
+  const result = runWorld(stalemate, { maxTicks: 0 });
+  assert.equal(result.outcome, "timeout");
+  assert.equal(result.winner, null);
+  assert.equal(result.world.tick, 0);
+  assert.equal(result.world.units.filter(({ alive }) => alive).length, 2);
 });
 
 
-test("the runner rejects an all-dead world as an invalid terminal", async () => {
+test("the runner reports an all-dead world as a draw", async () => {
   const { createWorld, runWorld } = await loadWorld();
   const allDead = createWorld(scenario([
     unit({ referenceId: 1628, owner: 2, x: 4, y: 4, hp: 0, alive: false }),
     unit({ referenceId: 1699, owner: 3, x: 5, y: 5, hp: 0, alive: false }),
   ]));
 
-  assert.throws(
-    () => runWorld(allDead, { maxTicks: 1 }),
-    /invalid terminal.*no live owners/i,
-  );
+  const result = runWorld(allDead, { maxTicks: 1 });
+  assert.equal(result.outcome, "draw");
+  assert.equal(result.winner, null);
 });
 
 

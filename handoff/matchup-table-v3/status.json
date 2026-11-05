@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "title": "Matchup Table v3",
+  "branch": "matchup-table-v3",
+  "createdAt": "2026-11-05T17:21:02.437878+00:00",
+  "purpose": "Portable data-only handoff; finish collection, analyze with owner, then wait for explicit approval for one release.",
+  "website": {
+    "sourceCommit": "a85e84f521a690b42e3365400a7c104c99752fc6",
+    "productionCommit": "2315f74ad12d57bb2af73d47c622eb0c7d06c3b2",
+    "servingDatabaseSha256": "2ea93603cf9b4e69ee6572c36938a0e49c63bca7a6384c0a2409d7d762325c1e",
+    "publishedReviewedContexts": 2305,
+    "rebuildOrDeploymentPerformed": false,
+    "rankingOrRecommendationChanges": false
+  },
+  "coverage": {
+    "variants": 555,
+    "civilizationPairs": 1540,
+    "displayedCells": 151223,
+    "profilePairs": 68916
+  },
+  "validation": {
+    "campaignPath": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05",
+    "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+    "sourceBranch": "simulations/civ-matchups-mismatch-validation-2026-11-05",
+    "sourceCommit": "2f58f42e1c4ccf58f680d29d375ad4a41861d34a",
+    "sourceStateUpdatedAt": "2026-11-05T17:19:54.142Z",
+    "physicsVersion": "frozen-civ-matchups-v3",
+    "executionVersion": "lossless-event-stream-v1",
+    "nodeVersion": "v24.19.0",
+    "inventoryDisplayedCells": 18298,
+    "totalContexts": 10227,
+    "reviewedContexts": 2997,
+    "changedWinnerOrCloseContexts": 484,
+    "remainingContexts": 7230,
+    "savedJournalRecords": 9626,
+    "blockedJobs": [
+      "mv_5e1e0d268234acff1d6e9008",
+      "mv_306dd795e5f68374d24e2a99"
+    ],
+    "completedPhases": [
+      "001",
+      "003",
+      "004",
+      "005",
+      "006",
+      "007",
+      "008",
+      "009",
+      "010",
+      "011",
+      "013",
+      "012",
+      "014",
+      "016",
+      "017",
+      "018",
+      "019",
+      "020",
+      "021",
+      "022",
+      "023"
+    ],
+    "latestCorrectionSnapshot": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/correction-snapshots/data-only-004-2026-11-05",
+    "complete": false
+  },
+  "workerOwnership": {
+    "location": "Original /workspace Linux machine; not transferred",
+    "sourceRunnerPidAtSnapshot": 9546,
+    "sourceSupervisorPidAtSnapshot": 9545,
+    "workers": 4,
+    "startAnotherRunner": false
+  },
+  "recordedGameIntake": {
+    "codeBranch": "codex/video-recorder-v3",
+    "codeCommit": "d6a8ca1697c983ec8a045221698e01a76df34d5d",
+    "destination": "aoe2x/js_simulation/calibration/live_observations/video_archive_indexes",
+    "originalIndexesSupplied": false,
+    "archiveRoots": [
+      "D:/AoE2 Renders",
+      "E:/AoE2 Renders"
+    ],
+    "missing": "Original recording run.json/chapter-results.json indexes live on the recording computer, not this cloud workspace."
+  },
+  "originalBaseline": {
+    "commit": "a3ce3c996c03a6708f1082a06a85e7c26af98a75",
+    "path": "data/golden/civ_matchups_first_pass.db",
+    "sha256": "93e5732f5e1afd08a9be5b292506edb2f4ee41c2be4352a8bc4128184a05ebb8"
+  },
+  "limitations": [
+    "Ongoing validation is incomplete; raw seeds and review state are a point-in-time snapshot.",
+    "Diagnosed blocked contexts remain unresolved, with no result assigned.",
+    "Selected legacy/current disagreements do not estimate global forecast accuracy.",
+    "Real-game captures require matching conditions; support Hussars and old count/draw policies may differ."
+  ]
+}

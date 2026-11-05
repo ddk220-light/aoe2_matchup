@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "status": "scores_finalized_web_app_pending",
+  "authorization": "Owner accepted the score list and requested shock infantry merged into militia, elephants and steppe lancers merged into knight. Web app changes are a later step.",
+  "datasetHash": "17a91c8fa14553abbce1f894cbeb4e637d9fe9a82977fc2da2b0bc824cfade3c",
+  "variants": 555,
+  "categories": [
+    {
+      "group": "Infantry",
+      "category": "militia",
+      "label": "Militia line",
+      "variants": 91,
+      "includedSourceLines": "militia;shock_infantry",
+      "leaderCivilization": "Teutons",
+      "leaderUnit": "Elite Teutonic Knight",
+      "leaderScore": 83.93897852988762
+    },
+    {
+      "group": "Infantry",
+      "category": "spear",
+      "label": "Spear line",
+      "variants": 56,
+      "includedSourceLines": "spear",
+      "leaderCivilization": "Mapuche",
+      "leaderUnit": "Halberdier",
+      "leaderScore": 51.41458333333333
+    },
+    {
+      "group": "Ranged",
+      "category": "archer",
+      "label": "Archer line",
+      "variants": 65,
+      "includedSourceLines": "archer",
+      "leaderCivilization": "Italians",
+      "leaderUnit": "Elite Genoese Crossbowman",
+      "leaderScore": 65.06688489640871
+    },
+    {
+      "group": "Ranged",
+      "category": "skirmisher",
+      "label": "Skirmisher line",
+      "variants": 57,
+      "includedSourceLines": "skirmisher",
+      "leaderCivilization": "Vietnamese",
+      "leaderUnit": "Imperial Skirmisher",
+      "leaderScore": 52.8859241806732
+    },
+    {
+      "group": "Ranged",
+      "category": "cav_archer",
+      "label": "Cavalry archer line",
+      "variants": 59,
+      "includedSourceLines": "cav_archer",
+      "leaderCivilization": "Dravidians",
+      "leaderUnit": "Elite Elephant Archer",
+      "leaderScore": 89.11153406519172
+    },
+    {
+      "group": "Ranged",
+      "category": "scorpion",
+      "label": "Scorpion line",
+      "variants": 58,
+      "includedSourceLines": "scorpion",
+      "leaderCivilization": "Khmer",
+      "leaderUnit": "Elite Ballista Elephant",
+      "leaderScore": 92.0522266313933
+    },
+    {
+      "group": "Ranged",
+      "category": "gunpowder",
+      "label": "Gunpowder",
+      "variants": 35,
+      "includedSourceLines": "gunpowder",
+      "leaderCivilization": "Bohemians",
+      "leaderUnit": "Elite Hussite Wagon",
+      "leaderScore": 85.44435648655598
+    },
+    {
+      "group": "Cavalry",
+      "category": "knight",
+      "label": "Knight line",
+      "variants": 70,
+      "includedSourceLines": "elephant;knight;steppe_lancer",
+      "leaderCivilization": "Persians",
+      "leaderUnit": "Elite War Elephant",
+      "leaderScore": 90.38629347520646
+    },
+    {
+      "group": "Cavalry",
+      "category": "light_cav",
+      "label": "Light cavalry line",
+      "variants": 51,
+      "includedSourceLines": "light_cav",
+      "leaderCivilization": "Magyars",
+      "leaderUnit": "Elite Magyar Huszar",
+      "leaderScore": 46.03764047141746
+    },
+    {
+      "group": "Cavalry",
+      "category": "camel",
+      "label": "Camel line",
+      "variants": 13,
+      "includedSourceLines": "camel",
+      "leaderCivilization": "Hindustanis",
+      "leaderUnit": "Imperial Camel Rider",
+      "leaderScore": 67.16843663391282
+    }
+  ],
+  "categoryMerges": {
+    "shock_infantry": "militia",
+    "elephant": "knight",
+    "steppe_lancer": "knight"
+  },
+  "formula": {
+    "status": "accepted for the finalized score tables; web app implementation is next",
+    "runMargin": "win: own remaining HP percent; loss: negative opponent remaining HP percent; draw: zero",
+    "aggregation": "average seeds inside each opponent matchup, then equal-weight the agreed opponents",
+    "displayScore": "50 + mean signed HP margin / 2 (fixed 0..100 scale; 50 is neutral)",
+    "mobilityBonus": null,
+    "costAdjustment": "already incorporated in approved army counts; no second multiplier",
+    "ties": "competition ranks using unrounded scores; exact ties share rank",
+    "comparison": "rank within each group; groups have different opponent pools"
+  },
+  "sourceEngineVersions": {
+    "original": 6768,
+    "corrected": 832
+  },
+  "provenance": "The user-authorized mixture of original and corrected engine results is preserved. Each score retains its source category and engine-run counts; detailed runs are in the consolidated campaign.",
+  "scope": "The agreed 555 Imperial land variants; siege/anti-building and naval scores are outside this campaign.",
+  "sources": [
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/ranking-readiness-2026-10-29/rankings-preview.json",
+      "sha256": "dc6e60a1b51f2bbe385d760e98028346f9af274345bd95d0c00a0ca7fcfb22d4"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/ranking-readiness-2026-10-29/readiness.json",
+      "sha256": "6ad44223bb35da8f8f1da7f925541550d32ab72ca12bdd7d328c83d611fba54a"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/ranking-readiness-2026-10-29/preview-validation.json",
+      "sha256": "a63fde45644ff80aed697b3fe38657a707506adaf24cbba72f5f870d2d5ccbe4"
+    }
+  ],
+  "generator": {
+    "path": "aoe2x/js_simulation/tools/finalize_ranking_scores.py",
+    "sha256": "f118d75bf9d979d8e3b655780fbb18cb7d67b7482815f7e3107439313e17b2c8"
+  },
+  "outputs": [
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/unit-ranking-scores-final-2026-10-29/scores.json",
+      "sha256": "477e799e40e08b082593485a7a9715ca3d2aee044a1eaee4b66867b899b11211"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/unit-ranking-scores-final-2026-10-29/scores.csv",
+      "sha256": "6720599669734b0a8e40c9945a92caa5e4135beec69fa9db705e54ff4e8c1d2a"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/unit-ranking-scores-final-2026-10-29/categories.csv",
+      "sha256": "160a810c35d07bfcac58e0b176ef1b7183ac2434bf97134f9042279b46fb8a9b"
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/reports/unit-ranking-scores-final-2026-10-29/validation.json",
+      "sha256": "321ec3bfcf641b4aba2e21c2f3407f528617965e7836048613a681750524ff58"
+    }
+  ]
+}

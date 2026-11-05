@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_2bade6ec790eeb009074bc5e",
+  "reviewedAt": "2026-11-05T09:22:28.410Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      26,
+      27
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "24102dc0378400e49d89e7b475dc2c034d67cce08e1bf3b59a56b800cc89a9aa",
+      "664675b856796becf6510b096973a7346adf315f8a793d0d81b43fce7e23c62d"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      75,
+      72
+    ]
+  },
+  "contextHash": "2bade6ec790eeb009074bc5e3525a4a0f314bdb9c9e6dd3f93d64f38c267da1a",
+  "pairKey": "24102dc0378400e49d89e7b475dc2c034d67cce08e1bf3b59a56b800cc89a9aa|664675b856796becf6510b096973a7346adf315f8a793d0d81b43fce7e23c62d",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1996,
+      "finalStateHash": "a33426eedc37a051f458de7878d45fd7cd3aa621b432382fd4d0a23c0349496c",
+      "eventLogHash": "b863f4d08155f7e2ce77ec58c528d6a5dc6fb6906e0b1127c02523febd432b4c",
+      "winnerHpFraction": 0.2951566951566952,
+      "recordHash": "02ddca310e29bc48aa4dec45843d016d452a98563957726f2fd1de7c78aa81b4"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1908,
+      "finalStateHash": "0f85ec6aa86542d3d0663b87ee2ec1d7190a3f0750cae068828d1f9389bfa894",
+      "eventLogHash": "0ddca5c072c8836eec5bf1e75523a893cc11c8024274d00dc6fada68ebd483c8",
+      "winnerHpFraction": 0.3002849002849003,
+      "recordHash": "fa9a8ae14c2eb6d648760d9dfa595baaf2960065728f128f5458e3f2c74e1cf3"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1996,
+      "finalStateHash": "a33426eedc37a051f458de7878d45fd7cd3aa621b432382fd4d0a23c0349496c",
+      "eventLogHash": "e3d4969bae0ef3f960aaf644bed46bf4776596da167b76b76bd2aff2bf4dcd6c",
+      "winnerHpFraction": 0.2951566951566952,
+      "recordHash": "29cc12ce0cdfd0aa1a05f4ed4a49045559e22ed522a2cec949f7a02aae2b15c2"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "29cc12ce0cdfd0aa1a05f4ed4a49045559e22ed522a2cec949f7a02aae2b15c2",
+    "result": {
+      "jobId": "mv_2bade6ec790eeb009074bc5e",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 518,
+      "startingHpByOwner": {
+        "2": 2600,
+        "3": 1755
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 10,
+          "hp": 518
+        }
+      },
+      "ticks": 1996,
+      "family": "waves",
+      "side2": {
+        "slug": "elite_eagle",
+        "label": "Elite Eagle Warrior",
+        "civ": "Mayans",
+        "count": 26,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "champion",
+        "label": "Two-Handed Swordsman",
+        "civ": "Tatars",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "a33426eedc37a051f458de7878d45fd7cd3aa621b432382fd4d0a23c0349496c",
+      "eventLogHash": "e3d4969bae0ef3f960aaf644bed46bf4776596da167b76b76bd2aff2bf4dcd6c"
+    },
+    "wallSeconds": 29.596684496998787,
+    "startedAt": "2026-11-05T09:21:58.813Z",
+    "finishedAt": "2026-11-05T09:22:28.410Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    60422
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 60422,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "fb78c7a50679c079d9d47833a89f914fe79fbf29c42ed9d30c02a9da9ec8117f"
+}

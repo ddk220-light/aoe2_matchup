@@ -1,0 +1,62 @@
+{
+  "checkedAt": "2026-11-02T06:35:23.736097+00:00",
+  "phase": 38,
+  "status": "in_progress_not_complete",
+  "runtimeFilesChecked": 62,
+  "validUniqueSourceSeeds": 32705,
+  "reviewSha256": "325cde096a5e21c93f9c99472371cb5fcd4c06e74a30fdcf5fe8cc00bb888a15",
+  "phaseReview": {
+    "phase": "038",
+    "reviewedAt": "2026-11-02T05:35:29.016Z",
+    "status": "complete_with_blocked",
+    "pairs": 256,
+    "validSeeds": 808,
+    "missingSeeds": 2,
+    "blockedPairs": [
+      "1ffea80be7cbe711552c09cbbed35d899207dd9792e87e740d14a8f3bc85d460|8082de979bcda18020ed9cc37890813f756afa0f0ead89fed2ac846ca9ad2d4b"
+    ],
+    "replay": {
+      "matchupId": "cm_00a1d3f6488bbb602729a2e5",
+      "seed": 0,
+      "exact": true,
+      "error": null,
+      "watchdog": false
+    },
+    "inferenceHash": "fd8d1edb170a28570b1c018298744ea0930f099106a918f828c1d3545e1a6804",
+    "unresolvedAfter": 48544
+  },
+  "deliverySummarySha256": "e3b525893c09967cb9fd28f7e7de7dea4c8bea3be4833fbb27440ba8e8dbe69f",
+  "deliveryCounts": {
+    "identity": 45,
+    "inferred": 10535,
+    "none": 1634,
+    "observed": 9792,
+    "predicted_unvalidated": 46910
+  },
+  "unresolvedPairs": 1634,
+  "note": "Two phase038 V3 seeds failed in final event hashing and remain missing. A separately frozen campaign recomputes the full pair under the unchanged tested event-stream runtime. It contributes no projection until reviewed. The earlier Elephant event-memory recovery is now complete and reviewed; Kona remains timed out, without an outcome. No forecast changes or bulk replay.",
+  "terminalGoalReview": {
+    "campaignHash": "ad724f10cc4d74e11d53e43ebd4e6860a29c247fa6c4b21161f080afff63c2aa",
+    "requiredSeeds": [
+      0,
+      1,
+      2
+    ],
+    "complete": true,
+    "exactReplaySeed": 0,
+    "physicsVersion": "collision-repair-v2-terminal-goal-candidate-v1",
+    "targetProjection": "predicted_unvalidated"
+  },
+  "phase038StreamReview": {
+    "campaignHash": "cfd424a435a2fadbb7b0b09feb1c28e09b9989f50a0139b58c75e0128e6ff7b9",
+    "requiredSeeds": [
+      0,
+      1,
+      2
+    ],
+    "complete": true,
+    "exactReplaySeed": 1,
+    "physicsVersion": "collision-repair-v2-static-memo-event-stream-candidate-v1",
+    "targetProjection": "predicted_unvalidated"
+  }
+}

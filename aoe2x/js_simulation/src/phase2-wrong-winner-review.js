@@ -143,7 +143,8 @@ export async function runPhase2WrongWinnerPlayback(root, rowId) {
     side3Class: side3Registry.class,
   });
   const live = result.world.units.filter(({ alive }) => alive);
-  const winnerHp = live.reduce((total, unit) => total + unit.hp, 0);
+  const winnerHp = live.filter(unit => unit.owner === result.winner)
+    .reduce((total, unit) => total + unit.hp, 0);
   return Object.freeze({
     schemaVersion: 1,
     mode: "phase2-wrong-winner-review",
@@ -177,6 +178,7 @@ export async function runPhase2WrongWinnerPlayback(root, rowId) {
     budget: null,
     kiteOwner: scenario.kiteOwner ?? null,
     ticks: result.ticks,
+    outcome: result.outcome,
     winnerOwner: result.winner,
     winnerHp,
     finalStateHash: hashCanonicalJson({

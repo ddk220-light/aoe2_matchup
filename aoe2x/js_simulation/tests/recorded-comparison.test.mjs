@@ -27,3 +27,17 @@ test("failed simulation is an error, not a match or tie", () => {
   assert.equal(result.error.message, "unsupported effect");
   assert.equal(result.winnerMatches, undefined);
 });
+
+test("timeouts have no elimination time, HP score or recorded-winner comparison", () => {
+  const result = compareRecordedResult({ jobId: "timeout",
+    recordingClock: { rows: "video_seconds", gameSpeed: 1.7 }, expected: { outcome: {
+      winnerOwner: 2, signedRemainingHpPercent: 50, eliminationTimeSeconds: 20,
+    } } }, { outcome: "timeout", winnerOwner: null, winnerHp: 0, ticks: 9000,
+    remainingByOwner: { 2: { units: 1, hp: 10 }, 3: { units: 1, hp: 10 } } });
+  assert.equal(result.status, "timeout");
+  assert.equal(result.winnerMatches, null);
+  assert.equal(result.simulation.eliminationTimeSeconds, null);
+  assert.equal(result.simulation.signedRemainingHpPercent, null);
+  assert.equal(result.durationDifferenceSeconds, null);
+  assert.equal(result.signedHpPercentagePointDifference, null);
+});

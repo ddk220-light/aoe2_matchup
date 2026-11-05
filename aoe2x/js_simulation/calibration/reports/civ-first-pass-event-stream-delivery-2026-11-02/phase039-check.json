@@ -1,0 +1,91 @@
+{
+  "checkedAt": "2026-11-02T07:40:36.563162+00:00",
+  "phase": 39,
+  "status": "in_progress_not_complete",
+  "frozenRuntimeFilesChecked": 62,
+  "validUniqueJournalSeedsAtSnapshot": 32911,
+  "phasePairs": 256,
+  "phaseValidSeeds": 829,
+  "phaseMissingSeeds": 2,
+  "blockedPairKeys": [
+    "4dfa091f0052f860d469970e36ced6af118452626ae6d0e6a39b30dad19a7ab6|609b9c904cbf8c867c2d4b81043811e4ba4112f7d2e7fd855a6c721f1d8ba6ab",
+    "4dfa091f0052f860d469970e36ced6af118452626ae6d0e6a39b30dad19a7ab6|8b7ca2dba60271513f27cb656e81a8e204a6391e6d15a86818b6b87eb097a6cb"
+  ],
+  "phaseExactReplay": {
+    "matchupId": "cm_01a4ed1fad55a1c310bd8568",
+    "seed": 0,
+    "exact": true,
+    "error": null,
+    "watchdog": false
+  },
+  "phaseReviewSha256": "35ace2ff908d0a5f4093da103b76e9747725d12d4408ec40173e29935cf6b75c",
+  "predictionSummarySha256": "ee03b6bf79c21cd88df5604f2999b7d6ca83a61edfedb976f5d6fd06d5f04075",
+  "predictionPolicy": "prediction-first-pass-v2",
+  "sourceCounts": {
+    "observedPairs": 10046,
+    "inferredPairs": 10624,
+    "predictedPairs": 46756,
+    "remainingNeedsDirectResult": 1445,
+    "blockedPairs": 16
+  },
+  "recoveryInventory": {
+    "path": "/workspace/aoe2_civ_phase039_stream/aoe2x/js_simulation/calibration/campaigns/civ-matchups-phase039-stream-first-pass-2026-11-02",
+    "hash": "d83d5a04d09eed2222a3c1905734711570d0ef82cd29642472429ed239b8a27e",
+    "physicsVersion": "collision-repair-v2-static-memo-event-stream-candidate-v1",
+    "requiredInitialSeeds": [
+      0,
+      1,
+      2
+    ],
+    "runtimeIdenticalToCompletedPhase038": true
+  },
+  "note": "Both exhausted V3 seed1 attempts completed combat but failed final canonical event hashing. Neither is a measurement. The separately frozen two-job recovery recomputes full seed sets; partial/unreviewed results cannot fill gaps.",
+  "deliveryCounts": {
+    "identity": 45,
+    "inferred": 10624,
+    "none": 1428,
+    "observed": 10046,
+    "predicted_unvalidated": 46773
+  },
+  "deliveryUnresolvedPairs": 1428,
+  "deliverySummarySha256": "c0b5be4ac8ed1bfde9e952ddf4fce1d4c1e3ddcbfac0144f596a8aec23f18044",
+  "lastRecoveryReviewCheckedAt": "2026-11-02T08:42:31.859541+00:00",
+  "phase039RecoveryComplete": {
+    "campaignHash": "d83d5a04d09eed2222a3c1905734711570d0ef82cd29642472429ed239b8a27e",
+    "savedSeeds": 6,
+    "reviewedPairs": 2,
+    "allExactReplaysPassed": true,
+    "finalCheckpoint": "be86df35"
+  },
+  "newExhaustedRecovery": {
+    "campaignHash": "29ac37c8445fe6972199a79c641cadfc2e260665b5c8ef01cfe5600de5fc5921",
+    "sourceFailureReferences": [
+      {
+        "path": "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/attempts.jsonl",
+        "line": 115,
+        "recordSha256": "97933a12fcf3fe3ffc8ebbcb761fb811dca62b072c5d3530b73b9ce8c2dce0db",
+        "matchupId": "cm_313d7b3bb1a75fbc0a90e70f",
+        "seed": 0
+      }
+    ],
+    "sourcePhasePlanReference": {
+      "path": "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/phases/040.json",
+      "sha256": "f6fe130bcc931edcedf71296cc2715929be74d6931550a604247deec36cf8c12"
+    },
+    "sourceFailureDurableInGitAtCheck": true,
+    "status": "complete",
+    "savedSeeds": 3,
+    "exactReplay": {
+      "seed": 1,
+      "passed": true
+    },
+    "finalNativeCheckpoint": "b715013b",
+    "finalReviewDocumentation": "ffee4401",
+    "targetProjection": "predicted_unvalidated"
+  },
+  "latestSourceSnapshotAudit": {
+    "checkedAt": "2026-11-02T09:27:42.738661+00:00",
+    "validUniqueJournalSeeds": 33597,
+    "frozenRuntimeFilesChecked": 62
+  }
+}

@@ -1,0 +1,13 @@
+# First-pass delivery with isolated static-memo recovery
+
+The frozen prediction-first-pass-v2 policy, simulation sources, physical contexts and existing journals are unchanged. The delivery builder additionally accepts the separately frozen static-memo candidate campaign in `/workspace/aoe2_civ_path_cache` on `simulations/civ-matchups-path-cache-2026-11-02`.
+
+The one-worker runner is `node/civ-matchups/recover-static-memo-first-pass.mjs`; its campaign is `calibration/campaigns/civ-matchups-static-memo-first-pass-2026-11-02`, manifest hash `dacfede78a6f2488a197c7598966133eec49fb07e6c538b8b5b0390fd880c230`. It recomputes the required Kona/Armenian Skirmisher seeds and performs an exact replay review. It never imports old outcomes. Inspect state, lock, log `/workspace/aoe2_civ_static_memo_recovery.log`, and live PID before resuming. Do not retry its failed keys without diagnosis.
+
+The only changed runtime file is collision.js: static geometry validation is memoized for identical displacement and tolerance inside one movement solve. It preserves arithmetic, obstacle order, geometry precision and fallback behavior. Thirty collision regressions plus two cache-invalidation tests passed. A bounded failed-seed probe and a completed saved control matched exactly; the probe took 24.59 versus 70.10 wall seconds on the shared host. The source forest-pocket fidelity question remains open. The diagnostics and exact provenance are in that branch's `calibration/reports/civ-static-geometry-cache-2026-11-02`.
+
+`build_civ_first_pass_delivery.py` accepts `--static-memo-recovery` with this campaign as its default. A missing review contributes nothing. Once complete, its own campaign records are written to `static-memo-candidate-evidence-ledger.jsonl.gz`. Its projection remains `predicted_unvalidated`, `repaired_engine_projection`, never a V3 measurement or a validated prediction. Source/target versions, exact seed references, source context and fidelity status remain explicit. V2 and patrol-candidate ledgers remain separate. No bulk replay is required.
+
+Six delivery tests cover ordinary repaired, patrol and static-memo projections; missing seeds, seed disagreement, wrong physics, changed outcome and reversed display orientation. The phase034 full-grid preview verifies all 68,916 profile pairs, 151,223 cells, 555 variants and 1,540 civilization pairs. It excludes the running, unreviewed static-memo attempt and is not a completed delivery.
+
+The preview summary and file hashes are published here; full preview tables are local disposable build artifacts, reproducible from the immutable phase034 inputs. Publish the complete bundle only when the first pass has zero gaps.

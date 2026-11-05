@@ -1,0 +1,169 @@
+{
+  "byFamily": {
+    "cav_archer|light_cav": {
+      "count_extrapolation": 21,
+      "effect_and_count_extrapolation": 9,
+      "effect_extrapolation": 317,
+      "supported_context_estimate": 301
+    },
+    "elephant|knight": {
+      "effect_and_count_extrapolation": 30,
+      "effect_extrapolation": 222
+    },
+    "knight|light_cav": {
+      "count_extrapolation": 1,
+      "effect_and_count_extrapolation": 99,
+      "effect_extrapolation": 498,
+      "supported_context_estimate": 617
+    },
+    "knight|militia": {
+      "count_extrapolation": 1,
+      "effect_and_count_extrapolation": 6,
+      "effect_extrapolation": 560,
+      "supported_context_estimate": 246
+    },
+    "knight|skirmisher": {
+      "count_extrapolation": 11,
+      "effect_and_count_extrapolation": 31,
+      "effect_extrapolation": 361,
+      "supported_context_estimate": 452
+    },
+    "light_cav|scorpion": {
+      "effect_and_count_extrapolation": 8,
+      "effect_extrapolation": 307
+    },
+    "militia|scorpion": {
+      "effect_and_count_extrapolation": 2,
+      "effect_extrapolation": 190
+    },
+    "militia|skirmisher": {
+      "count_extrapolation": 19,
+      "effect_and_count_extrapolation": 11,
+      "effect_extrapolation": 321,
+      "supported_context_estimate": 125
+    },
+    "scorpion|scorpion": {
+      "effect_and_count_extrapolation": 5,
+      "effect_extrapolation": 34
+    },
+    "scorpion|skirmisher": {
+      "effect_and_count_extrapolation": 6,
+      "effect_extrapolation": 207
+    }
+  },
+  "estimateTiers": {
+    "count_extrapolation": 53,
+    "effect_and_count_extrapolation": 207,
+    "effect_extrapolation": 3017,
+    "supported_context_estimate": 1741
+  },
+  "estimatedDisplayedCells": 8404,
+  "estimatedProfilePairs": 5018,
+  "kind": "provisional common-opponent estimates; not current-engine observations or decisive inferred conclusions",
+  "noEstimateReasons": {
+    "common_c_disagreement_or_small_margin": 1525,
+    "common_c_rule_failed_minimum_validation": 19211,
+    "missing_independent_common_c": 2705,
+    "no_calibrated_common_c_rule": 21139,
+    "prospective_counterexample": 5187,
+    "source_conflict_or_missing_seeds": 43
+  },
+  "prospectivePhase": {
+    "baselineObservedShapes": "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-adaptive-rule-v1-2026-11-01/baseline-count-shapes.json",
+    "byFamily": {
+      "archer|archer": {
+        "closeCalledDecisive": 5,
+        "correct": 3,
+        "predicted": 9,
+        "wrong": 6
+      },
+      "archer|light_cav": {
+        "closeCalledDecisive": 1,
+        "correct": 5,
+        "predicted": 8,
+        "wrong": 3
+      },
+      "cav_archer|knight": {
+        "correct": 5,
+        "predicted": 8,
+        "wrong": 3
+      },
+      "cav_archer|light_cav": {
+        "correct": 8,
+        "predicted": 8
+      },
+      "knight|light_cav": {
+        "correct": 8,
+        "predicted": 8
+      },
+      "knight|militia": {
+        "correct": 2,
+        "predicted": 2
+      },
+      "knight|skirmisher": {
+        "correct": 9,
+        "predicted": 9
+      },
+      "light_cav|militia": {
+        "correct": 6,
+        "predicted": 8,
+        "wrong": 2
+      },
+      "militia|skirmisher": {
+        "correct": 8,
+        "predicted": 8
+      }
+    },
+    "completedPairKeys": 768,
+    "disabledFamilies": [
+      "archer|archer",
+      "archer|light_cav",
+      "cav_archer|knight",
+      "light_cav|militia"
+    ],
+    "distinctProfilesByFamily": {
+      "archer|archer": 14,
+      "archer|light_cav": 11,
+      "cav_archer|knight": 13,
+      "cav_archer|light_cav": 13,
+      "knight|light_cav": 11,
+      "knight|militia": 3,
+      "knight|skirmisher": 11,
+      "light_cav|militia": 15,
+      "militia|skirmisher": 11
+    },
+    "journals": [
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/020.jsonl",
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/021.jsonl",
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/022.jsonl"
+    ],
+    "minimumDistinctProfilesForVerification": 12,
+    "minimumIndependentPairsForVerification": 60,
+    "verifiedFamilies": []
+  },
+  "rules": "unit-line rule must have >=20 pair-level CV predictions, zero wrong winners and zero close-as-decisive errors",
+  "simulationJobsRun": 0,
+  "skippableProfilePairs": 0,
+  "sourceHashes": {
+    "commonCSelection": "175ca98a58dd8826888ee22464f20c58f8be7638f95174745e5aa666655a3f8f",
+    "definition": "f66273e29420d79909efe434e100987f2bee6d8c9e301f467cb97de5c3461920",
+    "inferenceSummary": "479fda3953af21345ae92e9520837aad63719096803e3e9a3afa5cee2bcf9f97",
+    "profileMatchups": "9a5e3d6bb9ae6e3f887902f6eb1000bb7a5def3e9b8eb9cdb62076d90d69d9d8",
+    "prospectiveJournals": {
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/020.jsonl": "a3847b6fe31758601fa9881846379b99935b58b633bdc8d5e33c8856eff18db0",
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/021.jsonl": "8026e0eb89cb015d8b12a364dc410d87a026d0e1813144f5308a4410a7817c88",
+      "/workspace/aoe2_path_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-campaign-2026-10-31/adaptive/runs/022.jsonl": "13cd88d91c8ffbabe513d53eb63f4bee26f305fe0bfcde73a3282778695e05e1"
+    },
+    "rankingExtraRuns": "775f41f0e6e3bcbe52041186cc774ff96c060543e8d9a58ecacfa8bf595d0515",
+    "rankingRuns": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8",
+    "validationBaseline": "648b12d1ae6e6788808539ec2ea7037a4fb76f8d2066ea97f64a51aa909119a4",
+    "validationBaselineSupportedPairs": "8548d7c1c03d4b20f5ab9c58ec0a4ac7ac188e79939f88663847fe2bd48e20b4",
+    "variantProfiles": "91fe53a3c8b7a6ef65d1dcc0a3c4041c65cfd81193f30fad8564093cbd3e40c6"
+  },
+  "sourcePhase": 22,
+  "sourceUnresolvedProfilePairs": 54828,
+  "stillUnestimatedDisplayedCells": 76724,
+  "stillUnestimatedProfilePairs": 49810,
+  "supportedCandidateProspectivePool": 1729,
+  "totalProfilePairs": 68916
+}

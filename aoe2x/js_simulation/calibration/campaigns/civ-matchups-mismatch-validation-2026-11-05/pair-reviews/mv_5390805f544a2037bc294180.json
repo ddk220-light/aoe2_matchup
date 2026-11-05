@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_5390805f544a2037bc294180",
+  "reviewedAt": "2026-11-05T16:59:24.091Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "06366fbeeabb9d1b706c13f2853d567f425d014d5fa935867c931bc26d54b221",
+      "cb95066a1c440cb69916905e62e108001fedd8cd9d02ed9b43d4f3509952b553"
+    ],
+    "scenarioHash": "280c1f49d499b78ecaed35ff1b233bbd36380317d621fcd6cbca810b9ba46119",
+    "weightedCosts": [
+      72,
+      74.5
+    ]
+  },
+  "contextHash": "5390805f544a2037bc2941806fbb5fa089cdb97fc526935d975145ca112b7959",
+  "pairKey": "06366fbeeabb9d1b706c13f2853d567f425d014d5fa935867c931bc26d54b221|cb95066a1c440cb69916905e62e108001fedd8cd9d02ed9b43d4f3509952b553",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1874,
+      "finalStateHash": "148190bc0aaf60454773b2d33c4164f136ac3aa47c606f35acdbb2a65ad5ad6c",
+      "eventLogHash": "df5e6dccb89f42e8fb7f8228b2ad2e1b292e135403d493b91240b988e1aac990",
+      "winnerHpFraction": 0.5777777777777777,
+      "recordHash": "92c497cf82f2b76fef26816c0cb1b3f51a05cfb7cf3f276b232ccee5ee8c3789"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1987,
+      "finalStateHash": "1389a55eb4085d54b2b119eae1732f81e2728482b7b8864b8d055a584093b88b",
+      "eventLogHash": "4d8113fea2b4bfd373e14f6f68a992a77053dae156b85e17064a8d7018ba139f",
+      "winnerHpFraction": 0.5303703703703704,
+      "recordHash": "c885038b5c7ba6a35c7aea6e93a86ecb31db865fe8d19c3268e2bf43f443ff6e"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1930,
+      "finalStateHash": "aaad06c246e06785a7dd00ddea2ea08daa652c1dea23091fbb5c8efdb3f5f7da",
+      "eventLogHash": "0069b1176162e728a7e08001e36916bd334674e0c18442f2ceec6dd13782cecc",
+      "winnerHpFraction": 0.522962962962963,
+      "recordHash": "44d471aafad49fff262186101b091f4ce4dc7d81ca3b53bb77d7676bac0e89bb"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "92c497cf82f2b76fef26816c0cb1b3f51a05cfb7cf3f276b232ccee5ee8c3789",
+    "result": {
+      "jobId": "mv_5390805f544a2037bc294180",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 780,
+      "startingHpByOwner": {
+        "2": 1890,
+        "3": 1350
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 18,
+          "hp": 780
+        }
+      },
+      "ticks": 1874,
+      "family": "kite",
+      "side2": {
+        "slug": "champion",
+        "label": "Champion",
+        "civ": "Shu",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_chu_ko_nu_chinese",
+        "label": "Elite Chu Ko Nu",
+        "civ": "Chinese",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "148190bc0aaf60454773b2d33c4164f136ac3aa47c606f35acdbb2a65ad5ad6c",
+      "eventLogHash": "df5e6dccb89f42e8fb7f8228b2ad2e1b292e135403d493b91240b988e1aac990"
+    },
+    "wallSeconds": 14.049192255996168,
+    "startedAt": "2026-11-05T16:59:10.041Z",
+    "finishedAt": "2026-11-05T16:59:24.091Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    30461
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 30461,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "0498f205170771fbfe64efbb528e37a4dd124bf32f87d96ffc28ce62af9faeb5"
+}

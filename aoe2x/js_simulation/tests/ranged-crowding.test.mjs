@@ -258,7 +258,16 @@ test("a large mobile-ranged body remains compliant after committing", () => {
   const interaction = result.contactReservations.get("1:2");
 
   assert.equal(interaction.kind, "ranged-crowd");
-  assert.ok(Math.abs(interaction.collisionExtent - 0.35) < 1e-12);
+  // Committing a non-siege ranged body must not turn it into a hard
+  // blocker. Compare with the same crowd before commitment: its desired
+  // inward step can be steered sideways, so 0.35 is not a valid invariant.
+  const uncommitted = planRangedCrowding([
+    unit(1, 1, 1, { mechanics: largeRangedMechanics }), units[1],
+  ], [proposal(1, 0), proposal(2, -0.1)], 15);
+  assert.deepEqual(result.proposals, uncommitted.proposals);
+  assert.deepEqual(interaction, uncommitted.contactReservations.get("1:2"));
+  assert.ok(interaction.collisionExtent < 1,
+    "the overlapping pair must keep a compliant surface smaller than its full bodies");
   assert.equal(interaction.pathObstructs, false);
 });
 

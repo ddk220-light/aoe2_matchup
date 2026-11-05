@@ -1,0 +1,144 @@
+{
+  "matchupId": "m_ce33e3944153ff258187",
+  "seed": 1,
+  "sourceHashes": {
+    "world.js": "c5609c42646f611f4aac0c5232f558e81f1e9b5a9a9f52ccae19e5ac4952e0d5",
+    "contact-reservations.js": "28a0fb292776e3857d380e5bdff5f2bf2eeffdb17012a4d21de85fdd295b2975",
+    "collision.js": "3aab0df60312a8a293e213130b872fb3e532cdef8d95c3ae19f641d236f23952"
+  },
+  "wallSeconds": 121.79512272999999,
+  "tick": 9960,
+  "gameSeconds": 166,
+  "result": {
+    "jobId": "m_ce33e3944153ff258187",
+    "seed": 1,
+    "outcome": "timeout",
+    "winnerOwner": null,
+    "winnerHp": 0,
+    "startingHpByOwner": {
+      "2": 945,
+      "3": 1540
+    },
+    "remainingByOwner": {
+      "2": {
+        "units": 1,
+        "hp": 5
+      },
+      "3": {
+        "units": 21,
+        "hp": 1310
+      }
+    },
+    "ticks": 9960,
+    "family": "kite",
+    "side2": {
+      "slug": "imp_elite_skirm",
+      "label": "Elite Skirmisher",
+      "civ": "Incas",
+      "count": 27,
+      "class": "mobile_ranged"
+    },
+    "side3": {
+      "slug": "champion",
+      "label": "Champion",
+      "civ": "Spanish",
+      "count": 22,
+      "class": "melee"
+    },
+    "finalStateHash": "e4b46b7cdc398c228adff2be97ab2e2ac05b044ac985e480b8a37a97cc53d1bf",
+    "eventLogHash": "425b2df92465a186e4239911cde880cb9a8396b2d85b160946e795b19dd38460"
+  },
+  "error": null,
+  "collision": {
+    "solves": 9960,
+    "actualSweeps": 1953071,
+    "maxActualSweeps": 4096,
+    "modes": {
+      "converged": 2048,
+      "slop": 7912
+    }
+  },
+  "hotFunctions": [
+    {
+      "frame": "finalGeometryViolation file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/collision.js:530",
+      "percent": 46.2951391873444
+    },
+    {
+      "frame": "constrainStaticGeometry file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/collision.js:360",
+      "percent": 11.25010851205623
+    },
+    {
+      "frame": "planPersistentChaseRoute file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/chase-path.js:552",
+      "percent": 5.805290255023338
+    },
+    {
+      "frame": "constrainPair file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/collision.js:311",
+      "percent": 4.949139785103488
+    },
+    {
+      "frame": "(garbage collector) :0",
+      "percent": 3.245019458883917
+    },
+    {
+      "frame": "moveUnits file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/world.js:3062",
+      "percent": 2.8885453383541067
+    },
+    {
+      "frame": "freezeUnit file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/world.js:378",
+      "percent": 2.3296287595309244
+    },
+    {
+      "frame": "resolveConstraints file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/collision.js:382",
+      "percent": 1.6488787958412807
+    },
+    {
+      "frame": "finalGeometryIsValid file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/collision.js:567",
+      "percent": 1.4162057783279975
+    },
+    {
+      "frame": "buildPersistentGrid file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/chase-path.js:372",
+      "percent": 1.316027973837088
+    },
+    {
+      "frame": "heapPop file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/chase-path.js:143",
+      "percent": 1.2979430419292557
+    },
+    {
+      "frame": "distributeEqualMassRemoval file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/collision.js:279",
+      "percent": 1.2155190668766684
+    },
+    {
+      "frame": "selectEngagementTarget file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/targeting.js:256",
+      "percent": 1.1170526431400754
+    },
+    {
+      "frame": "resolvePairInteraction file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/pair-interactions.js:167",
+      "percent": 1.0913926125501507
+    },
+    {
+      "frame": "updateEngagements file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/world.js:3912",
+      "percent": 0.8430370046199722
+    },
+    {
+      "frame": "validateStartingGeometry file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/collision.js:148",
+      "percent": 0.8285465474121565
+    },
+    {
+      "frame": "canonicalJson file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/canonical-json.js:84",
+      "percent": 0.8230122887654566
+    },
+    {
+      "frame": "stepWorld file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/world.js:5884",
+      "percent": 0.5727587981936693
+    },
+    {
+      "frame": "acquirePursuitTargets file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/world.js:1813",
+      "percent": 0.49909548227851674
+    },
+    {
+      "frame": "interaction file:///workspace/aoe2_collision_followups/aoe2x/js_simulation/src/combat/pair-interactions.js:105",
+      "percent": 0.43274928446127237
+    }
+  ],
+  "note": "Profiling and trace overhead included in wall time."
+}

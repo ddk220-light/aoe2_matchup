@@ -113,6 +113,7 @@ export async function runTapeConditioned(root, row, sampleIndex, seed, experimen
   const experimentalKiteProfile = kiteProfileExperiment(kite.kiteProfile, experiment);
   const scenario = {
     ratio: `${row.side2.count}v${row.side3.count}`,
+    openingSeed: mixSeed(seed, sampleIndex, row.id ?? row.matchup ?? "standard-row"),
     units,
     ...kite,
     ...(experiment?.chaseCapture === true && Number.isSafeInteger(kite.kiteOwner)
@@ -124,29 +125,24 @@ export async function runTapeConditioned(root, row, sampleIndex, seed, experimen
     ...(experimentalKiteProfile ? { kiteProfile: experimentalKiteProfile } : {}),
   };
 
-  let result;
-  try {
-    result = runWorld(createWorld(scenario), {
-      maxTicks: STANDARD_UNITS_MAX_TICKS,
-      retainSnapshots: false,
-    });
-  } catch (error) {
-    if (!String(error?.message ?? error).includes("world exceeded")) throw error;
+  const result = runWorld(createWorld(scenario), {
+    maxTicks: STANDARD_UNITS_MAX_TICKS,
+    retainSnapshots: false,
+  });
+  if (result.outcome !== "win") {
     return Object.freeze({
       rowId: row.id,
       matchup: row.matchup,
       sampleIndex,
       seed,
-      outcome: "timeout",
+      outcome: result.outcome,
       winnerOwner: null,
-      winnerHp: null,
-      score: null,
-      ticks: STANDARD_UNITS_MAX_TICKS,
+      winnerHp: result.outcome === "draw" ? 0 : null,
+      score: result.outcome === "draw" ? 0 : null,
+      ticks: result.ticks,
       finalStateHash: null,
       eventLogHash: null,
-      diagnostics: error.world
-        ? timeoutDiagnostics(error.world, error.events)
-        : Object.freeze({}),
+      diagnostics: timeoutDiagnostics(result.world, result.events),
     });
   }
 

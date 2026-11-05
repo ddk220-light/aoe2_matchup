@@ -191,6 +191,10 @@ export function calculateDamage(actor, target, options = {}) {
   const baseArmor = classValue(armors, "4", "armor");
   let pierceAttack = classValue(attacks, "3", "attack");
   const pierceArmor = classValue(armors, "3", "armor");
+  const attackBonus = (actor?.specialState?.killAttackBonus ?? 0)
+    + (actor?.specialState?.nearbyAttackBonus ?? 0);
+  if (baseAttack !== undefined) baseAttack += attackBonus;
+  else if (pierceAttack !== undefined) pierceAttack += attackBonus;
   if (
     (baseAttack === undefined || baseArmor === undefined)
     && (pierceAttack === undefined || pierceArmor === undefined)
@@ -213,10 +217,16 @@ export function calculateDamage(actor, target, options = {}) {
     // Armor-bypass technologies such as Wootz Steel ignore the matching BASE
     // armor only. Bonus attack classes still resolve against their own armor
     // classes below, exactly like an ordinary attack.
-    if (classId === "4" && actorEffects.ignores_melee_armor) return 0;
-    if (classId === "3" && actorEffects.ignores_pierce_armor) return 0;
+    const nonSiegeLand = armors["20"] === undefined
+      && target?.mechanics?.unit_type !== 80 && (target?.mechanics?.unit_traits & 2) === 0;
+    if (classId === "4" && actorEffects.ignores_melee_armor
+        && (!actorEffects.melee_armor_bypass_non_siege_land_only || nonSiegeLand)) return 0;
+    if (classId === "3" && actorEffects.ignores_pierce_armor
+        && (!actorEffects.pierce_armor_bypass_non_siege_land_only || nonSiegeLand)) return 0;
     if (classId !== "3" && classId !== "4") return armorValue;
-    return Math.max(0, armorValue + (target?.specialState?.nearbyArmorBonus ?? 0)
+    // Stripping cannot create negative armor, but native negative armor
+    // (notably rams) must survive even when no stripping has occurred.
+    return Math.max(Math.min(0, armorValue), armorValue + (target?.specialState?.nearbyArmorBonus ?? 0)
       - (target?.specialState?.armorStripped ?? 0));
   };
   const term = (classId, attackValue, armorValue) => (
@@ -225,15 +235,18 @@ export function calculateDamage(actor, target, options = {}) {
       : Math.max(0, attackValue - strippedArmor(classId, armorValue))
   );
   let damage = term("4", baseAttack, baseArmor) + term("3", pierceAttack, pierceArmor);
-  damage += actor?.specialState?.killAttackBonus ?? 0;
-  damage += actor?.specialState?.nearbyAttackBonus ?? 0;
+  let bonusDamage = 0;
   for (const [classId, attack] of Object.entries(attacks)) {
     if (classId === "4" || classId === "3" || attack <= 0) continue;
     const armor = classValue(armors, classId, "armor");
     if (armor === undefined) continue;
-    damage += Math.max(0, requireFinite(attack, `attack class ${classId}`)
+    bonusDamage += Math.max(0, requireFinite(attack, `attack class ${classId}`)
       - (options.ignoreArmor === true ? 0 : armor));
   }
+  const bonusResistance = targetEffects.bonus_damage_reduction ?? 0;
+  damage += bonusResistance > 0
+    ? Math.floor(bonusDamage * (1 - bonusResistance) + 1e-12)
+    : bonusDamage;
   const executeDamage = requireFinite(actorEffects.execute_damage_per_step ?? 0,
     "execute damage per step");
   const executeStep = requireFinite(actorEffects.execute_hp_step ?? 0,
@@ -677,12 +690,35 @@ export function createAttackCanceledEvent(details) {
 }
 
 
-export function orderReadyAttacks(attacks) {
+export function orderReadyAttacks(attacks, { seed = 0 } = {}) {
   if (!Array.isArray(attacks)) throw new TypeError("ready attacks must be an array");
-  return [...attacks].sort((left, right) => (
+  if (!Number.isSafeInteger(seed) || seed < 0) {
+    throw new RangeError("combat seed must be a nonnegative safe integer");
+  }
+  // Canonicalize before drawing so input-array order cannot favor either side.
+  // Shuffle only ties: an earlier damage frame always retains precedence.
+  const ordered = [...attacks].sort((left, right) => (
     left.readyTick - right.readyTick ||
     left.actorId - right.actorId ||
     left.targetId - right.targetId ||
     compareText(left.type, right.type)
   ));
+  for (let start = 0; start < ordered.length;) {
+    let end = start + 1;
+    while (end < ordered.length && ordered[end].readyTick === ordered[start].readyTick) end++;
+    // A separate, stateless mulberry32 stream for each damage tick. Neither
+    // projectile scatter nor snapshot retention consumes this stream.
+    let state = ((seed >>> 0) ^ Math.imul(Math.floor(seed / 4294967296), 0x85ebca6b)
+      ^ Math.imul(ordered[start].readyTick, 0x9e3779b1) ^ 0xa511e9b3) >>> 0;
+    for (let i = end - 1; i > start; i--) {
+      state = (state + 0x6d2b79f5) >>> 0;
+      let draw = Math.imul(state ^ (state >>> 15), 1 | state);
+      draw = (draw + Math.imul(draw ^ (draw >>> 7), 61 | draw)) ^ draw;
+      const roll = ((draw ^ (draw >>> 14)) >>> 0) / 4294967296;
+      const j = start + Math.floor(roll * (i - start + 1));
+      [ordered[i], ordered[j]] = [ordered[j], ordered[i]];
+    }
+    start = end;
+  }
+  return ordered;
 }

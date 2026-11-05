@@ -74,6 +74,13 @@ REFERENCE_EFFECT_COLUMNS = (
     "charge_attack_melee",
     "charge_recharge_time",
     "damage_reflect_percent",
+    "bonus_damage_reduction",
+    "dodge_shield_max",
+    "dodge_shield_recharge",
+    "block_first_melee",
+    "food_per_kill",
+    "wood_per_kill",
+    "gold_per_kill",
     "attack_bonus_nearby",
     "nearby_bonus_count",
     "hp_nearby_percent_per_unit",
@@ -211,6 +218,24 @@ def _runtime_effects(reference: dict[str, Any], unit_slug: str) -> dict[str, Any
     effects.update(RUNTIME_EFFECTS_BY_CIV_SLUG.get(
         (reference["civ_name"], unit_slug), {}
     ))
+    if unit_slug in {"militia", "man_at_arms", "swordsmen", "long_swordsman",
+                     "two_handed", "two_handed_swordsman", "champion", "legionary"}:
+        effects["speed_attack_aura_recipient"] = "militia"
+    if reference["civ_name"] == "Khitans":
+        # Normalize the older handwritten reference values too. Ranged cavalry
+        # and mounted siege never receive Ordo under the owner's combat scope.
+        effects.pop("hp_regen_in_combat", None)
+        if unit_slug in {"hussar", "light_cav", "steppe_lancer", "elite_steppe", "camel", "heavy_camel"}:
+            effects["hp_regen_in_combat"] = reference["final_hp"] * 1.5
+            effects["combat_regen_max_hp_per_minute"] = 1.5
+    # Identity tags describe an ability's eligible unit family; combat never
+    # needs to recognize a civilization or a unit name to evaluate the aura.
+    if unit_slug in {"knight", "cavalier", "paladin"} or effects.get("attack_bonus_nearby"):
+        effects["nearby_attack_group"] = "knight_monaspa"
+    # Both current sources of pierce bypass (Composite Bowman and Rocket
+    # Cart) explicitly exclude siege, ships and buildings in the unit docs.
+    if effects.get("ignores_pierce_armor"):
+        effects["pierce_armor_bypass_non_siege_land_only"] = True
     if 1484 in reference["applied_tech_ids"]:
         # Shipped Effects.xs EffectFunction30: task160, WorkValue1=1,
         # WorkValue2=.1, WorkRange=0 (own HP). This is not execute damage.
@@ -1197,7 +1222,12 @@ def export_unit_mechanics(
     if 1484 in reference["applied_tech_ids"]:
         fields["effects.missing_hp_attack"] = "Effects.xs EffectFunction30; task160 (+1 primary attack / 10% own HP lost)"
 
+    from aoe2x.dbgen.patch188329_stats import ELEPHANTS, provenance
+    if unit.id in ELEPHANTS and (reference["base_hp"] != ELEPHANTS[unit.id][1]
+                               or reference["base_cost_food"] != 70):
+        raise ValueError("regenerate or migrate the reference with patch188329 before exporting")
     return {
+        **provenance(unit.id),
         "unit_master": unit.id,
         "unit_type": int(unit.type),
         "unit_class": int(unit.class_),

@@ -1,0 +1,24 @@
+--- runtime/src/combat/collision.js
++++ probe/src/combat/collision.js
+@@ -318,6 +318,7 @@
+ 
+ function reportCollisionDiagnostics(callback, mode, sweeps, largestCorrection,
+   restoredReferences = []) {
++  globalThis.__rankingDiagnostic.collisionReport({ mode, sweeps, largestCorrection });
+   if (callback === undefined) return;
+   callback(Object.freeze({
+     mode,
+@@ -370,6 +371,13 @@
+     lastCorrection = largestCorrection;
+   }
+ 
++  globalThis.__rankingDiagnostic.collisionBudget({
++    bodies: bodies.length, obstacles: obstacles.length, lastCorrection,
++    strictViolation: finalGeometryViolation(bodies, obstacles, bounds, EPSILON, pairInteractions),
++    slopViolation: finalGeometryViolation(bodies, obstacles, bounds, GEOMETRY_SLOP, pairInteractions),
++    allowEarlySlop,
++    maxMove: Math.max(...bodies.map(b => Math.hypot(b.dx, b.dy))),
++  });
+   // Ally separation is a soft constraint: a crowd can stay mutually unsatisfied
+   // for as long as it likes, exactly as the tapes show. Spending the whole sweep
+   // budget is therefore not an error provided the hard invariants -- enemy

@@ -1,0 +1,7166 @@
+{
+  "updatedAt": "2026-10-29T21:06:18.694434+00:00",
+  "sourceHashes": {
+    "arena-physics-map.js": "7a4cdb06eb275c38f0fd76f8f00bbdfdb492d89e228a69e6f0f2bcdec47078bd",
+    "battle-setup.js": "e3fe43c18a94545f6300410234df88274704e7dfc16c25c55cdb89a179c19318",
+    "canonical-json.js": "ebffd58076b4fa7811697f4ff93e0da2a55b95fbfefa9ad6fff4a254965d14f0",
+    "champion-comparison.js": "38f895eacd2a182e24c39a2d699601162a6368f6511f7ba140f22a085f8abdc9",
+    "champion-scenarios.js": "2c149421aaed39f2dce265f51ded730560b3c7fc08323548b09beae5af55d132",
+    "combat/ai-orders.js": "419304d06e005449f3f62c1dfa62144b26e4ef85a55dc2bc62822fe9810b0d4e",
+    "combat/attacks.js": "496782759dc9540355626f3ab5718db19e2964f1003b4adbd0747088a33f00e6",
+    "combat/chase-path.js": "502a9567b736941ef8f63765b36aef18abba84b91131c886dc16060077ed28c4",
+    "combat/cohort-motion.js": "93db572f1be894693c86f8cd6449522fe6531fdd1db6270a45422611cbf98161",
+    "combat/collision.js": "3e4bc576462051826cef72eccdcfd112e77212c2718f9cc465ea6bf217948aa3",
+    "combat/contact-graph-steering.js": "3e04ec8c0b9301b91be3c3b2dc2a080551b43e5e833268b6784bdafca7a19469",
+    "combat/contact-reservations.js": "28a0fb292776e3857d380e5bdff5f2bf2eeffdb17012a4d21de85fdd295b2975",
+    "combat/diplomacy.js": "dfa46fde46f83f09a52e3818a495a9c3373eba1c59ee7f93de87ec0a6389844a",
+    "combat/experiments.js": "65be7ae497bf3bed48e74d73e3a7e47f9aea0273913cbe46bac132e620d8058c",
+    "combat/kite-timing.js": "f86ed7caca423911190a7aa98cfff93ec9420fefdf0afbceddcbe4ab2f83853f",
+    "combat/local-avoidance.js": "3ec1de33580cd0738d29fc1627b8d6d4aacbbc02962df49ab1e4c817ff86c5ec",
+    "combat/matchup-summary.js": "c4d6ddf08d160b561e298cef2b7a02522db2aa8ee839583f0c45b1054cf50081",
+    "combat/movement.js": "613b9db05a2713ce3cf444b5e29b3cba5f0fc9d7d570efe702350d2b18fe1c97",
+    "combat/pair-interactions.js": "23a1579a6e9b93dd7097fb6a8bb1c1ed7209d2a7ee7b445e0d7317d6f58ac716",
+    "combat/projectile-mechanics.js": "77c0c9d58fda17872cee1f1e2010be4a5e602f970a9550930b847f69de13bf96",
+    "combat/ranged-crowding.js": "6c4b98c52601da822a13042ea8bfb84ef52ff6a19cb8e0b617f4ef49aeb561e9",
+    "combat/reach-melee.js": "e1aba17836c00a01908c7381200194beafbff5a1f96c78e475b1f1a6c168dfc7",
+    "combat/solo-navigation.js": "c4adb8087f1ff4a2851b193516620972d4cbcda70357d5e45badd8815e4503f0",
+    "combat/targeting.js": "d97c0f3a6d80c070943c983148802714866ceb4e4b672965daf309cf29ee9adf",
+    "combat/unit-defenses.js": "1e90c38a8a3a23ecdb870162b5b2e493b38cd005cd6dbe84c15539493a155f4a",
+    "combat/unit-state.js": "f9aa4196e0a62de16b08cdda29736e060698d2abe219f68ec81bf3c598492e3a",
+    "combat/world.js": "ee4f333822df501cb47135fb3f5a198d9ff8c2b16e6a376b26efa9d5488d1915",
+    "dedicated-benchmark-rig.js": "8bf88c46a58905e9f8c9f5e8e07ab595424ce3d4bc9a0f8d1870af1806be39ee",
+    "dedicated-golden-comparison.js": "310b96fa55a37670c208ecf4aa3fbbc4227ca0b19e100dc95e17b9b5320dd3ea",
+    "dedicated-golden-corpus.js": "e1cc7bdc1b5e465df063d8dafd0f00149107e3b4dc61ad27f246ae25b727642a",
+    "engine-config.js": "1636b7c15b8088114d6b709af4500f8f3825d36d1367f13c7625efff58c1dc89",
+    "fight.js": "c6cdc76c76d5f7ae3d12810cd7ace410624ef8e4b657104d4366e2444563de94",
+    "formation-model.js": "8f1b7ca80879c2ee732dea7171e3e69ed8f97c1b2f239ec08079bff011f47276",
+    "kite-profiles.js": "f45e9ec67850427eb50dddc461f9d422b9c6db5a99b00cc47fae567bd71208b9",
+    "kiting-observation-matchups.js": "0dbd2c4a80f085fb68ff689370d0facae05e2466c3af59a6a939a5df7d63bd0d",
+    "kiting-observation-placement.js": "4e85983caea8b7b22f37d3bc9a9dc9fff3dbd5f511ade62c274bfbf2a821450d",
+    "lab-scenario.js": "9d87d64a6d6ebfedff67a33b0f587e2caa13860f8d62cbf885f2bee724b40acb",
+    "map-model.js": "5689f3f360c699e20cb256d1a70eb29f3db13a2dca5653e673527ad16ab99936",
+    "matchup-playback.js": "d2a2d9d25be073f77c2d0aaeabcdab8f0df3c990da32480e15dd41f2c2e718be",
+    "mechanics-schema.js": "9a6d0902add6d434da9b74d08e05496b9c1c0733da9ad15e0ae2b8e594ca6f56",
+    "phase2-batch1-comparison.js": "a2933507b035ef6bb91e33ffd821574a1052ef2852319bb1df9ec5bd1802b64a",
+    "phase2-wrong-winner-review.js": "452c3d2adc33be3ca72df2ac4a6e2fb5265fa2324a8e8da8ee0d807aa583af85",
+    "placement-table.js": "38d1566c3f18373703db1a2584b6551376a9b1a50703ba2cadf79c01b19954be",
+    "placement.js": "c1b42b95b1de138b54f37c3f5aa78f3280aed1cf7f3de87ee73f794eaa58cda2",
+    "purchase.js": "92050e141c098b420808289fa164d496c7ea8ce7c998fb32af255d4947801239",
+    "simulation-clock.js": "b2abb7591762f625803c616f82fd8d9ae09c8c4f24f1b2a8db7f2923ef7013d5",
+    "standard-units-comparison.js": "253313a4916a105277000938dbadaaef770334d8e58935b06b59c164c2668d63",
+    "unit-registry.js": "260d19ddcf9a8cecf027de965ead841829cd23069e87a1664fe56bfeefbb1325"
+  },
+  "complete": true,
+  "controlFailures": 0,
+  "controls": 37,
+  "exactControls": 3,
+  "changedControls": 34,
+  "winnerChanges": 3,
+  "controlComparisons": [
+    {
+      "matchupId": "m_1953dc7ed7f5690da46a",
+      "seed": 0,
+      "teams": [
+        "Varangians|elite_jarl_varangians",
+        "Spanish|hussar"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 29.85,
+      "candidateGameSeconds": 28.333333333333332,
+      "baselineRemaining": {
+        "2": {
+          "units": 18,
+          "hp": 1752
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 19,
+          "hp": 1647
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_1953dc7ed7f5690da46a",
+      "seed": 2,
+      "teams": [
+        "Varangians|elite_jarl_varangians",
+        "Spanish|hussar"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 30.516666666666666,
+      "candidateGameSeconds": 28.783333333333335,
+      "baselineRemaining": {
+        "2": {
+          "units": 18,
+          "hp": 1710
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 20,
+          "hp": 1746
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_1953dc7ed7f5690da46a",
+      "seed": 1,
+      "teams": [
+        "Varangians|elite_jarl_varangians",
+        "Spanish|hussar"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 29.85,
+      "candidateGameSeconds": 29.383333333333333,
+      "baselineRemaining": {
+        "2": {
+          "units": 20,
+          "hp": 1758
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 19,
+          "hp": 1749
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_497ee2a68a272a1f4fcd",
+      "seed": 2,
+      "teams": [
+        "Tupi|elite_blackwood_archer_tupi",
+        "Spanish|hussar"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 45.71666666666667,
+      "candidateGameSeconds": 45.95,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 1103.000000000034
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 1084.0000000000214
+        }
+      }
+    },
+    {
+      "matchupId": "m_497ee2a68a272a1f4fcd",
+      "seed": 0,
+      "teams": [
+        "Tupi|elite_blackwood_archer_tupi",
+        "Spanish|hussar"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 47.15,
+      "candidateGameSeconds": 45.75,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 1086.0000000000332
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 1086.0000000000314
+        }
+      }
+    },
+    {
+      "matchupId": "m_497ee2a68a272a1f4fcd",
+      "seed": 1,
+      "teams": [
+        "Tupi|elite_blackwood_archer_tupi",
+        "Spanish|hussar"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 44.11666666666667,
+      "candidateGameSeconds": 45.71666666666667,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 1084.0000000000348
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 1066.0000000000223
+        }
+      }
+    },
+    {
+      "matchupId": "m_62f2291f3c26de9db10f",
+      "seed": 1,
+      "teams": [
+        "Varangians|elite_varangian_guard",
+        "Chinese|arbalester"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 27.766666666666666,
+      "candidateGameSeconds": 27.766666666666666,
+      "baselineRemaining": {
+        "2": {
+          "units": 14,
+          "hp": 937
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 14,
+          "hp": 937
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_62f2291f3c26de9db10f",
+      "seed": 0,
+      "teams": [
+        "Varangians|elite_varangian_guard",
+        "Chinese|arbalester"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 27.533333333333335,
+      "candidateGameSeconds": 27.533333333333335,
+      "baselineRemaining": {
+        "2": {
+          "units": 14,
+          "hp": 955
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 14,
+          "hp": 955
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_62f2291f3c26de9db10f",
+      "seed": 2,
+      "teams": [
+        "Varangians|elite_varangian_guard",
+        "Chinese|arbalester"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 26.066666666666666,
+      "candidateGameSeconds": 26.066666666666666,
+      "baselineRemaining": {
+        "2": {
+          "units": 15,
+          "hp": 993
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 15,
+          "hp": 993
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 0,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": true,
+      "baselineWinner": 2,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 35.28333333333333,
+      "candidateGameSeconds": 36.56666666666667,
+      "baselineRemaining": {
+        "2": {
+          "units": 6,
+          "hp": 308
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 6,
+          "hp": 168
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 1,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 37.583333333333336,
+      "candidateGameSeconds": 39.63333333333333,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 5,
+          "hp": 196
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 3,
+          "hp": 126
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 2,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 39.4,
+      "candidateGameSeconds": 35.56666666666667,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 4,
+          "hp": 182
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 7,
+          "hp": 294
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 3,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 44.5,
+      "candidateGameSeconds": 35.333333333333336,
+      "baselineRemaining": {
+        "2": {
+          "units": 2,
+          "hp": 84
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 7,
+          "hp": 252
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 5,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": true,
+      "baselineWinner": 2,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 32.85,
+      "candidateGameSeconds": 34.5,
+      "baselineRemaining": {
+        "2": {
+          "units": 11,
+          "hp": 434
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 8,
+          "hp": 322
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 4,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 32.68333333333333,
+      "candidateGameSeconds": 32.25,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 8,
+          "hp": 294
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 434
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 6,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": true,
+      "baselineWinner": 2,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 36.233333333333334,
+      "candidateGameSeconds": 38.916666666666664,
+      "baselineRemaining": {
+        "2": {
+          "units": 4,
+          "hp": 210
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 3,
+          "hp": 154
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 8,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 37.583333333333336,
+      "candidateGameSeconds": 39.63333333333333,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 5,
+          "hp": 196
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 3,
+          "hp": 126
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 7,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 33.0,
+      "candidateGameSeconds": 42.11666666666667,
+      "baselineRemaining": {
+        "2": {
+          "units": 10,
+          "hp": 378
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 3,
+          "hp": 98
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_9dbe33eceef98c3aae72",
+      "seed": 0,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|paladin"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 30.133333333333333,
+      "candidateGameSeconds": 28.783333333333335,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 15,
+          "hp": 2076
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 17,
+          "hp": 2085
+        }
+      }
+    },
+    {
+      "matchupId": "m_9dbe33eceef98c3aae72",
+      "seed": 1,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|paladin"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 30.133333333333333,
+      "candidateGameSeconds": 28.783333333333335,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 15,
+          "hp": 2076
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 17,
+          "hp": 2085
+        }
+      }
+    },
+    {
+      "matchupId": "m_1855b762f7479a5e9fbe",
+      "seed": 9,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|champion"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 32.68333333333333,
+      "candidateGameSeconds": 32.25,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 7,
+          "hp": 266
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 434
+        }
+      }
+    },
+    {
+      "matchupId": "m_19b0be5f01f75e80e258",
+      "seed": 0,
+      "teams": [
+        "Chinese|arbalester",
+        "Turks|paladin"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 34.15,
+      "candidateGameSeconds": 32.916666666666664,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 1432
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 1468
+        }
+      }
+    },
+    {
+      "matchupId": "m_19b0be5f01f75e80e258",
+      "seed": 1,
+      "teams": [
+        "Chinese|arbalester",
+        "Turks|paladin"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 36.78333333333333,
+      "candidateGameSeconds": 35.93333333333333,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 1392
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 1376
+        }
+      }
+    },
+    {
+      "matchupId": "m_19b0be5f01f75e80e258",
+      "seed": 2,
+      "teams": [
+        "Chinese|arbalester",
+        "Turks|paladin"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 34.65,
+      "candidateGameSeconds": 32.46666666666667,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 1452
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 1480
+        }
+      }
+    },
+    {
+      "matchupId": "m_735b95318dc4432456b5",
+      "seed": 0,
+      "teams": [
+        "Saracens|hand_cannoneer",
+        "Chinese|arbalester"
+      ],
+      "exact": true,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 28.366666666666667,
+      "candidateGameSeconds": 28.366666666666667,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 11,
+          "hp": 433.5
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 11,
+          "hp": 433.5
+        }
+      }
+    },
+    {
+      "matchupId": "m_735b95318dc4432456b5",
+      "seed": 1,
+      "teams": [
+        "Saracens|hand_cannoneer",
+        "Chinese|arbalester"
+      ],
+      "exact": true,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 28.9,
+      "candidateGameSeconds": 28.9,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 441
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 441
+        }
+      }
+    },
+    {
+      "matchupId": "m_9dbe33eceef98c3aae72",
+      "seed": 2,
+      "teams": [
+        "Spanish|champion",
+        "Spanish|paladin"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 30.133333333333333,
+      "candidateGameSeconds": 28.783333333333335,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 15,
+          "hp": 2076
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 17,
+          "hp": 2085
+        }
+      }
+    },
+    {
+      "matchupId": "m_735b95318dc4432456b5",
+      "seed": 2,
+      "teams": [
+        "Saracens|hand_cannoneer",
+        "Chinese|arbalester"
+      ],
+      "exact": true,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 30.05,
+      "candidateGameSeconds": 30.05,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 11,
+          "hp": 420.5
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 11,
+          "hp": 420.5
+        }
+      }
+    },
+    {
+      "matchupId": "m_7bf4c642a74217824b64",
+      "seed": 0,
+      "teams": [
+        "Saracens|heavy_cav_archer",
+        "Spanish|imp_elite_skirm"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 49.68333333333333,
+      "candidateGameSeconds": 49.7,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 14,
+          "hp": 406
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 14,
+          "hp": 406
+        }
+      }
+    },
+    {
+      "matchupId": "m_7bf4c642a74217824b64",
+      "seed": 1,
+      "teams": [
+        "Saracens|heavy_cav_archer",
+        "Spanish|imp_elite_skirm"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 50.96666666666667,
+      "candidateGameSeconds": 50.96666666666667,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 410
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 410
+        }
+      }
+    },
+    {
+      "matchupId": "m_7bf4c642a74217824b64",
+      "seed": 2,
+      "teams": [
+        "Saracens|heavy_cav_archer",
+        "Spanish|imp_elite_skirm"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 3,
+      "candidateWinner": 3,
+      "baselineGameSeconds": 50.28333333333333,
+      "candidateGameSeconds": 50.28333333333333,
+      "baselineRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 15,
+          "hp": 387
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 15,
+          "hp": 387
+        }
+      }
+    },
+    {
+      "matchupId": "m_af47f361f34798711c25",
+      "seed": 0,
+      "teams": [
+        "Bulgarians|elite_konnik_bulgarians",
+        "Turks|heavy_camel"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 56.2,
+      "candidateGameSeconds": 54.63333333333333,
+      "baselineRemaining": {
+        "2": {
+          "units": 13,
+          "hp": 800
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 14,
+          "hp": 898
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_af47f361f34798711c25",
+      "seed": 1,
+      "teams": [
+        "Bulgarians|elite_konnik_bulgarians",
+        "Turks|heavy_camel"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 56.9,
+      "candidateGameSeconds": 54.63333333333333,
+      "baselineRemaining": {
+        "2": {
+          "units": 13,
+          "hp": 998
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 14,
+          "hp": 898
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_af47f361f34798711c25",
+      "seed": 2,
+      "teams": [
+        "Bulgarians|elite_konnik_bulgarians",
+        "Turks|heavy_camel"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 56.2,
+      "candidateGameSeconds": 54.63333333333333,
+      "baselineRemaining": {
+        "2": {
+          "units": 13,
+          "hp": 800
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 14,
+          "hp": 898
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_c4d0b4d4dac68fadd4eb",
+      "seed": 0,
+      "teams": [
+        "Persians|elite_war_elephant_persians",
+        "Spanish|halberdier"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 21.95,
+      "candidateGameSeconds": 22.85,
+      "baselineRemaining": {
+        "2": {
+          "units": 12,
+          "hp": 5262
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 13,
+          "hp": 4958
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_c4d0b4d4dac68fadd4eb",
+      "seed": 1,
+      "teams": [
+        "Persians|elite_war_elephant_persians",
+        "Spanish|halberdier"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 21.95,
+      "candidateGameSeconds": 22.85,
+      "baselineRemaining": {
+        "2": {
+          "units": 12,
+          "hp": 5262
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 13,
+          "hp": 4958
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    },
+    {
+      "matchupId": "m_c4d0b4d4dac68fadd4eb",
+      "seed": 2,
+      "teams": [
+        "Persians|elite_war_elephant_persians",
+        "Spanish|halberdier"
+      ],
+      "exact": false,
+      "winnerChanged": false,
+      "baselineWinner": 2,
+      "candidateWinner": 2,
+      "baselineGameSeconds": 21.95,
+      "candidateGameSeconds": 22.85,
+      "baselineRemaining": {
+        "2": {
+          "units": 12,
+          "hp": 5262
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "candidateRemaining": {
+        "2": {
+          "units": 13,
+          "hp": 4958
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      }
+    }
+  ],
+  "anomalyRetries": 107,
+  "anomalyOutcomes": {
+    "win": 107
+  },
+  "anomalies": [
+    {
+      "matchupId": "m_75259c25e0e311285d0f",
+      "seed": 1,
+      "teams": [
+        "Mapuche|elite_bolas_rider_mapuche",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 9.784780018999998,
+      "lastProgress": {
+        "tick": 2520,
+        "simulationSeconds": 42
+      },
+      "result": {
+        "jobId": "m_75259c25e0e311285d0f",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 473,
+        "startingHpByOwner": {
+          "2": 1560,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 9,
+            "hp": 473
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2821,
+        "family": "kite",
+        "side2": {
+          "slug": "elite_bolas_rider_mapuche",
+          "label": "Elite Bolas Rider",
+          "civ": "Mapuche",
+          "count": 24,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "b0f26c37932829fe75608793633b6f467243ac606acd1f1cb1de5c3e93b90e48",
+        "eventLogHash": "2f018b155c807008fce8b41d3e80dfcfb410dfcfb0e384c342cdf4892ea1fd67"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_318d8eed9fdb6b2a0100",
+      "seed": 0,
+      "teams": [
+        "Berbers|hand_cannoneer",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 15.562194703000015,
+      "lastProgress": {
+        "tick": 1669,
+        "simulationSeconds": 27.816666666666666
+      },
+      "result": {
+        "jobId": "m_318d8eed9fdb6b2a0100",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1217.5,
+        "startingHpByOwner": {
+          "2": 1080,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 19,
+            "hp": 1217.5
+          }
+        },
+        "ticks": 1732,
+        "family": "rvr",
+        "side2": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Berbers",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "0912c964a2a7da42c0e7bdf21702a27c0cc470c36d3bc5d33ea4d9b237de1c8f",
+        "eventLogHash": "2638a341766962c3df43de479aa5f7aef561780a7c294ff5ae717f5020782844"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_1fb69067f9398f2309ce",
+      "seed": 0,
+      "teams": [
+        "Armenians|heavy_scorpion",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 36.160978233,
+      "lastProgress": {
+        "tick": 4021,
+        "simulationSeconds": 67.01666666666667
+      },
+      "result": {
+        "jobId": "m_1fb69067f9398f2309ce",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 699.3954000000003,
+        "startingHpByOwner": {
+          "2": 1320,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 18,
+            "hp": 699.3954000000003
+          }
+        },
+        "ticks": 4125,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Armenians",
+          "count": 22,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "9ead14420178da01f0e8dcf6fef391147de46a1881a8d28ff017923323a4a925",
+        "eventLogHash": "177e83c018876bf28abac9adcf41dbeb278e502e2a4a2d086cbdcf15c4b20c31"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_7f887f8f3fab653c553a",
+      "seed": 2,
+      "teams": [
+        "Bengalis|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 25.082485959000014,
+      "lastProgress": {
+        "tick": 3901,
+        "simulationSeconds": 65.01666666666667
+      },
+      "result": {
+        "jobId": "m_7f887f8f3fab653c553a",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 751,
+        "startingHpByOwner": {
+          "2": 1020,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 13,
+            "hp": 751
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4079,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Bengalis",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "688bd0781ee64ff88041dee57659ec7457ebad8f9bd89f9358cf368858c73868",
+        "eventLogHash": "9939b043e365345f7b465a9d2e9022798c443c2b9804915927b268af3d43589b"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_318d8eed9fdb6b2a0100",
+      "seed": 2,
+      "teams": [
+        "Berbers|hand_cannoneer",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 35.41744466000001,
+      "lastProgress": {
+        "tick": 1606,
+        "simulationSeconds": 26.766666666666666
+      },
+      "result": {
+        "jobId": "m_318d8eed9fdb6b2a0100",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1344,
+        "startingHpByOwner": {
+          "2": 1080,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 19,
+            "hp": 1344
+          }
+        },
+        "ticks": 1747,
+        "family": "rvr",
+        "side2": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Berbers",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "71d556f94b35d4ff733cc2c8c6d87e034c664c63958100971a37c1f4ee309b5c",
+        "eventLogHash": "8ab3b7b8794a81cf65708e24c3068ea33378fac8b9e88404346c76f66df110e4"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_5ae9ad79f7d6a5ddeeb8",
+      "seed": 2,
+      "teams": [
+        "Aztecs|imp_elite_skirm",
+        "Turks|paladin"
+      ],
+      "wallSeconds": 8.971400533000008,
+      "lastProgress": {
+        "tick": 1825,
+        "simulationSeconds": 30.416666666666668
+      },
+      "result": {
+        "jobId": "m_5ae9ad79f7d6a5ddeeb8",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2076,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2380
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 17,
+            "hp": 2076
+          }
+        },
+        "ticks": 1986,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Aztecs",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Turks",
+          "count": 17,
+          "class": "melee"
+        },
+        "finalStateHash": "6c083faffbe7633cae6a0ffed2e96db735948215043c09a2a91597e50eefc80b",
+        "eventLogHash": "de795d7b06b2476595c7805b137dcf37254490355efbf479785fc9bddde02bc5"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_a496158d51565a9c832e",
+      "seed": 2,
+      "teams": [
+        "Bohemians|elite_hussite_wagon_bohemians",
+        "Chinese|arbalester"
+      ],
+      "wallSeconds": 21.922718850000006,
+      "lastProgress": {
+        "tick": 4312,
+        "simulationSeconds": 71.86666666666666
+      },
+      "result": {
+        "jobId": "m_a496158d51565a9c832e",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 3341,
+        "startingHpByOwner": {
+          "2": 3910,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 16,
+            "hp": 3341
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4397,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_hussite_wagon_bohemians",
+          "label": "Elite Hussite Wagon",
+          "civ": "Bohemians",
+          "count": 17,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "civ": "Chinese",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "16f7a5fb67673021ace2302e6f334b18b154147f7a4798c4eddb82325dfa2453",
+        "eventLogHash": "9746785ad5f9b650739847beae0d9e3c4039af1d4a18a5306e93e48ec20b22e9"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_aec31411caccb86c55e5",
+      "seed": 0,
+      "teams": [
+        "Armenians|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 21.559066084999998,
+      "lastProgress": {
+        "tick": 4197,
+        "simulationSeconds": 69.95
+      },
+      "result": {
+        "jobId": "m_aec31411caccb86c55e5",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 624,
+        "startingHpByOwner": {
+          "2": 1020,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 12,
+            "hp": 624
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4292,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Armenians",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "92423fbd797e69a62b2827e55eb7273951e75fa301cdc2d28ab3d7c5c1d64b0a",
+        "eventLogHash": "ea93225054e44584bea17b90bdb04b83e501b86fe2430a825cbf3fc073e77c8c"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_aec31411caccb86c55e5",
+      "seed": 1,
+      "teams": [
+        "Armenians|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 20.915975311999993,
+      "lastProgress": {
+        "tick": 4111,
+        "simulationSeconds": 68.51666666666667
+      },
+      "result": {
+        "jobId": "m_aec31411caccb86c55e5",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 614,
+        "startingHpByOwner": {
+          "2": 1020,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 12,
+            "hp": 614
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4402,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Armenians",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "23dafdf016bd6f70bf5bf650a0a0dac12092b1d88d43e5245a4ce99f2240d630",
+        "eventLogHash": "f82bba7cb0ef869058ce661b26081cc3bc2d0f2db83ef77c940c356b7078b28a"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_d80eb7ee96f46bf06530",
+      "seed": 0,
+      "teams": [
+        "Berbers|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 13.073484087999997,
+      "lastProgress": {
+        "tick": 1483,
+        "simulationSeconds": 24.716666666666665
+      },
+      "result": {
+        "jobId": "m_d80eb7ee96f46bf06530",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1173.5,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 18,
+            "hp": 1173.5
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 1808,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Berbers",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "5767b3fb5e08a105d04214345f0b3a66afddcd79acc82358a616eb2a5d7cce5e",
+        "eventLogHash": "b496d9e1a61c5ef6c76dca047b9da787a706c07d63ce871165eed7ae170c5227"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_aec31411caccb86c55e5",
+      "seed": 2,
+      "teams": [
+        "Armenians|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 18.438314798000007,
+      "lastProgress": {
+        "tick": 3981,
+        "simulationSeconds": 66.35
+      },
+      "result": {
+        "jobId": "m_aec31411caccb86c55e5",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 642,
+        "startingHpByOwner": {
+          "2": 1020,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 12,
+            "hp": 642
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4000,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Armenians",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "da139781a087e2d803a763a53134afc2e8bfe3d4dc2313e2e10da70d1bd2d6ac",
+        "eventLogHash": "983200e77222cce998f2342f0dab43d128b66fe8b626df5661bc838e37936f75"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_de08d5907319e3f1237d",
+      "seed": 0,
+      "teams": [
+        "Aztecs|heavy_scorpion",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 17.285372216000017,
+      "lastProgress": {
+        "tick": 2258,
+        "simulationSeconds": 37.63333333333333
+      },
+      "result": {
+        "jobId": "m_de08d5907319e3f1237d",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 861.6949999999994,
+        "startingHpByOwner": {
+          "2": 880,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 19,
+            "hp": 861.6949999999994
+          }
+        },
+        "ticks": 2514,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Scorpion",
+          "civ": "Aztecs",
+          "count": 22,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "8b308fe7524abb74e560b55e406ce21adbf10bf676ad285f347a4b35bfd36e32",
+        "eventLogHash": "cc204a1ea43c08f3bcef9fce2ed3a6ecf86d60ed688e391a4eb847b929a62bd3"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_de08d5907319e3f1237d",
+      "seed": 2,
+      "teams": [
+        "Aztecs|heavy_scorpion",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 17.605180502000003,
+      "lastProgress": {
+        "tick": 2564,
+        "simulationSeconds": 42.733333333333334
+      },
+      "result": {
+        "jobId": "m_de08d5907319e3f1237d",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 812.4249999999993,
+        "startingHpByOwner": {
+          "2": 880,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 20,
+            "hp": 812.4249999999993
+          }
+        },
+        "ticks": 2595,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Scorpion",
+          "civ": "Aztecs",
+          "count": 22,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "3fc6af322cce94f597e04e5f0952af0b2453db2ce3f32d830803afa03ea40f02",
+        "eventLogHash": "a3e55ee8a06b8be85e684cbdcac53837372310e17bd133ed91629306747e72f3"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_00ce0474739733c6feb2",
+      "seed": 0,
+      "teams": [
+        "Bohemians|elite_hussite_wagon_bohemians",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 25.06249693600001,
+      "lastProgress": {
+        "tick": 5630,
+        "simulationSeconds": 93.83333333333333
+      },
+      "result": {
+        "jobId": "m_00ce0474739733c6feb2",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 2985,
+        "startingHpByOwner": {
+          "2": 3450,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 14,
+            "hp": 2985
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 5854,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_hussite_wagon_bohemians",
+          "label": "Elite Hussite Wagon",
+          "civ": "Bohemians",
+          "count": 15,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "9695cdf6334f831b0bfbf6b493a75189c02a6dece739e7a978afae77af0c2006",
+        "eventLogHash": "18775cdd98feddebefb6abe9d684d3f21bbc62512907cabd634bf6a2f3372315"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_00ce0474739733c6feb2",
+      "seed": 1,
+      "teams": [
+        "Bohemians|elite_hussite_wagon_bohemians",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 24.63799545300001,
+      "lastProgress": {
+        "tick": 5909,
+        "simulationSeconds": 98.48333333333333
+      },
+      "result": {
+        "jobId": "m_00ce0474739733c6feb2",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 2975,
+        "startingHpByOwner": {
+          "2": 3450,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 14,
+            "hp": 2975
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 5935,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_hussite_wagon_bohemians",
+          "label": "Elite Hussite Wagon",
+          "civ": "Bohemians",
+          "count": 15,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "2da10fafdc7071b143b6f5c86198737f18c9114f4c6aea5bd74634df887b4d0f",
+        "eventLogHash": "0b9d8cfb2ed343d3ea1b080f80b87adc875442ad25d34fa55c13b48790ad51a6"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_00ce0474739733c6feb2",
+      "seed": 2,
+      "teams": [
+        "Bohemians|elite_hussite_wagon_bohemians",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 27.641324371000053,
+      "lastProgress": {
+        "tick": 5624,
+        "simulationSeconds": 93.73333333333333
+      },
+      "result": {
+        "jobId": "m_00ce0474739733c6feb2",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 2971,
+        "startingHpByOwner": {
+          "2": 3450,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 14,
+            "hp": 2971
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 6043,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_hussite_wagon_bohemians",
+          "label": "Elite Hussite Wagon",
+          "civ": "Bohemians",
+          "count": 15,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "631bbdc0f19258b00c505bfc5fb96c0cdcda97abffe74fa493e38943d07eb251",
+        "eventLogHash": "0d48be0df3a9752a1547775a7c68b5fcc98b972c41cbf383ff7298e5bcf944c7"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_37f33ea91dbdedda8d83",
+      "seed": 0,
+      "teams": [
+        "Burgundians|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 21.981350999000018,
+      "lastProgress": {
+        "tick": 6562,
+        "simulationSeconds": 109.36666666666666
+      },
+      "result": {
+        "jobId": "m_37f33ea91dbdedda8d83",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 31,
+        "startingHpByOwner": {
+          "2": 680,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 3,
+            "hp": 31
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 7418,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Scorpion",
+          "civ": "Burgundians",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "5d0726c3e118fd1cf6f9bd2861b457decbce18bf17ddd2e3ea1eac48b6516862",
+        "eventLogHash": "b66266350cc08e44927fd8fb15fa9b01a9652496d51e793dd103ef0d6d865512"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_3fb05e487a0685c8dcd7",
+      "seed": 1,
+      "teams": [
+        "Bulgarians|heavy_cav_archer",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 13.957285840999976,
+      "lastProgress": {
+        "tick": 2469,
+        "simulationSeconds": 41.15
+      },
+      "result": {
+        "jobId": "m_3fb05e487a0685c8dcd7",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 830,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 14,
+            "hp": 830
+          }
+        },
+        "ticks": 2858,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Bulgarians",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "788b9cfb3fabca4c107ab69aad71d21aed652e058beffb95d96d78b119d2705e",
+        "eventLogHash": "11a437ff88f815a28af8e61c2a8959c00779c8030e80ad4994bbfbbe0f70c0bb"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_37f33ea91dbdedda8d83",
+      "seed": 1,
+      "teams": [
+        "Burgundians|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 24.85896213,
+      "lastProgress": {
+        "tick": 7065,
+        "simulationSeconds": 117.75
+      },
+      "result": {
+        "jobId": "m_37f33ea91dbdedda8d83",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 52.19599999999995,
+        "startingHpByOwner": {
+          "2": 680,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 6,
+            "hp": 52.19599999999995
+          }
+        },
+        "ticks": 7560,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Scorpion",
+          "civ": "Burgundians",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "4131cd2e74adec79434d30f3ffde74bad4c0779152e3eaa047bf3b603c41cee1",
+        "eventLogHash": "c530947ed3f11ef68feee46c4fffcbcf30fb734e0ed038849601404f3eed91fc"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_77452dc2df8e26c631bd",
+      "seed": 0,
+      "teams": [
+        "Bulgarians|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 11.404128139999987,
+      "lastProgress": {
+        "tick": 1695,
+        "simulationSeconds": 28.25
+      },
+      "result": {
+        "jobId": "m_77452dc2df8e26c631bd",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1173.5,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 18,
+            "hp": 1173.5
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 1808,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Bulgarians",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "af0d4a123eac220ecb7c4b206fbbd8bcb4b2dbfe1f7dd5b6ad4860c70dae0727",
+        "eventLogHash": "b496d9e1a61c5ef6c76dca047b9da787a706c07d63ce871165eed7ae170c5227"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_5e5573811c13a0d956db",
+      "seed": 0,
+      "teams": [
+        "Bohemians|elite_hussite_wagon_bohemians",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 34.37390019799996,
+      "lastProgress": {
+        "tick": 5418,
+        "simulationSeconds": 90.3
+      },
+      "result": {
+        "jobId": "m_5e5573811c13a0d956db",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 3985,
+        "startingHpByOwner": {
+          "2": 4600,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 18,
+            "hp": 3985
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 5604,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_hussite_wagon_bohemians",
+          "label": "Elite Hussite Wagon",
+          "civ": "Bohemians",
+          "count": 20,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "2a36869b6381877ba4fc1c59c813b7ceb89dcb16d90497acf40858c4266f185a",
+        "eventLogHash": "8fa596c50fab0a2673313f72b96555a68e38440be4ae41922f8c6785d37daa65"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_5e5573811c13a0d956db",
+      "seed": 1,
+      "teams": [
+        "Bohemians|elite_hussite_wagon_bohemians",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 31.545167684999992,
+      "lastProgress": {
+        "tick": 5176,
+        "simulationSeconds": 86.26666666666667
+      },
+      "result": {
+        "jobId": "m_5e5573811c13a0d956db",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 4013,
+        "startingHpByOwner": {
+          "2": 4600,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 19,
+            "hp": 4013
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 5439,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_hussite_wagon_bohemians",
+          "label": "Elite Hussite Wagon",
+          "civ": "Bohemians",
+          "count": 20,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "c69b43ce4a9fb60b28ee3e428b02a4454332634506d920a6485081524d292beb",
+        "eventLogHash": "9609cf3a5cbe0ae2e3770ac5aad7af3de08c6ef0e62b5bf899e91ce2142697a6"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_bf1ed614717ec1806ca0",
+      "seed": 0,
+      "teams": [
+        "Burgundians|heavy_scorpion",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 8.284323635000037,
+      "lastProgress": {
+        "tick": 1818,
+        "simulationSeconds": 30.3
+      },
+      "result": {
+        "jobId": "m_bf1ed614717ec1806ca0",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 500.376,
+        "startingHpByOwner": {
+          "2": 880,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 17,
+            "hp": 500.376
+          }
+        },
+        "ticks": 1885,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Scorpion",
+          "civ": "Burgundians",
+          "count": 22,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "5038cbc1f6d27e8ee4b5c68bdbba77cf8068bb40d3bc71c1d741ae7d0f7b3cca",
+        "eventLogHash": "4f060b59749b4d81cf606cb84136c3dcba7c4f6240fbecd3a3f00ccaa7c30aa9"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_8d9ee346dae1cdac7c52",
+      "seed": 0,
+      "teams": [
+        "Bohemians|heavy_mounted_crossbowman",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 10.32249214300001,
+      "lastProgress": {
+        "tick": 2538,
+        "simulationSeconds": 42.3
+      },
+      "result": {
+        "jobId": "m_8d9ee346dae1cdac7c52",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1397.5,
+        "startingHpByOwner": {
+          "2": 1035,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 18,
+            "hp": 1397.5
+          }
+        },
+        "ticks": 2996,
+        "family": "kite",
+        "side2": {
+          "slug": "heavy_mounted_crossbowman",
+          "label": "Mounted Crossbowman",
+          "civ": "Bohemians",
+          "count": 23,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "d2daf8bc2d93b8e7525f8e514963f4820524014f18d633e18b0050d819c399a8",
+        "eventLogHash": "524d048e97e9fd25215a19cea0b14bf0d414578fa115049cb880017deefc7957"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_d687b81fffad659d9b72",
+      "seed": 1,
+      "teams": [
+        "Bulgarians|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 13.851720361999993,
+      "lastProgress": {
+        "tick": 1629,
+        "simulationSeconds": 27.15
+      },
+      "result": {
+        "jobId": "m_d687b81fffad659d9b72",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1939,
+        "startingHpByOwner": {
+          "2": 810,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 1939
+          }
+        },
+        "ticks": 1807,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Archer",
+          "civ": "Bulgarians",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "b0dcf3bb88d36465181a23ba3ca6ff07c57d1b518bbd374587a51e9060a65855",
+        "eventLogHash": "6a398a43a7f9647d9df5d15632c6417d405d3ea05b2d2bfc65d8908848ae1bdd"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_5e5573811c13a0d956db",
+      "seed": 2,
+      "teams": [
+        "Bohemians|elite_hussite_wagon_bohemians",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 31.766825271000037,
+      "lastProgress": {
+        "tick": 5651,
+        "simulationSeconds": 94.18333333333334
+      },
+      "result": {
+        "jobId": "m_5e5573811c13a0d956db",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 3987,
+        "startingHpByOwner": {
+          "2": 4600,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 18,
+            "hp": 3987
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 5654,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_hussite_wagon_bohemians",
+          "label": "Elite Hussite Wagon",
+          "civ": "Bohemians",
+          "count": 20,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "5f46e8d5f06aaf2c0c688152506f0169074ba2acf504d8ba0eed2ce2866b00bb",
+        "eventLogHash": "16f529d086d9fa67914cee0c5b436c2d8f90be5d1ef35a60e10cfb1a42de1f48"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_e1b16d1cc27900b777f4",
+      "seed": 2,
+      "teams": [
+        "Britons|heavy_mounted_crossbowman",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 11.204729501000024,
+      "lastProgress": {
+        "tick": 2993,
+        "simulationSeconds": 49.88333333333333
+      },
+      "result": {
+        "jobId": "m_e1b16d1cc27900b777f4",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1069,
+        "startingHpByOwner": {
+          "2": 1265,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 14,
+            "hp": 1069
+          }
+        },
+        "ticks": 3484,
+        "family": "kite",
+        "side2": {
+          "slug": "heavy_mounted_crossbowman",
+          "label": "Heavy Mounted Crossbowman",
+          "civ": "Britons",
+          "count": 23,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "f329283e8016e38d2a9955ff20ef47c472257e45f6ddcce3fad6c86d6d0f6e35",
+        "eventLogHash": "95260ec91e359df393d3c989a0b17cb22a9321b60a8409304104306f9f18c5b0"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_ed79846db7272bf05960",
+      "seed": 2,
+      "teams": [
+        "Britons|imp_elite_skirm",
+        "Turks|paladin"
+      ],
+      "wallSeconds": 7.0282852799999525,
+      "lastProgress": {
+        "tick": 1823,
+        "simulationSeconds": 30.383333333333333
+      },
+      "result": {
+        "jobId": "m_ed79846db7272bf05960",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2219,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2380
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 17,
+            "hp": 2219
+          }
+        },
+        "ticks": 1986,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Britons",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Turks",
+          "count": 17,
+          "class": "melee"
+        },
+        "finalStateHash": "7f9e44c58a092357b8dbba13e8e6a21b0f69f1d893f882418b663ce07c3442ea",
+        "eventLogHash": "40d09e9911e91eee27b01334af52bdda90c7622e4f537010005564e7b533a2ee"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_d687b81fffad659d9b72",
+      "seed": 0,
+      "teams": [
+        "Bulgarians|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 26.13158022199996,
+      "lastProgress": {
+        "tick": 1759,
+        "simulationSeconds": 29.316666666666666
+      },
+      "result": {
+        "jobId": "m_d687b81fffad659d9b72",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1934,
+        "startingHpByOwner": {
+          "2": 810,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 24,
+            "hp": 1934
+          }
+        },
+        "ticks": 1817,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Archer",
+          "civ": "Bulgarians",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "f43a811055f6b01430cf43112476374171850833d17ef4aa9917200c6c7d01a3",
+        "eventLogHash": "e6d4964b98f9c93186eb606f0ba3ba5c9a5a401f0fc0b5901f96e01edf8846f3"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_5c951a7bad151e048fb7",
+      "seed": 0,
+      "teams": [
+        "Cumans|imp_elite_skirm",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 8.402359457999992,
+      "lastProgress": {
+        "tick": 1925,
+        "simulationSeconds": 32.083333333333336
+      },
+      "result": {
+        "jobId": "m_5c951a7bad151e048fb7",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2008,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2185
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 2008
+          }
+        },
+        "ticks": 1935,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Cumans",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 23,
+          "class": "melee"
+        },
+        "finalStateHash": "2b6d1e9ba97789209681caab7c5107363a57f3305d859381030d5309580dcd31",
+        "eventLogHash": "406628a9a089027b3dcb9bb43d3144375683dff48be0d17cab775a09d6c0c74f"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_9f24a61daa053dd6cbde",
+      "seed": 0,
+      "teams": [
+        "Celts|imp_elite_skirm",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 9.662172053999965,
+      "lastProgress": {
+        "tick": 1873,
+        "simulationSeconds": 31.216666666666665
+      },
+      "result": {
+        "jobId": "m_9f24a61daa053dd6cbde",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2008,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2185
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 2008
+          }
+        },
+        "ticks": 1935,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Celts",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 23,
+          "class": "melee"
+        },
+        "finalStateHash": "28f4baf81c12d439c01c1e140cc1bd1c56a7066111945355737416ec4d0a0aff",
+        "eventLogHash": "042a2db9bd8472d9e9626ec7cadd9853c32f9dc0fe4d3f4ff70a30d03df5ccef"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_a315a10a95405cac3c93",
+      "seed": 1,
+      "teams": [
+        "Cumans|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 15.575967237000004,
+      "lastProgress": {
+        "tick": 1750,
+        "simulationSeconds": 29.166666666666668
+      },
+      "result": {
+        "jobId": "m_a315a10a95405cac3c93",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1887,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 1887
+          }
+        },
+        "ticks": 2018,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Crossbowman",
+          "civ": "Cumans",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "b2bcd55fc9ce86cdcf077ab4f777586e9d5ba47fac01cceea80a61dc73ee1059",
+        "eventLogHash": "6d7595d7a0179b56eda51b1c283f3ec4d67ac9ac0aa8b5da6fcd014b6a9e6c49"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_a315a10a95405cac3c93",
+      "seed": 0,
+      "teams": [
+        "Cumans|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 30.664925248000014,
+      "lastProgress": {
+        "tick": 2061,
+        "simulationSeconds": 34.35
+      },
+      "result": {
+        "jobId": "m_a315a10a95405cac3c93",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1844,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 22,
+            "hp": 1844
+          }
+        },
+        "ticks": 2125,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Crossbowman",
+          "civ": "Cumans",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "8948ca2b9ed0b9ca4fe10824d6c1c02492cb1d2ad8971140d530a235cb54b7bc",
+        "eventLogHash": "bd0e70aedfcf33a375d039cbc832dd3dd343466f08fccc28496a4fde69fa2228"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_c4816b60d8b32f7a77cb",
+      "seed": 1,
+      "teams": [
+        "Chinese|heavy_cav_archer",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 12.017594566999993,
+      "lastProgress": {
+        "tick": 1967,
+        "simulationSeconds": 32.78333333333333
+      },
+      "result": {
+        "jobId": "m_c4816b60d8b32f7a77cb",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1260,
+        "startingHpByOwner": {
+          "2": 1890,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 20,
+            "hp": 1260
+          }
+        },
+        "ticks": 2310,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Cavalry Archer",
+          "civ": "Chinese",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "8c2bccb3e7dc098ebe156260eda1547f89a64511b88542c842dd8067ea61036f",
+        "eventLogHash": "86fac476f006ef607957a090d453cabe13cae4cc7866c8f6c52aaa2ec1a5fb2b"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_ab29a22ad2541ca15219",
+      "seed": 1,
+      "teams": [
+        "Celts|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 16.807975320999976,
+      "lastProgress": {
+        "tick": 2003,
+        "simulationSeconds": 33.38333333333333
+      },
+      "result": {
+        "jobId": "m_ab29a22ad2541ca15219",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1990,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 24,
+            "hp": 1990
+          }
+        },
+        "ticks": 2106,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Crossbowman",
+          "civ": "Celts",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "1bed8e0baedceb02862466487fd4283c68c64d15de316fe54bd21b292aca8329",
+        "eventLogHash": "c7666933e0d520e51a1601740f056a6a9e6acbc4d80dccbf78be73d1c881f396"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_ca7c090fe84eedf9b08a",
+      "seed": 0,
+      "teams": [
+        "Chinese|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 18.580792098000007,
+      "lastProgress": {
+        "tick": 3466,
+        "simulationSeconds": 57.766666666666666
+      },
+      "result": {
+        "jobId": "m_ca7c090fe84eedf9b08a",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 699,
+        "startingHpByOwner": {
+          "2": 1020,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 12,
+            "hp": 699
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 3517,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Chinese",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "e7ffe2f369a31e70742e9aa9b17af592978ea6c859785cbcc9d1856cc63017c0",
+        "eventLogHash": "f699b27ecb4da785b81a43a41858b1125d554b4423228656ca8be806da96149c"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_ab29a22ad2541ca15219",
+      "seed": 0,
+      "teams": [
+        "Celts|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 41.406114890000026,
+      "lastProgress": {
+        "tick": 2100,
+        "simulationSeconds": 35
+      },
+      "result": {
+        "jobId": "m_ab29a22ad2541ca15219",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1984,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 24,
+            "hp": 1984
+          }
+        },
+        "ticks": 2225,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Crossbowman",
+          "civ": "Celts",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "6de5cfdda025f48dafdda79ba4a0499674b1c9220749962acad2037562cefc2e",
+        "eventLogHash": "4d8a8c6b8f4115c1d9c7ef229938157c4ee2fc9acd165dda8716e943f0511a81"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_ca7c090fe84eedf9b08a",
+      "seed": 1,
+      "teams": [
+        "Chinese|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 17.86380361100001,
+      "lastProgress": {
+        "tick": 2799,
+        "simulationSeconds": 46.65
+      },
+      "result": {
+        "jobId": "m_ca7c090fe84eedf9b08a",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 717,
+        "startingHpByOwner": {
+          "2": 1020,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 14,
+            "hp": 717
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 3098,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Chinese",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "82b2e578942cb464d9b54271c7b08fe554dd98e0cf06aaeeffb713b9be2df4dd",
+        "eventLogHash": "f916d6ed2528b996f8e86becd9dd6bfccdffe23fce566cc63ec512a0d8c65c0b"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_ca7c090fe84eedf9b08a",
+      "seed": 2,
+      "teams": [
+        "Chinese|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 17.120289836000012,
+      "lastProgress": {
+        "tick": 2829,
+        "simulationSeconds": 47.15
+      },
+      "result": {
+        "jobId": "m_ca7c090fe84eedf9b08a",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 718,
+        "startingHpByOwner": {
+          "2": 1020,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 14,
+            "hp": 718
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 3142,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Chinese",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "e0bb2641ffa620704c6f5e0dc6da6c43469f6f8fe335f9d267036ccc6cebf6f1",
+        "eventLogHash": "527ef83a5b4600b4e62b35f5679c4598cb6cd85427bb7172f097f6c73bce18ed"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_0445c2f7cdd81c9446b9",
+      "seed": 0,
+      "teams": [
+        "Goths|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 10.377187304999971,
+      "lastProgress": {
+        "tick": 1946,
+        "simulationSeconds": 32.43333333333333
+      },
+      "result": {
+        "jobId": "m_0445c2f7cdd81c9446b9",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1011.5,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 15,
+            "hp": 1011.5
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2077,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Goths",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "13db41b8b5c05d119e8d1f45d08a3d5aa3e78073423f24ed1302f01fda4276ae",
+        "eventLogHash": "5fb125a727b58f5c14b233c5f6ec7a9538d1f6fba56568111afcd16f7f0bc122"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_0445c2f7cdd81c9446b9",
+      "seed": 1,
+      "teams": [
+        "Goths|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 9.685548843000026,
+      "lastProgress": {
+        "tick": 1827,
+        "simulationSeconds": 30.45
+      },
+      "result": {
+        "jobId": "m_0445c2f7cdd81c9446b9",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1000.5,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 16,
+            "hp": 1000.5
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2124,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Goths",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "6fff5dbe6cec67e2fed3e15f0b2442af90e3f92129d5190736c0f98011d83e0b",
+        "eventLogHash": "ee1e93be03a5467f320758d88207cea9f61fc261ce1ea648e36a3492854dcaa6"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_541cb4f47757dc381e24",
+      "seed": 1,
+      "teams": [
+        "Franks|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 12.050020572999959,
+      "lastProgress": {
+        "tick": 1714,
+        "simulationSeconds": 28.566666666666666
+      },
+      "result": {
+        "jobId": "m_541cb4f47757dc381e24",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2058,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 2058
+          }
+        },
+        "ticks": 1871,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Crossbowman",
+          "civ": "Franks",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "a9bad2e613585ad6dfda5e6e9df825fb25a616c90a8e0186801ed1cc2d01bafe",
+        "eventLogHash": "3ce0f4adbc1085dd1424a64fc4331054a3174b18ac61f28896948896e728a5f2"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_541cb4f47757dc381e24",
+      "seed": 0,
+      "teams": [
+        "Franks|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 28.745686124,
+      "lastProgress": {
+        "tick": 1672,
+        "simulationSeconds": 27.866666666666667
+      },
+      "result": {
+        "jobId": "m_541cb4f47757dc381e24",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2056,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 2056
+          }
+        },
+        "ticks": 1786,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Crossbowman",
+          "civ": "Franks",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "4178a5d792bf4874e555d2da8e5b8831c568d7db645887a18fd4aedfbef5e932",
+        "eventLogHash": "baae851bd01bea3d8f1f6554bb8974217f09b34b962129ec331c534be5796b77"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_a3d5818088a977998b00",
+      "seed": 0,
+      "teams": [
+        "Georgians|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 9.379462075999996,
+      "lastProgress": {
+        "tick": 1979,
+        "simulationSeconds": 32.983333333333334
+      },
+      "result": {
+        "jobId": "m_a3d5818088a977998b00",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1039.7177777777995,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 15,
+            "hp": 1039.7177777777995
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2077,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Georgians",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "af00b19b6d61a40a9d57127f7cb358b77fce975ad96c983a2f182fd1a8d925ad",
+        "eventLogHash": "075388952d813074b29e9bda837f2fe0cdab6ec0cb10ceaaf642afd28967e293"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_884099beb2270e9030a6",
+      "seed": 0,
+      "teams": [
+        "Dravidians|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 33.473106364,
+      "lastProgress": {
+        "tick": 3978,
+        "simulationSeconds": 66.3
+      },
+      "result": {
+        "jobId": "m_884099beb2270e9030a6",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 707,
+        "startingHpByOwner": {
+          "2": 1080,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 13,
+            "hp": 707
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4228,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Dravidians",
+          "count": 18,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "32f6692c1c2ac4726014b5e0ded0a9fd92d087cd695b74a90fb5a632af6467d3",
+        "eventLogHash": "4d66e2c4092f92988ba0aabcf5d98b5a4d4a32618368b4a1c4bcafa034cddc76"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_884099beb2270e9030a6",
+      "seed": 1,
+      "teams": [
+        "Dravidians|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 31.162209676,
+      "lastProgress": {
+        "tick": 3794,
+        "simulationSeconds": 63.233333333333334
+      },
+      "result": {
+        "jobId": "m_884099beb2270e9030a6",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 731,
+        "startingHpByOwner": {
+          "2": 1080,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 15,
+            "hp": 731
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4034,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Dravidians",
+          "count": 18,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "1e0da7a0a5071d0d349a88099746cb98afa3d6b106ef75d3c2659ea58fc29b57",
+        "eventLogHash": "2abd273a76ae6dd15dc21c482613a4545d626573023b60a0011dd412f5f0c3f0"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_a3d5818088a977998b00",
+      "seed": 1,
+      "teams": [
+        "Georgians|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 11.191208843,
+      "lastProgress": {
+        "tick": 1635,
+        "simulationSeconds": 27.25
+      },
+      "result": {
+        "jobId": "m_a3d5818088a977998b00",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1026.8627777777838,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 16,
+            "hp": 1026.8627777777838
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2124,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Georgians",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "5d7063748dc5c64db45e4fd75e1cb8fffa8065da9e47986de941142a22890342",
+        "eventLogHash": "213b32095a6f7777b9445581a0217e5020ae0dc8b598520dc7c934fc29f51fa4"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_884099beb2270e9030a6",
+      "seed": 2,
+      "teams": [
+        "Dravidians|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 40.191564125000006,
+      "lastProgress": {
+        "tick": 4332,
+        "simulationSeconds": 72.2
+      },
+      "result": {
+        "jobId": "m_884099beb2270e9030a6",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 686,
+        "startingHpByOwner": {
+          "2": 1080,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 13,
+            "hp": 686
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4656,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Dravidians",
+          "count": 18,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "31b7a9585e6a2d9e0aa793ea426733f7c9673bcabc26827860c3c76a47b43782",
+        "eventLogHash": "ddc5efc3864ab9057db0569cbdb328c1efc1a750296205f6f547f15bed620ee9"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_c75495b82b2961071269",
+      "seed": 1,
+      "teams": [
+        "Dravidians|heavy_scorpion",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 46.657201266,
+      "lastProgress": {
+        "tick": 4159,
+        "simulationSeconds": 69.31666666666666
+      },
+      "result": {
+        "jobId": "m_c75495b82b2961071269",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 377.5398000000002,
+        "startingHpByOwner": {
+          "2": 1440,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 12,
+            "hp": 377.5398000000002
+          }
+        },
+        "ticks": 4469,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Dravidians",
+          "count": 24,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "1cd81d53fdd1fc6e3baf67b21b4af09d71b7d34daa36117d51abbc77dee7c137",
+        "eventLogHash": "98c8030f68bbbf9955230bff72a9bd85bfd8fcb51949bad5a4e11007db80e3bd"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_0c68e610b8767183612d",
+      "seed": 0,
+      "teams": [
+        "Khitans|mounted_trebuchet_khitans",
+        "Turks|paladin"
+      ],
+      "wallSeconds": 12.001598587,
+      "lastProgress": {
+        "tick": 2197,
+        "simulationSeconds": 36.61666666666667
+      },
+      "result": {
+        "jobId": "m_0c68e610b8767183612d",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1478.6666666667272,
+        "startingHpByOwner": {
+          "2": 1275,
+          "3": 3780
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 1478.6666666667272
+          }
+        },
+        "ticks": 2352,
+        "family": "siege",
+        "side2": {
+          "slug": "mounted_trebuchet_khitans",
+          "label": "Mounted Trebuchet",
+          "civ": "Khitans",
+          "count": 17,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Turks",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "0fcc7a089478c42543c5a04d02ae51ff487d36ace643be0b2ae74a47894bfa0b",
+        "eventLogHash": "43c5b2f5a6b002a217ab21612668f3385e8e4434b980ce7cd3769c8070d86c02"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_1dcec090a20ee815ce4c",
+      "seed": 1,
+      "teams": [
+        "Huns|heavy_cav_archer",
+        "Chinese|arbalester"
+      ],
+      "wallSeconds": 14.205023473,
+      "lastProgress": {
+        "tick": 1902,
+        "simulationSeconds": 31.7
+      },
+      "result": {
+        "jobId": "m_1dcec090a20ee815ce4c",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 612,
+        "startingHpByOwner": {
+          "2": 2000,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 9,
+            "hp": 612
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2566,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Huns",
+          "count": 25,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "civ": "Chinese",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "b74001d891f877e115f525ee9510bb339aae1b84a1761fc5585f692ffab0bc95",
+        "eventLogHash": "5d6a0c17548d41116fc793da11753ff964c8249c60c9b26b7f128186c29da2b0"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_37c30f06e68d852f5c25",
+      "seed": 1,
+      "teams": [
+        "Italians|heavy_mounted_crossbowman",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 9.728783201999999,
+      "lastProgress": {
+        "tick": 1883,
+        "simulationSeconds": 31.383333333333333
+      },
+      "result": {
+        "jobId": "m_37c30f06e68d852f5c25",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1325,
+        "startingHpByOwner": {
+          "2": 1690,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 20,
+            "hp": 1325
+          }
+        },
+        "ticks": 2141,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_mounted_crossbowman",
+          "label": "Mounted Crossbowman",
+          "civ": "Italians",
+          "count": 26,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "91e9e3afa9ca6ef15887a9e4c2b37d603f9ddc5a176da6a5ec9996a60bab450e",
+        "eventLogHash": "d1be1a2fa2744ddeb21aa7874bc1402120f96ff5f3cafdcb72f6ea118dacabb6"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_c75495b82b2961071269",
+      "seed": 2,
+      "teams": [
+        "Dravidians|heavy_scorpion",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 63.882681179,
+      "lastProgress": {
+        "tick": 4277,
+        "simulationSeconds": 71.28333333333333
+      },
+      "result": {
+        "jobId": "m_c75495b82b2961071269",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 354.39360000000016,
+        "startingHpByOwner": {
+          "2": 1440,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 12,
+            "hp": 354.39360000000016
+          }
+        },
+        "ticks": 4455,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Dravidians",
+          "count": 24,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "f5deaa3f00c7638de39c3935ce09274ca3a96cba23810bc8f6abc9ea8b3b1f77",
+        "eventLogHash": "41b532a2f60394313486dca22b5dbdc0fe349eaf5d22fbf42a52e96be97679ab"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_cfef7e2dfe096a793b5f",
+      "seed": 0,
+      "teams": [
+        "Gurjaras|imp_elite_skirm",
+        "Turks|paladin"
+      ],
+      "wallSeconds": 7.114137627999996,
+      "lastProgress": {
+        "tick": 1813,
+        "simulationSeconds": 30.216666666666665
+      },
+      "result": {
+        "jobId": "m_cfef7e2dfe096a793b5f",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2079,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2240
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 16,
+            "hp": 2079
+          }
+        },
+        "ticks": 1936,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Gurjaras",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Turks",
+          "count": 16,
+          "class": "melee"
+        },
+        "finalStateHash": "897ce9c582052a00a280f09ab445ade9b487ad4b03f3f8de84e553a21ec4954d",
+        "eventLogHash": "9d14fce8fb5d95318b2a3e8cd8890119edb240a9b93d114fe79d649bf1fd1464"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_6ae4fc5733a4bef055c4",
+      "seed": 0,
+      "teams": [
+        "Khmer|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 8.261044321000002,
+      "lastProgress": {
+        "tick": 1507,
+        "simulationSeconds": 25.116666666666667
+      },
+      "result": {
+        "jobId": "m_6ae4fc5733a4bef055c4",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1225.5,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 18,
+            "hp": 1225.5
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 1946,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Khmer",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "97674bfd7948e9413666d7aad37d601c0ec553a7e12c13c03320776471689490",
+        "eventLogHash": "e68c303d319dbf39a76c72eb27b9470645363839ac3f6b15a600e08b07874062"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_b87035b586b3baac05d8",
+      "seed": 1,
+      "teams": [
+        "Jurchens|heavy_cav_archer",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 11.441800977,
+      "lastProgress": {
+        "tick": 2665,
+        "simulationSeconds": 44.416666666666664
+      },
+      "result": {
+        "jobId": "m_b87035b586b3baac05d8",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 780,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 13,
+            "hp": 780
+          }
+        },
+        "ticks": 2935,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Jurchens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "cf6260e9822ced3143f19571b09243e463b7f4a2afb36ee9503dca285dcaa6fe",
+        "eventLogHash": "c45d866e03016c87159ae9e0e216edddac928e4c6f78b89fd6c732ed486bad3c"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_927a914ef2de84d80395",
+      "seed": 0,
+      "teams": [
+        "Incas|imp_elite_skirm",
+        "Turks|paladin"
+      ],
+      "wallSeconds": 7.101048748000001,
+      "lastProgress": {
+        "tick": 1812,
+        "simulationSeconds": 30.2
+      },
+      "result": {
+        "jobId": "m_927a914ef2de84d80395",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2079,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2240
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 16,
+            "hp": 2079
+          }
+        },
+        "ticks": 1936,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Incas",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Turks",
+          "count": 16,
+          "class": "melee"
+        },
+        "finalStateHash": "10ff739627b58df35c9bec91426e04d3cc7c4722d475bd76dc0ce207ecbd32c7",
+        "eventLogHash": "84d5a4ea609dbeab2741bf31c630ac94362a99a29e70e41c0ff796b08b0bf387"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_ce33e3944153ff258187",
+      "seed": 1,
+      "teams": [
+        "Incas|imp_elite_skirm",
+        "Spanish|champion"
+      ],
+      "wallSeconds": 8.117927857999996,
+      "lastProgress": {
+        "tick": 1799,
+        "simulationSeconds": 29.983333333333334
+      },
+      "result": {
+        "jobId": "m_ce33e3944153ff258187",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1355,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 1540
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 21,
+            "hp": 1355
+          }
+        },
+        "ticks": 2073,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Incas",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "champion",
+          "label": "Champion",
+          "civ": "Spanish",
+          "count": 22,
+          "class": "melee"
+        },
+        "finalStateHash": "4046111ad5895d6f3304635d96044ac315e9dd262ba1e64773b90d07ac045fae",
+        "eventLogHash": "2bda892c237ee2a79a5e528c4c6fbd134e9b0abb65f2fce4a24ed4ac148e0645"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_4fcb05713847c40f4b5e",
+      "seed": 1,
+      "teams": [
+        "Mayans|elite_plumed_archer_mayans",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 15.234260200000005,
+      "lastProgress": {
+        "tick": 2592,
+        "simulationSeconds": 43.2
+      },
+      "result": {
+        "jobId": "m_4fcb05713847c40f4b5e",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 801,
+        "startingHpByOwner": {
+          "2": 1755,
+          "3": 2000
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 12,
+            "hp": 801
+          }
+        },
+        "ticks": 3457,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_plumed_archer_mayans",
+          "label": "Elite Plumed Archer",
+          "civ": "Mayans",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 25,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "f80012aaf684d5dac4aa50c73b4e7b96851462fb51ccf25426154223903d450e",
+        "eventLogHash": "aec9f39584a6cbbfaca01cfd6f2b250f0b47548b03b4face30edf1376b31fbc8"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_4fcb05713847c40f4b5e",
+      "seed": 0,
+      "teams": [
+        "Mayans|elite_plumed_archer_mayans",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 16.299931115,
+      "lastProgress": {
+        "tick": 3735,
+        "simulationSeconds": 62.25
+      },
+      "result": {
+        "jobId": "m_4fcb05713847c40f4b5e",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 754,
+        "startingHpByOwner": {
+          "2": 1755,
+          "3": 2000
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 11,
+            "hp": 754
+          }
+        },
+        "ticks": 3751,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_plumed_archer_mayans",
+          "label": "Elite Plumed Archer",
+          "civ": "Mayans",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 25,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "a377f56391afb3cf21f35a614759042b415a8c604a08d9c7baf59266d2be2149",
+        "eventLogHash": "74c21fa03fee0f0e1df54171bf9f1c65d2e3fbbfb8ec3000ea355a7f40168942"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_4fcb05713847c40f4b5e",
+      "seed": 2,
+      "teams": [
+        "Mayans|elite_plumed_archer_mayans",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 15.151494426999998,
+      "lastProgress": {
+        "tick": 3132,
+        "simulationSeconds": 52.2
+      },
+      "result": {
+        "jobId": "m_4fcb05713847c40f4b5e",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 757,
+        "startingHpByOwner": {
+          "2": 1755,
+          "3": 2000
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 11,
+            "hp": 757
+          }
+        },
+        "ticks": 3729,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_plumed_archer_mayans",
+          "label": "Elite Plumed Archer",
+          "civ": "Mayans",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 25,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "93d7c604bd296accac1db0902c6aa6180014336d0592c3cedaef0614af87510e",
+        "eventLogHash": "7b4872a4bdeac0fb490e4bcddb06b3d769f5fb995ca59af827675a61575c999e"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_a16ec12f3502b6cdd334",
+      "seed": 0,
+      "teams": [
+        "Koreans|elite_war_wagon_koreans",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 8.453441699999996,
+      "lastProgress": {
+        "tick": 2108,
+        "simulationSeconds": 35.13333333333333
+      },
+      "result": {
+        "jobId": "m_a16ec12f3502b6cdd334",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 3456,
+        "startingHpByOwner": {
+          "2": 4400,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 18,
+            "hp": 3456
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2221,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_war_wagon_koreans",
+          "label": "Elite War Wagon",
+          "civ": "Koreans",
+          "count": 22,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "36f3fe3227c8baf4d0019d18b5228450cca01aff047c2de51dcb8c39e6e61bcf",
+        "eventLogHash": "cf018f9e968d7ae002c51a1e2486df0d433d728f9e7c92f3d7a6b9f3fa57ee3c"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_edc9b0f477d0c4e3b8cb",
+      "seed": 1,
+      "teams": [
+        "Malians|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 12.060211746,
+      "lastProgress": {
+        "tick": 1815,
+        "simulationSeconds": 30.25
+      },
+      "result": {
+        "jobId": "m_edc9b0f477d0c4e3b8cb",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1561,
+        "startingHpByOwner": {
+          "2": 1080,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 20,
+            "hp": 1561
+          }
+        },
+        "ticks": 2104,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "civ": "Malians",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "f1e268a0a862522724797b299c78adf7f878065bfc090a76e20be467cb0cd2c5",
+        "eventLogHash": "8b57b3c96ec875726caf318152f962b8b2f27a2ba49efc26f26ec437d1451417"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_03d5ca59552b4d81aecf",
+      "seed": 0,
+      "teams": [
+        "Portuguese|heavy_scorpion",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 26.173338447999996,
+      "lastProgress": {
+        "tick": 2528,
+        "simulationSeconds": 42.13333333333333
+      },
+      "result": {
+        "jobId": "m_03d5ca59552b4d81aecf",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 704.7899999999993,
+        "startingHpByOwner": {
+          "2": 960,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 18,
+            "hp": 704.7899999999993
+          }
+        },
+        "ticks": 2819,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Scorpion",
+          "civ": "Portuguese",
+          "count": 24,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "4123b6b5db1267ef4b12e9226501824a1f6a4087152aa976148f79a783a8b828",
+        "eventLogHash": "68269c7c4a88eae71d4784b5c965cac183ea52e241092c9feb9603c45644304c"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_03d5ca59552b4d81aecf",
+      "seed": 2,
+      "teams": [
+        "Portuguese|heavy_scorpion",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 24.359472993999997,
+      "lastProgress": {
+        "tick": 2495,
+        "simulationSeconds": 41.583333333333336
+      },
+      "result": {
+        "jobId": "m_03d5ca59552b4d81aecf",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 685.6979999999993,
+        "startingHpByOwner": {
+          "2": 960,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 18,
+            "hp": 685.6979999999993
+          }
+        },
+        "ticks": 2868,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Scorpion",
+          "civ": "Portuguese",
+          "count": 24,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "f15c5c9047c4ddc5d004834e170aa7713b1ad51e187f23378cd2a62442fefd5b",
+        "eventLogHash": "8672aea973a73b64133a4f03e43648ef8e1a665f70dbe7cc1a030e15c8b5d84d"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_2001b4ec56e343b36fac",
+      "seed": 1,
+      "teams": [
+        "Muisca|imp_elite_skirm",
+        "Spanish|champion"
+      ],
+      "wallSeconds": 7.6004607829999875,
+      "lastProgress": {
+        "tick": 1664,
+        "simulationSeconds": 27.733333333333334
+      },
+      "result": {
+        "jobId": "m_2001b4ec56e343b36fac",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1497,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 1680
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 1497
+          }
+        },
+        "ticks": 1790,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Muisca",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "champion",
+          "label": "Champion",
+          "civ": "Spanish",
+          "count": 24,
+          "class": "melee"
+        },
+        "finalStateHash": "2a793c349ed1bf53b4e3acb12d0ccf20c474220c501264ac7e8df8d8fe9402fe",
+        "eventLogHash": "b7d177cf956b75dcd0b1f9fa630c50b8190f7378ffac596b8c7414b36ca1d0ac"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_793dc0d956f79e4e43dd",
+      "seed": 1,
+      "teams": [
+        "Muisca|elite_guecha_warrior_muisca",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 12.23568099600001,
+      "lastProgress": {
+        "tick": 3379,
+        "simulationSeconds": 56.31666666666667
+      },
+      "result": {
+        "jobId": "m_793dc0d956f79e4e43dd",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1088,
+        "startingHpByOwner": {
+          "2": 1380,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 16,
+            "hp": 1088
+          }
+        },
+        "ticks": 3627,
+        "family": "kite",
+        "side2": {
+          "slug": "elite_guecha_warrior_muisca",
+          "label": "Elite Guecha Warrior",
+          "civ": "Muisca",
+          "count": 23,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "907ace534f32ef4d38efb57341d3c329d0fa8fc8e6d79eaf7ce13fe7255e0418",
+        "eventLogHash": "690debd7ac7954934f91f34706f8387af36ffa2084862885797b0f0da442d90e"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_60fc1eebd5894d219d2a",
+      "seed": 2,
+      "teams": [
+        "Romans|heavy_scorpion",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 22.072865919000005,
+      "lastProgress": {
+        "tick": 2447,
+        "simulationSeconds": 40.78333333333333
+      },
+      "result": {
+        "jobId": "m_60fc1eebd5894d219d2a",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 912,
+        "startingHpByOwner": {
+          "2": 1560,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 16,
+            "hp": 912
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2599,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Romans",
+          "count": 26,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "49d73170f8a0a873f02ec85fa924f2c6864e8756c6a949c71997c84fd870a2f8",
+        "eventLogHash": "9becf6ab3cff52b4b5eadd773361acbf5a7ef5f9f8ff42d90a5da520226aa787"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_0645f9dd7620892eaeeb",
+      "seed": 2,
+      "teams": [
+        "Mapuche|imp_elite_skirm",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 66.848270423,
+      "lastProgress": {
+        "tick": 2326,
+        "simulationSeconds": 38.766666666666666
+      },
+      "result": {
+        "jobId": "m_0645f9dd7620892eaeeb",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1923.5000000000005,
+        "startingHpByOwner": {
+          "2": 1350,
+          "3": 2185
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 1923.5000000000005
+          }
+        },
+        "ticks": 2363,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Mapuche",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 23,
+          "class": "melee"
+        },
+        "finalStateHash": "f7d3f414fd4b9366a63150f18d1a21a3097023414ce882e2f9d25a100db8b306",
+        "eventLogHash": "aa039253fbca9acaeb782f44ed7f70b27a0a8f2af18b061e46817651a1aff715"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_793dc0d956f79e4e43dd",
+      "seed": 2,
+      "teams": [
+        "Muisca|elite_guecha_warrior_muisca",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 9.139352767000004,
+      "lastProgress": {
+        "tick": 2901,
+        "simulationSeconds": 48.35
+      },
+      "result": {
+        "jobId": "m_793dc0d956f79e4e43dd",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1200,
+        "startingHpByOwner": {
+          "2": 1380,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 18,
+            "hp": 1200
+          }
+        },
+        "ticks": 3330,
+        "family": "kite",
+        "side2": {
+          "slug": "elite_guecha_warrior_muisca",
+          "label": "Elite Guecha Warrior",
+          "civ": "Muisca",
+          "count": 23,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "65d14092b91d81e8fbf44b17ca1475a8db44daacbeb4f5862232507dd3c9c997",
+        "eventLogHash": "61a9a566a16067a255892cf37fec8e3506de7cd881f878549f6e5f151c8cc79a"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_793dc0d956f79e4e43dd",
+      "seed": 0,
+      "teams": [
+        "Muisca|elite_guecha_warrior_muisca",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 16.050580910999997,
+      "lastProgress": {
+        "tick": 3937,
+        "simulationSeconds": 65.61666666666666
+      },
+      "result": {
+        "jobId": "m_793dc0d956f79e4e43dd",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1163,
+        "startingHpByOwner": {
+          "2": 1380,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 19,
+            "hp": 1163
+          }
+        },
+        "ticks": 4022,
+        "family": "kite",
+        "side2": {
+          "slug": "elite_guecha_warrior_muisca",
+          "label": "Elite Guecha Warrior",
+          "civ": "Muisca",
+          "count": 23,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "919038573d765c9ce4687cf952ff1a174880e2aed3d05d7ca6b7a81615818366",
+        "eventLogHash": "207946cf6941f230b6f3b6244559fe07928689cd33d5efa338937f8a49947eed"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_d7d39a8b9adc02491168",
+      "seed": 1,
+      "teams": [
+        "Portuguese|hand_cannoneer",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 8.094460810999998,
+      "lastProgress": {
+        "tick": 1804,
+        "simulationSeconds": 30.066666666666666
+      },
+      "result": {
+        "jobId": "m_d7d39a8b9adc02491168",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 899.5,
+        "startingHpByOwner": {
+          "2": 1040,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 13,
+            "hp": 899.5
+          }
+        },
+        "ticks": 2552,
+        "family": "kite",
+        "side2": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Portuguese",
+          "count": 26,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "7af92d02726d2bce8990595d2280e5a3f2a862a980db0b85f1c49a3ba1029993",
+        "eventLogHash": "1d0e5c855572c55673a88e11cd3a256079dc2974c4a85e79497d7edf9d291828"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_d681f3f7b7ea94aaf710",
+      "seed": 2,
+      "teams": [
+        "Muisca|elite_guecha_warrior_muisca",
+        "Turks|paladin"
+      ],
+      "wallSeconds": 14.475649728999997,
+      "lastProgress": {
+        "tick": 2794,
+        "simulationSeconds": 46.56666666666667
+      },
+      "result": {
+        "jobId": "m_d681f3f7b7ea94aaf710",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1972,
+        "startingHpByOwner": {
+          "2": 1620,
+          "3": 3360
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 20,
+            "hp": 1972
+          }
+        },
+        "ticks": 2801,
+        "family": "kite",
+        "side2": {
+          "slug": "elite_guecha_warrior_muisca",
+          "label": "Elite Guecha Warrior",
+          "civ": "Muisca",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Turks",
+          "count": 24,
+          "class": "melee"
+        },
+        "finalStateHash": "fd706b3ac1fde6fe7f1276b74d56122597472c7ce147673ed36cc5b159b1b302",
+        "eventLogHash": "0407fa9e15c7809029e6dc967cf1a4d2dac3f92e7e8fd17db74b5a73c5267c2a"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_f10c56e300cff4e4b4b2",
+      "seed": 1,
+      "teams": [
+        "Romans|heavy_cav_archer",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 13.757894740000017,
+      "lastProgress": {
+        "tick": 3741,
+        "simulationSeconds": 62.35
+      },
+      "result": {
+        "jobId": "m_f10c56e300cff4e4b4b2",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1031,
+        "startingHpByOwner": {
+          "2": 1920,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 15,
+            "hp": 1031
+          }
+        },
+        "ticks": 3873,
+        "family": "kite",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Romans",
+          "count": 24,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "87a9707ddc4482f6560fd62c865dc721012e9a1d8faaa49a4cb3122fa942562f",
+        "eventLogHash": "343cc927fc6b5234bfc1ae8191b8b412dc6cd17e741122c78bb3b98239c0edad"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_13c2360680396b66c117",
+      "seed": 0,
+      "teams": [
+        "Saracens|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 13.529634832999989,
+      "lastProgress": {
+        "tick": 1584,
+        "simulationSeconds": 26.4
+      },
+      "result": {
+        "jobId": "m_13c2360680396b66c117",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1327.5,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 19,
+            "hp": 1327.5
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 1690,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "d9eb04bd6fd7c52ad08a34eae92af1d6e9ab9d3b68dde5b548c6dae43db88e4f",
+        "eventLogHash": "f7b4ed0e24fa36a465fa250b33ff4f57a4b67330e0802d4707bd7df4aff396a8"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_13c2360680396b66c117",
+      "seed": 2,
+      "teams": [
+        "Saracens|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 16.809197475000023,
+      "lastProgress": {
+        "tick": 1446,
+        "simulationSeconds": 24.1
+      },
+      "result": {
+        "jobId": "m_13c2360680396b66c117",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1311,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 19,
+            "hp": 1311
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 1718,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "4a943afe6f14c701def5740084affd20aa5b01545e5d5c39de99f462e508cfa6",
+        "eventLogHash": "cbeda009d1ecbdb1370cc6a541265a90bd0f72e083eaa17b8074cb3ff04fdb42"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_1e49e0284b17acd04ec6",
+      "seed": 2,
+      "teams": [
+        "Sicilians|heavy_mounted_crossbowman",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 11.087450148000004,
+      "lastProgress": {
+        "tick": 3276,
+        "simulationSeconds": 54.6
+      },
+      "result": {
+        "jobId": "m_1e49e0284b17acd04ec6",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 880,
+        "startingHpByOwner": {
+          "2": 1725,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 14,
+            "hp": 880
+          }
+        },
+        "ticks": 3813,
+        "family": "kite",
+        "side2": {
+          "slug": "heavy_mounted_crossbowman",
+          "label": "Heavy Mounted Crossbowman",
+          "civ": "Sicilians",
+          "count": 23,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "ca8b85475f8d41ce9587817f34b4a60a78bd0394c9def366240f901ee327b048",
+        "eventLogHash": "5163f5592aa009929f99f60b914046ca447b6ec29e28d153cda60e8b6e02ddc3"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_14c654e4d24dbf59ee7b",
+      "seed": 2,
+      "teams": [
+        "Shu|war_chariot_shu",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 19.817549300999993,
+      "lastProgress": {
+        "tick": 4539,
+        "simulationSeconds": 75.65
+      },
+      "result": {
+        "jobId": "m_14c654e4d24dbf59ee7b",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 342,
+        "startingHpByOwner": {
+          "2": 1365,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 6,
+            "hp": 342
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 5123,
+        "family": "rvr",
+        "side2": {
+          "slug": "war_chariot_shu",
+          "label": "War Chariot",
+          "civ": "Shu",
+          "count": 21,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "a838d31530aba78a11990581df4c68047d4aa0596ad54b8b865b178ca1cde093",
+        "eventLogHash": "537404f696ba2a745ae975b0f813d0007f276c53726eb5c2e76c401f0a719dd3"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_fd1eebbb6c1579534aac",
+      "seed": 1,
+      "teams": [
+        "Muisca|imp_elite_skirm",
+        "Turks|paladin"
+      ],
+      "wallSeconds": 5.706905563000007,
+      "lastProgress": {
+        "tick": 1572,
+        "simulationSeconds": 26.2
+      },
+      "result": {
+        "jobId": "m_fd1eebbb6c1579534aac",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2209,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2380
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 17,
+            "hp": 2209
+          }
+        },
+        "ticks": 1818,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Muisca",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Turks",
+          "count": 17,
+          "class": "melee"
+        },
+        "finalStateHash": "b826a3110ebf92d64949642dfc117fb1859e9d8f2a9b0b80fa9584ac8ae3be1a",
+        "eventLogHash": "352ea8654e29af4279f20c6194bdcd636383d4e52d1597c582e25de4ebb1d55d"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_47341333e6c09205a174",
+      "seed": 0,
+      "teams": [
+        "Saxons|imp_elite_skirm",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 7.148398313999991,
+      "lastProgress": {
+        "tick": 2730,
+        "simulationSeconds": 45.5
+      },
+      "result": {
+        "jobId": "m_47341333e6c09205a174",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 469,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 1440
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 14,
+            "hp": 469
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2787,
+        "family": "rvr",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Saxons",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 18,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "305559b884120ea915f1890272e2b7f8b77ccb0b36819fe5842c1114ecc1c4c1",
+        "eventLogHash": "a43dc88be88fb6f3ccd77b13ef26476a0a6066bc9b8a42175da5b5529160ca88"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_42c63b4c3fafb71721e6",
+      "seed": 0,
+      "teams": [
+        "Tatars|heavy_cav_archer",
+        "Saracens|hand_cannoneer"
+      ],
+      "wallSeconds": 14.535726710999995,
+      "lastProgress": {
+        "tick": 1545,
+        "simulationSeconds": 25.75
+      },
+      "result": {
+        "jobId": "m_42c63b4c3fafb71721e6",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1360,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 20,
+            "hp": 1360
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 1687,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Tatars",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "bac983543b973e12c712c446b4e8b230ce495168fdffd4bc0d52458d5917d73b",
+        "eventLogHash": "23365e48e431371d62d56736de04ed5fb461a83fde545c73a4d32cc33765ca4c"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_63efd460c7019f99c77c",
+      "seed": 1,
+      "teams": [
+        "Spanish|hand_cannoneer",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 14.429360899999999,
+      "lastProgress": {
+        "tick": 1663,
+        "simulationSeconds": 27.716666666666665
+      },
+      "result": {
+        "jobId": "m_63efd460c7019f99c77c",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1198,
+        "startingHpByOwner": {
+          "2": 1080,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 18,
+            "hp": 1198
+          }
+        },
+        "ticks": 1726,
+        "family": "rvr",
+        "side2": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "5945005b79faf79ac5d26cb55a20b6d6bc005897ee70cea5513520cff38496e1",
+        "eventLogHash": "210ab7ff7ac28c74aa4103d57e95425aa8a7b27294f25a19b2721f0755cb8084"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_97613e2115bcc013da3a",
+      "seed": 1,
+      "teams": [
+        "Spanish|hand_cannoneer",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 6.537025760000018,
+      "lastProgress": {
+        "tick": 2671,
+        "simulationSeconds": 44.516666666666666
+      },
+      "result": {
+        "jobId": "m_97613e2115bcc013da3a",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 763,
+        "startingHpByOwner": {
+          "2": 960,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 10,
+            "hp": 763
+          }
+        },
+        "ticks": 2881,
+        "family": "kite",
+        "side2": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Spanish",
+          "count": 24,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "24884eb2fbb30922f69e8fb8481cb2fce9132e011dc7328dc282df55f4a73a92",
+        "eventLogHash": "2062d6684344034425529ade48d084b291ba0c35ee3bbf7accde446463af392a"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_95d1499627691cf3c02f",
+      "seed": 2,
+      "teams": [
+        "Sicilians|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 19.353205459999998,
+      "lastProgress": {
+        "tick": 3729,
+        "simulationSeconds": 62.15
+      },
+      "result": {
+        "jobId": "m_95d1499627691cf3c02f",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 751,
+        "startingHpByOwner": {
+          "2": 1020,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 13,
+            "hp": 751
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4079,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Sicilians",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "3459fd95df3cb6cd4b1490a6288d0b764d2d61059cdd2c9550138753b5e30b27",
+        "eventLogHash": "9939b043e365345f7b465a9d2e9022798c443c2b9804915927b268af3d43589b"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_84ddf03e4cb66ff1d8a3",
+      "seed": 0,
+      "teams": [
+        "Slavs|heavy_scorpion",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 34.22696125200001,
+      "lastProgress": {
+        "tick": 2737,
+        "simulationSeconds": 45.61666666666667
+      },
+      "result": {
+        "jobId": "m_84ddf03e4cb66ff1d8a3",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 663,
+        "startingHpByOwner": {
+          "2": 1440,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 13,
+            "hp": 663
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 3153,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Slavs",
+          "count": 24,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "141a865c8043a53c890336cf62b03f99537e3f3f24748b4ed648b9f0efb4e3fb",
+        "eventLogHash": "40e56dcf595a0f5220013947982658587be052f291a4e6cc8bcf9b3461f76324"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_b1514092de28e0395d25",
+      "seed": 1,
+      "teams": [
+        "Shu|war_chariot_shu",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 22.969178210000013,
+      "lastProgress": {
+        "tick": 8337,
+        "simulationSeconds": 138.95
+      },
+      "result": {
+        "jobId": "m_b1514092de28e0395d25",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 202,
+        "startingHpByOwner": {
+          "2": 975,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 15,
+            "hp": 202
+          }
+        },
+        "ticks": 9056,
+        "family": "rvr",
+        "side2": {
+          "slug": "war_chariot_shu",
+          "label": "War Chariot",
+          "civ": "Shu",
+          "count": 15,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "d6eae60de216d994a17e454c3d5de01a9d2aa46b51ea3ebe01bc3ce30e4ae2a3",
+        "eventLogHash": "f2acdaf6d2109325967402daa816a4c3b3b883f9efc503f24e15394792623f7d"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_b1514092de28e0395d25",
+      "seed": 2,
+      "teams": [
+        "Shu|war_chariot_shu",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 25.425698608000005,
+      "lastProgress": {
+        "tick": 9410,
+        "simulationSeconds": 156.83333333333334
+      },
+      "result": {
+        "jobId": "m_b1514092de28e0395d25",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 100,
+        "startingHpByOwner": {
+          "2": 975,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 3,
+            "hp": 100
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 9514,
+        "family": "rvr",
+        "side2": {
+          "slug": "war_chariot_shu",
+          "label": "War Chariot",
+          "civ": "Shu",
+          "count": 15,
+          "class": "siege_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "5a2c8eb1912e75ed205038bfd05410d57ea8eb48c238422a0958e680038cba1b",
+        "eventLogHash": "869d4f2cd8865c791f0a257bf303c6ff2ec756b49be810b03cf6403837bf0116"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_b89bf55ce1873e7ac838",
+      "seed": 1,
+      "teams": [
+        "Spanish|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 16.41509055199998,
+      "lastProgress": {
+        "tick": 1420,
+        "simulationSeconds": 23.666666666666668
+      },
+      "result": {
+        "jobId": "m_b89bf55ce1873e7ac838",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1939,
+        "startingHpByOwner": {
+          "2": 810,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 1939
+          }
+        },
+        "ticks": 1807,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Archer",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "f5be01fddc983f367bb62f46af066aef258fa8e214552d501ff077b02bfa1ca2",
+        "eventLogHash": "0153e90cad9061df3d281bcbee00cbdc34d2699c079b5cc5fec0dc902028ba72"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_f0e3947fab0462692501",
+      "seed": 0,
+      "teams": [
+        "Tatars|heavy_cav_archer",
+        "Chinese|arbalester"
+      ],
+      "wallSeconds": 10.091709299999987,
+      "lastProgress": {
+        "tick": 1833,
+        "simulationSeconds": 30.55
+      },
+      "result": {
+        "jobId": "m_f0e3947fab0462692501",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1067,
+        "startingHpByOwner": {
+          "2": 1840,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 16,
+            "hp": 1067
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2238,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Tatars",
+          "count": 23,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "civ": "Chinese",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "001da67621af96f773072d5e444ff0d5229430245f8b9fb9f5c8689be03fc8ba",
+        "eventLogHash": "288ff98adb4cbc750c4724a82898f708e0aa0ba01d6881e8195873da4e1f9d66"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_b89bf55ce1873e7ac838",
+      "seed": 0,
+      "teams": [
+        "Spanish|arbalester",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 24.58617216400002,
+      "lastProgress": {
+        "tick": 1639,
+        "simulationSeconds": 27.316666666666666
+      },
+      "result": {
+        "jobId": "m_b89bf55ce1873e7ac838",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1934,
+        "startingHpByOwner": {
+          "2": 810,
+          "3": 2470
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 24,
+            "hp": 1934
+          }
+        },
+        "ticks": 1817,
+        "family": "kite",
+        "side2": {
+          "slug": "arbalester",
+          "label": "Archer",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 26,
+          "class": "melee"
+        },
+        "finalStateHash": "61d20f9b5e7c441dd4342d529e8e1e2f9fd11347aa87bf87216383efe88c62b1",
+        "eventLogHash": "7b6a11299596e3ea35c87adb9ca4ff8ab8e0638ddad08c0d8ec72500c3729b74"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_19d46af37e9f423dbe56",
+      "seed": 1,
+      "teams": [
+        "Vikings|heavy_mounted_crossbowman",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 14.20442246599999,
+      "lastProgress": {
+        "tick": 1422,
+        "simulationSeconds": 23.7
+      },
+      "result": {
+        "jobId": "m_19d46af37e9f423dbe56",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1595,
+        "startingHpByOwner": {
+          "2": 1170,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 23,
+            "hp": 1595
+          }
+        },
+        "ticks": 1810,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_mounted_crossbowman",
+          "label": "Mounted Crossbowman",
+          "civ": "Vikings",
+          "count": 26,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "39ef694440b6d57cfdd8ee63e1ac8bbac489ad15e6d74801e14a2b854bc0145a",
+        "eventLogHash": "1e76206ab04ae65be284f6f82e1cb7c4ac8b591996f53b8f90e5747dd7f41486"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_da7da5f98989d0913ec0",
+      "seed": 1,
+      "teams": [
+        "Tatars|heavy_cav_archer",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 17.74749562900001,
+      "lastProgress": {
+        "tick": 3449,
+        "simulationSeconds": 57.483333333333334
+      },
+      "result": {
+        "jobId": "m_da7da5f98989d0913ec0",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 680,
+        "startingHpByOwner": {
+          "2": 2160,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 12,
+            "hp": 680
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 3807,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Tatars",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "5cc6fc84c924cbe26b57f1f74d29883ae147bb2ac65ed2d28d282bf0ceb805b7",
+        "eventLogHash": "878768a47eb71f24d2eb24a73dcb94d4e31a6d71cfb84c0253584cfc8adfef5d"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_19d46af37e9f423dbe56",
+      "seed": 0,
+      "teams": [
+        "Vikings|heavy_mounted_crossbowman",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 18.402205369000033,
+      "lastProgress": {
+        "tick": 1903,
+        "simulationSeconds": 31.716666666666665
+      },
+      "result": {
+        "jobId": "m_19d46af37e9f423dbe56",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1550,
+        "startingHpByOwner": {
+          "2": 1170,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 22,
+            "hp": 1550
+          }
+        },
+        "ticks": 1968,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_mounted_crossbowman",
+          "label": "Mounted Crossbowman",
+          "civ": "Vikings",
+          "count": 26,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "2fa0136d433797d1ac73d5b04da9b1beb684d8e5cfb9ebc6244d81055e1926e8",
+        "eventLogHash": "bd7de56f305fa9527ced9d1473de93dee95125075f4ed902abfa8bd8445cad97"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_55b143fd6c092a98027e",
+      "seed": 2,
+      "teams": [
+        "Varangians|heavy_mounted_crossbowman",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 13.913960254999983,
+      "lastProgress": {
+        "tick": 5505,
+        "simulationSeconds": 91.75
+      },
+      "result": {
+        "jobId": "m_55b143fd6c092a98027e",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 302,
+        "startingHpByOwner": {
+          "2": 1955,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 4,
+            "hp": 302
+          }
+        },
+        "ticks": 5966,
+        "family": "kite",
+        "side2": {
+          "slug": "heavy_mounted_crossbowman",
+          "label": "Heavy Mounted Crossbowman",
+          "civ": "Varangians",
+          "count": 23,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "2eb08ef04d4ae41c1738fc688fa90a7328e1580794400be23802a272c57d4ee0",
+        "eventLogHash": "84907fc7d53fd5cfa907f4233c38fffdfafd5c89819b3600ab8bec97a48529a7"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_19d46af37e9f423dbe56",
+      "seed": 2,
+      "teams": [
+        "Vikings|heavy_mounted_crossbowman",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 18.389372313999978,
+      "lastProgress": {
+        "tick": 1891,
+        "simulationSeconds": 31.516666666666666
+      },
+      "result": {
+        "jobId": "m_19d46af37e9f423dbe56",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1572.5,
+        "startingHpByOwner": {
+          "2": 1170,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 21,
+            "hp": 1572.5
+          }
+        },
+        "ticks": 1910,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_mounted_crossbowman",
+          "label": "Mounted Crossbowman",
+          "civ": "Vikings",
+          "count": 26,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "4ae9a37b7ca33dae122e8fb4170915beb0f5969903d9ad821bd7438dd0e8a38c",
+        "eventLogHash": "a67904490aa168e894c75b90de69b4f236db064874d5f068c0b80517ba6c649a"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_bff2e104a2dde69c5f1a",
+      "seed": 0,
+      "teams": [
+        "Vietnamese|elite_rattan_archer_vietnamese",
+        "Spanish|hussar"
+      ],
+      "wallSeconds": 8.656773835,
+      "lastProgress": {
+        "tick": 2813,
+        "simulationSeconds": 46.88333333333333
+      },
+      "result": {
+        "jobId": "m_bff2e104a2dde69c5f1a",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 775,
+        "startingHpByOwner": {
+          "2": 1200,
+          "3": 2565
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 11,
+            "hp": 775
+          }
+        },
+        "ticks": 3057,
+        "family": "kite",
+        "side2": {
+          "slug": "elite_rattan_archer_vietnamese",
+          "label": "Elite Rattan Archer",
+          "civ": "Vietnamese",
+          "count": 25,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "hussar",
+          "label": "Hussar",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "melee"
+        },
+        "finalStateHash": "1fed1144001333974643c4be99484c0aa0f110c8e6f5081b79c9d76aabb7d39a",
+        "eventLogHash": "7bd3d3a03fd60c377acbcadcf7eaf7654b2895ba367c2893c74c8177b5faf0d0"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_645c7985fb11bf8feae7",
+      "seed": 1,
+      "teams": [
+        "Turks|heavy_cav_archer",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 18.654038337999953,
+      "lastProgress": {
+        "tick": 3536,
+        "simulationSeconds": 58.93333333333333
+      },
+      "result": {
+        "jobId": "m_645c7985fb11bf8feae7",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 850,
+        "startingHpByOwner": {
+          "2": 2700,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 12,
+            "hp": 850
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 3807,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Turks",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "585159aef163a78736ce6e1394e3764dce64c53ffc91a84dd7855f2840927e94",
+        "eventLogHash": "cf8ab64bfb99d0dbfbdf2a0747dc8c8f1d424d714b0f047e4c6bd0379b43e786"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_968ecebb18fbe9f09f62",
+      "seed": 2,
+      "teams": [
+        "Teutons|heavy_scorpion",
+        "Spanish|imp_elite_skirm"
+      ],
+      "wallSeconds": 17.950780501,
+      "lastProgress": {
+        "tick": 3837,
+        "simulationSeconds": 63.95
+      },
+      "result": {
+        "jobId": "m_968ecebb18fbe9f09f62",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 751,
+        "startingHpByOwner": {
+          "2": 1020,
+          "3": 945
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 13,
+            "hp": 751
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 4079,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_scorpion",
+          "label": "Heavy Scorpion",
+          "civ": "Teutons",
+          "count": 17,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "imp_elite_skirm",
+          "label": "Elite Skirmisher",
+          "civ": "Spanish",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "0cf1658a3fef161d2f265095434353e0482560aadbe97d29ac938003bd3d15c9",
+        "eventLogHash": "9939b043e365345f7b465a9d2e9022798c443c2b9804915927b268af3d43589b"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_fc5ea04998edffc9e957",
+      "seed": 0,
+      "teams": [
+        "Vietnamese|imp_elite_skirm",
+        "Spanish|champion"
+      ],
+      "wallSeconds": 7.83686198300001,
+      "lastProgress": {
+        "tick": 1780,
+        "simulationSeconds": 29.666666666666668
+      },
+      "result": {
+        "jobId": "m_fc5ea04998edffc9e957",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1304,
+        "startingHpByOwner": {
+          "2": 1134,
+          "3": 1680
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 22,
+            "hp": 1304
+          }
+        },
+        "ticks": 1959,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_elite_skirm",
+          "label": "Imperial Skirmisher",
+          "civ": "Vietnamese",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "champion",
+          "label": "Champion",
+          "civ": "Spanish",
+          "count": 24,
+          "class": "melee"
+        },
+        "finalStateHash": "bc574851f58fc20249827c9dd2bcc5b4cc286123e0260742b1008401a5766041",
+        "eventLogHash": "e40347878f630863ba9d1e0cc71185ff7902fc339b51c382029bfc239187301e"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_d68bf9b8c7fd0687b8b6",
+      "seed": 2,
+      "teams": [
+        "Turks|hand_cannoneer",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 14.851887186000008,
+      "lastProgress": {
+        "tick": 1763,
+        "simulationSeconds": 29.383333333333333
+      },
+      "result": {
+        "jobId": "m_d68bf9b8c7fd0687b8b6",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1065.5,
+        "startingHpByOwner": {
+          "2": 1350,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 16,
+            "hp": 1065.5
+          }
+        },
+        "ticks": 2222,
+        "family": "rvr",
+        "side2": {
+          "slug": "hand_cannoneer",
+          "label": "Hand Cannoneer",
+          "civ": "Turks",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "8f65237a5737553af945c381f4e84be32e2151a174788a98afbd6ad0c87625fd",
+        "eventLogHash": "a962a3f27b5142922eb6ec290407cc9e15940c124ee6278b339fc40f425565de"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_fe48b3779f1dac3146bf",
+      "seed": 0,
+      "teams": [
+        "Turks|heavy_cav_archer",
+        "Chinese|arbalester"
+      ],
+      "wallSeconds": 9.593802804999985,
+      "lastProgress": {
+        "tick": 1986,
+        "simulationSeconds": 33.1
+      },
+      "result": {
+        "jobId": "m_fe48b3779f1dac3146bf",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 1288,
+        "startingHpByOwner": {
+          "2": 2300,
+          "3": 1080
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 15,
+            "hp": 1288
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2343,
+        "family": "rvr",
+        "side2": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Turks",
+          "count": 23,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "arbalester",
+          "label": "Arbalester",
+          "civ": "Chinese",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "9e17c88d54e88fbf78ddb032a97026c77b300b3b0d83651f0b802d075f780d27",
+        "eventLogHash": "21026c66e11cadc75bfc1fc3771641bee04990556c347eb01f4ba3ab1b5287be"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_9ae6163ad68b2d1a9ee4",
+      "seed": 1,
+      "teams": [
+        "Tupi|imp_slinger",
+        "Turks|paladin"
+      ],
+      "wallSeconds": 4.988743677000049,
+      "lastProgress": {
+        "tick": 1240,
+        "simulationSeconds": 20.666666666666668
+      },
+      "result": {
+        "jobId": "m_9ae6163ad68b2d1a9ee4",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 2201,
+        "startingHpByOwner": {
+          "2": 945,
+          "3": 2660
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 17,
+            "hp": 2201
+          }
+        },
+        "ticks": 1657,
+        "family": "kite",
+        "side2": {
+          "slug": "imp_slinger",
+          "label": "Slinger",
+          "civ": "Tupi",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Turks",
+          "count": 19,
+          "class": "melee"
+        },
+        "finalStateHash": "a0e94541d7d162025dd1a52c1c8c6a62219bf8271145d4078ab52ea0e161cb67",
+        "eventLogHash": "eefb5c4649cfddffe502a774d98b0d1528c5e47d9bcfa17f4a56950e454daf27"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_a31297d0614154669474",
+      "seed": 0,
+      "teams": [
+        "Khmer|elite_elephant",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 5.558636758000008,
+      "lastProgress": {
+        "tick": 2083,
+        "simulationSeconds": 34.71666666666667
+      },
+      "result": {
+        "jobId": "m_a31297d0614154669474",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 2,
+        "winnerHp": 5100,
+        "startingHpByOwner": {
+          "2": 6400,
+          "3": 2160
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 18,
+            "hp": 5100
+          },
+          "3": {
+            "units": 0,
+            "hp": 0
+          }
+        },
+        "ticks": 2274,
+        "family": "kite",
+        "side2": {
+          "slug": "elite_elephant",
+          "label": "Elite Battle Elephant",
+          "civ": "Khmer",
+          "count": 20,
+          "class": "melee"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "dbad58203e3f0fa133b70ad754048799ca3fb6eb85dc6463f1bed10184eeb672",
+        "eventLogHash": "3e546db8eb86f10ab5060d26b6a6504b0e6a2bc9b34a12907d9ccc1f787863a9"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_94d18770a3cd337104d9",
+      "seed": 1,
+      "teams": [
+        "Wu|elite_fire_archer_wu",
+        "Saracens|heavy_cav_archer"
+      ],
+      "wallSeconds": 11.155361962000024,
+      "lastProgress": {
+        "tick": 1548,
+        "simulationSeconds": 25.8
+      },
+      "result": {
+        "jobId": "m_94d18770a3cd337104d9",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1089,
+        "startingHpByOwner": {
+          "2": 1080,
+          "3": 2000
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 18,
+            "hp": 1089
+          }
+        },
+        "ticks": 1922,
+        "family": "rvr",
+        "side2": {
+          "slug": "elite_fire_archer_wu",
+          "label": "Elite Fire Archer",
+          "civ": "Wu",
+          "count": 27,
+          "class": "mobile_ranged"
+        },
+        "side3": {
+          "slug": "heavy_cav_archer",
+          "label": "Heavy Cavalry Archer",
+          "civ": "Saracens",
+          "count": 25,
+          "class": "mobile_ranged"
+        },
+        "finalStateHash": "e7aba1e38e9b30e3ed1724b6edef9604713a7fc198bb884baa9282fad8ad45e9",
+        "eventLogHash": "f77100244003b432e9444cabc3e53af9e923df1ec2dff7ba7df05396df144ca7"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_77921566a09000903b8f",
+      "seed": 0,
+      "teams": [
+        "Portuguese|paladin",
+        "Spanish|paladin"
+      ],
+      "wallSeconds": 41.51348589300003,
+      "lastProgress": {
+        "tick": 3383,
+        "simulationSeconds": 56.38333333333333
+      },
+      "result": {
+        "jobId": "m_77921566a09000903b8f",
+        "seed": 0,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1265,
+        "startingHpByOwner": {
+          "2": 3780,
+          "3": 4500
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 11,
+            "hp": 1265
+          }
+        },
+        "ticks": 3544,
+        "family": "waves",
+        "side2": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Portuguese",
+          "count": 27,
+          "class": "melee"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Paladin",
+          "civ": "Spanish",
+          "count": 25,
+          "class": "melee"
+        },
+        "finalStateHash": "21b521e56934b660e912ce55f99995eec830c7a7b89a950cf5db75975c21ffc2",
+        "eventLogHash": "f2e788cf91fc1c9025d7a9b75147a5912e607f93fdc399f614916d1b20cb5e86"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_77921566a09000903b8f",
+      "seed": 2,
+      "teams": [
+        "Portuguese|paladin",
+        "Spanish|paladin"
+      ],
+      "wallSeconds": 40.33440928300004,
+      "lastProgress": {
+        "tick": 3463,
+        "simulationSeconds": 57.71666666666667
+      },
+      "result": {
+        "jobId": "m_77921566a09000903b8f",
+        "seed": 2,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1265,
+        "startingHpByOwner": {
+          "2": 3780,
+          "3": 4500
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 11,
+            "hp": 1265
+          }
+        },
+        "ticks": 3544,
+        "family": "waves",
+        "side2": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Portuguese",
+          "count": 27,
+          "class": "melee"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Paladin",
+          "civ": "Spanish",
+          "count": 25,
+          "class": "melee"
+        },
+        "finalStateHash": "21b521e56934b660e912ce55f99995eec830c7a7b89a950cf5db75975c21ffc2",
+        "eventLogHash": "6ae7055afc83c0bd3bcffa62b7cfe6f20d2e68657d8d289cbb1a7eed12357895"
+      },
+      "error": null,
+      "watchdog": null
+    },
+    {
+      "matchupId": "m_77921566a09000903b8f",
+      "seed": 1,
+      "teams": [
+        "Portuguese|paladin",
+        "Spanish|paladin"
+      ],
+      "wallSeconds": 41.150475334000014,
+      "lastProgress": {
+        "tick": 3501,
+        "simulationSeconds": 58.35
+      },
+      "result": {
+        "jobId": "m_77921566a09000903b8f",
+        "seed": 1,
+        "outcome": "win",
+        "winnerOwner": 3,
+        "winnerHp": 1265,
+        "startingHpByOwner": {
+          "2": 3780,
+          "3": 4500
+        },
+        "remainingByOwner": {
+          "2": {
+            "units": 0,
+            "hp": 0
+          },
+          "3": {
+            "units": 11,
+            "hp": 1265
+          }
+        },
+        "ticks": 3544,
+        "family": "waves",
+        "side2": {
+          "slug": "paladin",
+          "label": "Cavalier",
+          "civ": "Portuguese",
+          "count": 27,
+          "class": "melee"
+        },
+        "side3": {
+          "slug": "paladin",
+          "label": "Paladin",
+          "civ": "Spanish",
+          "count": 25,
+          "class": "melee"
+        },
+        "finalStateHash": "21b521e56934b660e912ce55f99995eec830c7a7b89a950cf5db75975c21ffc2",
+        "eventLogHash": "20fe7c452c7b09dcf094d7b5d23097e867203d42da97d7b12e4cad0e3722eae3"
+      },
+      "error": null,
+      "watchdog": null
+    }
+  ],
+  "dataPolicy": "Separate engine version. Keep original results immutable; do not combine changed behavior with original ranking samples. Recompute affected campaign results before scoring.",
+  "tests": {
+    "command": [
+      "node",
+      "--test",
+      "--test-concurrency=1",
+      "tests/arena-physics-map.test.mjs",
+      "tests/mechanics-schema.test.mjs",
+      "tests/unit-model.test.mjs",
+      "tests/combat-resolution.test.mjs",
+      "tests/movement-collision.test.mjs",
+      "tests/pair-interactions.test.mjs",
+      "tests/collision-performance.test.mjs",
+      "tests/ranking-campaign.test.mjs",
+      "tests/full-ranking-campaign.test.mjs",
+      "tests/bolt-passthrough.test.mjs",
+      "tests/conditional-damage-reduction.test.mjs",
+      "tests/production-mobile-presentation.test.mjs",
+      "tests/contact-reservations.test.mjs",
+      "tests/blocked-pursuit-recovery.test.mjs",
+      "tests/pursuit-attack-position.test.mjs",
+      "tests/chase-path.test.mjs",
+      "tests/ranged-crowding.test.mjs",
+      "tests/ranged-attack.test.mjs",
+      "tests/contact-graph-steering.test.mjs",
+      "tests/collision-recovery.test.mjs",
+      "tests/ranking-worker-pool.test.mjs"
+    ],
+    "files": [
+      "arena-physics-map",
+      "mechanics-schema",
+      "unit-model",
+      "combat-resolution",
+      "movement-collision",
+      "pair-interactions",
+      "collision-performance",
+      "ranking-campaign",
+      "full-ranking-campaign",
+      "bolt-passthrough",
+      "conditional-damage-reduction",
+      "production-mobile-presentation",
+      "contact-reservations",
+      "blocked-pursuit-recovery",
+      "pursuit-attack-position",
+      "chase-path",
+      "ranged-crowding",
+      "ranged-attack",
+      "contact-graph-steering",
+      "collision-recovery",
+      "ranking-worker-pool"
+    ],
+    "exitCode": 0,
+    "tests": 201,
+    "passed": 201,
+    "failed": 0,
+    "runnerRecheck": {
+      "command": "node --test --test-concurrency=1 tests/full-ranking-campaign.test.mjs tests/ranking-worker-pool.test.mjs",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "reason": "Confirm partial-time propagation and preservation of the default worker for historical capped campaigns."
+    }
+  }
+}

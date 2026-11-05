@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-11-01T19:22:58.882713+00:00",
+  "sourcePhase": 28,
+  "predictionSummarySha256": "33ad9a2e95e58ba0431de62164270b22570a7ab050930401d955bc70cafa48e5",
+  "reviewSha256": "f4083f3ba82e8c46bf566acf83718c08aa3bfa246cba780a1542624bee29d0f4",
+  "status": "running; first pass incomplete",
+  "evidenceCounts": {
+    "observedPairs": 7233,
+    "inferredPairs": 10318,
+    "predictedPairs": 48833,
+    "remainingNeedsDirectResult": 2487,
+    "blockedPairs": 13
+  },
+  "previousGapCount": 1991,
+  "newGapCount": 2487,
+  "gapChange": {
+    "forecastContextMismatch": 479,
+    "inferenceNoLongerEligible": 62,
+    "previousGapsObserved": 31,
+    "previousGapsInferred": 14,
+    "netIncrease": 496
+  },
+  "mismatchFields": {
+    "profiles": 479,
+    "counts": 445,
+    "weightedCosts": 462,
+    "scenarioHash": 305,
+    "family": 305
+  },
+  "interpretation": "Inference-derived candidate orientation changed for 479 pairs. Frozen forecast context hashes do not match, so these predictions are correctly withheld. No reverse orientation or changed scenario is assumed equivalent. Existing simulation jobs retain the frozen inventory counts, sides, scenarios and seeds. These remain direct-result gaps. This audit does not revise any forecast model, policy, physical input or journal.",
+  "checks": {
+    "phase028Review": "passed",
+    "phase028MissingSeeds": 0,
+    "phase028ExactReplay": true,
+    "journalValidatedSeedsAtCheck": 23386,
+    "duplicateSavedSeeds": 0,
+    "invalidOutcomeRecords": 0,
+    "frozenV3RuntimeFiles": 62,
+    "frozenRecoveryRuntimeFiles": 62
+  },
+  "recovery": {
+    "missingScorpionSeedsCompleted": 6,
+    "note": "Separate V2-stream records; not V3 measurements. Completed Scorpion pairs still await reserved compatible V2 replay evidence and exact pair reviews. Long recovery fight remains active.",
+    "campaign": "civ-matchups-blocked-v2-stream-2026-11-01"
+  },
+  "nextAction": "Continue the existing phase029 runner and separate V2 replay/recovery workers; do not restart live processes or begin a second validation pass."
+}

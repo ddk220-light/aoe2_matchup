@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_7fed508fbd8b31cea884c84c",
+  "reviewedAt": "2026-11-05T01:59:14.243Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      23,
+      27
+    ],
+    "engineFamily": "siege",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1",
+      "f3c459406151d74cb364011a730c81bedf3a5c4a4e147656957a1f80fe7abd64"
+    ],
+    "scenarioHash": "a200814a9afc51a4006d0f95fb205ae75c57d0013c0b679094d0b3f66af5576d",
+    "weightedCosts": [
+      133.60000000000002,
+      95
+    ]
+  },
+  "contextHash": "7fed508fbd8b31cea884c84c3a363c0f204c7e1bcb6c52c0b2b67e89c95a1de3",
+  "pairKey": "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1|f3c459406151d74cb364011a730c81bedf3a5c4a4e147656957a1f80fe7abd64",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 1271,
+      "finalStateHash": "103f4eaa4e8877d402927588c08f984121b4ebd49b794b84e99cf8c1755f0231",
+      "eventLogHash": "4b14d06f75180067396fed708abdb8b5b1fc59e037c5634f5c5945745cd3e1ff",
+      "winnerHpFraction": 0.8484472049689441,
+      "recordHash": "7ac81b4e080d76e883902b96485427347b3c9cf6b62c508d39aac4b8163169b1"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 1325,
+      "finalStateHash": "fb757425461961257ad971b2da7ac1ffa58f1d00d9c007be9cbfa0097f1fda3a",
+      "eventLogHash": "a0058af0c858ad18e0ce35d19c98441c58c06ef9bb7d2a947f3819cb77432005",
+      "winnerHpFraction": 0.8322981366459627,
+      "recordHash": "27eae73b8f15f2ef03aea953191849924133aad17af4971075e2d0097d8492b6"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1282,
+      "finalStateHash": "f927cb6766d87080c0d62fc69e0605736d620cf78a9d6c4e48916cbe299caa61",
+      "eventLogHash": "7a4c5aae9b3178a6bf975a73281b6bd374c3a906499ba051f88c03376ca3b7e8",
+      "winnerHpFraction": 0.8403726708074534,
+      "recordHash": "75d4303b6137865467199a8dfe61a98fbafb485f71e3d78df62d0ad2e9bd5f04"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "75d4303b6137865467199a8dfe61a98fbafb485f71e3d78df62d0ad2e9bd5f04",
+    "result": {
+      "jobId": "mv_7fed508fbd8b31cea884c84c",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 1353,
+      "startingHpByOwner": {
+        "2": 1610,
+        "3": 3375
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 21,
+          "hp": 1353
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1282,
+      "family": "siege",
+      "side2": {
+        "slug": "elite_organ_gun_portuguese",
+        "label": "Elite Organ Gun",
+        "civ": "Portuguese",
+        "count": 23,
+        "class": "siege_ranged"
+      },
+      "side3": {
+        "slug": "warrior_priest_armenians",
+        "label": "Warrior Priest",
+        "civ": "Armenians",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "f927cb6766d87080c0d62fc69e0605736d620cf78a9d6c4e48916cbe299caa61",
+      "eventLogHash": "7a4c5aae9b3178a6bf975a73281b6bd374c3a906499ba051f88c03376ca3b7e8"
+    },
+    "wallSeconds": 3.976900375000201,
+    "startedAt": "2026-11-05T01:59:10.266Z",
+    "finishedAt": "2026-11-05T01:59:14.243Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    3580
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 3580,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "151fca5415dd8ffbbbf549e8b488a0b38475030ae00267ad61ef72280f3639cd"
+}

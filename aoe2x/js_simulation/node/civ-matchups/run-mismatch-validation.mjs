@@ -5,6 +5,7 @@ import {readFileSync,readdirSync,existsSync,mkdirSync,openSync,closeSync,writeFi
 import {resolve,relative} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {RankingWorkerPool} from '../ranking-worker-pool.mjs';
+import {runOrderedQueue} from './rolling-validation-queue.mjs';
 import {SIM,ROOT,DIR,sha,load,lines,gzlines,now,json,append,verifyManifest,payload,required,canonicalOutcome,exact,digest} from './mismatch-validation-lib.mjs';
 
 const manifest=verifyManifest(),jobs=gzlines(resolve(DIR,'jobs.jsonl.gz'));
@@ -37,10 +38,23 @@ for(const file of readdirSync(resolve(DIR,'pair-reviews')).filter(f=>f.endsWith(
 }
 const failures=existsSync(attemptPath)?lines(attemptPath):[];
 const blocked=new Set(failures.filter(r=>r.exhausted).map(r=>r.matchupId));
+const controlsPath=resolve(DIR,'queue-controls.json');
+const controls=existsSync(controlsPath)?load(controlsPath):null;
+if(controls){
+ const {controlsHash,...body}=controls;assert.equal(controlsHash,digest(body));assert.equal(controls.campaignHash,manifest.campaignHash);
+ assert.equal(controls.inventorySha256,sha(readFileSync(resolve(DIR,'jobs.jsonl.gz'))));
+ for(const f of controls.schedulerFiles)assert.equal(sha(readFileSync(resolve(ROOT,f.path))),f.sha256,'scheduler source changed');
+ for(const q of controls.quarantinedContexts){
+  assert(byJob.has(q.jobId));assert.equal(q.status,'unfinished_not_a_result');
+  assert.equal(sha(readFileSync(resolve(ROOT,q.diagnosisFile))),q.diagnosisSha256);
+  if(!reviews.has(q.jobId))blocked.add(q.jobId);
+ }
+}
 const active=new Map();let stopped=false,pool,lastCheckpoint=Date.now(),sinceCheckpoint=0;
 function progress(){const terminal=Boolean(state.finishedAt);Object.assign(state,{status:terminal?state.status:stopped?'stopping':'running',pid:terminal?null:process.pid,updatedAt:now(),savedFreshSeeds:fresh.size,
  reviewedJobs:reviews.size,changedJobs:[...reviews.values()].filter(r=>r.changed).length,
- remainingJobs:jobs.length-reviews.size,blockedJobs:[...blocked],active:[...active.values()]});json(statePath,state);}
+ remainingJobs:jobs.length-reviews.size,blockedJobs:[...blocked],active:[...active.values()],
+ schedulerVersion:'rolling-phase-queue-v2',queueControlsHash:controls?.controlsHash??null});json(statePath,state);}
 process.on('SIGTERM',()=>{stopped=true;progress();});process.on('SIGINT',()=>{stopped=true;progress();});
 function git(args){const env={...process.env};delete env.GH_TOKEN;
  return execFileSync('git',['-c','http.extraHeader=','-c','credential.helper=',...args],{cwd:ROOT,env,encoding:'utf8',timeout:60000,maxBuffer:1024*1024,stdio:['ignore','pipe','pipe']}).trim();}
@@ -121,25 +135,37 @@ async function reviewJob(job){
  console.log(JSON.stringify({reviewed:job.id,outcome,changed:review.changed,completed:reviews.size,total:jobs.length}));
 }
 let checkpointTimer;
+const finalizedPhases=new Set();
+const phaseIndex=new Map(jobs.map((job,i)=>[job.id,Math.floor(i/manifest.policy.phaseJobs)]));
+function finishPhase(index){
+ const phase=String(index+1).padStart(3,'0');if(finalizedPhases.has(phase))return;
+ const batch=jobs.slice(index*manifest.policy.phaseJobs,(index+1)*manifest.policy.phaseJobs);
+ if(!batch.every(j=>reviews.has(j.id)||blocked.has(j.id)))return;
+ const complete=batch.filter(j=>reviews.has(j.id));
+ const path=resolve(DIR,'reviews',`${phase}.json`);
+ if(existsSync(path)&&load(path).status==='passed'){
+  const old=load(path);assert.equal(old.campaignHash,manifest.campaignHash);
+  assert.equal(old.plannedJobs,batch.length);assert.equal(old.reviewHashes.length,batch.length);
+  for(const r of old.reviewHashes)assert.equal(reviews.get(r.jobId)?.reviewHash,r.reviewHash);
+  finalizedPhases.add(phase);return;
+ }
+ const report={phase,campaignHash:manifest.campaignHash,reviewedAt:now(),plannedJobs:batch.length,reviewedJobs:complete.length,
+  changedJobs:complete.filter(j=>reviews.get(j.id).changed).length,blockedJobs:batch.filter(j=>blocked.has(j.id)).map(j=>j.id),
+  reviewHashes:complete.map(j=>({jobId:j.id,reviewHash:reviews.get(j.id).reviewHash})),
+  schedulerVersion:'rolling-phase-queue-v2',queueControlsHash:controls?.controlsHash??null,
+  status:complete.length===batch.length?'passed':'complete_with_blocked'};
+ json(path,report);finalizedPhases.add(phase);
+ if(report.status==='passed'&&!state.completedPhases.includes(phase))state.completedPhases.push(phase);
+ checkpoint(`phase ${phase}: ${reviews.size}/${jobs.length} reviewed`);
+}
 try{
  delete state.finishedAt;state.status='running';
  progress();pool=new RankingWorkerPool(manifest.policy.workers,{workerUrl:new URL('../mismatch-validation-worker.mjs',import.meta.url),maxTicks:Number.MAX_SAFE_INTEGER});
  checkpointTimer=setInterval(()=>{if(Date.now()-lastCheckpoint>=600000)checkpoint(`${reviews.size}/${jobs.length} reviewed, partial`);},30000);
- for(let start=0;start<jobs.length&&!stopped;start+=manifest.policy.phaseJobs){
-  const phase=String(1+start/manifest.policy.phaseJobs).padStart(3,'0');
-  const batch=jobs.slice(start,start+manifest.policy.phaseJobs),pending=batch.filter(j=>!reviews.has(j.id)&&!blocked.has(j.id));
-  let cursor=0;
-  await Promise.all(Array.from({length:manifest.policy.workers},async()=>{
-   while(!stopped&&cursor<pending.length){const job=pending[cursor++];await reviewJob(job);active.delete(job.id);progress();}
-  }));
-  const complete=batch.filter(j=>reviews.has(j.id));
-  const report={phase,campaignHash:manifest.campaignHash,reviewedAt:now(),plannedJobs:batch.length,reviewedJobs:complete.length,
-   changedJobs:complete.filter(j=>reviews.get(j.id).changed).length,blockedJobs:batch.filter(j=>blocked.has(j.id)).map(j=>j.id),
-   reviewHashes:complete.map(j=>({jobId:j.id,reviewHash:reviews.get(j.id).reviewHash})),status:complete.length===batch.length?'passed':stopped?'interrupted':'complete_with_blocked'};
-  json(resolve(DIR,'reviews',`${phase}.json`),report);
-  if(report.status==='passed'&&!state.completedPhases.includes(phase))state.completedPhases.push(phase);
-  checkpoint(`phase ${phase}: ${reviews.size}/${jobs.length} reviewed`);
- }
+ for(let index=0;index<Math.ceil(jobs.length/manifest.policy.phaseJobs);index++)finishPhase(index);
+ await runOrderedQueue({jobs,workers:manifest.policy.workers,
+  skip:job=>reviews.has(job.id)||blocked.has(job.id),shouldStop:()=>stopped,run:reviewJob,
+  onSettled:job=>{active.delete(job.id);progress();finishPhase(phaseIndex.get(job.id));}});
  state.status=stopped?'interrupted':reviews.size===jobs.length?'complete':'blocked_needs_diagnosis';
  state.finishedAt=now();state.active=[];state.pid=null;json(statePath,state);
  // Checkpoint must preserve terminal status instead of advertising a live queue.

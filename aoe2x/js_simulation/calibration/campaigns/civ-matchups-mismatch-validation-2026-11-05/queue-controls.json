@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "selectionVersion": "rolling-phase-queue-v2",
+  "createdAt": "2026-11-05T02:40:52.405Z",
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "inventorySha256": "07abaace6d976a82c73319112fb3a5cfde29962690eb75ff4c801513bfd4bae9",
+  "policy": "Same frozen inventory, four workers, same seeds/counts/scenarios/physics. Remove cross-phase idle barriers. Quarantined contexts stay unfinished and cannot contribute corrections or completion.",
+  "schedulerFiles": [
+    {
+      "path": "aoe2x/js_simulation/node/civ-matchups/run-mismatch-validation.mjs",
+      "sha256": "e7eb7c2880d54393c2f609e0e9b0111aec97e70cb392350769031d4d31995338"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/civ-matchups/rolling-validation-queue.mjs",
+      "sha256": "5a8ec1157b807507480e4580806571beb66e1583cf83df94143b69a6f2404a6c"
+    }
+  ],
+  "quarantinedContexts": [
+    {
+      "jobId": "mv_5e1e0d268234acff1d6e9008",
+      "seed": 1,
+      "status": "unfinished_not_a_result",
+      "diagnosisFile": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/diagnostics/mv_5e1e0d268234acff1d6e9008/REVIEW.json",
+      "diagnosisSha256": "38daa159015fb78304eccf06d459136ddd5b7cc439c0976f9dd0100996531018"
+    }
+  ],
+  "controlsHash": "18185a84c42ce2b824e690760ee114ee49385e08344e7e2c9060084ba8f89d46"
+}

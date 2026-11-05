@@ -50,3 +50,20 @@ projections are byte-identical to the preceding release. Desktop and mobile
 data-selection checks passed. The existing strict mobile menu/smooth-scroll
 offset test is sensitive to the animated header's intermediate height on both
 old and new datasets; no product presentation changes are included here.
+
+## Cumulative checkpoint 002
+
+The cumulative snapshot now independently verifies 255 physical contexts:
+230 former forecasts and 25 former inferences have complete native seed sets
+and exact replay reviews. This covers 426 displayed cells and changes 161
+winner/close outcomes. Snapshot 001 and all its released corrections remain
+preserved. The new serving database SHA-256 is
+`b6f0c8d25dd01075dca6e63383173f8ef610dcf4c3e1af60b2ff5df82cbbf3ad`.
+
+Ten correction/advisor tests and all 195 export checks passed. Public
+civilization, ranking and simulator projections remain byte-identical. The
+stalled Armenian Champion / Tupi slinger context contributes no correction;
+its existing evidence and cells remain byte-identical to the immutable baseline.
+See the operations document for the diagnosed unfinished quarantine and the
+versioned rolling scheduler, which keeps the four-worker limit and all frozen
+battle inputs while allowing unrelated contexts to continue across audit phases.

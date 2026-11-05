@@ -28,6 +28,25 @@ matchup-specific mechanics. All required seeds and an exact replay must pass for
 each correction. Diagnose exhausted attempts before any revised inventory or
 runtime; no blind retries, invented draws, imported old winners or physics mixing.
 
+The scheduler now uses `rolling-phase-queue-v2`: audit phases remain groups of
+128 contexts, while free workers can continue across a phase boundary rather
+than waiting idle behind one slow fight. Worker count, seeds and battle inputs
+are unchanged. `queue-controls.json` pins the inventory, scheduler source hashes
+and any diagnosed unfinished quarantines. A quarantine is not a result, a
+verified skip or completion. Do not remove one or retry it without reviewing its
+diagnosis and creating a separately versioned control decision.
+
+Current quarantine: `mv_5e1e0d268234acff1d6e9008`, seed 1, Armenian Champion /
+`Tupi|imp_slinger`, 27/27. Three watchdog attempts and the fourth attempt's
+saved timeline repeated the same four surviving units, positions, targets and
+HP (174 versus 5), with unchanged movement/damage/death counts for thousands
+of game seconds. See `diagnostics/<jobId>/REVIEW.json`. The active fourth attempt
+was deliberately canceled after preserving its diagnostic state; the saved
+measurement journal's SHA-256 was identical before and after cancellation.
+The existing supervisor resumed the queue with all 920 valid records preserved.
+No result was assigned, no physics changed, and the full inventory remains
+incomplete until the quarantined context is legitimately resolved.
+
 ## Reviewed correction exports
 
 From the validation worktree, use
@@ -38,6 +57,8 @@ reviewed contexts already committed to Git. Every export independently validates
 source hashes, required seeds, winners, orientations and exact replay results.
 Push the referenced validation commit before publishing a snapshot. Do not edit
 or replace an existing snapshot. Keep every failure and old prediction.
+Use `--reviewed-only` when a quarantined context leaves an earlier phase blocked;
+later reviewed contexts are still eligible for cumulative correction snapshots.
 
 Website worktree: `/workspace/aoe2_advisor_release`, branch
 `website/matchup-advisor-first-pass-2026-11-03`. Check status and current remote main

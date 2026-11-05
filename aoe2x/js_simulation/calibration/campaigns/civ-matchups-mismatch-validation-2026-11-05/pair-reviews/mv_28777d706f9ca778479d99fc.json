@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_28777d706f9ca778479d99fc",
+  "reviewedAt": "2026-11-05T08:58:02.449Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      21
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "2de336c65d7dda15852a12e83746a1c8d056ced83ffd1c661d27f9d684f8b8ea",
+      "fe0c29b64aadaabc1d9441c45896f5f3fd985ef51e5ede375e751588ff0be667"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      56.5,
+      94.5
+    ]
+  },
+  "contextHash": "28777d706f9ca778479d99fc909a1ec8a3867ac5684629c0d59557deab878ec6",
+  "pairKey": "2de336c65d7dda15852a12e83746a1c8d056ced83ffd1c661d27f9d684f8b8ea|fe0c29b64aadaabc1d9441c45896f5f3fd985ef51e5ede375e751588ff0be667",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 3122,
+      "finalStateHash": "671a04da45e3b5a2c468ea4dc5674b4126c17474448b8fff3016e1b06de1ff01",
+      "eventLogHash": "dcf6cd8f5c0a510e219efb5e5377d57218e20bd81083682c51b1a8d490aa0742",
+      "winnerHpFraction": 0.24232804232804234,
+      "recordHash": "17940e3fc5e506deddcca2a6168515f421bc46412216e651881cb2f848da6173"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 2939,
+      "finalStateHash": "67cd82d11bad5ae213da43febb49a204508ac1bc5ce11e836fdc8e2ebd90f802",
+      "eventLogHash": "7d4bd8ca264e8b9658e963824c34e1730237b8c2fab13c9c9a7f8ca66355ed34",
+      "winnerHpFraction": 0.30687830687830686,
+      "recordHash": "1e8615cb2270f0f9e2f59a67cc917819bf281063e802645d345a3d69df24c6b4"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 3430,
+      "finalStateHash": "5d0f7820834c9089c37e1ee9407271fc56e16e5403fff2dc968cd8363457e201",
+      "eventLogHash": "069526970af227ba3f315e27a5b7b3ecc28ff5e586c214a3d519854871cd02c7",
+      "winnerHpFraction": 0.1925925925925926,
+      "recordHash": "b2d9961427b1726b38665381188a7a493a7679febe59b79060c9fcf3137512a1"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "b2d9961427b1726b38665381188a7a493a7679febe59b79060c9fcf3137512a1",
+    "result": {
+      "jobId": "mv_28777d706f9ca778479d99fc",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 182,
+      "startingHpByOwner": {
+        "2": 945,
+        "3": 1008
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 7,
+          "hp": 182
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 3430,
+      "family": "rvr",
+      "side2": {
+        "slug": "imp_elite_skirm",
+        "label": "Elite Skirmisher",
+        "civ": "Dravidians",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "elite_rattan_archer_vietnamese",
+        "label": "Elite Rattan Archer",
+        "civ": "Vietnamese",
+        "count": 21,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "5d0f7820834c9089c37e1ee9407271fc56e16e5403fff2dc968cd8363457e201",
+      "eventLogHash": "069526970af227ba3f315e27a5b7b3ecc28ff5e586c214a3d519854871cd02c7"
+    },
+    "wallSeconds": 8.149615514997393,
+    "startedAt": "2026-11-05T08:57:54.299Z",
+    "finishedAt": "2026-11-05T08:58:02.449Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    37895
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 37895,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "ab527ca8a6230d72da75b302be31775ec5d7fc20bcfddef2e73f0b4054771d13"
+}

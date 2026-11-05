@@ -67,3 +67,16 @@ its existing evidence and cells remain byte-identical to the immutable baseline.
 See the operations document for the diagnosed unfinished quarantine and the
 versioned rolling scheduler, which keeps the four-worker limit and all frozen
 battle inputs while allowing unrelated contexts to continue across audit phases.
+
+## Cumulative checkpoint 003
+
+The independently verified cumulative snapshot covers 481 physical contexts:
+403 fresh measured seed sets and 78 exact checks of existing native observations.
+It reviews 1,283 displayed cells, replaces forecasts/inferences with measurements
+in 638 cells, and changes 228 winner/close outcomes. Earlier released corrections
+remain included. The serving database SHA-256 is
+`5cedcc046177238c419af20b82aba8beb29b2ccb54fb71d7eec7ad3ddd11df81`.
+
+Ten correction/advisor tests and all 195 export checks passed. Civilization,
+ranking and simulator projections remain byte-identical. The quarantined context
+still contributes no correction; its existing evidence and cells are unchanged.

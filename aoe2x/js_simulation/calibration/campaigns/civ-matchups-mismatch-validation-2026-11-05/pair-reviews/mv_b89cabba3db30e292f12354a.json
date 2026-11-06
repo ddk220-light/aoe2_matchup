@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_b89cabba3db30e292f12354a",
+  "reviewedAt": "2026-11-06T09:16:48.136Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      22
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "9f99987d467a0b9fb721b4f31e8ce680f16abc64f77aa03716a52638bb49f971",
+      "1bca0d666e907a97271200a1d24890d73e5c0556fcf44da56c1c53c0e08f31d8"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      102,
+      150
+    ]
+  },
+  "contextHash": "b89cabba3db30e292f12354a09dd5857736a8bc7e144469c082c2b47ea50dff5",
+  "pairKey": "1bca0d666e907a97271200a1d24890d73e5c0556fcf44da56c1c53c0e08f31d8|9f99987d467a0b9fb721b4f31e8ce680f16abc64f77aa03716a52638bb49f971",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 4860,
+      "finalStateHash": "c9ccc11c1de98941a746b7bc8850b6f9db38e0f84c785944f2d2418c14a4c373",
+      "eventLogHash": "c63f64685fbe36c4cf157b848ec1317c22fb64d233254c095e5e8be419b5c6bb",
+      "winnerHpFraction": 0.10909090909090909,
+      "recordHash": "1090e62a25c6cbae1fecd8671f224eef93e31c29437db47e96c256d118a239ff"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 3573,
+      "finalStateHash": "4184fc121e1f1da93dd91ed7095176863d581236fe411ffd3e45efeedce54bb2",
+      "eventLogHash": "84a6d4640b667d1b6c02978161c9d47869672296821b2e01717332db7637c0d3",
+      "winnerHpFraction": 0.3409090909090909,
+      "recordHash": "e00d01704a6967c48ebc32a57e6ab1ce09a68beef5e7b09df647d92e39ed142f"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 3564,
+      "finalStateHash": "342d20477d2463e3165d6fe4eb6e5fdb55cd7deaa47e31160ad287f0e4ad0fb7",
+      "eventLogHash": "0c80decebf114c5f5b22543d066eaf310b43aad56e48c35788fc7bee34c64026",
+      "winnerHpFraction": 0.40454545454545454,
+      "recordHash": "6d1f7f24a3ef208142d8cb1db72916402d0c3cc5bb4173344448ce3ad353f3d9"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "e00d01704a6967c48ebc32a57e6ab1ce09a68beef5e7b09df647d92e39ed142f",
+    "result": {
+      "jobId": "mv_b89cabba3db30e292f12354a",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 450,
+      "startingHpByOwner": {
+        "2": 2160,
+        "3": 1320
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 9,
+          "hp": 450
+        }
+      },
+      "ticks": 3573,
+      "family": "rvr",
+      "side2": {
+        "slug": "heavy_cav_archer",
+        "label": "Heavy Cavalry Archer",
+        "civ": "Japanese",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "heavy_scorpion",
+        "label": "Heavy Scorpion",
+        "civ": "Mongols",
+        "count": 22,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "4184fc121e1f1da93dd91ed7095176863d581236fe411ffd3e45efeedce54bb2",
+      "eventLogHash": "84a6d4640b667d1b6c02978161c9d47869672296821b2e01717332db7637c0d3"
+    },
+    "wallSeconds": 13.015989403009415,
+    "startedAt": "2026-11-06T09:16:35.120Z",
+    "finishedAt": "2026-11-06T09:16:48.136Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    50202
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 50202,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "fa47569a1cb6f55aab4b54dc49a10a7a42db29421e8f9ece7c8cbf236f7ab808"
+}

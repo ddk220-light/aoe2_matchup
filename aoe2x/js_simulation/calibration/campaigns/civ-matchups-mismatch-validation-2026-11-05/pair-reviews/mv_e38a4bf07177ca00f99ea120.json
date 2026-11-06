@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_e38a4bf07177ca00f99ea120",
+  "reviewedAt": "2026-11-06T16:02:23.085Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      21
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "824d34967ccb0b2f3961836986546f2f42923f575c682fde4522f68215da8b2e",
+      "d8dcce3ce690508ac8516497e650bbbf4956e632dd196dc0aa5bb731f80eb728"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      72,
+      115.6
+    ]
+  },
+  "contextHash": "e38a4bf07177ca00f99ea120287787ef71b1bc4dff54c79edad26142e961b35b",
+  "pairKey": "824d34967ccb0b2f3961836986546f2f42923f575c682fde4522f68215da8b2e|d8dcce3ce690508ac8516497e650bbbf4956e632dd196dc0aa5bb731f80eb728",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1991,
+      "finalStateHash": "d58a4dd2680ca35973ac5a74462cf00bcfb14a2817b709f4693e08de5d48b52b",
+      "eventLogHash": "86fa933d82fc79714c5cf48b54bc494e168936be8db8c8d88503ab6f858a9d57",
+      "winnerHpFraction": 0.6328571428571429,
+      "recordHash": "b5486ed969a435d0f345fcd2f659b040394764d853bc0deab63013e28037d7ab"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1991,
+      "finalStateHash": "d58a4dd2680ca35973ac5a74462cf00bcfb14a2817b709f4693e08de5d48b52b",
+      "eventLogHash": "163a42ead9d0af590236fd646a31a2e8391653ef2c3c7094eef32752d6bdb8f6",
+      "winnerHpFraction": 0.6328571428571429,
+      "recordHash": "d417017bae2c483efb01a8f671a83455d1f7a6ba8cc6246c57e29c57e10070cd"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1991,
+      "finalStateHash": "d58a4dd2680ca35973ac5a74462cf00bcfb14a2817b709f4693e08de5d48b52b",
+      "eventLogHash": "b31f846307c3aeaa1a26c27843d13166d36dbae16f114662caeaa44fc0b4a89d",
+      "winnerHpFraction": 0.6328571428571429,
+      "recordHash": "440b512b59b0a0039f41467f506b51f047156f0ef67d07bbf9a560c188a71243"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "440b512b59b0a0039f41467f506b51f047156f0ef67d07bbf9a560c188a71243",
+    "result": {
+      "jobId": "mv_e38a4bf07177ca00f99ea120",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 3987,
+      "startingHpByOwner": {
+        "2": 2268,
+        "3": 6300
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 17,
+          "hp": 3987
+        }
+      },
+      "ticks": 1991,
+      "family": "waves",
+      "side2": {
+        "slug": "champion",
+        "label": "Champion",
+        "civ": "Vikings",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_elephant",
+        "label": "Elite Battle Elephant",
+        "civ": "Malay",
+        "count": 21,
+        "class": "melee"
+      },
+      "finalStateHash": "d58a4dd2680ca35973ac5a74462cf00bcfb14a2817b709f4693e08de5d48b52b",
+      "eventLogHash": "b31f846307c3aeaa1a26c27843d13166d36dbae16f114662caeaa44fc0b4a89d"
+    },
+    "wallSeconds": 32.01674127799272,
+    "startedAt": "2026-11-06T16:01:51.068Z",
+    "finishedAt": "2026-11-06T16:02:23.085Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    57665
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 57665,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "d765f7d1c4139b32d63ef4cb03ec7a9ac7b1cec49843da3b9359b741acff2546"
+}

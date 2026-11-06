@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_e391961e457101cc8556db93",
+  "reviewedAt": "2026-11-06T16:01:48.401Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      21,
+      27
+    ],
+    "engineFamily": "siege",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1",
+      "589f5b3ddd57850463e234ae8dfd40273a2c52aaa1da9b894ed502fe24803b32"
+    ],
+    "scenarioHash": "a200814a9afc51a4006d0f95fb205ae75c57d0013c0b679094d0b3f66af5576d",
+    "weightedCosts": [
+      133.60000000000002,
+      78
+    ]
+  },
+  "contextHash": "e391961e457101cc8556db93aa53aeeb03450c8e84945b0a54e5b00e2c09f50e",
+  "pairKey": "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1|589f5b3ddd57850463e234ae8dfd40273a2c52aaa1da9b894ed502fe24803b32",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 993,
+      "finalStateHash": "ed109f345a354255744d7aee1efa5e86d7903f27f1ca1975f389b6ffb5139567",
+      "eventLogHash": "32954121e3731756c6aa4efc916ab8cbb498ff28f3aa2241611a84a682e44ba1",
+      "winnerHpFraction": 0.8020408163265306,
+      "recordHash": "acb819d04c4b87ee22ed61d70702a3f3bc51bc6b64d09cabac964c708bc49c9e"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 1014,
+      "finalStateHash": "8f603ad9b093c676761c29ad3f4414921a490c9f3e4524bffa6f42cb66c91d0c",
+      "eventLogHash": "3f0656e28048baa8bb1e4760f7c12b3e0c06990a1a9ac0b63b989f1a6074f2a6",
+      "winnerHpFraction": 0.8503401360544217,
+      "recordHash": "3c7e69673740d477db155dc4cf5458a498f455df6e7a06895f7c27a80d122f2e"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 898,
+      "finalStateHash": "7f438676fb2316c497dd7b16a60df44f66c0794ba4436b82fc0257975f33bfa4",
+      "eventLogHash": "e0dddaf3f57a15c0a666852d517d71c1914b43169359e412bf326e189eb2c200",
+      "winnerHpFraction": 0.8496598639455782,
+      "recordHash": "00b756163fe9feaecd302cceeb65eedfdbf3c437bf8f8a9954d373bc4b94ffca"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "acb819d04c4b87ee22ed61d70702a3f3bc51bc6b64d09cabac964c708bc49c9e",
+    "result": {
+      "jobId": "mv_e391961e457101cc8556db93",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 1179,
+      "startingHpByOwner": {
+        "2": 1470,
+        "3": 2160
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 18,
+          "hp": 1179
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 993,
+      "family": "siege",
+      "side2": {
+        "slug": "elite_organ_gun_portuguese",
+        "label": "Elite Organ Gun",
+        "civ": "Portuguese",
+        "count": 21,
+        "class": "siege_ranged"
+      },
+      "side3": {
+        "slug": "elite_samurai_japanese",
+        "label": "Elite Samurai",
+        "civ": "Japanese",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "ed109f345a354255744d7aee1efa5e86d7903f27f1ca1975f389b6ffb5139567",
+      "eventLogHash": "32954121e3731756c6aa4efc916ab8cbb498ff28f3aa2241611a84a682e44ba1"
+    },
+    "wallSeconds": 3.209292439997196,
+    "startedAt": "2026-11-06T16:01:45.191Z",
+    "finishedAt": "2026-11-06T16:01:48.400Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    49831
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 49831,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "f34d612f43f929c5db9ce2cf89b5aeae3c391b17eb19cc16530fc7057762f01f"
+}

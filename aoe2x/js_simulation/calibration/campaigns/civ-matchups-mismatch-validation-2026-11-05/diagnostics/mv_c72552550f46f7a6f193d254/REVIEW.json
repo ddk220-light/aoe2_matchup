@@ -1,0 +1,1066 @@
+{
+  "version": "civ-mismatch-exhausted-seed-diagnosis-v1",
+  "createdAt": "2026-11-06T13:56:26.783870+00:00",
+  "diagnosticOnly": true,
+  "status": "unfinished_no_result",
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "sourceCommit": "9c4a5eba96dace1b7d89347624ec968ee4e37621",
+  "jobId": "mv_c72552550f46f7a6f193d254",
+  "seed": 2,
+  "originalEvidenceIds": [
+    61949
+  ],
+  "displayPair": [
+    {
+      "civilization": "Muisca",
+      "unit": "Elite Guecha Warrior",
+      "key": "Muisca|elite_guecha_warrior_muisca"
+    },
+    {
+      "civilization": "Vikings",
+      "unit": "Champion",
+      "key": "Vikings|champion"
+    }
+  ],
+  "physicalContext": {
+    "counts": [
+      22,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "9beb8362c119a89050f56e18d4d95ab464c0755343a056437379f33a036a3428",
+      "824d34967ccb0b2f3961836986546f2f42923f575c682fde4522f68215da8b2e"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      111,
+      72
+    ]
+  },
+  "contextHash": "c72552550f46f7a6f193d254742286e61967613d00cee4ea7594462d522a7f3c",
+  "nativeMatchupId": "cm_7e573faad39254ef92e281b4",
+  "scenarioPatrolTargets": {
+    "2": {
+      "x": 2,
+      "y": 13
+    },
+    "3": {
+      "x": 13,
+      "y": 2
+    }
+  },
+  "attemptJournal": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/attempts.jsonl",
+  "attemptReferences": [
+    {
+      "line": 32,
+      "sha256IncludingNewline": "7308ba79f204522abb6133230c3a9beede4568ee62c261a1ce9fc34ae35ccd34",
+      "attempt": 1,
+      "wallLimitSeconds": 180,
+      "startedAt": "2026-11-06T11:22:20.494Z",
+      "finishedAt": "2026-11-06T11:25:20.496Z",
+      "wallSeconds": 180.0024732219875,
+      "exhausted": false,
+      "watchdog": true,
+      "lastProgress": {
+        "tick": 123659,
+        "simulationSeconds": 2060.983333333333
+      }
+    },
+    {
+      "line": 33,
+      "sha256IncludingNewline": "dce0befbe2d5f3416c964f38872378b01b8a63e856db6014a204e07001a56a2b",
+      "attempt": 2,
+      "wallLimitSeconds": 600,
+      "startedAt": "2026-11-06T11:25:20.498Z",
+      "finishedAt": "2026-11-06T11:35:20.513Z",
+      "wallSeconds": 600.0153713790029,
+      "exhausted": false,
+      "watchdog": true,
+      "lastProgress": {
+        "tick": 511795,
+        "simulationSeconds": 8529.916666666666
+      }
+    },
+    {
+      "line": 34,
+      "sha256IncludingNewline": "187d778589fbeb6ca7d44cda45ded4f06f08ea88cfbf2df1d83d4efd704fd595",
+      "attempt": 3,
+      "wallLimitSeconds": 1800,
+      "startedAt": "2026-11-06T11:35:20.514Z",
+      "finishedAt": "2026-11-06T12:05:20.540Z",
+      "wallSeconds": 1800.0261302179993,
+      "exhausted": false,
+      "watchdog": true,
+      "lastProgress": {
+        "tick": 1561618,
+        "simulationSeconds": 26026.966666666667
+      }
+    },
+    {
+      "line": 35,
+      "sha256IncludingNewline": "b8d53fd4eae8acaacc81694ffb77d5d4ae2607ab6f5fe045040e22dced570c1e",
+      "attempt": 4,
+      "wallLimitSeconds": 3600,
+      "startedAt": "2026-11-06T12:05:20.541Z",
+      "finishedAt": "2026-11-06T13:05:20.567Z",
+      "wallSeconds": 3600.0258939389882,
+      "exhausted": true,
+      "watchdog": true,
+      "lastProgress": {
+        "tick": 3143892,
+        "simulationSeconds": 52398.2
+      }
+    }
+  ],
+  "progressTimelines": [
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_c72552550f46f7a6f193d254-2-fresh_measurement-1793964140496.jsonl",
+      "sha256": "d260a8f1714e643c74e1f4f86152b93b41c3d113d4b55819313cfb3d1df332c4",
+      "bytes": 21286,
+      "snapshots": 6,
+      "latestTick": 101702,
+      "latestGameSeconds": 1695.0333333333333,
+      "unchangedStateSinceGameSeconds": 247.35,
+      "unchangedStateGameSeconds": 1447.6833333333334,
+      "unchangedStateSnapshots": 5,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 31.722222222222896
+        },
+        "3": {
+          "units": 15,
+          "hp": 854
+        }
+      },
+      "allEventCountersUnchanged": true,
+      "eventCounters": {
+        "scenario-trigger-fired": 1,
+        "patrol-issued": 2,
+        "move": 57144,
+        "pursuit-acquired": 1292,
+        "engagement-started": 591,
+        "attack-start": 359,
+        "damage": 329,
+        "death": 33,
+        "engagement-ended": 562,
+        "pursuit-invalidated": 146,
+        "contact-reservation-acquired": 157,
+        "blocked": 29571,
+        "contact-reservation-persisted": 13420,
+        "contact-release-published": 14,
+        "contact-release-persisted": 3457,
+        "pursuit-route-planned": 456,
+        "pursuit-retarget-requested": 362,
+        "contact-reservation-released": 157,
+        "pursuit-route-invalidated": 249,
+        "attack-canceled": 13,
+        "pursuit-route-advanced": 261
+      },
+      "allPositionsAndTargetsUnchanged": true,
+      "allSurvivorsIdleWithoutTargets": true,
+      "positionsEqualScenarioPatrolTargets": true,
+      "lastPositions": [
+        {
+          "id": 9011,
+          "owner": 2,
+          "hp": 31.722222222222896,
+          "x": 2,
+          "y": 13,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9500,
+          "owner": 3,
+          "hp": 35,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9503,
+          "owner": 3,
+          "hp": 63,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9504,
+          "owner": 3,
+          "hp": 49,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9505,
+          "owner": 3,
+          "hp": 63,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9506,
+          "owner": 3,
+          "hp": 84,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9507,
+          "owner": 3,
+          "hp": 56,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9509,
+          "owner": 3,
+          "hp": 70,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9510,
+          "owner": 3,
+          "hp": 49,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9511,
+          "owner": 3,
+          "hp": 84,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9512,
+          "owner": 3,
+          "hp": 70,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9513,
+          "owner": 3,
+          "hp": 28,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9515,
+          "owner": 3,
+          "hp": 28,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9516,
+          "owner": 3,
+          "hp": 77,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9517,
+          "owner": 3,
+          "hp": 77,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9521,
+          "owner": 3,
+          "hp": 21,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        }
+      ]
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_c72552550f46f7a6f193d254-2-fresh_measurement-1793964320506.jsonl",
+      "sha256": "269a3bd707b61dd49d687e130ef0c436b430e316294a522a85269d5bd80c98a8",
+      "bytes": 61970,
+      "snapshots": 20,
+      "latestTick": 486106,
+      "latestGameSeconds": 8101.766666666666,
+      "unchangedStateSinceGameSeconds": 289.65,
+      "unchangedStateGameSeconds": 7812.116666666667,
+      "unchangedStateSnapshots": 19,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 31.722222222222896
+        },
+        "3": {
+          "units": 15,
+          "hp": 854
+        }
+      },
+      "allEventCountersUnchanged": true,
+      "eventCounters": {
+        "scenario-trigger-fired": 1,
+        "patrol-issued": 2,
+        "move": 57144,
+        "pursuit-acquired": 1292,
+        "engagement-started": 591,
+        "attack-start": 359,
+        "damage": 329,
+        "death": 33,
+        "engagement-ended": 562,
+        "pursuit-invalidated": 146,
+        "contact-reservation-acquired": 157,
+        "blocked": 29571,
+        "contact-reservation-persisted": 13420,
+        "contact-release-published": 14,
+        "contact-release-persisted": 3457,
+        "pursuit-route-planned": 456,
+        "pursuit-retarget-requested": 362,
+        "contact-reservation-released": 157,
+        "pursuit-route-invalidated": 249,
+        "attack-canceled": 13,
+        "pursuit-route-advanced": 261
+      },
+      "allPositionsAndTargetsUnchanged": true,
+      "allSurvivorsIdleWithoutTargets": true,
+      "positionsEqualScenarioPatrolTargets": true,
+      "lastPositions": [
+        {
+          "id": 9011,
+          "owner": 2,
+          "hp": 31.722222222222896,
+          "x": 2,
+          "y": 13,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9500,
+          "owner": 3,
+          "hp": 35,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9503,
+          "owner": 3,
+          "hp": 63,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9504,
+          "owner": 3,
+          "hp": 49,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9505,
+          "owner": 3,
+          "hp": 63,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9506,
+          "owner": 3,
+          "hp": 84,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9507,
+          "owner": 3,
+          "hp": 56,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9509,
+          "owner": 3,
+          "hp": 70,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9510,
+          "owner": 3,
+          "hp": 49,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9511,
+          "owner": 3,
+          "hp": 84,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9512,
+          "owner": 3,
+          "hp": 70,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9513,
+          "owner": 3,
+          "hp": 28,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9515,
+          "owner": 3,
+          "hp": 28,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9516,
+          "owner": 3,
+          "hp": 77,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9517,
+          "owner": 3,
+          "hp": 77,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9521,
+          "owner": 3,
+          "hp": 21,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        }
+      ]
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_c72552550f46f7a6f193d254-2-fresh_measurement-1793964920516.jsonl",
+      "sha256": "cb85758caeba8fa8457903f797384cd13f35e05ba5b4762ecd6ad8e380927041",
+      "bytes": 178285,
+      "snapshots": 60,
+      "latestTick": 1535470,
+      "latestGameSeconds": 25591.166666666668,
+      "unchangedStateSinceGameSeconds": 322.1666666666667,
+      "unchangedStateGameSeconds": 25269.0,
+      "unchangedStateSnapshots": 59,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 31.722222222222896
+        },
+        "3": {
+          "units": 15,
+          "hp": 854
+        }
+      },
+      "allEventCountersUnchanged": true,
+      "eventCounters": {
+        "scenario-trigger-fired": 1,
+        "patrol-issued": 2,
+        "move": 57144,
+        "pursuit-acquired": 1292,
+        "engagement-started": 591,
+        "attack-start": 359,
+        "damage": 329,
+        "death": 33,
+        "engagement-ended": 562,
+        "pursuit-invalidated": 146,
+        "contact-reservation-acquired": 157,
+        "blocked": 29571,
+        "contact-reservation-persisted": 13420,
+        "contact-release-published": 14,
+        "contact-release-persisted": 3457,
+        "pursuit-route-planned": 456,
+        "pursuit-retarget-requested": 362,
+        "contact-reservation-released": 157,
+        "pursuit-route-invalidated": 249,
+        "attack-canceled": 13,
+        "pursuit-route-advanced": 261
+      },
+      "allPositionsAndTargetsUnchanged": true,
+      "allSurvivorsIdleWithoutTargets": true,
+      "positionsEqualScenarioPatrolTargets": true,
+      "lastPositions": [
+        {
+          "id": 9011,
+          "owner": 2,
+          "hp": 31.722222222222896,
+          "x": 2,
+          "y": 13,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9500,
+          "owner": 3,
+          "hp": 35,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9503,
+          "owner": 3,
+          "hp": 63,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9504,
+          "owner": 3,
+          "hp": 49,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9505,
+          "owner": 3,
+          "hp": 63,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9506,
+          "owner": 3,
+          "hp": 84,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9507,
+          "owner": 3,
+          "hp": 56,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9509,
+          "owner": 3,
+          "hp": 70,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9510,
+          "owner": 3,
+          "hp": 49,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9511,
+          "owner": 3,
+          "hp": 84,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9512,
+          "owner": 3,
+          "hp": 70,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9513,
+          "owner": 3,
+          "hp": 28,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9515,
+          "owner": 3,
+          "hp": 28,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9516,
+          "owner": 3,
+          "hp": 77,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9517,
+          "owner": 3,
+          "hp": 77,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9521,
+          "owner": 3,
+          "hp": 21,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        }
+      ]
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_c72552550f46f7a6f193d254-2-fresh_measurement-1793966720543.jsonl",
+      "sha256": "8e4fcdcddd75e91c03ba82528d74e96df66bc18bc6254ba65a025304bee4d66f",
+      "bytes": 352741,
+      "snapshots": 120,
+      "latestTick": 3119991,
+      "latestGameSeconds": 51999.85,
+      "unchangedStateSinceGameSeconds": 312.85,
+      "unchangedStateGameSeconds": 51687.0,
+      "unchangedStateSnapshots": 119,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 31.722222222222896
+        },
+        "3": {
+          "units": 15,
+          "hp": 854
+        }
+      },
+      "allEventCountersUnchanged": true,
+      "eventCounters": {
+        "scenario-trigger-fired": 1,
+        "patrol-issued": 2,
+        "move": 57144,
+        "pursuit-acquired": 1292,
+        "engagement-started": 591,
+        "attack-start": 359,
+        "damage": 329,
+        "death": 33,
+        "engagement-ended": 562,
+        "pursuit-invalidated": 146,
+        "contact-reservation-acquired": 157,
+        "blocked": 29571,
+        "contact-reservation-persisted": 13420,
+        "contact-release-published": 14,
+        "contact-release-persisted": 3457,
+        "pursuit-route-planned": 456,
+        "pursuit-retarget-requested": 362,
+        "contact-reservation-released": 157,
+        "pursuit-route-invalidated": 249,
+        "attack-canceled": 13,
+        "pursuit-route-advanced": 261
+      },
+      "allPositionsAndTargetsUnchanged": true,
+      "allSurvivorsIdleWithoutTargets": true,
+      "positionsEqualScenarioPatrolTargets": true,
+      "lastPositions": [
+        {
+          "id": 9011,
+          "owner": 2,
+          "hp": 31.722222222222896,
+          "x": 2,
+          "y": 13,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9500,
+          "owner": 3,
+          "hp": 35,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9503,
+          "owner": 3,
+          "hp": 63,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9504,
+          "owner": 3,
+          "hp": 49,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9505,
+          "owner": 3,
+          "hp": 63,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9506,
+          "owner": 3,
+          "hp": 84,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9507,
+          "owner": 3,
+          "hp": 56,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9509,
+          "owner": 3,
+          "hp": 70,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9510,
+          "owner": 3,
+          "hp": 49,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9511,
+          "owner": 3,
+          "hp": 84,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9512,
+          "owner": 3,
+          "hp": 70,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9513,
+          "owner": 3,
+          "hp": 28,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9515,
+          "owner": 3,
+          "hp": 28,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9516,
+          "owner": 3,
+          "hp": 77,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9517,
+          "owner": 3,
+          "hp": 77,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9521,
+          "owner": 3,
+          "hp": 21,
+          "x": 13,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": null,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        }
+      ]
+    }
+  ],
+  "validSeedRecords": [
+    {
+      "seed": 0,
+      "sourceFile": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+      "line": 20437,
+      "sha256IncludingNewline": "e66fa964b46872f30f31bd15874fca52d0b748bd799894419564bd0ccbfe7514",
+      "ticks": 2865,
+      "winnerOwner": 3,
+      "finalStateHash": "6f55bede8bd8a9c448ae255fcd2626194cb86199e6225e8d7f851eeff375fb23",
+      "eventLogHash": "f5c5078e7a7c417076ad62e3e175f0f45c66c55fe7a328615232fbb87a586a50"
+    },
+    {
+      "seed": 1,
+      "sourceFile": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+      "line": 20438,
+      "sha256IncludingNewline": "f26e3442b0e281e310aae1b4a5d39567f2bf6d4e124731c36305ecdc88105a32",
+      "ticks": 3689,
+      "winnerOwner": 3,
+      "finalStateHash": "4623e2d058679cc395669990b5dc27bc2fa607be17db14615faa79b83db6ec40",
+      "eventLogHash": "d362a170268b465ac5405594f737491bd840ca972ebc387f26eb1be2db321576"
+    }
+  ],
+  "missingRequiredSeeds": [
+    2
+  ],
+  "pairReviewExists": false,
+  "observations": [
+    "All four prescribed limits exhausted without a native terminal result. The final watchdog reached tick 3143892 / game second 52398.2.",
+    "Each closed timeline has a stationary suffix starting at its second snapshot: every surviving position, target, HP total and event counter remains unchanged.",
+    "The final timeline retains one Muisca Elite Guecha Warrior at 31.722222222222896 HP at (2,13), and fifteen Viking Champions totaling 854 HP at (13,2). All sixteen units are idle with no pursuit, engagement or attack target; both coordinates equal the original scenario patrol destinations.",
+    "The final unchanged suffix covers 119 snapshots from game second 312.85 through 51999.85. Movement, blocked, attack, damage and death counters all remain fixed.",
+    "Native seeds 0 and 1 remain valid original records. Seed 2 and the independent pair replay are missing, so their shared winner cannot be copied into a correction."
+  ],
+  "diagnosis": "Persistent frozen-runtime patrol-endpoint nontermination after both groups reach their original patrol destinations. Saved state is static across all four attempts; the precise reacquisition mechanism and real-game fidelity are not independently established here. No draw or winner is assigned.",
+  "decision": {
+    "resultAssigned": false,
+    "physicsChanged": false,
+    "automaticRetryAuthorized": false,
+    "retainOriginalServingEvidence": true,
+    "continueOtherInventoryJobs": true,
+    "nextStep": "Keep this context unresolved; require a separately reviewed recovery decision before any further retry."
+  }
+}

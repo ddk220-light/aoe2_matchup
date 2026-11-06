@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_93cd8c57d0c40693b0585023",
+  "reviewedAt": "2026-11-06T02:54:45.870Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      13,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b",
+      "e9abf54d54751e4af25ac840518d89b802f0187ef559c2c581eb95796c8aa925"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      367.5,
+      81.60000000000001
+    ]
+  },
+  "contextHash": "93cd8c57d0c40693b05850234f2ea06b4b623efbeb0115064b156b8b059f1e06",
+  "pairKey": "b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b|e9abf54d54751e4af25ac840518d89b802f0187ef559c2c581eb95796c8aa925",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 3947,
+      "finalStateHash": "833689c05092b04ebc8de7701afe05cbbcb8da86e3060270cf927c8287b92b37",
+      "eventLogHash": "444565182c9b0c23a90d914356b38e0557116e4f18d00f25d3f09a419091872e",
+      "winnerHpFraction": 0.062391975308649164,
+      "recordHash": "84ce711c796b00e8899fcea6a001e65cb038e6039f504593f67cca9e8df93f6a"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 3578,
+      "finalStateHash": "4c21d042bad8db07bd5bbc051bcb9406ba5b94a4940f24c93203b23303dda9cc",
+      "eventLogHash": "5bc8818365f5e90078786114b8658e1eba6c9b824ddbb45bbc6d22655fdddb2b",
+      "winnerHpFraction": 0.11618827160494885,
+      "recordHash": "e383d3b4bef0b85338add0038fae1d6df22d77392af3fbb013c9350227f2d5e4"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 4749,
+      "finalStateHash": "2348132500dc1a3f2ee2a2141b60d3cb01c40eaa597e001f4f350f1bc454bdb6",
+      "eventLogHash": "b8fb1ba28f1e05b86bea8f6d7ecd92e282a850831dd82e486c91eb187d728abd",
+      "winnerHpFraction": 0.003209876543210786,
+      "recordHash": "1e87dc2e7b19199d97e0cf349fc975184513ad40d4bb6d4f98db90c419e2f21d"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "e383d3b4bef0b85338add0038fae1d6df22d77392af3fbb013c9350227f2d5e4",
+    "result": {
+      "jobId": "mv_93cd8c57d0c40693b0585023",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 250.96666666668952,
+      "startingHpByOwner": {
+        "2": 975,
+        "3": 2160
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 250.96666666668952
+        }
+      },
+      "ticks": 3578,
+      "family": "rvr",
+      "side2": {
+        "slug": "mounted_trebuchet_khitans",
+        "label": "Mounted Trebuchet",
+        "civ": "Khitans",
+        "count": 13,
+        "class": "siege_ranged"
+      },
+      "side3": {
+        "slug": "heavy_cav_archer",
+        "label": "Heavy Cavalry Archer",
+        "civ": "Huns",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "4c21d042bad8db07bd5bbc051bcb9406ba5b94a4940f24c93203b23303dda9cc",
+      "eventLogHash": "5bc8818365f5e90078786114b8658e1eba6c9b824ddbb45bbc6d22655fdddb2b"
+    },
+    "wallSeconds": 11.46128327099979,
+    "startedAt": "2026-11-06T02:54:34.408Z",
+    "finishedAt": "2026-11-06T02:54:45.869Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    46920
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 46920,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "0e4a8b402d3a0a85d65c428654cc1303c01dcf4c6cb30f0058874d8de66874d2"
+}

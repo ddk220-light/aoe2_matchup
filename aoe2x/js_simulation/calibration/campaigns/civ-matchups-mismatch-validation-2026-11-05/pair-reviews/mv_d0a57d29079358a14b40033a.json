@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_d0a57d29079358a14b40033a",
+  "reviewedAt": "2026-11-06T13:11:49.585Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      20,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "8adc61e15cca6379e6a1a7cf67e7f6a61e4f3b77f344a16eb57d586d2e70ac25",
+      "2e7ecd595f72eb982a468a307036e8305fbcfe2b0d335ef0e662a0de719f8f2b"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      150,
+      82.5
+    ]
+  },
+  "contextHash": "d0a57d29079358a14b40033a557cde47f8cd87c5171035c08a860292d67acf1a",
+  "pairKey": "2e7ecd595f72eb982a468a307036e8305fbcfe2b0d335ef0e662a0de719f8f2b|8adc61e15cca6379e6a1a7cf67e7f6a61e4f3b77f344a16eb57d586d2e70ac25",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 2237,
+      "finalStateHash": "0922779696c003f702991eac96604395a871baa18d5b68ca924d4273dd717cec",
+      "eventLogHash": "5f1af108cd08e71a13d2e6d762fd4626b8c54a79d89ba6bef4ae59b1043a907b",
+      "winnerHpFraction": 0.05449047619047625,
+      "recordHash": "baa82812750cbb61c33f21ef93e9c5b649a124ff4437960c609c4ed1a09fa030"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1870,
+      "finalStateHash": "f2a6fc23739abb0c938224d2564d2f7d72f44ec3fbbf2653a287afbced17d851",
+      "eventLogHash": "ab919d0e971ae97ac5aa0017a5cdfa385267be7b1d1f24b3e4babf3cca4ef5e8",
+      "winnerHpFraction": 0.11715089947089954,
+      "recordHash": "1ba28b73762dd2dc2a4b870f709756336e4349680fa4ce35bb3c9eb1777dc54d"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1902,
+      "finalStateHash": "713e624225c3e8af09b69299fe23a577ec2e5d05ff5895cda041154e8ab94cec",
+      "eventLogHash": "96a2ebed58dbb93eb028ce1f9ff1fcb07cc0132fa93382e6ec4ecdbc3cb39996",
+      "winnerHpFraction": 0.07089259259259265,
+      "recordHash": "549a2c67465bf7d7276f1915b5dcce3afab76caf7a4f9e33fb2e21f121e3f85c"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "1ba28b73762dd2dc2a4b870f709756336e4349680fa4ce35bb3c9eb1777dc54d",
+    "result": {
+      "jobId": "mv_d0a57d29079358a14b40033a",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 221.41520000000014,
+      "startingHpByOwner": {
+        "2": 1200,
+        "3": 1890
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 9,
+          "hp": 221.41520000000014
+        }
+      },
+      "ticks": 1870,
+      "family": "rvr",
+      "side2": {
+        "slug": "heavy_scorpion",
+        "label": "Heavy Scorpion",
+        "civ": "Sicilians",
+        "count": 20,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "elite_throwing_axeman_franks",
+        "label": "Elite Throwing Axeman",
+        "civ": "Franks",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "f2a6fc23739abb0c938224d2564d2f7d72f44ec3fbbf2653a287afbced17d851",
+      "eventLogHash": "ab919d0e971ae97ac5aa0017a5cdfa385267be7b1d1f24b3e4babf3cca4ef5e8"
+    },
+    "wallSeconds": 5.047584243997932,
+    "startedAt": "2026-11-06T13:11:44.537Z",
+    "finishedAt": "2026-11-06T13:11:49.585Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    39329
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 39329,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "2cea0482abc3f2b19cc48f937e623b52f265d199b8bfccce05b8f86c6960b1ca"
+}

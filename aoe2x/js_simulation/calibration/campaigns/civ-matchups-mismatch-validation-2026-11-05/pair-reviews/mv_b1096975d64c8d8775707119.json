@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_b1096975d64c8d8775707119",
+  "reviewedAt": "2026-11-06T07:54:58.156Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      15
+    ],
+    "engineFamily": "siege",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "92819482c4434960f29fefc42705a71e541a9b85ec65014adc5bd41275711089",
+      "b85163394b7845d05a785658badea6bbc4a90c05ed9f79e5093bb5b0095ba203"
+    ],
+    "scenarioHash": "68355152c72a621245965a8a10f001b96dbf2b6789cea9e5dff7c7335943029d",
+    "weightedCosts": [
+      57.5,
+      188
+    ]
+  },
+  "contextHash": "b1096975d64c8d87757071199fa3242b1c863df99536814bf479c21a7d81d165",
+  "pairKey": "92819482c4434960f29fefc42705a71e541a9b85ec65014adc5bd41275711089|b85163394b7845d05a785658badea6bbc4a90c05ed9f79e5093bb5b0095ba203",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1004,
+      "finalStateHash": "f77cb2ac601d579c25bd06ff170230e4b0f2c379b97423bd31b9dc652547dcf3",
+      "eventLogHash": "89dcae78c6677e790db83e4e034f4130740bfa950804370dad032f552e4d58fa",
+      "winnerHpFraction": 0.8071111111111111,
+      "recordHash": "96b9ad39e44e2f7c6f9862f28a042b0a9ce45cf958bdc958e82be74b8e66528e"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 991,
+      "finalStateHash": "1c2597d54752a17063c3102d9a76557ebde300225c87ec28791d7f766bd3b910",
+      "eventLogHash": "9f595121c5fa4b43b137a8bcae2ff16bf0759d67f84523c740c34ed75cbf270f",
+      "winnerHpFraction": 0.8142222222222222,
+      "recordHash": "df7f23a67ed521c6d19e04bb8cf26394d506257730a9898da13b07b4e355953f"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 991,
+      "finalStateHash": "b0a247392e611a1c4004f88c162503d7bb8a3b72864b267a237b3b08187dbc84",
+      "eventLogHash": "602ae420cb5fada6673ab7f1da3e5dce3973c0d5ded273d539b8c5afcb76e541",
+      "winnerHpFraction": 0.8142222222222222,
+      "recordHash": "6e6d9a317f7a6d722288431545ae941bc012266b58423b521531d9ac5b34c215"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "96b9ad39e44e2f7c6f9862f28a042b0a9ce45cf958bdc958e82be74b8e66528e",
+    "result": {
+      "jobId": "mv_b1096975d64c8d8775707119",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 3632,
+      "startingHpByOwner": {
+        "2": 1620,
+        "3": 4500
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 3632
+        }
+      },
+      "ticks": 1004,
+      "family": "siege",
+      "side2": {
+        "slug": "halberdier",
+        "label": "Halberdier",
+        "civ": "Tatars",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_ballista_elephant_khmer",
+        "label": "Elite Ballista Elephant",
+        "civ": "Khmer",
+        "count": 15,
+        "class": "siege_ranged"
+      },
+      "finalStateHash": "f77cb2ac601d579c25bd06ff170230e4b0f2c379b97423bd31b9dc652547dcf3",
+      "eventLogHash": "89dcae78c6677e790db83e4e034f4130740bfa950804370dad032f552e4d58fa"
+    },
+    "wallSeconds": 2.4594669400006532,
+    "startedAt": "2026-11-06T07:54:55.697Z",
+    "finishedAt": "2026-11-06T07:54:58.156Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    53738
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 53738,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "58bb2004825225d8ce5b9a0e74b0e4a543c591a48b135717815186a492f3aaa8"
+}

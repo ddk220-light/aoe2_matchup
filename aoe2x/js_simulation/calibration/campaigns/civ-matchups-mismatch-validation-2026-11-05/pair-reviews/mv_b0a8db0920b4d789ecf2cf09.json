@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_b0a8db0920b4d789ecf2cf09",
+  "reviewedAt": "2026-11-06T07:52:14.154Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      19
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "ba37636133465ca1443b16ea9e1ee4fd48e7cee9af55bf6b8eb9d8b7ad752441",
+      "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      72,
+      142.5
+    ]
+  },
+  "contextHash": "b0a8db0920b4d789ecf2cf09c9cd624412948474ab513e8540aa80794a17f5f1",
+  "pairKey": "9173e5f675a78e6373c505b20fe7fd08d2a598dd403f795aad74a23e0996b87b|ba37636133465ca1443b16ea9e1ee4fd48e7cee9af55bf6b8eb9d8b7ad752441",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 2666,
+      "finalStateHash": "6d238decb6781656a8d3dad2256eeb03db43aa6ee551589c21e5768e99b59436",
+      "eventLogHash": "426ca2b6bec736cdf0ee7872ca9b0a2d85cf26399080ec2284efebbdb40647ff",
+      "winnerHpFraction": 0.02962962962962963,
+      "recordHash": "ab461523550c54b5c135662c5f6ef4945850aa54afdd525a5c9ac9be81934921"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 2483,
+      "finalStateHash": "2181e67260f809f7c0c3d4de8727aa24270ce43a9c1cee2cefd1be287091d845",
+      "eventLogHash": "6227942d050fe98ef2929bc3a401d16e3f2a6b6390688fd16f709e3acb109955",
+      "winnerHpFraction": 0.06666666666666667,
+      "recordHash": "a5a04fe0d2945041d52b4f57d02be6c0c61d8ec34acf2a8b0629dc058c8e902a"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 2580,
+      "finalStateHash": "f0195b21078e04a33e00748e8144eaac63f74246debd3504602f41fd024469e9",
+      "eventLogHash": "5213dceaf64fdbee9366c704d936855851b64faf87d5caac6a5d185cbbb36f16",
+      "winnerHpFraction": 0.042328042328042326,
+      "recordHash": "89c30589fc7d4a0f694f71da541ae15b91d8080a283ba50c00c090afd8881f7e"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "89c30589fc7d4a0f694f71da541ae15b91d8080a283ba50c00c090afd8881f7e",
+    "result": {
+      "jobId": "mv_b0a8db0920b4d789ecf2cf09",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 80,
+      "startingHpByOwner": {
+        "2": 1890,
+        "3": 2660
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 2,
+          "hp": 80
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 2580,
+      "family": "waves",
+      "side2": {
+        "slug": "champion",
+        "label": "Champion",
+        "civ": "Japanese",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "paladin",
+        "label": "Cavalier",
+        "civ": "Armenians",
+        "count": 19,
+        "class": "melee"
+      },
+      "finalStateHash": "f0195b21078e04a33e00748e8144eaac63f74246debd3504602f41fd024469e9",
+      "eventLogHash": "5213dceaf64fdbee9366c704d936855851b64faf87d5caac6a5d185cbbb36f16"
+    },
+    "wallSeconds": 20.172474506989122,
+    "startedAt": "2026-11-06T07:51:53.982Z",
+    "finishedAt": "2026-11-06T07:52:14.154Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    3115
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 3115,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 3,
+  "reviewHash": "4622838a10d6729b24db210d7b225210ceae490208784a66ca4f2d8f85f35e0c"
+}

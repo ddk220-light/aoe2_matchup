@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_b02e8ff2cc5e373f4978117b",
+  "reviewedAt": "2026-11-06T07:49:07.281Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      16
+    ],
+    "engineFamily": "siege",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "7044d63ae86cbda6c51e3c10c4d0205b4128267a19cd25624f23946e9f585151",
+      "b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b"
+    ],
+    "scenarioHash": "68355152c72a621245965a8a10f001b96dbf2b6789cea9e5dff7c7335943029d",
+    "weightedCosts": [
+      136.5,
+      367.5
+    ]
+  },
+  "contextHash": "b02e8ff2cc5e373f4978117b761d1ed9a416c5db61d740eab8435cb690c3e92e",
+  "pairKey": "7044d63ae86cbda6c51e3c10c4d0205b4128267a19cd25624f23946e9f585151|b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 2354,
+      "finalStateHash": "2246b06c6bb131da2b49254abc838a709d5867e33ebbeaa0f91908ccb1a37c4e",
+      "eventLogHash": "800aea57cef4d65758c08dde60f211cc995dd945c5429ddbcf77d8bbb6f9834e",
+      "winnerHpFraction": 0.1885297418630906,
+      "recordHash": "aef5f5082413fad746363e9576dcf5c9c32af8791732e89cc419326531afbf12"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 2343,
+      "finalStateHash": "64bcfec08bf69965c521afde0ab402c3cb413216a7068b9bd79121ecf79d69bf",
+      "eventLogHash": "34c5c2b50920e3d23b45c124ed1c51ede87af3328f2a8d920de5ff8131af6ac5",
+      "winnerHpFraction": 0.36654320987655725,
+      "recordHash": "f5f501f16b3790420b4a71675ac951e320981cdabb59f428bec15a10816f3d24"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 2330,
+      "finalStateHash": "ce5790b2eb1ab7804616a478e972952a8a78be32e99a1128c39a022224f4b5b5",
+      "eventLogHash": "26a15868e42a42a5a445934b62c1307ed77c254f414b8a226fa14527c5e799ac",
+      "winnerHpFraction": 0.32049382716050756,
+      "recordHash": "e1c5cc795348264f2d21e866aaf0ee9266caac955f038526ec029ee7fd21e205"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "e1c5cc795348264f2d21e866aaf0ee9266caac955f038526ec029ee7fd21e205",
+    "result": {
+      "jobId": "mv_b02e8ff2cc5e373f4978117b",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 951.8666666667075,
+      "startingHpByOwner": {
+        "2": 2970,
+        "3": 1200
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 22,
+          "hp": 951.8666666667075
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 2330,
+      "family": "siege",
+      "side2": {
+        "slug": "paladin",
+        "label": "Heavy Hei-Kuang Cavalry",
+        "civ": "Wu",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "mounted_trebuchet_khitans",
+        "label": "Mounted Trebuchet",
+        "civ": "Khitans",
+        "count": 16,
+        "class": "siege_ranged"
+      },
+      "finalStateHash": "ce5790b2eb1ab7804616a478e972952a8a78be32e99a1128c39a022224f4b5b5",
+      "eventLogHash": "26a15868e42a42a5a445934b62c1307ed77c254f414b8a226fa14527c5e799ac"
+    },
+    "wallSeconds": 26.10559386700392,
+    "startedAt": "2026-11-06T07:48:41.176Z",
+    "finishedAt": "2026-11-06T07:49:07.281Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    53440
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 53440,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "44467f05e88775e79f3db7ab69190bc9bd2a75e94769320609f0c510622042ba"
+}

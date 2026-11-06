@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_d3c4cfc08dd9033279cd8e55",
+  "reviewedAt": "2026-11-06T13:41:07.164Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      26
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "cd7d53d5f42f97df3997c6191308a334997e30f652e5444d8e7cfa32b470c8b4",
+      "ba22a2c1e2d9804309b0826451e26390abfeba236e9f6cb7afb710d5c944addf"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      110,
+      121
+    ]
+  },
+  "contextHash": "d3c4cfc08dd9033279cd8e55eb9f277dbdbb92f09cea10cf45b874bb0f1cb078",
+  "pairKey": "ba22a2c1e2d9804309b0826451e26390abfeba236e9f6cb7afb710d5c944addf|cd7d53d5f42f97df3997c6191308a334997e30f652e5444d8e7cfa32b470c8b4",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 1526,
+      "finalStateHash": "dfd3a87b981c4edf418904744760021b81bc7d671332afc2ecffb4a004a205f0",
+      "eventLogHash": "aa1f8769666bcec31ce7f296988006b6727a83f8f616542d583bf86a3327fb7b",
+      "winnerHpFraction": 0.28425925925925927,
+      "recordHash": "bd2cf7994b0aa6e864bf059c7b9aebb40513ea87fd69f11efa30d7f429a0a31a"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 1524,
+      "finalStateHash": "e82df006422cd5f1dc233869a859551f82c251060473a62b45f740b8553266f4",
+      "eventLogHash": "8af86745015fff62ce15152a95fe7958771222bc970e6948c6f85822612fba5b",
+      "winnerHpFraction": 0.31574074074074077,
+      "recordHash": "8dc31d3424d9127e4a2f3110f9a2c40f1a674fb669b559730d12d9cf117cd4bb"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1513,
+      "finalStateHash": "a655b8698988c1bfeca6be5ebdc51b35abc8711c802c48c69c146d6af1e0d382",
+      "eventLogHash": "885a8fe34d92bf50ee151c550ef5c56d6a46a4791fcc1954a0e5e5f8c76f0a6c",
+      "winnerHpFraction": 0.30277777777777776,
+      "recordHash": "2c10ee97ced158cc648d7cc672fc557443c5cf970d7c009f10187c5cea457762"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "2c10ee97ced158cc648d7cc672fc557443c5cf970d7c009f10187c5cea457762",
+    "result": {
+      "jobId": "mv_d3c4cfc08dd9033279cd8e55",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 327,
+      "startingHpByOwner": {
+        "2": 1080,
+        "3": 4160
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 12,
+          "hp": 327
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1513,
+      "family": "kite",
+      "side2": {
+        "slug": "grenadier_jurchens",
+        "label": "Grenadier",
+        "civ": "Jurchens",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "heavy_camel",
+        "label": "Imperial Camel Rider",
+        "civ": "Hindustanis",
+        "count": 26,
+        "class": "melee"
+      },
+      "finalStateHash": "a655b8698988c1bfeca6be5ebdc51b35abc8711c802c48c69c146d6af1e0d382",
+      "eventLogHash": "885a8fe34d92bf50ee151c550ef5c56d6a46a4791fcc1954a0e5e5f8c76f0a6c"
+    },
+    "wallSeconds": 6.330745791003108,
+    "startedAt": "2026-11-06T13:41:00.833Z",
+    "finishedAt": "2026-11-06T13:41:07.164Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    46055
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 46055,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "68af8d09bcee05c83162dce548d446ded40f78dcfd7c5dcf59c190ed82274ce8"
+}

@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_8559213ad0bdb3f2afa99980",
+  "reviewedAt": "2026-11-06T00:38:15.937Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      24
+    ],
+    "engineFamily": "siege",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "6b49bea11ff75983dda0a1498b6e0b10363336c12c7c164276b99fb984e31448",
+      "b85163394b7845d05a785658badea6bbc4a90c05ed9f79e5093bb5b0095ba203"
+    ],
+    "scenarioHash": "68355152c72a621245965a8a10f001b96dbf2b6789cea9e5dff7c7335943029d",
+    "weightedCosts": [
+      142.5,
+      188
+    ]
+  },
+  "contextHash": "8559213ad0bdb3f2afa9998057ce49cde03269808dab446b2d0cb460da2d683f",
+  "pairKey": "6b49bea11ff75983dda0a1498b6e0b10363336c12c7c164276b99fb984e31448|b85163394b7845d05a785658badea6bbc4a90c05ed9f79e5093bb5b0095ba203",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 4720,
+      "finalStateHash": "9473516c5c5464ab261dfda8bebb7b5604f6ee11647f09c374d5409efa5707df",
+      "eventLogHash": "c3de43afa78703750162e88c64460502acac70a3cfb95929a7cfd7fffd6fb5d0",
+      "winnerHpFraction": 0.4190277777777778,
+      "recordHash": "d3155a7a67789541ef4e666e7be2a2f0fec90c5b2b5b81d448b4967f7a0520c5"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 4454,
+      "finalStateHash": "bd88f3d49b59d55691d3b640fbbc4a112aa78828d4f8020063ecddc4df2546b0",
+      "eventLogHash": "efe0d1de87afeb4a8fa3813fa5e9808305fb088b6e33b8975ed3fec1a58321f7",
+      "winnerHpFraction": 0.47694444444444445,
+      "recordHash": "64bbb912d9742f5e35468a4bb72fdff3370bee985a0cb32b652d5df7804adc7b"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 4655,
+      "finalStateHash": "ff75be77edac41ed5869788cceab13a1bde0f909f558ee01fdba974672c316ef",
+      "eventLogHash": "0419f1c00bb01a6dea62cc8935bc3794b44f40144de9a1ccd3ccf0350bee6291",
+      "winnerHpFraction": 0.48041666666666666,
+      "recordHash": "a50f9d9d700fd01f39a850c501b969b80df8d07183f6981da632d72f614fba08"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "a50f9d9d700fd01f39a850c501b969b80df8d07183f6981da632d72f614fba08",
+    "result": {
+      "jobId": "mv_8559213ad0bdb3f2afa99980",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 3459,
+      "startingHpByOwner": {
+        "2": 3780,
+        "3": 7200
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 14,
+          "hp": 3459
+        }
+      },
+      "ticks": 4655,
+      "family": "siege",
+      "side2": {
+        "slug": "paladin",
+        "label": "Cavalier",
+        "civ": "Sicilians",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_ballista_elephant_khmer",
+        "label": "Elite Ballista Elephant",
+        "civ": "Khmer",
+        "count": 24,
+        "class": "siege_ranged"
+      },
+      "finalStateHash": "ff75be77edac41ed5869788cceab13a1bde0f909f558ee01fdba974672c316ef",
+      "eventLogHash": "0419f1c00bb01a6dea62cc8935bc3794b44f40144de9a1ccd3ccf0350bee6291"
+    },
+    "wallSeconds": 19.104711744010448,
+    "startedAt": "2026-11-06T00:37:56.832Z",
+    "finishedAt": "2026-11-06T00:38:15.937Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    53726
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 53726,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "cee6a61dd5dcf4c209592941b6ad45fb41fa1ede0856a8983b72d240cb7e7e52"
+}

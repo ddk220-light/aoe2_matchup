@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_bdefd3b51ae05ede1027864b",
+  "reviewedAt": "2026-11-06T10:01:55.025Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      17,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "b21848bddbe33923bfe88d70a5e62d9b2ac199cd5f8ca5e5d1d8079b83014214",
+      "fcc686e169cc3ae542b52068cfadf0f7cc9b11ac854fba73b0c9baac5dd6471f"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      150,
+      57.5
+    ]
+  },
+  "contextHash": "bdefd3b51ae05ede1027864b5c18f494ba2699f51d9d175cee8abb372caa5f3f",
+  "pairKey": "b21848bddbe33923bfe88d70a5e62d9b2ac199cd5f8ca5e5d1d8079b83014214|fcc686e169cc3ae542b52068cfadf0f7cc9b11ac854fba73b0c9baac5dd6471f",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 964,
+      "finalStateHash": "06290b9ba668958282c592e350ba902960f97def6c58e43faff897c813a0c471",
+      "eventLogHash": "65186a1d62dfe27dd2337b73cf632ecb20a4294ea4e1d5bdbfaa2ac99344b0c3",
+      "winnerHpFraction": 0.9107843137254902,
+      "recordHash": "c0e15315f72dfe64239d2af8ea3fc876476a07cb63a1926084a3b4d0435372aa"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 945,
+      "finalStateHash": "da2c06b1032eaab14cd744c7aff159c021d338210b35f437266f36e133a99a1f",
+      "eventLogHash": "82e1f7c883ad5535824eb9acc59677b14f021fd8fd31aa86aba04e9e3455ceaf",
+      "winnerHpFraction": 0.8862745098039215,
+      "recordHash": "49b2f2af3712916f5ce8c4063e99b6f72640ffcb266953266215bc01954d8919"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1084,
+      "finalStateHash": "ac75db8daf12a11d3d57172f5a62caae8d00bc16c5453c3b3b39a8bcdcb75b2d",
+      "eventLogHash": "a00084201bd8d659667d6a7f9eeb41bd3729f901f3e00a3d73fbe955942cd495",
+      "winnerHpFraction": 0.8931372549019608,
+      "recordHash": "bf967270c8892c348080cd9e290b88fa05af0328a98032ad547bf77ce0a0e52f"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "bf967270c8892c348080cd9e290b88fa05af0328a98032ad547bf77ce0a0e52f",
+    "result": {
+      "jobId": "mv_bdefd3b51ae05ede1027864b",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 911,
+      "startingHpByOwner": {
+        "2": 1020,
+        "3": 1620
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 16,
+          "hp": 911
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1084,
+      "family": "kite",
+      "side2": {
+        "slug": "heavy_scorpion",
+        "label": "Heavy Scorpion",
+        "civ": "Chinese",
+        "count": 17,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "halberdier",
+        "label": "Halberdier",
+        "civ": "Tupi",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "ac75db8daf12a11d3d57172f5a62caae8d00bc16c5453c3b3b39a8bcdcb75b2d",
+      "eventLogHash": "a00084201bd8d659667d6a7f9eeb41bd3729f901f3e00a3d73fbe955942cd495"
+    },
+    "wallSeconds": 3.7341011510044337,
+    "startedAt": "2026-11-06T10:01:51.291Z",
+    "finishedAt": "2026-11-06T10:01:55.025Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    31332
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 31332,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "4fb2cf51cf1c33d0dcecdafcefe05b1d17a167d58aebb3d6ca24df5a4e777607"
+}

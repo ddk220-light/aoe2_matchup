@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_b57c3ca49ce5161f946f2177",
+  "reviewedAt": "2026-11-06T08:39:17.339Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      20
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14",
+      "b21848bddbe33923bfe88d70a5e62d9b2ac199cd5f8ca5e5d1d8079b83014214"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      81,
+      150
+    ]
+  },
+  "contextHash": "b57c3ca49ce5161f946f2177526878de95ecedbb1297725db4085de52aa77a9f",
+  "pairKey": "8f7b6cf45c35cf3ba5a912abbe480ff3a5bdf239cec38bacc549a3eb697e7b14|b21848bddbe33923bfe88d70a5e62d9b2ac199cd5f8ca5e5d1d8079b83014214",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 2760,
+      "finalStateHash": "1c153ef9e25a99a7260634c10fb293156512d574f7ecf67204e7fee10e8824b2",
+      "eventLogHash": "dbcf197770d9b1bda81743e666039c2b82dc30de2e5bd202d537e772956523dd",
+      "winnerHpFraction": 0.7583333333333333,
+      "recordHash": "fedbf8551fbd4e7f26d428a55cd98d137ebed22536b8dfc99ee7377506d67035"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 2834,
+      "finalStateHash": "1b4c4844af65dc4ff935a5f6b199bded42d8cf5812956362f9e5b68ab13f005f",
+      "eventLogHash": "3b5992898e65c9efdae6986692a359691294317afd86abcff0a719d0e2b7b51d",
+      "winnerHpFraction": 0.75,
+      "recordHash": "eb7c664b085c19af0d372ef9f6c7a58b7322687b941c5ee402ba4a0612208865"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 3048,
+      "finalStateHash": "57ef20881ac108cb83f22f2e7cb92094cac529faf90274c8c58ba6c2469016c9",
+      "eventLogHash": "de90c88c54217d803b490f0bcd55fcbc3154fb20185519c27b325a5807da4187",
+      "winnerHpFraction": 0.7458333333333333,
+      "recordHash": "8df70a1072478caef9af7d76493a1bac709a92f85b5991784e3328993b21b3c1"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "eb7c664b085c19af0d372ef9f6c7a58b7322687b941c5ee402ba4a0612208865",
+    "result": {
+      "jobId": "mv_b57c3ca49ce5161f946f2177",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 900,
+      "startingHpByOwner": {
+        "2": 1350,
+        "3": 1200
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 17,
+          "hp": 900
+        }
+      },
+      "ticks": 2834,
+      "family": "rvr",
+      "side2": {
+        "slug": "elite_composite_bowman_armenians",
+        "label": "Elite Composite Bowman",
+        "civ": "Armenians",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "heavy_scorpion",
+        "label": "Heavy Scorpion",
+        "civ": "Chinese",
+        "count": 20,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "1b4c4844af65dc4ff935a5f6b199bded42d8cf5812956362f9e5b68ab13f005f",
+      "eventLogHash": "3b5992898e65c9efdae6986692a359691294317afd86abcff0a719d0e2b7b51d"
+    },
+    "wallSeconds": 20.94386378099024,
+    "startedAt": "2026-11-06T08:38:56.395Z",
+    "finishedAt": "2026-11-06T08:39:17.339Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    829
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 829,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "50d2c4f37f6276433908f430bd5623912b683dcabb22c943235cb5dd54ee4074"
+}

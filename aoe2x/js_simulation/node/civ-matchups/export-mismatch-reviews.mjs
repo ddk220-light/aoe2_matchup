@@ -19,7 +19,8 @@ assert(phases.length||reviewedOnly,'no complete reviewed phase');
 const ids=new Set(),phaseRefs=[],expectedReviewHashes=new Map();
 if(reviewedOnly){
  const prefix=relative(ROOT,resolve(DIR,'pair-reviews'));
- const committed=execFileSync('git',['ls-tree','-r','--name-only','HEAD','--',prefix],{cwd:ROOT,encoding:'utf8'}).trim().split('\n').filter(Boolean);
+ // The full frozen review list exceeds Node's default 1 MiB output buffer.
+ const committed=execFileSync('git',['ls-tree','-r','--name-only','HEAD','--',prefix],{cwd:ROOT,encoding:'utf8',maxBuffer:16*1024*1024}).trim().split('\n').filter(Boolean);
  for(const path of committed){const r=load(resolve(ROOT,path));
   assert.equal(sha(readFileSync(resolve(ROOT,path))),sha(execFileSync('git',['show',`HEAD:${path}`],{cwd:ROOT})));
   ids.add(r.jobId);

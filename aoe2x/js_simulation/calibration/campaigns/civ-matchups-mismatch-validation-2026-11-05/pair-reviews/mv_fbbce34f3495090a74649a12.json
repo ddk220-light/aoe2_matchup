@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_fbbce34f3495090a74649a12",
+  "reviewedAt": "2026-11-06T20:19:06.632Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      24
+    ],
+    "engineFamily": "kite",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "1464e310f6123dc35ce5dcd264b4c151e508b646e0be3208b93f513e8ff06972",
+      "797f5a9029b799d143fea6f2fdf755e7dc2ce0ba44b4eed5f9259c74eecf0af8"
+    ],
+    "scenarioHash": "280c1f49d499b78ecaed35ff1b233bbd36380317d621fcd6cbca810b9ba46119",
+    "weightedCosts": [
+      72,
+      92.5
+    ]
+  },
+  "contextHash": "fbbce34f3495090a74649a1230d776e6720dda8f5c01d90f3ecc0cdcd05328ea",
+  "pairKey": "1464e310f6123dc35ce5dcd264b4c151e508b646e0be3208b93f513e8ff06972|797f5a9029b799d143fea6f2fdf755e7dc2ce0ba44b4eed5f9259c74eecf0af8",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 2043,
+      "finalStateHash": "077840b70f2116e8197829d23c82e4fe74f8064b91e04cb3a647f8f4ce662625",
+      "eventLogHash": "a02f967a74cd3ac2e982aa9ee7e1fb4745f5e9d0d3ae1ad3e4a632201c24bb7d",
+      "winnerHpFraction": 0.5174603174603175,
+      "recordHash": "41c724756a793fb4b5f5b0b2aa6f00cfd774841c3c286c12bbfeabb4df76f93f"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 2026,
+      "finalStateHash": "598d249159f1db3fff8bc0d2174383fd67c1bf6be98814d86a1ecf94a4d1e75f",
+      "eventLogHash": "c44b7943cc2a5102c05c7a7bc9158bf6bfdbe7241837ef6c020b5617611edbef",
+      "winnerHpFraction": 0.5100529100529101,
+      "recordHash": "cd887a3055e00fe00d5104df01dc8dd570a7375a554be28ceb5a4d74ca521b10"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 2093,
+      "finalStateHash": "cf3665591d4ce7d689936f97bf5b772367a88ff2a5b2f6ac5ae0b3ed3de5cdb9",
+      "eventLogHash": "a58f6ed6d6a4317a262efeedf0ad637b5bdbfbdbcb9863913f0687fd657b9eb3",
+      "winnerHpFraction": 0.4973544973544973,
+      "recordHash": "587bb0c07a29788ba00fb2eadecf3b5eaa9c450c4dd4a496464181c47161a47c"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "cd887a3055e00fe00d5104df01dc8dd570a7375a554be28ceb5a4d74ca521b10",
+    "result": {
+      "jobId": "mv_fbbce34f3495090a74649a12",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 964,
+      "startingHpByOwner": {
+        "2": 1890,
+        "3": 1560
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 17,
+          "hp": 964
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 2026,
+      "family": "kite",
+      "side2": {
+        "slug": "champion",
+        "label": "Champion",
+        "civ": "Aztecs",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_kipchak_cumans",
+        "label": "Elite Kipchak",
+        "civ": "Cumans",
+        "count": 24,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "598d249159f1db3fff8bc0d2174383fd67c1bf6be98814d86a1ecf94a4d1e75f",
+      "eventLogHash": "c44b7943cc2a5102c05c7a7bc9158bf6bfdbe7241837ef6c020b5617611edbef"
+    },
+    "wallSeconds": 7.9216797040104865,
+    "startedAt": "2026-11-06T20:18:58.710Z",
+    "finishedAt": "2026-11-06T20:19:06.632Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    4127
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 4127,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "366cb2592358a4a355d896346e26021a87cedb9a94c28d340fc30666c6f52f33"
+}

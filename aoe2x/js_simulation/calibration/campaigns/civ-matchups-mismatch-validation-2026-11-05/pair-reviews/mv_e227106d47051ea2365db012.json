@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_e227106d47051ea2365db012",
+  "reviewedAt": "2026-11-06T15:49:35.420Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      21
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "996b17b26f4eecc17dd73095da8b799c3315219e586e9beca6d1840e1487227a",
+      "7044d63ae86cbda6c51e3c10c4d0205b4128267a19cd25624f23946e9f585151"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      80,
+      136.5
+    ]
+  },
+  "contextHash": "e227106d47051ea2365db01267e37f8ea0cf066d5f19ffcb1b95647be0e38078",
+  "pairKey": "7044d63ae86cbda6c51e3c10c4d0205b4128267a19cd25624f23946e9f585151|996b17b26f4eecc17dd73095da8b799c3315219e586e9beca6d1840e1487227a",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 2033,
+      "finalStateHash": "3fa19286f29875dc9f8fcaffd874627628255adaa5665ea87b4f5074fc4819ed",
+      "eventLogHash": "d4988666631cd027fa5de3f4bd167824771d39020d549908309e07aec7d4613f",
+      "winnerHpFraction": 0.3251082251082251,
+      "recordHash": "bcd3a7b9c658d88ca9285dde09183fb17dc928bccb8a72f16c33b9284f2b9105"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 2033,
+      "finalStateHash": "3fa19286f29875dc9f8fcaffd874627628255adaa5665ea87b4f5074fc4819ed",
+      "eventLogHash": "aeafe2e0d84da65e97250dab31cdb18f630c880f15c2e18839a2d9b0ee4b5591",
+      "winnerHpFraction": 0.3251082251082251,
+      "recordHash": "7e3dde0353e76fa8e133c848eda993a962e1cf323efffd1b9aeee78bf6eb355d"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 2033,
+      "finalStateHash": "3fa19286f29875dc9f8fcaffd874627628255adaa5665ea87b4f5074fc4819ed",
+      "eventLogHash": "adfcaa490e66fc2446dc6c3b739cb5bc4e958776ab8177ca8204e35d1109b1c2",
+      "winnerHpFraction": 0.3251082251082251,
+      "recordHash": "ca35ec958915744d8eebd2878bfd065f570d26c86039c4cf8cc00f148ab6feeb"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "bcd3a7b9c658d88ca9285dde09183fb17dc928bccb8a72f16c33b9284f2b9105",
+    "result": {
+      "jobId": "mv_e227106d47051ea2365db012",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 751,
+      "startingHpByOwner": {
+        "2": 2700,
+        "3": 2310
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 14,
+          "hp": 751
+        }
+      },
+      "ticks": 2033,
+      "family": "waves",
+      "side2": {
+        "slug": "hussar",
+        "label": "Winged Hussar",
+        "civ": "Poles",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "paladin",
+        "label": "Heavy Hei-Kuang Cavalry",
+        "civ": "Wu",
+        "count": 21,
+        "class": "melee"
+      },
+      "finalStateHash": "3fa19286f29875dc9f8fcaffd874627628255adaa5665ea87b4f5074fc4819ed",
+      "eventLogHash": "d4988666631cd027fa5de3f4bd167824771d39020d549908309e07aec7d4613f"
+    },
+    "wallSeconds": 30.43935357300937,
+    "startedAt": "2026-11-06T15:49:04.980Z",
+    "finishedAt": "2026-11-06T15:49:35.419Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    63426
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 63426,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "28e6a37d746c183258d43acd405492a82656aed41cca1dbd306b229573a26a32"
+}

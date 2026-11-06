@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_d19043b8718ca93f4154a7ab",
+  "reviewedAt": "2026-11-06T13:23:10.154Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      23
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "aa664bc0ad9db5f86841e099e215910ac08b40aaf87c20195c2923c13909ea08",
+      "e5a00219933208589910da45518b648df304c1b9fa4564b973e3678b4bbaeaf7"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      104,
+      140.5
+    ]
+  },
+  "contextHash": "d19043b8718ca93f4154a7ab51e084261a11b12fe59fdde469405485bc361778",
+  "pairKey": "aa664bc0ad9db5f86841e099e215910ac08b40aaf87c20195c2923c13909ea08|e5a00219933208589910da45518b648df304c1b9fa4564b973e3678b4bbaeaf7",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 3731,
+      "finalStateHash": "0163e2444624e2c74ddea2472ab35f6d589c405ebb46adc6537451fa21623668",
+      "eventLogHash": "fab4722cf893d05a28144045710cb2e55b98dc13db1fdb48fb094eb0b05622aa",
+      "winnerHpFraction": 0.34782608695652173,
+      "recordHash": "3f09e6c4f2aadfa4d55d739d93880ad69738bc00b0e6b811628e1b7c03e02867"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 3731,
+      "finalStateHash": "0163e2444624e2c74ddea2472ab35f6d589c405ebb46adc6537451fa21623668",
+      "eventLogHash": "5d2408532a6b9334e80c0cda15fed4df936fae157ad4082d7bf4e37a56908dbb",
+      "winnerHpFraction": 0.34782608695652173,
+      "recordHash": "5ab062b35fc4931fe5dc268422b71625019e90150e612cb77a3d78024a9033f7"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 3731,
+      "finalStateHash": "0163e2444624e2c74ddea2472ab35f6d589c405ebb46adc6537451fa21623668",
+      "eventLogHash": "d4f165f32f5b4a59b6bc7f4d05d070571fc35fe868b7b3905894fea33c1b0324",
+      "winnerHpFraction": 0.34782608695652173,
+      "recordHash": "96abc468063a84d971cf7ff4b2fc82e8698029c3f44ef59ba9c5064bf8bf4110"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "5ab062b35fc4931fe5dc268422b71625019e90150e612cb77a3d78024a9033f7",
+    "result": {
+      "jobId": "mv_d19043b8718ca93f4154a7ab",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 1280,
+      "startingHpByOwner": {
+        "2": 4455,
+        "3": 3680
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 1280
+        }
+      },
+      "ticks": 3731,
+      "family": "waves",
+      "side2": {
+        "slug": "elite_keshik_tatars",
+        "label": "Elite Keshik",
+        "civ": "Tatars",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_iron_pagoda_jurchens",
+        "label": "Elite Iron Pagoda",
+        "civ": "Jurchens",
+        "count": 23,
+        "class": "melee"
+      },
+      "finalStateHash": "0163e2444624e2c74ddea2472ab35f6d589c405ebb46adc6537451fa21623668",
+      "eventLogHash": "5d2408532a6b9334e80c0cda15fed4df936fae157ad4082d7bf4e37a56908dbb"
+    },
+    "wallSeconds": 58.07529632799327,
+    "startedAt": "2026-11-06T13:22:12.078Z",
+    "finishedAt": "2026-11-06T13:23:10.154Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    50840
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 50840,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "c122e394223f903c0bc80bf5b79f5077b60fa64dbacb95816459a37ce4382886"
+}

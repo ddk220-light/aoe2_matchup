@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_00398ebd89588911ce96d7c5",
+  "reviewedAt": "2026-11-06T20:52:43.262Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      26
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "904d798ce922c1da37a6ecb95fc98734ebbe916a812adcae384b5addaa62665a",
+      "5b48f0295c7632f1547294e2b83bf479d31315c4918ddcc0eca495714e991f4a"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      72,
+      80
+    ]
+  },
+  "contextHash": "00398ebd89588911ce96d7c5c7a9d6fb24df40052f1e13bffb74933d2e7695dd",
+  "pairKey": "5b48f0295c7632f1547294e2b83bf479d31315c4918ddcc0eca495714e991f4a|904d798ce922c1da37a6ecb95fc98734ebbe916a812adcae384b5addaa62665a",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 2950,
+      "finalStateHash": "bfde184cb04c174250c6fd2a8fc587ee3e73fb70521020361d4d20445d1c1d68",
+      "eventLogHash": "75b5d61384d6f6d20db7c9876b1cd40ee027a90aff71036c10c898d696cb5339",
+      "winnerHpFraction": 0.22962962962962963,
+      "recordHash": "182a58bbc9ebf9f5b5b5d678b8bdd72100c39671e470dd58044d9aaee410b856"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 2950,
+      "finalStateHash": "bfde184cb04c174250c6fd2a8fc587ee3e73fb70521020361d4d20445d1c1d68",
+      "eventLogHash": "0121bc9db6c57be054785f74421636fed529e7e3fbc5ce0959e6df080a74a459",
+      "winnerHpFraction": 0.22962962962962963,
+      "recordHash": "130b2aba83b1bf6329afa1ccac289f77b8f88ebfb80e2d1a7fb196a4dd403545"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 2950,
+      "finalStateHash": "bfde184cb04c174250c6fd2a8fc587ee3e73fb70521020361d4d20445d1c1d68",
+      "eventLogHash": "b956a60dd2759af56432e1c95c8ad6c0825478a3c0fdf339285481256c09dc6e",
+      "winnerHpFraction": 0.22962962962962963,
+      "recordHash": "70454e9f94e2142b8e7c763ac4bf85b4054fb505a16777574c61e555009b5ca9"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "182a58bbc9ebf9f5b5b5d678b8bdd72100c39671e470dd58044d9aaee410b856",
+    "result": {
+      "jobId": "mv_00398ebd89588911ce96d7c5",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 434,
+      "startingHpByOwner": {
+        "2": 1890,
+        "3": 2470
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 10,
+          "hp": 434
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 2950,
+      "family": "waves",
+      "side2": {
+        "slug": "champion",
+        "label": "Champion",
+        "civ": "Byzantines",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "hussar",
+        "label": "Hussar",
+        "civ": "Spanish",
+        "count": 26,
+        "class": "melee"
+      },
+      "finalStateHash": "bfde184cb04c174250c6fd2a8fc587ee3e73fb70521020361d4d20445d1c1d68",
+      "eventLogHash": "75b5d61384d6f6d20db7c9876b1cd40ee027a90aff71036c10c898d696cb5339"
+    },
+    "wallSeconds": 38.30010547098517,
+    "startedAt": "2026-11-06T20:52:04.962Z",
+    "finishedAt": "2026-11-06T20:52:43.262Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    25159
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 25159,
+      "outcome": "b_win",
+      "evidenceType": "observed"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "13bc932d5eb69351feffcf0855872baeca5b0e576e6baa155d093d8733132bbe"
+}

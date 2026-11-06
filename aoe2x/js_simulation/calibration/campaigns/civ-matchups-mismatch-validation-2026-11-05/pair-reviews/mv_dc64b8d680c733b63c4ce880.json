@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_dc64b8d680c733b63c4ce880",
+  "reviewedAt": "2026-11-06T14:56:28.179Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      25
+    ],
+    "engineFamily": "kite",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "99bc5f54323b2a5829ad8de2e2bd721fa09648058899927fd83fdffb9acd2892",
+      "48cfa306b4616d62a4c23857e76ec0ecd2689beb8abe0c118b18c7c12e9baf58"
+    ],
+    "scenarioHash": "280c1f49d499b78ecaed35ff1b233bbd36380317d621fcd6cbca810b9ba46119",
+    "weightedCosts": [
+      114,
+      133.5
+    ]
+  },
+  "contextHash": "dc64b8d680c733b63c4ce880e682ec189f566efb8758338e6c38557f5acfce01",
+  "pairKey": "48cfa306b4616d62a4c23857e76ec0ecd2689beb8abe0c118b18c7c12e9baf58|99bc5f54323b2a5829ad8de2e2bd721fa09648058899927fd83fdffb9acd2892",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 1900,
+      "finalStateHash": "da632a6f81fe4e4bddd5b80a8c4a5f9c5aed4b394117d23f2e39ab2d732bdcfe",
+      "eventLogHash": "08ff6a9b08fef60f4bbbc6a08cdac5c71bcd5bb2782e77f9f3f560ce71a4bdbe",
+      "winnerHpFraction": 0.45698924731182794,
+      "recordHash": "858a5b59b79c32082abb21ca95acd59804d77814615f1024bc2ccd5e49e1b1c6"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 2040,
+      "finalStateHash": "9006f64755c563629a567998e88a1b411d79391f797e863529d651cfdf9151ec",
+      "eventLogHash": "fc1df9c89bd5a77885145bd966b1b68c625d435af15c8739f3791e50fa760c49",
+      "winnerHpFraction": 0.40352449223416964,
+      "recordHash": "df5b267ed8f1b117a20575c651aedce9b80cf85bd720e63174a54a37efaf175c"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1991,
+      "finalStateHash": "d6dd27c1b8833b4c8bf343c968eb396687c5e31e1211490b8d365427e0f739a4",
+      "eventLogHash": "c15baba14451113bd869fec21c3d9f4f1716cebe07d5b437ccbfdb1edeff24ae",
+      "winnerHpFraction": 0.43309438470728795,
+      "recordHash": "fbd7fe621371280c9fef72dc89c01b94469881093bec97e35194728233e5791d"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "858a5b59b79c32082abb21ca95acd59804d77814615f1024bc2ccd5e49e1b1c6",
+    "result": {
+      "jobId": "mv_dc64b8d680c733b63c4ce880",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 1530,
+      "startingHpByOwner": {
+        "2": 3348,
+        "3": 2125
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 15,
+          "hp": 1530
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1900,
+      "family": "kite",
+      "side2": {
+        "slug": "elite_steppe",
+        "label": "Elite Steppe Lancer",
+        "civ": "Mongols",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_arambai_burmese",
+        "label": "Elite Arambai",
+        "civ": "Burmese",
+        "count": 25,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "da632a6f81fe4e4bddd5b80a8c4a5f9c5aed4b394117d23f2e39ab2d732bdcfe",
+      "eventLogHash": "08ff6a9b08fef60f4bbbc6a08cdac5c71bcd5bb2782e77f9f3f560ce71a4bdbe"
+    },
+    "wallSeconds": 7.138344990000129,
+    "startedAt": "2026-11-06T14:56:21.040Z",
+    "finishedAt": "2026-11-06T14:56:28.179Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    22862
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 22862,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "9e0fca86ef1d7745fec6d46ae0635d717178aff6b326458fe3a883453117b815"
+}

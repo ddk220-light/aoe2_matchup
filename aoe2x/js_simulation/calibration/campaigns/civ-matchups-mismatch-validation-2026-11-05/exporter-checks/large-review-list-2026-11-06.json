@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-11-06T21:29:02.903183+00:00",
+  "nonMeasurementToolingCheck": true,
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "problem": "Committed pair-review path listing exceeds the default child-process output buffer; export stops before writing an artifact.",
+  "failedSourceCommit": "ccff1f69730a97b869945422ce9d82b0637ed36d",
+  "listingBytes": 1097844,
+  "listedCommittedReviewPaths": 8317,
+  "defaultMaxBufferBytes": 1048576,
+  "error": "spawnSync git ENOBUFS at exporter git ls-tree call",
+  "preservedFailureLog": {
+    "path": "/workspace/aoe2_mismatch_data_only_032_snapshot.log",
+    "sha256": "5435c89d7fec6b0d92cf7da9f0fe7082070840a272f20d09ec1b33ce63914947"
+  },
+  "fixCommit": "b01795bb5d7292b748c932d1993e6c451fe2fd26",
+  "changedFile": "aoe2x/js_simulation/node/civ-matchups/export-mismatch-reviews.mjs",
+  "changedFileSha256": "3b066356f1e6e85279f25c51476f0da37b61ce11930087a339c1383a2589ce0e",
+  "change": "Raise only the review-path listing maxBuffer to 16 MiB; retain every evidence, context, seed and replay check.",
+  "maxBufferBytes": 16777216,
+  "focusedTests": {
+    "command": "node --test aoe2x/js_simulation/tests/mismatch-validation.test.mjs",
+    "passed": 3,
+    "failed": 0
+  },
+  "syntaxCheck": {
+    "command": "node --check aoe2x/js_simulation/node/civ-matchups/export-mismatch-reviews.mjs",
+    "passed": true
+  },
+  "frozenRuntimeFilesChecked": 62,
+  "frozenInputFilesChecked": 62,
+  "frozenFilesAllMatch": true,
+  "fullExportRegression": {
+    "snapshot": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/correction-snapshots/data-only-032-2026-11-06",
+    "sourceCommit": "b01795bb5d7292b748c932d1993e6c451fe2fd26",
+    "summarySha256": "a053db2c44cc221cbc3f74c37b6c5f253803d6bc6753bd0ec42e3d3d836c22e5",
+    "reviewedContexts": 8317,
+    "exactReplayChecks": 8317,
+    "priorRowsUnchanged": 7847,
+    "newRows": 470,
+    "blockedExcluded": true
+  },
+  "productionServingDatabaseUnchanged": true,
+  "limitations": "This is an export tooling check, never a battle outcome. Unfinished contexts remain unresolved."
+}

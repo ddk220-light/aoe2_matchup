@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_96fee5852e4d4c7a2977a220",
+  "reviewedAt": "2026-11-06T03:25:35.946Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      18,
+      27
+    ],
+    "engineFamily": "siege",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+      "a6caaba787d632a760672e49b4e7ea2dfe8ef8d0e4472b1f695890abd6331198"
+    ],
+    "scenarioHash": "a200814a9afc51a4006d0f95fb205ae75c57d0013c0b679094d0b3f66af5576d",
+    "weightedCosts": [
+      174,
+      80
+    ]
+  },
+  "contextHash": "96fee5852e4d4c7a2977a220277704b1c3cf09e7652a6b96b46a3693296c54e3",
+  "pairKey": "a6caaba787d632a760672e49b4e7ea2dfe8ef8d0e4472b1f695890abd6331198|db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 2316,
+      "finalStateHash": "1e65fb04e2af0d56012453a1892eb02ad165cd93b9c94d8734e288e284263538",
+      "eventLogHash": "9600c373d92e2721c4fc8c70a5ce813865751472f6b3b3c561f9f914b7e3f448",
+      "winnerHpFraction": 0.30683760683760686,
+      "recordHash": "6b9e8a7f6fc1e47a2283dc03061dd36b2e0daba9f9424cda0c9c9b9bec7fa2c8"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 2262,
+      "finalStateHash": "9608174cbffa6b4cbcf0d62e98fb490e6a1ef1b91383073f28416f6668c4f257",
+      "eventLogHash": "101ccc4349b4de292f92eada1063307a0979ca334a00f35edabeefea4ee395e2",
+      "winnerHpFraction": 0.3769230769230769,
+      "recordHash": "0661b9d4dbf0700f460862a61c59f4cf6b3ad0fde4b1e756222e413bea92585f"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 2372,
+      "finalStateHash": "11e74c58e5827c735049da5cd8970c34a45fcf746f3e3fc17077dde2cfbec56c",
+      "eventLogHash": "9c725edcdbf9ed6cded320ca9117a71a6ce8c85bc4ddd450c0818b5740151396",
+      "winnerHpFraction": 0.2794871794871795,
+      "recordHash": "781c2b2f52960ed90eb6b9ee49526ba0a0b17df4c63dcd612ad94aab299435a8"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "0661b9d4dbf0700f460862a61c59f4cf6b3ad0fde4b1e756222e413bea92585f",
+    "result": {
+      "jobId": "mv_96fee5852e4d4c7a2977a220",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 441,
+      "startingHpByOwner": {
+        "2": 1170,
+        "3": 2025
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 9,
+          "hp": 441
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 2262,
+      "family": "siege",
+      "side2": {
+        "slug": "war_chariot_shu",
+        "label": "War Chariot",
+        "civ": "Shu",
+        "count": 18,
+        "class": "siege_ranged"
+      },
+      "side3": {
+        "slug": "hussar",
+        "label": "Hussar",
+        "civ": "Khitans",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "9608174cbffa6b4cbcf0d62e98fb490e6a1ef1b91383073f28416f6668c4f257",
+      "eventLogHash": "101ccc4349b4de292f92eada1063307a0979ca334a00f35edabeefea4ee395e2"
+    },
+    "wallSeconds": 7.523350962996483,
+    "startedAt": "2026-11-06T03:25:28.423Z",
+    "finishedAt": "2026-11-06T03:25:35.946Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    53009
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 53009,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "e1646867cc9f5618b9fd3ab8463b9d59ee3507613e5e8d63c5fd37f1d7b7bcae"
+}

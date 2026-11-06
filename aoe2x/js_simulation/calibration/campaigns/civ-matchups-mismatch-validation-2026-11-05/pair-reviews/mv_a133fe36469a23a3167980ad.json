@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_a133fe36469a23a3167980ad",
+  "reviewedAt": "2026-11-06T05:14:17.428Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      23,
+      27
+    ],
+    "engineFamily": "siege",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+      "1f5cb1ed977076e4e1c67c9929a53909fe5d68bb91c21d3df9111bb4f6630cbe"
+    ],
+    "scenarioHash": "a200814a9afc51a4006d0f95fb205ae75c57d0013c0b679094d0b3f66af5576d",
+    "weightedCosts": [
+      174,
+      121
+    ]
+  },
+  "contextHash": "a133fe36469a23a3167980ad9bffb7acaf38ee64ad51891a8dec5fdb98c1f8a8",
+  "pairKey": "1f5cb1ed977076e4e1c67c9929a53909fe5d68bb91c21d3df9111bb4f6630cbe|db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1443,
+      "finalStateHash": "8f2b7f2a9c38b13637aaac1d4d0c1d1bdff51b86525d06169ba888eb79083019",
+      "eventLogHash": "63ec4b139caa8021c64611f238f5e036beacc07119ff1903aa16aa0c65c7c7af",
+      "winnerHpFraction": 0.3074074074074074,
+      "recordHash": "50911fd90020c6c607c8a5e929895a0d79e38757b3d8b39e8b557ac79284c8ba"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1522,
+      "finalStateHash": "6b111bf15af20b7b4117f1c8d64a03b2cbefdf8471fe5d52b14e725b2becf0f2",
+      "eventLogHash": "b84b6d21d7b1174a65bf51d7b9c850379d73f44ef7a1eb4b8b1398cafccbca67",
+      "winnerHpFraction": 0.2560846560846561,
+      "recordHash": "842a9f607049f85c514bebe38e8822334bfc8d1bf09f15858db33e151c781d2c"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1480,
+      "finalStateHash": "e2e26db5aa0953e6508839cc51d6fe26ac610630fffad0d27b409b18eb2f0e4b",
+      "eventLogHash": "08e328c22e5cc91eab9be006c396fe4fd339187c0b984cdff65a48c2df2fbc51",
+      "winnerHpFraction": 0.3126984126984127,
+      "recordHash": "54bd89ac4b0c5ebdb73c2d4c0d0d62ce42184e6fb5b5aa77825ffc934b6cccdc"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "842a9f607049f85c514bebe38e8822334bfc8d1bf09f15858db33e151c781d2c",
+    "result": {
+      "jobId": "mv_a133fe36469a23a3167980ad",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 1210,
+      "startingHpByOwner": {
+        "2": 1495,
+        "3": 4725
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 12,
+          "hp": 1210
+        }
+      },
+      "ticks": 1522,
+      "family": "siege",
+      "side2": {
+        "slug": "war_chariot_shu",
+        "label": "War Chariot",
+        "civ": "Shu",
+        "count": 23,
+        "class": "siege_ranged"
+      },
+      "side3": {
+        "slug": "heavy_camel",
+        "label": "Heavy Camel Rider",
+        "civ": "Saracens",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "6b111bf15af20b7b4117f1c8d64a03b2cbefdf8471fe5d52b14e725b2becf0f2",
+      "eventLogHash": "b84b6d21d7b1174a65bf51d7b9c850379d73f44ef7a1eb4b8b1398cafccbca67"
+    },
+    "wallSeconds": 5.362440458998084,
+    "startedAt": "2026-11-06T05:14:12.065Z",
+    "finishedAt": "2026-11-06T05:14:17.428Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    65080
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 65080,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "fe1250e4f21b5f7ac6fff19fc42e200b9e499dcef69105b124d5a2eabfe88159"
+}

@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_95f59ddaec395e2c415e66d0",
+  "reviewedAt": "2026-11-06T03:16:54.003Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      24,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1",
+      "9f99987d467a0b9fb721b4f31e8ce680f16abc64f77aa03716a52638bb49f971"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      133.60000000000002,
+      102
+    ]
+  },
+  "contextHash": "95f59ddaec395e2c415e66d054e3c4ed932b710b572f92535c8b14c3b0634c96",
+  "pairKey": "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1|9f99987d467a0b9fb721b4f31e8ce680f16abc64f77aa03716a52638bb49f971",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 3344,
+      "finalStateHash": "1657b799fbeaef5ad563d0e50952724f4db066a73ed9df1fed20ecd921a2b59e",
+      "eventLogHash": "e85b051721edfc5d8b7d2a81af2f14d9cff8652f2b7d0a7eea824e7c430e5faf",
+      "winnerHpFraction": 0.2113095238095238,
+      "recordHash": "7d642d3a9b846304ca2ecd9b9f53955ca02909f8f2dac7fe1db320a85e65a09b"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 4188,
+      "finalStateHash": "175342568f30b2fd6f66c9d4d3e91f7374fe622a075df9302cb4391ba61194ca",
+      "eventLogHash": "f4320d4ca9911509ac704bf1e88090271e765123cf669f625f0891d565c75e51",
+      "winnerHpFraction": 0.16666666666666666,
+      "recordHash": "efd2380608a42efb6cc2a914696beaa008245bd49b31adf0082d10900ee1b699"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 3232,
+      "finalStateHash": "b302ce65ec90d2e3e8ef8b66bb509e46b1bee7d3cecd7e760c0cef9152826d45",
+      "eventLogHash": "cc6225ef0aee3c3b5723842e18a8a5bbe042f1b2c65d10aa3f252f5c03afa784",
+      "winnerHpFraction": 0.32142857142857145,
+      "recordHash": "8ff56f387a738229580ae4ed216235b6e3183658d413c1c3aa6b79080da756ab"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "8ff56f387a738229580ae4ed216235b6e3183658d413c1c3aa6b79080da756ab",
+    "result": {
+      "jobId": "mv_95f59ddaec395e2c415e66d0",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 540,
+      "startingHpByOwner": {
+        "2": 1680,
+        "3": 2160
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 9,
+          "hp": 540
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 3232,
+      "family": "rvr",
+      "side2": {
+        "slug": "elite_organ_gun_portuguese",
+        "label": "Elite Organ Gun",
+        "civ": "Portuguese",
+        "count": 24,
+        "class": "siege_ranged"
+      },
+      "side3": {
+        "slug": "heavy_cav_archer",
+        "label": "Heavy Cavalry Archer",
+        "civ": "Japanese",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "b302ce65ec90d2e3e8ef8b66bb509e46b1bee7d3cecd7e760c0cef9152826d45",
+      "eventLogHash": "cc6225ef0aee3c3b5723842e18a8a5bbe042f1b2c65d10aa3f252f5c03afa784"
+    },
+    "wallSeconds": 19.900738277003168,
+    "startedAt": "2026-11-06T03:16:34.102Z",
+    "finishedAt": "2026-11-06T03:16:54.003Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    50223
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 50223,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "a3becd8f3282d13d34c58c37354bf72c40ea763d814770b724843e84487e25f2"
+}

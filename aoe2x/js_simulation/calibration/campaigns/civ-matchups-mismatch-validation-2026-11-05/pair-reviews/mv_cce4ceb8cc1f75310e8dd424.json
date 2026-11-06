@@ -1,0 +1,120 @@
+{
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "jobId": "mv_cce4ceb8cc1f75310e8dd424",
+  "reviewedAt": "2026-11-06T12:32:33.620Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      20,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+      "44f1c4a783eda4c1d2baf4a14245b8e82d92ee0f39f73368a81139d6ec36cd77"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      174,
+      97
+    ]
+  },
+  "contextHash": "cce4ceb8cc1f75310e8dd4246fae1cf083906e7e841b3941fb6b90cd0117d064",
+  "pairKey": "44f1c4a783eda4c1d2baf4a14245b8e82d92ee0f39f73368a81139d6ec36cd77|db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 3659,
+      "finalStateHash": "822fec38896959b97ba9544e0f0f5f3d651f8f23f8367ede73f3a5a9967e2f78",
+      "eventLogHash": "39f4cfc55abac530b31252cb2e4d42ce2a3ca066b99fca6979206d9f48fd3418",
+      "winnerHpFraction": 0.5507692307692308,
+      "recordHash": "34091dadf00fe9974c8001501590f9b38fcbdd7a4053691d83d4becccfdc96ab"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 3708,
+      "finalStateHash": "14be9a22ad455324fc1a94c3bf00f45488d32a15cd8c6d5cbab36ad16873d9ef",
+      "eventLogHash": "8e9b26eef5fe289a7811162027958a574fc50513090c13770575379c5ad66c00",
+      "winnerHpFraction": 0.55,
+      "recordHash": "8a27517954fffa9b8ad529f80d6cd00051ec1962c9e7f9d72301fe22b868f0f6"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 4175,
+      "finalStateHash": "831e621288e215e340fb866448e69b775fc44b5424f4607f20c146b7b441a858",
+      "eventLogHash": "c4f51b37ae422376e0898068c9a7b746bb7bb3b1df68f8fb028dc4a13ae2bad7",
+      "winnerHpFraction": 0.5153846153846153,
+      "recordHash": "52daa44783be03c16660fe02fa63a55aac00a53e7254ce4286af940f1dc654a8"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "34091dadf00fe9974c8001501590f9b38fcbdd7a4053691d83d4becccfdc96ab",
+    "result": {
+      "jobId": "mv_cce4ceb8cc1f75310e8dd424",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 716,
+      "startingHpByOwner": {
+        "2": 1300,
+        "3": 1620
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 12,
+          "hp": 716
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 3659,
+      "family": "rvr",
+      "side2": {
+        "slug": "war_chariot_shu",
+        "label": "War Chariot",
+        "civ": "Shu",
+        "count": 20,
+        "class": "siege_ranged"
+      },
+      "side3": {
+        "slug": "xianbei_raider_wei",
+        "label": "Xianbei Raider",
+        "civ": "Wei",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "822fec38896959b97ba9544e0f0f5f3d651f8f23f8367ede73f3a5a9967e2f78",
+      "eventLogHash": "39f4cfc55abac530b31252cb2e4d42ce2a3ca066b99fca6979206d9f48fd3418"
+    },
+    "wallSeconds": 20.60538039700687,
+    "startedAt": "2026-11-06T12:32:13.014Z",
+    "finishedAt": "2026-11-06T12:32:33.619Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    66474
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 66474,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "400fa542e370fdb5b7258e2f943a081f8a798101b9c24cad521873f271db960d"
+}

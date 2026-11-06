@@ -1,0 +1,612 @@
+{
+  "version": "civ-mismatch-exhausted-seed-diagnosis-v1",
+  "createdAt": "2026-11-06T18:15:38.315946+00:00",
+  "diagnosticOnly": true,
+  "status": "unfinished_no_result",
+  "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+  "sourceCommit": "7471207816a612a47bd9759125c5c707e88a4a12",
+  "jobId": "mv_e50435eb3040ac8928d195ee",
+  "seed": 1,
+  "originalEvidenceIds": [
+    44562
+  ],
+  "displayPair": [
+    {
+      "civilization": "Lithuanians",
+      "unit": "Imperial Elite Skirmisher",
+      "key": "Lithuanians|imp_elite_skirm"
+    },
+    {
+      "civilization": "Gurjaras",
+      "unit": "Heavy Camel",
+      "key": "Gurjaras|heavy_camel"
+    }
+  ],
+  "physicalContext": {
+    "counts": [
+      27,
+      20
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "0929e56543b64b842580ae156f6f37fcc013754d7f29d06082e68aa235dce4a7",
+      "7e8d81810f0b54f0c85ddd3fa4a665aa7bc85b68f901609a0dc3a86693c1691c"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      56.5,
+      107
+    ]
+  },
+  "contextHash": "e50435eb3040ac8928d195ee30dece2d9536b449e84a3e54eadd7e3a461a8cfa",
+  "nativeMatchupId": "cm_b9cdd2cd04eb34298165efdb",
+  "scenarioPatrolTargets": {
+    "2": {
+      "x": 2,
+      "y": 13
+    },
+    "3": {
+      "x": 13,
+      "y": 2
+    }
+  },
+  "attemptJournal": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/attempts.jsonl",
+  "attemptReferences": [
+    {
+      "line": 36,
+      "sha256IncludingNewline": "718cf8ac50f15c1617a62dbe8d05b18c09022a750cc1363da6fc21e1647b059e",
+      "attempt": 1,
+      "wallLimitSeconds": 180,
+      "startedAt": "2026-11-06T16:13:47.367Z",
+      "finishedAt": "2026-11-06T16:16:47.369Z",
+      "wallSeconds": 180.002325515002,
+      "exhausted": false,
+      "watchdog": true,
+      "lastProgress": {
+        "tick": 30120,
+        "simulationSeconds": 502
+      }
+    },
+    {
+      "line": 37,
+      "sha256IncludingNewline": "025dad0995027745b452d9e34a78f56cefdb1fbaffa3f71903e166a8335d5666",
+      "attempt": 2,
+      "wallLimitSeconds": 600,
+      "startedAt": "2026-11-06T16:16:47.371Z",
+      "finishedAt": "2026-11-06T16:26:47.401Z",
+      "wallSeconds": 600.0305711730123,
+      "exhausted": false,
+      "watchdog": true,
+      "lastProgress": {
+        "tick": 290710,
+        "simulationSeconds": 4845.166666666667
+      }
+    },
+    {
+      "line": 38,
+      "sha256IncludingNewline": "f3eba985268a458b20e5ea95a09ea4b3887d618cadadf3e4afa25903057cd91d",
+      "attempt": 3,
+      "wallLimitSeconds": 1800,
+      "startedAt": "2026-11-06T16:26:47.404Z",
+      "finishedAt": "2026-11-06T16:56:47.430Z",
+      "wallSeconds": 1800.026168731004,
+      "exhausted": false,
+      "watchdog": true,
+      "lastProgress": {
+        "tick": 1257507,
+        "simulationSeconds": 20958.45
+      }
+    },
+    {
+      "line": 39,
+      "sha256IncludingNewline": "ca701afc006f7f15fcca4e99f6fd522ff7989f32f872f56d2b87c0ca52503bd9",
+      "attempt": 4,
+      "wallLimitSeconds": 3600,
+      "startedAt": "2026-11-06T16:56:47.439Z",
+      "finishedAt": "2026-11-06T17:56:47.466Z",
+      "wallSeconds": 3600.026195704013,
+      "exhausted": true,
+      "watchdog": true,
+      "lastProgress": {
+        "tick": 2716419,
+        "simulationSeconds": 45273.65
+      }
+    }
+  ],
+  "progressTimelines": [
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_e50435eb3040ac8928d195ee-1-fresh_measurement-1793981627368.jsonl",
+      "sha256": "7099732a9acb4e9c735ffb14b3674b01db449d151c9815a9260e91c89bfa04d8",
+      "bytes": 24962,
+      "snapshots": 6,
+      "latestTick": 24278,
+      "latestGameSeconds": 404.6333333333333,
+      "unchangedCombatSinceGameSeconds": 404.6333333333333,
+      "unchangedCombatGameSeconds": 0.0,
+      "unchangedCombatSnapshots": 1,
+      "singleSnapshotDoesNotEstablishPlateau": true,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 5
+        },
+        "3": {
+          "units": 15,
+          "hp": 1821
+        }
+      },
+      "combatCounters": {
+        "attack-start": 510,
+        "damage": 489,
+        "death": 31,
+        "ranged-volley": 0,
+        "impact-hazard-created": 0
+      },
+      "eventCounterDeltasDuringUnchangedCombat": {},
+      "positionsAndTargetsUnchangedDuringSuffix": true,
+      "lastPositions": [
+        {
+          "id": 9020,
+          "owner": 2,
+          "hp": 5,
+          "x": 15.010102051443365,
+          "y": 2,
+          "action": "reload",
+          "pursuitTargetId": 9515,
+          "engagedTargetId": 9515,
+          "attackTargetId": null
+        },
+        {
+          "id": 9501,
+          "owner": 3,
+          "hp": 140,
+          "x": 14.00750440164058,
+          "y": 3.149159986898674,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9502,
+          "owner": 3,
+          "hp": 134,
+          "x": 14.595863777952319,
+          "y": 4.149159986898674,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9504,
+          "owner": 3,
+          "hp": 140,
+          "x": 14.1161939325746,
+          "y": 2.144354640399427,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9505,
+          "owner": 3,
+          "hp": 116,
+          "x": 13.362046696382349,
+          "y": 2.144723376955699,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9506,
+          "owner": 3,
+          "hp": 128,
+          "x": 13.612046696382349,
+          "y": 2.644723376955699,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9507,
+          "owner": 3,
+          "hp": 140,
+          "x": 13.764046297704132,
+          "y": 1.6444415072567111,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9508,
+          "owner": 3,
+          "hp": 134,
+          "x": 14.75749707718036,
+          "y": 3.3942579593434576,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9510,
+          "owner": 3,
+          "hp": 128,
+          "x": 13.862046696382349,
+          "y": 2.649159986898674,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9511,
+          "owner": 3,
+          "hp": 131,
+          "x": 14.436564258806815,
+          "y": 3.649159986898674,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9512,
+          "owner": 3,
+          "hp": 122,
+          "x": 13.764046297704132,
+          "y": 1.356029387839299,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9513,
+          "owner": 3,
+          "hp": 134,
+          "x": 14.362046696382349,
+          "y": 2.6443546403974274,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": 9020,
+          "attackTargetId": null
+        },
+        {
+          "id": 9514,
+          "owner": 3,
+          "hp": 110,
+          "x": 14.862046696380549,
+          "y": 2.8942579593434576,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9515,
+          "owner": 3,
+          "hp": 116,
+          "x": 13.862046696382349,
+          "y": 2.1445490400717477,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9516,
+          "owner": 3,
+          "hp": 128,
+          "x": 13.264046297704132,
+          "y": 1.8397235955465223,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9518,
+          "owner": 3,
+          "hp": 20,
+          "x": 14.25749707718036,
+          "y": 3.149159986898674,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        }
+      ]
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_e50435eb3040ac8928d195ee-1-fresh_measurement-1793981807385.jsonl",
+      "sha256": "a8e278758d102c7dc5fbe1095ebb11057b3f61a10b323e147ec750bf2f179eb4",
+      "bytes": 52857,
+      "snapshots": 20,
+      "latestTick": 266479,
+      "latestGameSeconds": 4441.316666666667,
+      "unchangedCombatSinceGameSeconds": 2029.7166666666667,
+      "unchangedCombatGameSeconds": 2411.6,
+      "unchangedCombatSnapshots": 7,
+      "singleSnapshotDoesNotEstablishPlateau": false,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 5
+        },
+        "3": {
+          "units": 3,
+          "hp": 384
+        }
+      },
+      "combatCounters": {
+        "attack-start": 993,
+        "damage": 972,
+        "death": 43,
+        "ranged-volley": 0,
+        "impact-hazard-created": 0
+      },
+      "eventCounterDeltasDuringUnchangedCombat": {
+        "blocked": 578784,
+        "contact-release-persisted": 289392,
+        "pursuit-retarget-requested": 57880,
+        "pursuit-route-invalidated": 24116,
+        "pursuit-route-planned": 53055
+      },
+      "positionsAndTargetsUnchangedDuringSuffix": true,
+      "lastPositions": [
+        {
+          "id": 9020,
+          "owner": 2,
+          "hp": 5,
+          "x": 15.010102051443365,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": 9504,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9504,
+          "owner": 3,
+          "hp": 140,
+          "x": 14.11638024115653,
+          "y": 2.144354640399427,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9513,
+          "owner": 3,
+          "hp": 134,
+          "x": 14.362046696382349,
+          "y": 2.6443546403974274,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": 9020,
+          "attackTargetId": null
+        },
+        {
+          "id": 9514,
+          "owner": 3,
+          "hp": 110,
+          "x": 14.862046696380549,
+          "y": 2.894220715545482,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        }
+      ]
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_e50435eb3040ac8928d195ee-1-fresh_measurement-1793982407405.jsonl",
+      "sha256": "43feaedfac92765b1239a60122ccfb5d0127a2e3feb22addb035e1287ce7e9b6",
+      "bytes": 111218,
+      "snapshots": 60,
+      "latestTick": 1235083,
+      "latestGameSeconds": 20584.716666666667,
+      "unchangedCombatSinceGameSeconds": 1863.8833333333334,
+      "unchangedCombatGameSeconds": 18720.833333333332,
+      "unchangedCombatSnapshots": 48,
+      "singleSnapshotDoesNotEstablishPlateau": false,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 5
+        },
+        "3": {
+          "units": 3,
+          "hp": 384
+        }
+      },
+      "combatCounters": {
+        "attack-start": 993,
+        "damage": 972,
+        "death": 43,
+        "ranged-volley": 0,
+        "impact-hazard-created": 0
+      },
+      "eventCounterDeltasDuringUnchangedCombat": {
+        "blocked": 4493000,
+        "contact-release-persisted": 2246500,
+        "pursuit-retarget-requested": 449300,
+        "pursuit-route-invalidated": 187209,
+        "pursuit-route-planned": 411859
+      },
+      "positionsAndTargetsUnchangedDuringSuffix": true,
+      "lastPositions": [
+        {
+          "id": 9020,
+          "owner": 2,
+          "hp": 5,
+          "x": 15.010102051443365,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": 9504,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9504,
+          "owner": 3,
+          "hp": 140,
+          "x": 14.11638024115653,
+          "y": 2.144354640399427,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9513,
+          "owner": 3,
+          "hp": 134,
+          "x": 14.362046696382349,
+          "y": 2.6443546403974274,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": 9020,
+          "attackTargetId": null
+        },
+        {
+          "id": 9514,
+          "owner": 3,
+          "hp": 110,
+          "x": 14.862046696380549,
+          "y": 2.894220715545482,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        }
+      ]
+    },
+    {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/progress/mv_e50435eb3040ac8928d195ee-1-fresh_measurement-1793984207441.jsonl",
+      "sha256": "cd75353cfef315f9497c4d62733c2a283ae3bc47e2631919a8acb906a9febd9a",
+      "bytes": 200216,
+      "snapshots": 120,
+      "latestTick": 2693634,
+      "latestGameSeconds": 44893.9,
+      "unchangedCombatSinceGameSeconds": 1892.3,
+      "unchangedCombatGameSeconds": 43001.6,
+      "unchangedCombatSnapshots": 108,
+      "singleSnapshotDoesNotEstablishPlateau": false,
+      "remaining": {
+        "2": {
+          "units": 1,
+          "hp": 5
+        },
+        "3": {
+          "units": 3,
+          "hp": 384
+        }
+      },
+      "combatCounters": {
+        "attack-start": 993,
+        "damage": 972,
+        "death": 43,
+        "ranged-volley": 0,
+        "impact-hazard-created": 0
+      },
+      "eventCounterDeltasDuringUnchangedCombat": {
+        "blocked": 10320384,
+        "contact-release-persisted": 5160192,
+        "pursuit-retarget-requested": 1032040,
+        "pursuit-route-invalidated": 430016,
+        "pursuit-route-planned": 946035
+      },
+      "positionsAndTargetsUnchangedDuringSuffix": true,
+      "lastPositions": [
+        {
+          "id": 9020,
+          "owner": 2,
+          "hp": 5,
+          "x": 15.010102051443365,
+          "y": 2,
+          "action": "idle",
+          "pursuitTargetId": 9504,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9504,
+          "owner": 3,
+          "hp": 140,
+          "x": 14.11638024115653,
+          "y": 2.144354640399427,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        },
+        {
+          "id": 9513,
+          "owner": 3,
+          "hp": 134,
+          "x": 14.362046696382349,
+          "y": 2.6443546403974274,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": 9020,
+          "attackTargetId": null
+        },
+        {
+          "id": 9514,
+          "owner": 3,
+          "hp": 110,
+          "x": 14.862046696380549,
+          "y": 2.894220715545482,
+          "action": "idle",
+          "pursuitTargetId": 9020,
+          "engagedTargetId": null,
+          "attackTargetId": null
+        }
+      ]
+    }
+  ],
+  "validSeedRecords": [
+    {
+      "seed": 0,
+      "sourceFile": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+      "line": 23203,
+      "sha256IncludingNewline": "8c0f008c89fe0e4c2e13f5bd2be21e21c07ddec7170674119a6a985ef5dba8c1",
+      "ticks": 2460,
+      "winnerOwner": 3,
+      "finalStateHash": "e06077d5cd4094b255df027542ab2a91ea9cfdb5d33c678ec0ea43285c82a3fc",
+      "eventLogHash": "cc390cf4648da547044c30fbe1301abf49154f5595b3ba0149d4f2e56871548c"
+    }
+  ],
+  "missingRequiredSeeds": [
+    1,
+    2
+  ],
+  "pairReviewExists": false,
+  "observations": [
+    "All four prescribed limits exhausted without a native terminal result. The final watchdog reached tick 2716419 / game second 45273.65.",
+    "The initial 180-second attempt still showed a larger enemy army and ongoing earlier combat; its single final-state snapshot alone does not establish a plateau.",
+    "The 600/1800/3600 attempts settle to one Lithuanian skirmisher at 5 HP versus three Gurjara Heavy Camels totaling 384 HP. The final unchanged combat suffix spans 108 snapshots from game second 1892.3 through 44893.9.",
+    "During the final suffix all recorded positions and target fields stay fixed, attack/damage/death counters remain fixed, but blocked increases by 10320384, route plans by 946035, route invalidations by 430016 and contact-release-persisted by 5160192.",
+    "The skirmisher remains at (15.010102051443365,2) near the northeastern forest boundary. All three camels retain pursuit of it and one remains engaged. These surviving positions are not the scenario patrol destinations.",
+    "Only native seed 0 is saved; required seeds 1 and 2 and the independent pair replay are missing. The seed 0 winner cannot be copied into a correction."
+  ],
+  "diagnosis": "Prolonged blocked-pursuit nontermination near the northeastern forest boundary after combat leaves four units. Static positions with continuing route/contact retries distinguish it from the fully idle patrol-endpoint case. The precise collision or targeting mechanism and real-game fidelity are not independently established here. No draw or winner is assigned.",
+  "decision": {
+    "resultAssigned": false,
+    "physicsChanged": false,
+    "automaticRetryAuthorized": false,
+    "retainOriginalServingEvidence": true,
+    "continueOtherInventoryJobs": true,
+    "nextStep": "Keep this context unresolved; require a separately reviewed recovery decision before any further retry."
+  }
+}

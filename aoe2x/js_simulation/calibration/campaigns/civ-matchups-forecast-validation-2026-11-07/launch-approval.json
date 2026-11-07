@@ -1,6 +1,17 @@
 {
-  "durationApproved": false,
-  "status": "awaiting_explicit_duration_approval",
+  "durationApproved": true,
+  "status": "approved",
   "reason": "AGENTS.md requires asking before work estimated beyond one hour. The full forecast campaign exceeds that duration.",
-  "requestedScope": "Keep running more matchups, the ones that are guesses. The eventual target is to validate all guesses. Start with the lowest confidence ones."
+  "requestedScope": "Keep running more matchups, the ones that are guesses. The eventual target is to validate all guesses. Start with the lowest confidence ones.",
+  "approvedAt": "2026-11-07T12:01:56.706778+00:00",
+  "sourceRole": "user",
+  "sourceMessage": "Yes start",
+  "approvalRequest": "May I run the prepared 39,124-context validation queue beyond one hour, with four workers and an ongoing research-only monitor?",
+  "scope": {
+    "ongoingValidation": true,
+    "workers": 4,
+    "researchOnlyMonitor": true,
+    "websiteDeployments": false,
+    "knownHeldContextsNotRetried": true
+  }
 }

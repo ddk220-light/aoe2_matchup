@@ -74,6 +74,12 @@ checks are ready first; ongoing execution remains gated by explicit duration
 approval in `launch-approval.json`. Record the actual user approval there before
 launch, without marking incomplete seed sets as complete.
 
+The owner explicitly approved the ongoing four-worker campaign and research-only
+monitor with “Yes start” on 2026-11-07. That approval is recorded in
+`launch-approval.json`; it remains valid for safe resumes of this frozen scope.
+Do not ask for the same duration approval again. Website deployment and physics
+changes remain outside this approval.
+
 Before any launch/resume, inspect the manifest, queue controls, state, journals,
 attempts, pair/phase reviews, progress snapshots, logs, locks and live PIDs.
 Only restore a missing supervisor after checking its existing runner and lock.

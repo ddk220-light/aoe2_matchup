@@ -26,21 +26,19 @@ safe interruption; restore a missing supervisor only after checking its existing
 runner/lock. Logs are `/workspace/aoe2_civ_forecast_validation.log` and
 `/workspace/aoe2_civ_forecast_supervisor.log`.
 
-Four workers use the unchanged memory-safe frozen V3 runtime with the
-user-approved `sampling-policy-v2.json` amendment
-`0760c8fd7ee4274728b2211cf765172daed25551eeb1d4495498a28663602b70`. This supersedes
-the former uniform three-seed minimum, not the frozen physics/source/inventory.
-For a new context, run seed 0 first. Stop additional seeds only when its physical
-winner agrees with every original forecast, the loser is eliminated, and the
-winner retains at least 25% of its own starting total army HP. Such results are
-`single_seed_confirmation`, not multi-seed validations. Close/undecisive results,
-draws, original close forecasts, or disagreement require seeds 0..2; mixed
-winners require 3..9 as well. Keep the independent exact replay for EVERY
-accepted result. A same-seed replay checks reproducibility, not seed independence.
-Preserve all pre-amendment reviews/rows and use the original seed requirement
-for `legacyInProgressJobs`; never discard additional evidence or retry a blocked
-case to qualify it for an early stop. Verify the base manifest plus amendment
-source hashes; runtime files and physical contexts cannot be overridden.
+Four workers use the unchanged memory-safe V3 runtime and current amendment
+`sampling-policy-v3.json`, hash `4404ca505096341c2bcea03e1376ed5d7c27f7a1f6d6452bd92a9a526273c30c`.
+The owner explicitly removed same-seed replays. Use exactly 1 / 3 / 10 DISTINCT
+seeds: one execution of seed 0 for clear agreement (loser eliminated, winner
+retains at least 25% of its own starting total HP); three seeds 0..2 for close,
+undecisive or disagreeing results; ten seeds 0..9 if the initial winners vary.
+NEVER rerun a completed seed, whether for replay, repeatability, hash checks or
+export verification. Existing completed seeds count toward the total. No fourth
+or eleventh execution is required. Mark new replay evidence as not required,
+not performed, exact=null. Preserve real historical replay evidence unchanged.
+Verify the base manifest and both amendment files; v3 supersedes v2 execution
+requirements. Keep single-seed confirmations separate from multi-seed results.
+No physics, original forecasts, contexts, source hashes or ordered jobs change.
 Follow normal retries before calling a new case exhausted. Diagnose exhausted
 attempts from fsynced snapshots before any further retry. Timeouts, diagnostics,
 partial sets and user declarations are never native simulation results. Never

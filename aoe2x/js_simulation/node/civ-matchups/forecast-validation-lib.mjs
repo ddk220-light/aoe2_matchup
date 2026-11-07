@@ -5,7 +5,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {gunzipSync} from 'node:zlib';
 import {hashCanonicalJson as digest} from '../../src/canonical-json.js';
-import {verifyPolicyInputs} from './forecast-screening-policy.mjs';
+import {verifyPolicyInputs} from './forecast-no-replay-policy.mjs';
 export {digest};
 export const SIM=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 export const ROOT=resolve(SIM,'../..');

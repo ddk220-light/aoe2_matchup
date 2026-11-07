@@ -7,7 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {RankingWorkerPool} from '../ranking-worker-pool.mjs';
 import {runOrderedQueue} from './rolling-validation-queue.mjs';
 import {SIM,ROOT,DIR,sha,load,lines,gzlines,now,json,append,verifyManifest,payload,required,canonicalOutcome,exact,digest} from './forecast-validation-lib.mjs';
-import {loadScreeningPolicy,screeningDecision,screeningOutcome,verifySamplingReview} from './forecast-screening-policy.mjs';
+import {loadScreeningPolicy,screeningDecision,screeningOutcome,verifySamplingReview,noReplayEvidence} from './forecast-no-replay-policy.mjs';
 
 const manifest=verifyManifest(),jobs=gzlines(resolve(DIR,'jobs.jsonl.gz'));
 const samplingPolicy=loadScreeningPolicy(DIR);
@@ -64,6 +64,7 @@ function progress(){const terminal=Boolean(state.finishedAt);Object.assign(state
  singleSeedConfirmedJobs:[...reviews.values()].filter(r=>r.evidenceLevel==='single_seed_confirmation').length,
  multiSeedValidatedJobs:[...reviews.values()].filter(r=>r.evidenceLevel!=='single_seed_confirmation').length,
  samplingPolicyHash:samplingPolicy?.amendmentHash??null,
+ independentExactReplayRequired:samplingPolicy?.independentExactReplayRequired??true,
  remainingJobs:manifest.totalForecastContexts-reviews.size,remainingRunnableJobs:jobs.length-reviews.size,
  totalForecastContexts:manifest.totalForecastContexts,runnableJobs:jobs.length,heldContexts:manifest.heldContexts,blockedJobs:[...blocked],active:[...active.values()],
  schedulerVersion:'rolling-phase-queue-v2',queueControlsHash:controls?.controlsHash??null});json(statePath,state);}
@@ -80,6 +81,8 @@ function checkpoint(label){
 }
 function saved(job){return [...fresh.values()].filter(r=>r.matchupId===job.id);}
 async function execute(job,seed,purpose){
+ assert(samplingPolicy?.independentExactReplayRequired!==false||purpose==='fresh_measurement','Same-seed replays are disabled');
+ if(purpose==='fresh_measurement')assert(!fresh.has(`${job.id}:${seed}`),'Never rerun a completed seed');
  for(let attempt=0;attempt<manifest.policy.wallTimeoutSteps.length;attempt++){
   const limitSeconds=manifest.policy.wallTimeoutSteps[attempt],startedAt=now(),start=performance.now();
   active.set(job.id,{jobId:job.id,seed,purpose,attempt:attempt+1,startedAt,limitSeconds});progress();
@@ -128,11 +131,14 @@ async function reviewJob(job){
   }
   if(stopped)return;
   evidenceRows=saved(job);control=[...evidenceRows].sort((a,b)=>a.wallSeconds-b.wallSeconds||a.seed-b.seed)[0];
-  const run=await execute(job,control.seed,'independent_exact_replay');if(!run)return;
-  check={exact:exact(run.result,control),seed:control.seed,expectedRecordHash:digest(control),
-   result:run.result,wallSeconds:run.wallSeconds,startedAt:run.startedAt,finishedAt:run.finishedAt};
+  if(samplingPolicy?.independentExactReplayRequired===false)check=noReplayEvidence(samplingPolicy);
+  else{
+   const run=await execute(job,control.seed,'independent_exact_replay');if(!run)return;
+   check={exact:exact(run.result,control),seed:control.seed,expectedRecordHash:digest(control),
+    result:run.result,wallSeconds:run.wallSeconds,startedAt:run.startedAt,finishedAt:run.finishedAt};
+  }
  }
- if(!check.exact){
+ if(check.exact===false){
   append(attemptPath,{campaignHash:manifest.campaignHash,matchupId:job.id,purpose:'exact_replay',exhausted:true,
    error:{name:'ExactReplayMismatch',message:'Same frozen context produced a different result; diagnosis required'},check,at:now()});
   blocked.add(job.id);return;

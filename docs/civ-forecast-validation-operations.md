@@ -60,7 +60,34 @@ This is an additional dynamic blocked job, separate from the frozen 24 held
 contexts. No result is assigned and no further retry is authorized by this
 diagnosis. Preserve the live ordinary queue and all existing failures.
 
-## User-approved adaptive seed policy (2026-11-07)
+## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
+
+The owner explicitly removed all same-seed replays: “In any case, it should
+either be one in our case, three if it is, and then ten, no re-running.”
+`sampling-policy-v3.json` records amendment `4404ca505096341c2bcea03e1376ed5d7c27f7a1f6d6452bd92a9a526273c30c`.
+This supersedes every earlier replay requirement for new research results.
+
+- One execution of seed 0 is sufficient for a clear forecast agreement: losing
+  army eliminated and winning army retaining at least 25% of its starting HP.
+- Close or disagreeing results require three distinct seeds, 0–2.
+- If those winners vary, require ten distinct seeds, 0–9.
+- Never rerun a completed seed. There is no fourth or eleventh execution for
+  repeatability. Existing completed seeds count toward the required total.
+- Existing replay evidence stays intact. New records explicitly say that replay
+  was not required and was not performed; never invent a replay success.
+- Timeouts are not results. Preserve failures, held contexts and diagnosed
+  blockers; no new retry of an exhausted context is authorized here.
+
+At this transition, 651 existing reviews and 2,396 native records were preserved
+under `policy-transitions/distinct-seeds-no-replay-v3/`. The previous v2 policy
+file, its helper/tests and all earlier reviews and snapshots are immutable.
+The same 62 runtime files, physical contexts, frozen forecasts and ordered queue
+are retained. Only research execution/verification code changes. The supervisor
+command and four-worker setup remain the same. No website change is authorized.
+Single-seed confirmations remain distinct from multi-seed validations; this
+stopping rule does not establish unbiased forecast accuracy.
+
+## Historical adaptive policy v2 (superseded by v3)
 
 The owner explicitly requested a decisive agreeing first run to stop early, with
 additional runs for close or disagreeing results, then instructed: “Use this as
@@ -106,9 +133,9 @@ runtime: `frozen-civ-matchups-v3` with `lossless-event-stream-v1` event storage.
 Combat, collision, pathing, arithmetic, acquisition, scenarios and termination
 are unchanged. Node must match the version pinned in the manifest.
 
-Four workers use the approved adaptive policy above for new contexts and the
-original seed policy for grandfathered work. An independent exact replay of a
-completed seed is required for every accepted context. The retry schedule is 180/600/1800/3600 wall seconds. A watchdog,
+Four workers use the current 1 / 3 / 10 distinct-seed policy above. No same-seed
+replay is performed for a new result. The retry schedule for unfinished attempts
+is 180/600/1800/3600 wall seconds. A watchdog,
 diagnostic, partial set or exhausted attempt is never a result. Diagnose exhausted
 failures from the fsynced snapshots before any further retry or separate inventory.
 
@@ -133,7 +160,7 @@ monitor with “Yes start” on 2026-11-07. That approval is recorded in
 Do not ask for the same duration approval again. Website deployment and physics
 changes remain outside this approval.
 
-Before any launch/resume, inspect the base manifest and sampling amendment,
+Before any launch/resume, inspect the base manifest, current v3 amendment and retained v2 amendment,
 queue controls, state, journals,
 attempts, pair/phase reviews, progress snapshots, logs, locks and live PIDs.
 Only restore a missing supervisor after checking its existing runner and lock.
@@ -166,11 +193,13 @@ node aoe2x/js_simulation/node/civ-matchups/export-forecast-reviews.mjs \
 ```
 
 The exporter independently reconciles journals, required seeds, context hashes,
-physical orientation, review hashes and exact replay evidence. It preserves
-original evidence and excludes held, partial and diagnostic records. New exports use
-`civ-matchup-forecast-corrections-v2`, preserving v1 rows verbatim while recording
-the amendment hash and separate evidence-level counts; snapshots 001/002 retain
-their original v1 schema. The reviewed-only exporter pins a single committed
+physical orientation and review hashes. Historical replay evidence is verified
+without executing a simulation; new v3 rows must explicitly record no replay. It preserves
+original evidence and excludes held, partial and diagnostic records. New exports
+use `civ-matchup-forecast-corrections-v3`, preserving earlier rows verbatim while
+recording the current amendment hash, separate evidence-level counts, actual
+historical replay checks and contexts with no replay. Existing snapshots retain
+their original schema and bytes. The reviewed-only exporter pins a single committed
 source revision for its journals and reviews. In either schema, do not disguise it as the older
 mismatch campaign or import it with a tool that has not reviewed this schema.
 

@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_7c67c0b2b78046cf95864ac7",
+  "reviewedAt": "2026-11-07T12:19:29.759Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "5ede90b71dda795c52cc22de87bc15e1f0f2e34c98138763bd1a553e37f10aa8",
+      "51c87acab3e108809fc65be9c000d4945dde17d52bed9a3246eb79f7d848e668"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      100,
+      102
+    ]
+  },
+  "contextHash": "7c67c0b2b78046cf95864ac7f443a146b97824cb2e23f1a5ace7bf16540c75b6",
+  "pairKey": "51c87acab3e108809fc65be9c000d4945dde17d52bed9a3246eb79f7d848e668|5ede90b71dda795c52cc22de87bc15e1f0f2e34c98138763bd1a553e37f10aa8",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 3248,
+      "finalStateHash": "56e37a01a538bf42a398eef1c6bdcecdce2afccac5b2e7f7ed9c696d8888bd1e",
+      "eventLogHash": "79e559471d82b8cf40a96272d182d4d2311c53bc6e7e2c9344d0e83c0d9674dd",
+      "winnerHpFraction": 0.13796296296296295,
+      "recordHash": "ab78c9f850b0e828cb0ea38ec21ea1cc659809ff565d0dc1d5a560e12f4ddbd0"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 2607,
+      "finalStateHash": "9c8587c875aa30958444146bad5b3a53e52137ebfc3c0fb3af223911b256a1f0",
+      "eventLogHash": "0a9a9c6fe406e37d2e2085c14deefe5488fa567a28c26439b7165f93f201ca04",
+      "winnerHpFraction": 0.24305555555555555,
+      "recordHash": "a94fcce4bcccfa5e80db357990b7686673959692e6fbbcb797865e2f09800bd5"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 3399,
+      "finalStateHash": "b794070d3146aeb92b40835205468f38f8917ab3eebd5ae7947e7b451a329fb3",
+      "eventLogHash": "16654053f899730e58730f5d56f2b967c23cdb821732da9b74aef36007965e42",
+      "winnerHpFraction": 0.1,
+      "recordHash": "99745f98825b4d9320b9af34e59fd7fe7380feb46565e0921e5d3274409e0c75"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "ab78c9f850b0e828cb0ea38ec21ea1cc659809ff565d0dc1d5a560e12f4ddbd0",
+    "result": {
+      "jobId": "fv_7c67c0b2b78046cf95864ac7",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 298,
+      "startingHpByOwner": {
+        "2": 1080,
+        "3": 2160
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 6,
+          "hp": 298
+        }
+      },
+      "ticks": 3248,
+      "family": "rvr",
+      "side2": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "civ": "Bohemians",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "heavy_cav_archer",
+        "label": "Heavy Cavalry Archer",
+        "civ": "Romans",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "56e37a01a538bf42a398eef1c6bdcecdce2afccac5b2e7f7ed9c696d8888bd1e",
+      "eventLogHash": "79e559471d82b8cf40a96272d182d4d2311c53bc6e7e2c9344d0e83c0d9674dd"
+    },
+    "wallSeconds": 9.03619677400007,
+    "startedAt": "2026-11-07T12:19:20.722Z",
+    "finishedAt": "2026-11-07T12:19:29.759Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    13676
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 13676,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 2,
+  "reviewHash": "70cb0076745d0f956916672224add7f6c92e39827d0abc9149a3ce340d6c1a5a"
+}

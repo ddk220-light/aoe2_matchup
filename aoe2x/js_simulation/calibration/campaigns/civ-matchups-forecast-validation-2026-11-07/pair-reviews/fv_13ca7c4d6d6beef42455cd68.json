@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_13ca7c4d6d6beef42455cd68",
+  "reviewedAt": "2026-11-07T14:15:35.001Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      24
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "9beb8362c119a89050f56e18d4d95ab464c0755343a056437379f33a036a3428",
+      "eb5641a087dc420fbb88ca16cee20d0371aa9f1496ede2c744fc61bb4dd3b4d7"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      111,
+      142.5
+    ]
+  },
+  "contextHash": "13ca7c4d6d6beef42455cd682f8aeb6c2c0697252ce8593f6e43149cee8b8944",
+  "pairKey": "9beb8362c119a89050f56e18d4d95ab464c0755343a056437379f33a036a3428|eb5641a087dc420fbb88ca16cee20d0371aa9f1496ede2c744fc61bb4dd3b4d7",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 3844,
+      "finalStateHash": "0fccdd07b98881602bf8b8967061777f2a6e71eccd5c46bd54875382727944fb",
+      "eventLogHash": "cd9bd2c7b16db159ef3798e89eb5eb272d79503c94f41608b6d9a4fb31a8e421",
+      "winnerHpFraction": 0.3194444444444444,
+      "recordHash": "6499671e0f288433e256432472e7076001750efd06166a0d6b80396ff6c5252e"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 3241,
+      "finalStateHash": "f57f5455ffb1c84b881f5f746d865577cdcc813cefdfd0d136fa44688a0d1120",
+      "eventLogHash": "b509c6bed9cb8d1a836432e02356c99ff55e36469009efb29abcd589734bc95b",
+      "winnerHpFraction": 0.3,
+      "recordHash": "5b52dbf199186b04958095eea40d617b4300a32c00f24c24a6b4d6774ba339e7"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 3997,
+      "finalStateHash": "feec0cfd833b120464cac98545dcc1a8faf5912159eaa8353947a1305723c698",
+      "eventLogHash": "d2c4ba84376d58bbdb08c0cbff8b921d2ce7037beb687c8ee5ef51c7fba5ac27",
+      "winnerHpFraction": 0.14722222222222223,
+      "recordHash": "216fe8c637bc8d2e8aaa24af18929569a70eaea70c5ea9d75fe70642e419773a"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "216fe8c637bc8d2e8aaa24af18929569a70eaea70c5ea9d75fe70642e419773a",
+    "result": {
+      "jobId": "fv_13ca7c4d6d6beef42455cd68",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 424,
+      "startingHpByOwner": {
+        "2": 1620,
+        "3": 2880
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 8,
+          "hp": 424
+        }
+      },
+      "ticks": 3997,
+      "family": "kite",
+      "side2": {
+        "slug": "elite_guecha_warrior_muisca",
+        "label": "Elite Guecha Warrior",
+        "civ": "Muisca",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "paladin",
+        "label": "Cavalier",
+        "civ": "Koreans",
+        "count": 24,
+        "class": "melee"
+      },
+      "finalStateHash": "feec0cfd833b120464cac98545dcc1a8faf5912159eaa8353947a1305723c698",
+      "eventLogHash": "d2c4ba84376d58bbdb08c0cbff8b921d2ce7037beb687c8ee5ef51c7fba5ac27"
+    },
+    "wallSeconds": 13.695637505000457,
+    "startedAt": "2026-11-07T14:15:21.305Z",
+    "finishedAt": "2026-11-07T14:15:35.001Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    55687
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 55687,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "c63bd65a1d38c43c992f898f2058e4338bcb3bceaeffc3de9675e69a563d328c"
+}

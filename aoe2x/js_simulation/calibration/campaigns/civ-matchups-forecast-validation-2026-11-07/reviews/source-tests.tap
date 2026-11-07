@@ -1,0 +1,20 @@
+✔ streamed canonical hash agrees on nested and sparse values (748.213438ms)
+✔ streamed canonical hash rejects the same unsupported values (0.729045ms)
+✔ incremental canonical array hash preserves arbitrary batch boundaries and sparse/unicode values (4.239754ms)
+✔ nonretaining event stream preserves initial history, all event order, outcomes, and final units (216.20249ms)
+✔ a million events are hashed under a 32-MiB heap without retaining them (1925.357579ms)
+✔ only complete seed sets classify and mixed initial winners require all ten (2.489354ms)
+✔ physical team order maps to canonical profile order without transferring orientation (0.151748ms)
+✔ an exact replay requires winner, ticks, final state and every event (0.257087ms)
+✔ a slow context cannot idle available workers behind a phase boundary (4.16403ms)
+✔ resume skips reviewed and quarantined contexts without running them (0.911024ms)
+✔ stop drains active work without admitting additional jobs (0.88863ms)
+✔ duplicate contexts are rejected before execution (1.249064ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2261.88327

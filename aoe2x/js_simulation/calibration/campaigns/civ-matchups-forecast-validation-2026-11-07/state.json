@@ -21,32 +21,40 @@
     "016",
     "017"
   ],
-  "reviewedJobs": 2187,
-  "savedFreshSeeds": 6351,
-  "changedJobs": 654,
+  "reviewedJobs": 2239,
+  "savedFreshSeeds": 6489,
+  "changedJobs": 669,
   "active": [
     {
-      "jobId": "fv_3e01189c33f546bd648e5316",
-      "seed": 0,
+      "jobId": "fv_692228fdfc2f09c07874a4d0",
+      "seed": 1,
       "purpose": "fresh_measurement",
       "attempt": 1,
-      "startedAt": "2026-11-07T18:27:21.816Z",
+      "startedAt": "2026-11-07T18:37:32.325Z",
       "limitSeconds": 180
     },
     {
-      "jobId": "fv_5efc4fa4cb5b984b8a07ec94",
-      "seed": 0,
+      "jobId": "fv_b6a1cc20ffd78c50978f089b",
+      "seed": 2,
       "purpose": "fresh_measurement",
       "attempt": 1,
-      "startedAt": "2026-11-07T18:27:26.152Z",
+      "startedAt": "2026-11-07T18:37:43.207Z",
       "limitSeconds": 180
     },
     {
-      "jobId": "fv_3473dc04d5e6d67e194010d8",
+      "jobId": "fv_7ece20e6faad852623f0523f",
       "seed": 0,
       "purpose": "fresh_measurement",
       "attempt": 1,
-      "startedAt": "2026-11-07T18:27:38.516Z",
+      "startedAt": "2026-11-07T18:37:18.139Z",
+      "limitSeconds": 180
+    },
+    {
+      "jobId": "fv_2cdb3ee3a499822b21677c6f",
+      "seed": 0,
+      "purpose": "fresh_measurement",
+      "attempt": 1,
+      "startedAt": "2026-11-07T18:37:24.016Z",
       "limitSeconds": 180
     }
   ],
@@ -56,16 +64,16 @@
   "totalForecastContexts": 39148,
   "runnableJobs": 39124,
   "heldContexts": 24,
-  "remainingJobs": 36961,
-  "remainingRunnableJobs": 36937,
-  "updatedAt": "2026-11-07T18:27:39.896Z",
+  "remainingJobs": 36909,
+  "remainingRunnableJobs": 36885,
+  "updatedAt": "2026-11-07T18:37:55.082Z",
   "schedulerVersion": "rolling-phase-queue-v2",
   "queueControlsHash": "db762974735885b0d742aa964f58e530b0254b777d39086f5cb47000696235cd",
   "lastPushedAt": "2026-11-07T18:24:01.114Z",
-  "remotePending": false,
-  "lastPushError": null,
-  "singleSeedConfirmedJobs": 802,
-  "multiSeedValidatedJobs": 1385,
+  "remotePending": true,
+  "lastPushError": "Error: Command failed: git -c http.extraHeader= -c credential.helper= push origin simulations/civ-forecast-validation-2026-11-07\nfatal: could not read Username for 'https://github.com': No such device or address\n",
+  "singleSeedConfirmedJobs": 823,
+  "multiSeedValidatedJobs": 1416,
   "samplingPolicyHash": "4404ca505096341c2bcea03e1376ed5d7c27f7a1f6d6452bd92a9a526273c30c",
   "independentExactReplayRequired": false
 }

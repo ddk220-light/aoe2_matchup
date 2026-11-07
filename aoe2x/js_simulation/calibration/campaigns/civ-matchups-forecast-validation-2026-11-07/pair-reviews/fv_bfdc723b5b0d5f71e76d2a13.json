@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_bfdc723b5b0d5f71e76d2a13",
+  "reviewedAt": "2026-11-07T12:31:43.591Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      20,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "1e6dd366f5260e2a8334d7080a63d4f30a1912f1391275f9dc38644945a57997",
+      "ef4bb570253a3ff7d860cececdb3cc40a01f3ea1d079c9620acd0286de3cd720"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      100,
+      57.5
+    ]
+  },
+  "contextHash": "bfdc723b5b0d5f71e76d2a13cfffb3a69aa8f93dd619f18bc20f44e232f377c6",
+  "pairKey": "1e6dd366f5260e2a8334d7080a63d4f30a1912f1391275f9dc38644945a57997|ef4bb570253a3ff7d860cececdb3cc40a01f3ea1d079c9620acd0286de3cd720",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1482,
+      "finalStateHash": "5a6b39581d236ecfbd4fb71b4eedea3084e0bd251959611f30bd17f4a4497930",
+      "eventLogHash": "e14597f92ae883f103367ef0370bd244971d1519d925e41cef5524b2a44de3c0",
+      "winnerHpFraction": 0.4677248677248677,
+      "recordHash": "825dc591ece722852b1fbdc2f4ca17aacc1cb7c0110c462bcdd4a464d5a0b69c"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1471,
+      "finalStateHash": "35e9f020ba9cebb9dbcb2851942e395bdf84d7fef1922fc315b63253f820e52e",
+      "eventLogHash": "755c3e8aa381d1b51dbf5077fbbaba2ba69533981db119777b064fb5063cde56",
+      "winnerHpFraction": 0.4708994708994709,
+      "recordHash": "4c04527fb06e53c0e710abe49cc3a53ccb71c4db3be12d15ce8cb237bf25a092"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1617,
+      "finalStateHash": "b0776d11b092c33afedae6b63bc3983be8d5afe3acf5268484f7dab4233dc41b",
+      "eventLogHash": "f40e2d28993d87086eac991dba4b63093cade53005d56f9d5956e328d7a74db9",
+      "winnerHpFraction": 0.382010582010582,
+      "recordHash": "6bed00d30357b144b548c458119bd32b276aaee6d026726141855c483190e08b"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "825dc591ece722852b1fbdc2f4ca17aacc1cb7c0110c462bcdd4a464d5a0b69c",
+    "result": {
+      "jobId": "fv_bfdc723b5b0d5f71e76d2a13",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 442,
+      "startingHpByOwner": {
+        "2": 800,
+        "3": 945
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 14,
+          "hp": 442
+        }
+      },
+      "ticks": 1482,
+      "family": "rvr",
+      "side2": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "civ": "Burgundians",
+        "count": 20,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "imp_slinger",
+        "label": "Slinger",
+        "civ": "Incas",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "5a6b39581d236ecfbd4fb71b4eedea3084e0bd251959611f30bd17f4a4497930",
+      "eventLogHash": "e14597f92ae883f103367ef0370bd244971d1519d925e41cef5524b2a44de3c0"
+    },
+    "wallSeconds": 3.6860270650000313,
+    "startedAt": "2026-11-07T12:31:39.905Z",
+    "finishedAt": "2026-11-07T12:31:43.591Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    20327
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 20327,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "e509b1a95f9514ce4b8be15b2c9efc8a0d23a2f03c21ae86e93e4ec872dc1970"
+}

@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_8620b8a75c4b0954d46afec4",
+  "reviewedAt": "2026-11-07T12:30:44.579Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      16
+    ],
+    "engineFamily": "siege",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "d655bf0e3e242afccc4f46a45f2dce72a4cdec85c48bef412fd496a344ca4c9b",
+      "db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010"
+    ],
+    "scenarioHash": "68355152c72a621245965a8a10f001b96dbf2b6789cea9e5dff7c7335943029d",
+    "weightedCosts": [
+      62.5,
+      174
+    ]
+  },
+  "contextHash": "8620b8a75c4b0954d46afec4a19683e25d107e2926caa2b7582b298677695b18",
+  "pairKey": "d655bf0e3e242afccc4f46a45f2dce72a4cdec85c48bef412fd496a344ca4c9b|db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1254,
+      "finalStateHash": "0a730e126024b404dc719af7a5f593632671961ba840c5aa0cb10333eb083a0a",
+      "eventLogHash": "900d3990ec269f4176e99641b8a7b187fa978f7afd05b9820e7498add10d3a11",
+      "winnerHpFraction": 0.7163461538461539,
+      "recordHash": "4f557b7c2baa473ef73f88438b84cf5b9dbff8ad9393c5f64881687e1f31d1c7"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1273,
+      "finalStateHash": "ec3f7259b31f8da508d279609462af3523253fa650f0693df591348ab5ea070f",
+      "eventLogHash": "239754bca3f13890adcb5f29bd9c2344f77726a9d4d82596ff51576919ab64e9",
+      "winnerHpFraction": 0.6682692307692307,
+      "recordHash": "5a5e7fbc94a54e116d9f5bc6e8d9da47547639d15c676e5960e96b7c28afd605"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1237,
+      "finalStateHash": "f2995d9fe31bdc65874195d195c8b931eaf560402247f021e1a175774806e7b9",
+      "eventLogHash": "69864af474192c28a04dceace5822bcf49b1024654b243b7efce0461b0629983",
+      "winnerHpFraction": 0.6730769230769231,
+      "recordHash": "4adc4706da84dd8c7877ce110a913abcc9456d13554fab7db731c7fd558ee27e"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "5a5e7fbc94a54e116d9f5bc6e8d9da47547639d15c676e5960e96b7c28afd605",
+    "result": {
+      "jobId": "fv_8620b8a75c4b0954d46afec4",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 695,
+      "startingHpByOwner": {
+        "2": 1620,
+        "3": 1040
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 11,
+          "hp": 695
+        }
+      },
+      "ticks": 1273,
+      "family": "siege",
+      "side2": {
+        "slug": "flemish_militia",
+        "label": "Flemish Militia",
+        "civ": "Burgundians",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "war_chariot_shu",
+        "label": "War Chariot",
+        "civ": "Shu",
+        "count": 16,
+        "class": "siege_ranged"
+      },
+      "finalStateHash": "ec3f7259b31f8da508d279609462af3523253fa650f0693df591348ab5ea070f",
+      "eventLogHash": "239754bca3f13890adcb5f29bd9c2344f77726a9d4d82596ff51576919ab64e9"
+    },
+    "wallSeconds": 2.671123757999856,
+    "startedAt": "2026-11-07T12:30:41.908Z",
+    "finishedAt": "2026-11-07T12:30:44.579Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    20148
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 20148,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "52fd40744476e804e4a173a2fed17a0803b3ccbdaa0ae286e4a4feb42720c6cd"
+}

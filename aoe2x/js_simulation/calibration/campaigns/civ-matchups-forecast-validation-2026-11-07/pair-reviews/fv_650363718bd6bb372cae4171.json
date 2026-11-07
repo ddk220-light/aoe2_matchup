@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_650363718bd6bb372cae4171",
+  "reviewedAt": "2026-11-07T12:36:58.173Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      24
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "48cfa306b4616d62a4c23857e76ec0ecd2689beb8abe0c118b18c7c12e9baf58",
+      "db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      133.5,
+      174
+    ]
+  },
+  "contextHash": "650363718bd6bb372cae4171535f0cb5a4dee34a68d8093d3481f37f5594c8ae",
+  "pairKey": "48cfa306b4616d62a4c23857e76ec0ecd2689beb8abe0c118b18c7c12e9baf58|db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1817,
+      "finalStateHash": "225e9735ecc93403b3d434dafed69f57abbf177dd404ded0a591b07a7fb9920a",
+      "eventLogHash": "763400e2f46ba7785c877e6a5c8f610b927536963632b0877f69b89a88ea685e",
+      "winnerHpFraction": 0.5256410256410257,
+      "recordHash": "dac5af6280bf3c2c846e67bf4e3f8243c7e5419c1494d021eb498d3f555f8246"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1813,
+      "finalStateHash": "00dc6e58ea32905e542c4f4b906208ec5cf9c2875c50a45321062fde82bf5b63",
+      "eventLogHash": "b4a9417b41b74a03ff049f7e08c9695263f90b30327dfd7958268ed69fca8684",
+      "winnerHpFraction": 0.5224358974358975,
+      "recordHash": "c852fc11d9cf85880275e0fda570cdcd94ab6d13d7d3fd645f52bec99818c383"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1752,
+      "finalStateHash": "4b9e64948f908b984b2cc5dfdb41e1c09c1460ac0a9361d3f9ddf5cb6efefbeb",
+      "eventLogHash": "b484fe667464cb194aa581de6a61f698f860074d38e16017340e508e8b1f1c0e",
+      "winnerHpFraction": 0.5564102564102564,
+      "recordHash": "52332af5e55e91590a819c57ecb9b9d6851cad5e57a259dea794af56bc685db8"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "52332af5e55e91590a819c57ecb9b9d6851cad5e57a259dea794af56bc685db8",
+    "result": {
+      "jobId": "fv_650363718bd6bb372cae4171",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 868,
+      "startingHpByOwner": {
+        "2": 2295,
+        "3": 1560
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 14,
+          "hp": 868
+        }
+      },
+      "ticks": 1752,
+      "family": "rvr",
+      "side2": {
+        "slug": "elite_arambai_burmese",
+        "label": "Elite Arambai",
+        "civ": "Burmese",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "war_chariot_shu",
+        "label": "War Chariot",
+        "civ": "Shu",
+        "count": 24,
+        "class": "siege_ranged"
+      },
+      "finalStateHash": "4b9e64948f908b984b2cc5dfdb41e1c09c1460ac0a9361d3f9ddf5cb6efefbeb",
+      "eventLogHash": "b484fe667464cb194aa581de6a61f698f860074d38e16017340e508e8b1f1c0e"
+    },
+    "wallSeconds": 5.778838065000018,
+    "startedAt": "2026-11-07T12:36:52.394Z",
+    "finishedAt": "2026-11-07T12:36:58.173Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    22917
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 22917,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "f94b393c619d2f94535c31f7db004d314857116fa3832915c6579e2524f6236f"
+}

@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_bacc618a6afa64084e07169c",
+  "reviewedAt": "2026-11-07T12:38:09.171Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      16
+    ],
+    "engineFamily": "siege",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "75138154553cc4cc31e48e7773c4f8de29466b661a1575a7c9f9e7a357336b8d",
+      "db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010"
+    ],
+    "scenarioHash": "68355152c72a621245965a8a10f001b96dbf2b6789cea9e5dff7c7335943029d",
+    "weightedCosts": [
+      57.5,
+      174
+    ]
+  },
+  "contextHash": "bacc618a6afa64084e07169c2e1ad0c848fefd99932f53e66f2b4371e041871c",
+  "pairKey": "75138154553cc4cc31e48e7773c4f8de29466b661a1575a7c9f9e7a357336b8d|db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 856,
+      "finalStateHash": "bb9839e3d6157a1bb74cb5144155561cb62b24fd50d3f3d46b2fb3a203f7511e",
+      "eventLogHash": "fe37095c90ed18a5e81795103895fd0d7e68e547243e9c781b18d4c243e420ec",
+      "winnerHpFraction": 0.7317307692307692,
+      "recordHash": "642c658814f7bc9666b628d631836ac183bf7f99ebbe7f9b6567aab9d0837c4c"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 885,
+      "finalStateHash": "0035220e7be0bc9e8c67b57638578f80469a2c5f9ca627ab9f652865dae57801",
+      "eventLogHash": "4ce1e0863559cc600df7ce70a212f47ef55bac5679feb969a9acf8dfc2270466",
+      "winnerHpFraction": 0.7721153846153846,
+      "recordHash": "dd6f50aac74979f06f391447ed27a83dca6a7bb5433cac8e7640cf89fb946894"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 890,
+      "finalStateHash": "c8436882312ed59390792f3477d3c7bb8b0a9f79ef9a82ca7df36a6ace5b8725",
+      "eventLogHash": "3728b1e7974ad140b2a6f5e2ede60c7833e9c2ff0239a5647920beed9b1821eb",
+      "winnerHpFraction": 0.7317307692307692,
+      "recordHash": "341ebe96fda6992c90bd17bd1ac79176002bf54f660f0ec900094719e85f04d2"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "642c658814f7bc9666b628d631836ac183bf7f99ebbe7f9b6567aab9d0837c4c",
+    "result": {
+      "jobId": "fv_bacc618a6afa64084e07169c",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 761,
+      "startingHpByOwner": {
+        "2": 1620,
+        "3": 1040
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 13,
+          "hp": 761
+        }
+      },
+      "ticks": 856,
+      "family": "siege",
+      "side2": {
+        "slug": "halberdier",
+        "label": "Halberdier",
+        "civ": "Burmese",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "war_chariot_shu",
+        "label": "War Chariot",
+        "civ": "Shu",
+        "count": 16,
+        "class": "siege_ranged"
+      },
+      "finalStateHash": "bb9839e3d6157a1bb74cb5144155561cb62b24fd50d3f3d46b2fb3a203f7511e",
+      "eventLogHash": "fe37095c90ed18a5e81795103895fd0d7e68e547243e9c781b18d4c243e420ec"
+    },
+    "wallSeconds": 2.0827881240001878,
+    "startedAt": "2026-11-07T12:38:07.088Z",
+    "finishedAt": "2026-11-07T12:38:09.171Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    23517
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 23517,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "f68e0735f7006eac523255c18fed09488f5f7b23a4dd077b149cf62eb81152a3"
+}

@@ -60,6 +60,45 @@ This is an additional dynamic blocked job, separate from the frozen 24 held
 contexts. No result is assigned and no further retry is authorized by this
 diagnosis. Preserve the live ordinary queue and all existing failures.
 
+## User-approved adaptive seed policy (2026-11-07)
+
+The owner explicitly requested a decisive agreeing first run to stop early, with
+additional runs for close or disagreeing results, then instructed: “Use this as
+the approach to go forward. Update the scheduled tasks and the runner so that
+this is the logic that is used in this process.”
+
+This supersedes the uniform three-seed minimum for new ordinary contexts.
+`sampling-policy-v2.json` records the separate amendment
+`0760c8fd7ee4274728b2211cf765172daed25551eeb1d4495498a28663602b70`. The original campaign
+manifest/hash, production source, inventory order and all 62 runtime hashes stay
+frozen. The amendment binds exactly three research orchestration/export source
+overrides and new policy/test files; no physics or battle inputs are overridden.
+
+- Run seed 0 first. If its canonical physical winner agrees with every original
+  forecast for the context, the losing army is eliminated, and the winning army
+  retains at least 25% of its own starting total HP, accept a
+  `single_seed_confirmation` after the independent exact replay passes.
+- A close/undecisive result, draw, forecast disagreement, or original close
+  forecast requires seeds 0–2. If those winners vary, require all seeds 3–9.
+- Every accepted result still needs the independent exact replay. The same-seed
+  replay verifies reproducibility; it is not another independent seed. Thus a
+  straightforward confirmation uses two executions, not four.
+- Every previously collected seed/review stays intact. The 615 reviewed contexts
+  at the transition retain their original multi-seed reviews. The three saved
+  unfinished contexts are explicitly grandfathered into the old seed requirement;
+  the exhausted one remains blocked and is not retried. Additional collected
+  evidence can never be ignored to qualify for an early stop.
+
+The immutable transition archive retains 2,250 native records, prior attempts
+and the stopped state under `policy-transitions/decisive-agreement-v2/`, bound
+to source commit `1398877b3000af777413a427799f778b01cf2e18`. No old review or snapshot
+is relabeled. State, phase reviews and v2 correction exports count
+`singleSeedConfirmations` separately from `multiSeedValidations` (state keys use
+`singleSeedConfirmedJobs` and `multiSeedValidatedJobs`). A single confirmation
+does not demonstrate seed robustness. Agreement-dependent stopping introduces
+selection bias: report observed changes by evidence level and never present the
+combined retained percentage as an unbiased forecast-accuracy estimate.
+
 ## Measurement and provenance gates
 
 The 62 runtime files are byte-identical to the tested mismatch-validation
@@ -67,9 +106,9 @@ runtime: `frozen-civ-matchups-v3` with `lossless-event-stream-v1` event storage.
 Combat, collision, pathing, arithmetic, acquisition, scenarios and termination
 are unchanged. Node must match the version pinned in the manifest.
 
-Four workers use initial seeds 0, 1, 2; if their winners differ, seeds 3–9 are
-required. An independent exact replay of a completed seed is required for every
-context. The retry schedule is 180/600/1800/3600 wall seconds. A watchdog,
+Four workers use the approved adaptive policy above for new contexts and the
+original seed policy for grandfathered work. An independent exact replay of a
+completed seed is required for every accepted context. The retry schedule is 180/600/1800/3600 wall seconds. A watchdog,
 diagnostic, partial set or exhausted attempt is never a result. Diagnose exhausted
 failures from the fsynced snapshots before any further retry or separate inventory.
 
@@ -94,7 +133,8 @@ monitor with “Yes start” on 2026-11-07. That approval is recorded in
 Do not ask for the same duration approval again. Website deployment and physics
 changes remain outside this approval.
 
-Before any launch/resume, inspect the manifest, queue controls, state, journals,
+Before any launch/resume, inspect the base manifest and sampling amendment,
+queue controls, state, journals,
 attempts, pair/phase reviews, progress snapshots, logs, locks and live PIDs.
 Only restore a missing supervisor after checking its existing runner and lock.
 Never start a duplicate. Resume only through:
@@ -117,7 +157,7 @@ simulations or losing durable measurements.
 ## Independent research snapshots and release hold
 
 After pushing source/review checkpoints, export only committed, fully reviewed
-contexts to a new immutable path:
+contexts complete under their recorded sampling protocol to a new immutable path:
 
 ```sh
 node aoe2x/js_simulation/node/civ-matchups/export-forecast-reviews.mjs \
@@ -127,8 +167,11 @@ node aoe2x/js_simulation/node/civ-matchups/export-forecast-reviews.mjs \
 
 The exporter independently reconciles journals, required seeds, context hashes,
 physical orientation, review hashes and exact replay evidence. It preserves
-original evidence and excludes held, partial and diagnostic records. The export
-schema is `civ-matchup-forecast-corrections-v1`; do not disguise it as the older
+original evidence and excludes held, partial and diagnostic records. New exports use
+`civ-matchup-forecast-corrections-v2`, preserving v1 rows verbatim while recording
+the amendment hash and separate evidence-level counts; snapshots 001/002 retain
+their original v1 schema. The reviewed-only exporter pins a single committed
+source revision for its journals and reviews. In either schema, do not disguise it as the older
 mismatch campaign or import it with a tool that has not reviewed this schema.
 
 Do not apply snapshots to the serving DB, rebuild/export the website, run

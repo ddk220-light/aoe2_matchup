@@ -7,8 +7,10 @@ import {execFileSync} from 'node:child_process';
 import {RankingWorkerPool} from '../ranking-worker-pool.mjs';
 import {runOrderedQueue} from './rolling-validation-queue.mjs';
 import {SIM,ROOT,DIR,sha,load,lines,gzlines,now,json,append,verifyManifest,payload,required,canonicalOutcome,exact,digest} from './forecast-validation-lib.mjs';
+import {loadScreeningPolicy,screeningDecision,screeningOutcome,verifySamplingReview} from './forecast-screening-policy.mjs';
 
 const manifest=verifyManifest(),jobs=gzlines(resolve(DIR,'jobs.jsonl.gz'));
+const samplingPolicy=loadScreeningPolicy(DIR);
 const authorization=load(resolve(DIR,'launch-approval.json'));
 assert(authorization.durationApproved===true,'Long-running launch needs the saved duration approval');
 const parity=load(resolve(DIR,'reviews/runtime-parity.json'));
@@ -45,7 +47,11 @@ const controls=existsSync(controlsPath)?load(controlsPath):null;
 if(controls){
  const {controlsHash,...body}=controls;assert.equal(controlsHash,digest(body));assert.equal(controls.campaignHash,manifest.campaignHash);
  assert.equal(controls.inventorySha256,sha(readFileSync(resolve(DIR,'jobs.jsonl.gz'))));
- for(const f of controls.schedulerFiles)assert.equal(sha(readFileSync(resolve(ROOT,f.path))),f.sha256,'scheduler source changed');
+ for(const f of controls.schedulerFiles){
+  const override=samplingPolicy?.sourceOverrides.find(r=>r.path===f.path);
+  if(override)assert.equal(override.originalSha256,f.sha256);
+  assert.equal(sha(readFileSync(resolve(ROOT,f.path))),override?.sha256??f.sha256,'scheduler source changed');
+ }
  for(const q of controls.quarantinedContexts){
   assert(byJob.has(q.jobId));assert.equal(q.status,'unfinished_not_a_result');
   assert.equal(sha(readFileSync(resolve(ROOT,q.diagnosisFile))),q.diagnosisSha256);
@@ -55,6 +61,9 @@ if(controls){
 const active=new Map();let stopped=false,pool,lastCheckpoint=Date.now(),sinceCheckpoint=0;
 function progress(){const terminal=Boolean(state.finishedAt);Object.assign(state,{status:terminal?state.status:stopped?'stopping':'running',pid:terminal?null:process.pid,updatedAt:now(),savedFreshSeeds:fresh.size,
  reviewedJobs:reviews.size,changedJobs:[...reviews.values()].filter(r=>r.changed).length,
+ singleSeedConfirmedJobs:[...reviews.values()].filter(r=>r.evidenceLevel==='single_seed_confirmation').length,
+ multiSeedValidatedJobs:[...reviews.values()].filter(r=>r.evidenceLevel!=='single_seed_confirmation').length,
+ samplingPolicyHash:samplingPolicy?.amendmentHash??null,
  remainingJobs:manifest.totalForecastContexts-reviews.size,remainingRunnableJobs:jobs.length-reviews.size,
  totalForecastContexts:manifest.totalForecastContexts,runnableJobs:jobs.length,heldContexts:manifest.heldContexts,blockedJobs:[...blocked],active:[...active.values()],
  schedulerVersion:'rolling-phase-queue-v2',queueControlsHash:controls?.controlsHash??null});json(statePath,state);}
@@ -90,6 +99,7 @@ function record(job,seed,run){const r=run.result;
  const row={campaignHash:manifest.campaignHash,matchupId:job.id,pairKey:job.pairKey,contextHash:job.contextHash,
   physicsVersion:manifest.physicsVersion,executionVersion:manifest.executionVersion,seed,
   startedAt:run.startedAt,finishedAt:run.finishedAt,wallSeconds:run.wallSeconds,purpose:run.purpose,
+  ...(samplingPolicy?{samplingPolicyHash:samplingPolicy.amendmentHash}:{}),
   counts:job.counts,profileHashes:job.profileHashes,scenarioHash:job.scenarioHash,
   outcome:r.outcome==='draw'?'draw':r.winnerOwner===2?'win':'loss',winnerOwner:r.winnerOwner,
   unitStartingHp:r.startingHpByOwner[2],opponentStartingHp:r.startingHpByOwner[3],
@@ -101,6 +111,10 @@ function record(job,seed,run){const r=run.result;
 }
 async function reviewJob(job){
  let evidenceRows,control,check;
+ const originalRows=job.evidenceIds.map(id=>({id,...original.get(id)}));
+ const originalOutcomes=originalRows.map(r=>r.outcome);
+ const decision=()=>screeningDecision(job,saved(job),originalOutcomes,samplingPolicy);
+ const needed=()=>samplingPolicy?decision().requiredSeeds:required(saved(job));
  if(job.validationMode==='exact_replay_of_measured_seed_set'){
   evidenceRows=expected.get(job.id);assert(evidenceRows?.length);
   control=[...evidenceRows].sort((a,b)=>a.wallSeconds-b.wallSeconds||a.seed-b.seed)[0];
@@ -108,10 +122,11 @@ async function reviewJob(job){
   if(!r){const run=await execute(job,control.seed,'native_exact_replay');if(!run)return; r=record(job,control.seed,run);}
   check={exact:exact(r,control),seed:control.seed,freshRecordHash:digest(r),expectedRecordHash:digest(control)};
  }else{
-  while(required(saved(job)).length){
+  while(needed().length){
    if(stopped)return;
-   const seed=required(saved(job))[0],run=await execute(job,seed,'fresh_measurement');if(!run)return;record(job,seed,run);
+   const seed=needed()[0],run=await execute(job,seed,'fresh_measurement');if(!run)return;record(job,seed,run);
   }
+  if(stopped)return;
   evidenceRows=saved(job);control=[...evidenceRows].sort((a,b)=>a.wallSeconds-b.wallSeconds||a.seed-b.seed)[0];
   const run=await execute(job,control.seed,'independent_exact_replay');if(!run)return;
   check={exact:exact(run.result,control),seed:control.seed,expectedRecordHash:digest(control),
@@ -122,19 +137,23 @@ async function reviewJob(job){
    error:{name:'ExactReplayMismatch',message:'Same frozen context produced a different result; diagnosis required'},check,at:now()});
   blocked.add(job.id);return;
  }
- assert.equal(required(evidenceRows).length,0);
- const originalRows=job.evidenceIds.map(id=>({id,...original.get(id)}));
- const outcome=originalRows.every(r=>r.evidenceType==='identity')?'equivalent':canonicalOutcome(job,evidenceRows);
+ const sampling=samplingPolicy?screeningDecision(job,evidenceRows,originalOutcomes,samplingPolicy):null;
+ assert.equal((sampling?.requiredSeeds??required(evidenceRows)).length,0);
+ const outcome=originalRows.every(r=>r.evidenceType==='identity')?'equivalent':samplingPolicy?screeningOutcome(job,evidenceRows,originalOutcomes,samplingPolicy):canonicalOutcome(job,evidenceRows);
  const body={campaignHash:manifest.campaignHash,jobId:job.id,reviewedAt:now(),status:'passed',
   context:job.context,contextHash:job.contextHash,pairKey:job.pairKey,physicsVersion:manifest.physicsVersion,
-  validationMode:job.validationMode,seedCount:evidenceRows.length,requiredSeeds:required(evidenceRows),
+  validationMode:sampling?.evidenceLevel==='single_seed_confirmation'?'single_seed_forecast_screen':job.validationMode,
+  ...(sampling?{samplingPolicyHash:samplingPolicy.amendmentHash,evidenceLevel:sampling.evidenceLevel,samplingDecision:sampling}:{}),
+  seedCount:evidenceRows.length,requiredSeeds:sampling?.requiredSeeds??required(evidenceRows),
   seedResults:evidenceRows.map(r=>({seed:r.seed,winnerOwner:r.winnerOwner,ticks:r.ticks,finalStateHash:r.finalStateHash,eventLogHash:r.eventLogHash,
    winnerHpFraction:Math.max(r.unitRemainingHp/r.unitStartingHp,r.opponentRemainingHp/r.opponentStartingHp),
    ...(r.sourceFile?{sourceFile:r.sourceFile,sourceLine:r.sourceLine,sourceLineSha256:r.sourceLineSha256}:{}),recordHash:digest(r)})),
   exactReplay:check,outcome,originalEvidenceIds:job.evidenceIds,
   originalOutcomes:originalRows.map(r=>({evidenceId:r.id,outcome:r.outcome,evidenceType:r.evidenceType})),
   changed:originalRows.some(r=>r.outcome!==outcome),displayedMismatchCells:job.displayedCells};
- const review={...body,reviewHash:digest(body)};json(resolve(DIR,'pair-reviews',job.id+'.json'),review);reviews.set(job.id,review);
+ const review={...body,reviewHash:digest(body)};
+ if(samplingPolicy)verifySamplingReview(job,evidenceRows,originalOutcomes,review,samplingPolicy);
+ json(resolve(DIR,'pair-reviews',job.id+'.json'),review);reviews.set(job.id,review);
  console.log(JSON.stringify({reviewed:job.id,outcome,changed:review.changed,completed:reviews.size,total:jobs.length}));
 }
 let checkpointTimer;
@@ -153,6 +172,9 @@ function finishPhase(index){
   finalizedPhases.add(phase);return;
  }
  const report={phase,campaignHash:manifest.campaignHash,reviewedAt:now(),plannedJobs:batch.length,reviewedJobs:complete.length,
+  samplingPolicyHash:samplingPolicy?.amendmentHash??null,
+  singleSeedConfirmations:complete.filter(j=>reviews.get(j.id).evidenceLevel==='single_seed_confirmation').length,
+  multiSeedValidations:complete.filter(j=>reviews.get(j.id).evidenceLevel!=='single_seed_confirmation').length,
   changedJobs:complete.filter(j=>reviews.get(j.id).changed).length,blockedJobs:batch.filter(j=>blocked.has(j.id)).map(j=>j.id),
   reviewHashes:complete.map(j=>({jobId:j.id,reviewHash:reviews.get(j.id).reviewHash})),
   schedulerVersion:'rolling-phase-queue-v2',queueControlsHash:controls?.controlsHash??null,

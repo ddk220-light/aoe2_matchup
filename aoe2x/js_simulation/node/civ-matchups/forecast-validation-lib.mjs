@@ -5,6 +5,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {gunzipSync} from 'node:zlib';
 import {hashCanonicalJson as digest} from '../../src/canonical-json.js';
+import {verifyPolicyInputs} from './forecast-screening-policy.mjs';
 export {digest};
 export const SIM=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 export const ROOT=resolve(SIM,'../..');
@@ -36,6 +37,6 @@ export function exact(actual,expected){return ['ticks','winnerOwner','finalState
 export function verifyManifest(){const m=load(resolve(DIR,'manifest.json')),{campaignHash,...body}=m;
  assert.equal(digest(body),campaignHash);assert.equal(process.version,m.nodeVersion);
  assert.equal(digest(Object.fromEntries(Object.entries(process.env).filter(([k])=>k.startsWith('AOE2X_EXP_')).sort())),digest(m.simulationEnvironment));
- for(const r of [...m.runtimeFiles,...m.inputFiles])assert.equal(sha(readFileSync(resolve(ROOT,r.path))),r.sha256,r.path);
+ verifyPolicyInputs(m,ROOT,DIR);
  return m;
 }

@@ -10,6 +10,22 @@ already published checkpoints as history.
 Do not retrain/expand forecasts, change ranking scores or UI/recommendation
 weights, run all other forecasts, or resume the old bulk replay campaigns.
 
+## Consolidated release authorized on 2026-11-07
+
+After reviewing the available-data analysis, the owner instructed: “Did you
+apply update the production matchup table with the new results? Make sure
+that's done.” This authorizes one consolidated release through the saved test,
+staging and production gates below. It does not re-enable recurring releases
+or the paused mismatch monitor.
+
+Use the immutable `consolidated-2026-11-07` website snapshot, exported from
+validation source `e6b6326de5675b4a804b906e30fa98c755584e74` and archived with
+the analysis at `1a669f22601ce2118a8d8033330224f3326f2d2f`. It contains
+10,222 complete seed/replay reviews. The five remaining native simulator
+contexts stay blocked; the owner's separately attributed winners already
+match their saved outcomes. Preserve their flags and failures, and verify
+those five outcomes without presenting them as simulation measurements.
+
 ## Run safety
 
 Validation worktree: `/workspace/aoe2_civ_mismatch_validation`, branch

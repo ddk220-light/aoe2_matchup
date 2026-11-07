@@ -64,6 +64,35 @@ and permitted work cannot advance them, prepare the actual coverage and
 changed/retained/mixed-result analysis with source/full-list links, separating
 single-seed confirmations from multi-seed validations. Agreement-dependent
 stopping cannot estimate unbiased global forecast accuracy. Report the
-remaining limitations once, then pause this monitor for user discussion. Until
-that review point, provide concise actual progress only when asked. Future
+remaining limitations once, then pause this monitor for user discussion. Future
 production releases require a new explicit user instruction.
+
+Milestone reporting is now explicitly authorized. On each hourly check, count
+complete, integrity-checked pair reviews, never raw seed executions or partial
+sets. Read campaign `monitor-reporting.json`. Report when the reviewed total
+crosses an unreported multiple of 1,000: 1,000, 2,000, 3,000, and so on. The next
+milestone starts at 1,000; the owner's last requested status was 935 reviewed.
+When no new milestone is crossed and this is not the final/blocker review point,
+continue quietly without a user-facing progress report.
+
+Use the same concise status format requested by the owner:
+"X of 39,148 matchup contexts reviewed (Y%)." Then show single-seed confirmations
+and multi-seed validations; changed outcomes and retained forecasts; remaining
+contexts including held/exhausted counts; actual live worker health, no-replay
+status, research checkpoint push status and whether production is unchanged.
+Use the latest actual counts at the check. If more than one 1,000-context boundary
+was crossed since the last check, combine them into one report covering every
+new milestone; do not invent historical counts or send duplicate status reports.
+Do not present the changed fraction as unbiased forecast accuracy.
+
+Save each issued report and its actual count/source references to a NEW immutable
+campaign `monitor-reports/milestone-NNNNNN.json` path named for the highest newly
+crossed boundary (for example milestone-001000.json). Preserve prior reports.
+Advance `lastReportedMilestone`, `nextMilestone` and `lastReport` in
+`monitor-reporting.json` only when preparing that report, and commit/push the
+report plus cursor on this research branch. Do not call a notification delivered
+unless delivery is actually confirmed. Save the cursor before returning the
+report so subsequent hourly checks do not repeat a milestone. This reporting
+instruction supersedes the former progress-only-when-asked restriction, and
+changes no simulation seed policy or execution. Never restart a healthy runner
+or rerun a completed seed to create a report.

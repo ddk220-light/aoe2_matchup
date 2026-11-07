@@ -211,7 +211,17 @@ another release after reviewing new results.
 
 Keep the old mismatch monitor paused unless its owner explicitly retargets it
 to this new frozen inventory after duration approval. Any ongoing monitor must
-follow these commands and gates, never resume a historical campaign, and report
-concise progress only when requested. At the review point, provide actual counts,
+follow these commands and gates and never resume a historical campaign. The
+owner additionally authorized a concise status report after each new 1,000
+reviewed contexts, detected by the existing hourly check. Use the durable cursor
+in `monitor-reporting.json`, starting with the 1,000 milestone, and preserve
+issued report records under immutable `monitor-reports/milestone-NNNNNN.json`
+paths. Combine multiple boundaries crossed between checks into one report using
+current actual counts. Update the cursor only for a report being issued, push
+reporting metadata on the research branch, and suppress duplicate milestones.
+No new milestone means no routine progress report. Keep the previous status
+format: reviewed/total and percent, single/multi counts, changed/retained,
+remaining with held/exhausted counts, workers/replays and push/production status.
+This changes reporting only; the live four-worker 1/3/10 no-replay queue continues. At the review point, provide actual counts,
 changed/retained winners, close cases, confidence-category results, failures and
 limitations with source links. A stopped queue is not full validation.

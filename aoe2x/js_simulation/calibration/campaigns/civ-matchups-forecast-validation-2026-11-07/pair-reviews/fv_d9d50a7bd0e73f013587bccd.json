@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_d9d50a7bd0e73f013587bccd",
+  "reviewedAt": "2026-11-07T13:16:58.035Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      25,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "124fb6c6a9f61a09b695a1e3c7c958b26aa02e7ce9648fe134f42b7ff37a48ac",
+      "2a146afdb1c29d4e32bf33004c10d0c2320dc6d782db7c4568bc76b6d7bcaca8"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      82,
+      72
+    ]
+  },
+  "contextHash": "d9d50a7bd0e73f013587bccd5d7a1dd0155e0e0c883bfe85c757b5f24dac5963",
+  "pairKey": "124fb6c6a9f61a09b695a1e3c7c958b26aa02e7ce9648fe134f42b7ff37a48ac|2a146afdb1c29d4e32bf33004c10d0c2320dc6d782db7c4568bc76b6d7bcaca8",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 1217,
+      "finalStateHash": "eef0b979ef7743a836fe44cd0d44711ce55edeb0352318bfcc9f67195d6a472c",
+      "eventLogHash": "3c0f99b1f963bfb596a90a1c8d4165b982d7e26fc68f03cd97ebaa66eb88c6dc",
+      "winnerHpFraction": 0.7424,
+      "recordHash": "d3049de2db164b79bf436e0b6db7f83731bda6d222eef48068bf7257686bf8e9"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 1331,
+      "finalStateHash": "c20145b97e4651a08bc2bc7d1dfd084d0b3bff12f776f25d4e616c0a35eaa714",
+      "eventLogHash": "15d031916ad048528c9e5833f4b370b1b128e2c985140d54504bd1486fb7dec9",
+      "winnerHpFraction": 0.7248,
+      "recordHash": "28f62ca321a639e294a14e322068cd729c84b62bb7037f3ed56860b6c22be6eb"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1214,
+      "finalStateHash": "8175eb13b30a9a0e1dce449e2988005374cca14f93ae97c6fa69907df8ab0027",
+      "eventLogHash": "6c9a953158ca12746ddf827761a7002ba6a1b047fbc647e29ecf172ba861b172",
+      "winnerHpFraction": 0.7616,
+      "recordHash": "6561bd187483c59c30283cae791c1e6b738bea7a291c8fa75f6d371ec8d0606b"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "d3049de2db164b79bf436e0b6db7f83731bda6d222eef48068bf7257686bf8e9",
+    "result": {
+      "jobId": "fv_d9d50a7bd0e73f013587bccd",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 928,
+      "startingHpByOwner": {
+        "2": 1250,
+        "3": 1755
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 20,
+          "hp": 928
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1217,
+      "family": "kite",
+      "side2": {
+        "slug": "elite_chakram_thrower_gurjaras",
+        "label": "Elite Chakram Thrower",
+        "civ": "Gurjaras",
+        "count": 25,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "champion",
+        "label": "Two-Handed Swordsman",
+        "civ": "Ethiopians",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "eef0b979ef7743a836fe44cd0d44711ce55edeb0352318bfcc9f67195d6a472c",
+      "eventLogHash": "3c0f99b1f963bfb596a90a1c8d4165b982d7e26fc68f03cd97ebaa66eb88c6dc"
+    },
+    "wallSeconds": 3.748498010000214,
+    "startedAt": "2026-11-07T13:16:54.286Z",
+    "finishedAt": "2026-11-07T13:16:58.035Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    38185
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 38185,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 2,
+  "reviewHash": "1c5b272b85a681525b57d8abff24aa5be6042cc0984ba8c5bee4c57096a877b2"
+}

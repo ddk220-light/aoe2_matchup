@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_812635621bc8444adb9cc098",
+  "reviewedAt": "2026-11-07T13:20:46.337Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      23,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "melee_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "bb1995238f983249ba9d043cbee65846981e467ecf9fbae43524c0cf9668c65f",
+      "2e7ecd595f72eb982a468a307036e8305fbcfe2b0d335ef0e662a0de719f8f2b"
+    ],
+    "scenarioHash": "280c1f49d499b78ecaed35ff1b233bbd36380317d621fcd6cbca810b9ba46119",
+    "weightedCosts": [
+      114.5,
+      82.5
+    ]
+  },
+  "contextHash": "812635621bc8444adb9cc098df1388bf9bea4b66ecd8321f57e4eac53f88a361",
+  "pairKey": "2e7ecd595f72eb982a468a307036e8305fbcfe2b0d335ef0e662a0de719f8f2b|bb1995238f983249ba9d043cbee65846981e467ecf9fbae43524c0cf9668c65f",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 1595,
+      "finalStateHash": "c57cf091a552ab9516353b6cfd6157f3f9286231d33dd919ce8ffc761b4f2379",
+      "eventLogHash": "9e456518fc10de071980756308c6750de8e66a3c486bb38f31b1d984a406621c",
+      "winnerHpFraction": 0.42063492063492064,
+      "recordHash": "de642981b8bfeb6468b058a821ad84f004d7f916be0e134e7c68e19891c5c332"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 1628,
+      "finalStateHash": "7ddd803618e34c33122075ac2a3088c9b8f62af1a283681227e0173f56ae2d51",
+      "eventLogHash": "86693312b1006fd3acf82deeb64986320a2b0cee777145c8c10ce8be4168f567",
+      "winnerHpFraction": 0.43862433862433864,
+      "recordHash": "86785132b83ac42903542bf424bbd27a63f7147bb4dc45f933c76bc90c89bf98"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 1586,
+      "finalStateHash": "8a5fd02393414a38572909779430cb16cf357f86a40fa6e79113173e841419fa",
+      "eventLogHash": "a9679fac1b34d407dd05b8d35826a6bb757c9730d00f04df1b81b76b0230ca2f",
+      "winnerHpFraction": 0.4746031746031746,
+      "recordHash": "9da3ed2448c6f00f55d966f5c133fd9f455ea165c198e95b8c89c021fd80d77f"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "86785132b83ac42903542bf424bbd27a63f7147bb4dc45f933c76bc90c89bf98",
+    "result": {
+      "jobId": "fv_812635621bc8444adb9cc098",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 829,
+      "startingHpByOwner": {
+        "2": 1840,
+        "3": 1890
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 15,
+          "hp": 829
+        }
+      },
+      "ticks": 1628,
+      "family": "kite",
+      "side2": {
+        "slug": "elite_varangian_guard",
+        "label": "Elite Varangian Guard",
+        "civ": "Varangians",
+        "count": 23,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_throwing_axeman_franks",
+        "label": "Elite Throwing Axeman",
+        "civ": "Franks",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "7ddd803618e34c33122075ac2a3088c9b8f62af1a283681227e0173f56ae2d51",
+      "eventLogHash": "86693312b1006fd3acf82deeb64986320a2b0cee777145c8c10ce8be4168f567"
+    },
+    "wallSeconds": 3.9807824039999398,
+    "startedAt": "2026-11-07T13:20:42.356Z",
+    "finishedAt": "2026-11-07T13:20:46.337Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    39368
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 39368,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "4d5b74c4adff06617f9b45103b3b9efe9ed29c263ee58b6a37ecfea070cc13a5"
+}

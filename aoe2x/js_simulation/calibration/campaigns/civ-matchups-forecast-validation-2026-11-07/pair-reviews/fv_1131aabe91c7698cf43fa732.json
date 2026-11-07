@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_1131aabe91c7698cf43fa732",
+  "reviewedAt": "2026-11-07T13:21:23.666Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      24,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "242bac234ddf0838249ab7ed13af04d1f3f063811605d5f0c9b0d01970c373da",
+      "a4a7103e960f06e95a10a13b2ed659aedb22d048c86994b08dfdcc0836b09f8a"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      100,
+      77.5
+    ]
+  },
+  "contextHash": "1131aabe91c7698cf43fa732498b2c96aeb5d347306903a53c7aadb220ca4183",
+  "pairKey": "242bac234ddf0838249ab7ed13af04d1f3f063811605d5f0c9b0d01970c373da|a4a7103e960f06e95a10a13b2ed659aedb22d048c86994b08dfdcc0836b09f8a",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 1466,
+      "finalStateHash": "eceae626e4c5f65b4cf2e6ef2f1040ef5df7dfb8d4821c42c235716536b4334c",
+      "eventLogHash": "f4c33c721373e07d179904c3dbe39a872c60920db85de75251e57e16ce187c20",
+      "winnerHpFraction": 0.5625,
+      "recordHash": "695d7ecc766c3a9d95269650b6cb920cf960ea0e4d038602aea37fc561032de9"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 1523,
+      "finalStateHash": "294ce0d89e547880e83b6b22afa5958492cdc6977a7ed52726ad3118c1a11903",
+      "eventLogHash": "e13b9374c3be523b3fdce1ff97c3dacd6eff0548ca65378f7b46fd88e8041729",
+      "winnerHpFraction": 0.5208333333333334,
+      "recordHash": "d595ddbef459f4ca8e344f01307eb6d33cef589143b3b4a9c36174a8aef99455"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1499,
+      "finalStateHash": "0c3a1e26e08c2071a38ddfe700ad21da620227cf661911036a3d4bb6ac34aa47",
+      "eventLogHash": "feaed83422bfb5a09356e38bf2738973a0a660699e63f2e3acfe32d2a6ad1561",
+      "winnerHpFraction": 0.5729166666666666,
+      "recordHash": "11d4536adcd94c1c94a8e5e51eb476fa90c12b065bc52fb0d7beff949f5829cf"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "d595ddbef459f4ca8e344f01307eb6d33cef589143b3b4a9c36174a8aef99455",
+    "result": {
+      "jobId": "fv_1131aabe91c7698cf43fa732",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 500,
+      "startingHpByOwner": {
+        "2": 960,
+        "3": 1755
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 14,
+          "hp": 500
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1523,
+      "family": "kite",
+      "side2": {
+        "slug": "hand_cannoneer",
+        "label": "Hand Cannoneer",
+        "civ": "Franks",
+        "count": 24,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "elite_champi_warrior",
+        "label": "Elite Champi Warrior",
+        "civ": "Muisca",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "294ce0d89e547880e83b6b22afa5958492cdc6977a7ed52726ad3118c1a11903",
+      "eventLogHash": "e13b9374c3be523b3fdce1ff97c3dacd6eff0548ca65378f7b46fd88e8041729"
+    },
+    "wallSeconds": 4.951953018999658,
+    "startedAt": "2026-11-07T13:21:18.713Z",
+    "finishedAt": "2026-11-07T13:21:23.665Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    39516
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 39516,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 2,
+  "reviewHash": "1009c138eeb24b522fe163ebfaf1b18cfe464b96ec3dc3a6bc0f318466a2e1df"
+}

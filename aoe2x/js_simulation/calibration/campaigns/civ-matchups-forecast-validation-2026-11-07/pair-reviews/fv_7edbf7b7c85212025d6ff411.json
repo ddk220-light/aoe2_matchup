@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_7edbf7b7c85212025d6ff411",
+  "reviewedAt": "2026-11-07T13:16:50.612Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      22,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "fa8761f1751d4449eea54afa315ab342e253698f4203c5b5a129c1faef8d92a1",
+      "9f663f9285e1b4276b458a80e065047a819de90772d1b19816e321af8a9554d5"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      105.5,
+      72
+    ]
+  },
+  "contextHash": "7edbf7b7c85212025d6ff411be30065cf476ab8d2998ae5336a53156e7b28fc1",
+  "pairKey": "9f663f9285e1b4276b458a80e065047a819de90772d1b19816e321af8a9554d5|fa8761f1751d4449eea54afa315ab342e253698f4203c5b5a129c1faef8d92a1",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 2867,
+      "finalStateHash": "6880f0dc45b11b10307fdf43671dd723fb9d829c1572b994c7bccbaf6ff324d6",
+      "eventLogHash": "b7580fb1b3646bd1455cc02cb2ec36bddecce83b8177807cd058156195bc3b13",
+      "winnerHpFraction": 0.14027777777777778,
+      "recordHash": "ec581aff134219b6730366294486ebd8204218a69172bc5417b983863f281ca5"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 2997,
+      "finalStateHash": "4829f15cfd693db5d54dcfdd6683a28ee04ae0ca093f2193b89c2d7de5659f0b",
+      "eventLogHash": "31604e1f7c89c1713c7b1eed69c732fbb819ce73341ba681da983e373b11f2da",
+      "winnerHpFraction": 0.09675925925925925,
+      "recordHash": "c15b7056f05a624142d5a33fa6711b8aa43a5296e7563c5dc0be80fec87ce330"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 2929,
+      "finalStateHash": "1246b2023c78022a548988055fc406569c52a3917d422444024badf85430a9b0",
+      "eventLogHash": "325284fb04ac5d5ea14c3f80e4328839433ea15aeaadbbd60f55c82d29323407",
+      "winnerHpFraction": 0.14953703703703702,
+      "recordHash": "3e8f91aa83c8f7bcac67c83a7341e44d136f8d74783a3f43b32ed006fe7a5054"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "c15b7056f05a624142d5a33fa6711b8aa43a5296e7563c5dc0be80fec87ce330",
+    "result": {
+      "jobId": "fv_7edbf7b7c85212025d6ff411",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 104.5,
+      "startingHpByOwner": {
+        "2": 1430,
+        "3": 1080
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 4,
+          "hp": 104.5
+        }
+      },
+      "ticks": 2997,
+      "family": "rvr",
+      "side2": {
+        "slug": "elite_bolas_rider_mapuche",
+        "label": "Elite Bolas Rider",
+        "civ": "Mapuche",
+        "count": 22,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "arbalester",
+        "label": "Arbalester",
+        "civ": "Ethiopians",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "4829f15cfd693db5d54dcfdd6683a28ee04ae0ca093f2193b89c2d7de5659f0b",
+      "eventLogHash": "31604e1f7c89c1713c7b1eed69c732fbb819ce73341ba681da983e373b11f2da"
+    },
+    "wallSeconds": 6.446225723999553,
+    "startedAt": "2026-11-07T13:16:44.166Z",
+    "finishedAt": "2026-11-07T13:16:50.612Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    38024
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 38024,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "bf385b5ea0adda07dbd75990c63b1193c5560d862c8449435e3140c7a539f069"
+}

@@ -1,0 +1,120 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_4e2d51b5de5056ede6216426",
+  "reviewedAt": "2026-11-07T13:16:15.998Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      26,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "2c3bd2236e6a50f03c8e039604eccb55a73eff8991b3cac20c05e0f2ff13bb87",
+      "d9e6c38132ae55d852f44694f8a06aef4e096fd051941cefde305e3f7e19c9ed"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      127.5,
+      114.5
+    ]
+  },
+  "contextHash": "4e2d51b5de5056ede6216426c791bd43972b0609a996ef19a9ee030f5f750b89",
+  "pairKey": "2c3bd2236e6a50f03c8e039604eccb55a73eff8991b3cac20c05e0f2ff13bb87|d9e6c38132ae55d852f44694f8a06aef4e096fd051941cefde305e3f7e19c9ed",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 1580,
+      "finalStateHash": "26f0cca586a97a1f85d33ac1454da102e06462fe07422130df091d4851c0642b",
+      "eventLogHash": "83b3e0e39cc5b9610f95fe201cb92ef60be7537d90f89b4922f64ec63817f978",
+      "winnerHpFraction": 0.3974358974358974,
+      "recordHash": "5ec4b7e42bf88f4474d281f4fa127b0f56f225e481d41c4f6b6db052d3f10c5d"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 1638,
+      "finalStateHash": "ff3d8f993a59d68d7ba835fd0c75b27def5bc298259132ee9f82021c20260d86",
+      "eventLogHash": "b8c82e1dcae57e56f9a9d84d58cae08ba127d889aa06d9534cc7879a9af8d762",
+      "winnerHpFraction": 0.3974358974358974,
+      "recordHash": "810f3164cae48a6e325da3a6b09ab2bd858f112898e7ab564119a78cf85a6af8"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 1610,
+      "finalStateHash": "a8003a29dab21f4658c9f41c0b4289c30bdf8cf4617a65cb474c5ebea8673656",
+      "eventLogHash": "88108a7e47eaea87d837e2d857d1145f6588b5393dc2b4ad1a4e49f17219901b",
+      "winnerHpFraction": 0.47435897435897434,
+      "recordHash": "a23b61285fc776ac2e1586927f11469359a03b17502577703d871a5692e99f7a"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "a23b61285fc776ac2e1586927f11469359a03b17502577703d871a5692e99f7a",
+    "result": {
+      "jobId": "fv_4e2d51b5de5056ede6216426",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 740,
+      "startingHpByOwner": {
+        "2": 1560,
+        "3": 2592
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 14,
+          "hp": 740
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 1610,
+      "family": "kite",
+      "side2": {
+        "slug": "heavy_scorpion",
+        "label": "Heavy Scorpion",
+        "civ": "Dravidians",
+        "count": 26,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "elite_varangian_guard",
+        "label": "Elite Varangian Guard",
+        "civ": "Vikings",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "a8003a29dab21f4658c9f41c0b4289c30bdf8cf4617a65cb474c5ebea8673656",
+      "eventLogHash": "88108a7e47eaea87d837e2d857d1145f6588b5393dc2b4ad1a4e49f17219901b"
+    },
+    "wallSeconds": 7.65589863999933,
+    "startedAt": "2026-11-07T13:16:08.342Z",
+    "finishedAt": "2026-11-07T13:16:15.998Z"
+  },
+  "outcome": "a_win",
+  "originalEvidenceIds": [
+    37398
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 37398,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "eff67f94fe8c4a645d00409fee919b4d95ef877ac283d1980405275742072c29"
+}

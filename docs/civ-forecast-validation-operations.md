@@ -46,6 +46,20 @@ They need separately reviewed recovery decisions; this ordinary queue does not
 blindly retry them or count their supplied/projected winners as measurements.
 The campaign and exports cannot claim full completion while these remain held.
 
+## Newly exhausted forecast contexts
+
+`fv_c553e033f98149a99dc0ffcf`, seed 1, Bohemian Elite Hussite Wagon /
+Khitan Mounted Trebuchet, counts 27/19, exhausted all four prescribed watchdogs
+at 2026-11-07T13:59:13.230Z. Its four timelines reproduce fixed surviving
+positions, HP, actions and targets while blocked/route-planning counters grow.
+The exact routing/acquisition/range cause and real-game outcome remain unknown.
+See `diagnostics/fv_c553e033f98149a99dc0ffcf/REVIEW.json` and its reproducible
+reader, bound to source commit `43f129b7852722b4d6c8f87928104b34c98e447f`.
+Only seed 0 is saved; seeds 1 and 2 and an exact pair replay are missing.
+This is an additional dynamic blocked job, separate from the frozen 24 held
+contexts. No result is assigned and no further retry is authorized by this
+diagnosis. Preserve the live ordinary queue and all existing failures.
+
 ## Measurement and provenance gates
 
 The 62 runtime files are byte-identical to the tested mismatch-validation

@@ -1,0 +1,113 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_c541a10c9764e0cfa601914d",
+  "reviewedAt": "2026-11-07T14:41:11.110Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      25,
+      27
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "0d93c37ad607125ca3870b56b77eb234ac8e05388840abb59c99f93d6712addd",
+      "61e714087091096d75c8bbe6a173eb8ed01a22ec5a6faeee5c90c6c4ed4ab2ab"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      136.5,
+      119.5
+    ]
+  },
+  "contextHash": "c541a10c9764e0cfa601914dd12fe183df55cb7b0371fd501ccae4d871f43aa8",
+  "pairKey": "0d93c37ad607125ca3870b56b77eb234ac8e05388840abb59c99f93d6712addd|61e714087091096d75c8bbe6a173eb8ed01a22ec5a6faeee5c90c6c4ed4ab2ab",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "single_seed_forecast_screen",
+  "samplingPolicyHash": "0760c8fd7ee4274728b2211cf765172daed25551eeb1d4495498a28663602b70",
+  "evidenceLevel": "single_seed_confirmation",
+  "samplingDecision": {
+    "evidenceLevel": "single_seed_confirmation",
+    "reason": "decisive_forecast_agreement",
+    "firstSeedOutcome": "b_win",
+    "firstSeedAgrees": true,
+    "firstSeedWinnerHpFraction": 0.46956521739130436,
+    "minimumWinnerHpFraction": 0.25,
+    "requiredSeeds": []
+  },
+  "seedCount": 1,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 2172,
+      "finalStateHash": "4bd390e65ec527a188685521d89448d9b526fcfb3bd588514fe26e35b80586dc",
+      "eventLogHash": "f86df4440734c6834b35a47070dd5997b3c4ba0f2229ba59266eb4e3e6673728",
+      "winnerHpFraction": 0.46956521739130436,
+      "recordHash": "c3b6fe4016f91dc83ce4037ef3bd4f33219dc8e51605333b82a617e9e4c2a957"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "c3b6fe4016f91dc83ce4037ef3bd4f33219dc8e51605333b82a617e9e4c2a957",
+    "result": {
+      "jobId": "fv_c541a10c9764e0cfa601914d",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 1458,
+      "startingHpByOwner": {
+        "2": 3425,
+        "3": 3105
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 18,
+          "hp": 1458
+        }
+      },
+      "ticks": 2172,
+      "family": "waves",
+      "side2": {
+        "slug": "paladin",
+        "label": "Heavy Hei-Kuang Cavalry",
+        "civ": "Wei",
+        "count": 25,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "elite_temple_guard_muisca",
+        "label": "Elite Temple Guard",
+        "civ": "Muisca",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "4bd390e65ec527a188685521d89448d9b526fcfb3bd588514fe26e35b80586dc",
+      "eventLogHash": "f86df4440734c6834b35a47070dd5997b3c4ba0f2229ba59266eb4e3e6673728"
+    },
+    "wallSeconds": 27.354252146000015,
+    "startedAt": "2026-11-07T14:40:43.756Z",
+    "finishedAt": "2026-11-07T14:41:11.110Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    62075
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 62075,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "218623e4d36fbdf49025694c061f2b1c0716908e6bdcf86c6cfb977b767b73b7"
+}

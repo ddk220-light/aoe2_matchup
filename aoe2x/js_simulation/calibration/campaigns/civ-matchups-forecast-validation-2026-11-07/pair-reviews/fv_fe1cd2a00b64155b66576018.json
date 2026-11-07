@@ -1,0 +1,131 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_fe1cd2a00b64155b66576018",
+  "reviewedAt": "2026-11-07T14:39:12.857Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      25,
+      27
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "1a480caf4b70c4f1c44fd576780cdb37d8fc8287c4d246c4f4dccd4a04afd2d2",
+      "6d7cab1d3b6fd095c272434237a6a69917821863b48d13206eb943da9a02e0e2"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      142.5,
+      121
+    ]
+  },
+  "contextHash": "fe1cd2a00b64155b66576018da183e896785501026c79d2f1a40029aa8602e8f",
+  "pairKey": "1a480caf4b70c4f1c44fd576780cdb37d8fc8287c4d246c4f4dccd4a04afd2d2|6d7cab1d3b6fd095c272434237a6a69917821863b48d13206eb943da9a02e0e2",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "samplingPolicyHash": "0760c8fd7ee4274728b2211cf765172daed25551eeb1d4495498a28663602b70",
+  "evidenceLevel": "multi_seed_validation",
+  "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "reason": "pre_amendment_in_progress",
+    "firstSeedOutcome": "b_win",
+    "firstSeedAgrees": true,
+    "firstSeedWinnerHpFraction": 0.19788359788359788,
+    "minimumWinnerHpFraction": 0.25,
+    "requiredSeeds": []
+  },
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 3008,
+      "finalStateHash": "0add6132bf58b24e15e5fe471e08f12d7f17ba30b65397bcc855c9e6949f08c7",
+      "eventLogHash": "c368c74ce8e3c6cd92876328e32cd8a2652a111775194b1814a9c5546dd339b8",
+      "winnerHpFraction": 0.19788359788359788,
+      "recordHash": "652c24d2e8f1d80db6bd055fe62e307e9efd87cef4c345ae592988bdf37d4360"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 3008,
+      "finalStateHash": "0add6132bf58b24e15e5fe471e08f12d7f17ba30b65397bcc855c9e6949f08c7",
+      "eventLogHash": "118c1e7758513fa09fa398644d4f89a4abd0b6b39a873ee715c2d2a5d6ac5875",
+      "winnerHpFraction": 0.19788359788359788,
+      "recordHash": "591cb0d55f72fb4ee452a233ac84f23e33a994e58b930bf3eedf4f83eb5b6ff2"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 3150,
+      "finalStateHash": "c0b1ef28c394a2d70d443bcc1bb9aa753bc55b244b08217f5c062b64a36bfa0b",
+      "eventLogHash": "8d2eada6d873c88b59079321f7b159a254e717fd257352089e8cecd91793c31f",
+      "winnerHpFraction": 0.20634920634920634,
+      "recordHash": "a3d98fa670e266c1452fbc959952b9feed77dc76ccea2de9fa9a5e68046181ae"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "a3d98fa670e266c1452fbc959952b9feed77dc76ccea2de9fa9a5e68046181ae",
+    "result": {
+      "jobId": "fv_fe1cd2a00b64155b66576018",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 3,
+      "winnerHp": 780,
+      "startingHpByOwner": {
+        "2": 4500,
+        "3": 3780
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 0,
+          "hp": 0
+        },
+        "3": {
+          "units": 9,
+          "hp": 780
+        }
+      },
+      "ticks": 3150,
+      "family": "waves",
+      "side2": {
+        "slug": "paladin",
+        "label": "Paladin",
+        "civ": "Teutons",
+        "count": 25,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "heavy_camel",
+        "label": "Heavy Camel Rider",
+        "civ": "Mongols",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "c0b1ef28c394a2d70d443bcc1bb9aa753bc55b244b08217f5c062b64a36bfa0b",
+      "eventLogHash": "8d2eada6d873c88b59079321f7b159a254e717fd257352089e8cecd91793c31f"
+    },
+    "wallSeconds": 29.994244676999994,
+    "startedAt": "2026-11-07T14:38:42.863Z",
+    "finishedAt": "2026-11-07T14:39:12.857Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    61196
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 61196,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 1,
+  "reviewHash": "2939f2f7fb7e9a633f1d5a5e1e07a2dfbdf95e014fd4c71f234f2fc611d8d738"
+}

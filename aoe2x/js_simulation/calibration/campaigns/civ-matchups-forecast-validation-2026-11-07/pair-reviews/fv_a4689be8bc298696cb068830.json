@@ -1,0 +1,131 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_a4689be8bc298696cb068830",
+  "reviewedAt": "2026-11-07T14:38:36.569Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      21,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+      "62f7ba915fe2449074b06218efd61cad43e5ed16b614e7997290ee4283af017b"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      174,
+      102
+    ]
+  },
+  "contextHash": "a4689be8bc298696cb068830134c07eb42d5292c348a14c8482a1dc2de40fda7",
+  "pairKey": "62f7ba915fe2449074b06218efd61cad43e5ed16b614e7997290ee4283af017b|db6345c86b958d680964fdd8a5d1c6c6985a9c47b87f6612efd73b2ad9541010",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "samplingPolicyHash": "0760c8fd7ee4274728b2211cf765172daed25551eeb1d4495498a28663602b70",
+  "evidenceLevel": "multi_seed_validation",
+  "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "reason": "additional_seed_evidence",
+    "firstSeedOutcome": "b_win",
+    "firstSeedAgrees": false,
+    "firstSeedWinnerHpFraction": 0.4608058608058608,
+    "minimumWinnerHpFraction": 0.25,
+    "requiredSeeds": []
+  },
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 3134,
+      "finalStateHash": "df235b60624fb69727e3046f647b12d2163f955e52d13ed3fe6e14bac067462b",
+      "eventLogHash": "5f5b95f2e1de69bb0e652eaf0b4d761cf10b9e0409e22d50ecc9247c40c3c87b",
+      "winnerHpFraction": 0.4608058608058608,
+      "recordHash": "774515a2688d2f6ea2f95014b464982c64e7d11cf146b49c95a26ce63e8d44c8"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 3387,
+      "finalStateHash": "3578ac9123b7eae3edb024fe71c551d4a39666acacd6461870118f7957992e32",
+      "eventLogHash": "dd6a034784032ba75009adccc87f9a8c000b4c01b8ce793484826fc349e1e966",
+      "winnerHpFraction": 0.42637362637362636,
+      "recordHash": "43d20e0151b9ebcd10a65cd95ae0328bf3be5d7cd1c1aae1dde1743cae1925fc"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 3135,
+      "finalStateHash": "ce83be5141761f4eb8aa130892722de233b531b7b90b27f6d86df697c93f1bc9",
+      "eventLogHash": "143f4c1802d46bcb6c79a5a3672c7cf5dcf8dd402323d8bc5c5cde3103f83862",
+      "winnerHpFraction": 0.44835164835164837,
+      "recordHash": "66dad83410a7898f02af64591a3eb18a4b463526e354aaf3a6833a170800c035"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 1,
+    "expectedRecordHash": "43d20e0151b9ebcd10a65cd95ae0328bf3be5d7cd1c1aae1dde1743cae1925fc",
+    "result": {
+      "jobId": "fv_a4689be8bc298696cb068830",
+      "seed": 1,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 582,
+      "startingHpByOwner": {
+        "2": 1365,
+        "3": 2160
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 10,
+          "hp": 582
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 3387,
+      "family": "rvr",
+      "side2": {
+        "slug": "war_chariot_shu",
+        "label": "War Chariot",
+        "civ": "Shu",
+        "count": 21,
+        "class": "siege_ranged"
+      },
+      "side3": {
+        "slug": "heavy_cav_archer",
+        "label": "Heavy Cavalry Archer",
+        "civ": "Mongols",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "finalStateHash": "3578ac9123b7eae3edb024fe71c551d4a39666acacd6461870118f7957992e32",
+      "eventLogHash": "dd6a034784032ba75009adccc87f9a8c000b4c01b8ce793484826fc349e1e966"
+    },
+    "wallSeconds": 13.836668613000002,
+    "startedAt": "2026-11-07T14:38:22.732Z",
+    "finishedAt": "2026-11-07T14:38:36.569Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    61291
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 61291,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "2dcf5baaf831cb62561574993c5f2861aff0b8a12cfde7445863187735292e0d"
+}

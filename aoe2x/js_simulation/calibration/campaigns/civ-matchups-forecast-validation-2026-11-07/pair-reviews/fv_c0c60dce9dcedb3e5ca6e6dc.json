@@ -1,0 +1,131 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_c0c60dce9dcedb3e5ca6e6dc",
+  "reviewedAt": "2026-11-07T14:41:32.606Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      27
+    ],
+    "engineFamily": "kite",
+    "family": "ranged_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "aa58807bebd293dc85814e5369a8e61c29786fbe9acc31ad8885df23690cf44b",
+      "7b0807fd6930f4780d9bb736d955fb85b12fbf2ffd4f8f34d97ffea876af4528"
+    ],
+    "scenarioHash": "8a32fbb627938798552e0f2b278c064a614723fa940ec6e11f50c5163080fc60",
+    "weightedCosts": [
+      56.5,
+      57.5
+    ]
+  },
+  "contextHash": "c0c60dce9dcedb3e5ca6e6dc0d5f37fdfb055a810921612d437b988e398be3f6",
+  "pairKey": "7b0807fd6930f4780d9bb736d955fb85b12fbf2ffd4f8f34d97ffea876af4528|aa58807bebd293dc85814e5369a8e61c29786fbe9acc31ad8885df23690cf44b",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "samplingPolicyHash": "0760c8fd7ee4274728b2211cf765172daed25551eeb1d4495498a28663602b70",
+  "evidenceLevel": "multi_seed_validation",
+  "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "reason": "additional_seed_evidence",
+    "firstSeedOutcome": "b_win",
+    "firstSeedAgrees": false,
+    "firstSeedWinnerHpFraction": 0.43386243386243384,
+    "minimumWinnerHpFraction": 0.25,
+    "requiredSeeds": []
+  },
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 3013,
+      "finalStateHash": "7a948b7e745971efa8b399225b0a814e3df04c7be54e72e659da939959d3e794",
+      "eventLogHash": "cf6ae76c3c4b3640a071eabb67a7fe2865b71218568a26219d0d8a641751fdb9",
+      "winnerHpFraction": 0.43386243386243384,
+      "recordHash": "f938b18cc6b4c234a12be5204ded6d185ce3de1f6f84103ee2c6ad9370ef22d1"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 2,
+      "ticks": 3370,
+      "finalStateHash": "ad74b1ceeea443c14f773ac6879438406f46c47a6ce9740ce253904f6b209a4b",
+      "eventLogHash": "4a6d16db4c3c749200fa0bb3a1a3e77422f2876fb6dffcab60560916a4a64a3b",
+      "winnerHpFraction": 0.37037037037037035,
+      "recordHash": "d432c299fc9dd73bf9564827bf5671977f694ff2e0ad5913687c80ea7ff2f0e8"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 2,
+      "ticks": 3105,
+      "finalStateHash": "615dfa58691652fc50ef1e520eda592eba42e9e199842179b418cdb44bd44e5f",
+      "eventLogHash": "1dc4b48363bade8fd5621739e4e370e2e339f248ea1a744da104bb8c918afc3a",
+      "winnerHpFraction": 0.3492063492063492,
+      "recordHash": "3f851cb0159cda3d34e19f95f5d2fbaaf79b9f6ff1866413fb0bc2edf61116f8"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 2,
+    "expectedRecordHash": "3f851cb0159cda3d34e19f95f5d2fbaaf79b9f6ff1866413fb0bc2edf61116f8",
+    "result": {
+      "jobId": "fv_c0c60dce9dcedb3e5ca6e6dc",
+      "seed": 2,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 330,
+      "startingHpByOwner": {
+        "2": 945,
+        "3": 1620
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 12,
+          "hp": 330
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 3105,
+      "family": "kite",
+      "side2": {
+        "slug": "imp_elite_skirm",
+        "label": "Elite Skirmisher",
+        "civ": "Muisca",
+        "count": 27,
+        "class": "mobile_ranged"
+      },
+      "side3": {
+        "slug": "halberdier",
+        "label": "Halberdier",
+        "civ": "Sicilians",
+        "count": 27,
+        "class": "melee"
+      },
+      "finalStateHash": "615dfa58691652fc50ef1e520eda592eba42e9e199842179b418cdb44bd44e5f",
+      "eventLogHash": "1dc4b48363bade8fd5621739e4e370e2e339f248ea1a744da104bb8c918afc3a"
+    },
+    "wallSeconds": 8.806845566000003,
+    "startedAt": "2026-11-07T14:41:23.796Z",
+    "finishedAt": "2026-11-07T14:41:32.603Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    62247
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 62247,
+      "outcome": "a_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": true,
+  "displayedMismatchCells": 1,
+  "reviewHash": "37cf8a30734aa81123017f34541540f2b90f617a8a8361fb3ac060e8d0a7408c"
+}

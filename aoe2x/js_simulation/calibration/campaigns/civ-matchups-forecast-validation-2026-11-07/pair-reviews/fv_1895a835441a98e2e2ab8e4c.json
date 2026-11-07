@@ -1,0 +1,113 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_1895a835441a98e2e2ab8e4c",
+  "reviewedAt": "2026-11-07T14:42:49.863Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      19
+    ],
+    "engineFamily": "waves",
+    "family": "melee_vs_melee",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "fd21ff70a5f9d1886d004493a32128936c19380de4fb2f675d6da2380aa64ade",
+      "c685efbd62654696ab54feaf602449e4d247ba90a16b8f8606d8a6964f787a14"
+    ],
+    "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+    "weightedCosts": [
+      57.6,
+      121
+    ]
+  },
+  "contextHash": "1895a835441a98e2e2ab8e4ca5640235e63faa27d8a55f3125d5a5bf772356a5",
+  "pairKey": "c685efbd62654696ab54feaf602449e4d247ba90a16b8f8606d8a6964f787a14|fd21ff70a5f9d1886d004493a32128936c19380de4fb2f675d6da2380aa64ade",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "single_seed_forecast_screen",
+  "samplingPolicyHash": "0760c8fd7ee4274728b2211cf765172daed25551eeb1d4495498a28663602b70",
+  "evidenceLevel": "single_seed_confirmation",
+  "samplingDecision": {
+    "evidenceLevel": "single_seed_confirmation",
+    "reason": "decisive_forecast_agreement",
+    "firstSeedOutcome": "b_win",
+    "firstSeedAgrees": true,
+    "firstSeedWinnerHpFraction": 0.5216931216931217,
+    "minimumWinnerHpFraction": 0.25,
+    "requiredSeeds": []
+  },
+  "seedCount": 1,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 2,
+      "ticks": 2491,
+      "finalStateHash": "604336d5501d9a23238d6bb4990abf869cc55a6dad1d143ba745569026ea7cda",
+      "eventLogHash": "fd1e155bc41a0e6a3ee79dfa12f1e59f63f43e0e5940e5ff9ce3581c86654f28",
+      "winnerHpFraction": 0.5216931216931217,
+      "recordHash": "131f68e4a6f6c3b450197a536aaf9ade347b2992d63eae3c6ab6e718996b6171"
+    }
+  ],
+  "exactReplay": {
+    "exact": true,
+    "seed": 0,
+    "expectedRecordHash": "131f68e4a6f6c3b450197a536aaf9ade347b2992d63eae3c6ab6e718996b6171",
+    "result": {
+      "jobId": "fv_1895a835441a98e2e2ab8e4c",
+      "seed": 0,
+      "outcome": "win",
+      "winnerOwner": 2,
+      "winnerHp": 986,
+      "startingHpByOwner": {
+        "2": 1890,
+        "3": 2660
+      },
+      "remainingByOwner": {
+        "2": {
+          "units": 17,
+          "hp": 986
+        },
+        "3": {
+          "units": 0,
+          "hp": 0
+        }
+      },
+      "ticks": 2491,
+      "family": "waves",
+      "side2": {
+        "slug": "champion",
+        "label": "Champion",
+        "civ": "Saxons",
+        "count": 27,
+        "class": "melee"
+      },
+      "side3": {
+        "slug": "heavy_camel",
+        "label": "Heavy Camel Rider",
+        "civ": "Turks",
+        "count": 19,
+        "class": "melee"
+      },
+      "finalStateHash": "604336d5501d9a23238d6bb4990abf869cc55a6dad1d143ba745569026ea7cda",
+      "eventLogHash": "fd1e155bc41a0e6a3ee79dfa12f1e59f63f43e0e5940e5ff9ce3581c86654f28"
+    },
+    "wallSeconds": 19.069177116999985,
+    "startedAt": "2026-11-07T14:42:30.794Z",
+    "finishedAt": "2026-11-07T14:42:49.863Z"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    62794
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 62794,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 3,
+  "reviewHash": "3f50a1e5ff44fadc33679aab538f87b751d949434ef8ae831667833e84e1b0ed"
+}

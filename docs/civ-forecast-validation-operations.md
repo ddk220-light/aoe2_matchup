@@ -116,6 +116,19 @@ requires no same-seed replay. This fourth dynamic blocker stays separate from
 the frozen 24 held contexts. Preserve all failures and keep the job blocked
 pending a separate recovery review; the ordinary queue continues.
 
+`fv_d94fee4147c5053486b13687`, seed 0, Chinese Heavy Scorpion / Polish
+Heavy Mounted Crossbowman, counts 23/27, exhausted its four normal attempts at
+2026-11-08T16:05:57.277Z. Each failed with the same ranged-crowd reservation
+geometry RangeError during movement resolution, reporting separation
+0.02350274216190229 against extent 0.025 for references 9000/9011. These are
+errors, not watchdog results or completed seeds. The coarse fsynced snapshots
+precede the failing step and do not establish its full instantaneous state or
+root cause. See `diagnostics/fv_d94fee4147c5053486b13687/REVIEW.json`, bound to
+source commit `80c66d94fdfedccd255ff21ae3a1428f0f67add9`, and its read-only reader.
+No outcome, pair correction, physics change or further retry is authorized.
+This fifth dynamic blocker remains separate from the 24 frozen held contexts;
+the ordinary queue continues.
+
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 
 The owner explicitly removed all same-seed replays: “In any case, it should

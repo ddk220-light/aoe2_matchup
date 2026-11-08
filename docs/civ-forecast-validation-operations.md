@@ -55,10 +55,28 @@ positions, HP, actions and targets while blocked/route-planning counters grow.
 The exact routing/acquisition/range cause and real-game outcome remain unknown.
 See `diagnostics/fv_c553e033f98149a99dc0ffcf/REVIEW.json` and its reproducible
 reader, bound to source commit `43f129b7852722b4d6c8f87928104b34c98e447f`.
-Only seed 0 is saved; seeds 1 and 2 and an exact pair replay are missing.
+Only seed 0 is saved; seeds 1 and 2 remain missing. The historical diagnosis
+predates the v3 amendment; no new same-seed replay is required.
 This is an additional dynamic blocked job, separate from the frozen 24 held
 contexts. No result is assigned and no further retry is authorized by this
 diagnosis. Preserve the live ordinary queue and all existing failures.
+
+`fv_9c07f592c61760a424b461f4`, seed 0, Danish Elite Jomsviking / Muisca
+Elite Guecha Warrior, counts 27/23, exhausted all four prescribed watchdogs
+at 2026-11-07T23:59:34.786Z. All four saved timelines reproduce twelve idle
+Jomsvikings at (2,13), with 666 combined HP, and one idle Guecha Warrior at
+(13,2), with 16.027777777777807 HP. All thirteen survivors have null pursuit,
+engagement and attack targets. Positions, HP, actions, targets and every event
+counter remain constant across each late suffix while ticks advance; the final
+attempt has 119 consecutive such snapshots. The precise cause and real-game
+outcome remain unknown. See
+`diagnostics/fv_9c07f592c61760a424b461f4/REVIEW.json` and its reproducible reader,
+bound to source commit `cded99b0b044a7bcfe108bc7a80453a193eeee63`.
+No seed completed, so there is no native result or pair correction. Later seed
+requirements depend on a completed first result; v3 requires no same-seed replay.
+Keep this second dynamic blocker separate from the frozen 24 held contexts.
+No further retry, physics change or imported winner is authorized. The healthy
+existing four-worker ordinary queue continues with both exhausted jobs blocked.
 
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 

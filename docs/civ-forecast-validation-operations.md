@@ -129,6 +129,18 @@ No outcome, pair correction, physics change or further retry is authorized.
 This fifth dynamic blocker remains separate from the 24 frozen held contexts;
 the ordinary queue continues.
 
+`fv_5bc5ce13eed6d3668dda1e1c`, seed 0, Italian Elite Skirmisher / Byzantine
+Hussar, counts 27/23, exhausted all four normal watchdogs at
+2026-11-08T16:22:11.497Z. The two short attempts stop earlier, with
+21 and 19 Hussars. The two long attempts reach the same fixed late state:
+one skirmisher at 15 HP and three Hussars at 215 combined HP, all idle with null
+attack targets. Their constant-core suffixes contain 11 and 75 snapshots while
+six reservation/pursuit/blocked counters grow. The precise cause and real-game
+result remain unknown. See `diagnostics/fv_5bc5ce13eed6d3668dda1e1c/REVIEW.json`,
+bound to source `ff4d2a7be0ad780cbf04c626a7d19147da9761d9`. No seed completed and no winner,
+draw, correction or further retry is authorized. This sixth dynamic blocker is
+separate from the frozen 24 held contexts. The ordinary queue continues.
+
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 
 The owner explicitly removed all same-seed replays: “In any case, it should
@@ -294,3 +306,28 @@ remaining with held/exhausted counts, workers/replays and push/production status
 This changes reporting only; the live four-worker 1/3/10 no-replay queue continues. At the review point, provide actual counts,
 changed/retained winners, close cases, confidence-category results, failures and
 limitations with source links. A stopped queue is not full validation.
+
+## One-time approved website release on 2026-11-08
+
+The owner separately authorized one update: “Can you update the website matchup
+advisor with the latest data, just this time? ... Git commit and push as well.”
+That exception is complete at website commit
+`a2c963466d7b98356d63a6920b8828f7286f8ec0`, with 11,478 reviewed forecast
+contexts from immutable snapshot 029. Authorization, exact CI/deployment checks
+and actual production endpoint results are retained under
+`website-releases/2026-11-08/`.
+
+Hourly checks must read campaign `website-release-status.json` for the latest
+explicitly approved production commit and serving DB hash. Compare the live site
+and website worktree against that bookmark; do not treat this approved update as
+drift or roll it back. The frozen research baseline remains C907 / SHA-256
+36626bc0f74242de5482d98362695cec15226eb87cba8767371841a62bd231d5 forever for
+this inventory; do not alter the manifest, input archive, original forecasts or
+job order. New result comparisons still use that original baseline.
+
+Run the read-only `tools/audit_civ_forecast_validation.mjs --output <new-path>`
+for live integrity/count checks. It reads the production bookmark separately
+from frozen research inputs and executes no simulation. Historical checks and
+reports retain their original production references. No website rebuild, export,
+preview, serving import, main/staging push or deployment is authorized on an
+hourly research run. Future releases need a new explicit owner instruction.

@@ -96,3 +96,12 @@ report so subsequent hourly checks do not repeat a milestone. This reporting
 instruction supersedes the former progress-only-when-asked restriction, and
 changes no simulation seed policy or execution. Never restart a healthy runner
 or rerun a completed seed to create a report.
+
+The separately authorized one-time website update on 2026-11-08 is complete.
+Read campaign `website-release-status.json` and its immutable verification receipt
+for the latest approved production commit/serving DB hash. Preserve that release;
+do not mistake it for unauthorized drift or roll it back. The frozen comparison
+source remains C907 / SHA-256 36626bc0f74242de5482d98362695cec15226eb87cba8767371841a62bd231d5.
+Use `tools/audit_civ_forecast_validation.mjs --output <new-path>` for read-only
+live counts/integrity checks. Historical reports and frozen inputs stay unchanged.
+This monitor remains data-only; no future automatic website release is authorized.

@@ -157,6 +157,24 @@ winner, draw, pair review, correction or further retry is authorized. This seven
 dynamic blocker is separate from the frozen 24 held contexts; the ordinary queue
 continues.
 
+`fv_0466e97c7d116241411573cc`, seed 0, Cuman Elite Skirmisher / Malay
+Light Cavalry, counts 27/23, exhausted all four normal watchdogs at
+2026-11-08T18:42:51.662Z, after the 12,000-milestone integrity check. The frozen
+role key `Malay|hussar` retains the actual upgrade Light Cavalry. Each timeline
+has a constant-survivor/HP suffix: one skirmisher at 11 HP and sixteen cavalry
+at 777 combined HP. The suffixes contain 4, 18, 58 and 118 snapshots. All sampled
+survivors are idle with null attack targets, but their positions and pursuit
+targets keep changing. Eleven movement/pursuit/reservation/blocked counters grow
+while combat counters remain fixed. The final constant-HP suffix contains 118
+distinct sampled position/action/target states. This is continuing movement and
+replanning without HP progress, rather than a fixed-position stall; the precise
+cause and real-game outcome remain unknown. See
+`diagnostics/fv_0466e97c7d116241411573cc/REVIEW.json`, bound to source
+`819e95bb2ed89e3ff5619fcbcee8c5c75f868a92`. No seed completed and no winner,
+draw, correction or further retry is authorized. This eighth dynamic blocker
+stays separate from the frozen 24 held contexts. Preserve the earlier milestone
+report and its capture time; retain this later diagnosis separately.
+
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 
 The owner explicitly removed all same-seed replays: “In any case, it should

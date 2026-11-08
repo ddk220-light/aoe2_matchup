@@ -98,6 +98,24 @@ requires no same-seed replay. This third dynamic blocker stays separate from
 the frozen 24 held contexts. Preserve all failures and keep the job blocked
 pending a separate recovery review; the ordinary queue continues.
 
+`fv_e0d18588ecc82161d1d74801`, seed 0, Malay Light Cavalry / Khitan
+Elite Skirmisher, counts 23/27, exhausted all four prescribed watchdogs at
+2026-11-08T06:07:28.184Z. The unchanged role keys are `Malay|hussar` and
+`Khitans|imp_elite_skirm`; the frozen mechanics name the actual upgrades Light
+Cavalry and Elite Skirmisher. All four attempts reach the same late positions,
+HP, actions and targets: three cavalry at 96 combined HP and one skirmisher at
+27 HP, all idle with null attack targets. Five pursuit/contact/blocked counters
+continue increasing while combat counters remain unchanged. The final late
+suffix contains 118 consecutive snapshots with unchanged core state. The
+precise contact/range/geometry/route cause and real-game outcome remain unknown.
+See `diagnostics/fv_e0d18588ecc82161d1d74801/REVIEW.json` and its reproducible
+reader, bound to source commit `4e05f22c28840dbaa8350f227144941a53a62e88`.
+No seed completed, so no native winner, draw, pair review or correction is
+assigned. Later seed requirements depend on a completed first result; v3
+requires no same-seed replay. This fourth dynamic blocker stays separate from
+the frozen 24 held contexts. Preserve all failures and keep the job blocked
+pending a separate recovery review; the ordinary queue continues.
+
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 
 The owner explicitly removed all same-seed replays: “In any case, it should

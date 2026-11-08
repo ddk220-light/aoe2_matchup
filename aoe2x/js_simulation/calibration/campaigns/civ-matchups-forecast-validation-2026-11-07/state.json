@@ -51,42 +51,35 @@
     "048",
     "050",
     "051",
-    "052"
+    "052",
+    "053"
   ],
-  "reviewedJobs": 6745,
-  "savedFreshSeeds": 18136,
-  "changedJobs": 2064,
+  "reviewedJobs": 6782,
+  "savedFreshSeeds": 18218,
+  "changedJobs": 2078,
   "active": [
     {
-      "jobId": "fv_6d835525165d2d9d40243500",
-      "seed": 9,
-      "purpose": "fresh_measurement",
-      "attempt": 1,
-      "startedAt": "2026-11-08T06:17:46.921Z",
-      "limitSeconds": 180
-    },
-    {
-      "jobId": "fv_01f9ace06f8f8b46d1a3aa9e",
-      "seed": 2,
-      "purpose": "fresh_measurement",
-      "attempt": 1,
-      "startedAt": "2026-11-08T06:17:25.571Z",
-      "limitSeconds": 180
-    },
-    {
-      "jobId": "fv_c3e33a271b8278d13684327f",
-      "seed": 1,
-      "purpose": "fresh_measurement",
-      "attempt": 1,
-      "startedAt": "2026-11-08T06:17:45.683Z",
-      "limitSeconds": 180
-    },
-    {
-      "jobId": "fv_3d769b7562f15227cc06dce5",
+      "jobId": "fv_de6b25c6a61dc1140385b735",
       "seed": 0,
       "purpose": "fresh_measurement",
       "attempt": 1,
-      "startedAt": "2026-11-08T06:17:41.291Z",
+      "startedAt": "2026-11-08T06:21:52.381Z",
+      "limitSeconds": 180
+    },
+    {
+      "jobId": "fv_4a5e6501735e0f839c5b851c",
+      "seed": 0,
+      "purpose": "fresh_measurement",
+      "attempt": 1,
+      "startedAt": "2026-11-08T06:21:52.777Z",
+      "limitSeconds": 180
+    },
+    {
+      "jobId": "fv_6d54b1fd2e1cc9171d8bc1e0",
+      "seed": 0,
+      "purpose": "fresh_measurement",
+      "attempt": 1,
+      "startedAt": "2026-11-08T06:21:53.301Z",
       "limitSeconds": 180
     }
   ],
@@ -99,16 +92,16 @@
   "totalForecastContexts": 39148,
   "runnableJobs": 39124,
   "heldContexts": 24,
-  "remainingJobs": 32403,
-  "remainingRunnableJobs": 32379,
-  "updatedAt": "2026-11-08T06:17:56.812Z",
+  "remainingJobs": 32366,
+  "remainingRunnableJobs": 32342,
+  "updatedAt": "2026-11-08T06:21:57.726Z",
   "schedulerVersion": "rolling-phase-queue-v2",
   "queueControlsHash": "db762974735885b0d742aa964f58e530b0254b777d39086f5cb47000696235cd",
   "lastPushedAt": "2026-11-08T06:07:37.775Z",
-  "remotePending": false,
-  "lastPushError": null,
-  "singleSeedConfirmedJobs": 3065,
-  "multiSeedValidatedJobs": 3680,
+  "remotePending": true,
+  "lastPushError": "Error: Command failed: git -c http.extraHeader= -c credential.helper= push origin simulations/civ-forecast-validation-2026-11-07\nTo https://github.com/ddk220-light/aoe2_matchup.git\n ! [remote rejected]     simulations/civ-forecast-validation-2026-11-07 -> simulations/civ-forecast-validation-2026-11-07 (cannot lock ref 'refs/heads/simulations/civ-forecast-validation-2026-11-07': is at 3b0cee5985d158d138f031521660b1eb4bc2cfe3 but expected 4e05f22c28840dbaa8350f227144941a53a62e88)\nerror: failed to push some refs to 'https://github.com/ddk220-light/aoe2_matchup.git'\n",
+  "singleSeedConfirmedJobs": 3084,
+  "multiSeedValidatedJobs": 3698,
   "samplingPolicyHash": "4404ca505096341c2bcea03e1376ed5d7c27f7a1f6d6452bd92a9a526273c30c",
   "independentExactReplayRequired": false
 }

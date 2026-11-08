@@ -1,0 +1,13 @@
+# One-time forecast results update
+
+The owner authorized this update on 2026-11-08: “Can you update the website matchup advisor with the latest data, just this time? ... Git commit and push as well.” This is one release; the ongoing forecast validation monitor remains research-only and future production updates need new explicit authorization.
+
+The release imports checkpoint 029: **11,478 reviewed forecast contexts**, consisting of **6,415 single-seed confirmations** and **5,063 multi-seed validations**. **2,758 outcomes differ** from the saved forecasts; **8,720 retain** them. Across the displayed aliases, **15,503 cells** gain measured evidence and **3,526 displayed outcomes change**. The serving database SHA-256 is `1443ed45b5d704fc23c60123954a17b9d3583c1f732f48bca5fc643ab04be567`.
+
+The immutable input is the previously released production DB at `c907cc23668611851a2112911893929c3b905696`, SHA-256 `36626bc0f74242de5482d98362695cec15226eb87cba8767371841a62bd231d5`. All prior 10,222 mismatch corrections remain intact. The full-grid audit preserves all 57,438 other evidence blobs and 135,720 other displayed cells exactly. The remaining 27,670 forecasts retain their outcomes, flags and incomplete status; held, exhausted and partial attempts are not imported as results.
+
+The forecast-aware importer accepts complete evidence under each recorded 1/3/10 distinct-seed policy, verifies review/native-record hashes and physical orientation, and stores original evidence and cell flags separately from measured evidence. It preserves historical replay evidence and records single- versus multi-seed evidence explicitly. The older mismatch import protocol is unchanged. Import and integrity checks execute no simulations.
+
+The confidence-ordered queue and agreement-dependent stopping cannot establish unbiased global forecast accuracy. No UI, recommendation formula, ranking score, civilization data or simulation physics changes are included. Forecasts and observations retain the existing uniform presentation. The civilization, ranking, simulator and engine export components remain byte-identical.
+
+The complete research bundle, authorization and full-grid audit are under `data/validation/civ-matchups-forecast-validation-2026-11-07/2026-11-08/`. Source details and the full frozen list are linked there. Release gates are the import/advisor contracts, full-grid audit, all 195 feature-export checks, clean-checkout CI packaging/backend/Astro checks, exact-commit staging preview verification, then the authorized main push and production verification. Local packaging encountered a workspace destination-policy restriction on unchanged media review assets; the required clean-checkout CI build remains the packaging gate.

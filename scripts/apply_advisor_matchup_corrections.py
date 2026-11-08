@@ -24,6 +24,12 @@ def sha(path):
 
 def apply(baseline, snapshot, output):
     manifest = json.loads((snapshot / 'manifest.json').read_text())
+    if manifest['version'] == 'civ-matchup-forecast-corrections-v3':
+        if __package__:
+            from .apply_advisor_forecast_corrections import apply_forecast
+        else:
+            from apply_advisor_forecast_corrections import apply_forecast
+        return apply_forecast(baseline, snapshot, output)
     for file, expected in manifest['files'].items():
         assert sha(snapshot / file) == expected, ('snapshot hash mismatch', file)
     assert manifest['version'] == 'civ-matchup-mismatch-corrections-v1'

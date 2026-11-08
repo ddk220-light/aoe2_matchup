@@ -76,7 +76,27 @@ No seed completed, so there is no native result or pair correction. Later seed
 requirements depend on a completed first result; v3 requires no same-seed replay.
 Keep this second dynamic blocker separate from the frozen 24 held contexts.
 No further retry, physics change or imported winner is authorized. The healthy
-existing four-worker ordinary queue continues with both exhausted jobs blocked.
+existing four-worker ordinary queue continues with exhausted jobs blocked.
+
+`fv_5c08b7d3266df27dbb057abc`, seed 0, Incan Elite Skirmisher / Polish
+Cavalier, counts 27/19, exhausted all four prescribed watchdogs at
+2026-11-08T04:22:50.718Z. The unchanged role keys are `Incas|imp_elite_skirm`
+and `Poles|paladin`; their frozen mechanics name the actual simulated upgrades
+Elite Skirmisher and Cavalier. The first short attempt ended earlier, with one
+skirmisher and fourteen cavalry survivors. The three longer attempts reach the
+same late positions, HP, actions and targets: one skirmisher at 9 HP and three
+Cavaliers at 339 combined HP, all idle with null attack targets. Five
+pursuit/contact/blocked counters grow while combat counters remain unchanged.
+The final late suffix contains 106 consecutive snapshots with unchanged core
+state. The precise contact/range/geometry/route cause and real-game outcome
+remain unknown. See `diagnostics/fv_5c08b7d3266df27dbb057abc/REVIEW.json` and
+its reproducible reader, bound to source commit
+`d5144b0ac57335b017b6d7ca0fe2b3d2f8315e03`.
+No seed completed, so no native winner, draw, pair review or correction is
+assigned. Later seed requirements depend on a completed first result; v3
+requires no same-seed replay. This third dynamic blocker stays separate from
+the frozen 24 held contexts. Preserve all failures and keep the job blocked
+pending a separate recovery review; the ordinary queue continues.
 
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 

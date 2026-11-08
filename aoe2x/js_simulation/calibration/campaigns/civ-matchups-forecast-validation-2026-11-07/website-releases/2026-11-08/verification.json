@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "status": "verified_live",
+  "verifiedAt": "2026-11-08T16:24:59.233Z",
+  "authorization": "authorization.json",
+  "scope": "Owner-authorized one-time advisor data release; ongoing monitor stays research-only.",
+  "commit": "a2c963466d7b98356d63a6920b8828f7286f8ec0",
+  "sourceSnapshot": "correction-snapshots/029",
+  "sourceResearchCommit": "52e495a2cc8b33dbcaac489dd4db6c49059e170f",
+  "servingDatabaseSha256": "1443ed45b5d704fc23c60123954a17b9d3583c1f732f48bca5fc643ab04be567",
+  "frozenResearchBaseline": {
+    "commit": "c907cc23668611851a2112911893929c3b905696",
+    "databaseSha256": "36626bc0f74242de5482d98362695cec15226eb87cba8767371841a62bd231d5",
+    "unchanged": true
+  },
+  "reviewedContexts": 11478,
+  "singleSeedConfirmations": 6415,
+  "multiSeedValidations": 5063,
+  "changedOutcomes": 2758,
+  "retainedForecasts": 8720,
+  "displayedCellsReviewed": 15503,
+  "displayedOutcomesChanged": 3526,
+  "remainingForecastContexts": 27670,
+  "priorMismatchCorrectionsPreserved": 10222,
+  "componentVersions": {
+    "civilizations": "f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b",
+    "engine": "bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941",
+    "rankings": "0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8",
+    "simulator": "e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0",
+    "advisor": "a27bcc04a6187a30e565f385183d762c42a7abc0dc26427b93b212e1e6a93c20"
+  },
+  "preview": {
+    "verifiedAt": "2026-11-08T16:21:47.860Z",
+    "candidateCommit": "a2c963466d7b98356d63a6920b8828f7286f8ec0",
+    "stagingDeployment": {
+      "id": "dpl_F1Vt5KrKYqo7xkiXko1pfRGkzhjm",
+      "url": "aoe2-matchup-migration-asuuqovg2-ddk220.vercel.app",
+      "state": "READY",
+      "branch": "staging"
+    },
+    "ci": {
+      "runId": 42498691592,
+      "jobs": {
+        "test": "success",
+        "vercel-build": "success"
+      }
+    },
+    "reviewedContexts": 11478,
+    "changedOutcomes": 2758,
+    "retainedForecasts": 8720,
+    "advisorVersion": "a27bcc04a6187a30e565f385183d762c42a7abc0dc26427b93b212e1e6a93c20",
+    "endpointChecks": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/units",
+        "status": 200
+      },
+      {
+        "path": "/civilizations",
+        "status": 200
+      },
+      {
+        "path": "/matchup-advisor",
+        "status": 200
+      },
+      {
+        "path": "/api/ref/unit-line/militia",
+        "status": 200
+      },
+      {
+        "path": "/data/release.json",
+        "status": 200
+      },
+      {
+        "path": "/api/advisor-catalog",
+        "status": 200
+      },
+      {
+        "path": "/api/advisor-evidence/38",
+        "status": 200
+      },
+      {
+        "path": "/api/advisor-evidence/86",
+        "status": 200
+      },
+      {
+        "path": "/api/advisor-evidence/12916",
+        "status": 200
+      }
+    ],
+    "localBrowser": {
+      "advisorDesktop": "passed",
+      "advisorMobileFunctional": "passed",
+      "simulatorDesktopAndMobileCompletedBattle": "passed",
+      "strictMobileScrollAssertion": "failed: 5px deviation from target, no overflow/errors; unchanged frontend; private functional visibility check passed"
+    },
+    "remoteBattlePost": "not tested directly: connector only supports GET and workspace destination policy blocks browser/shell access. Clean-checkout CI packaged API checks and local completed battle passed.",
+    "simulationExecutionsForImportAndIntegrity": 0
+  },
+  "production": {
+    "id": "dpl_2tVgwZWaRH5hPmmDh7gY8b2dnHJr",
+    "url": "https://aoe2-matchup-migration-aqlz26guj-ddk220.vercel.app",
+    "domain": "https://aoe2matchup.com",
+    "state": "READY",
+    "branch": "main",
+    "target": "production",
+    "aliases": [
+      "aoe2matchup.com",
+      "aoe2-matchup-migration.vercel.app",
+      "www.aoe2matchup.com",
+      "aoe2-matchup-migration-ddk220.vercel.app",
+      "aoe2-matchup-migration-git-main-ddk220.vercel.app"
+    ],
+    "ci": {
+      "runId": 42499509427,
+      "jobs": {
+        "test": "success",
+        "vercel-build": "success"
+      }
+    },
+    "endpointChecks": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/units",
+        "status": 200
+      },
+      {
+        "path": "/civilizations",
+        "status": 200
+      },
+      {
+        "path": "/matchup-advisor",
+        "status": 200
+      },
+      {
+        "path": "/api/ref/unit-line/militia",
+        "status": 200
+      },
+      {
+        "path": "/data/release.json",
+        "status": 200
+      },
+      {
+        "path": "/api/advisor-catalog",
+        "status": 200
+      },
+      {
+        "path": "/api/advisor-evidence/38",
+        "status": 200
+      },
+      {
+        "path": "/api/advisor-evidence/86",
+        "status": 200
+      },
+      {
+        "path": "/api/advisor-evidence/12916",
+        "status": 200
+      }
+    ],
+    "examples": [
+      {
+        "evidenceId": 38,
+        "outcome": "close_uncertain",
+        "evidenceLevel": "multi_seed_validation"
+      },
+      {
+        "evidenceId": 86,
+        "outcome": "a_win",
+        "evidenceLevel": "multi_seed_validation"
+      },
+      {
+        "evidenceId": 12916,
+        "outcome": "a_win",
+        "evidenceLevel": "single_seed_confirmation"
+      }
+    ]
+  },
+  "campaignSeedExecutionsForImportOrIntegrity": 0,
+  "unvalidatedOrBlockedImported": false,
+  "productFormulasOrPhysicsChanged": false,
+  "futureAutomaticReleasesAuthorized": false
+}

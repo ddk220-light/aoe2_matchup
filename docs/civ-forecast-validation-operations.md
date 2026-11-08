@@ -141,6 +141,22 @@ bound to source `ff4d2a7be0ad780cbf04c626a7d19147da9761d9`. No seed completed an
 draw, correction or further retry is authorized. This sixth dynamic blocker is
 separate from the frozen 24 held contexts. The ordinary queue continues.
 
+`fv_91e08f7a4d9e62083a18bf56`, seed 0, Muisca Elite Guecha Warrior /
+Turkish Cavalier, counts 27/24, exhausted all four normal watchdogs at
+2026-11-08T17:56:10.714Z. The frozen role key `Turks|paladin` retains the actual
+mechanics upgrade Cavalier. All four attempts end in the same saved positions,
+HP, actions and targets: one Guecha Warrior at 60 HP and three Cavaliers at
+240 combined HP, all idle with null attack targets. The three longer timelines
+have constant-core suffixes of 15, 56 and 115 snapshots, with five
+reservation/pursuit/blocked counters growing while combat counters remain
+unchanged. The first short attempt has only one final constant-core snapshot.
+The precise cause and real-game outcome remain unknown. See
+`diagnostics/fv_91e08f7a4d9e62083a18bf56/REVIEW.json`, bound to source
+`b8de7e6406df79cd0c99dd2f182ff7bb1fce7ffd`. No native seed completed, and no
+winner, draw, pair review, correction or further retry is authorized. This seventh
+dynamic blocker is separate from the frozen 24 held contexts; the ordinary queue
+continues.
+
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 
 The owner explicitly removed all same-seed replays: “In any case, it should

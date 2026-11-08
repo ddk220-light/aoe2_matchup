@@ -1,0 +1,91 @@
+{
+  "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "jobId": "fv_b05ddd441406dd7d8f5b3b12",
+  "reviewedAt": "2026-11-08T19:19:38.414Z",
+  "status": "passed",
+  "context": {
+    "counts": [
+      27,
+      14
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "242bac234ddf0838249ab7ed13af04d1f3f063811605d5f0c9b0d01970c373da",
+      "b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      100,
+      367.5
+    ]
+  },
+  "contextHash": "b05ddd441406dd7d8f5b3b12711137db171e0bbb2688c3b25e73b4e0ad6b2c7b",
+  "pairKey": "242bac234ddf0838249ab7ed13af04d1f3f063811605d5f0c9b0d01970c373da|b31197993fbfe1c60bb09c7fce2779cba2c60fe8926c4d5fc47efe1f0ab3403b",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "validationMode": "fresh_seed_set",
+  "samplingPolicyHash": "4404ca505096341c2bcea03e1376ed5d7c27f7a1f6d6452bd92a9a526273c30c",
+  "evidenceLevel": "multi_seed_validation",
+  "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "reason": "additional_seed_evidence",
+    "firstSeedOutcome": "b_win",
+    "firstSeedAgrees": true,
+    "firstSeedWinnerHpFraction": 0.15,
+    "minimumWinnerHpFraction": 0.25,
+    "requiredSeeds": []
+  },
+  "seedCount": 3,
+  "requiredSeeds": [],
+  "seedResults": [
+    {
+      "seed": 0,
+      "winnerOwner": 3,
+      "ticks": 2273,
+      "finalStateHash": "36aff01295a06d036a479ca6a7ea8f743f21e50bd53f877585f7b80a3ade248c",
+      "eventLogHash": "32825315bf322621fe3e3deaff11b4c645f6509f1a9249bcfcfdd34e756b8d84",
+      "winnerHpFraction": 0.15,
+      "recordHash": "2cdc47690198f323df8b61fcd43b8be524aceb86a1d259aa877dba7feb4f9464"
+    },
+    {
+      "seed": 1,
+      "winnerOwner": 3,
+      "ticks": 2776,
+      "finalStateHash": "a7f3ed1abc0f1e0ae57b21bd481751e47d2c07e786ae7f7cb92fb2ae6271f11f",
+      "eventLogHash": "5fccb04f8dcf5d68a91b5d91362f51fddb5c525bca1cc04fa3e65b680a13f2ea",
+      "winnerHpFraction": 0.02857142857142857,
+      "recordHash": "eae9c857fe16472b9525acdfa89d06312149cdc2fa0656cb2215317ce9f60910"
+    },
+    {
+      "seed": 2,
+      "winnerOwner": 3,
+      "ticks": 2590,
+      "finalStateHash": "16631529cdf69844205cb1ae5ab49fd576caed12327d1cf6231466d79cb322e1",
+      "eventLogHash": "fd5e341cbf42e708e01de4299cb7cd5b83ea656791f2239bdf420d3744fd3c45",
+      "winnerHpFraction": 0.13428571428571429,
+      "recordHash": "6c2c3c04618cebd67fdfaa54d36c69dd241a97d0efb95c4ed90d8641da1a8e92"
+    }
+  ],
+  "exactReplay": {
+    "required": false,
+    "performed": false,
+    "exact": null,
+    "reason": "owner_removed_same_seed_replays",
+    "samplingPolicyHash": "4404ca505096341c2bcea03e1376ed5d7c27f7a1f6d6452bd92a9a526273c30c"
+  },
+  "outcome": "b_win",
+  "originalEvidenceIds": [
+    39459
+  ],
+  "originalOutcomes": [
+    {
+      "evidenceId": 39459,
+      "outcome": "b_win",
+      "evidenceType": "predicted_unvalidated"
+    }
+  ],
+  "changed": false,
+  "displayedMismatchCells": 2,
+  "reviewHash": "5f2ce79bb58c95fc01c2c54df0f62a326e874dbcaf13260d472e385eec88f182"
+}

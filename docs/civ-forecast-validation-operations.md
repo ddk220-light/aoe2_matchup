@@ -175,6 +175,22 @@ draw, correction or further retry is authorized. This eighth dynamic blocker
 stays separate from the frozen 24 held contexts. Preserve the earlier milestone
 report and its capture time; retain this later diagnosis separately.
 
+`fv_c250a7a42ac0230166abf1ef`, seed 0, Viking Light Cavalry / Sicilian
+Elite Skirmisher, counts 23/27, exhausted all four normal watchdogs at
+2026-11-09T04:19:58.749Z. The frozen role key `Vikings|hussar` retains the
+actual upgrade Light Cavalry. The first short attempt stops earlier, with
+fourteen cavalry at 675 combined HP and one skirmisher at 8 HP, still attacking.
+The three longer attempts reach identical fixed positions, HP, actions and
+targets: three cavalry at 136.5 combined HP and one skirmisher at 8 HP, all idle
+with null attack targets. Their constant-core suffixes contain 9, 52 and 111
+snapshots while five reservation/pursuit/blocked counters grow and combat
+counters remain unchanged. The precise cause and real-game outcome remain
+unknown. See `diagnostics/fv_c250a7a42ac0230166abf1ef/REVIEW.json`, bound to
+source `0789456d2247747e840f1210293f9a536a580945`. No seed completed and no
+winner, draw, pair review, correction or further retry is authorized. This ninth
+dynamic blocker remains separate from the frozen 24 held contexts; the ordinary
+queue continues.
+
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 
 The owner explicitly removed all same-seed replays: “In any case, it should

@@ -208,6 +208,23 @@ context blocked pending separate recovery review; assign no native outcome,
 review or correction and do not retry it. The ordinary four-worker queue
 continues, with no simulation executed for this diagnosis.
 
+`fv_687be822b7c8f4102aabb93f`, seed 0, Burmese Elite Skirmisher /
+Mapuche Elite Kona, counts 27/19, exhausted all four normal watchdogs at
+2026-11-09T14:04:05.015Z, after the 24,000-milestone integrity check. No seed
+completed. All four saved timelines end with one skirmisher at 21 HP and
+eighteen Elite Kona at 2,460 combined HP. Their constant-HP suffixes contain
+5/19/59/119 snapshots, with 5/19/59/118 distinct position states and two target
+states per suffix. All sampled survivors in those suffixes are idle with null
+attack targets; twelve movement, pursuit, reservation and blocked counters grow
+while combat counters remain fixed. This is movement and replanning without HP
+progress. The precise cause and real-game outcome remain unknown. See
+`diagnostics/fv_687be822b7c8f4102aabb93f/REVIEW.json`, bound to source
+`c40618ff041961ffcb7abdb79ad8ed3a3f2d1f64`, every attempt line and each closed
+progress-file hash. Keep this eleventh newly exhausted context blocked pending
+separate recovery review; assign no native outcome, review or correction and
+do not retry it. The ordinary four-worker queue continues. No simulation was
+executed for this diagnosis, and the earlier milestone report remains unchanged.
+
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 
 The owner explicitly removed all same-seed replays: “In any case, it should

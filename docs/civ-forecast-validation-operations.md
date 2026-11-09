@@ -191,6 +191,23 @@ winner, draw, pair review, correction or further retry is authorized. This ninth
 dynamic blocker remains separate from the frozen 24 held contexts; the ordinary
 queue continues.
 
+`fv_02521b013b039fe6f65c73ca`, seed 0, Burgundian Elite Skirmisher /
+Mapuche Elite Kona, counts 27/19, exhausted all four normal watchdogs at
+2026-11-09T12:30:36.891Z. No seed completed. All four saved timelines end
+with one skirmisher at 22 HP and eighteen Elite Kona at 2,460 combined HP.
+Their constant-HP suffixes contain 5/19/59/119 snapshots. All sampled survivors
+in these suffixes are idle with null attack targets, while positions and
+pursuit/engagement targets keep changing: 5/19/59/118 distinct position states
+and two target states per suffix. Twelve movement, pursuit, reservation and
+blocked counters grow while combat counters remain fixed. This diagnoses
+movement and replanning without HP progress; the precise cause and real-game
+outcome remain unknown. See `diagnostics/fv_02521b013b039fe6f65c73ca/REVIEW.json`,
+bound to source `191ff4a05b031a6f5989681bdf0afe0acdedfc2d`, all four attempt
+lines and their closed progress-file hashes. Keep this tenth newly exhausted
+context blocked pending separate recovery review; assign no native outcome,
+review or correction and do not retry it. The ordinary four-worker queue
+continues, with no simulation executed for this diagnosis.
+
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 
 The owner explicitly removed all same-seed replays: “In any case, it should

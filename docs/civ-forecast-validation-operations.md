@@ -32,6 +32,25 @@ are untouched. Preserve the recovery receipt under
 wallSeconds include the administrative pause; retain those values and use the
 receipt to distinguish processing time from suspension in later timing analysis.
 
+## Ordinary queue finished — November 10, 2026
+
+The ordinary forecast queue ended naturally. There are 39,112 integrity-checked
+pair reviews: 31,895 single-seed confirmations and 7,217 multi-seed validations.
+Native validation remains incomplete for 36 contexts: the original 24 held
+contexts and 12 diagnosed exhausted contexts. No permitted ordinary jobs remain.
+The runner and supervisor exited normally; do not restart this blocked campaign
+or restore its supervisor. Further work on the unfinished contexts needs separate
+recovery review and owner discussion under the frozen source/seed restrictions.
+
+The hourly monitor is paused for that discussion. Its confirmed operating state
+is recorded in campaign `closeout/2026-11-10/monitor-pause.json`; the hourly
+schedule and local-only prompt were preserved. Read the full coverage,
+changed/retained/mixed-result analysis and source/full-list links in campaign
+`closeout/2026-11-10/README.md`. Final reviewed evidence is in immutable
+`correction-snapshots/070`, with its independent verification receipt. The
+39,000 milestone report and cursor are committed locally. Pushes remain blocked;
+no new build, deployment, serving DB import or production release is authorized.
+
 ## Owner cost hold — 2026-11-10
 
 The owner ordered Vercel deployments to stop after reporting build CPU costs:

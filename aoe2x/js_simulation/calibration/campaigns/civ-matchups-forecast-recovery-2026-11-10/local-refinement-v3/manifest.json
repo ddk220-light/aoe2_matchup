@@ -1,0 +1,525 @@
+{
+  "schemaVersion": 1,
+  "kind": "explicit-forecast-recovery",
+  "createdAt": "2026-11-10T15:16:20.750Z",
+  "physicsVersion": "forecast-recovery-local-refinement-v3",
+  "baseCampaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+  "basePhysicsVersion": "frozen-civ-matchups-v3",
+  "sourceCommit": "01f8f7698ff9c9f37020febb663951cc014203ea",
+  "nodeVersion": "v24.19.0",
+  "allowedJobs": [
+    "fv_e50435eb3040ac8928d195ee"
+  ],
+  "authorizedCrossEngineReruns": [],
+  "workers": 4,
+  "wallTimeoutSteps": [
+    180,
+    600,
+    1800,
+    3600
+  ],
+  "maxSimulationTicks": 9007199254740991,
+  "simulationEnvironment": {},
+  "samplingPolicyHash": "4404ca505096341c2bcea03e1376ed5d7c27f7a1f6d6452bd92a9a526273c30c",
+  "inputSha256": "46ee219ec4f1c8af467bc451161741b8578a12eae7bec633674700f4c85af172",
+  "authorizationSha256": "495fe0426d6723ba6009803a81fdd0a52ec86a3507274ce14a33e5d9a56967b9",
+  "runtimeFiles": [
+    {
+      "path": "aoe2x/js_simulation/fixtures/current_ranged_golden_formations.json",
+      "sha256": "fe42ae448fc426f1cdc28a3530c30fddd201abeeb17548c1b0aaf6973d0c9c53"
+    },
+    {
+      "path": "aoe2x/js_simulation/fixtures/golden_formation_27v27.json",
+      "sha256": "1ff57fdf49cf9a6a4c9fd2e329f28f7122e7f0799798ec463ec5bc66d108715a"
+    },
+    {
+      "path": "aoe2x/js_simulation/fixtures/golden_map.json",
+      "sha256": "721457e8507e9e4e47714445d658a6dfffae1cb9e502637cd4467e4c339ed6b3"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/campaign-worker.mjs",
+      "sha256": "66cee5426ac87c90974ac4dafe0e2c8533bc5d9a152d3ce3d726399bb5b29075"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/collision-validation-worker.mjs",
+      "sha256": "8837857409a030e928d7b47f83984dc3c4cc6b5397b613893d09b5892bc8295b"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/full-ranking-campaign.mjs",
+      "sha256": "feded33bc46427ea0a5cd40801f3bf97a5fb5cf79549e614285bcb45eb5eb6a0"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/ranking-campaign.mjs",
+      "sha256": "387f606cb4f09ae368076ba69c821bde091a4f2f8725c146232cb297c26c8cf7"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/ranking-equivalence.mjs",
+      "sha256": "c13a860cb78a0ffc7fa112e154997d355801e6d5f780f55ff943f001f515a462"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/ranking-pool-worker.mjs",
+      "sha256": "63c3084f46734bee45826841b6cb51cb89f01ae93749a3f4f1eaf9b0ba6dc4cc"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/ranking-worker-pool.mjs",
+      "sha256": "b22ddfe7ee070bf52f18ab99bac0319772464c787aa988b66f498abcc760f64a"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/refresh-ranking-campaign.mjs",
+      "sha256": "3ec688a30a7b9216cb2ec73a59bab2c8b9e8a9e0b3b550e7756e9788c8ce31d0"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/run-job.mjs",
+      "sha256": "24d336124c8286f2a27aaaba3bc950a8d5cb9a425b1c0bc84187a5a78531f1d9"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/verify-ranking-refresh.mjs",
+      "sha256": "425b601593280a6e0e1a47a29bce24ed706f68a5500a741198ba5d4c70180a6e"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/arena-physics-map.js",
+      "sha256": "7a4cdb06eb275c38f0fd76f8f00bbdfdb492d89e228a69e6f0f2bcdec47078bd"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/battle-setup.js",
+      "sha256": "e3fe43c18a94545f6300410234df88274704e7dfc16c25c55cdb89a179c19318"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/canonical-json.js",
+      "sha256": "8ce2d530940e45c7914a2883f27cc7acf95934cbc79a27dc31672a084c3a8af7"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/champion-comparison.js",
+      "sha256": "38f895eacd2a182e24c39a2d699601162a6368f6511f7ba140f22a085f8abdc9"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/champion-scenarios.js",
+      "sha256": "2c149421aaed39f2dce265f51ded730560b3c7fc08323548b09beae5af55d132"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/ai-orders.js",
+      "sha256": "419304d06e005449f3f62c1dfa62144b26e4ef85a55dc2bc62822fe9810b0d4e"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/attacks.js",
+      "sha256": "496782759dc9540355626f3ab5718db19e2964f1003b4adbd0747088a33f00e6"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/chase-path.js",
+      "sha256": "7ce444e97eefc5bdb6dcd8d78506605d8527d2e42e8bd412f2189b4578afa5df"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/cohort-motion.js",
+      "sha256": "93db572f1be894693c86f8cd6449522fe6531fdd1db6270a45422611cbf98161"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/collision.js",
+      "sha256": "3e4bc576462051826cef72eccdcfd112e77212c2718f9cc465ea6bf217948aa3"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/contact-graph-steering.js",
+      "sha256": "3e04ec8c0b9301b91be3c3b2dc2a080551b43e5e833268b6784bdafca7a19469"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/contact-reservations.js",
+      "sha256": "28a0fb292776e3857d380e5bdff5f2bf2eeffdb17012a4d21de85fdd295b2975"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/diplomacy.js",
+      "sha256": "dfa46fde46f83f09a52e3818a495a9c3373eba1c59ee7f93de87ec0a6389844a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/experiments.js",
+      "sha256": "65be7ae497bf3bed48e74d73e3a7e47f9aea0273913cbe46bac132e620d8058c"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/kite-timing.js",
+      "sha256": "f86ed7caca423911190a7aa98cfff93ec9420fefdf0afbceddcbe4ab2f83853f"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/local-avoidance.js",
+      "sha256": "3ec1de33580cd0738d29fc1627b8d6d4aacbbc02962df49ab1e4c817ff86c5ec"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/matchup-summary.js",
+      "sha256": "c4d6ddf08d160b561e298cef2b7a02522db2aa8ee839583f0c45b1054cf50081"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/movement.js",
+      "sha256": "613b9db05a2713ce3cf444b5e29b3cba5f0fc9d7d570efe702350d2b18fe1c97"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/pair-interactions.js",
+      "sha256": "23a1579a6e9b93dd7097fb6a8bb1c1ed7209d2a7ee7b445e0d7317d6f58ac716"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/projectile-mechanics.js",
+      "sha256": "77c0c9d58fda17872cee1f1e2010be4a5e602f970a9550930b847f69de13bf96"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/ranged-crowding.js",
+      "sha256": "1f4ec60fdcd182234570bd45a659d551b16d94772c30f382535cd8986b8c2364"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/reach-melee.js",
+      "sha256": "e1aba17836c00a01908c7381200194beafbff5a1f96c78e475b1f1a6c168dfc7"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/solo-navigation.js",
+      "sha256": "c4adb8087f1ff4a2851b193516620972d4cbcda70357d5e45badd8815e4503f0"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/targeting.js",
+      "sha256": "d97c0f3a6d80c070943c983148802714866ceb4e4b672965daf309cf29ee9adf"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/unit-defenses.js",
+      "sha256": "1e90c38a8a3a23ecdb870162b5b2e493b38cd005cd6dbe84c15539493a155f4a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/unit-state.js",
+      "sha256": "f9aa4196e0a62de16b08cdda29736e060698d2abe219f68ec81bf3c598492e3a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/combat/world.js",
+      "sha256": "30ed7bbaea982ab0ad6437c90e61373fac62ea1f70e2d597180d153a68f7a899"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/dedicated-benchmark-rig.js",
+      "sha256": "8bf88c46a58905e9f8c9f5e8e07ab595424ce3d4bc9a0f8d1870af1806be39ee"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/dedicated-golden-comparison.js",
+      "sha256": "310b96fa55a37670c208ecf4aa3fbbc4227ca0b19e100dc95e17b9b5320dd3ea"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/dedicated-golden-corpus.js",
+      "sha256": "e1cc7bdc1b5e465df063d8dafd0f00149107e3b4dc61ad27f246ae25b727642a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/engine-config.js",
+      "sha256": "1636b7c15b8088114d6b709af4500f8f3825d36d1367f13c7625efff58c1dc89"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/fight.js",
+      "sha256": "ae0a31f29f0a666816529b2af4f9d23bab176cdc602a2d591a8cdfd70b879c03"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/formation-model.js",
+      "sha256": "8f1b7ca80879c2ee732dea7171e3e69ed8f97c1b2f239ec08079bff011f47276"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/kite-profiles.js",
+      "sha256": "f45e9ec67850427eb50dddc461f9d422b9c6db5a99b00cc47fae567bd71208b9"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/kiting-observation-matchups.js",
+      "sha256": "0dbd2c4a80f085fb68ff689370d0facae05e2466c3af59a6a939a5df7d63bd0d"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/kiting-observation-placement.js",
+      "sha256": "4e85983caea8b7b22f37d3bc9a9dc9fff3dbd5f511ade62c274bfbf2a821450d"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/lab-scenario.js",
+      "sha256": "9d87d64a6d6ebfedff67a33b0f587e2caa13860f8d62cbf885f2bee724b40acb"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/map-model.js",
+      "sha256": "5689f3f360c699e20cb256d1a70eb29f3db13a2dca5653e673527ad16ab99936"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/matchup-playback.js",
+      "sha256": "d2a2d9d25be073f77c2d0aaeabcdab8f0df3c990da32480e15dd41f2c2e718be"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/mechanics-schema.js",
+      "sha256": "9a6d0902add6d434da9b74d08e05496b9c1c0733da9ad15e0ae2b8e594ca6f56"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/phase2-batch1-comparison.js",
+      "sha256": "a2933507b035ef6bb91e33ffd821574a1052ef2852319bb1df9ec5bd1802b64a"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/phase2-wrong-winner-review.js",
+      "sha256": "452c3d2adc33be3ca72df2ac4a6e2fb5265fa2324a8e8da8ee0d807aa583af85"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/placement-table.js",
+      "sha256": "38d1566c3f18373703db1a2584b6551376a9b1a50703ba2cadf79c01b19954be"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/placement.js",
+      "sha256": "c1b42b95b1de138b54f37c3f5aa78f3280aed1cf7f3de87ee73f794eaa58cda2"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/purchase.js",
+      "sha256": "92050e141c098b420808289fa164d496c7ea8ce7c998fb32af255d4947801239"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/simulation-clock.js",
+      "sha256": "b2abb7591762f625803c616f82fd8d9ae09c8c4f24f1b2a8db7f2923ef7013d5"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/standard-units-comparison.js",
+      "sha256": "253313a4916a105277000938dbadaaef770334d8e58935b06b59c164c2668d63"
+    },
+    {
+      "path": "aoe2x/js_simulation/src/unit-registry.js",
+      "sha256": "260d19ddcf9a8cecf027de965ead841829cd23069e87a1664fe56bfeefbb1325"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/mismatch-validation-worker.mjs",
+      "sha256": "1b4fd069b4736b3a659f3565750995886bc7fc3435c1addff33e7343b79e97e9"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/civ-matchups/forecast-screening-policy.mjs",
+      "sha256": "76f3db79f37e5c4cb27a0dcbb596deecc56f8235dae0ea5fe905d218e290b2e8"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/civ-matchups/run-targeted-recovery.mjs",
+      "sha256": "f99ed8f8c7c2ee40351fab58c9795720406b8dd2b820c489f197e0a5f28b1965"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/recovery-validation-worker.mjs",
+      "sha256": "6bdd874497d4419961afe47cb401d92b370ac4d924324a762b1fa4c8f9a8c0a7"
+    },
+    {
+      "path": "aoe2x/js_simulation/node/civ-matchups/run-recovery-batch.mjs",
+      "sha256": "c9369cb6fa8461f28f7692d88cba260530d86dc431bd2c7e3b5bbe725931c5f7"
+    }
+  ],
+  "frozenSources": [
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/runs.jsonl",
+      "sha256": "b6de6203383d8c622fe82a4b8e8e9d533d80dec69c0b2d2cc9739c0422a618dc"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/attempts.jsonl",
+      "sha256": "484a5afc2db3df8837216c5845f019c41494439ff6a296070b69f4410b37a4ae"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+      "sha256": "4c492b1d6ea61640f15e09d3237efd78832e43e279be3972eb3f6f997d77583a"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/attempts.jsonl",
+      "sha256": "8b207fae7e81c3d6d67787ed660eeaa5348ae06f58f46c1265a272f9751a6381"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/held-contexts.jsonl.gz",
+      "sha256": "37bbd55ca9ea0833a30823a567dcd38c58dcba1b894b3bc677abbb8de6c08c99"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/closeout/2026-11-10/remaining-contexts.jsonl.gz",
+      "sha256": "14244953b8c3bb91e40a4b7425caebccda7b60af0e8cac8270e984a76f93c0e1"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/original-evidence.jsonl.gz",
+      "sha256": "d62f91c088e70cb750aba137748b729107a3d7c6dd81e01a18fe9e25f7dc237a"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/sampling-policy-v2.json",
+      "sha256": "495330378781719f2cbf3814a5a67a794c1bbf0a66a7628d50e12071bd027cbc"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/sampling-policy-v3.json",
+      "sha256": "773b15c1e4d1d59a2d27ea2382cd31ee0063c22b0521a79785a2f59ec0e62cee"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/manifest.json",
+      "sha256": "063c73286a9ab641f9e3fd52090d35ac127f302030dd605a4ef781b4e44cf154"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/sources/variant-profiles.json",
+      "sha256": "3b48d90dd5ca7d7c0793da82d8791a10a4286359a592e4111b73c28dd649204b"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/monitor-reporting.json",
+      "sha256": "15540224b2b54df445864ce6d2761e8d0ed39a00a7dd04d08c6680d3c9ac156d"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/state.json",
+      "sha256": "dcdcb9c4f871f9b746de45d24f666a8baeecd7a2cb8ad72ef860955dd7cdc4b9"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/diagnostics/mv_5e1e0d268234acff1d6e9008/REVIEW.json",
+      "sha256": "38daa159015fb78304eccf06d459136ddd5b7cc439c0976f9dd0100996531018"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/diagnostics/mv_5e1e0d268234acff1d6e9008/mv_5e1e0d268234acff1d6e9008-1-fresh_measurement-1793845647052.jsonl",
+      "sha256": "a5186b70424686577884d56f29bd7b60d5cb1a3cadf01ae09995d05b0d9b3fab"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/diagnostics/mv_306dd795e5f68374d24e2a99/REVIEW.json",
+      "sha256": "15d191900c96eacc77227b64dca4712b92ddb1c60fc799121546d1a0dd274670"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_c553e033f98149a99dc0ffcf/REVIEW.json",
+      "sha256": "034edfda07ca9994593e1d24daaedaa76dd3349c282a8b18f9c3c66110d64d2a"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_02521b013b039fe6f65c73ca/REVIEW.json",
+      "sha256": "0c8af3fd3c3eed402e1bf1900d08383320704aa0e100dfab4f07b7ab9b6518f7"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_687be822b7c8f4102aabb93f/REVIEW.json",
+      "sha256": "d863d668d9abdada212caf7850947fb4c696cfeef4ac9407606f8eb340d9bf14"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_5bc5ce13eed6d3668dda1e1c/REVIEW.json",
+      "sha256": "b3bd783a963b5b0db4386d195ad2ccde6a813bcf127ed9c91fa31f2f6f55fff1"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/diagnostics/mv_9bc2d959cf36c2b00f7ffa75/REVIEW.json",
+      "sha256": "52160e42a96831646281a7eb331ec4c95aaf867b737c30a2b602fcee405d4fe6"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_d94fee4147c5053486b13687/REVIEW.json",
+      "sha256": "9114c2828182badb24d066c9f7d07c1e626aad001b8de6cd450af95192755cc9"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_91e08f7a4d9e62083a18bf56/REVIEW.json",
+      "sha256": "af734e47729896c44bf0b5fd0012707bdce8ca83449f40afc4b2718c4993b5de"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_0466e97c7d116241411573cc/REVIEW.json",
+      "sha256": "6fd187aee2d25ddeece1187b4ec6d7d9f43917303addb5a7b01dab4972519651"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_9c07f592c61760a424b461f4/REVIEW.json",
+      "sha256": "49cc045ab650f9a79897bd2732b7f80469e8a45bc1478b082c89a8a79c896a1f"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/diagnostics/mv_e50435eb3040ac8928d195ee/REVIEW.json",
+      "sha256": "35f0272f249a43d286540cc813f416703573ec8f836c819fd51230718d03fb26"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_5c08b7d3266df27dbb057abc/REVIEW.json",
+      "sha256": "6b250b1fb99760e6f2efe9850cd6aa3fb9f8acb8c7a2e463c561644a3b1627d8"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_e0d18588ecc82161d1d74801/REVIEW.json",
+      "sha256": "10ffcfc9b37db5a27bb7f1c6ed62d3f520d282cc228ef0aea1c532765744198c"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_5184d46798ee328659752ef9/REVIEW.json",
+      "sha256": "1eb0d26b267d6bd9ab1cc2d6ff98bf99466f52e3c1ca13c180359df43b68a1df"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/diagnostics/mv_c72552550f46f7a6f193d254/REVIEW.json",
+      "sha256": "0ed2b890637889aa0902a98e2fb144c32c0f7197b49b26b5177b8499fcf29711"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/diagnostics/fv_c250a7a42ac0230166abf1ef/REVIEW.json",
+      "sha256": "7594cb431596120be870751b4363a14eb20859e1eec3b0e6d179bd8ae3bf27af"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/jobs.jsonl.gz",
+      "sha256": "8468abdc1faf5817cff9d8c8d0bbf69c5a8f05af87280080c5a4e596e07e144d"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/recovery-review/2026-11-10/review.json",
+      "sha256": "213a7eb915ef4f5ddc383d8a08c166d571ad06789bf3beba22db6017959ef6ed"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/launch-approval.json",
+      "sha256": "70cfad9591faffe62a2e234b8538b5c9e28f8c5b0bb47a858a311f2986a9de07"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/website-releases/2026-11-10/authorization.json",
+      "sha256": "3f0a8a30e3c1252e54e025b8ef73d5f9bdbb426e0f37023f4628b344cc873c2c"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/unit-rankings-path-recovery-2026-10-29/manifest.json",
+      "sha256": "f66273e29420d79909efe434e100987f2bee6d8c9e301f467cb97de5c3461920"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/manifest.json",
+      "sha256": "6290e4ed5329af0b0e6a583b18f5e5848fe589871428bb0db12bad898eedf961"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/input.json",
+      "sha256": "9970989a9acf90e61de1cde0c6ed55fe9c33a0c1f0982994b6a255b3467ce44f"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/runs.jsonl",
+      "sha256": "3c25dc053382b6cc4dfb18ecd06c742aa692c05af762d996507267ab6477fada"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/attempts.jsonl",
+      "sha256": "d63c98729c68e82e615b651e35f8283f91d5400810fecd1942f438c5f92cb9b3"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/administrative-stop-review.json",
+      "sha256": "7129447e09020c34cffee6402a6c68aa9a33c995465552ef6fba9f3cdd6e8d6a"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/runner.log",
+      "sha256": "0dc55c994b50165745cbee9ebeafb700a9ac4958042b8a1054467e052f69a7c4"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/manifest.json",
+      "sha256": "bfce37ecc7566d3484812541e07c4804cdba03d9890adb04a8eea760cb134857"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/input.json",
+      "sha256": "212cb037662b220a92ed4f6133302dc12691403134c0eda09e7a04cd0493cea1"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/runs.jsonl",
+      "sha256": "31235f71b2ac60e8f3b3bb7f64e5fa74943ef8d3983112233b697206b2088776"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/attempts.jsonl",
+      "sha256": "50ee1c746773e9ef65a486ea025f59baf1e5bfe0b4320166d002d25b2c4ec467"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/STOP",
+      "sha256": "2226f20fc34bbb1c012d4cd14fad06cae45ad4eee5684fd831c3e01c18d4318a"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/progress/fv_e50435eb3040ac8928d195ee-1-1794322969943.jsonl",
+      "sha256": "7afe311008630d6557c0071701ad3cc587c6da11725de43c3c9f98b212e6c27d"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/progress/fv_e50435eb3040ac8928d195ee-1-1794323149946.jsonl",
+      "sha256": "ebcdd46cdcd091ce9b38efffa2c99c5af4dc942649bb90b7d666c04718f82cbd"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/local-refinement-v3/diagnosis.json",
+      "sha256": "6e854650a9bda2f4fb90aecf49cff89614fa87344a36ffffa758ea2e5f935e95"
+    }
+  ],
+  "nativeLedgers": [
+    "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/runs.jsonl",
+    "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/runs.jsonl",
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/runs.jsonl"
+  ],
+  "authorization": {
+    "sourceRole": "user",
+    "sourceMessage": "For the ones, the 19 that are completed runs and earlier engine versions, just rerun them again. 19 doesn't really matter, just rerun those. This main thing to fix is the 16 that have proceed or patrol failures. That's something that you may need to check in the way the engine works. That's causing this problem. Maybe you can change the seed or something. Just get it, you know, get some kind of a result. That's what matters.",
+    "interpretation": "Explicit exception permits rerunning the 19 older-engine projections under the repaired engine. The 16 diagnosed pursuit/patrol contexts have priority and only their missing seeds are executed. Original seeds are retained; no seed cherry-picking, outcome fabrication, exact replay or original ledger overwrite.",
+    "automaticPublicationAuthorized": false,
+    "productionReleaseAuthorized": false,
+    "recurringTasksRemainDisabled": true
+  },
+  "changedRuntimeFiles": [
+    {
+      "path": "aoe2x/js_simulation/src/combat/chase-path.js",
+      "sha256": "7ce444e97eefc5bdb6dcd8d78506605d8527d2e42e8bd412f2189b4578afa5df",
+      "originalSha256": "02a3d66fdfdb67d480b26fda96ff2550050a7f332d3e07d32c090683926caa83"
+    }
+  ],
+  "exactReplay": {
+    "required": false,
+    "performed": false,
+    "exact": null
+  },
+  "parentManifestHash": "bca8e2f98bc04218d3e2bcc6197be50e128077445bfe013e0a14857fce6d7686",
+  "parentManifestPath": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/manifest.json",
+  "resumeReason": "New diagnosed path-resolution repair for the sole remaining context. Existing completed seeds are protected; only missing seeds are executable.",
+  "parentPhysicsVersion": "forecast-recovery-path-patrol-v2",
+  "manifestHash": "1bc425deab7755e62d8da8cee52f09f76cab7160e58739ee288308cf6ae83a92"
+}

@@ -1,0 +1,2645 @@
+{
+  "createdAt": "2026-11-10T15:16:20.740Z",
+  "case": "fv_e50435eb3040ac8928d195ee",
+  "category": "raster_resolution_misses_narrow_legal_contact_approach",
+  "priorAttemptStatus": "two ordinary watchdog timeouts; stopped at a closed attempt boundary for a diagnosed mechanics repair, not declared exhausted",
+  "completedSeedsPreserved": [
+    0
+  ],
+  "permittedMissingSeeds": [
+    1,
+    2
+  ],
+  "attempts": [
+    {
+      "start": {
+        "status": "started",
+        "attemptId": "fv_e50435eb3040ac8928d195ee-1-1794322969943",
+        "jobId": "fv_e50435eb3040ac8928d195ee",
+        "seed": 1,
+        "attempt": 1,
+        "startedAt": "2026-11-10T15:02:49.943Z",
+        "diagnosticProgressPath": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/progress/fv_e50435eb3040ac8928d195ee-1-1794322969943.jsonl",
+        "manifestHash": "bca8e2f98bc04218d3e2bcc6197be50e128077445bfe013e0a14857fce6d7686",
+        "sourceCommit": "9d122bca46891131d819cd8666e61f041691e331",
+        "limitSeconds": 180
+      },
+      "finish": {
+        "status": "finished",
+        "attemptId": "fv_e50435eb3040ac8928d195ee-1-1794322969943",
+        "jobId": "fv_e50435eb3040ac8928d195ee",
+        "seed": 1,
+        "finishedAt": "2026-11-10T15:05:49.944Z",
+        "wallSeconds": 180.001656389,
+        "completed": false,
+        "exhausted": false,
+        "watchdog": true,
+        "lastProgress": {
+          "tick": 5426,
+          "simulationSeconds": 90.43333333333334
+        }
+      },
+      "snapshotSha256": "7afe311008630d6557c0071701ad3cc587c6da11725de43c3c9f98b212e6c27d",
+      "lastSnapshot": {
+        "at": "2026-11-10T15:05:20.065Z",
+        "diagnosticOnly": true,
+        "tick": 4861,
+        "simulationSeconds": 81.01666666666667,
+        "memoryUsage": {
+          "rss": 1140768768,
+          "heapTotal": 172617728,
+          "heapUsed": 82764344,
+          "external": 5695780,
+          "arrayBuffers": 2097723
+        },
+        "byOwner": {
+          "2": {
+            "units": 1,
+            "hp": 23
+          },
+          "3": {
+            "units": 17,
+            "hp": 2131
+          }
+        },
+        "eventCounts": {
+          "scenario-trigger-fired": 1,
+          "patrol-issued": 2,
+          "move": 49897,
+          "pursuit-acquired": 2867,
+          "engagement-started": 352,
+          "attack-start": 404,
+          "damage": 382,
+          "contact-reservation-acquired": 158,
+          "contact-reservation-persisted": 27350,
+          "blocked": 65108,
+          "engagement-ended": 300,
+          "contact-release-published": 3,
+          "contact-release-persisted": 12572,
+          "death": 29,
+          "pursuit-invalidated": 140,
+          "contact-reservation-released": 178,
+          "pursuit-route-planned": 1602,
+          "pursuit-route-invalidated": 1210,
+          "pursuit-retarget-requested": 4441,
+          "pursuit-route-advanced": 687,
+          "attack-canceled": 15
+        },
+        "positions": [
+          {
+            "id": 9007,
+            "owner": 2,
+            "hp": 23,
+            "x": 15.010102051443365,
+            "y": 6,
+            "action": "attacking",
+            "pursuitTargetId": 9501,
+            "engagedTargetId": 9501,
+            "attackTargetId": 9501,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 2,
+              "y": 13,
+              "commandX": 2,
+              "commandY": 13,
+              "cohortOriginX": 12.314814814814815,
+              "cohortOriginY": 3.685185185185185,
+              "formationStartX": 14.5,
+              "formationStartY": 5.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 97
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 125,
+              "swing": 55,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9500,
+            "owner": 3,
+            "hp": 140,
+            "x": 14.205426518240536,
+            "y": 5.804993703853938,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 1.5,
+              "formationStartY": 13.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 385
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9501,
+            "owner": 3,
+            "hp": 86,
+            "x": 14.7630302705424,
+            "y": 4.639196328483161,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 2.5,
+              "formationStartY": 14.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 385
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9502,
+            "owner": 3,
+            "hp": 128,
+            "x": 13.775795233056972,
+            "y": 6.304993703852942,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 3.5,
+              "formationStartY": 14.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9503,
+            "owner": 3,
+            "hp": 140,
+            "x": 14.263030260134483,
+            "y": 5.001425799209389,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 2.5,
+              "formationStartY": 13.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9504,
+            "owner": 3,
+            "hp": 137,
+            "x": 14.567329164892781,
+            "y": 3.8607955411434762,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 1.5,
+              "formationStartY": 12.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9505,
+            "owner": 3,
+            "hp": 134,
+            "x": 13.812577119884924,
+            "y": 6.80499370385212,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 1.5,
+              "formationStartY": 11.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9506,
+            "owner": 3,
+            "hp": 134,
+            "x": 13.763030260134483,
+            "y": 5.304993703853938,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 2.5,
+              "formationStartY": 12.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9507,
+            "owner": 3,
+            "hp": 140,
+            "x": 14.455426518240536,
+            "y": 5.75142579920916,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": 9007,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 3.5,
+              "formationStartY": 13.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9508,
+            "owner": 3,
+            "hp": 119,
+            "x": 14.763030260134483,
+            "y": 5.336175135424161,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": 9007,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 4.5,
+              "formationStartY": 14.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9509,
+            "owner": 3,
+            "hp": 107,
+            "x": 14.263030260134483,
+            "y": 5.251425799209389,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 5.5,
+              "formationStartY": 14.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9510,
+            "owner": 3,
+            "hp": 134,
+            "x": 14.859311473995408,
+            "y": 5.086175135424161,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 4.5,
+              "formationStartY": 13.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9511,
+            "owner": 3,
+            "hp": 134,
+            "x": 13.705426518240536,
+            "y": 5.554993703853938,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 3.5,
+              "formationStartY": 12.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9512,
+            "owner": 3,
+            "hp": 140,
+            "x": 14.013030270542655,
+            "y": 4.501425799209389,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 2.5,
+              "formationStartY": 11.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9513,
+            "owner": 3,
+            "hp": 125,
+            "x": 14.263030270542655,
+            "y": 4.501425799209389,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 1.5,
+              "formationStartY": 10.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9514,
+            "owner": 3,
+            "hp": 71,
+            "x": 14.763030270542655,
+            "y": 4.360795541143476,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 2.5,
+              "formationStartY": 10.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 241
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9515,
+            "owner": 3,
+            "hp": 128,
+            "x": 13.705426518240536,
+            "y": 6.054993703853938,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 3.5,
+              "formationStartY": 11.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9516,
+            "owner": 3,
+            "hp": 134,
+            "x": 13.510066080292056,
+            "y": 4.778576148745586,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 4.5,
+              "formationStartY": 12.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          }
+        ],
+        "pursuitRecoveryState": {
+          "attempts": {
+            "mapEntries": [
+              [
+                9507,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 4
+                }
+              ],
+              [
+                9513,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 4
+                }
+              ],
+              [
+                9502,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 3
+                }
+              ],
+              [
+                9505,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 3
+                }
+              ],
+              [
+                9508,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 3
+                }
+              ],
+              [
+                9501,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 1
+                }
+              ],
+              [
+                9511,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 1
+                }
+              ],
+              [
+                9512,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 1
+                }
+              ],
+              [
+                9515,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 1
+                }
+              ]
+            ]
+          },
+          "routes": {
+            "mapEntries": [
+              [
+                9516,
+                {
+                  "targetReferenceId": 9007,
+                  "targetX": 15.010102051443365,
+                  "targetY": 6,
+                  "waypoints": [
+                    {
+                      "x": 13.457277477068926,
+                      "y": 4.3081118003598835
+                    }
+                  ],
+                  "waypointIndex": 0,
+                  "recoveryKind": "local-escape"
+                }
+              ],
+              [
+                9509,
+                {
+                  "targetReferenceId": 9007,
+                  "targetX": 15.010102051443365,
+                  "targetY": 6,
+                  "waypoints": [
+                    {
+                      "x": 14.625,
+                      "y": 5.625
+                    }
+                  ],
+                  "waypointIndex": 0,
+                  "waypointTolerance": 0.1875,
+                  "goalStopSpec": {
+                    "metric": "chebyshev",
+                    "reach": 0.55
+                  }
+                }
+              ]
+            ]
+          },
+          "retargetReady": {
+            "setValues": [
+              9515,
+              9502,
+              9512,
+              9506,
+              9507,
+              9511,
+              9516,
+              9509,
+              9503,
+              9508,
+              9504,
+              9514,
+              9513,
+              9501,
+              9510,
+              9500,
+              9505
+            ]
+          },
+          "nextRetargetScanTick": {
+            "mapEntries": [
+              [
+                9516,
+                4892
+              ],
+              [
+                9024,
+                870
+              ],
+              [
+                9023,
+                539
+              ],
+              [
+                9006,
+                493
+              ],
+              [
+                9507,
+                4864
+              ],
+              [
+                9505,
+                4893
+              ],
+              [
+                9012,
+                870
+              ],
+              [
+                9503,
+                4884
+              ],
+              [
+                9500,
+                4867
+              ],
+              [
+                9511,
+                4884
+              ],
+              [
+                9004,
+                666
+              ],
+              [
+                9002,
+                1129
+              ],
+              [
+                9003,
+                1130
+              ],
+              [
+                9501,
+                4870
+              ],
+              [
+                9502,
+                4880
+              ],
+              [
+                9508,
+                4905
+              ],
+              [
+                9509,
+                4898
+              ],
+              [
+                9506,
+                4862
+              ],
+              [
+                9504,
+                4889
+              ],
+              [
+                9013,
+                1480
+              ],
+              [
+                9519,
+                1287
+              ],
+              [
+                9014,
+                1404
+              ],
+              [
+                9513,
+                4895
+              ],
+              [
+                9008,
+                1141
+              ],
+              [
+                9515,
+                4888
+              ],
+              [
+                9011,
+                1219
+              ],
+              [
+                9015,
+                1928
+              ],
+              [
+                9025,
+                1303
+              ],
+              [
+                9018,
+                1308
+              ],
+              [
+                9010,
+                1337
+              ],
+              [
+                9020,
+                1586
+              ],
+              [
+                9510,
+                4897
+              ],
+              [
+                9518,
+                2099
+              ],
+              [
+                9512,
+                4903
+              ],
+              [
+                9000,
+                2331
+              ],
+              [
+                9007,
+                2232
+              ],
+              [
+                9009,
+                2312
+              ],
+              [
+                9514,
+                4864
+              ]
+            ]
+          },
+          "routeFailures": {
+            "mapEntries": [
+              [
+                9503,
+                53
+              ],
+              [
+                9508,
+                1
+              ],
+              [
+                9509,
+                397
+              ],
+              [
+                9501,
+                4
+              ],
+              [
+                9505,
+                17
+              ],
+              [
+                9514,
+                15
+              ],
+              [
+                9515,
+                5
+              ],
+              [
+                9502,
+                4
+              ],
+              [
+                9500,
+                8
+              ],
+              [
+                9506,
+                160
+              ]
+            ]
+          },
+          "failedTargets": {
+            "mapEntries": [
+              [
+                9507,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9506,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9500,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9501,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9502,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9503,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9511,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9515,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9505,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9509,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9510,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9508,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9512,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ]
+            ]
+          }
+        },
+        "patrolOpeningTargetByOwner": {
+          "mapEntries": [
+            [
+              2,
+              [
+                9518,
+                9517
+              ]
+            ],
+            [
+              3,
+              [
+                9012,
+                9006,
+                9022
+              ]
+            ]
+          ]
+        },
+        "contactReservationState": {
+          "reservations": {
+            "mapEntries": [
+              [
+                "9500:9507",
+                {
+                  "leftId": 9500,
+                  "rightId": 9507,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9500,
+                  "targetId": null,
+                  "acquiredTick": 3792
+                }
+              ],
+              [
+                "9501:9514",
+                {
+                  "leftId": 9501,
+                  "rightId": 9514,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9501,
+                  "targetId": null,
+                  "acquiredTick": 3520
+                }
+              ],
+              [
+                "9502:9515",
+                {
+                  "leftId": 9502,
+                  "rightId": 9515,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9502,
+                  "targetId": null,
+                  "acquiredTick": 3038
+                }
+              ],
+              [
+                "9503:9509",
+                {
+                  "leftId": 9503,
+                  "rightId": 9509,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9503,
+                  "targetId": null,
+                  "acquiredTick": 3533
+                }
+              ],
+              [
+                "9506:9511",
+                {
+                  "leftId": 9506,
+                  "rightId": 9511,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9506,
+                  "targetId": null,
+                  "acquiredTick": 2481
+                }
+              ],
+              [
+                "9508:9510",
+                {
+                  "leftId": 9508,
+                  "rightId": 9510,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9508,
+                  "targetId": null,
+                  "acquiredTick": 2453
+                }
+              ],
+              [
+                "9512:9513",
+                {
+                  "leftId": 9512,
+                  "rightId": 9513,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9512,
+                  "targetId": null,
+                  "acquiredTick": 3835
+                }
+              ]
+            ]
+          },
+          "inheritedExtents": {
+            "mapEntries": [
+              [
+                "9501:9510",
+                0.446978806942
+              ],
+              [
+                "9507:9508",
+                0.415250663785
+              ]
+            ]
+          },
+          "formationPairs": {
+            "mapEntries": []
+          },
+          "alliedTransitPathObstructs": true
+        }
+      }
+    },
+    {
+      "start": {
+        "status": "started",
+        "attemptId": "fv_e50435eb3040ac8928d195ee-1-1794323149946",
+        "jobId": "fv_e50435eb3040ac8928d195ee",
+        "seed": 1,
+        "attempt": 2,
+        "startedAt": "2026-11-10T15:05:49.946Z",
+        "diagnosticProgressPath": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/progress/fv_e50435eb3040ac8928d195ee-1-1794323149946.jsonl",
+        "manifestHash": "bca8e2f98bc04218d3e2bcc6197be50e128077445bfe013e0a14857fce6d7686",
+        "sourceCommit": "9d122bca46891131d819cd8666e61f041691e331",
+        "limitSeconds": 600
+      },
+      "finish": {
+        "status": "finished",
+        "attemptId": "fv_e50435eb3040ac8928d195ee-1-1794323149946",
+        "jobId": "fv_e50435eb3040ac8928d195ee",
+        "seed": 1,
+        "finishedAt": "2026-11-10T15:15:49.968Z",
+        "wallSeconds": 600.0223912109999,
+        "completed": false,
+        "exhausted": false,
+        "watchdog": true,
+        "lastProgress": {
+          "tick": 15130,
+          "simulationSeconds": 252.16666666666666
+        }
+      },
+      "snapshotSha256": "ebcdd46cdcd091ce9b38efffa2c99c5af4dc942649bb90b7d666c04718f82cbd",
+      "lastSnapshot": {
+        "at": "2026-11-10T15:15:20.584Z",
+        "diagnosticOnly": true,
+        "tick": 14348,
+        "simulationSeconds": 239.13333333333333,
+        "memoryUsage": {
+          "rss": 642293760,
+          "heapTotal": 171925504,
+          "heapUsed": 22236528,
+          "external": 5556500,
+          "arrayBuffers": 1311003
+        },
+        "byOwner": {
+          "2": {
+            "units": 1,
+            "hp": 23
+          },
+          "3": {
+            "units": 16,
+            "hp": 1976
+          }
+        },
+        "eventCounts": {
+          "scenario-trigger-fired": 1,
+          "patrol-issued": 2,
+          "move": 89070,
+          "pursuit-acquired": 2869,
+          "engagement-started": 353,
+          "attack-start": 457,
+          "damage": 434,
+          "contact-reservation-acquired": 160,
+          "contact-reservation-persisted": 93757,
+          "blocked": 219850,
+          "engagement-ended": 302,
+          "contact-release-published": 3,
+          "contact-release-persisted": 27654,
+          "death": 30,
+          "pursuit-invalidated": 141,
+          "contact-reservation-released": 229,
+          "pursuit-route-planned": 6408,
+          "pursuit-route-invalidated": 5380,
+          "pursuit-retarget-requested": 23232,
+          "pursuit-route-advanced": 1322,
+          "attack-canceled": 15
+        },
+        "positions": [
+          {
+            "id": 9007,
+            "owner": 2,
+            "hp": 23,
+            "x": 15.010102051443365,
+            "y": 6,
+            "action": "attacking",
+            "pursuitTargetId": 9509,
+            "engagedTargetId": 9509,
+            "attackTargetId": 9509,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 2,
+              "y": 13,
+              "commandX": 2,
+              "commandY": 13,
+              "cohortOriginX": 12.314814814814815,
+              "cohortOriginY": 3.685185185185185,
+              "formationStartX": 14.5,
+              "formationStartY": 5.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 97
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 28,
+              "reload": 178,
+              "swing": 2,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9500,
+            "owner": 3,
+            "hp": 140,
+            "x": 14.205426518240536,
+            "y": 5.804993703853938,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 1.5,
+              "formationStartY": 13.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 385
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9502,
+            "owner": 3,
+            "hp": 128,
+            "x": 13.775795233056972,
+            "y": 6.304993703852942,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 3.5,
+              "formationStartY": 14.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9503,
+            "owner": 3,
+            "hp": 140,
+            "x": 14.292060710130622,
+            "y": 5.001425799209389,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 2.5,
+              "formationStartY": 13.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9504,
+            "owner": 3,
+            "hp": 137,
+            "x": 14.783648000921389,
+            "y": 4.2514257992096,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 1.5,
+              "formationStartY": 12.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9505,
+            "owner": 3,
+            "hp": 134,
+            "x": 13.812577119884924,
+            "y": 6.80499370385212,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 1.5,
+              "formationStartY": 11.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9506,
+            "owner": 3,
+            "hp": 134,
+            "x": 13.792060710130622,
+            "y": 5.304993703853938,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 2.5,
+              "formationStartY": 12.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9507,
+            "owner": 3,
+            "hp": 140,
+            "x": 14.455426518240536,
+            "y": 5.75142579920916,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": 9007,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 3.5,
+              "formationStartY": 13.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9508,
+            "owner": 3,
+            "hp": 119,
+            "x": 14.792060710130622,
+            "y": 5.252366900175521,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 4.5,
+              "formationStartY": 14.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 337
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9509,
+            "owner": 3,
+            "hp": 38,
+            "x": 14.292060710130622,
+            "y": 5.251425799209389,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 5.5,
+              "formationStartY": 14.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9510,
+            "owner": 3,
+            "hp": 134,
+            "x": 14.917871621160524,
+            "y": 5.002366900175521,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 4.5,
+              "formationStartY": 13.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9511,
+            "owner": 3,
+            "hp": 134,
+            "x": 13.705426518240536,
+            "y": 5.554993703853938,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 3.5,
+              "formationStartY": 12.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9512,
+            "owner": 3,
+            "hp": 140,
+            "x": 13.537829771599894,
+            "y": 4.540490871216584,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 2.5,
+              "formationStartY": 11.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9513,
+            "owner": 3,
+            "hp": 125,
+            "x": 14.170666233594538,
+            "y": 4.296869588861045,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 1.5,
+              "formationStartY": 10.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9514,
+            "owner": 3,
+            "hp": 71,
+            "x": 14.750001355270149,
+            "y": 4.5014257992096125,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 2.5,
+              "formationStartY": 10.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 241
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9515,
+            "owner": 3,
+            "hp": 128,
+            "x": 13.705426518240536,
+            "y": 6.054993703853938,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 3.5,
+              "formationStartY": 11.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          },
+          {
+            "id": 9516,
+            "owner": 3,
+            "hp": 134,
+            "x": 13.792060710130622,
+            "y": 4.804993703853938,
+            "action": "idle",
+            "pursuitTargetId": 9007,
+            "engagedTargetId": null,
+            "attackTargetId": null,
+            "moveOrder": {
+              "kind": "scenario-patrol",
+              "x": 13,
+              "y": 2,
+              "commandX": 13,
+              "commandY": 2,
+              "cohortOriginX": 3.45,
+              "cohortOriginY": 12.85,
+              "formationStartX": 4.5,
+              "formationStartY": 12.5,
+              "issuedTick": 0,
+              "triggerId": 0,
+              "openingSeed": 1,
+              "sharedVisionPrimed": false,
+              "motionStartTick": 60,
+              "nextOpeningScanTick": 289
+            },
+            "openingAcquisitionComplete": true,
+            "actionTimers": {
+              "windup": 0,
+              "reload": 0,
+              "swing": 0,
+              "acquire": 0
+            },
+            "avoidance": null
+          }
+        ],
+        "pursuitRecoveryState": {
+          "attempts": {
+            "mapEntries": [
+              [
+                9501,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 4
+                }
+              ],
+              [
+                9504,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 4
+                }
+              ],
+              [
+                9510,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 4
+                }
+              ],
+              [
+                9503,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 3
+                }
+              ],
+              [
+                9509,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 3
+                }
+              ],
+              [
+                9511,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 3
+                }
+              ],
+              [
+                9514,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 3
+                }
+              ],
+              [
+                9515,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 3
+                }
+              ],
+              [
+                9516,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 3
+                }
+              ],
+              [
+                9500,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 2
+                }
+              ],
+              [
+                9506,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 2
+                }
+              ],
+              [
+                9508,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 2
+                }
+              ],
+              [
+                9507,
+                {
+                  "targetReferenceId": 9007,
+                  "count": 1
+                }
+              ]
+            ]
+          },
+          "routes": {
+            "mapEntries": [
+              [
+                9512,
+                {
+                  "targetReferenceId": 9007,
+                  "targetX": 15.010102051443365,
+                  "targetY": 6,
+                  "waypoints": [
+                    {
+                      "x": 13.251165354318191,
+                      "y": 4.520896135696386
+                    }
+                  ],
+                  "waypointIndex": 0,
+                  "recoveryKind": "local-escape"
+                }
+              ],
+              [
+                9513,
+                {
+                  "targetReferenceId": 9007,
+                  "targetX": 15.010102051443365,
+                  "targetY": 6,
+                  "waypoints": [
+                    {
+                      "x": 13.752602484072245,
+                      "y": 4.254058814720349
+                    }
+                  ],
+                  "waypointIndex": 0,
+                  "recoveryKind": "local-escape"
+                }
+              ]
+            ]
+          },
+          "retargetReady": {
+            "setValues": [
+              9515,
+              9502,
+              9512,
+              9506,
+              9507,
+              9511,
+              9516,
+              9509,
+              9503,
+              9508,
+              9504,
+              9514,
+              9513,
+              9501,
+              9510,
+              9500,
+              9505
+            ]
+          },
+          "nextRetargetScanTick": {
+            "mapEntries": [
+              [
+                9516,
+                14396
+              ],
+              [
+                9024,
+                870
+              ],
+              [
+                9023,
+                539
+              ],
+              [
+                9006,
+                493
+              ],
+              [
+                9507,
+                14368
+              ],
+              [
+                9505,
+                14349
+              ],
+              [
+                9012,
+                870
+              ],
+              [
+                9503,
+                14388
+              ],
+              [
+                9500,
+                14371
+              ],
+              [
+                9511,
+                14388
+              ],
+              [
+                9004,
+                666
+              ],
+              [
+                9002,
+                1129
+              ],
+              [
+                9003,
+                1130
+              ],
+              [
+                9501,
+                10102
+              ],
+              [
+                9502,
+                14384
+              ],
+              [
+                9508,
+                14361
+              ],
+              [
+                9509,
+                14354
+              ],
+              [
+                9506,
+                14366
+              ],
+              [
+                9504,
+                14393
+              ],
+              [
+                9013,
+                1480
+              ],
+              [
+                9519,
+                1287
+              ],
+              [
+                9014,
+                1404
+              ],
+              [
+                9513,
+                14351
+              ],
+              [
+                9008,
+                1141
+              ],
+              [
+                9515,
+                14392
+              ],
+              [
+                9011,
+                1219
+              ],
+              [
+                9015,
+                1928
+              ],
+              [
+                9025,
+                1303
+              ],
+              [
+                9018,
+                1308
+              ],
+              [
+                9010,
+                1337
+              ],
+              [
+                9020,
+                1586
+              ],
+              [
+                9510,
+                14353
+              ],
+              [
+                9518,
+                2099
+              ],
+              [
+                9512,
+                14359
+              ],
+              [
+                9000,
+                2331
+              ],
+              [
+                9007,
+                10152
+              ],
+              [
+                9009,
+                2312
+              ],
+              [
+                9514,
+                14368
+              ]
+            ]
+          },
+          "routeFailures": {
+            "mapEntries": [
+              [
+                9503,
+                53
+              ],
+              [
+                9508,
+                708
+              ],
+              [
+                9509,
+                1977
+              ],
+              [
+                9501,
+                4
+              ],
+              [
+                9505,
+                17
+              ],
+              [
+                9514,
+                120
+              ],
+              [
+                9515,
+                5
+              ],
+              [
+                9502,
+                4
+              ],
+              [
+                9500,
+                8
+              ],
+              [
+                9506,
+                1740
+              ],
+              [
+                9510,
+                58
+              ],
+              [
+                9516,
+                57
+              ]
+            ]
+          },
+          "failedTargets": {
+            "mapEntries": [
+              [
+                9501,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9505,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9509,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9508,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9506,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9507,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9510,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9500,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9514,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9502,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9503,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9511,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9513,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ],
+              [
+                9515,
+                {
+                  "setValues": [
+                    9007
+                  ]
+                }
+              ]
+            ]
+          }
+        },
+        "patrolOpeningTargetByOwner": {
+          "mapEntries": [
+            [
+              2,
+              [
+                9518,
+                9517
+              ]
+            ],
+            [
+              3,
+              [
+                9012,
+                9006,
+                9022
+              ]
+            ]
+          ]
+        },
+        "contactReservationState": {
+          "reservations": {
+            "mapEntries": [
+              [
+                "9500:9507",
+                {
+                  "leftId": 9500,
+                  "rightId": 9507,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9500,
+                  "targetId": null,
+                  "acquiredTick": 3792
+                }
+              ],
+              [
+                "9502:9515",
+                {
+                  "leftId": 9502,
+                  "rightId": 9515,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9502,
+                  "targetId": null,
+                  "acquiredTick": 3038
+                }
+              ],
+              [
+                "9503:9509",
+                {
+                  "leftId": 9503,
+                  "rightId": 9509,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9503,
+                  "targetId": null,
+                  "acquiredTick": 3533
+                }
+              ],
+              [
+                "9504:9514",
+                {
+                  "leftId": 9504,
+                  "rightId": 9514,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9504,
+                  "targetId": null,
+                  "acquiredTick": 10065
+                }
+              ],
+              [
+                "9506:9511",
+                {
+                  "leftId": 9506,
+                  "rightId": 9511,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9506,
+                  "targetId": null,
+                  "acquiredTick": 2481
+                }
+              ],
+              [
+                "9508:9510",
+                {
+                  "leftId": 9508,
+                  "rightId": 9510,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9508,
+                  "targetId": null,
+                  "acquiredTick": 2453
+                }
+              ],
+              [
+                "9512:9516",
+                {
+                  "leftId": 9512,
+                  "rightId": 9516,
+                  "kind": "allied-transit",
+                  "collisionExtent": 0.25,
+                  "attackSurfaceExtent": 0.5,
+                  "pathObstructs": true,
+                  "mayDeepen": true,
+                  "initiatorId": 9512,
+                  "targetId": null,
+                  "acquiredTick": 10186
+                }
+              ]
+            ]
+          },
+          "inheritedExtents": {
+            "mapEntries": [
+              [
+                "9507:9508",
+                0.499058899034
+              ]
+            ]
+          },
+          "formationPairs": {
+            "mapEntries": []
+          },
+          "alliedTransitPathObstructs": true
+        }
+      }
+    }
+  ],
+  "diagnosis": "A valid 1/64-tile route reaches the unchanged attack envelope where the 1/16-tile grid contains no legal corridor. Static circular clearance and dynamic contact reservations are retained. This is a planning discretization repair, not a collision or range tolerance increase.",
+  "behaviorChange": "After both coarser searches fail, refine a bounded local corridor using the same global grid origin. Only route geometry changes; no source context, stats, seed, time step, attack reach, collision surface or winner logic changes.",
+  "verification": {
+    "syntheticTests": 88,
+    "passed": 88,
+    "failed": 0,
+    "noCompletedCampaignSeedUsedAsRegression": true,
+    "diagnosticGeometryNotNativeResult": true
+  },
+  "productionEligible": false
+}

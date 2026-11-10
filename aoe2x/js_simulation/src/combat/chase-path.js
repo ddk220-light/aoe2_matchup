@@ -648,6 +648,38 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
     if (cellTiles === CELL_TILES) return planPersistentChaseRoute(
       mover, target, obstacles, map, { ...options, cellTiles: CELL_TILES / 4 },
     );
+    if (cellTiles === CELL_TILES / 4) {
+      // A contact-width pocket can be narrower than a fine cell. Search a
+      // smaller local configuration space at the next resolution, rather
+      // than rasterizing the entire map at that resolution for every actor.
+      // Padding admits a detour around a full body on either side. Failure
+      // remains failure; neither collision surfaces nor attack reach change.
+      const padding = 2 * (collisionRadius(mover) + Math.max(
+        collisionRadius(target), ...obstacles.map(collisionRadius),
+        ...(map.obstacles ?? []).map(obstacleRadius),
+      ));
+      const resolution = CELL_TILES / 16;
+      const floor = value => Math.floor(value / resolution) * resolution;
+      const ceil = value => Math.ceil(value / resolution) * resolution;
+      const left = Math.max(0, floor(Math.min(mover.x, target.x) - padding));
+      const top = Math.max(0, floor(Math.min(mover.y, target.y) - padding));
+      const right = Math.min(map.width, ceil(Math.max(mover.x, target.x) + padding));
+      const bottom = Math.min(map.height, ceil(Math.max(mover.y, target.y) + padding));
+      const shift = body => ({ ...body, x: body.x - left, y: body.y - top });
+      const nearby = body => body.x >= left - padding && body.x <= right + padding
+        && body.y >= top - padding && body.y <= bottom + padding;
+      const local = planPersistentChaseRoute(shift(mover), shift(target),
+        obstacles.filter(nearby).map(shift), {
+          ...map, width: right - left, height: bottom - top,
+          obstacles: (map.obstacles ?? []).filter(nearby).map(shift),
+        }, { ...options, cellTiles: CELL_TILES / 16 });
+      if (!local || local.stand) return local;
+      return Object.freeze({ ...local, targetX: target.x, targetY: target.y,
+        waypoints: Object.freeze(local.waypoints.map(point => Object.freeze({
+          x: point.x + left, y: point.y + top,
+        }))),
+      });
+    }
     return Object.freeze({ stand: true });
   }
   const path = [];

@@ -1,5 +1,23 @@
 # Recovery of 36 unfinished forecast contexts
 
+## Current result — November 10, 2026, 7:18 a.m. PST
+
+All 36 contexts have complete, independently audited recovery evidence,
+covering 220 displayed cells. See [RESULTS.md](RESULTS.md) and immutable
+[snapshot 002](correction-snapshots/002/verification.json): 11 single-seed
+confirmations, 25 multi-seed validations, 34 retained forecasts and two changed
+outcomes (including one mixed-winner set). The 19 older-engine contexts were
+rerun under the owner's explicit exception; all 57 new seeds retained their
+earlier winner. The 16 pursuit/patrol cases and the collision case also completed.
+
+The package contains 93 individual seed records: 80 new recovery measurements
+and 13 preserved original native measurements. Six completed seed sets span
+engine versions and remain explicitly identified. The frozen campaign and
+production remain unchanged. All runners have exited; recurring tasks remain
+disabled. New checkpoints and exports are local Git commits, not pushed.
+
+The sections below preserve the preparation and first-result history.
+
 The owner authorized fixing the 36 after the reviewed-data production release.
 That release is verified at `634554b39a46ad9d05081d5efcf1691a8fbd3c39`.
 Recovery is local research on `simulations/civ-forecast-recovery-2026-11-10`.

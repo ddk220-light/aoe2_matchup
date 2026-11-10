@@ -1,5 +1,37 @@
 # Validate the remaining matchup forecasts
 
+## Current owner instruction: local research only, no builds
+
+The owner authorized resumption: “ok, continue but make sure no more builds until
+I say to deploy to prod.” This supersedes the temporary process/monitor pause
+below. Continue the same four-worker forecast research and normal hourly monitor;
+all Git pushes remain blocked. Keep the local pre-push guard installed, never
+bypass it, and never push another branch to evade it. No Vercel preview or
+production build, website build/export, deployment, release preview or serving
+database import is authorized. A future production release needs a new explicit
+owner instruction.
+
+Research checkpoints, independent reviewed-only exports and milestone reports
+must now be committed locally on this research branch. Do not require a source
+commit to exist on the remote to validate local evidence. Check the local Git
+objects, hashes, full seed requirements and review references instead. Preserve
+the production bookmark checks. Treat the runner's blocked push / remotePending
+as intentional; do not repair it by removing the guard. Report local checkpoint
+status honestly, never say a new checkpoint/report was pushed. Save the reporting
+cursor and report locally before returning a milestone report. All other frozen
+physics, inputs, ordering, 1/3/10 distinct-seed, no-replay and held-context rules
+below remain in force.
+
+The suspended processes are resumed in place. The main Node event-loop timer
+clock and native timer deadline are rebased by the suspended interval before
+SIGCONT, preserving their logical remaining watchdog budgets. This recovery was
+first verified with a timer-only control process; no matchup was executed for
+the recovery test. Worker/battle state, physics files, seeds and completed records
+are untouched. Preserve the recovery receipt under
+`cost-holds/2026-11-10/resume-local-only/`. The four in-flight records' measured
+wallSeconds include the administrative pause; retain those values and use the
+receipt to distinguish processing time from suspension in later timing analysis.
+
 ## Owner cost hold — 2026-11-10
 
 The owner ordered Vercel deployments to stop after reporting build CPU costs:

@@ -1,0 +1,62 @@
+{
+  "sourceCommit": "13b854e0cd2fb6717ce295a4ca55ab5e2011be96",
+  "reviewedOnly": true,
+  "contexts": 35,
+  "displayedCells": 219,
+  "singleSeedConfirmations": 11,
+  "multiSeedValidations": 24,
+  "changed": 2,
+  "retained": 33,
+  "mixedWinners": 1,
+  "mixedEngineVersionSets": 5,
+  "individualSeedRecords": 90,
+  "sourceFilesVerifiedAgainstLocalGitObjects": {
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/audits/progress-002.json": {
+      "commit": "13b854e0cd2fb6717ce295a4ca55ab5e2011be96",
+      "sha256": "3b053622f56035a5b4de6751660c0382474becf78583d9277e70bb21424a0644"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/collision-core-v1/review.json": {
+      "commit": "13b854e0cd2fb6717ce295a4ca55ab5e2011be96",
+      "sha256": "a0e2b49fdf6be3a0961f8c8c7ca157e613fe851c81cc359ba6b933d44b340be1"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/collision-core-v1/input.json": {
+      "commit": "13b854e0cd2fb6717ce295a4ca55ab5e2011be96",
+      "sha256": "ae5ef3ca012e90f05089f9c90024dc97bfa54fe59df9408ee7b3a1a63274daac"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/collision-core-v1/runs.jsonl": {
+      "commit": "13b854e0cd2fb6717ce295a4ca55ab5e2011be96",
+      "sha256": "fb3d99ec918a7cfea206eec89c8113f19349e7f05aa45b8388a046121a704e72"
+    },
+    "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl": {
+      "commit": "a837ceeb9686ced81e051e6691d4c3456a25854a",
+      "sha256": "4c492b1d6ea61640f15e09d3237efd78832e43e279be3972eb3f6f997d77583a"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/runs.jsonl": {
+      "commit": "13b854e0cd2fb6717ce295a4ca55ab5e2011be96",
+      "sha256": "3c25dc053382b6cc4dfb18ecd06c742aa692c05af762d996507267ab6477fada"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/runs.jsonl": {
+      "commit": "13b854e0cd2fb6717ce295a4ca55ab5e2011be96",
+      "sha256": "31235f71b2ac60e8f3b3bb7f64e5fa74943ef8d3983112233b697206b2088776"
+    },
+    "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/runs.jsonl": {
+      "commit": "a837ceeb9686ced81e051e6691d4c3456a25854a",
+      "sha256": "b6de6203383d8c622fe82a4b8e8e9d533d80dec69c0b2d2cc9739c0422a618dc"
+    }
+  },
+  "outputSha256": {
+    "runs.csv": "763acfbbc2fdbb99fa6d8d11dfbd7b15d1c3f02ff165ef11d18f508995624125",
+    "matchup-reviews.json": "6d38c856ec7e178b1a01ace25cedb89f7c01e16d7fd26eb12a30d99594796289",
+    "runs.jsonl.gz": "2e56dd312c5e6b73129a5e92b22f5b6ed501ba7caf9df01695ef4a2efaa7a39b",
+    "matchups.csv": "79467d8b7bf89adcc5b0e46a0f9c4e01c4d88421ce03675926a2e42a5e90cf16"
+  },
+  "simulationsExecutedForExport": 0,
+  "productionEligible": false,
+  "publication": "local only",
+  "limitations": [
+    "These are separately versioned recovery results; frozen campaign records and production are unchanged.",
+    "Mixed-engine seed sets retain original per-run provenance and must not be called homogeneous frozen-engine validation.",
+    "Agreement-dependent stopping cannot estimate unbiased global forecast accuracy.",
+    "Per-run terminal measurements and evidence hashes are included. This is not a frame-by-frame event recording."
+  ]
+}

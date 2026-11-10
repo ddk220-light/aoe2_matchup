@@ -1,0 +1,42 @@
+{
+  "pid": 1248054,
+  "suspendedLoopMonotonicMs": 449067807,
+  "resumedLoopMonotonicMs": 449069523,
+  "excludedSuspensionAndUnobservedIdleMs": 1716,
+  "timerCount": 1,
+  "preservedTimers": [
+    {
+      "deadlineRemainingMs": 25,
+      "timerAddress": "0x238627c8",
+      "callback": "node::Environment::RunTimers",
+      "logicalClockBefore": 147,
+      "logicalClockAfter": 147
+    }
+  ],
+  "memoryChanges": [
+    {
+      "address": "0x6b0dcc0",
+      "before": 449067807,
+      "after": 449069523
+    },
+    {
+      "address": "0x23862848",
+      "before": 449067832,
+      "after": 449069548
+    },
+    {
+      "address": "0x23862cf8",
+      "before": 449067660,
+      "after": 449069376
+    }
+  ],
+  "battleStateAccessedOrChanged": false,
+  "physicsOrSeedSourceFilesChanged": false,
+  "newSimulationExecutionStartedForRecovery": false,
+  "resumedAtUnixNs": 1794285067109942464,
+  "test": "two suspended JS deadlines retain remaining budgets and relative spacing",
+  "passed": true,
+  "timerASecondsAfterResume": 0.25531354802660644,
+  "timerBSecondsAfterResume": 0.5510320659959689,
+  "simulationExecutions": 0
+}

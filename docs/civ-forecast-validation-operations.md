@@ -1,6 +1,26 @@
 # Validate the remaining matchup forecasts
 
-## Current owner instruction: local research only, no builds
+## Current owner instruction: stop recurring work and publish the research checkpoint
+
+The owner now requested: “Stop recurring tasks, commit and push to git, don't
+deploy anything to prod.” This authorizes one publication of the completed
+research checkpoint on `simulations/civ-forecast-validation-2026-11-07`, superseding
+the earlier local-only push hold for this checkpoint. No build, preview deployment,
+production deployment, serving database import, simulation rerun or further
+recurring research is authorized. Both AoE2 recurring tasks are confirmed disabled;
+the ordinary queue and its workers have stopped. The 36 held/exhausted contexts
+remain unfinished and require separate recovery review.
+
+The research branch commits `git.deploymentEnabled: false` in `vercel.json`.
+The CI workflow only accepts pushes to main/staging, which must remain untouched.
+The pre-push guard may admit only the exact owner-approved research commit/ref
+pair for this publication; restore its original general block immediately after
+the attempt. Do not enable future automatic checkpoint pushes. Preserve historical
+local-only reports and receipts as records of their original state. See campaign
+`closeout/2026-11-10/owner-publication-authorization.json`; that preparation record
+does not by itself establish remote push success.
+
+## Previous owner instruction: local research only, no builds
 
 The owner authorized resumption: “ok, continue but make sure no more builds until
 I say to deploy to prod.” This supersedes the temporary process/monitor pause

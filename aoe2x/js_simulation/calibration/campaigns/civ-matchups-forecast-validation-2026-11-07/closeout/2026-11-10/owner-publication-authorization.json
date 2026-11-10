@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-10T05:17:56.755015-08:00",
+  "ownerInstruction": "All done now? Stop recurring tasks, commit and push to git, don't deploy anything to prod. This is very useful and valuable data to review!",
+  "scope": "One owner-authorized publication of the completed research checkpoint to the existing research branch; no build or deployment.",
+  "branch": "simulations/civ-forecast-validation-2026-11-07",
+  "remote": "https://github.com/ddk220-light/aoe2_matchup.git",
+  "previousRemoteCommit": "76a1c5ccd4cd86b93314755357ae1749b1288735",
+  "researchCloseoutCommit": "aa13f7f4b3f91214358052f4918dcaf1f47b8df9",
+  "reviewedContexts": 39112,
+  "inventoryContexts": 39148,
+  "remainingHeld": 24,
+  "remainingExhausted": 12,
+  "nativeValidationComplete": false,
+  "ordinaryQueueFinished": true,
+  "activeWorkers": 0,
+  "recurringTasks": [
+    {
+      "id": "6ae5866e15d481918ed2ddb5cb369b74",
+      "title": "Validate remaining matchup forecasts",
+      "is_enabled": false
+    },
+    {
+      "id": "6ae3bbf505a881918a2588fac11afbb1",
+      "title": "Unit simulation completion",
+      "is_enabled": false
+    }
+  ],
+  "deploymentPrevention": {
+    "committedVercelConfig": "vercel.json",
+    "git.deploymentEnabled": false,
+    "documentation": "https://vercel.com/docs/project-configuration/git-configuration",
+    "githubWorkflowPushBranches": [
+      "staging",
+      "main"
+    ],
+    "productionCommit": "a2c963466d7b98356d63a6920b8828f7286f8ec0",
+    "productionDeployment": "dpl_2tVgwZWaRH5hPmmDh7gY8b2dnHJr",
+    "researchBranchDeploymentsBeforePush": 0
+  },
+  "guard": {
+    "originalSha256": "2f1bd8ee79d74e0bce72492574ec8c53164df0ceaff9fdd0ac45d1f7b03ad005",
+    "policy": "Allow only the exact approved local/remote branch and commit tuple, with the committed deployment-disable configuration verified; restore original guard immediately after the push attempt.",
+    "generalPushHoldRemains": true
+  },
+  "publicationStatus": "prepared; this record does not claim push completion",
+  "historicalLocalOnlyReceiptsUnchanged": true,
+  "noSimulationsExecuted": true,
+  "noBuildOrDeploymentAuthorized": true
+}

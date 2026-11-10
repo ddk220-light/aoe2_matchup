@@ -85,7 +85,8 @@ immutable(lock, {pid: process.pid, manifestHash, sourceCommit, startedAt: new Da
 mkdirSync(resolve(dir, 'progress'), {recursive: true});
 mkdirSync(resolve(dir, 'reviews'), {recursive: true});
 const pool = new RankingWorkerPool(4, {workerUrl: new URL('../recovery-validation-worker.mjs', import.meta.url), maxTicks: Number.MAX_SAFE_INTEGER});
-const stopRequested = () => existsSync(resolve(dir, 'STOP'));
+let administrativeError = null;
+const stopRequested = () => administrativeError !== null || existsSync(resolve(dir, 'STOP'));
 let nextCase = 0;
 async function runCase(c) {
   if (exhaustedJobs.has(c.job.id)) return;
@@ -136,7 +137,7 @@ async function runCase(c) {
     reviewedAt: new Date().toISOString(), status: 'candidate_protocol_complete', frozenCampaignResult: false, productionEligible: false,
     physicsVersions: [...new Set(all.map(r => r.physicsVersion))],
     samplingDecision: decision(c), outcome: screeningOutcome(c.job, all, c.originalOutcomes, policy),
-    recordReferences: [...c.preservedNativeReferences.map(ref => ({...ref, record: undefined, seed: ref.record.seed, physicsVersion: ref.record.physicsVersion})),
+    recordReferences: [...c.preservedNativeReferences.map(({record, ...ref}) => ({...ref, seed: record.seed, physicsVersion: record.physicsVersion})),
       ...rows.filter(r => r.matchupId === c.job.id).map(r => ({path: rowsPath, seed: r.seed, physicsVersion: r.physicsVersion, recordHash: digest(r)}))],
     authorizedCrossEngineRerun: c.category === 'cross_engine_projection',
     exactReplay: {required: false, performed: false, exact: null},
@@ -146,7 +147,15 @@ async function runCase(c) {
 }
 try {
   await Promise.all(Array.from({length: 4}, async () => {
-    while (nextCase < cases.length && !stopRequested()) await runCase(cases[nextCase++]);
+    try {
+      while (nextCase < cases.length && !stopRequested()) await runCase(cases[nextCase++]);
+    } catch (error) {
+      // Let already dispatched battles finish and save their results before
+      // closing the pool. An administrative error is never a battle result.
+      administrativeError = error;
+      append(resolve(dir, 'administrative-errors.jsonl'), {at: new Date().toISOString(), name: error.name, message: error.message, stack: error.stack});
+    }
   }));
   console.log(JSON.stringify({finished: true, stoppedBetweenAttempts: stopRequested(), completedCases: cases.filter(c => !decision(c).requiredSeeds.length).length, exhaustedJobs: [...exhaustedJobs]}));
+  if (administrativeError) throw administrativeError;
 } finally { await pool.close(); unlinkSync(lock); }

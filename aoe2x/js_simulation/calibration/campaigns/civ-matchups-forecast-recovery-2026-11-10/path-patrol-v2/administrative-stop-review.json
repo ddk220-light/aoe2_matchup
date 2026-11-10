@@ -1,0 +1,50 @@
+{
+  "at": "2026-11-10T15:01:43.834539+00:00",
+  "kind": "administrative_runner_error",
+  "cause": "Review canonical hashing rejected an undefined record property; worker pool closed on review exception. Engine physics did not throw.",
+  "completedResultsPreserved": 5,
+  "completedSeedsRerun": false,
+  "unclosedStarts": [
+    {
+      "status": "started",
+      "attemptId": "fv_5e1e0d268234acff1d6e9008-2-1794322864746",
+      "jobId": "fv_5e1e0d268234acff1d6e9008",
+      "seed": 2,
+      "attempt": 2,
+      "startedAt": "2026-11-10T15:01:04.746Z",
+      "diagnosticProgressPath": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/progress/fv_5e1e0d268234acff1d6e9008-2-1794322864746.jsonl",
+      "manifestHash": "161a25a6eb95c07a3350097388d180042437898f332876923b084af9faf30f98",
+      "sourceCommit": "e5526a47e83a36422476374771154164f1548424",
+      "limitSeconds": 600
+    },
+    {
+      "status": "started",
+      "attemptId": "fv_c553e033f98149a99dc0ffcf-1-1794322864747",
+      "jobId": "fv_c553e033f98149a99dc0ffcf",
+      "seed": 1,
+      "attempt": 2,
+      "startedAt": "2026-11-10T15:01:04.747Z",
+      "diagnosticProgressPath": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/progress/fv_c553e033f98149a99dc0ffcf-1-1794322864747.jsonl",
+      "manifestHash": "161a25a6eb95c07a3350097388d180042437898f332876923b084af9faf30f98",
+      "sourceCommit": "e5526a47e83a36422476374771154164f1548424",
+      "limitSeconds": 600
+    },
+    {
+      "status": "started",
+      "attemptId": "fv_5bc5ce13eed6d3668dda1e1c-0-1794322864749",
+      "jobId": "fv_5bc5ce13eed6d3668dda1e1c",
+      "seed": 0,
+      "attempt": 2,
+      "startedAt": "2026-11-10T15:01:04.749Z",
+      "diagnosticProgressPath": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/progress/fv_5bc5ce13eed6d3668dda1e1c-0-1794322864749.jsonl",
+      "manifestHash": "161a25a6eb95c07a3350097388d180042437898f332876923b084af9faf30f98",
+      "sourceCommit": "e5526a47e83a36422476374771154164f1548424",
+      "limitSeconds": 600
+    }
+  ],
+  "unclosedStartsWereNotDispatched": true,
+  "evidence": "Each unclosed start follows PoolClosed. RankingWorkerPool.run throws synchronously if closed; all three paths do not exist.",
+  "nativeFailuresAdded": 0,
+  "normalRetryBudgetResetForAdministrativeInterruption": true,
+  "logSha256": "0dc55c994b50165745cbee9ebeafb700a9ac4958042b8a1054467e052f69a7c4"
+}

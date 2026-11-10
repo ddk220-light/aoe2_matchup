@@ -286,6 +286,25 @@ separate recovery review; assign no native outcome, review or correction and
 do not retry it. The ordinary four-worker queue continues. No simulation was
 executed for this diagnosis, and the earlier milestone report remains unchanged.
 
+`fv_5184d46798ee328659752ef9`, seed 0, Sicilian Elite Skirmisher /
+Mapuche Elite Kona, counts 27/19, exhausted all four normal watchdogs on
+November 9, 2026, at 11:51:50.115 p.m. PST (America/Los_Angeles). No seed
+completed. The four saved timelines have constant-survivor/HP suffixes: one
+skirmisher at 22 HP and eighteen Elite Kona at 2,460 combined HP. The suffixes
+contain 5/19/59/119 snapshots and equally many distinct position states, with
+1/2/2/2 distinct target states. All sampled survivors in those suffixes are
+idle with null attack targets while twelve movement, pursuit, reservation and
+blocked counters grow; combat counters remain fixed. This is movement and
+replanning without HP progress. The precise cause and real-game outcome remain
+unknown. See `diagnostics/fv_5184d46798ee328659752ef9/REVIEW.json`, bound to
+local source `ebd992b430c44148967480228dd9d5ec6cfa3f29`, every attempt line
+and each closed progress-file hash. The final saved snapshots precede the
+attempts' lastProgress markers; both are retained as diagnostics. Keep this
+twelfth newly exhausted context blocked pending separate recovery review;
+assign no native outcome, review or correction and do not retry it. The normal
+four-worker queue continues. No simulation was executed for this diagnosis;
+earlier milestone reports remain unchanged.
+
 ## Current execution policy: 1 / 3 / 10 distinct seeds, no replays
 
 The owner explicitly removed all same-seed replays: “In any case, it should

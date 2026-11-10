@@ -6,6 +6,8 @@ The owner explicitly requested: “ok, then first update the matchup table, comm
 
 Preserve the frozen campaign, existing native evidence, all completed seeds, held-context provenance and administrative-pause receipts. Recovery engine changes and results require separate versioning; never turn cross-engine projections into frozen-engine measurements. Recurring tasks remain disabled. The research pre-push guard remains installed; this one website release does not authorize future automatic releases or checkpoint pushes. Record preparation and actual deployment verification separately under `website-releases/2026-11-10/`. Earlier hold/publication sections below are historical and apply except where this explicit instruction supersedes them.
 
+The one-time release is now verified live at commit `634554b39a46ad9d05081d5efcf1691a8fbd3c39`, serving DB SHA-256 `eca8b868fa99cacb4789ec9ce6fec7ecb8058f58b587c8ee51fd1969fa10af29`. Both staging and main CI jobs passed, and production evidence matches the committed snapshot. Read `website-releases/2026-11-10/verification.json` and the updated production bookmark. No further production release is authorized. Recovery work starts separately; the frozen campaign and recurring tasks stay stopped.
+
 ## Previous owner instruction: stop recurring work and publish the research checkpoint
 
 The owner now requested: “Stop recurring tasks, commit and push to git, don't

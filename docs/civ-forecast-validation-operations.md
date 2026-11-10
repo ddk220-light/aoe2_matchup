@@ -20,6 +20,20 @@ local-only reports and receipts as records of their original state. See campaign
 `closeout/2026-11-10/owner-publication-authorization.json`; that preparation record
 does not by itself establish remote push success.
 
+## Review of the 36 unfinished contexts — November 10, 2026
+
+The owner requested “Ok review the 36.” The saved-evidence review is complete:
+19 different-engine projections, eight fixed-position pursuit stalls, six moving
+without combat, two idle patrol-endpoint cases, and one collision exception.
+These cover 220 displayed cells. No context was promoted and no simulation was
+executed. Read campaign `recovery-review/2026-11-10/README.md`, the full 36-case
+CSV and source-bound JSON for findings and recovery recommendations. This review
+includes the first held case's unclosed fourth diagnostic timeline and the
+four isolated seed-0 threshold matches without discarding known later failures.
+Keep recurring tasks stopped and all original evidence unchanged. A review is
+not authorization to restart the campaign, retry seeds, change physics, publish
+new commits automatically, build or deploy. New review artifacts remain local.
+
 ## Previous owner instruction: local research only, no builds
 
 The owner authorized resumption: “ok, continue but make sure no more builds until

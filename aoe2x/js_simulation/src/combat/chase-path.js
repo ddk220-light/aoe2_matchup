@@ -298,16 +298,16 @@ export function planChaseAim(mover, target, obstacles, map, options = {}) {
 }
 
 
-function addHardBody(blocked, body, reach, cols, rows) {
-  const loX = Math.max(0, Math.floor((body.x - reach) / CELL_TILES - 0.5) + 1);
-  const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / CELL_TILES - 0.5) - 1);
-  const loY = Math.max(0, Math.floor((body.y - reach) / CELL_TILES - 0.5) + 1);
-  const hiY = Math.min(rows - 1, Math.ceil((body.y + reach) / CELL_TILES - 0.5) - 1);
+function addHardBody(blocked, body, reach, cols, rows, cellTiles = CELL_TILES) {
+  const loX = Math.max(0, Math.floor((body.x - reach) / cellTiles - 0.5) + 1);
+  const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / cellTiles - 0.5) - 1);
+  const loY = Math.max(0, Math.floor((body.y - reach) / cellTiles - 0.5) + 1);
+  const hiY = Math.min(rows - 1, Math.ceil((body.y + reach) / cellTiles - 0.5) - 1);
   const distance = body.owner === undefined ? Math.hypot : Math.max;
   for (let cy = loY; cy <= hiY; cy += 1) {
     for (let cx = loX; cx <= hiX; cx += 1) {
-      const centreX = (cx + 0.5) * CELL_TILES;
-      const centreY = (cy + 0.5) * CELL_TILES;
+      const centreX = (cx + 0.5) * cellTiles;
+      const centreY = (cy + 0.5) * cellTiles;
       if (distance(Math.abs(centreX - body.x), Math.abs(centreY - body.y)) < reach) {
         blocked[cellIndex(cx, cy, cols)] = 1;
       }
@@ -317,15 +317,15 @@ function addHardBody(blocked, body, reach, cols, rows) {
 
 
 function addAlliedBody(alliedOccupancy, alliedHardOccupancy, congestion,
-  body, reach, hard, cols, rows) {
-  const loX = Math.max(0, Math.floor((body.x - reach) / CELL_TILES - 0.5) + 1);
-  const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / CELL_TILES - 0.5) - 1);
-  const loY = Math.max(0, Math.floor((body.y - reach) / CELL_TILES - 0.5) + 1);
-  const hiY = Math.min(rows - 1, Math.ceil((body.y + reach) / CELL_TILES - 0.5) - 1);
+  body, reach, hard, cols, rows, cellTiles = CELL_TILES) {
+  const loX = Math.max(0, Math.floor((body.x - reach) / cellTiles - 0.5) + 1);
+  const hiX = Math.min(cols - 1, Math.ceil((body.x + reach) / cellTiles - 0.5) - 1);
+  const loY = Math.max(0, Math.floor((body.y - reach) / cellTiles - 0.5) + 1);
+  const hiY = Math.min(rows - 1, Math.ceil((body.y + reach) / cellTiles - 0.5) - 1);
   for (let cy = loY; cy <= hiY; cy += 1) {
     for (let cx = loX; cx <= hiX; cx += 1) {
-      const centreX = (cx + 0.5) * CELL_TILES;
-      const centreY = (cy + 0.5) * CELL_TILES;
+      const centreX = (cx + 0.5) * cellTiles;
+      const centreY = (cy + 0.5) * cellTiles;
       const penetration = reach - Math.max(
         Math.abs(centreX - body.x),
         Math.abs(centreY - body.y),
@@ -336,7 +336,7 @@ function addAlliedBody(alliedOccupancy, alliedHardOccupancy, congestion,
       if (hard) {
         alliedHardOccupancy[index] = Math.min(255, alliedHardOccupancy[index] + 1);
       }
-      congestion[index] += Math.ceil(penetration / CELL_TILES) * STRAIGHT_COST;
+      congestion[index] += Math.ceil(penetration / cellTiles) * STRAIGHT_COST;
     }
   }
 }
@@ -372,6 +372,7 @@ function alliedTransitSlotAvailable(mover, body, slots) {
 // shortest physical route; the costs of a dense pack add and make walking
 // around the connected crowd cheaper without a roster-size or unit-name gate.
 function buildPersistentGrid(mover, target, obstacles, cols, rows, options = {}) {
+  const cellTiles = options.cellTiles ?? CELL_TILES;
   const hardBlocked = new Uint8Array(cols * rows);
   const congestion = new Uint32Array(cols * rows);
   const alliedOccupancy = new Uint8Array(cols * rows);
@@ -400,7 +401,7 @@ function buildPersistentGrid(mover, target, obstacles, cols, rows, options = {})
         && !includeNonObstructingContacts) continue;
     const reach = interaction?.collisionExtent ?? moverRadius + obstacleRadius(body);
     if (!dynamic || !areAllies(body, mover)) {
-      addHardBody(hardBlocked, body, reach, cols, rows);
+      addHardBody(hardBlocked, body, reach, cols, rows, cellTiles);
       continue;
     }
     // A planner may admit one ally only when the unified contact authority
@@ -423,6 +424,7 @@ function buildPersistentGrid(mover, target, obstacles, cols, rows, options = {})
       hard,
       cols,
       rows,
+      cellTiles,
     );
   }
   const blocked = new Uint8Array(cols * rows);
@@ -483,9 +485,11 @@ function pursuitStopSpec(mover, target, pairInteractions) {
 }
 
 
-function inGoalEnvelope(cx, cy, target, stopSpec) {
-  const x = (cx + 0.5) * CELL_TILES;
-  const y = (cy + 0.5) * CELL_TILES;
+function inGoalEnvelope(cx, cy, target, stopSpec, cellTiles = CELL_TILES) {
+  return pointInGoalEnvelope((cx + 0.5) * cellTiles, (cy + 0.5) * cellTiles, target, stopSpec);
+}
+
+function pointInGoalEnvelope(x, y, target, stopSpec) {
   const dx = Math.abs(x - target.x);
   const dy = Math.abs(y - target.y);
   const distance = stopSpec.metric === "euclidean" ? Math.hypot(dx, dy) : Math.max(dx, dy);
@@ -493,13 +497,13 @@ function inGoalEnvelope(cx, cy, target, stopSpec) {
 }
 
 
-function envelopeHeuristic(cx, cy, target, stopSpec) {
+function envelopeHeuristic(cx, cy, target, stopSpec, cellTiles = CELL_TILES) {
   // Dijkstra for a circular projectile envelope. A zero heuristic is exact,
   // deterministic, and comfortably bounded by the 64x64 golden map grid.
   // The melee box-envelope keeps the tighter admissible octile heuristic.
   if (stopSpec.metric === "euclidean") return 0;
-  const x = (cx + 0.5) * CELL_TILES;
-  const y = (cy + 0.5) * CELL_TILES;
+  const x = (cx + 0.5) * cellTiles;
+  const y = (cy + 0.5) * cellTiles;
   const dx = Math.max(0, Math.abs(x - target.x) - stopSpec.reach);
   const dy = Math.max(0, Math.abs(y - target.y) - stopSpec.reach);
   // Floor keeps this heuristic admissible for a goal envelope whose edge may
@@ -507,16 +511,16 @@ function envelopeHeuristic(cx, cy, target, stopSpec) {
   return octile(
     0,
     0,
-    Math.floor(dx / CELL_TILES),
-    Math.floor(dy / CELL_TILES),
+    Math.floor(dx / cellTiles),
+    Math.floor(dy / cellTiles),
   );
 }
 
 
-function freezePersistentRoute(target, path, cols) {
+function freezePersistentRoute(target, path, cols, stopSpec, cellTiles = CELL_TILES) {
   const waypoints = Object.freeze(path.slice(1).map((index) => Object.freeze({
-    x: (index % cols + 0.5) * CELL_TILES,
-    y: (Math.floor(index / cols) + 0.5) * CELL_TILES,
+    x: (index % cols + 0.5) * cellTiles,
+    y: (Math.floor(index / cols) + 0.5) * cellTiles,
   })));
   return Object.freeze({
     targetReferenceId: target.referenceId,
@@ -524,6 +528,10 @@ function freezePersistentRoute(target, path, cols) {
     targetY: target.y,
     waypoints,
     waypointIndex: 0,
+    waypointTolerance: cellTiles * 0.75,
+    ...(waypoints.length && inGoalEnvelope(
+      path.at(-1) % cols, Math.floor(path.at(-1) / cols), target, stopSpec, cellTiles,
+    ) ? { goalStopSpec: stopSpec } : {}),
   });
 }
 
@@ -552,8 +560,9 @@ function detourPrefix(path, blocked, congestion, cols, targetX, targetY) {
 // moving target. Unlike planChaseAim, this plans to the actor's physical stop
 // envelope and includes geometric allied congestion in the route cost.
 export function planPersistentChaseRoute(mover, target, obstacles, map, options = {}) {
-  const cols = Math.max(1, Math.round(map.width / CELL_TILES));
-  const rows = Math.max(1, Math.round(map.height / CELL_TILES));
+  const cellTiles = options.cellTiles ?? CELL_TILES;
+  const cols = Math.max(1, Math.round(map.width / cellTiles));
+  const rows = Math.max(1, Math.round(map.height / cellTiles));
   const {
     blocked,
     hardBlocked,
@@ -570,23 +579,24 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
     rows,
     { ...options, mapObstacles: map.obstacles ?? [] },
   );
-  const startX = toCell(mover.x, cols);
-  const startY = toCell(mover.y, rows);
-  const targetX = toCell(target.x, cols);
-  const targetY = toCell(target.y, rows);
+  const gridCell = (position, count) => Math.max(0, Math.min(count - 1, Math.floor(position / cellTiles)));
+  const startX = gridCell(mover.x, cols);
+  const startY = gridCell(mover.y, rows);
+  const targetX = gridCell(target.x, cols);
+  const targetY = gridCell(target.y, rows);
   const startIndex = cellIndex(startX, startY, cols);
   blocked[startIndex] = 0;
   congestion[startIndex] = 0;
   const stopSpec = pursuitStopSpec(mover, target, pairInteractions);
-  if (inGoalEnvelope(startX, startY, target, stopSpec)) return null;
-  if (!lineHasPersistentObstruction(
+  if (pointInGoalEnvelope(mover.x, mover.y, target, stopSpec)) return null;
+  if (!options.includeNonObstructingContacts && !lineHasPersistentObstruction(
     blocked, congestion, cols, startX, startY, targetX, targetY,
   )) return null;
 
   const gScore = new Map([[startIndex, 0]]);
   const cameFrom = new Map();
   const closed = new Set();
-  const startH = envelopeHeuristic(startX, startY, target, stopSpec);
+  const startH = envelopeHeuristic(startX, startY, target, stopSpec, cellTiles);
   const heap = [{ index: startIndex, g: 0, h: startH, f: startH }];
   let goalIndex = null;
   let expansions = 0;
@@ -609,7 +619,8 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
     expansions += 1;
     const cx = current.index % cols;
     const cy = (current.index - cx) / cols;
-    if (inGoalEnvelope(cx, cy, target, stopSpec)) {
+    if (!hardBlocked[current.index]
+        && inGoalEnvelope(cx, cy, target, stopSpec, cellTiles)) {
       goalIndex = current.index;
       break;
     }
@@ -627,21 +638,33 @@ export function planPersistentChaseRoute(mover, target, obstacles, map, options 
       if (known !== undefined && known <= tentative) continue;
       gScore.set(nIndex, tentative);
       cameFrom.set(nIndex, current.index);
-      const h = envelopeHeuristic(nx, ny, target, stopSpec);
+      const h = envelopeHeuristic(nx, ny, target, stopSpec, cellTiles);
       heapPush(heap, { index: nIndex, g: tentative, h, f: tentative + h });
     }
   }
-  if (goalIndex === null) return Object.freeze({ stand: true });
+  if (goalIndex === null) {
+    // Refine a failed coarse search; geometry and attack reach stay identical.
+    // Narrow legal approaches may contain no 0.25-tile cell centre.
+    if (cellTiles === CELL_TILES) return planPersistentChaseRoute(
+      mover, target, obstacles, map, { ...options, cellTiles: CELL_TILES / 4 },
+    );
+    return Object.freeze({ stand: true });
+  }
   const path = [];
   for (let index = goalIndex; index !== undefined; index = cameFrom.get(index)) {
     path.push(index);
     if (index === startIndex) break;
   }
   path.reverse();
+  // The actual mover can be outside range although its containing cell centre
+  // is inside. Retain that exact centre as a real terminal waypoint.
+  if (path.length === 1) path.unshift(startIndex);
   return freezePersistentRoute(
     target,
     detourPrefix(path, blocked, congestion, cols, targetX, targetY),
     cols,
+    stopSpec,
+    cellTiles,
   );
 }
 
@@ -654,7 +677,10 @@ export function advancePersistentChaseRoute(mover, route) {
   while (waypointIndex < route.waypoints.length) {
     const waypoint = route.waypoints[waypointIndex];
     if (Math.hypot(waypoint.x - mover.x, waypoint.y - mover.y)
-        > ROUTE_WAYPOINT_REACHED_TILES + 1e-12) break;
+        > (route.waypointTolerance ?? ROUTE_WAYPOINT_REACHED_TILES) + 1e-12) break;
+    if (waypointIndex === route.waypoints.length - 1 && route.goalStopSpec
+        && !pointInGoalEnvelope(mover.x, mover.y,
+          { x: route.targetX, y: route.targetY }, route.goalStopSpec)) break;
     waypointIndex += 1;
   }
   if (waypointIndex === route.waypointIndex) return route;

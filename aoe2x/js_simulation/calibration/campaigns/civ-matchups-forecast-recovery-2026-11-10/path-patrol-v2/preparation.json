@@ -1,0 +1,33 @@
+{
+  "createdAt": "2026-11-10T15:00:25.937Z",
+  "nativeExecutionsDuringPreparation": 0,
+  "baseManifestAndBothAmendmentsVerified": true,
+  "savedDiagnosticGeometry": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/diagnosis/saved-geometry.json",
+  "savedDiagnosticGeometrySha256": "8adaa5d92c7d3179cbfe87d1702fe7c6b23e7783f74922f9caf9c02e338bdea4",
+  "priorityCases": 16,
+  "authorizedOlderEngineReruns": 19,
+  "protectedNativeSeeds": 13,
+  "alreadyRecoveredCollisionCasePreserved": true,
+  "regressionTests": {
+    "kind": "synthetic mechanics checks, no campaign seed replay",
+    "total": 86,
+    "passed": 86,
+    "failed": 0
+  },
+  "mechanics": [
+    "Do not consume a terminal waypoint until the actor is actually inside its attack envelope.",
+    "Refine a failed coarse route to find narrow legal approaches; keep collision extents unchanged and reject blocked goal centres.",
+    "Release dead opening anchors so delayed units can acquire living enemies.",
+    "Reverse unengaged scenario patrols at their endpoint and preserve combat suspension."
+  ],
+  "patrolReference": {
+    "url": "https://manuals.plus/m/bede02f48ca7b2aae252168379555520636b871dcd6c6fdba8ba2766ea0186e2.pdf",
+    "title": "Age of Empires II: The Age of Kings manual",
+    "quote": "The unit will patrol back and forth from its starting point to the patrol point you select."
+  },
+  "limitations": [
+    "Synthetic tests and saved-state diagnosis establish engine behavior, not full live-game fidelity.",
+    "Old completed native seeds remain at their original engine versions. Combined seed reviews must disclose this."
+  ],
+  "publication": "local only; pre-push guard retained; production unchanged"
+}

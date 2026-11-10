@@ -155,7 +155,7 @@ def main():
  report=analyze();out.mkdir(parents=True,exist_ok=True)
  with (out/'review.json').open('x')as f:json.dump(report,f,indent=2);f.write('\n')
  with (out/'cases.csv').open('x',newline='')as f:
-  keys=['jobId','label','counts','category','displayedCells','completedSeeds','missingSeeds','finding','nextAction'];w=csv.DictWriter(f,fieldnames=keys);w.writeheader()
+  keys=['jobId','label','counts','category','displayedCells','completedSeeds','missingSeeds','finding','nextAction'];w=csv.DictWriter(f,fieldnames=keys,lineterminator='\n');w.writeheader()
   for r in report['cases']:w.writerow({'jobId':r['jobId'],'label':r['label'],'counts':'/'.join(map(str,r['counts'])),'category':r['category'],'displayedCells':r['displayedCells'],'completedSeeds':r.get('completedSeedsInOriginalLedger',[]),'missingSeeds':r.get('knownRequiredMissingSeeds','target-engine evidence not complete'),'finding':r['finding'],'nextAction':r['nextAction']})
  print(json.dumps({k:v for k,v in report.items()if k not in ['cases','sourceHashes']},indent=2))
 if __name__=='__main__':main()

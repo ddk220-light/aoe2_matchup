@@ -1,0 +1,102 @@
+{
+  "createdAt": "2026-11-10T15:17:25.347Z",
+  "simulationExecutionsForAudit": 0,
+  "manifestHash": "1bc425deab7755e62d8da8cee52f09f76cab7160e58739ee288308cf6ae83a92",
+  "sourceCommit": "0439741378b67b369a97bcef331a3dd24252d9fc",
+  "cases": 1,
+  "complete": 1,
+  "remaining": 0,
+  "singleSeedConfirmations": 0,
+  "multiSeedValidations": 1,
+  "changed": 0,
+  "retained": 1,
+  "mixedWinners": 0,
+  "completeWithMixedEngineVersions": 1,
+  "checkedRunReferences": 3,
+  "checkedRuntimeCommitManifests": 1,
+  "unclosedAttempts": [],
+  "exhaustedContexts": [],
+  "frozenSourcesVerified": 50,
+  "productionEligible": false,
+  "publication": "local only",
+  "limitation": "Agreement-dependent stopping is not an unbiased accuracy estimate. Recovery engine behavior has synthetic regression coverage, not a new complete live-game fidelity validation. Mixed-version seed sets are explicitly marked.",
+  "results": [
+    {
+      "jobId": "fv_e50435eb3040ac8928d195ee",
+      "label": "Lithuanians Elite Skirmisher / Gurjaras Heavy Camel Rider",
+      "category": "fixed_position_pursuit",
+      "displayedCells": 1,
+      "complete": true,
+      "evidenceLevel": "multi_seed_validation",
+      "requiredSeeds": [],
+      "outcome": "b_win",
+      "originalOutcomes": [
+        "b_win"
+      ],
+      "changed": false,
+      "mixedWinners": false,
+      "physicsVersions": [
+        "frozen-civ-matchups-v3",
+        "forecast-recovery-local-refinement-v3"
+      ],
+      "review": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/local-refinement-v3/reviews/fv_e50435eb3040ac8928d195ee.json",
+      "earlierEngineComparison": [],
+      "seeds": [
+        {
+          "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+          "line": 23203,
+          "sha256IncludingNewline": "8c0f008c89fe0e4c2e13f5bd2be21e21c07ddec7170674119a6a985ef5dba8c1",
+          "seed": 0,
+          "winnerOwner": 3,
+          "hp": [
+            0,
+            2182
+          ],
+          "survivors": [
+            0,
+            17
+          ],
+          "physicsVersion": "frozen-civ-matchups-v3",
+          "finalStateHash": "e06077d5cd4094b255df027542ab2a91ea9cfdb5d33c678ec0ea43285c82a3fc",
+          "eventLogHash": "cc390cf4648da547044c30fbe1301abf49154f5595b3ba0149d4f2e56871548c"
+        },
+        {
+          "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/local-refinement-v3/runs.jsonl",
+          "line": 1,
+          "sha256IncludingNewline": "d56e4e91fe45ef4d78048df9690025a956e7f37c61534e0de10304929bf76fe2",
+          "seed": 1,
+          "winnerOwner": 3,
+          "hp": [
+            0,
+            2193
+          ],
+          "survivors": [
+            0,
+            18
+          ],
+          "physicsVersion": "forecast-recovery-local-refinement-v3",
+          "finalStateHash": "e49ab93b78849ac9c960d885fcd577779ca82ee1c42c6026f135fed8d2de206e",
+          "eventLogHash": "53390442ec6a2e5f890991302d721a30001429a395e1f144038fe2293b69e43c"
+        },
+        {
+          "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/local-refinement-v3/runs.jsonl",
+          "line": 2,
+          "sha256IncludingNewline": "a9875dd9e05a94dc6f7c35b8ca574df3abfb9f9245f32813ae147afad0998996",
+          "seed": 2,
+          "winnerOwner": 3,
+          "hp": [
+            0,
+            2179
+          ],
+          "survivors": [
+            0,
+            17
+          ],
+          "physicsVersion": "forecast-recovery-local-refinement-v3",
+          "finalStateHash": "3c2cc4f9b3cea36e5ca09ad20141bc62871df676e6e26e640560c102c62372a2",
+          "eventLogHash": "b7fef74ca1e60779749c815612d45e365003934661c3c265193486caf133013c"
+        }
+      ]
+    }
+  ]
+}

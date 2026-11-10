@@ -1,0 +1,47 @@
+{
+  "recordedAt": "2026-11-10T14:15:04.854Z",
+  "baseManifestAndBothAmendmentsVerified": true,
+  "baseRuntimeFilesVerified": 62,
+  "candidateRuntimeChanges": [
+    {
+      "path": "aoe2x/js_simulation/src/combat/ranged-crowding.js",
+      "originalSha256": "6c4b98c52601da822a13042ea8bfb84ef52ff6a19cb8e0b617f4ef49aeb561e9",
+      "sha256": "1f4ec60fdcd182234570bd45a659d551b16d94772c30f382535cd8986b8c2364"
+    }
+  ],
+  "unchangedPhysicalContext": {
+    "counts": [
+      23,
+      27
+    ],
+    "engineFamily": "rvr",
+    "family": "ranged_vs_ranged",
+    "policy": "27-geometric-cost-v3; zero buffers; disableAiOrders; disableKiting; preserveOwnerOrientation",
+    "profiles": [
+      "b21848bddbe33923bfe88d70a5e62d9b2ac199cd5f8ca5e5d1d8079b83014214",
+      "e7c5552f750d74aa2a83fe5fdc236be99ce442290868fe2c6e93266785920a2f"
+    ],
+    "scenarioHash": "430aea829cb96c749d501969fb3c018dbde2601162b68bb36bfac80c4a64b3de",
+    "weightedCosts": [
+      150,
+      107.5
+    ]
+  },
+  "priorSeed0ClosedFailedAttempts": 4,
+  "completedSeedReferences": [],
+  "initialPermittedMissingSeeds": [
+    0
+  ],
+  "regressionValidation": {
+    "kind": "synthetic unit tests, not campaign seed executions",
+    "initialFailure": "Two inherited-overlap tests reproduced RangeError before the repair; two guard tests already passed.",
+    "afterRepair": {
+      "tests": 47,
+      "passed": 47,
+      "failed": 0
+    },
+    "command": "node --test aoe2x/js_simulation/tests/ranged-crowding-inherited-core.test.mjs aoe2x/js_simulation/tests/ranged-crowding.test.mjs aoe2x/js_simulation/tests/movement-collision.test.mjs aoe2x/js_simulation/tests/pair-interactions.test.mjs"
+  },
+  "frozenInputsUnchanged": true,
+  "noNewNativeExecutionDuringPreparation": true
+}

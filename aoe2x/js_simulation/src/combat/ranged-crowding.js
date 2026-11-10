@@ -267,9 +267,12 @@ function crowdReservation(
   // reservation cannot retroactively declare the current geometry invalid.
   const collisionExtent = committedSiegeBody
     ? Math.min(fullExtent, current)
-    : Math.max(
-      fullExtent * RANGED_TRANSIT_BODY_CORE_FRACTION,
-      Math.min(fullExtent, current, projected),
+    : Math.min(
+      current,
+      Math.max(
+        fullExtent * RANGED_TRANSIT_BODY_CORE_FRACTION,
+        Math.min(fullExtent, projected),
+      ),
     );
   const [leftId, rightId] = left.referenceId < right.referenceId
     ? [left.referenceId, right.referenceId]

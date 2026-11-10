@@ -53,3 +53,25 @@ Omitting `--verify-only` executes only missing seeds authorized by that manifest
 Inspect the lock and live process first; never start a second runner. Original
 ledger paths currently refer to the frozen local worktree and must remain
 available for the no-rerun checks. Source hashes are recorded for portability.
+
+## First recovery result — November 10, 2026, 6:15 a.m. PST
+
+The sole seed-0 execution completed normally with no failed recovery attempts:
+Chinese Heavy Scorpion won, with 13 survivors and 620 of 1,380 starting HP
+(44.93%); all 27 opponents were eliminated. The battle ended at tick 3,067
+(51.12 simulated seconds). This agrees with the original forecast and satisfies
+the recorded single-seed rule. Seeds 1..9 are not required and seed 0 must never
+be rerun, including under another engine version.
+
+`collision-core-v1/verification.json` independently checks the saved record,
+attempt journal, review hashes, local source commit and unchanged frozen files.
+The runtime source commit is `1ba6aeb88c01b9c79e02d0068410ff776193bcf5`.
+The runner exited and removed its lock. This new result is committed locally,
+not pushed, and is not included in production.
+
+Recovery has produced a complete candidate result for one of the 36 contexts.
+The other 35 have no new recovery result. The frozen campaign still records
+39,112 complete contexts and 36 unfinished contexts: this separate repair is
+not a retroactive change to that campaign's physics or coverage. Broader
+mechanics/fidelity review and an explicit future release are still required
+before considering candidate evidence for the website.

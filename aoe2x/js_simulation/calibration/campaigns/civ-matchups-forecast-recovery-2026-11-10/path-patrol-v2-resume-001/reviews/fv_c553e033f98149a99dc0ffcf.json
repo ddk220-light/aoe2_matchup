@@ -1,0 +1,54 @@
+{
+  "manifestHash": "bca8e2f98bc04218d3e2bcc6197be50e128077445bfe013e0a14857fce6d7686",
+  "sourceCommit": "9d122bca46891131d819cd8666e61f041691e331",
+  "jobId": "fv_c553e033f98149a99dc0ffcf",
+  "contextHash": "c553e033f98149a99dc0ffcf3350f1a1fe927b9a2f693f4f57a8076e9642e1f7",
+  "label": "Bohemians Elite Hussite Wagon / Khitans Mounted Trebuchet",
+  "reviewedAt": "2026-11-10T15:03:01.915Z",
+  "status": "candidate_protocol_complete",
+  "frozenCampaignResult": false,
+  "productionEligible": false,
+  "physicsVersions": [
+    "frozen-civ-matchups-v3",
+    "forecast-recovery-path-patrol-v2"
+  ],
+  "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "reason": "pre_amendment_in_progress",
+    "firstSeedOutcome": "b_win",
+    "firstSeedAgrees": false,
+    "firstSeedWinnerHpFraction": 0.356140350877193,
+    "minimumWinnerHpFraction": 0.25,
+    "requiredSeeds": []
+  },
+  "outcome": "b_win",
+  "recordReferences": [
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/runs.jsonl",
+      "line": 256,
+      "sha256IncludingNewline": "0f6bc36661453cf15b80064d08132597c77a942a1dfc3afa361f3484c263ab75",
+      "seed": 0,
+      "physicsVersion": "frozen-civ-matchups-v3"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/runs.jsonl",
+      "seed": 1,
+      "physicsVersion": "forecast-recovery-path-patrol-v2",
+      "recordHash": "effa7836cceb03d747f28fa635d90cc286ade7496f4094ced280fb1597b77d29"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/runs.jsonl",
+      "seed": 2,
+      "physicsVersion": "forecast-recovery-path-patrol-v2",
+      "recordHash": "dc5de99061c9ce9c37dee1da7d6d3ee34e87e7c90aef3b917177fdbf667fb36a"
+    }
+  ],
+  "authorizedCrossEngineRerun": false,
+  "exactReplay": {
+    "required": false,
+    "performed": false,
+    "exact": null
+  },
+  "limitation": "Recovery results retain their engine version. A combined protocol may include preserved frozen-engine seeds; it is not a homogeneous frozen-engine validation.",
+  "reviewHash": "23fa7a686e1a50493845f397a391cc1772a359bb703b40426da6ebe0d3c27c64"
+}

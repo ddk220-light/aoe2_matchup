@@ -1,0 +1,56 @@
+{
+  "manifestHash": "bca8e2f98bc04218d3e2bcc6197be50e128077445bfe013e0a14857fce6d7686",
+  "sourceCommit": "9d122bca46891131d819cd8666e61f041691e331",
+  "jobId": "fv_306dd795e5f68374d24e2a99",
+  "contextHash": "306dd795e5f68374d24e2a991eb3984715be59ac83a1fdc17e5677bb1f7b8d53",
+  "label": "Aztecs Elite Skirmisher / Huns Elite Tarkan",
+  "reviewedAt": "2026-11-10T15:02:17.401Z",
+  "status": "candidate_protocol_complete",
+  "frozenCampaignResult": false,
+  "productionEligible": false,
+  "physicsVersions": [
+    "frozen-civ-matchups-v3",
+    "forecast-recovery-path-patrol-v2"
+  ],
+  "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "reason": "pre_amendment_in_progress",
+    "firstSeedOutcome": "a_win",
+    "firstSeedAgrees": true,
+    "firstSeedWinnerHpFraction": 0.9473856209150326,
+    "minimumWinnerHpFraction": 0.25,
+    "requiredSeeds": []
+  },
+  "outcome": "a_win",
+  "recordReferences": [
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+      "line": 5966,
+      "sha256IncludingNewline": "a30357ea144b42f0ba23ec52b25568b4ef671b1ca3cc121315e74312108ee3d0",
+      "seed": 0,
+      "physicsVersion": "frozen-civ-matchups-v3"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/runs.jsonl",
+      "line": 2,
+      "sha256IncludingNewline": "70e0b025e293570775dccde0e238e3205350574f0775bf1fe9df448fde822918",
+      "seed": 1,
+      "physicsVersion": "forecast-recovery-path-patrol-v2"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/runs.jsonl",
+      "line": 5,
+      "sha256IncludingNewline": "af4c9e6bdd4c278ab667d60516588c5a4390b8cd9981a87e43e9e7b6af6caa65",
+      "seed": 2,
+      "physicsVersion": "forecast-recovery-path-patrol-v2"
+    }
+  ],
+  "authorizedCrossEngineRerun": false,
+  "exactReplay": {
+    "required": false,
+    "performed": false,
+    "exact": null
+  },
+  "limitation": "Recovery results retain their engine version. A combined protocol may include preserved frozen-engine seeds; it is not a homogeneous frozen-engine validation.",
+  "reviewHash": "5265db2816cef68f09662e4f7becd76e499f4239b932ef73e3f9ff672841233d"
+}

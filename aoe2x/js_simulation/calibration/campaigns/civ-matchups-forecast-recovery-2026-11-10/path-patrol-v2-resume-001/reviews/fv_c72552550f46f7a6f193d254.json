@@ -1,0 +1,55 @@
+{
+  "manifestHash": "bca8e2f98bc04218d3e2bcc6197be50e128077445bfe013e0a14857fce6d7686",
+  "sourceCommit": "9d122bca46891131d819cd8666e61f041691e331",
+  "jobId": "fv_c72552550f46f7a6f193d254",
+  "contextHash": "c72552550f46f7a6f193d254742286e61967613d00cee4ea7594462d522a7f3c",
+  "label": "Muisca Elite Guecha Warrior / Vikings Champion",
+  "reviewedAt": "2026-11-10T15:05:01.808Z",
+  "status": "candidate_protocol_complete",
+  "frozenCampaignResult": false,
+  "productionEligible": false,
+  "physicsVersions": [
+    "frozen-civ-matchups-v3",
+    "forecast-recovery-path-patrol-v2"
+  ],
+  "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "reason": "pre_amendment_in_progress",
+    "firstSeedOutcome": "a_win",
+    "firstSeedAgrees": true,
+    "firstSeedWinnerHpFraction": 0.4166666666666667,
+    "minimumWinnerHpFraction": 0.25,
+    "requiredSeeds": []
+  },
+  "outcome": "a_win",
+  "recordReferences": [
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+      "line": 20437,
+      "sha256IncludingNewline": "e66fa964b46872f30f31bd15874fca52d0b748bd799894419564bd0ccbfe7514",
+      "seed": 0,
+      "physicsVersion": "frozen-civ-matchups-v3"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl",
+      "line": 20438,
+      "sha256IncludingNewline": "f26e3442b0e281e310aae1b4a5d39567f2bf6d4e124731c36305ecdc88105a32",
+      "seed": 1,
+      "physicsVersion": "frozen-civ-matchups-v3"
+    },
+    {
+      "path": "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/runs.jsonl",
+      "seed": 2,
+      "physicsVersion": "forecast-recovery-path-patrol-v2",
+      "recordHash": "3e766c2d795628fe00e73597700e3ca98b07cf8bd8a2715fb7715aeb06fc4551"
+    }
+  ],
+  "authorizedCrossEngineRerun": false,
+  "exactReplay": {
+    "required": false,
+    "performed": false,
+    "exact": null
+  },
+  "limitation": "Recovery results retain their engine version. A combined protocol may include preserved frozen-engine seeds; it is not a homogeneous frozen-engine validation.",
+  "reviewHash": "d2cfe1091c6969bb90749ba8be4a686af1d555b8b462645fe6819afa5eeea753"
+}

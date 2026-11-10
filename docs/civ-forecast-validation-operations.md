@@ -1,6 +1,12 @@
 # Validate the remaining matchup forecasts
 
-## Current owner instruction: stop recurring work and publish the research checkpoint
+## Current owner instruction: one production data release, then recover the 36
+
+The owner explicitly requested: “ok, then first update the matchup table, commit and push to git, and also deploy to prod with the latest validated data for matchups. then start on the 36.” This authorizes one production release of the complete reviewed-only snapshot 070 (39,112 contexts) and the required website commit/push, checks and deployment. The 36 unfinished contexts stay excluded. After production verification, begin the separately versioned recovery work reviewed on November 10. The owner also accepted the stated several-hour duration.
+
+Preserve the frozen campaign, existing native evidence, all completed seeds, held-context provenance and administrative-pause receipts. Recovery engine changes and results require separate versioning; never turn cross-engine projections into frozen-engine measurements. Recurring tasks remain disabled. The research pre-push guard remains installed; this one website release does not authorize future automatic releases or checkpoint pushes. Record preparation and actual deployment verification separately under `website-releases/2026-11-10/`. Earlier hold/publication sections below are historical and apply except where this explicit instruction supersedes them.
+
+## Previous owner instruction: stop recurring work and publish the research checkpoint
 
 The owner now requested: “Stop recurring tasks, commit and push to git, don't
 deploy anything to prod.” This authorizes one publication of the completed

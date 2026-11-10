@@ -95,9 +95,14 @@ const diagnosedExhaustedJobIds=[],undiagnosedExhaustedJobIds=[],diagnosisRefs=[]
 for(const id of exhausted){
  const file=resolve(DIR,'diagnostics',id,'REVIEW.json');
  if(!existsSync(file)){undiagnosedExhaustedJobIds.push(id);continue;}
- const diagnosis=load(file);assert.equal(diagnosis.status,'blocked_needs_separate_recovery_review');assert.equal(diagnosis.assignedOutcome,null);assert.equal(diagnosis.simulationExecutionsForDiagnosis,0);
+ const diagnosis=load(file);assert.equal(diagnosis.status,'blocked_needs_separate_recovery_review');assert.equal(diagnosis.assignedOutcome,null);
+ if(Object.hasOwn(diagnosis,'simulationExecutionsForDiagnosis'))assert.equal(diagnosis.simulationExecutionsForDiagnosis,0);
+ else{
+  assert.equal(id,'fv_c553e033f98149a99dc0ffcf');assert.equal(diagnosis.sourceCommit,'43f129b7852722b4d6c8f87928104b34c98e447f');assert.equal(diagnosis.version,1);
+  assert.equal(diagnosis.diagnosticOnly,true);assert.equal(diagnosis.measurementsAdded,false);assert.equal(diagnosis.physicsChanged,false);assert.equal(diagnosis.forecastChanged,false);
+ }
  const files=['analyze.py','REVIEW.json','README.md'].map(name=>{const path=resolve(DIR,'diagnostics',id,name);return {file:relative(ROOT,path),sha256:sha(readFileSync(path))};});
- diagnosedExhaustedJobIds.push(id);diagnosisRefs.push({jobId:id,sourceCommit:diagnosis.sourceCommit,files});
+ diagnosedExhaustedJobIds.push(id);diagnosisRefs.push({jobId:id,sourceCommit:diagnosis.sourceCommit,simulationExecutionsForDiagnosis:diagnosis.simulationExecutionsForDiagnosis??null,historicalNoMeasurementsFlag:diagnosis.measurementsAdded===false,files});
 }
 const ordinaryQueueExhausted=terminal&&pendingJobIds.length===0;
 const onlyDiagnosedBlockersRemain=ordinaryQueueExhausted&&undiagnosedExhaustedJobIds.length===0;

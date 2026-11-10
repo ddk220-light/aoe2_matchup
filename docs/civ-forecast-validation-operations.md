@@ -1,5 +1,34 @@
 # Validate the remaining matchup forecasts
 
+## Owner cost hold — 2026-11-10
+
+The owner ordered Vercel deployments to stop after reporting build CPU costs:
+“Stop deploying to vercel!!? ... This is analysis, no prod deployments.”
+This hold supersedes the continuing-run and automatic checkpoint-push instructions
+below until the owner discusses resumption. The scheduled monitor is disabled.
+The existing supervisor (276824) and runner (276825) are suspended with SIGSTOP;
+their locks, saved measurements and in-memory work are retained. Do not start a
+replacement, send SIGCONT, kill either process, or resume a campaign automatically.
+An administrative pause is not a native failure or result. In-flight seeds need
+careful recovery review because wall-clock watchdogs elapsed during the pause;
+never rerun a completed seed or discard a pending completed result.
+
+All pushes from `refs/heads/simulations/*` are blocked by the repository's local
+pre-push hook. Keep new evidence and this hold committed locally; do not bypass
+the hook or push to another branch to evade the hold. The research checkout now
+sets `git.deploymentEnabled` to `false` for every branch inheriting this config.
+That change is local and must not be presented as a newly published project-wide
+Vercel setting. No build or deployment is permitted to test it.
+
+Vercel inspection found at least 300 Git-triggered preview deployments from the
+older mismatch-analysis branch, dated 2026-11-05 through 2026-11-07. These consumed
+build work despite not changing production. The current forecast branch returned
+zero deployments, and the team had no BUILDING, QUEUED or INITIALIZING deployments
+at the incident check. Production remains the separately approved 2026-11-08
+release. Preserve those distinctions; production unchanged does not prove that
+no preview builds ran. See campaign `cost-holds/2026-11-10/` for the inspection
+receipt and source references. No monetary or billable CPU estimate was verified.
+
 The owner requested on 2026-11-07: “Keep running more matchups, the ones that
 are guesses. The eventual target is to validate all guesses. Start with the
 lowest confidence ones.” This expands research to the forecasts remaining in

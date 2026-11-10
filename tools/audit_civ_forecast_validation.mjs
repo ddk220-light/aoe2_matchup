@@ -62,10 +62,45 @@ const attemptChecks=attempts.map(a=>{
  const bytes=readFileSync(resolve(ROOT,a.progressPath)),last=bytes.toString().trim().split('\n').at(-1),snapshot=JSON.parse(last);
  return {jobId:a.matchupId,seed:a.seed,attempt:a.attempt,exhausted:a.exhausted,progressPath:a.progressPath,progressSha256:sha(bytes),lastSnapshotTick:snapshot.tick,recordedLastProgress:a.lastProgress};
 });
-const state=load(resolve(DIR,'state.json')),runnerLock=load(resolve(DIR,'.runner.lock')),supervisorPid=Number(readFileSync(resolve(DIR,'.supervisor.lock'),'utf8').trim());
-assert.equal(runnerLock.campaignHash,m.campaignHash);assert.equal(runnerLock.pid,state.pid);assert.equal(state.status,'running');assert.equal(state.samplingPolicyHash,policy.amendmentHash);assert.equal(state.independentExactReplayRequired,false);assert.equal(state.active.length,4);
-function processHealth(pid,needle){const status=readFileSync('/proc/'+pid+'/status','utf8'),command=readFileSync('/proc/'+pid+'/cmdline').toString().replaceAll('\0',' ');assert(!/^State:\s+Z/m.test(status));assert(command.includes(needle));assert.equal(readlinkSync('/proc/'+pid+'/cwd'),ROOT);return {pid,live:true,command};}
-const health={runner:processHealth(state.pid,'run-forecast-validation.mjs'),supervisor:processHealth(supervisorPid,'supervise_civ_forecast_validation.py'),activeWorkers:state.active.length,active:state.active};
+const state=load(resolve(DIR,'state.json')),runnerLockPath=resolve(DIR,'.runner.lock'),supervisorLockPath=resolve(DIR,'.supervisor.lock');
+const supervisorPid=existsSync(supervisorLockPath)?Number(readFileSync(supervisorLockPath,'utf8').trim()):null;
+assert.equal(state.samplingPolicyHash,policy.amendmentHash);assert.equal(state.independentExactReplayRequired,false);assert.equal(m.policy.workers,4);
+assert(state.active.length>=0&&state.active.length<=m.policy.workers);
+const pendingJobIds=jobsArr.filter(j=>!reviews.has(j.id)&&!exhausted.includes(j.id)).map(j=>j.id);
+const terminal=['complete','blocked_needs_diagnosis'].includes(state.status);
+function processHealth(pid,needle){
+ if(!Number.isInteger(pid)||pid<=0)return {pid:null,live:false,command:null};
+ try{
+  const status=readFileSync('/proc/'+pid+'/status','utf8'),processState=status.match(/^State:\s+(\S)/m)?.[1];
+  if(processState==='Z')return {pid,live:false,command:null,processState};
+  const command=readFileSync('/proc/'+pid+'/cmdline').toString().replaceAll('\0',' ');
+  assert(command.includes(needle));assert.equal(readlinkSync('/proc/'+pid+'/cwd'),ROOT);
+  return {pid,live:true,command,processState,paused:['T','t'].includes(processState)};
+ }catch(error){if(['ENOENT','ESRCH'].includes(error.code))return {pid,live:false,command:null};throw error;}
+}
+if(terminal){
+ assert.equal(state.pid,null);assert.equal(state.active.length,0);assert.equal(state.reviewedJobs,reviews.size,'Queue finished during audit; take a new read-only snapshot');
+ assert.equal(pendingJobIds.length,0,'Terminal status does not excuse unfinished ordinary contexts');
+ assert.deepEqual([...state.blockedJobs].sort(),exhausted);
+ assert.equal(reviews.size+exhausted.length+held.length,39148);
+ assert(!existsSync(runnerLockPath),'Terminal runner is still closing; wait for its normal exit');
+ if(state.status==='complete'){assert.equal(held.length,0);assert.equal(exhausted.length,0);}
+}else{
+ assert.equal(state.status,'running');const runnerLock=load(runnerLockPath);
+ assert.equal(runnerLock.campaignHash,m.campaignHash);assert.equal(runnerLock.pid,state.pid);
+}
+const health={runner:processHealth(state.pid,'run-forecast-validation.mjs'),supervisor:processHealth(supervisorPid,'supervise_civ_forecast_validation.py'),activeWorkers:state.active.length,active:state.active,status:state.status,configuredWorkers:m.policy.workers};
+if(!terminal){assert(health.runner.live&&!health.runner.paused);assert(health.supervisor.live&&!health.supervisor.paused);}
+const diagnosedExhaustedJobIds=[],undiagnosedExhaustedJobIds=[],diagnosisRefs=[];
+for(const id of exhausted){
+ const file=resolve(DIR,'diagnostics',id,'REVIEW.json');
+ if(!existsSync(file)){undiagnosedExhaustedJobIds.push(id);continue;}
+ const diagnosis=load(file);assert.equal(diagnosis.status,'blocked_needs_separate_recovery_review');assert.equal(diagnosis.assignedOutcome,null);assert.equal(diagnosis.simulationExecutionsForDiagnosis,0);
+ const files=['analyze.py','REVIEW.json','README.md'].map(name=>{const path=resolve(DIR,'diagnostics',id,name);return {file:relative(ROOT,path),sha256:sha(readFileSync(path))};});
+ diagnosedExhaustedJobIds.push(id);diagnosisRefs.push({jobId:id,sourceCommit:diagnosis.sourceCommit,files});
+}
+const ordinaryQueueExhausted=terminal&&pendingJobIds.length===0;
+const onlyDiagnosedBlockersRemain=ordinaryQueueExhausted&&undiagnosedExhaustedJobIds.length===0;
 for(const a of state.active){assert.equal(a.purpose,'fresh_measurement');assert(!exhausted.includes(a.jobId));}
 const cutoff=new Date(policy.recordedAt).getTime();
 const newReplayFiles=readdirSync(resolve(DIR,'progress')).filter(f=>f.includes('replay')&&statSync(resolve(DIR,'progress',f)).mtimeMs>=cutoff);assert.deepEqual(newReplayFiles,[]);
@@ -73,5 +108,6 @@ const baseline='36626bc0f74242de5482d98362695cec15226eb87cba8767371841a62bd231d5
 const gitRefs=execFileSync('git',['ls-remote','origin','refs/heads/main','refs/heads/staging','refs/heads/simulations/civ-forecast-validation-2026-11-07'],{cwd:ROOT,encoding:'utf8'}).trim().split('\n').map(l=>l.split(/\s+/));
 const branchRefs=Object.fromEntries(gitRefs.map(([sha,ref])=>[ref,sha]));assert.equal(branchRefs['refs/heads/main'],approved.commit);assert.equal(branchRefs['refs/heads/staging'],approved.commit);
 const audit={status:'passed',capturedAt,verifiedAt:new Date().toISOString(),campaignHash:m.campaignHash,samplingPolicyHash:policy.amendmentHash,totalContexts:39148,reviewedContexts:reviews.size,completionPercent:Math.round(reviews.size/39148*1000)/10,singleSeedConfirmations:counts.single,multiSeedValidations:counts.multi,changedOutcomes:counts.changed,retainedForecasts:counts.retained,mixedWinners:counts.mixedWinners,closeUncertain:counts.closeUncertain,remainingContexts:39148-reviews.size,heldContexts:held.length,exhaustedContexts:exhausted.length,exhaustedJobIds:exhausted,originalConfidenceCategories:categories,evidenceCounts:counts,phaseChecks,attemptChecks,workerHealth:health,noReplayStatus:{enabled:false,newReplayFiles:0,historicalReplayEvidencePreserved:counts.historicalReplay},runtimeFilesVerified:m.runtimeFiles.length,originalInputFilesVerified:m.inputFiles.length,productionUnchanged:true,productionCommit:approved.commit,productionDatabaseSha256:approved.servingDatabaseSha256,frozenResearchBaselineCommit:m.sourceWebsiteCommit,frozenResearchBaselineDatabaseSha256:baseline,productionVerification:approved.verification,branchRefs,liveNativeRecords:records.length,liveNativeJournalSha256:sha(raw),reviewRefs:refs,liveReviewSetHash:digest(refs),simulationExecutionsForVerification:0};
+Object.assign(audit,{campaignStatus:state.status,ordinaryQueueExhausted,pendingRunnableContexts:pendingJobIds.length,pendingRunnableJobIds:pendingJobIds,onlyDiagnosedBlockersRemain,allForecastsHaveCompleteNativeEvidence:reviews.size===39148,diagnosedExhaustedJobIds,undiagnosedExhaustedJobIds,diagnosisRefs});
 const file=resolve(values.output);writeFileSync(file,JSON.stringify(audit,null,2)+'\n',{flag:'wx'});
 console.log(JSON.stringify({...audit,reviewRefs:refs.length,attemptChecks:attemptChecks.length,phaseChecks:phaseChecks.length,workerHealth:{runner:health.runner.pid,supervisor:health.supervisor.pid,activeWorkers:health.activeWorkers}},null,2));

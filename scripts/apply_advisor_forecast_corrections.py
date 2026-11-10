@@ -161,6 +161,10 @@ def apply_forecast(baseline, snapshot, output):
             db.execute("UPDATE metadata SET value=? WHERE key='dataset'", (encode(metadata),))
             assert [db.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0] for table in ('units', 'cells', 'evidence')] == [555, 151223, 68916]
             db.commit(); assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
+            # Larger pages pack the cumulative provenance blobs without the
+            # substantial half-empty 4 KiB pages. No row/blob encoding changes;
+            # the complete reviewed dataset must fit GitHub's 100 MiB limit.
+            db.execute('PRAGMA page_size=32768')
             db.execute('VACUUM')
         pending.replace(output)
     finally:

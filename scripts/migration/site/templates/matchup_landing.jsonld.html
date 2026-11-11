@@ -1,0 +1,41 @@
+{#- Verbatim from apps/website/templates/matchup_landing.html (block structured_data). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [{
+    "@type": "Question",
+    "name": "Who wins, {{ a_name }} ({{ civ_a }}) or {{ b_name }} ({{ civ_b }})?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Run the live battle simulator at {{ canonical_url }} to see the tick-by-tick result. The page shows full upgraded stats, costs, and armor classes for both units."
+    }
+  },{
+    "@type": "Question",
+    "name": "What are the full stats for {{ a_name }}?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "{{ a_name }} ({{ civ_a }}, Imperial Age, fully upgraded): {{ a.final_hp|int }} HP, {{ a.final_attack|int }} attack, {{ a.final_melee_armor|int }}/{{ a.final_pierce_armor|int }} armor."
+    }
+  },{
+    "@type": "Question",
+    "name": "What are the full stats for {{ b_name }}?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "{{ b_name }} ({{ civ_b }}, Imperial Age, fully upgraded): {{ b.final_hp|int }} HP, {{ b.final_attack|int }} attack, {{ b.final_melee_armor|int }}/{{ b.final_pierce_armor|int }} armor."
+    }
+  }]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site_url }}/" },
+    { "@type": "ListItem", "position": 2, "name": "Matchups", "item": "{{ site_url }}/matchups" },
+    { "@type": "ListItem", "position": 3, "name": "{{ a_name }} vs {{ b_name }}", "item": "{{ canonical_url }}" }
+  ]
+}
+</script>

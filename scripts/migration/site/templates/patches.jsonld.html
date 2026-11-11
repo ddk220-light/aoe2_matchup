@@ -1,0 +1,14 @@
+{#- Verbatim from apps/website/templates/patches.html (block structured_data). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+{% if patches %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Age of Empires II patch notes",
+  "itemListElement": [
+    {% for p in patches %}{ "@type": "ListItem", "position": {{ loop.index }}, "name": {{ p.title | tojson }}, "url": "{{ site_url }}/patches/{{ p.build_number }}" }{{ "," if not loop.last }}
+    {% endfor %}]
+}
+</script>
+{% endif %}

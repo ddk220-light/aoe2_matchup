@@ -1,0 +1,14 @@
+{#- Verbatim from apps/website/templates/patch_unit.html (block structured_data). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site_url }}/" },
+    { "@type": "ListItem", "position": 2, "name": "Patches", "item": "{{ site_url }}/patches" },
+    { "@type": "ListItem", "position": 3, "name": "Update {{ build }}", "item": "{{ site_url }}/patches/{{ build }}" },
+    { "@type": "ListItem", "position": 4, "name": {{ (civ ~ " " ~ unit_title) | tojson }}, "item": "{{ site_url }}/patches/{{ build }}/{{ civ }}/{{ unit }}" }
+  ]
+}
+</script>

@@ -1,0 +1,13 @@
+{#- Verbatim from apps/website/templates/civ_detail.html (block structured_data). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site_url }}/" },
+    { "@type": "ListItem", "position": 2, "name": "Civilizations", "item": "{{ site_url }}/civilizations" },
+    { "@type": "ListItem", "position": 3, "name": "{{ civ.name }}", "item": "{{ site_url }}/civilizations/{{ civ.slug }}" }
+  ]
+}
+</script>

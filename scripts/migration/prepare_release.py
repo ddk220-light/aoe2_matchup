@@ -3,27 +3,26 @@
 No provider credentials, production HTTP calls, or data generation are involved.
 Generated directories are disposable. Public assets use an explicit allowlist.
 """
-from html import unescape
-from html.parser import HTMLParser
 import hashlib
 import json
 from pathlib import Path
 import re
 import shutil
 import sys
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 from export_data import export as export_data
 from restore_retained import restore as restore_retained
 from export_civilization_pages import export_pages
 from export_ranking_pages import export_pages as export_ranking_pages
 from export_simulator_page import export_page as export_simulator_page
 from export_remaining_pages import export_pages as export_remaining_pages
+from scripts.migration.site import pages as site_pages
 
-ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / 'apps/backend/runtime'
 PUBLIC = ROOT / 'apps/web/public'
 GENERATED = ROOT / 'apps/web/src/generated'
-sys.path[:0] = [str(ROOT / 'apps/website'), str(ROOT)]
-import app as website
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
@@ -31,27 +30,6 @@ def digest(data):
 def json_bytes(value):
     return (json.dumps(value, sort_keys=True, ensure_ascii=False, indent=2) + '\n').encode()
 
-class Head(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.meta = []; self.links = []; self.title = ''; self.in_title = False
-    def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
-        if tag == 'meta': self.meta.append(attrs)
-        if tag == 'link': self.links.append(attrs)
-        if tag == 'title': self.in_title = True
-    def handle_endtag(self, tag):
-        if tag == 'title': self.in_title = False
-    def handle_data(self, value):
-        if self.in_title: self.title += value
-
-with website.app.test_client() as client:
-    response = client.get('/about', base_url='https://aoe2matchup.com')
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    catalog_response = client.get('/api/assets/catalog')
-    assert catalog_response.status_code == 200
-    public_catalog = catalog_response.get_json()
 # M3 publishes only an already validated immutable media manifest.
 media_dir = ROOT/'docs/migration/milestone-3'
 media = json.loads((media_dir/'media-manifest.json').read_text())
@@ -69,32 +47,17 @@ def resolve_media(value):
 public_catalog = resolve_media(public_catalog)
 exports = ROOT/'.migration-cache/exports'
 data = export_data(exports)
-civilization_pages = export_pages(ROOT, website, exports, data, media, public_catalog, Head)
-ranking_pages = export_ranking_pages(ROOT, website, exports, data, public_catalog, Head)
-simulator_page = export_simulator_page(ROOT, website, exports, data, public_catalog, Head)
-remaining_pages = export_remaining_pages(ROOT, website, Head)
+civilization_pages = export_pages(ROOT, exports, data, media, public_catalog)
+ranking_pages = export_ranking_pages(ROOT, exports, data, public_catalog)
+simulator_page = export_simulator_page(ROOT, exports, data, public_catalog)
+remaining_pages = export_remaining_pages(ROOT)
 retained_manifest = restore_retained()
 assert data['components']['engine']['version'] == retained_manifest['legacy_engine_version'], \
     'An engine change requires an explicit legacy-client compatibility release'
 engine_version=data['components']['engine']['version']
 engine_prefix=f'/releases/engine/{engine_version}'
-head_html = html.split('<head>', 1)[1].split('</head>', 1)[0]
-head = Head(); head.feed(head_html)
-scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, re.S)
-plain = [s for s in scripts if s.strip() and not s.lstrip().startswith('{')]
-theme_start = next(s for s in plain if 'before paint' in s)
-nav_script = next(s for s in plain if 'setNavH' in s)
-theme_script = next(s for s in plain if 'function applyTheme' in s)
-catalog_script = next(s for s in plain if 'window.SITE_CATALOG =' in s)
-structured = re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
-for value in structured: json.loads(value)
-nav = re.search(r'<nav class="site-nav">.*?</nav>', html, re.S).group()
-footer = re.search(r'<footer\b.*?</footer>', html, re.S).group()
-body = html.split('</nav>', 1)[1].split('</script>', 1)[1].split('<footer', 1)[0].strip()
-about = {'title': head.title, 'meta': head.meta, 'links': head.links,
-         'structured': structured, 'style': re.search(r'<style>(.*?)</style>', head_html, re.S).group(1),
-         'body': body, 'nav': nav, 'footer': footer, 'theme_start': theme_start,
-         'nav_script': nav_script, 'theme_script': theme_script, 'catalog_script': catalog_script}
+# Head metadata, the methodology body and the shared catalog script of /about.
+about = site_pages.about()
 
 backend_sources = set()
 for base in ['aoe2x/advisor', 'aoe2x/assets', 'aoe2x/batch', 'aoe2x/dbgen', 'aoe2x/rank', 'aoe2x/sim',
@@ -112,8 +75,7 @@ backend_sources.update((ROOT/'aoe2x/js_simulation').glob('*.py'))
 backend_sources.update((ROOT/'aoe2x/js_simulation/src').rglob('*.js'))
 for name in ['golden_map.json', 'golden_formation_27v27.json', 'current_ranged_golden_formations.json']:
     backend_sources.add(ROOT/'aoe2x/js_simulation/fixtures'/name)
-# Imported framework helpers resolve templates relative to their original file.
-backend_sources.update((ROOT/'apps/website/templates').glob('*.html'))
+# No templates: the packaged API 404s every non-API path before any HTML route runs.
 
 public_sources = {}
 # Stylesheets and page scripts are bundled by the Astro app; only shared runtime files are copied.
@@ -146,6 +108,9 @@ config['headers'].append({'source':'/data/release.json','headers':[{'key':'Cache
 (ROOT/'vercel.json').write_bytes(json_bytes(config))
 
 source_files = backend_sources | set(public_sources.values())
+# The build-side page builders and their verbatim snippets.
+source_files.update(p for p in (ROOT/'scripts/migration/site').rglob('*') if p.is_file()
+                    and p.suffix in ['.py', '.html'] and '__pycache__' not in p.parts)
 for base in ['apps/web/src']:
     source_files.update(p for p in (ROOT/base).rglob('*') if p.is_file()
                         and not any(x in ['generated', '__pycache__'] or re.fullmatch(r'generated [0-9]+', x) for x in p.parts))

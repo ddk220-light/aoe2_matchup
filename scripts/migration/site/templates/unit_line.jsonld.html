@@ -1,0 +1,13 @@
+{#- Verbatim from apps/website/templates/unit_line.html (block structured_data). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site_url }}/" },
+    { "@type": "ListItem", "position": 2, "name": "Unit Rankings", "item": "{{ site_url }}/units" },
+    { "@type": "ListItem", "position": 3, "name": {{ line.line_name | tojson }}, "item": "{{ site_url }}/units/{{ page.url }}" }
+  ]
+}
+</script>

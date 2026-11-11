@@ -1,0 +1,25 @@
+{#- Verbatim from apps/website/templates/patch_build.html (block structured_data). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  "headline": "Age of Empires II Update {{ build_number }} — Balance Changes",
+  "datePublished": "{{ release_date }}",
+  "dateModified": "{{ release_date }}",
+  "author": { "@type": "Organization", "name": "AoE2 Matchup" },
+  "publisher": { "@type": "Organization", "name": "AoE2 Matchup" },
+  "mainEntityOfPage": "{{ site_url }}/patches/{{ build_number }}"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ site_url }}/" },
+    { "@type": "ListItem", "position": 2, "name": "Patches", "item": "{{ site_url }}/patches" },
+    { "@type": "ListItem", "position": 3, "name": "Update {{ build_number }}", "item": "{{ site_url }}/patches/{{ build_number }}" }
+  ]
+}
+</script>

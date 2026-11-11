@@ -1,59 +1,42 @@
-"""Build projections of existing page contexts, preserving source data and copy."""
+"""Build projections of the matchup, advisor, patch and /vs/ pages, preserving source data and copy."""
 import json
 import re
-from xml.etree import ElementTree
+
+from scripts.migration.site import pages as site_pages
+from scripts.migration.site.data import load_unit_for_landing, unique_units_list
+from scripts.migration.site.patches import connect as patches_connect, ref_unit_name
+from scripts.migration.site.sitemap import sitemap_xml
+from scripts.migration.site.sources import REF_DB_PATH, connect_readonly, valid_civilizations
 
 
-def export_pages(root, website, head_parser):
-    contexts = {}
-    render = website.render_template
-    def capture(name, **kwargs):
-        contexts['value'] = kwargs
-        return render(name, **kwargs)
-    def metadata(html):
-        head = head_parser(); head.feed(html.split('<head>', 1)[1].split('</head>', 1)[0])
-        return {'title': head.title, 'meta': head.meta, 'links': head.links,
-                'structured': re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S),
-                'nav': re.search(r'<nav class="site-nav">.*?</nav>', html, re.S).group(),
-                'footer': re.search(r'<footer\b.*?</footer>', html, re.S).group()}
+def export_pages(root):
     result = {'patch_units': {}, 'patch_builds': {}, 'icon_names': json.loads((root/'aoe2x/assets/presentation.json').read_text())['icon_names']}
-    website.render_template = capture
+    result['matchups'] = site_pages.matchups()
+    result['advisor'] = site_pages.advisor()
+    result['patch_index'] = site_pages.patch_hub()
+    for patch in result['patch_index']['patches']:
+        build = str(patch['build_number'])
+        result['patch_builds'][build] = site_pages.patch_build(build)
+    result['sitemap'] = sitemap_xml()
+    conn = patches_connect()
     try:
-        with website.app.test_client() as client:
-            def page(path):
-                r = client.get(path, base_url=website.SITE_URL); assert r.status_code == 200, path
-                value = {**contexts['value'], 'frame': metadata(r.get_data(as_text=True))}
-                value.pop('active_nav', None)
-                return value
-            result['matchups'] = page('/matchups')
-            result['advisor'] = page('/matchup-advisor')
-            result['patch_index'] = page('/patches')
-            for patch in result['patch_index']['patches']:
-                build = str(patch['build_number'])
-                result['patch_builds'][build] = page('/patches/' + build)
-            sitemap = client.get('/sitemap.xml').get_data(as_text=True)
-            result['sitemap'] = sitemap
-            conn = website._patches_conn()
-            try:
-                # Include ranking-only units too; the sitemap is not the route boundary.
-                keys = conn.execute('SELECT p.build_number, c.civ_name, c.unit_slug FROM patch_unit_changes c JOIN patches p ON p.id=c.patch_id UNION SELECT p.build_number, c.my_civ, c.my_unit_slug FROM patch_matchup_changes c JOIN patches p ON p.id=c.patch_id UNION SELECT p.build_number, c.civ_name, c.unit_slug FROM patch_unit_ranking c JOIN patches p ON p.id=c.patch_id').fetchall()
-            finally: conn.close()
-            for build, civ, unit in keys:
-                key = f'{build}/{civ}/{unit}'
-                result['patch_units'][key] = page('/patches/' + key)
-            # Original route succeeds for any unit/civ when the build exists.
-            result['empty_patch_frame'] = page('/patches/' + next(iter(result['patch_builds'])) + '/Unknown/not_a_unit')['frame']
-            result['landing_frame'] = page('/vs/Spanish/champion/Chinese/arbalester')['frame']
-    finally: website.render_template = render
-    conn = website.get_ref_db()
+        # Include ranking-only units too; the sitemap is not the route boundary.
+        keys = conn.execute('SELECT p.build_number, c.civ_name, c.unit_slug FROM patch_unit_changes c JOIN patches p ON p.id=c.patch_id UNION SELECT p.build_number, c.my_civ, c.my_unit_slug FROM patch_matchup_changes c JOIN patches p ON p.id=c.patch_id UNION SELECT p.build_number, c.civ_name, c.unit_slug FROM patch_unit_ranking c JOIN patches p ON p.id=c.patch_id').fetchall()
+    finally: conn.close()
+    for build, civ, unit in keys:
+        result['patch_units'][f'{build}/{civ}/{unit}'] = site_pages.patch_unit_page(build, civ, unit)
+    # A known build accepts any unit/civ; Astro fills in this frame for unchanged units.
+    result['empty_patch_frame'] = site_pages.patch_unit_page(next(iter(result['patch_builds'])), 'Unknown', 'not_a_unit')['frame']
+    result['landing_frame'] = site_pages.matchup_landing_frame('Spanish', 'champion', 'Chinese', 'arbalester')
+    conn = connect_readonly(REF_DB_PATH)
     try: keys = conn.execute('SELECT DISTINCT civ_name, unit_slug FROM ref_units').fetchall()
     finally: conn.close()
-    result['landing_units'] = {civ + '/' + slug: website._load_unit_for_landing(civ, slug) for civ, slug in keys}
+    result['landing_units'] = {civ + '/' + slug: load_unit_for_landing(civ, slug) for civ, slug in keys}
     for unit in result['landing_units'].values():
         unit['_speed'] = format(unit['final_speed'], '.2f') if unit['final_speed'] else '—'
-    result['valid_civs'] = sorted(website._valid_civs())
-    result['related_units'] = website._unique_units_list()
-    result['unit_names'] = {civ + '/' + slug: website._ref_unit_name(civ, slug) for civ, slug in keys}
+    result['valid_civs'] = sorted(valid_civilizations())
+    result['related_units'] = unique_units_list()
+    result['unit_names'] = {civ + '/' + slug: ref_unit_name(civ, slug) for civ, slug in keys}
     # Apply the already-existing post-render wrapper at build time, so notes work without JS.
     def wrap(value):
         if isinstance(value, str) and '<table class="mtable">' in value:

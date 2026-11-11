@@ -1,0 +1,16 @@
+{#- Verbatim from apps/website/templates/base.html (block structured_data). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+    {% set _social_urls = (social_links.values() | reject('none') | list) if social_links is defined else [] %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "AoE2 Matchup",
+      "description": "Age of Empires II analysis tool with {{ civilization_count }} civilization overviews, published unit rankings, and fully-upgraded army simulations.",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Web",
+      "url": "{{ site_url }}",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }{% if _social_urls %},
+      "sameAs": [{% for u in _social_urls %}"{{ u }}"{% if not loop.last %}, {% endif %}{% endfor %}]{% endif %}
+    }
+    </script>

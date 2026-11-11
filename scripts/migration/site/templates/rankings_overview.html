@@ -1,0 +1,44 @@
+{#- Verbatim from apps/website/templates/rankings.html (section#rankings-ssr). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+<section id="rankings-ssr" class="rankings-ssr" aria-label="Rankings at a glance">
+    <h2 class="rankings-ssr-title">Rankings at a glance</h2>
+    <p class="rankings-ssr-intro">
+        Land units are scored by Simulation V3 at full Imperial upgrades, with 27 units
+        on the cheaper side and population- and cost-balanced opposing armies.
+        Each matchup averages three seeded runs, extended to ten when outcomes differ.
+        Score = 50 + half the average signed surviving HP percentage. Higher is stronger; 50 is neutral.
+        Below are the top units in each category; use the interactive table above to explore every line, civ, and matchup.
+    </p>
+    <p class="rankings-ssr-intro">
+        {% if ranking_release.source_summary %}
+        Published land rankings: {{ ranking_release.source_summary.variants }} unit variants
+        across {{ ranking_release.source_summary.categories }} categories,
+        {% else %}
+        Published ranking data: game build {{ ranking_release.game_build }},
+        {% endif %}
+        generated {{ ranking_release.generated_at[:10] }}. Some siege and naval categories retain historical
+        results; each category's score information explains its method. Scores are published separately
+        from the live simulator.
+    </p>
+    {% for group in rankings_overview %}
+    <div class="rankings-ssr-group">
+        <h3>Best {{ group.label }}</h3>
+        <table class="rankings-ssr-table">
+            <thead><tr><th>#</th><th>Unit</th><th>Civilization</th><th>Score</th></tr></thead>
+            <tbody>
+                {% for u in group.units %}
+                <tr><td>{{ loop.index }}</td><td>{{ u.name }}</td><td>{{ u.civ }}</td><td>{{ u.score }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+    <nav class="rankings-ssr-lines" aria-label="Unit line guides">
+        <h3>Unit line guides</h3>
+        <ul>
+            {% for url, label in unit_line_pages %}
+            <li><a href="/units/{{ url }}">{{ label }}</a></li>
+            {% endfor %}
+        </ul>
+    </nav>
+</section>

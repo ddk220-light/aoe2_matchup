@@ -1,0 +1,14 @@
+{#- Verbatim from apps/website/templates/civ_overview.html (block content). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Age of Empires II civilizations",
+  "numberOfItems": {{ civ_overview | length }},
+  "itemListElement": [
+    {% for civ in civ_overview %}{ "@type": "ListItem", "position": {{ loop.index }}, "name": "{{ civ.name }}", "url": "{{ site_url }}/civilizations/{{ civ.slug }}" }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>

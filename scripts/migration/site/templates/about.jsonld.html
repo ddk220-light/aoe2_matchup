@@ -1,0 +1,27 @@
+{#- Verbatim from apps/website/templates/about.html (block structured_data). Only the text inside the
+    tags is published, so keep it byte-exact (whitespace and escaping included). -#}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  "name": "How AoE2 Matchup works",
+  "url": "{{ site_url }}/about",
+  "description": "Methodology behind AoE2 Matchup: data extracted from the Age of Empires II:DE game files, fully-upgraded stats for all {{ civilization_count }} civilizations, and 7,600 selected simulation runs behind the finalized land rankings."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Where does the data come from?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Unit stats are extracted directly from the Age of Empires II: Definitive Edition game files (the .dat), then fully upgraded for each of the {{ civilization_count }} civilizations using every blacksmith, university and unique-tech upgrade plus that civ's bonuses." } },
+    { "@type": "Question", "name": "How is the winner of a matchup decided?",
+      "acceptedAnswer": { "@type": "Answer", "text": "A deterministic, tick-by-tick battle simulation models armor classes, attack delays, projectile travel time and accuracy, charge attacks, trample and bleed. Land rankings use 7,600 selected runs covering 555 civilization/unit variants." } },
+    { "@type": "Question", "name": "What does the land ranking score mean?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The cheaper side fields 27 units; the opposing count balances population and resource cost. Each opponent contributes equally. Score = 50 + half the average signed surviving HP percentage; 50 is neutral." } },
+    { "@type": "Question", "name": "Is this an official Microsoft site?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. AoE2 Matchup is a free fan-made tool and is not affiliated with or endorsed by Microsoft, Forgotten Empires, or World's Edge." } }
+  ]
+}
+</script>

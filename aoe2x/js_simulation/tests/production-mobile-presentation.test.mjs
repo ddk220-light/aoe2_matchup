@@ -16,15 +16,16 @@ import {
   productionUnitVisualScale,
 } from "../viewer/map-renderer.js";
 
+// The live Battle Simulation page is the Astro simulator feature.
 const websiteCss = await readFile(
-  new URL("../../../apps/website/static/css/simulate.css", import.meta.url),
+  new URL("../../../apps/web/src/features/simulator/simulator.css", import.meta.url),
   "utf8",
 );
 const websitePage = (await Promise.all([
-  "simulate.js", "battle/playback.js", "battle/statistics.js", "battle/selection.js",
-].map(path => readFile(new URL(`../../../apps/website/static/js/${path}`, import.meta.url), "utf8")))).join("\n");
+  "enhance.js", "playback.js", "statistics.js", "selection.js",
+].map(path => readFile(new URL(`../../../apps/web/src/features/simulator/${path}`, import.meta.url), "utf8")))).join("\n");
 const websiteTemplate = await readFile(
-  new URL("../../../apps/website/templates/simulate.html", import.meta.url),
+  new URL("../../../apps/web/src/pages/index.astro", import.meta.url),
   "utf8",
 );
 

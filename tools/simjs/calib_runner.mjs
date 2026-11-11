@@ -69,7 +69,7 @@ import {
     R5B, setR5B, R5D1, setR5D1, R5D, setR5D, B2, setB2, R5F, setR5F,
     C2A, setC2A, C2B, setC2B, C2C, setC2C, C3, setC3, C4, setC4,
     D2, setD2, E1, setE1, W1, setW1, W2, setW2,
-} from "../../apps/website/static/js/engine/constants.js";
+} from "../../legacy/client/js/engine/constants.js";
 
 // ---- Round-5b rule flags --------------------------------------------------
 // `--r5b <spec>` A/B's the four R5b ranged rules without editing engine source

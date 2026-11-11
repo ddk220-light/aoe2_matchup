@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 
-const DIR = "apps/website/static/js/engine";
+const DIR = "legacy/client/js/engine";
 const BANNED = /Math\.random|document\.|window\.|getElementById|requestAnimationFrame|performance\.now|new Image|fetch\(|alert\(/;
 
 test("engine sources are DOM-free and Math.random-free", () => {

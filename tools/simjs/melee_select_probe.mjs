@@ -25,7 +25,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
-import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
+import { BattleUnit } from "../../legacy/client/js/engine/battle_unit.js";
 import { loadManifest, loadCalibDicts, loadCalibSpawns } from "./calib_runner.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));

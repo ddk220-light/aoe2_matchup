@@ -41,8 +41,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
-import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
-import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
+import { BattleUnit } from "../../legacy/client/js/engine/battle_unit.js";
+import { TILE_SIZE } from "../../legacy/client/js/engine/constants.js";
 import {
     applyR5BSpec, applyR5D1Spec, applyR5DSpec, applyR5FSpec, applyD2Spec,
 } from "./calib_runner.mjs";

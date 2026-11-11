@@ -169,10 +169,14 @@ def test_server_costs_use_resource_images_and_omit_zero(client):
     assert 'src="/static/img/resources/wood.png"' in html
     assert 'src="/static/img/resources/gold.png"' in html
     assert '/static/img/resources/food.png' not in html
+    # /static/img/ is published from the media authoring copy (data/media/img).
+    import mimetypes
+    from aoe2x.paths import MEDIA_DIR
     for resource in ('food', 'wood', 'gold'):
-        response = client.get(f'/static/img/resources/{resource}.png')
-        assert response.status_code == 200
-        assert response.mimetype == 'image/png'
+        image = MEDIA_DIR / 'img' / 'resources' / f'{resource}.png'
+        assert image.is_file()
+        assert mimetypes.guess_type(image.name)[0] == 'image/png'
+        assert image.read_bytes().startswith(b'\x89PNG\r\n\x1a\n')
 
 
 def test_page_api_keeps_imperial_age_policy_and_existing_ranks(client):
@@ -248,7 +252,8 @@ def test_index_links_to_detail_pages(client):
 
 
 def test_civ_analyzer_has_civilization_deep_links(client):
-    script = client.get("/static/js/civilization-view.js").data.decode()
+    from aoe2x.paths import LEGACY_CLIENT_DIR
+    script = (LEGACY_CLIENT_DIR / "js" / "civilization-view.js").read_text(encoding="utf-8")
     assert 'https://aoe2techtree.net/#' in script
     assert 'https://ageofempires.fandom.com/wiki/' in script
     assert "Open Tech Tree" in script

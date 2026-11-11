@@ -1,7 +1,7 @@
 """R5e: is the tape's per-shot victim choice POSITIONAL, and is that the same
 thing as the heavy-cavalry-archer army stringing out along the threat axis?
 
-MEASUREMENT ONLY. Nothing under apps/website/static/js/engine/ is imported or
+MEASUREMENT ONLY. Nothing under legacy/client/js/engine/ is imported or
 changed. The engine side is read from tools/simjs/ranged_shot_dump.mjs dumps,
 the tape side from the recordings, and every statistic is computed by ONE
 function over the normalised ``Fight`` that tools/simjs/ranged_fire_forensics.py

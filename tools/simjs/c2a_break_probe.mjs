@@ -32,8 +32,8 @@ import {
     applyC2ASpec, applyC2CSpec,
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
 } from "./calib_runner.mjs";
-import { BattleUnit } from "../../apps/website/static/js/engine/battle_unit.js";
-import { TILE_SIZE, C2C } from "../../apps/website/static/js/engine/constants.js";
+import { BattleUnit } from "../../legacy/client/js/engine/battle_unit.js";
+import { TILE_SIZE, C2C } from "../../legacy/client/js/engine/constants.js";
 
 const argv = process.argv.slice(2);
 const flag = (n, d) => {

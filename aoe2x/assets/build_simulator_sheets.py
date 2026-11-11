@@ -57,7 +57,7 @@ def main():
         publish_staging([(slug(name), args.output / f"{slug(name)}.webp") for name in NEW_NAMES.values()])
         return
     args.output.mkdir(parents=True, exist_ok=True)
-    metadata_path = ROOT / "apps/website/static/data/anim_sheets.json"
+    metadata_path = ROOT / "data/media/data/anim_sheets.json"
     metadata = json.loads(metadata_path.read_text())
     from graphics.units.extract_sprite_geometry import native_geometry, resolve_source
     from genieutils.datfile import DatFile
@@ -66,7 +66,7 @@ def main():
     graphics_dir = args.game_data / "resources/_common/drs/graphics"
     evidence_path = ROOT / "graphics/units/unit_sprite_geometry.json"
     evidence = json.loads(evidence_path.read_text())
-    manifest = json.loads((ROOT / "apps/website/static/data/unit_sprites.json").read_text())
+    manifest = json.loads((ROOT / "data/media/data/unit_sprites.json").read_text())
     outputs = []
     for name in NEW_NAMES.values():
         key = slug(name)

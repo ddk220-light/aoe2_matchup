@@ -1,4 +1,4 @@
-// Headless fight runner over the EXTRACTED engine (apps/website/static/js/engine/).
+// Headless fight runner over the EXTRACTED engine (legacy/client/js/engine/).
 //
 // This is the counterpart of legacy_harness.cjs's runFightCaptured(): same inputs
 // (a frozen combat_dicts.json + one panel_spec row + a seed), same output shape, so
@@ -42,7 +42,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { createSimulation } from "../../apps/website/static/js/engine/index.js";
+import { createSimulation } from "../../legacy/client/js/engine/index.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 

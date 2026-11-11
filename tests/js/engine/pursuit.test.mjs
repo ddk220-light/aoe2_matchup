@@ -10,9 +10,9 @@ import {
     STUCK_PROGRESS_RATE,
     PURSUIT_BAR_FRACTION,
     PURSUIT_MIN_ADVANTAGE,
-} from "../../../apps/website/static/js/engine/constants.js";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/constants.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 // ---- (a): the rate expression must be an EXACT no-op at the current tick
 // rate. This is the load-bearing IEEE-754 fact the whole step (a) rests on:

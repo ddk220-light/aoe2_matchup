@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Projectile, classifyProjectile } from "../../../apps/website/static/js/engine/projectile.js";
-import { MeleeEffect } from "../../../apps/website/static/js/engine/melee_effect.js";
-import { TILE_SIZE } from "../../../apps/website/static/js/engine/constants.js";
+import { Projectile, classifyProjectile } from "../../../legacy/client/js/engine/projectile.js";
+import { MeleeEffect } from "../../../legacy/client/js/engine/melee_effect.js";
+import { TILE_SIZE } from "../../../legacy/client/js/engine/constants.js";
 
 test("projectile flies toward target and fires onHit exactly once on arrival", () => {
     let hits = 0;

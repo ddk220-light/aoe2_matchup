@@ -19,7 +19,7 @@ const context = vm.createContext({
     SUMMARY_TEMPLATES: {},
     window: {},
 });
-vm.runInContext(fs.readFileSync(path.join(__dirname, '../apps/website/static/js/civilization-view.js'), 'utf8'), context);
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../legacy/client/js/civilization-view.js'), 'utf8'), context);
 
 const unit = {
     unit_name: 'Elite Jomsviking', unit_slug: 'elite_jomsviking', line_slug: 'jomsviking',

@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {LatestRequest, requestJson} from '../apps/website/static/js/shared/api.js';
-import {WorkerSession} from '../apps/website/static/js/battle/worker-session.js';
-import {createPageData} from '../apps/website/static/js/shared/page-data.js';
+// The live simulator modules read the page's #simulator-config bootstrap at
+// import time; give them a minimal one so they load outside a browser.
+globalThis.document ??= {getElementById: () => ({textContent: JSON.stringify({versions: {}, engine_worker_url: '/worker.js'})})};
+const {LatestRequest, requestJson} = await import('../apps/web/src/features/simulator/api.mjs');
+const {WorkerSession} = await import('../apps/web/src/features/simulator/worker-session.js');
+const {createPageData} = await import('../apps/web/src/features/rankings/page-data.mjs');
 
 test('selection changes abort the old request and invalidate its response', () => {
     const requests = new LatestRequest();

@@ -6,7 +6,7 @@ import sqlite3
 from apps.website.services.advisor import (
     DATASET, advisor_catalog, advisor_evidence, advisor_matchups,
 )
-from aoe2x.paths import WEBAPP_DIR
+from aoe2x.paths import MEDIA_DIR
 
 
 def test_complete_saved_matrix_and_all_civilizations():
@@ -94,7 +94,7 @@ def test_canonical_unit_icons_and_existing_siege_reference_are_complete():
     units = catalog['units'] + [u for group in catalog['reference_units'].values() for u in group]
     for unit in units:
         assert unit['icon']
-        assert (WEBAPP_DIR / unit['icon'].removeprefix('/')).is_file(), unit['name']
+        assert (MEDIA_DIR / unit['icon'].removeprefix('/static/')).is_file(), unit['name']
     franks = catalog['reference_units']['Franks']
     assert any(u.get('rank') for u in franks)
 

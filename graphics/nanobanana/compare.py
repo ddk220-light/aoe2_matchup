@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RAW  = os.path.join(ROOT, 'graphics', 'game_raw_files')
-ICO  = os.path.join(ROOT, 'apps', 'website', 'static', 'img', 'units')
+ICO  = os.path.join(ROOT, 'data', 'media', 'img', 'units')
 FLUX = os.path.join(ROOT, 'graphics', 'art', 'flux2_hybrid')
 NB   = os.path.join(os.path.dirname(__file__), 'renders', 'batch_nb')
 OUT  = os.path.join(os.path.dirname(__file__), 'critique')

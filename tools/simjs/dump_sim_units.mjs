@@ -12,7 +12,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
-import { TILE_SIZE } from "../../apps/website/static/js/engine/constants.js";
+import { TILE_SIZE } from "../../legacy/client/js/engine/constants.js";
 import { loadManifest, loadCalibDicts, loadCalibSpawns } from "./calib_runner.mjs";
 import { calibrationPaths } from "./calibration_paths.mjs";
 

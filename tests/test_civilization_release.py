@@ -265,7 +265,7 @@ def test_standard_units_retain_existing_page_columns_and_lines():
 def test_longship_media_is_explicit_legacy_alias(name, legacy):
     media = builder().media_for(name)
     assert media['icon'] == '/static/img/units/' + legacy + '.png'
-    assert (Path(__file__).resolve().parents[1] / 'apps/website' / media['icon'].lstrip('/')).is_file()
+    assert (Path(__file__).resolve().parents[1] / 'data/media' / media['icon'].removeprefix('/static/')).is_file()
 
 
 def test_release_selected_missing_unit_is_a_build_error():

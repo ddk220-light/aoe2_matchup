@@ -78,7 +78,7 @@ def test_indexing_policy_distinguishes_staging_and_production(client, monkeypatc
     response = client.get('/', base_url='https://webapp-staging.up.railway.app')
     assert response.headers['X-Robots-Tag'] == 'noindex, nofollow'
     assert 'content="noindex, nofollow"' in response.get_data(as_text=True)
-    assert client.get('/static/js/simulate.js').status_code == 200
+    assert client.get('/static/js/matchup.js').status_code == 200
     monkeypatch.setenv('RAILWAY_ENVIRONMENT_NAME', 'production')
     response = client.get('/', base_url=app.SITE_URL)
     assert 'X-Robots-Tag' not in response.headers

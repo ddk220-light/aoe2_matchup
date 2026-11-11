@@ -1,4 +1,4 @@
-// Tests for the opt-in golden arena (apps/website/static/js/engine/arena.js).
+// Tests for the opt-in golden arena (legacy/client/js/engine/arena.js).
 //
 // Two jobs, and the first one matters more than the second:
 //
@@ -19,7 +19,7 @@ import {
     Arena,
     makeArena,
     TILE_SIZE,
-} from "../../../apps/website/static/js/engine/index.js";
+} from "../../../legacy/client/js/engine/index.js";
 
 const dicts = JSON.parse(
     readFileSync("tools/simjs/golden/combat_dicts.json", "utf8"),

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 // Chinese Elite Fire Lancer combat dictionary:
 // charge_projectile_count=3, charge_attack_range=4 (tiles -> 120px),

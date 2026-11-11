@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const model = require("../apps/website/static/js/rankings_v3_model.js");
+const model = require("../legacy/client/js/rankings_v3_model.js");
 
 test("the rankings table uses one uniform final-score column set", () => {
     const aggregate = model.buildTableColumns({ showLine: true });

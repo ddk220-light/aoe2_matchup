@@ -28,7 +28,7 @@ from google.genai import types
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RAW  = os.path.join(ROOT, 'graphics', 'game_raw_files')
-ICO  = os.path.join(ROOT, 'apps', 'website', 'static', 'img', 'units')
+ICO  = os.path.join(ROOT, 'data', 'media', 'img', 'units')
 UNITS_DIR = os.path.join(ROOT, 'graphics', 'units')   # per-unit asset folders
 MODEL = 'gemini-3-pro-image-preview'   # Nano Banana Pro
 

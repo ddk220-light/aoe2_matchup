@@ -18,9 +18,9 @@ import {
     setW2,
     W2_REACTION_MIN_S,
     W2_REACTION_MAX_S,
-} from "../../../apps/website/static/js/engine/constants.js";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/constants.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 function withW2(cfg, fn) {
     const saved = { ...W2 };

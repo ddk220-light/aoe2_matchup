@@ -62,7 +62,7 @@ from dataclasses import dataclass
 
 ENGINE_ABSTRACT = "abstract"   # aoe2x/sim/simulation.py      (tick, no positions)
 ENGINE_POSITION = "position"   # aoe2x/sim/simulation_real.py (2D, batch matchup data)
-ENGINE_JS = "js"               # apps/website/static/js/simulate.js (interactive page)
+ENGINE_JS = "js"               # legacy/client/js/simulate.js (interactive page)
 
 ALL_ENGINES = (ENGINE_ABSTRACT, ENGINE_POSITION, ENGINE_JS)
 

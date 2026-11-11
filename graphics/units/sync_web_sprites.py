@@ -1,13 +1,13 @@
 """Phase-0 build: publish unit sprites into the website (decision C1) + manifest.
 
 For every unit that has a red idle sprite (graphics/units/<slug>/<slug>_idle_dir06_dat4x.png):
-  * copy red  -> apps/website/static/img/unit_sprites/<slug>.png
-  * copy blue -> apps/website/static/img/unit_sprites/<slug>_blue.png   (if generated)
+  * copy red  -> data/media/img/unit_sprites/<slug>.png
+  * copy blue -> data/media/img/unit_sprites/<slug>_blue.png   (if generated)
   each downscaled so the longer side <= MAX_SIDE (keeps web payload small; display
   sizes are 24-88px and the sim draws at ~30-60px, so this is still oversampled).
 
 Also writes the manifest the frontend reads:
-  apps/website/static/data/unit_sprites.json   keyed by unit DISPLAY NAME:
+  data/media/data/unit_sprites.json   keyed by unit DISPLAY NAME:
     "Knight": {slug, w, h, ratio, cat, url, url_blue}
   cat = square (<=1.5) | borderline (1.5-1.8) | extreme (>1.8).  Phase 1 only
   USES cat=="square"; the rest are published but the frontend falls back to the
@@ -25,10 +25,10 @@ from build_icons import slugify
 from aoe2x.extract.extract_units import UNIT_NAMES
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-WEB = os.path.join(ROOT, 'apps', 'website', 'static')
+WEB = os.path.join(ROOT, 'data', 'media')                          # media authoring copy
 SPRITE_OUT = os.path.join(WEB, 'img', 'unit_sprites')
 MANIFEST = os.path.join(WEB, 'data', 'unit_sprites.json')       # tooling copy
-MANIFEST_JS = os.path.join(WEB, 'js', 'unit_sprites.js')         # browser copy (sync load)
+MANIFEST_JS = os.path.join(ROOT, 'apps', 'website', 'static', 'js', 'unit_sprites.js')  # browser copy (sync load)
 MAX_SIDE = 384
 URL_BASE = '/static/img/unit_sprites'
 

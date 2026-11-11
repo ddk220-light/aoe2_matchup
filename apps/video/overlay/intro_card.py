@@ -77,8 +77,8 @@ if ".claude" in _parts:
     _cut = _parts.index(".claude")
     _MAIN_CHECKOUT_ROOT = Path(*_parts[:_cut])
 
-SPRITE_DIR = REPO_ROOT / "apps" / "website" / "static" / "img" / "unit_sprites"
-ICON_DIR = REPO_ROOT / "apps" / "website" / "static" / "img" / "units"
+SPRITE_DIR = REPO_ROOT / "data" / "media" / "img" / "unit_sprites"
+ICON_DIR = REPO_ROOT / "data" / "media" / "img" / "units"
 REF_DB = REPO_ROOT / "data" / "golden" / "aoe2_reference.db"
 COMBAT_DICTS_JSON = (REPO_ROOT / "apps" / "video" / "sim_v2" / "_work"
                      / "elite_temple_guard_muisca" / "combat_dicts_all.json")

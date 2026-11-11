@@ -10,7 +10,7 @@ Arguments
 ---------
   slug           kebab-case unit slug (used as output filename)
   sld_filename   filename in graphics/game_raw_files/ (e.g. u_cav_arambai_elite_idleA_x2.sld)
-  icon_filename  filename in apps/website/static/img/units/ (e.g. Elite_Arambai.png)
+  icon_filename  filename in data/media/img/units/ (e.g. Elite_Arambai.png)
   render_png     path to the FLUX.2 render to grade (absolute or relative to repo root)
   dir_angle      0..15 — which sprite direction to show; default 5
 
@@ -29,7 +29,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT    = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RAW     = os.path.join(ROOT, 'graphics', 'game_raw_files')
-ICO     = os.path.join(ROOT, 'apps', 'website', 'static', 'img', 'units')
+ICO     = os.path.join(ROOT, 'data', 'media', 'img', 'units')
 OUT_DIR = os.path.join(os.path.dirname(__file__), 'critique')
 
 if len(sys.argv) < 5:

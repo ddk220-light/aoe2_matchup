@@ -95,10 +95,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildFight, STEP, MAX_SECONDS } from "./headless.mjs";
-import { BattleUnit } from "../../apps/website/static/js/engine/index.js";
+import { BattleUnit } from "../../legacy/client/js/engine/index.js";
 import {
     TILE_SIZE, MELEE_CONTACT_SLOTS,
-} from "../../apps/website/static/js/engine/constants.js";
+} from "../../legacy/client/js/engine/constants.js";
 import {
     loadManifest, loadCalibDicts, loadCalibSpawns, spawnsForFight,
     applyW1Spec, applyW2Spec,

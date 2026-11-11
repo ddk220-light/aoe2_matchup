@@ -13,9 +13,9 @@ from botocore.client import Config as _BotoConfig
 from aoe2x.assets import catalog, config
 # catalog_pg (psycopg) imported lazily in main() so media-only publishing works
 # on a machine without psycopg installed.
-from aoe2x.paths import WEBAPP_DIR
+from aoe2x.paths import MEDIA_DIR
 
-STATIC = str(WEBAPP_DIR / "static")
+STATIC = str(MEDIA_DIR)  # media authoring copy: img/, anim/, data/
 
 
 def _bucket_client():

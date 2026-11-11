@@ -29,7 +29,7 @@ from aoe2x.extract.extract_units import UNIT_NAMES
 from build_unit_assets import NAME_FORCE_ID, decode_red, decode_shadow
 from resolve_sprites import LAND_SLD, NAVAL_SLD
 
-MANIFEST = ROOT / "apps/website/static/data/unit_sprites.json"
+MANIFEST = ROOT / "data/media/data/unit_sprites.json"
 EVIDENCE = ROOT / "graphics/units/unit_sprite_geometry.json"
 RUNTIME = ROOT / "aoe2x/js_simulation/viewer/unit-sprite-geometry.js"
 REFERENCE = "halberdier"

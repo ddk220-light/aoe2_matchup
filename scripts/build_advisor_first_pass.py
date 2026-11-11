@@ -51,7 +51,7 @@ def build(source, output):
                                 (unit['civilization'], unit['slug'], 'Imperial')).fetchone()
         assert ref is not None, ('missing reference unit', unit['key'])
         icon = presentation['icon_names'][unit['name']]
-        assert (ROOT / f'apps/website/static/img/units/{icon}.png').is_file(), icon
+        assert (ROOT / f'data/media/img/units/{icon}.png').is_file(), icon
         data = dict(unit, id=index, icon=f'/static/img/units/{icon}.png',
                     costs={name: ref[f'final_cost_{name}'] for name in ('food', 'wood', 'gold')})
         units[unit['key']] = data

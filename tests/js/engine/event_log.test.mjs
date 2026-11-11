@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createSimulation } from "../../../apps/website/static/js/engine/index.js";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+import { createSimulation } from "../../../legacy/client/js/engine/index.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 const ARCHER = { hp: 40, attack: 6, attack_range: 5, attack_speed: 0.5, attack_delay: 0.2,
     movement_speed: 0.96, melee_armor: 0, pierce_armor: 0, outline_size: 0.2, accuracy: 100,

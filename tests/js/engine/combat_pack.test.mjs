@@ -34,10 +34,10 @@ import {
     COMBAT_PACK_SLACK_TILES,
     COMBAT_PACK_RANGED,
     setW1,
-} from "../../../apps/website/static/js/engine/constants.js";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { Simulation } from "../../../apps/website/static/js/engine/sim.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/constants.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { Simulation } from "../../../legacy/client/js/engine/sim.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 function simStub(seed = 1) {
     return {

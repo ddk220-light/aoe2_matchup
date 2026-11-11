@@ -1,7 +1,7 @@
 // ============================================================================
 // ALTERNATE SIMULATION MODEL v2 — "position-aware + randomness"
 // ============================================================================
-// The webapp flanking sim (apps/website/static/js/simulate.js) with a physical
+// The webapp flanking sim (legacy/client/js/simulate.js) with a physical
 // fix package calibrated against 20 per-unit in-game decodes of ETG vs Huskarl
 // (see ETG_SIM_INVESTIGATION.md §11). It is defined ENTIRELY as a frozen set of
 // transforms applied to the REAL simulate.js at load time — no fork, so it stays

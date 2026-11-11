@@ -145,8 +145,9 @@ def test_battle_page_uses_player_controls_and_public_defaults(client):
 
 
 def test_battle_card_metric_labels_wrap_instead_of_truncating():
-    css = (ROOT / "apps" / "website" / "static" / "css" / "simulate.css").read_text()
-    script = (ROOT / "apps" / "website" / "static" / "js" / "simulate.js").read_text()
+    simulator = ROOT / "apps" / "web" / "src" / "features" / "simulator"
+    css = (simulator / "simulator.css").read_text()
+    script = (simulator / "enhance.js").read_text()
     metric_label_rule = css.split(".matchup-metric > span {", 1)[1].split("}", 1)[0]
     vitals_rule = css.split(".progress-vitals {", 1)[1].split("}", 1)[0]
     hp_rule = css.split(".progress-hp-inline {", 1)[1].split("}", 1)[0]

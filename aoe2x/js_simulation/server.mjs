@@ -178,14 +178,16 @@ function publicFile(root, pathname) {
   // treatment. The allowlist deliberately excludes simulate.js, its engine,
   // and lab harnesses: this local page can share CSS/icons without importing
   // any production simulation behavior.
+  const repoRoot = path.resolve(root, "..", "..");
+  const legacyClient = path.join(repoRoot, "legacy", "client");
+  const liveStatic = path.join(repoRoot, "apps", "website", "static");
   const sharedFile = new Map([
-    ["/static/css/base.css", ["css", "base.css"]],
-    ["/static/css/simulate.css", ["css", "simulate.css"]],
-    ["/static/js/constants.js", ["js", "constants.js"]],
-    ["/static/js/unit_sprites.js", ["js", "unit_sprites.js"]],
+    ["/static/css/base.css", [legacyClient, "css", "base.css"]],
+    ["/static/css/simulate.css", [legacyClient, "css", "simulate.css"]],
+    ["/static/js/constants.js", [liveStatic, "js", "constants.js"]],
+    ["/static/js/unit_sprites.js", [liveStatic, "js", "unit_sprites.js"]],
   ]).get(pathname);
-  const websiteStatic = path.resolve(root, "..", "..", "apps", "website", "static");
-  if (sharedFile) return path.join(websiteStatic, ...sharedFile);
+  if (sharedFile) return path.join(...sharedFile);
   const imageMatch = pathname.match(/^\/static\/img\/(.+)$/);
   if (imageMatch) {
     let relative;
@@ -195,7 +197,7 @@ function publicFile(root, pathname) {
       return null;
     }
     if (!relative || relative.includes("\\") || relative.split("/").includes("..")) return null;
-    const imageRoot = path.join(websiteStatic, "img");
+    const imageRoot = path.join(repoRoot, "data", "media", "img");
     const candidate = path.resolve(imageRoot, relative);
     return candidate.startsWith(`${imageRoot}${path.sep}`) ? candidate : null;
   }

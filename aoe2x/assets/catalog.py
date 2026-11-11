@@ -7,15 +7,15 @@ route (which redirects to a presigned Railway Bucket URL)."""
 import json
 import os
 
-from aoe2x.paths import WEBAPP_DIR  # Path: <repo>/apps/website (single source of truth)
+from aoe2x.paths import MEDIA_DIR  # Path: <repo>/data/media (single source of truth)
 
-MANIFEST_PATH = str(WEBAPP_DIR / "static" / "data" / "unit_sprites.json")
-ANIMS_PATH = str(WEBAPP_DIR / "static" / "data" / "unit_anims.json")
-ICON_DIR = str(WEBAPP_DIR / "static" / "img" / "units")
+MANIFEST_PATH = str(MEDIA_DIR / "data" / "unit_sprites.json")
+ANIMS_PATH = str(MEDIA_DIR / "data" / "unit_anims.json")
+ICON_DIR = str(MEDIA_DIR / "img" / "units")
 _STATIC_PREFIX = "/static"
 
 
-ANIM_SHEETS_PATH = str(WEBAPP_DIR / "static" / "data" / "anim_sheets.json")
+ANIM_SHEETS_PATH = str(MEDIA_DIR / "data" / "anim_sheets.json")
 
 
 def load_anim_slugs() -> list:

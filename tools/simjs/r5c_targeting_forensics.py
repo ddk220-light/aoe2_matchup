@@ -24,7 +24,7 @@ those two, from the tapes:
       that treats a landed damage event as "a hit on the unit I aimed at" is
       wrong by exactly that mechanism if it does not.
 
-MEASUREMENT ONLY. Nothing under apps/website/static/js/engine/ is touched or
+MEASUREMENT ONLY. Nothing under legacy/client/js/engine/ is touched or
 imported; the engine side is read from the shot dumps
 (tools/simjs/ranged_shot_dump.mjs), the tape side from the recordings, and
 every statistic is computed by ONE function over the normalised ``Fight``

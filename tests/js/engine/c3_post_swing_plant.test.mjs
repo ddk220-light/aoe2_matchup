@@ -36,9 +36,9 @@ import {
     setC3,
     POST_SWING_PLANT_S,
     MELEE_SWING_RECOVERY_S,
-} from "../../../apps/website/static/js/engine/constants.js";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/constants.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 // Same arrow-wrap pattern as the other flag tests (e1_orbit_kite etc.):
 // override, run, ALWAYS restore.

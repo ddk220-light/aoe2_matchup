@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "..");
 const FIXTURES = path.join(ROOT, "calibration", "fixtures");
-const ENGINE_REL = path.join("apps", "website", "static", "js", "engine");
+const ENGINE_REL = path.join("legacy", "client", "js", "engine");
 const LOCKED_ARCHIVE = "aoe2_golden_STANDARD_UNITS_FINAL.zip";
 const LOCKED_SHA256 = "31A31FE39C025DDD88EB1F502FD62E0EC48464F4CBB72C1693D5C4FEED0713C9";
 const LOCKED_RECORDINGS = 339;
@@ -53,9 +53,9 @@ async function smokePhysicsRenderer() {
   // The browser server mounts this module beside variant-specific engine files.
   // Rewrite those two browser-relative imports to file URLs for this Node smoke.
   const sourcePath = path.join(HERE, "physics_renderer.js");
-  const constantsUrl = pathToFileURL(path.join(ROOT, "apps", "website", "static", "js", "engine", "constants.js")).href;
+  const constantsUrl = pathToFileURL(path.join(ROOT, "legacy", "client", "js", "engine", "constants.js")).href;
   const simRendererSource = readFileSync(
-    path.join(ROOT, "apps", "website", "static", "js", "sim_renderer.js"),
+    path.join(ROOT, "legacy", "client", "js", "sim_renderer.js"),
     "utf8",
   ).replace('"./engine/constants.js"', JSON.stringify(constantsUrl));
   const simRendererUrl = `data:text/javascript;base64,${Buffer.from(simRendererSource).toString("base64")}`;

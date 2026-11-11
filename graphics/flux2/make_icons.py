@@ -2,7 +2,7 @@
 
 For each finished unit in JOBS, the 256×256 transparent icon
 (graphics/art/flux2_hybrid/<slug>_idle_dir05_icon.png) overwrites the
-corresponding PNG(s) in apps/website/static/img/units/.
+corresponding PNG(s) in data/media/img/units/.
 
 Usage
 -----
@@ -26,7 +26,7 @@ from PIL import Image
 
 ROOT   = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SRC    = os.path.join(ROOT, 'graphics', 'art', 'flux2_hybrid')
-ICO    = os.path.join(ROOT, 'apps', 'website', 'static', 'img', 'units')
+ICO    = os.path.join(ROOT, 'data', 'media', 'img', 'units')
 SIZE   = 256
 MARGIN = 0.96
 

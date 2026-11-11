@@ -27,9 +27,9 @@ import {
     TILE_SIZE,
     W1,
     setW1,
-} from "../../../apps/website/static/js/engine/constants.js";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/constants.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 // Same arrow-wrap pattern as the other flag tests (c3/c4/e1): override, run,
 // ALWAYS restore.

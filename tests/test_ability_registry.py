@@ -17,7 +17,7 @@ Five assertion layers, all against COMMITTED artifacts (no regeneration):
                           in the source of every engine the registry claims
                           implements it (snake_case for Python; snake OR
                           camelCase for the browser engine modules under
-                          apps/website/static/js/engine/). This proves the engines
+                          legacy/client/js/engine/). This proves the engines
                           mention the property, NOT that the semantics match —
                           semantic parity lives in tests/test_position_sim_abilities.py
                           and tests/test_frontend_projectile_miss.js.
@@ -66,10 +66,10 @@ ENGINE_SOURCES = {
     # reads `pop_space` there, exactly as it did before the split.
     "js": "\n".join(
         [
-            (ROOT / "apps" / "website" / "static" / "js" / "engine" / f).read_text(encoding="utf-8")
+            (ROOT / "legacy" / "client" / "js" / "engine" / f).read_text(encoding="utf-8")
             for f in ("battle_unit.js", "sim.js", "scenario.js", "projectile.js", "melee_effect.js")
         ]
-        + [(ROOT / "apps" / "website" / "static" / "js" / "simulate.js").read_text(encoding="utf-8")]
+        + [(ROOT / "legacy" / "client" / "js" / "simulate.js").read_text(encoding="utf-8")]
     ),
 }
 

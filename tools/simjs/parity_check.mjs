@@ -1,4 +1,4 @@
-// THE PARITY GATE: proves the extracted engine (apps/website/static/js/engine/)
+// THE PARITY GATE: proves the extracted engine (legacy/client/js/engine/)
 // reproduces tools/simjs/golden/panel.json — captured from the UNMODIFIED
 // simulate.js — bit for bit, for all 205 fights.
 //

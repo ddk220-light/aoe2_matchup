@@ -22,8 +22,8 @@
 // per shot.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 // Aztec Siege Onager combat dictionary.
 const ONAGER_STATS = {

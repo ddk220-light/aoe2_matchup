@@ -22,12 +22,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
     BattleUnit,
-} from "../../../apps/website/static/js/engine/battle_unit.js";
+} from "../../../legacy/client/js/engine/battle_unit.js";
 import {
     Projectile,
     sweptDistanceSq,
-} from "../../../apps/website/static/js/engine/projectile.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/projectile.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 import {
     D2,
     setD2,
@@ -35,8 +35,8 @@ import {
     BOLT_TOTAL_FLIGHT_TILES,
     BLAST_FALLOFF_ZERO_TILES,
     arcFlightFactor,
-} from "../../../apps/website/static/js/engine/constants.js";
-import { createSimulation } from "../../../apps/website/static/js/engine/scenario.js";
+} from "../../../legacy/client/js/engine/constants.js";
+import { createSimulation } from "../../../legacy/client/js/engine/scenario.js";
 
 // ---- representative siege combat dictionaries -----------------------------
 const SCORPION_STATS = {

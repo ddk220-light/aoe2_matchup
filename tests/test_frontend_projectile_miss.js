@@ -1,7 +1,7 @@
 /*
  * Frontend projectile-accuracy / miss-graze tests for the browser battle engine.
  *
- * Imports the LIVE `BattleUnit` from apps/website/static/js/engine/battle_unit.js
+ * Imports the LIVE `BattleUnit` from legacy/client/js/engine/battle_unit.js
  * (rather than a hand-copied snapshot) and exercises fireProjectile against a
  * minimal sim stub, so it tests exactly what ships. Mirrors the backend model in
  * aoe2x/sim/simulation_real.py fire_projectile + tests/test_position_sim_abilities.
@@ -23,9 +23,8 @@ const assert = require("assert");
 const ENGINE = path.join(
     __dirname,
     "..",
-    "apps",
-    "website",
-    "static",
+    "legacy",
+    "client",
     "js",
     "engine",
 );

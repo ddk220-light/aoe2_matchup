@@ -30,7 +30,7 @@ const require = createRequire(import.meta.url);
 
 // Compare against HEAD (not just the worktree) so a STAGED edit can't slip through.
 try {
-    execSync("git diff --quiet HEAD -- apps/website/static/js/simulate.js", { cwd: ROOT });
+    execSync("git diff --quiet HEAD -- legacy/client/js/simulate.js", { cwd: ROOT });
 } catch {
     console.error("simulate.js is dirty — capture must run against HEAD");
     process.exit(1);
@@ -81,7 +81,7 @@ const secs = (Date.now() - started) / 1000;
 // tree must produce an identical meta file, and wall-clock time would break that.
 const git = (cmd) => execSync(cmd, { cwd: ROOT }).toString().trim();
 writeFileSync(metaDest, JSON.stringify({
-    simulateJsBlobSha: git("git hash-object apps/website/static/js/simulate.js"),
+    simulateJsBlobSha: git("git hash-object legacy/client/js/simulate.js"),
     captureCommit: git("git rev-parse HEAD"),
     capturedAt: git("git log -1 --format=%cI HEAD"),
     seeds: SEEDS,

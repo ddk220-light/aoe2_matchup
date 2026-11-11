@@ -38,10 +38,10 @@ import {
     setC2A,
     C2C,
     setC2C,
-} from "../../../apps/website/static/js/engine/constants.js";
-import { Simulation } from "../../../apps/website/static/js/engine/sim.js";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/constants.js";
+import { Simulation } from "../../../legacy/client/js/engine/sim.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 const DT = 1 / 60;
 

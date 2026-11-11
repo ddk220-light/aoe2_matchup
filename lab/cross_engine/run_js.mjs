@@ -2,7 +2,7 @@
 //
 // Runs the 16-unit roster (roster.json) as an unordered round-robin — 120
 // pairs, 10 v 10, seeds 1..5 = 600 fights — through the EXTRACTED JS engine
-// (apps/website/static/js/engine/, the bit-exact replica of the production
+// (legacy/client/js/engine/, the bit-exact replica of the production
 // Battle Sim) via tools/simjs/headless.mjs, and writes js_results.json.
 //
 //     node lab/cross_engine/run_js.mjs
@@ -96,7 +96,7 @@ for (const [a, b] of pairs) {
 }
 
 const payload = {
-    engine: "js apps/website/static/js/engine (via tools/simjs/headless.mjs)",
+    engine: "js legacy/client/js/engine (via tools/simjs/headless.mjs)",
     count_per_side: COUNT,
     seeds: SEEDS,
     max_seconds: MAX_SECONDS,

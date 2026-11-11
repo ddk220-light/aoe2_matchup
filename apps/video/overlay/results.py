@@ -30,7 +30,6 @@ from typing import List, Optional
 _HERE = Path(__file__).resolve()
 _REPO = _HERE.parents[3]  # apps/video/overlay/ -> repo root
 _SB = _HERE.parents[1]  # apps/video/overlay/ -> apps/video
-_WEBAPP = _REPO / "apps" / "website"
 if str(_REPO) not in sys.path:
     sys.path.insert(0, str(_REPO))
 if str(_SB) not in sys.path:

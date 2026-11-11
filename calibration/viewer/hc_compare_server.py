@@ -228,7 +228,7 @@ def build_catalog(repo_root: Path) -> dict:
 
 def variant_specs(repo_root: Path) -> dict:
     repo_root = Path(repo_root)
-    engine_rel = Path("apps") / "website" / "static" / "js" / "engine"
+    engine_rel = Path("legacy") / "client" / "js" / "engine"
     return {
         "base": {
             "label": "Base — current simulation",
@@ -304,7 +304,7 @@ def _safe_child(root: Path, relative: str) -> Path | None:
 
 def _handler_class(repo_root: Path):
     viewer_root = repo_root / "calibration" / "viewer"
-    renderer_path = repo_root / "apps" / "website" / "static" / "js" / "sim_renderer.js"
+    renderer_path = repo_root / "legacy" / "client" / "js" / "sim_renderer.js"
     physics_renderer_path = viewer_root / "physics_renderer.js"
     variants = variant_specs(repo_root)
 

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readBattleOptions } from "../apps/website/static/js/battle/selection.js";
+import { readBattleOptions } from "../apps/web/src/features/simulator/selection.js";
 
 test("default selection requests cost-efficient setup and retains manual count mode", () => {
   const previous = globalThis.document;

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BattleUnit, setArmorClassNames } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+import { BattleUnit, setArmorClassNames } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 import {
     FIRE_CYCLE_QUANTUM,
     RANGED_STOP_OVERHEAD,
@@ -9,7 +9,7 @@ import {
     RANGED_POST_FIRE_RECOVERY_BY_SLUG,
     R5B,
     setR5B,
-} from "../../../apps/website/static/js/engine/constants.js";
+} from "../../../legacy/client/js/engine/constants.js";
 
 // Run `fn` with an R5B override, restoring the previous flags afterwards even
 // if it throws, so one test's rule selection can never leak into another's.

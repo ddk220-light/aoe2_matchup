@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createSimulation } from "../../../apps/website/static/js/engine/index.js";
+import { createSimulation } from "../../../legacy/client/js/engine/index.js";
 import { readFileSync } from "node:fs";
 
 const dicts = JSON.parse(readFileSync("tools/simjs/golden/combat_dicts.json", "utf8"));

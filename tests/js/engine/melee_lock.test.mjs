@@ -23,9 +23,9 @@ import {
     MELEE_TARGET_LOCK,
     MELEE_CONTACT_SLOTS,
     MELEE_BUMP_RETARGET,
-} from "../../../apps/website/static/js/engine/constants.js";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/constants.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 function countingRng() {
     const inner = makeRng(1);

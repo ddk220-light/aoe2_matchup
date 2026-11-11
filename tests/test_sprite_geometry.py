@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_native_geometry_covers_published_sprites():
     evidence = json.loads((ROOT / 'graphics/units/unit_sprite_geometry.json').read_text())
-    manifest = json.loads((ROOT / 'apps/website/static/data/unit_sprites.json').read_text())
+    manifest = json.loads((ROOT / 'data/media/data/unit_sprites.json').read_text())
     units = evidence['units']
     assert set(units) == {entry['slug'] for entry in manifest.values()}
     for entry in manifest.values():

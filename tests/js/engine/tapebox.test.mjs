@@ -1,4 +1,4 @@
-// Tests for the "tapebox" scenario (apps/website/static/js/engine/arena.js's
+// Tests for the "tapebox" scenario (legacy/client/js/engine/arena.js's
 // TapeBox + scenario.js's `spec.positions`) — E12's tape-faithful initial
 // conditions for calibration scoring.
 //
@@ -25,7 +25,7 @@ import {
     TILE_SIZE,
     TAPEBOX_MIN_TILE,
     TAPEBOX_MAX_TILE,
-} from "../../../apps/website/static/js/engine/index.js";
+} from "../../../legacy/client/js/engine/index.js";
 
 const dicts = JSON.parse(
     readFileSync("tools/simjs/golden/combat_dicts.json", "utf8"),

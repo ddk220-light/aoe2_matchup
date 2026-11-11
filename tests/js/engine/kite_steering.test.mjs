@@ -12,12 +12,12 @@ import {
     PURSUIT_MIN_ADVANTAGE,
     KITE_TANGENTIAL_WEIGHT,
     KITE_COHESION_WEIGHT,
-} from "../../../apps/website/static/js/engine/constants.js";
+} from "../../../legacy/client/js/engine/constants.js";
 import {
     BattleUnit,
     medianLiving,
-} from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 function simStub(seed = 1) {
     return {

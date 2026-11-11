@@ -19,5 +19,10 @@ EXTRACTED_DIR = INPUTS_DIR / "extracted_data"
 # local matchup DBs) — gitignored wholesale.
 LOCAL_DIR = DATA_DIR / "local"
 
-# The matchup-website app dir (templates/static/app.py).
-WEBAPP_DIR = REPO_ROOT / "apps" / "website"
+# Authoring copy of the site media (served from Blob in production), mirroring
+# the old website static/ layout: img/, anim/ and the data/ media manifests
+# (unit_sprites.json, unit_anims.json, anim_sheets.json).
+MEDIA_DIR = DATA_DIR / "media"
+# The retired legacy browser client (engine, simulate.js, renderer, lab harness,
+# CSS): research/parity code only, never published by the live site.
+LEGACY_CLIENT_DIR = REPO_ROOT / "legacy" / "client"

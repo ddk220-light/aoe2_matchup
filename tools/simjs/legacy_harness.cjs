@@ -2,7 +2,7 @@
 //
 //   Provenance: git show origin/aoe2_ai_for_simulation:apps/video/sim_v2/headless_sim.js
 //
-// Loads the REAL apps/website/static/js/simulate.js (+ its sibling scripts, in browser
+// Loads the REAL legacy/client/js/simulate.js (+ its sibling scripts, in browser
 // load order) in a vm sandbox so every closure/const is intact, stubs DOM/canvas, seeds
 // Math.random with mulberry32 for determinism, and drives BattleSimulation.update() at
 // the webapp's fixed 1/60 timestep. Combat / steering / flanking are byte-identical to
@@ -24,13 +24,17 @@ const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 
-// This harness lives at tools/simjs/; the webapp sim it drives is two levels up at
-// apps/website/static/js. Derive the repo root from __dirname so the harness is
+// This harness lives at tools/simjs/; the legacy webapp sim it drives is two levels
+// up at legacy/client/js. Derive the repo root from __dirname so the harness is
 // portable (no hard-coded absolute path).
 const REPO = path.resolve(__dirname, "..", "..");
-// PINNED: always the live webapp's static JS. No JSDIR override — the golden panel is
-// defined as "what apps/website/static/js/simulate.js does at this commit".
-const JSDIR = path.join(REPO, "apps", "website", "static", "js");
+// PINNED: always the legacy client's JS. No JSDIR override — the golden panel is
+// defined as "what legacy/client/js/simulate.js does at this commit".
+const JSDIR = path.join(REPO, "legacy", "client", "js");
+// The classic shared scripts simulate.js loads before itself are still published by
+// the live site, so they live with the live site's static files.
+const LIVE_JSDIR = path.join(REPO, "apps", "website", "static", "js");
+const LIVE_SCRIPTS = new Set(["constants.js", "unit_sprites.js", "api_client.js"]);
 
 const RAMP = "ship";      // PINNED (was: env RAMP / argv[2]) — "ship" applies no transform
 const MAX_S = 600;        // default fight cap in seconds; runFightCaptured takes its own
@@ -92,7 +96,7 @@ const sandbox = {
 sandbox.globalThis = sandbox;
 
 // ---- assemble source: sibling scripts (browser order) + simulate.js ----------
-function read(f) { return fs.readFileSync(path.join(JSDIR, f), "utf8").replace(/\r\n/g, "\n"); }
+function read(f) { return fs.readFileSync(path.join(LIVE_SCRIPTS.has(f) ? LIVE_JSDIR : JSDIR, f), "utf8").replace(/\r\n/g, "\n"); }
 let simSrc = read("simulate.js");
 // Kept for the NO-TRANSFORM GUARD at the end of the transform section.
 const rawSimSrc = simSrc;

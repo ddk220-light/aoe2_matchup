@@ -23,7 +23,7 @@ Each entry is a tuple:
 
   slug          str  kebab-case id, matches graphics/art/flux2_hybrid/<slug>_*
   sld_filename  str  filename in graphics/game_raw_files/ (usually elite idleA x2)
-  icon_filename str  filename in apps/website/static/img/units/ (Elite_Name.png)
+  icon_filename str  filename in data/media/img/units/ (Elite_Name.png)
   display_name  str  human-readable name used in the prompt
   kind          str  'foot' | 'mounted' | 'ship' | 'vehicle'
   dir_angle     int  0..15; use 5 for most units, 0 for ships
@@ -44,7 +44,7 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RAW  = os.path.join(ROOT, 'graphics', 'game_raw_files')
-ICO  = os.path.join(ROOT, 'apps', 'website', 'static', 'img', 'units')
+ICO  = os.path.join(ROOT, 'data', 'media', 'img', 'units')
 
 # ---------------------------------------------------------------------------
 # Shared prompt clauses — do not change; see docs/flux2-unit-art-workflow.md

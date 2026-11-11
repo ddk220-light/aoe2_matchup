@@ -342,7 +342,7 @@ def _expected_hit_damage(attacker_row: dict[str, Any], target_row: dict[str, Any
     AoE2 has a hard floor of 1 damage per landed hit — when armor >= attack
     the game still deals 1, it never deals 0 or negative. Both engines this
     repo runs enforce that floor (`Math.max(1, baseDmg + bonusDamage +
-    executeBonus)` in `apps/website/static/js/engine/battle_unit.js:334-337`;
+    executeBonus)` in `legacy/client/js/engine/battle_unit.js:334-337`;
     `max(1, base_dmg + bonus_damage + execute_bonus)` in
     `aoe2x/sim/simulation_real.py:730`), so the expected value returned here
     must be clamped the same way before comparison — DO NOT remove this

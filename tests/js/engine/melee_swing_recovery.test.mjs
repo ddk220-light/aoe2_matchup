@@ -31,9 +31,9 @@ import {
     MELEE_SWING_RECOVERY_S,
     MELEE_LANE_REACQUIRE,
     MELEE_LANE_CANDIDATE_CAP,
-} from "../../../apps/website/static/js/engine/constants.js";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+} from "../../../legacy/client/js/engine/constants.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 
 function countingRng() {
     const inner = makeRng(1);

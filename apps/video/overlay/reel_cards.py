@@ -24,7 +24,7 @@ from overlay.category_card import _font_stack
 from overlay.render_card import _screenshot
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-SPRITE_DIR = REPO_ROOT / "apps" / "website" / "static" / "img" / "unit_sprites"
+SPRITE_DIR = REPO_ROOT / "data" / "media" / "img" / "unit_sprites"
 
 # Parchment family tokens (identical to intro_card/category_card CSS).
 INK = "#3d2a16"

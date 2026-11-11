@@ -6,9 +6,9 @@
 // projectile radius); no test asserts a tuned constant.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BattleUnit } from "../../../apps/website/static/js/engine/battle_unit.js";
-import { Simulation } from "../../../apps/website/static/js/engine/sim.js";
-import { makeRng } from "../../../apps/website/static/js/engine/rng.js";
+import { BattleUnit } from "../../../legacy/client/js/engine/battle_unit.js";
+import { Simulation } from "../../../legacy/client/js/engine/sim.js";
+import { makeRng } from "../../../legacy/client/js/engine/rng.js";
 import {
     TILE_SIZE,
     PROJECTILE_RADIUS_TILES,
@@ -17,7 +17,7 @@ import {
     setR5B,
     R5D1,
     setR5D1,
-} from "../../../apps/website/static/js/engine/constants.js";
+} from "../../../legacy/client/js/engine/constants.js";
 
 const DT = 1 / 60;
 const STATS = {

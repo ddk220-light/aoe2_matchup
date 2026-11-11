@@ -1,4 +1,4 @@
-// Headless runner for the webapp's flanking battle sim (apps/website/static/js/simulate.js).
+// Headless runner for the webapp's flanking battle sim (legacy/client/js/simulate.js).
 // Loads the REAL file (+ its sibling scripts, in browser load order) in a vm sandbox so
 // every closure/const is intact, stubs DOM/canvas, seeds Math.random for determinism, and
 // drives BattleSimulation.update() at the webapp's fixed 1/60 timestep. Combat / steering /
@@ -10,13 +10,16 @@ const vm = require("vm");
 const path = require("path");
 
 // This harness lives at apps/video/sim_v2/; the webapp sim it drives is three
-// levels up at apps/website/static/js. Derive the repo root from __dirname so
+// levels up at legacy/client/js. Derive the repo root from __dirname so
 // the harness is portable (no hard-coded absolute path).
 const REPO = path.resolve(__dirname, "..", "..", "..");
 // JSDIR override lets a deployed copy of this harness (simulation_v2/ on
-// staging) run against its own engine_base/ snapshot instead of the live
-// webapp files. Default: the sibling webapp's static JS, as always.
-const JSDIR = process.env.JSDIR || path.join(REPO, "apps", "website", "static", "js");
+// staging) run against its own engine_base/ snapshot instead of the legacy
+// client files. Default: the legacy client's JS, with the classic shared
+// scripts (still published by the live site) read from the live static dir.
+const JSDIR = process.env.JSDIR || path.join(REPO, "legacy", "client", "js");
+const LIVE_JSDIR = process.env.JSDIR || path.join(REPO, "apps", "website", "static", "js");
+const LIVE_SCRIPTS = new Set(["constants.js", "unit_sprites.js", "api_client.js"]);
 
 const RAMP = process.env.RAMP || process.argv[2] || "ship";       // ship | window | off
 const N_SEEDS = parseInt(process.env.SEEDS || process.argv[3] || "8", 10);
@@ -79,7 +82,7 @@ const sandbox = {
 sandbox.globalThis = sandbox;
 
 // ---- assemble source: sibling scripts (browser order) + simulate.js ----------
-function read(f) { return fs.readFileSync(path.join(JSDIR, f), "utf8").replace(/\r\n/g, "\n"); }
+function read(f) { return fs.readFileSync(path.join(LIVE_SCRIPTS.has(f) ? LIVE_JSDIR : JSDIR, f), "utf8").replace(/\r\n/g, "\n"); }
 let simSrc = read("simulate.js");
 
 // Ramp variant: replace the monotonic ship ramp with the game-faithful 5s decaying

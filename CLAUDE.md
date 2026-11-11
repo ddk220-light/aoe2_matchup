@@ -67,7 +67,7 @@ Full detail: `docs/architecture/README.md`. The short version:
 |---|---|---|
 | Abstract tick (no positions) | `aoe2x/sim/simulation.py` | `/api/matchup-sims` overlay (via `best_units.get_matchup_sims`) |
 | Position-based 2D | `aoe2x/sim/simulation_real.py` | ALL batch matchup data (`run_matchup_battles.py`, `rebuild_matchup_baseline.py`, `patch_resim.py`) |
-| Frontend canvas (shared ESM engine) | `apps/website/static/js/engine/` (page shell: `simulate.js`, renderer: `sim_renderer.js`) | The interactive Battle Sim page at `/` and the lab harness at `/static/lab/sim_harness.html` — runs entirely client-side; also runs headless under node (`tools/simjs/headless.mjs`) |
+| Frontend canvas (shared ESM engine) | `legacy/client/js/engine/` (page shell: `simulate.js`, renderer: `sim_renderer.js`) | The interactive Battle Sim page at `/` and the lab harness at `/static/lab/sim_harness.html` — runs entirely client-side; also runs headless under node (`tools/simjs/headless.mjs`) |
 
 `aoe2x/sim/sim_version.py` hashes `simulation_real.py` + `aoe2x/dbgen/config_combat.py` into the matchup-row cache key: editing either auto-stales matchup data (re-simmed on next batch run). Editing `simulation.py` does **not** bump it.
 
@@ -85,7 +85,7 @@ aoe2x/dbgen/config_combat.py (+ config_units.py)
 ## Cross-File Sync Rules (forget one → bug)
 
 1. **New combat column/ability** = registry entry (`aoe2x/dbgen/ability_registry.py`) + `config_combat.py` value + one handler per engine (`simulation.py` / `simulation_real.py` / `static/js/engine/battle_unit.js`) — the ref-DB schema/writer/audit and `combat_unit_loader.py` are GENERATED from the registry; only legacy `generate_main_db.py` still needs hand edits. Checklist: runbooks §3.
-   - **Parity gate — any edit under `apps/website/static/js/engine/` must re-run `node tools/simjs/parity_check.mjs`** (bit-exact replay of 205 golden fights; exit 0 = OK). A deliberate behavior change *will* fail it: that is the signal to re-capture the golden panel and record why in the commit. Also run `node --test tests/js/engine/`.
+   - **Parity gate — any edit under `legacy/client/js/engine/` must re-run `node tools/simjs/parity_check.mjs`** (bit-exact replay of 205 golden fights; exit 0 = OK). A deliberate behavior change *will* fail it: that is the signal to re-capture the golden panel and record why in the commit. Also run `node --test tests/js/engine/`.
 2. **`UNIT_LINES`** — Python source is `aoe2x/sim/unit_lines.py` (imported by 8 modules); a JS copy lives in `static/js/rankings.js`. Update both.
 3. **Resource cost weights** — `simulation_real.py weighted_cost` ↔ `compute_battle_scores.calc_weighted_cost` (explicit keep-in-lockstep comment).
 4. **`PLAYER_COLORS`** — `replay_core.py` ↔ `clip_export.py` (intentionally different palettes; change together).

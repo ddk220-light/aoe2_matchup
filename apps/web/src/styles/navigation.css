@@ -1,6 +1,59 @@
-/* Fit the existing navigation controls on narrow phones without clipping. */
-@media (max-width:350px) {
-  body .site-nav {gap:3px}
-  body .site-nav .nav-tab {padding:6px 0; min-width:0}
-  body .site-nav .theme-toggle {margin-left:2px}
+/* Site header: one dark band, wordmark left, plain text sections, no sub-labels. */
+.site-nav {
+  position: sticky; top: 0; z-index: 1000;
+  background: var(--ink); color: var(--ink-text);
+  border-bottom: 1px solid var(--ink-edge);
+}
+.site-nav-inner {
+  display: flex; align-items: stretch; gap: 28px;
+  width: var(--container-app); margin: 0 auto; min-height: 52px;
+  padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
+}
+.nav-brand {
+  display: inline-flex; align-items: center; gap: 9px; flex: none;
+  font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem;
+  color: var(--ink-text); white-space: nowrap;
+}
+.nav-brand:hover { color: #fff; }
+.nav-brand-mark { width: 22px; height: 22px; color: var(--brass); flex: none; }
+.nav-links { display: flex; align-items: stretch; gap: 2px; min-width: 0; }
+.nav-link {
+  position: relative; display: inline-flex; align-items: center; padding: 0 13px;
+  font-size: 0.95rem; font-weight: 500; color: var(--ink-muted); white-space: nowrap;
+  transition: color 0.12s ease;
+}
+.nav-link:hover { color: #fff; }
+.nav-link.active { color: #fff; font-weight: 600; }
+.nav-link.active::after {
+  content: ""; position: absolute; left: 13px; right: 13px; bottom: -1px; height: 3px;
+  background: var(--brass);
+}
+.nav-aside { display: flex; align-items: stretch; gap: 6px; margin-left: auto; flex: none; }
+.nav-link-quiet { font-weight: 400; }
+.theme-toggle-btn {
+  align-self: center; display: grid; place-items: center; width: 34px; height: 34px;
+  background: transparent; border: 1px solid var(--ink-edge); border-radius: 6px;
+  color: var(--ink-muted); cursor: pointer;
+}
+.theme-toggle-btn:hover { color: #fff; border-color: var(--ink-muted); }
+.theme-icon { width: 17px; height: 17px; }
+.theme-icon-sun { display: none; }
+[data-theme="dark"] .theme-icon-sun { display: block; }
+[data-theme="dark"] .theme-icon-moon { display: none; }
+.site-nav a:focus-visible, .theme-toggle-btn:focus-visible { outline: 2px solid var(--brass); outline-offset: -3px; border-radius: 4px; }
+
+/* Narrow screens: wordmark row, then a swipeable row of sections. */
+@media (max-width: 860px) {
+  .site-nav-inner { flex-wrap: wrap; gap: 0 12px; min-height: 0; }
+  .nav-brand { padding: 9px 0 3px; font-size: 1.2rem; }
+  .nav-aside { padding: 6px 0 0; }
+  .nav-aside .nav-link { padding: 0 8px; font-size: 0.875rem; }
+  .nav-links {
+    order: 3; flex: 0 0 100%; overflow-x: auto; scrollbar-width: none;
+    margin: 0 calc(-1 * var(--gutter)); padding: 0 calc(var(--gutter) - 10px);
+    overscroll-behavior-x: contain;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-link { padding: 0 10px; min-height: 42px; font-size: 0.925rem; }
+  .nav-link.active::after { left: 10px; right: 10px; }
 }

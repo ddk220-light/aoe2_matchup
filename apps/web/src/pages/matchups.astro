@@ -6,7 +6,27 @@ const p=pages.matchups;
 const frame={...p.frame,links:p.frame.links.filter(l=>l.href!=='/static/css/matchups.css')};
 ---
 <BaseLayout page={frame}>
- <div class="page-header"><h1>AoE2 Unit Matchups</h1><p class="subtitle">Every civilization's unique unit, simulated against every other — pick a matchup to see who wins at full upgrades.</p></div>
- {p.popular.length>0 && <div class="container"><section class="popular-matchups"><h2>Popular matchups</h2><ul class="popular-matchups-list">{p.popular.map(([label,url])=><li><a href={url}>{label}</a></li>)}</ul></section></div>}
- <div class="container">{p.groups.map(group=><section class="matchup-group"><h2>{group.unit} <span class="matchup-group-civ">({group.civ})</span></h2><ul class="matchup-link-list">{group.links.map(link=><li><a href={link.url}>{link.label}</a></li>)}</ul></section>)}</div>
+ <div class="page-header"><h1>Unit Matchups</h1><p class="subtitle">Every unique unit against every other, side by side at full upgrades. Find a unit, pick its opponent.</p></div>
+ <main class="container matchups-page">
+  {p.popular.length>0 && <section class="popular-matchups"><h2 class="section-title">Common questions</h2><ul class="popular-matchups-list">{p.popular.map(([label,url])=><li><a href={url}>{label}</a></li>)}</ul></section>}
+  <section>
+   <div class="matchups-head"><h2 class="section-title">Unique units</h2><input type="search" class="civ-filter" id="matchupFilter" placeholder="Filter by unit or civilization" aria-label="Filter by unit or civilization" autocomplete="off" spellcheck="false"/></div>
+   <div id="matchupGroups">{p.groups.map(group=><details class="matchup-group" data-search={`${group.unit} ${group.civ}`.toLowerCase()}>
+    <summary><span class="matchup-group-unit">{group.unit}</span><span class="matchup-group-civ">{group.civ}</span><span class="matchup-group-count">{group.links.length} matchups</span></summary>
+    <ul class="matchup-link-list">{group.links.map(link=><li><a href={link.url}>{link.label.startsWith(group.unit+' vs ')?'vs '+link.label.slice(group.unit.length+4):link.label}</a></li>)}</ul>
+   </details>)}</div>
+   <p class="civ-chooser-empty" id="matchupNone" hidden>No unit or civilization matches that.</p>
+  </section>
+ </main>
+ <script is:inline>
+  (function(){
+   var input=document.getElementById('matchupFilter'),groups=[].slice.call(document.querySelectorAll('.matchup-group')),none=document.getElementById('matchupNone');
+   input.addEventListener('input',function(){
+    var q=input.value.trim().toLowerCase(),shown=0;
+    groups.forEach(function(g){var hit=g.getAttribute('data-search').indexOf(q)!==-1;g.hidden=!hit;if(hit)shown++;});
+    none.hidden=shown>0;
+    if(shown===1)groups.filter(function(g){return !g.hidden})[0].open=true;
+   });
+  })();
+ </script>
 </BaseLayout>

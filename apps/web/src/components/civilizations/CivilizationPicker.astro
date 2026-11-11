@@ -2,14 +2,35 @@
 import {roster} from '../../features/civilizations/data';
 const {selected = ''} = Astro.props;
 ---
-<div class="civilization-picker">
-  <p class="picker-label">{selected ? 'Choose another civilization' : 'Click a civilization to analyze'}</p>
-  <div class="civilization-grid">
-    {roster.map(civ => <a class:list={['civilization-link', {selected: civ.slug === selected}]}
-      href={`/civilizations/${civ.slug}`} data-civ-link aria-current={civ.slug === selected ? 'page' : undefined}>
-      <img src={civ.emblem.url} width={civ.emblem.width} height={civ.emblem.height}
-        alt={civ.name} loading="lazy" decoding="async" />
+<section class="civilization-picker" data-civ-picker>
+  <div class="picker-head">
+    <h2 class="picker-label">{selected ? 'Other civilizations' : `All ${roster.length} civilizations`}</h2>
+    <input type="search" class="civ-filter" data-civ-filter placeholder="Type to filter" aria-label="Filter civilizations" autocomplete="off" spellcheck="false" />
+  </div>
+  <div class="civ-chooser">
+    {roster.map(civ => <a class:list={['civ-tile', {selected: civ.slug === selected}]}
+      href={`/civilizations/${civ.slug}`} data-civ-link data-civ-name={civ.name.toLowerCase()} aria-current={civ.slug === selected ? 'page' : undefined}>
+      <img src={civ.emblem.url} width="36" height="36" alt="" loading="lazy" decoding="async" />
       <span>{civ.name}</span>
     </a>)}
   </div>
-</div>
+  <p class="civ-chooser-empty" data-civ-none hidden>No civilization matches that.</p>
+</section>
+<script is:inline>
+  document.addEventListener('input', function (event) {
+    var input = event.target;
+    if (!(input instanceof HTMLInputElement) || !input.hasAttribute('data-civ-filter')) return;
+    var picker = input.closest('[data-civ-picker]'), query = input.value.trim().toLowerCase(), shown = 0;
+    picker.querySelectorAll('.civ-tile').forEach(function (tile) {
+      tile.hidden = tile.getAttribute('data-civ-name').indexOf(query) === -1;
+      if (!tile.hidden) shown += 1;
+    });
+    picker.querySelector('[data-civ-none]').hidden = shown > 0;
+  });
+  document.addEventListener('keydown', function (event) {
+    var input = event.target;
+    if (event.key !== 'Enter' || !(input instanceof HTMLInputElement) || !input.hasAttribute('data-civ-filter')) return;
+    var first = input.closest('[data-civ-picker]').querySelector('.civ-tile:not([hidden])');
+    if (first) first.click();
+  });
+</script>

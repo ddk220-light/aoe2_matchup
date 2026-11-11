@@ -1,0 +1,100 @@
+/* Shared page furniture: page header, footer, civilization grid, small controls.
+   Every page uses these, so the site reads as one thing. */
+
+/* ---------- Page header: left-aligned title block on the content edge ---------- */
+.page-header {
+  width: var(--container-max); margin: 0 auto; padding: 30px 0 14px;
+  text-align: left;
+}
+.page-header.is-wide { width: var(--container-app); }
+.page-header.is-data { width: var(--container-data); }
+.page-header h1 {
+  font-family: var(--font-heading); font-weight: 600; font-size: 2.35rem;
+  line-height: 1.1; letter-spacing: -0.005em; color: var(--text); margin: 0 0 6px;
+}
+.page-header .subtitle {
+  font-size: var(--fs-md); line-height: 1.5; color: var(--text-muted);
+  max-width: 68ch; margin: 0;
+}
+.page-header .crumbs { font-size: var(--fs-sm); color: var(--text-dim); margin-bottom: 8px; }
+.page-header .crumbs a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-light); }
+.page-header .crumbs a:hover { color: var(--text); }
+@media (max-width: 768px) {
+  .page-header { padding: 20px 0 10px; }
+  .page-header h1 { font-size: 1.85rem; }
+  .page-header .subtitle { font-size: var(--fs-base); }
+}
+
+/* Section headings inside pages share the heading face. */
+.section-title {
+  font-family: var(--font-heading); font-weight: 600; font-size: 1.5rem; line-height: 1.2;
+  color: var(--text); margin: 0 0 10px;
+}
+
+/* ---------- Civilization grid: one look for every civ chooser ---------- */
+.civ-chooser {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 2px;
+}
+.civ-chooser .civ-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 9px 4px 7px; border: 1px solid transparent; border-radius: 6px;
+  background: none; color: var(--text); font: inherit; font-size: var(--fs-sm); line-height: 1.2;
+  text-align: center; cursor: pointer; text-decoration: none; min-width: 0;
+}
+.civ-chooser .civ-tile img { width: 36px; height: 36px; object-fit: contain; }
+.civ-chooser .civ-tile:hover { background: var(--bg-hover); color: var(--text); }
+.civ-chooser .civ-tile:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.civ-chooser .civ-tile.selected, .civ-chooser .civ-tile[aria-current="page"] {
+  background: var(--surface-elevated); border-color: var(--gold); font-weight: 600;
+}
+.civ-chooser .civ-tile[hidden] { display: none; }
+.civ-filter {
+  display: block; width: min(100%, 320px); padding: 8px 12px; margin: 0 0 10px;
+  font: inherit; font-size: var(--fs-base); color: var(--text);
+  background: var(--surface-elevated); border: 1px solid var(--border-light); border-radius: 6px;
+}
+.civ-filter:focus { outline: 2px solid var(--gold); outline-offset: -1px; border-color: var(--gold); }
+.civ-filter::placeholder { color: var(--text-dim); }
+.civ-chooser-empty { color: var(--text-muted); font-size: var(--fs-sm); padding: 8px 2px; }
+@media (max-width: 480px) {
+  .civ-chooser { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+  .civ-chooser .civ-tile img { width: 32px; height: 32px; }
+  .civ-filter { width: 100%; font-size: 16px; }
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+  margin-top: 72px; padding: 36px 0 max(24px, env(safe-area-inset-bottom));
+  background: var(--ink); color: var(--ink-muted); font-size: var(--fs-base); line-height: 1.5;
+}
+.site-footer-inner {
+  width: var(--container-max); margin: 0 auto;
+  display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); gap: 32px;
+}
+.site-footer-brand-name { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; color: var(--ink-text); margin: 0 0 6px; }
+.site-footer-tagline { margin: 0; max-width: 40ch; }
+.site-footer-heading { font-family: var(--font-body); font-size: var(--fs-sm); font-weight: 600; color: var(--ink-text); margin: 4px 0 10px; }
+.site-footer-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.site-footer-list a { color: var(--ink-muted); }
+.site-footer-list a:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.site-footer-legal {
+  width: var(--container-max); margin: 30px auto 0; padding-top: 16px;
+  border-top: 1px solid var(--ink-edge); font-size: var(--fs-sm); color: var(--ink-muted); max-width: none;
+}
+@media (max-width: 768px) {
+  .site-footer { margin-top: 48px; }
+  .site-footer-inner { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .site-footer-about { grid-column: 1 / -1; }
+  .site-footer-list { gap: 2px; }
+  .site-footer-list a { display: inline-block; padding: 7px 0; }
+}
+
+/* ---------- Long-form text pages (How it works) ---------- */
+article.about-page { max-width: none; width: var(--container-max); margin: 0 auto; padding: 8px 0 40px; }
+article.about-page > * { max-width: 72ch; }
+article.about-page p, article.about-page li { font-size: var(--fs-md); line-height: 1.6; max-width: 72ch; }
+article.about-page h2 { font-family: var(--font-heading); font-weight: 600; font-size: 1.6rem; color: var(--text); margin: 34px 0 8px; }
+article.about-page a { text-decoration: underline; text-underline-offset: 3px; }
+article.about-page code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.875em; background: var(--bg-hover); padding: 1px 5px; border-radius: 3px; }
+article.about-page .about-faq dt { color: var(--text); font-size: var(--fs-md); }
+article.about-page .about-faq dd { font-size: var(--fs-md); line-height: 1.6; }

@@ -9,9 +9,9 @@ const json = (value:unknown) => JSON.stringify(value).replace(/</g,'\\u003c');
 const config = {files:projection.files,media:projection.media,methods:projection.methods};
 ---
 <BaseLayout page={projection.frame}>
-  <div class="page-header">
+  <div class="page-header is-data">
     <h1>Unit Rankings</h1>
-    <p class="subtitle">Compare unit stats across civilizations</p>
+    <p class="subtitle">Every unit of every civilization, fully upgraded and scored by how it fights equal-cost armies. 50 is an even fight; higher wins more.</p>
   </div>
   <main class="container rankings-container">
     <div id="lineSelector" set:html={buildLineSelector('infantry','Imperial',projection.media)} />

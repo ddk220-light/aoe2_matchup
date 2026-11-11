@@ -2,7 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CivilizationPicker from './CivilizationPicker.astro';
 import UnitCard from './UnitCard.astro';
-import {frame, buildings, type Civilization} from '../../features/civilizations/data';
+import {frame, buildings, tiers, type Civilization} from '../../features/civilizations/data';
 import '../../features/civilizations/civilizations.css';
 interface Props {civ?: Civilization;}
 const {civ} = Astro.props;
@@ -11,22 +11,30 @@ const page = civ ? {...frame, ...civ} : frame;
 <BaseLayout page={page}>
   <main class="civ-page" data-civ-page data-civ={civ?.slug ?? ''}>
     {civ ? <>
-      <p class="civilization-breadcrumb"><a href="/civilizations" data-civ-link>← All civilizations</a>
-        <span aria-hidden="true">·</span> <a href="/matchup-advisor">Matchup Advisor</a></p>
+      <p class="civilization-breadcrumb"><a href="/civilizations" data-civ-link>Civilizations</a>
+        <span aria-hidden="true">/</span> <span>{civ.name}</span></p>
       <article>
         <header class="civilization-hero">
           <img class="civilization-emblem" src={civ.emblem.url} width={civ.emblem.width}
             height={civ.emblem.height} alt={civ.name} fetchpriority="high" decoding="async" />
           <div class="civilization-introduction">
             <h1>{civ.name}</h1>
-            <p class="civilization-subtitle">Age of Empires II civilization analysis — power units, tiers, and strategic identity</p>
             <p class="civilization-strategy">{civ.strategy}</p>
             <div class="civilization-external-links">
-              <a href={`https://aoe2techtree.net/#${encodeURIComponent(civ.name)}`} target="_blank" rel="nofollow noopener">Open Tech Tree ↗</a>
-              <a href={`https://ageofempires.fandom.com/wiki/${encodeURIComponent(civ.name.replace(/ /g, '_'))}`} target="_blank" rel="nofollow noopener">Open Wiki ↗</a>
+              <a href="/matchup-advisor">Plan a matchup with the advisor</a>
+              <a href={`https://aoe2techtree.net/#${encodeURIComponent(civ.name)}`} target="_blank" rel="nofollow noopener">Tech tree</a>
+              <a href={`https://ageofempires.fandom.com/wiki/${encodeURIComponent(civ.name.replace(/ /g, '_'))}`} target="_blank" rel="nofollow noopener">Wiki</a>
             </div>
           </div>
         </header>
+        <div class="units-heading">
+          <h2>Units, building by building</h2>
+          <ul class="tier-legend" aria-label="What the labels mean">
+            {['signature', 'good', 'generic', 'situational', 'bad', 'worst'].filter(key => tiers[key]).map(key =>
+              <li title={tiers[key].hint}><span class:list={['unit-tier', `tier-${key}`]}>{tiers[key].label}</span></li>)}
+          </ul>
+          <p class="units-hint">Each label compares this civilization's version of a unit with everyone else's. Select a unit for its stats.</p>
+        </div>
         <div class="building-groups">
           {buildings.map(([key, label]) => civ.groups[key]?.length > 0 && <section class="building-group" data-building={key}>
             <h2>{label}</h2>
@@ -38,7 +46,7 @@ const page = civ ? {...frame, ...civ} : frame;
       </article>
     </> : <header class="civilizations-heading">
       <h1>Civilizations</h1>
-      <p>Select a civilization to see its strengths, weaknesses, and strategic identity</p>
+      <p>What each civilization is good at, which of its units are worth building, and which to avoid.</p>
     </header>}
     <CivilizationPicker selected={civ?.slug ?? ''} />
   </main>

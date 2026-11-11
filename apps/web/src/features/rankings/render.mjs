@@ -21,7 +21,7 @@ const UNIT_LINES = {
     },
     stable: {
         name: "Stable Effectiveness",
-        shortName: "Stable",
+        shortName: "Cavalry",
         building: "Stable",
         castle: "Knight",
         imperial: "Paladin",
@@ -47,6 +47,9 @@ const UNIT_LINES = {
         subLines: ["galleon", "fire", "hulk"],
     },
 };
+
+const NUMERIC_HEAD = new Set(["ranking_score", "ranking_rank", "ranking_median_delta", "total_cost",
+    "dps", "final_hp", "final_attack", "final_range", "final_speed"]);
 
 function compactProgressiveBonuses(bonuses) {
     const parsed = (Array.isArray(bonuses) ? bonuses : []).map((value, index) => {
@@ -200,8 +203,7 @@ export function buildLineSelector(currentLine, currentAge="Imperial", media={}) 
 
         html += `<button class="unit-tab${activeClass}${unavailClass}" onclick="selectLine('${slug}')" aria-label="${line.name}" title="${line.name}">
             <img width="36" height="36" class="${tabImgClass}" src="${iUrl}" alt="${line.name}" data-anim-name="${tabName}" onerror="this.style.display='none'" />
-            <span class="unit-tab-label unit-tab-label-desktop">${line.name}</span>
-            <span class="unit-tab-label unit-tab-label-mobile">${line.shortName}</span>
+            <span class="unit-tab-label">${line.shortName}</span>
         </button>`;
     }
     html += '</div>';
@@ -369,13 +371,12 @@ export function buildTable({currentData, currentLine, currentAge="Imperial", sor
     const titleImgClass = titleUseSprite ? "sprite" : "";
 
     const allExpanded = isExpanded("Special");
-    const expandBtnLabel = allExpanded ? "▾ Collapse All" : "▸ Expand All";
+    const expandBtnLabel = allExpanded ? "Hide unit stats" : "Show unit stats";
     const expandBtnAction = allExpanded ? "collapseAll()" : "expandAll()";
 
     let html = `<div class="civ-filter-wrap">
-        <input type="text" id="civFilterInput" placeholder="Filter by civilization..." value="${escapeHtml(civFilter)}" oninput="renderTable()" />
-        <button class="export-btn" onclick="exportCSV()" title="Export current view as CSV">Export CSV</button>
-        <button class="expand-btn" onclick="${expandBtnAction}">${expandBtnLabel}</button>`;
+        <input type="text" id="civFilterInput" placeholder="Filter by civilization" aria-label="Filter by civilization" value="${escapeHtml(civFilter)}" oninput="renderTable()" />
+        <button class="expand-btn" onclick="${expandBtnAction}" aria-pressed="${allExpanded}">${expandBtnLabel}</button>`;
     if (lineInfo?.subLines && lineInfo.subLines.length > 1) {
         html += `<div class="line-filters"><span class="line-filters-label">Lines:</span>`;
         for (const sl of lineInfo.subLines) {
@@ -385,12 +386,12 @@ export function buildTable({currentData, currentLine, currentAge="Imperial", sor
         }
         html += `</div>`;
     }
-    html += `</div>`;
+    html += `<button class="export-btn" onclick="exportCSV()" title="Download the current view as a CSV file">Download CSV</button></div>`;
 
     html += `<div class="table-title">
         ${titleIcon ? `<img class="${titleImgClass}" src="${titleIcon}" alt="" data-anim-name="${titleName}" width="32" height="32" />` : ""}
-        <span class="table-title-desktop">${currentData.line_name} — ${currentAge} Age (${filtered.length} units)</span>
-        <span class="table-title-mobile">${lineInfo?.shortName || currentData.line_name}</span>
+        <span class="table-title-name">${lineInfo?.shortName || currentData.line_name}</span>
+        <span class="table-title-count">${filtered.length} units, fully upgraded in the ${currentAge} Age</span>
     </div>`;
 
     html += '<table class="stats-table"><thead><tr>';
@@ -400,11 +401,11 @@ export function buildTable({currentData, currentLine, currentAge="Imperial", sor
             ? sortDir === "asc"
                 ? "\u25B2"
                 : "\u25BC"
-            : "\u25B4";
+            : "";
         const infoHtml = col.mobileColumn === "score"
             ? `<button type="button" class="score-method-info" data-info-pin aria-label="How this score is calculated" aria-expanded="false" title="How this score is calculated" onclick="onScoreMethodInfoClick(event)">i</button>`
             : col.info
-                ? `<span class="info-icon" title="${col.info}">\u24D8</span>`
+                ? ""
                 : "";
         let chevronHtml = "";
         if (col.expandable && !col.hiddenWhenCollapsed) {
@@ -423,7 +424,7 @@ export function buildTable({currentData, currentLine, currentAge="Imperial", sor
         const mobileScoreLabel = col.mobileColumn === "score"
             ? '<span class="mobile-score-label">Score</span>'
             : "";
-        html += `<th class="${cls}" data-column="${col.key}"${mobileColumnAttr} onclick="sortBy('${col.key}')">
+        html += `<th title="${col.info || ""}" class="${[cls, NUMERIC_HEAD.has(col.key) ? "num" : ""].filter(Boolean).join(" ")}" data-column="${col.key}"${mobileColumnAttr} onclick="sortBy('${col.key}')">
             <span class="desktop-column-label">${col.label}</span>${mobileScoreLabel}${infoHtml}${chevronHtml}<span class="sort-arrow">${arrow}</span>
         </th>`;
     }
@@ -466,7 +467,7 @@ export function buildTable({currentData, currentLine, currentAge="Imperial", sor
                 : "";
             return `<td class="${expandableClass}${mobileColumnClass}"><div class="unit-cell">
                 <img loading="lazy" decoding="async" width="36" height="36" class="${cellImgClass}" src="${displayedUnitImg}" alt="${v}" data-anim-name="${v}" onerror="this.style.display='none'" />
-                <span class="unit-cell-copy"><span class="unit-cell-name">${v}${row.is_unique ? " *" : ""}</span>${civQualifier}</span>
+                <span class="unit-cell-copy"><span class="unit-cell-name">${v}${row.is_unique ? '<span class="unique-mark" title="Unique unit">unique</span>' : ""}</span>${civQualifier}</span>
             </div></td>`;
         }
         if (k === "line_slug") {
@@ -491,13 +492,13 @@ export function buildTable({currentData, currentLine, currentAge="Imperial", sor
             if (bonuses.length > 0) {
                 const text = bonuses.join(", ");
                 lines.push(
-                    `<div class="special-bonuses" title="${esc("\u2728 " + text)}">\u2728 ${text}</div>`,
+                    `<div class="special-bonuses" title="${esc("Civilization bonus: " + text)}"><span class="special-tag">Bonus</span>${text}</div>`,
                 );
             }
             if (missing.length > 0) {
                 const text = missing.join(", ");
                 lines.push(
-                    `<div class="special-missing" title="${esc("\u274c Missing: " + text)}">\u274c Missing: ${text}</div>`,
+                    `<div class="special-missing" title="${esc("Missing upgrades: " + text)}"><span class="special-tag">Missing</span>${text}</div>`,
                 );
             }
             if (lines.length === 0) lines.push("\u2014");
@@ -535,13 +536,17 @@ export function buildTable({currentData, currentLine, currentAge="Imperial", sor
             formatted = Math.round(v);
         else formatted = typeof v === "number" ? v.toFixed(1) : v;
 
+        if (k === "ranking_median_delta" && typeof v === "number") {
+            formatted = (v > 0 ? "+" : v < 0 ? "\u2212" : "") + Math.abs(v).toFixed(1);
+        }
+        const numClass = ` num num-${k}`;
         if (isScore) {
-            return `<td class="${cls}${hcClass} ${expandableClass}${mobileColumnClass}" onmouseenter="onScoreCellEnter(event,${rowIdx},'${k}')" onmouseleave="onScoreCellLeave()" onclick="onScoreCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
+            return `<td class="${cls}${hcClass}${numClass} ${expandableClass}${mobileColumnClass}" onmouseenter="onScoreCellEnter(event,${rowIdx},'${k}')" onmouseleave="onScoreCellLeave()" onclick="onScoreCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
         }
         if (isStat) {
-            return `<td class="${cls}${hcClass} ${expandableClass}${mobileColumnClass}" onmouseenter="onStatCellEnter(event,${rowIdx},'${k}')" onmouseleave="onStatCellLeave()" onclick="onStatCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
+            return `<td class="${cls}${hcClass}${numClass} ${expandableClass}${mobileColumnClass}" onmouseenter="onStatCellEnter(event,${rowIdx},'${k}')" onmouseleave="onStatCellLeave()" onclick="onStatCellClick(event,${rowIdx},'${k}')">${formatted}</td>`;
         }
-        return `<td class="${cls} ${expandableClass}${mobileColumnClass}">${formatted}</td>`;
+        return `<td class="${cls}${numClass} ${expandableClass}${mobileColumnClass}">${formatted}</td>`;
     }
 
     for (let i = 0; i < filtered.length; i++) {

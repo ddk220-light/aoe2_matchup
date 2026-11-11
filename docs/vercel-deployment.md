@@ -16,10 +16,14 @@ The `vercel-build` CI job generates both services, verifies their manifests,
 smokes the packaged API and builds Astro from a clean checkout. The original
 website/engine contract tests also remain required validation.
 
-After changing website presentation, carry equivalent behavior into the Astro
-components/features as well as the original Flask templates/scripts. Both use
-the same exported API data, but their frontend code is separate. Preview checks
-must cover affected pages and API calls, plus a completed simulator battle.
+Website presentation lives only in the Astro app (`apps/web`): the site header,
+footer, base styles (`apps/web/src/styles/`) and every page's markup and
+scripts. Do not mirror presentation changes into `apps/website`; its templates
+are no longer shown to visitors. `apps/website` is still required at build time
+for the API routes, the exported data and each page's title/meta/structured
+data, and several contract tests still read its legacy scripts, so it cannot be
+deleted outright yet. Preview checks must cover affected pages and API calls,
+plus a completed simulator battle.
 
 For a release, check the exact branch commit and both CI jobs, then verify its
 Vercel deployment. A READY state alone is insufficient: request `/`, `/units`,

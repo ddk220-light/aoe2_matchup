@@ -1,8 +1,15 @@
 ---
 import about from '../generated/about.json';
 import release from '../generated/release.json';
+import SiteNav from '../components/site/SiteNav.astro';
+import SiteFooter from '../components/site/SiteFooter.astro';
+import '../styles/base.css';
 import '../styles/navigation.css';
+import '../styles/foundations.css';
 const {page = about, title = page.title, metadata = true, assets = false} = Astro.props;
+// Stylesheets and fonts are owned by this app; only document links are kept.
+const links = page.links.filter(link => ['canonical', 'icon', 'alternate', 'prev', 'next'].includes(link.rel));
+const fonts = 'https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap';
 ---
 <!doctype html>
 <html lang="en">
@@ -11,10 +18,15 @@ const {page = about, title = page.title, metadata = true, assets = false} = Astr
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>{title}</title>
     {metadata && page.meta.filter(m => !['viewport'].includes(m.name) && !m.charset).map(m => <meta {...m} />)}
-    {metadata && page.links.map(link => <link {...link} />)}
+    {metadata && links.map(link => <link {...link} />)}
     {!metadata && <meta name="robots" content="noindex, nofollow" />}
-    {!metadata && <link rel="stylesheet" href="/static/css/base.css" />}
-    <script is:inline set:html={about.theme_start} />
+    {!metadata && <link rel="icon" type="image/png" href="/static/img/favicon.png" />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href={fonts} />
+    <script is:inline>
+      try { var t = localStorage.getItem('aoe2-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+    </script>
     <script>
       import '../lib/telemetry.mjs';
     </script>
@@ -22,17 +34,15 @@ const {page = about, title = page.title, metadata = true, assets = false} = Astr
     <slot name="head" />
   </head>
   <body>
-    <Fragment set:html={page.nav ?? about.nav} />
-    <script is:inline set:html={about.nav_script} />
+    <SiteNav />
     <slot />
-    <Fragment set:html={page.footer ?? about.footer} />
+    <SiteFooter />
     {assets && <>
       <script is:inline set:html={about.catalog_script} />
       <script is:inline src={release.components.media.catalog_url} />
       <script is:inline src="/static/js/constants.js" />
       <script is:inline src="/static/js/api_client.js" />
     </>}
-    <script is:inline set:html={about.theme_script} />
     <slot name="scripts" />
   </body>
 </html>

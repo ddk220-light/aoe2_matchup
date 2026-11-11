@@ -12,11 +12,15 @@ const emblems=Object.fromEntries(Object.entries(saved.emblems).map(([name,url])=
 const config={...saved,emblems,icons:catalog.icons,icon_names:pages.icon_names,files:data.components.advisor.files};
 ---
 <BaseLayout page={frame}>
- <div class="page-header"><h1>Matchup Advisor</h1><p class="subtitle">Compare two civilizations side by side</p></div>
- <div class="container-wide ma-advisor">
-  <div class="ma-picker"><button type="button" class="ma-slot ma-slot-left" id="slot-left"></button><div class="ma-vs">vs</div><button type="button" class="ma-slot ma-slot-right" id="slot-right"></button></div>
-  <div class="ma-civ-grid" id="civ-grid" aria-label="Choose a civilization">{saved.civilizations.map(name=><button type="button" class="ma-civ-card" data-civ={name}><img class="ma-civ-emblem" src={emblems[name]} alt="" loading="lazy" width="30" height="30"/><span class="ma-civ-card-name">{name}</span></button>)}</div>
-  <div id="top-units"></div><div id="results"><div class="ma-empty">Choose your civilization and an opponent to explore their matchups.</div></div>
+ <div class="page-header"><h1>Matchup Advisor</h1><p class="subtitle">Pick your civilization and your opponent's. See which unit to build, what it beats, and what to add for the units it loses to.</p></div>
+ <div class="container ma-advisor is-choosing">
+  <div class="ma-picker"><button type="button" class="ma-slot ma-slot-left" id="slot-left"></button><span class="ma-vs">vs</span><button type="button" class="ma-slot ma-slot-right" id="slot-right"></button></div>
+  <section class="ma-chooser" aria-label="Choose a civilization">
+   <div class="ma-chooser-head"><h2 class="ma-chooser-prompt" id="civ-prompt">Choose your civilization</h2><input type="search" class="civ-filter" id="civ-filter" placeholder="Type to filter, Enter to pick" aria-label="Filter civilizations" autocomplete="off" spellcheck="false"/></div>
+   <div class="ma-civ-grid civ-chooser" id="civ-grid">{saved.civilizations.map(name=><button type="button" class="ma-civ-card civ-tile" data-civ={name}><img class="ma-civ-emblem" src={emblems[name]} alt="" loading="lazy" width="36" height="36"/><span class="ma-civ-card-name">{name}</span></button>)}</div>
+   <p class="civ-chooser-empty" id="civ-none" hidden>No civilization matches that.</p>
+  </section>
+  <div id="top-units"></div><div id="results"><p class="ma-empty">Pick both civilizations above to see what each side should build.</p></div>
  </div>
  <div id="ma-detail" class="ma-detail" role="dialog" aria-label="Matchup details" hidden></div>
  <script is:inline id="advisor-config" type="application/json" set:html={JSON.stringify(config).replaceAll('<','\\u003c')}/>

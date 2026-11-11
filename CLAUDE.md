@@ -17,6 +17,18 @@ Flask web app ([aoe2matchup.com](https://aoe2matchup.com)) that extracts Age of 
 
 **Architecture docs live in `docs/architecture/`** — start at `README.md` (system map + single-sources-of-truth table). **Before any structural change, read the matching checklist in `docs/architecture/runbooks.md`** ("when X changes, update Y": new game patch, sim logic change, new combat column, new unit/civ, new icon, frontend constants, surgical stat fix).
 
+## Website frontend: one source of truth (2026-11-11)
+
+Production is Vercel (see `docs/vercel-deployment.md`), not Railway. All
+visitor-facing presentation lives in the Astro app `apps/web` (header/footer in
+`src/components/site/`, shared styles in `src/styles/`, page code in
+`src/features/` and `src/pages/`). Do **not** carry UI changes into
+`apps/website` templates/CSS: Flask there now only supplies the API, the
+exported data and page metadata at build time. After editing `apps/web`, run
+`python scripts/migration/prepare_release.py` before `npm run build --prefix apps/web`
+(the build refuses sources changed after sealing), then `git checkout vercel.json`
+unless the data itself changed.
+
 ## Build Pipeline (stats)
 
 ```bash

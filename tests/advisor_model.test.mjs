@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildAdvisorRecommendations as build, unitWeight, invertMatchup} from '../apps/website/static/js/advisor-model.mjs';
+import {buildAdvisorRecommendations as build, unitWeight, invertMatchup} from '../apps/web/src/features/advisor/model.mjs';
 
 const unit = (id, gold = 20, name = `Unit ${id}`) => ({id, key: `unit-${id}`, name, costs: {food: 50, wood: 0, gold}});
 function matrix(own, enemy, outcome) {

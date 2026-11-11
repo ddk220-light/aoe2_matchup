@@ -1,0 +1,524 @@
+/* ==========================================================================
+   AoE2 Unit Analyzer - Base Design System
+   Shared foundation for all pages. Page-specific styles go in separate files.
+   ========================================================================== */
+
+/* ==========================================================================
+   CANONICAL DESIGN TOKENS
+   LIGHT is the default (bare :root). DARK is opt-in via [data-theme="dark"].
+   Every colour, font, size, line-height and shadow other files consume lives
+   here. Page CSS should reference these tokens, never raw hex / family strings.
+   ========================================================================== */
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINT SCALE  (mobile-first; ONE shared scale, site-wide)
+   CSS custom-media isn't natively supported, so these are documented literals.
+   Every page must use these exact values — do not reintroduce 600/640/700/900/1100.
+
+     xs   <= 480px   small phone (360-430 real). PRIMARY TARGET. 1 column, full-width
+                     controls, card/stacked table reflow, bottom-sheet popups.
+     sm   <= 768px   large phone / small tablet portrait. 1 data column (2-up small
+                     cards), nav collapses to a scroll strip, tables scroll-with-
+                     sticky-first-col or reflow.
+     md   <= 1024px  tablet landscape / small laptop. 2-3 columns, sections 2-up.
+     lg   >= 1025px  laptop/desktop default — the base layout, no query needed.
+     xl   >= 1600px  large monitor — raise caps / go fluid so content fills width.
+     xxl  >= 1920px  ultrawide — widest data layouts allowed.
+
+   The ONE allowed off-scale value is the nav's 900px squeeze breakpoint
+   (documented at that rule). Everything else snaps to {480,768,1024,1600,1920}.
+   ========================================================================== */
+
+/* ---------- LIGHT MODE (default) ---------- */
+:root {
+    /* ---- Responsive layout tokens (theme-agnostic; live here so every page
+            shares ONE fluid container system instead of fixed narrow caps) ---- */
+    --gutter:           clamp(12px, 4vw, 24px);                  /* fluid side padding */
+    --container-prose:  min(100% - 2 * var(--gutter), 820px);    /* readable text measure */
+    --container-max:    min(100% - 2 * var(--gutter), 1500px);   /* standard pages */
+    --container-data:   min(100% - 2 * var(--gutter), 1760px);   /* table / grid-heavy pages */
+    --container-app:    min(100% - 2 * var(--gutter), 1920px);   /* dense multi-panel tools */
+    --nav-h:            56px;                                    /* sticky-nav height; refined at runtime by base.html */
+
+    /* Quiet warm paper with flat panels. */
+    --bg-deep:          #f4f3ef;
+    --bg:               #faf9f6;
+    --bg-warm:          #faf9f6;
+    --bg-hover:         #eeede8;
+    --surface:          var(--bg);
+    --surface-elevated: #ffffff;
+
+    /* Borders */
+    --border:           #deddd6;
+    --border-light:     #b7b8ae;
+
+    /* Text */
+    --text:             #292c28;
+    --text-muted:       #555c54;
+    --text-dim:         #656b62;
+
+    /* Muted green accent; retain legacy gold token names for page consumers. */
+    --gold:             #46634c;
+    --gold-light:       #344e3a;
+    --gold-dark:        #46634c;
+    --gold-glow:        rgba(70, 99, 76, 0.08);
+    --gold-cta:         #46634c;
+    --text-on-gold:     #ffffff;
+
+    /* Tamed strength scale (semantic, not neon) */
+    --strong:           #2f6b34;
+    --average:          #656b62;
+    --weak:             #9a5a17;
+    --poor:             #9e2b22;
+    --signature:        var(--gold);
+    /* Situational sits off the good/bad axis (it means "conditional / niche"),
+       so it gets a cool slate rather than another warm red — distinct from
+       --weak (Bad) and --poor (Worst). */
+    --situational:      #3f6079;
+    --strong-tint:      rgba(47, 107, 52, 0.12);
+    --weak-tint:        rgba(154, 90, 23, 0.12);
+    --poor-tint:        rgba(158, 43, 34, 0.12);
+    --situational-tint: rgba(63, 96, 121, 0.12);
+    --gold-tint:        rgba(70, 99, 76, 0.06);
+
+    /* Directional aliases (collapse old neon duplicates onto strength scale) */
+    --win:              var(--strong);
+    --loss:             var(--poor);
+    --eco:              var(--weak);
+    --pop:              var(--team2);
+    --up:               var(--strong);
+    --down:             var(--poor);
+    --link-data:        var(--gold);
+
+    /* Team identity (player colour only — never used for stat data) */
+    --team1:            #a23226;
+    --team2:            #1c6796;
+
+    /* Header banner glow (single themed token, no cross-theme semantic flip) */
+    --header-glow:      rgba(162, 50, 38, 0.10);
+
+    /* Themed simulate canvas backdrop */
+    --canvas-bg:        #dfe4cf;
+
+    /* Deprecated aliases kept so legacy refs still resolve */
+    --red:              var(--poor);
+    --green:            var(--strong);
+
+    /* Typography — families */
+    --font-display:     var(--font-body);
+    --font-heading:     "Crimson Pro", "Iowan Old Style", Georgia, serif;
+    --font-body:        "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+    /* Figures use the text face with tabular numerals; no separate code font. */
+    --font-mono:        var(--font-body);
+
+    /* Header band and its brass accent (same in both themes). */
+    --ink:              #1d2620;
+    --ink-edge:         #36423a;
+    --ink-text:         #f3f0e6;
+    --ink-muted:        #b9c0b4;
+    --brass:            #c9a24b;
+
+    /* Typography — size ramp (16px root, hard floor 0.75rem) */
+    --fs-xs:            0.75rem;
+    --fs-sm:            0.8125rem;
+    --fs-base:          0.9375rem;
+    --fs-md:            1.0625rem;
+    --fs-lg:            1.375rem;
+    --fs-xl:            2.125rem;
+    --fs-2xl:           2.75rem;
+
+    /* Line-height tokens */
+    --lh-tight:         1.2;
+    --lh-base:          1.55;
+    --lh-loose:         1.65;
+
+    /* Flat controls; shadows are reserved for floating surfaces. */
+    --shadow-sm:        none;
+    --shadow-card:      0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* ---------- DARK MODE (opt-in) ---------- */
+[data-theme="dark"] {
+    /* Neutral charcoal surfaces. */
+    --bg-deep:          #1c1f1d;
+    --bg:               #242824;
+    --bg-warm:          #242824;
+    --bg-hover:         #303630;
+    --surface:          var(--bg);
+    --surface-elevated: #2b302b;
+
+    /* Borders */
+    --border:           #3c433d;
+    --border-light:     #626c62;
+
+    /* Text */
+    --text:             #e7eae3;
+    --text-muted:       #b8c0b4;
+    --text-dim:         #9da798;
+
+    /* Accent */
+    --gold:             #b3c6a6;
+    --gold-light:       #d0dfc5;
+    --gold-dark:        #b3c6a6;
+    --gold-glow:        rgba(179, 198, 166, 0.08);
+    --gold-cta:         #b3c6a6;
+    --text-on-gold:     #1c1f1d;
+
+    /* Tamed strength scale */
+    --strong:           #6fb15e;
+    --average:          #b8c0b4;
+    --weak:             #cf9a4a;
+    --poor:             #cf6a5e;
+    --signature:        var(--gold);
+    /* Cool slate for the off-axis "Situational" tier (see light-mode note). */
+    --situational:      #7fa6c4;
+    --strong-tint:      rgba(111, 177, 94, 0.14);
+    --weak-tint:        rgba(207, 154, 74, 0.14);
+    --poor-tint:        rgba(207, 106, 94, 0.14);
+    --situational-tint: rgba(127, 166, 196, 0.14);
+    --gold-tint:        rgba(179, 198, 166, 0.08);
+
+    /* Directional aliases */
+    --win:              var(--strong);
+    --loss:             var(--poor);
+    --eco:              var(--weak);
+    --pop:              var(--team2);
+    --up:               var(--strong);
+    --down:             var(--poor);
+    --link-data:        var(--gold);
+
+    /* Team identity (brightened for dark AA) */
+    --team1:            #cf5a4b;
+    --team2:            #4a9fd4;
+
+    /* Header banner glow */
+    --header-glow:      rgba(122, 26, 26, 0.38);
+
+    /* Themed simulate canvas backdrop */
+    --canvas-bg:        #26301a;
+
+    /* Deprecated aliases */
+    --red:              var(--poor);
+    --green:            var(--strong);
+
+    /* Floating surfaces need more separation in dark mode. */
+    --shadow-sm:        none;
+    --shadow-card:      0 2px 10px rgba(0, 0, 0, 0.28);
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ---------- Font Smoothing + global scroll guards ---------- */
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    /* Anchor jumps land below the sticky nav, not under it */
+    scroll-padding-top: var(--nav-h);
+}
+
+/* ---------- Fluid root scale: ONE lever for big screens ----------
+   The type ramp (--fs-*) and unit-icon boxes are all rem, so growing the root
+   font-size on large monitors scales text AND icons together — the layout
+   "zooms" to fill the extra real estate instead of looking tiny in a wide page.
+   Laptops/phones (<1600) keep the 16px base untouched. */
+@media (min-width: 1600px) { html { font-size: 17px; } }
+@media (min-width: 1920px) { html { font-size: 18px; } }
+@media (min-width: 2560px) { html { font-size: 20px; } }
+
+/* Kill horizontal page overflow (the #1 mobile jank cause). This MUST live on
+   <html> only — NOT on <body>. Putting overflow-x:hidden on <body> makes the
+   browser compute body's overflow-y to `auto`, turning the body into a scroll
+   container that is exactly as tall as its content (so it can never scroll
+   itself). Combined with overscroll-behavior on the body, a mouse wheel over
+   the page content then gets swallowed instead of scrolling the viewport — the
+   scrollbar still drags, but the wheel does nothing. Keeping the clip + the
+   overscroll guard on the real viewport scroller (<html>) avoids that trap. */
+html,
+body {
+    max-width: 100%;
+}
+html {
+    overflow-x: hidden;
+    /* Prevent the vertical rubber-band / pull-to-refresh from chaining past the
+       viewport. Safe here because <html> is the element that actually scrolls. */
+    overscroll-behavior-y: none;
+}
+
+/* ---------- Reusable horizontal-scroller utility ----------
+   Apply to every horizontal scroll region (wide tables, tab bars, the mobile
+   nav strip): momentum on iOS, contained overscroll (no browser back-swipe),
+   and a hard width cap so it never pushes the page wider than the viewport. */
+.scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* ---------- Base Typography ---------- */
+body {
+    font-family: var(--font-body);
+    background: var(--bg-deep);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: var(--lh-base);
+    font-variant-numeric: tabular-nums;
+    position: relative;
+}
+
+/* Keep content stacking consistent with sticky navigation. */
+.site-nav,
+.page-header,
+.container,
+.container-wide,
+main {
+    position: relative;
+    z-index: 1;
+}
+
+/* Controls provide their own state transitions. */
+h1, h2, h3 {
+    font-family: var(--font-display);
+    color: var(--text);
+}
+
+h1 {
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+h2, h3 {
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+a {
+    color: var(--gold);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--gold-light);
+}
+
+/* ---------- Container ----------
+   Fluid min() caps so big monitors fill and small screens never overflow.
+   The flat @768 padding override is gone — the --gutter clamp handles it. */
+.container {
+    width: var(--container-max);
+    margin: 0 auto;
+    padding: 16px 0;
+}
+
+.container-wide {
+    width: var(--container-app);
+    margin: 0 auto;
+    padding: 16px 0;
+}
+
+/* ---------- Cards ---------- */
+.card {
+    background: var(--bg-warm);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.card:hover {
+    border-color: var(--border);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 20px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-warm);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    border-color: var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-gold {
+    border: none;
+    background: var(--gold-cta);
+    color: var(--text-on-gold);
+}
+
+.btn-gold:hover {
+    box-shadow: var(--shadow-sm);
+    filter: brightness(1.06);
+}
+
+.btn-gold:disabled,
+.btn:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ---------- Age Toggle ---------- */
+.age-toggle {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+
+.age-btn {
+    padding: 6px 18px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.age-btn:hover {
+    border-color: var(--gold-dark);
+    color: var(--text);
+}
+
+.age-btn.active {
+    background: var(--gold-dark);
+    color: var(--text-on-gold);
+    border-color: var(--gold-dark);
+    font-weight: 600;
+}
+
+/* ---------- De-neon accent utilities ---------- */
+/* A small calm strength cue: a 6px round leading dot instead of a neon edge. */
+.accent-dot::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    background: var(--border);
+}
+.accent-dot.is-strong::before { background: var(--strong); }
+.accent-dot.is-weak::before   { background: var(--weak); }
+.accent-dot.is-poor::before   { background: var(--poor); }
+.accent-dot.is-signature::before { background: var(--gold); }
+
+/* A neutral edge that pages tint via color-mix when they need direction. */
+.accent-edge {
+    border-left: 2px solid var(--border);
+}
+.accent-edge.is-strong { border-left-color: color-mix(in srgb, var(--strong) 55%, var(--border)); }
+.accent-edge.is-weak   { border-left-color: color-mix(in srgb, var(--weak) 55%, var(--border)); }
+.accent-edge.is-poor   { border-left-color: color-mix(in srgb, var(--poor) 55%, var(--border)); }
+.accent-edge.is-signature { border-left-color: var(--gold); }
+
+/* ============================================================
+   Shared floating-card primitive  (tooltips / hovercards / pinned info)
+   Page systems (rankings .hover-card, matchup .unit-badge-tooltip,
+   matchup_advisor identity cards) should adopt .floating-card so the
+   viewport-clamp + touch + bottom-sheet behaviour lives in ONE place.
+   ============================================================ */
+.floating-card {
+    /* never wider than the viewport minus gutters; caps at a readable 340px */
+    max-width: min(340px, calc(100vw - 2 * var(--gutter)));
+}
+/* On phones/tablets a pinned card can be taller than the screen, so it scrolls
+   internally. On desktop it floats and sizes to content — NO inner scrollbar,
+   so the mouse wheel always scrolls the page, never gets trapped in the card. */
+@media (max-width: 768px) {
+    .floating-card {
+        max-height: min(70vh, calc(100vh - var(--nav-h) - 16px));
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+}
+
+/* A small close affordance for tap-pinned cards (hidden until pinned on touch). */
+.floating-card-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    display: none;               /* shown by pages when a card is pinned on touch */
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 0;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 50%;
+}
+.floating-card-close:hover {
+    color: var(--text);
+    background: var(--bg-hover);
+}
+
+/* Optional dimmed backdrop behind a phone bottom-sheet (pages may toggle it). */
+.sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1099;
+    background: rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+}
+
+@keyframes sheetSlideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+
+/* xs: pinned cards become a bottom sheet — reachable, dismissible, never
+   clipped. Pages add the .is-pinned hook; the base geometry lives here. */
+@media (max-width: 480px) {
+    .floating-card.is-pinned {
+        position: fixed;
+        left: var(--gutter);
+        right: var(--gutter);
+        bottom: 0;
+        top: auto;
+        width: auto;
+        max-width: none;
+        max-height: 70vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        z-index: 1100;
+        border-radius: 12px 12px 0 0;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        animation: sheetSlideUp 0.2s ease-out both;
+    }
+    .floating-card.is-pinned .floating-card-close {
+        display: flex;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floating-card.is-pinned { animation: none; }
+}
+

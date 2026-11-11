@@ -1,0 +1,39 @@
+---
+import {roster} from '../../features/civilizations/data';
+const year = 2026;
+---
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <div class="site-footer-about">
+      <p class="site-footer-brand-name">AoE2 Matchup</p>
+      <p class="site-footer-tagline">A free fan tool for Age of Empires II: Definitive Edition. Every unit of all {roster.length} civilizations, fully upgraded, fought against each other in simulation.</p>
+    </div>
+    <nav class="site-footer-col" aria-label="Tools">
+      <h2 class="site-footer-heading">Tools</h2>
+      <ul class="site-footer-list">
+        <li><a href="/">Battle simulator</a></li>
+        <li><a href="/matchup-advisor">Matchup advisor</a></li>
+        <li><a href="/units">Unit rankings</a></li>
+        <li><a href="/civilizations">Civilizations</a></li>
+        <li><a href="/matchups">Unit matchups</a></li>
+        <li><a href="/patches">Patch notes</a></li>
+      </ul>
+    </nav>
+    <nav class="site-footer-col" aria-label="About">
+      <h2 class="site-footer-heading">About</h2>
+      <ul class="site-footer-list">
+        <li><a href="/about">How it works</a></li>
+        <li><a href="https://www.youtube.com/@AoE2Matchup" target="_blank" rel="me noopener">YouTube</a></li>
+      </ul>
+    </nav>
+    <nav class="site-footer-col" aria-label="Data sources">
+      <h2 class="site-footer-heading">Data sources</h2>
+      <ul class="site-footer-list">
+        <li><a href="https://github.com/Tapsa/genieutils" target="_blank" rel="nofollow noopener">genieutils</a></li>
+        <li><a href="https://aoe2techtree.net" target="_blank" rel="nofollow noopener">aoe2techtree.net</a></li>
+        <li><a href="https://ageofempires.fandom.com/wiki/Age_of_Empires_Series_Wiki" target="_blank" rel="nofollow noopener">Age of Empires Wiki</a></li>
+      </ul>
+    </nav>
+  </div>
+  <p class="site-footer-legal">© {year} AoE2 Matchup. Age of Empires II is a trademark of Microsoft Corporation. This site is not affiliated with or endorsed by Microsoft, Forgotten Empires, or World's Edge.</p>
+</footer>

@@ -9,23 +9,23 @@ export const RankingsV3Model = (() => {
         { key: "armor_combined", label: "M/P Arm", expandable: "Special", hiddenWhenCollapsed: true },
         { key: "final_range", label: "Range", expandable: "Special", hiddenWhenCollapsed: true },
         { key: "final_speed", label: "Speed", expandable: "Special", hiddenWhenCollapsed: true },
-        { key: "special_abilities", label: "Special", expandable: "Special" },
+        { key: "special_abilities", label: "Abilities and bonuses", expandable: "Special" },
     ];
 
     function buildTableColumns({ showLine = false } = {}) {
         return [
-            { key: "civ_name", label: "Civ" },
+            { key: "ranking_rank", label: "#", info: "Rank within this unit line." },
             { key: "unit_name", label: "Unit" },
+            { key: "civ_name", label: "Civilization" },
             ...(showLine ? [{ key: "line_slug", label: "Line" }] : []),
             {
                 key: "ranking_score",
                 label: "Score",
                 info: "Population- and cost-balanced combat score. Higher is better; 50 is neutral.",
             },
-            { key: "ranking_rank", label: "Rank", info: "Rank within this unit line." },
             {
                 key: "ranking_median_delta",
-                label: "vs Median",
+                label: "vs median",
                 info: "Score difference from the median unit in this line.",
             },
             { key: "total_cost", label: "Cost" },

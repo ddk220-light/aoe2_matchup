@@ -20,7 +20,7 @@ const costs = [['cost_food', 'Food', 'food'], ['cost_wood', 'Wood', 'wood'], ['c
       width={unit.media.width} height={unit.media.height} alt={unit.unit_name} loading="lazy" decoding="async" />}
     <div class="unit-label">
       <span class="unit-name">{unit.unit_name}</span>
-      {tier && <span class:list={['unit-tier', `tier-${unit.tier}`]}>{unit.tier === 'signature' && <span aria-hidden="true">★ </span>}{tier.label}</span>}
+      {tier && <span class:list={['unit-tier', `tier-${unit.tier}`]}>{tier.label}</span>}
     </div>
   </div>
   <div class="unit-tooltip" id={id}>

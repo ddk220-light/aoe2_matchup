@@ -1,0 +1,57 @@
+---
+// Site header. Owned here: the active section is derived from the URL.
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const sections = [
+  {href: '/', label: 'Simulator', match: (p: string) => p === '/' || p.startsWith('/simulate')},
+  {href: '/matchup-advisor', label: 'Advisor', match: (p: string) => p.startsWith('/matchup-advisor')},
+  {href: '/units', label: 'Rankings', match: (p: string) => p.startsWith('/units')},
+  {href: '/civilizations', label: 'Civilizations', match: (p: string) => p.startsWith('/civilizations')},
+  {href: '/matchups', label: 'Matchups', match: (p: string) => p.startsWith('/matchups') || p.startsWith('/vs')},
+  {href: '/patches', label: 'Patches', match: (p: string) => p.startsWith('/patches')},
+];
+---
+<header class="site-nav">
+  <div class="site-nav-inner">
+    <a href="/" class="nav-brand" aria-label="AoE2 Matchup home">
+      <svg class="nav-brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2 4 5v6.2c0 5 3.3 8.9 8 10.8 4.7-1.9 8-5.8 8-10.800V5l-8-3Z" fill="currentColor" opacity=".18"/>
+        <path d="M12 2 4 5v6.2c0 5 3.3 8.9 8 10.8 4.7-1.9 8-5.8 8-10.800V5l-8-3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="m8.2 8.2 7.6 7.600m0-7.6-7.6 7.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span>AoE2 Matchup</span>
+    </a>
+    <nav class="nav-links" id="navLinks" aria-label="Sections">
+      {sections.map(s => {
+        const active = s.match(path);
+        return <a href={s.href} class:list={['nav-link', {active}]} aria-current={active ? 'page' : undefined}>{s.label}</a>;
+      })}
+    </nav>
+    <div class="nav-aside">
+      <a href="/about" class:list={['nav-link', 'nav-link-quiet', {active: path.startsWith('/about')}]}>How it works</a>
+      <button class="theme-toggle-btn" id="themeToggle" type="button" aria-label="Switch colour theme" title="Switch colour theme">
+        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.500A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.500Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.500v2.500M12 19v2.500M2.5 12H5M19 12h2.500M5.3 5.300l1.8 1.800M16.9 16.900l1.8 1.800M5.3 18.700l1.8-1.800M16.9 7.100l1.8-1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+<script is:inline>
+  (function () {
+    var nav = document.querySelector('.site-nav');
+    if (!nav) return;
+    function setNavH() { document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px'); }
+    setNavH();
+    window.addEventListener('resize', setNavH, {passive: true});
+    var active = nav.querySelector('.nav-links .active'), strip = nav.querySelector('.nav-links');
+    if (active && strip && strip.scrollWidth > strip.clientWidth) {
+      strip.scrollLeft = Math.max(0, active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2);
+    }
+    var button = document.getElementById('themeToggle');
+    button.addEventListener('click', function () {
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (dark) document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme', 'dark');
+      try { localStorage.setItem('aoe2-theme', dark ? 'light' : 'dark'); } catch (e) {}
+    });
+  })();
+</script>

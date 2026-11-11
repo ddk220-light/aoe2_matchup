@@ -1,0 +1,70 @@
+{
+  "sourceCommit": "a6c5f34f2e18119fd86de2ec91f8b45402b13c45",
+  "reviewedOnly": true,
+  "contexts": 36,
+  "displayedCells": 220,
+  "singleSeedConfirmations": 11,
+  "multiSeedValidations": 25,
+  "changed": 2,
+  "retained": 34,
+  "mixedWinners": 1,
+  "mixedEngineVersionSets": 6,
+  "individualSeedRecords": 93,
+  "sourceFilesVerifiedAgainstLocalGitObjects": {
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/audits/final-path-patrol-v2.json": {
+      "commit": "a6c5f34f2e18119fd86de2ec91f8b45402b13c45",
+      "sha256": "5709940bca7faf052b098fab30c8c7bf1c00d407e5fe9e9be81f1f8b8bea7ae3"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/audits/final-refinement-v3.json": {
+      "commit": "a6c5f34f2e18119fd86de2ec91f8b45402b13c45",
+      "sha256": "8a81a628cbbb037a444f98e58882e14246fad5fb74ceea278e1eb0a7794ba2ce"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/collision-core-v1/review.json": {
+      "commit": "a6c5f34f2e18119fd86de2ec91f8b45402b13c45",
+      "sha256": "a0e2b49fdf6be3a0961f8c8c7ca157e613fe851c81cc359ba6b933d44b340be1"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/collision-core-v1/input.json": {
+      "commit": "a6c5f34f2e18119fd86de2ec91f8b45402b13c45",
+      "sha256": "ae5ef3ca012e90f05089f9c90024dc97bfa54fe59df9408ee7b3a1a63274daac"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/collision-core-v1/runs.jsonl": {
+      "commit": "a6c5f34f2e18119fd86de2ec91f8b45402b13c45",
+      "sha256": "fb3d99ec918a7cfea206eec89c8113f19349e7f05aa45b8388a046121a704e72"
+    },
+    "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/runs.jsonl": {
+      "commit": "a837ceeb9686ced81e051e6691d4c3456a25854a",
+      "sha256": "4c492b1d6ea61640f15e09d3237efd78832e43e279be3972eb3f6f997d77583a"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2/runs.jsonl": {
+      "commit": "a6c5f34f2e18119fd86de2ec91f8b45402b13c45",
+      "sha256": "3c25dc053382b6cc4dfb18ecd06c742aa692c05af762d996507267ab6477fada"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/path-patrol-v2-resume-001/runs.jsonl": {
+      "commit": "a6c5f34f2e18119fd86de2ec91f8b45402b13c45",
+      "sha256": "31235f71b2ac60e8f3b3bb7f64e5fa74943ef8d3983112233b697206b2088776"
+    },
+    "/workspace/aoe2_civ_forecast_validation/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/runs.jsonl": {
+      "commit": "a837ceeb9686ced81e051e6691d4c3456a25854a",
+      "sha256": "b6de6203383d8c622fe82a4b8e8e9d533d80dec69c0b2d2cc9739c0422a618dc"
+    },
+    "/workspace/aoe2_civ_forecast_recovery/aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/local-refinement-v3/runs.jsonl": {
+      "commit": "a6c5f34f2e18119fd86de2ec91f8b45402b13c45",
+      "sha256": "b623298b9ed36cccf1fa73b1d13c6d725f432acfd50904e8c2f0c1655b8b29d8"
+    }
+  },
+  "outputSha256": {
+    "runs.csv": "98692c5934e910652f9dbd1839d27f4da84ffdd17930d2560733a861ff1ec7d6",
+    "matchup-reviews.json": "a2395f922939be648f5aec04bad951f63c3fa512f862ba29cee0aa3a46e78ec1",
+    "runs.jsonl.gz": "00e6bc0c0339b979825a5a0e4edf0f2f3c014adcd254fa55f1cf66a9a6c6e307",
+    "matchups.csv": "700955b7956c64384151a24395343cdaaedf7eebf9501c29aecce35dcf998878"
+  },
+  "simulationsExecutedForExport": 0,
+  "productionEligible": false,
+  "publication": "local only",
+  "limitations": [
+    "These are separately versioned recovery results; frozen campaign records and production are unchanged.",
+    "Mixed-engine seed sets retain original per-run provenance and must not be called homogeneous frozen-engine validation.",
+    "Agreement-dependent stopping cannot estimate unbiased global forecast accuracy.",
+    "Per-run terminal measurements and evidence hashes are included. This is not a frame-by-frame event recording."
+  ]
+}

@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
-def forecast(tmp_path):
-    baseline = ROOT / 'data/golden/civ_matchups_first_pass.db'
+def forecast(tmp_path, forecast_import_baseline):
+    baseline = forecast_import_baseline
     db = sqlite3.connect(baseline)
     dictionary = db.execute("SELECT value FROM metadata WHERE key='compression_dictionary'").fetchone()[0]
     for identifier, blob in db.execute("SELECT e.id,e.data FROM evidence e JOIN cells c ON c.evidence_id=e.id WHERE c.evidence_type='predicted_unvalidated' ORDER BY e.id"):

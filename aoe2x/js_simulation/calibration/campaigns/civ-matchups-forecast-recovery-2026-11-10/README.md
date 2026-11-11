@@ -1,5 +1,16 @@
 # Recovery of 36 unfinished forecast contexts
 
+Publication update — November 10, 2026, 4:22 PM PST: all 36 recovery
+contexts and all 93 seed records are now published on the recovery research
+branch and deployed in the [production matchup table](https://aoe2matchup.com/matchup-advisor).
+Production commit: `baf6c71c45e6cb3d5d01f51167ae353f29d9607f`. The research archive was published at
+`be3db171438da99dfc86f12535db168baba66822`; see the
+[immutable release verification](website-releases/2026-11-11/verification.json).
+All 36 served evidence objects match the committed DB. Recurring tasks remain
+stopped and no future automatic release is authorized. The earlier completion
+report below preserves the state before this separately authorized publication.
+
+
 ## Current result — November 10, 2026, 7:18 a.m. PST
 
 All 36 contexts have complete, independently audited recovery evidence,

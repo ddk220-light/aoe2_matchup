@@ -1,12 +1,18 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import page from '../generated/simulator-page.json';
+import publicCatalog from '../generated/public-catalog.json';
 import release from '../generated/release.json';
 import CivilizationPicker from '../components/simulator/CivilizationPicker.astro';
 import '../features/simulator/simulator.css';
 const json = (value:unknown) => JSON.stringify(value).replace(/</g,'\\u003c');
 const {frame, ...data} = page;
-const config = {...data, engine_worker_url:release.engine_worker_url,
+// Team A is drawn in blue: give each simulator sprite its blue render too.
+const sprites = Object.fromEntries(Object.entries(data.sprites).map(([name, sprite]) => {
+  const url_blue = (publicCatalog.sprites as Record<string, {url_blue?: string}>)[name]?.url_blue;
+  return [name, url_blue ? {...sprite, url_blue} : sprite];
+}));
+const config = {...data, sprites, engine_worker_url:release.engine_worker_url,
   versions:{simulator:release.components.simulator.version,engine:release.components.engine.version}};
 ---
 <BaseLayout page={frame}>

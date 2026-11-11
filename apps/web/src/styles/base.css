@@ -85,14 +85,16 @@
     --win:              var(--strong);
     --loss:             var(--poor);
     --eco:              var(--weak);
-    --pop:              var(--team2);
+    --pop:              var(--team1);
     --up:               var(--strong);
     --down:             var(--poor);
     --link-data:        var(--gold);
 
-    /* Team identity (player colour only — never used for stat data) */
-    --team1:            #a23226;
-    --team2:            #1c6796;
+    /* Team identity (player colour only — never used for stat data).
+       Site-wide convention: team 1 = Team A / left / "You" = BLUE,
+       team 2 = Team B / right / "Opponent" = RED. */
+    --team1:            #1c6796;
+    --team2:            #a23226;
 
     /* Header banner glow (single themed token, no cross-theme semantic flip) */
     --header-glow:      rgba(162, 50, 38, 0.10);
@@ -182,14 +184,14 @@
     --win:              var(--strong);
     --loss:             var(--poor);
     --eco:              var(--weak);
-    --pop:              var(--team2);
+    --pop:              var(--team1);
     --up:               var(--strong);
     --down:             var(--poor);
     --link-data:        var(--gold);
 
-    /* Team identity (brightened for dark AA) */
-    --team1:            #cf5a4b;
-    --team2:            #4a9fd4;
+    /* Team identity (brightened for dark AA): team 1 blue, team 2 red */
+    --team1:            #4a9fd4;
+    --team2:            #cf5a4b;
 
     /* Header banner glow */
     --header-glow:      rgba(122, 26, 26, 0.38);

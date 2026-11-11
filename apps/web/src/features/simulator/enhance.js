@@ -1,3 +1,4 @@
+import {blueSheetImage} from './team-colour.mjs';
 import {catalog, ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING, CIV_EMBLEM_BASE, iconUrl, spriteFor, hasSprite, sheetFor, escapeHtml} from './catalog.mjs';
 import {readSimParams} from './params.mjs';
 /*
@@ -161,7 +162,7 @@ function renderSelection(teamNum) {
                     typeof hasSprite === "function" &&
                     hasSprite(u.unit_name);
                 const iUrl = useSprite
-                    ? spriteFor(u.unit_name)
+                    ? spriteFor(u.unit_name, teamNum)
                     : unitIconUrl(u.unit_name);
                 const imgCls = useSprite ? ' class="sprite"' : "";
                 const nameSafe = escapeHtml(u.unit_name);
@@ -177,13 +178,14 @@ function renderSelection(teamNum) {
                 '<div style="color:var(--text-muted);font-size:0.8rem;padding:8px">Loading units...</div>';
         }
     } else {
-        // Unit selected badge — transparent sprite when available (red default),
-        // boxed portrait otherwise. `sprite` class drops the circular frame.
+        // Unit selected badge — transparent sprite in the team's player colour
+        // when available (Team A blue, Team B red), boxed portrait otherwise.
+        // `sprite` class drops the circular frame.
         const useSprite =
             typeof hasSprite === "function" &&
             hasSprite(state.unitName);
         const iUrl = useSprite
-            ? spriteFor(state.unitName)
+            ? spriteFor(state.unitName, teamNum)
             : unitIconUrl(state.unitName);
         const imgCls = useSprite ? ' class="sprite"' : "";
         const unitNameSafe = escapeHtml(state.unitName);
@@ -346,10 +348,9 @@ function selectUnit(teamNum, slug, name) {
     leaveBattleForRosterEdit();
     teamState[teamNum].unitSlug = slug;
     teamState[teamNum].unitName = name;
-    // Preload canvas image: the red idle sprite (both teams) when the unit has a
-    // square sprite, else the portrait. Teams are told apart by HP-bar colour, not
-    // sprite colour, so the unit doesn't flip colour when its (red) attack anim
-    // plays. unitIsSprite drives no-circle render.
+    // Preload canvas image: the idle sprite in the team's player colour (Team A
+    // blue, Team B red) when the unit has a square sprite, else the portrait.
+    // unitIsSprite drives no-circle render.
     const url = spriteFor(name, teamNum);
     if (url) {
         const img = new Image();
@@ -361,10 +362,17 @@ function selectUnit(teamNum, slug, name) {
     }
     unitIsSprite[teamNum] = hasSprite(name);
     // Preload the attack sprite-sheet (animated frames) if this unit has one.
+    // Sheets only exist in red, so Team A gets a client-side blue recolour
+    // (see team-colour.mjs) and never flashes red while attacking.
     const sheet = (typeof sheetFor === "function") ? sheetFor(name) : null;
     if (sheet && sheet.url) {
-        const sImg = new Image();
-        sImg.src = sheet.url;
+        let sImg;
+        if (teamNum === 1) {
+            sImg = blueSheetImage(sheet.url);
+        } else {
+            sImg = new Image();
+            sImg.src = sheet.url;
+        }
         unitSheets[teamNum] = { img: sImg, meta: sheet };
     } else {
         unitSheets[teamNum] = null;
@@ -440,7 +448,7 @@ function renderSearchResults(teamNum, raw) {
         } else {
             const useSprite =
                 typeof hasSprite === "function" && hasSprite(it.name);
-            const iUrl = useSprite ? spriteFor(it.name) : unitIconUrl(it.name);
+            const iUrl = useSprite ? spriteFor(it.name, teamNum) : unitIconUrl(it.name);
             html += `<div class="search-result" data-idx="${idx}">
                 <img class="${useSprite ? "" : "emblem"}" src="${iUrl}" alt="" onerror="this.style.display='none'" />
                 <span class="sr-name">${escapeHtml(it.name)}</span>

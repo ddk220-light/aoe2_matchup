@@ -13,7 +13,7 @@ from genieutils.datfile import DatFile
 
 DAT = 'D:/SteamLibrary/steamapps/common/AoE2DE/resources/_common/dat/empires2_x2_p1.dat'
 
-# served civs (must match apps/website/static/js/constants.js ENABLED_CIVS)
+# served civs (must match apps/web/static/js/constants.js ENABLED_CIVS)
 ENABLED = ["Armenians","Aztecs","Bengalis","Berbers","Bohemians","Britons","Bulgarians",
     "Burgundians","Burmese","Byzantines","Celts","Chinese","Cumans","Dravidians","Ethiopians",
     "Franks","Georgians","Goths","Gurjaras","Hindustanis","Huns","Incas","Italians","Japanese",

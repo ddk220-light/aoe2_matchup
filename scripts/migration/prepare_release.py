@@ -106,7 +106,7 @@ for name in ['aoe2x/__init__.py', 'aoe2x/paths.py', 'aoe2x/storage.py',
     path = ROOT/name
     if path.exists(): backend_sources.add(path)
 backend_sources.update(p for p in (ROOT/'data/golden').rglob('*') if p.is_file() and p.suffix in ['.db', '.json'])
-backend_sources.update((ROOT/'apps/website/static/data').glob('*.json'))
+backend_sources.update((ROOT/'apps/backend/aoe2_api/data').glob('*.json'))
 backend_sources.update((ROOT/'aoe2x/js_simulation').glob('*.py'))
 # The existing release API fingerprints these sources; retain the same identity.
 backend_sources.update((ROOT/'aoe2x/js_simulation/src').rglob('*.js'))
@@ -117,9 +117,10 @@ backend_sources.update((ROOT/'apps/website/templates').glob('*.html'))
 
 public_sources = {}
 # Stylesheets and page scripts are bundled by the Astro app; only shared runtime files are copied.
+# static/js/unit_sprites.js has no source: it is written below from the public catalog.
 for name in ['img/favicon.png', 'img/og-default.png',
-             'js/constants.js', 'js/unit_sprites.js', 'js/api_client.js', 'js/v3_sim_worker.js']:
-    public_sources['static/'+name] = ROOT/'apps/website/static'/name
+             'js/constants.js', 'js/api_client.js', 'js/v3_sim_worker.js']:
+    public_sources['static/'+name] = ROOT/'apps/web/static'/name
 engine = ROOT/'aoe2x/js_simulation'
 for path in (engine/'src').rglob('*.js'):
     public_sources['v3-runtime/'+path.relative_to(engine).as_posix()] = path

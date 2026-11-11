@@ -90,7 +90,7 @@ aoe2x/dbgen/config_combat.py (+ config_units.py)
 3. **Resource cost weights** — `simulation_real.py weighted_cost` ↔ `compute_battle_scores.calc_weighted_cost` (explicit keep-in-lockstep comment).
 4. **`PLAYER_COLORS`** — `replay_core.py` ↔ `clip_export.py` (intentionally different palettes; change together).
 5. **Sim behavior changes** → regenerate `.golden/baseline.json` (`python .golden/capture_baseline.py`) and re-sim/re-derive matchup data (runbooks §2).
-6. **Frontend constants** (`ENABLED_CIVS`, `NAME_TO_ICON` 218 entries, `UNIQUE_BUILDING`) live ONLY in `apps/website/static/js/constants.js` — the old per-template copies are gone. (Server-side civ validation derives from the reference DB; the pipeline civ list `ORIGINAL_13_CIVS` in `aoe2x/dbgen/config_constants.py` is derived from `extraction.extract_constants.CIV_NAMES`.)
+6. **Frontend constants** (`ENABLED_CIVS`, `NAME_TO_ICON` 218 entries, `UNIQUE_BUILDING`) live ONLY in `apps/web/static/js/constants.js` — the old per-template copies are gone. (Server-side civ validation derives from the reference DB; the pipeline civ list `ORIGINAL_13_CIVS` in `aoe2x/dbgen/config_constants.py` is derived from `extraction.extract_constants.CIV_NAMES`.)
 
 ## Conventions
 

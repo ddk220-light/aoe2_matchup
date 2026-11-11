@@ -62,7 +62,7 @@ test('shared hover animation plays and restores the still without a per-card ove
         },
         document: { addEventListener: (event, handler) => { handlers[event] = handler; } },
     });
-    vm.runInContext(fs.readFileSync(path.join(__dirname, '../apps/website/static/js/constants.js'), 'utf8'), hoverContext);
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../apps/web/static/js/constants.js'), 'utf8'), hoverContext);
     const image = { src: '/assets/img/unit_sprites/elite_jarl.png', dataset: {}, getAttribute: () => image.src };
     const badge = { dataset: { animName: 'Elite Jarl' }, querySelector: () => image, contains: () => false };
     const target = { closest: () => badge };

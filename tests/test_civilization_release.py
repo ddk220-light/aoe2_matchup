@@ -80,7 +80,7 @@ def test_builder_explains_frank_mounted_crossbow_gold_discount():
 
 
 def test_committed_frank_mounted_crossbow_row_explains_gold_discount():
-    path = Path(__file__).resolve().parents[1] / 'apps/website/static/data/civilizations-185872.json'
+    path = Path(__file__).resolve().parents[1] / 'apps/backend/aoe2_api/data/civilizations-185872.json'
     release = json.loads(path.read_text(encoding='utf-8'))
     row = next(row for row in release['civilizations']['Franks']['units']
                if row['unit_slug'] == 'heavy_mounted_crossbowman')
@@ -323,7 +323,7 @@ def test_cranequins_is_applied_despite_new_regional_availability_prerequisite(tm
 
 
 def test_generated_release_contract_and_visible_longship_icons():
-    path = Path(__file__).resolve().parents[1] / 'apps/website/static/data/civilizations-185872.json'
+    path = Path(__file__).resolve().parents[1] / 'apps/backend/aoe2_api/data/civilizations-185872.json'
     assert path.exists(), 'Generated reference supplement is missing'
     release = json.loads(path.read_text())
     assert release['reference_build'] == 185872

@@ -28,7 +28,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 WEB = os.path.join(ROOT, 'data', 'media')                          # media authoring copy
 SPRITE_OUT = os.path.join(WEB, 'img', 'unit_sprites')
 MANIFEST = os.path.join(WEB, 'data', 'unit_sprites.json')       # tooling copy
-MANIFEST_JS = os.path.join(ROOT, 'apps', 'website', 'static', 'js', 'unit_sprites.js')  # browser copy (sync load)
+MANIFEST_JS = os.path.join(ROOT, 'legacy', 'client', 'js', 'unit_sprites.js')  # legacy browser copy (sync load)
 MAX_SIDE = 384
 URL_BASE = '/static/img/unit_sprites'
 

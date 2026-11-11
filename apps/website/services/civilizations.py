@@ -7,11 +7,14 @@ from pathlib import Path
 from aoe2x.advisor.best_units import load_civ_power_units
 from aoe2x.assets import config as asset_config
 from aoe2x.assets.catalog import _rewrite
+from aoe2x.paths import REPO_ROOT
 
 
 _PAGE_COLUMNS = ('cavalry', 'ranged', 'infantry', 'siege', 'navy')
-_SUPPLEMENT_PATH = Path(__file__).resolve().parents[1] / 'static/data/civilizations-185872.json'
-_STRATEGIES_PATH = Path(__file__).resolve().parents[1] / 'static/data/civilization-strategies.json'
+# API data owned by the backend; REPO_ROOT is the packaged runtime/ on Vercel.
+_DATA_DIR = REPO_ROOT / 'apps/backend/aoe2_api/data'
+_SUPPLEMENT_PATH = _DATA_DIR / 'civilizations-185872.json'
+_STRATEGIES_PATH = _DATA_DIR / 'civilization-strategies.json'
 
 
 @lru_cache(maxsize=1)

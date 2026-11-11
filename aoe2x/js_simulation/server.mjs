@@ -180,12 +180,12 @@ function publicFile(root, pathname) {
   // any production simulation behavior.
   const repoRoot = path.resolve(root, "..", "..");
   const legacyClient = path.join(repoRoot, "legacy", "client");
-  const liveStatic = path.join(repoRoot, "apps", "website", "static");
+  const liveStatic = path.join(repoRoot, "apps", "web", "static");
   const sharedFile = new Map([
     ["/static/css/base.css", [legacyClient, "css", "base.css"]],
     ["/static/css/simulate.css", [legacyClient, "css", "simulate.css"]],
     ["/static/js/constants.js", [liveStatic, "js", "constants.js"]],
-    ["/static/js/unit_sprites.js", [liveStatic, "js", "unit_sprites.js"]],
+    ["/static/js/unit_sprites.js", [legacyClient, "js", "unit_sprites.js"]],
   ]).get(pathname);
   if (sharedFile) return path.join(...sharedFile);
   const imageMatch = pathname.match(/^\/static\/img\/(.+)$/);

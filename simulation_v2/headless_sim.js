@@ -18,8 +18,8 @@ const REPO = path.resolve(__dirname, "..", "..", "..");
 // client files. Default: the legacy client's JS, with the classic shared
 // scripts (still published by the live site) read from the live static dir.
 const JSDIR = process.env.JSDIR || path.join(REPO, "legacy", "client", "js");
-const LIVE_JSDIR = process.env.JSDIR || path.join(REPO, "apps", "website", "static", "js");
-const LIVE_SCRIPTS = new Set(["constants.js", "unit_sprites.js", "api_client.js"]);
+const LIVE_JSDIR = process.env.JSDIR || path.join(REPO, "apps", "web", "static", "js");
+const LIVE_SCRIPTS = new Set(["constants.js", "api_client.js"]);
 
 const RAMP = process.env.RAMP || process.argv[2] || "ship";       // ship | window | off
 const N_SEEDS = parseInt(process.env.SEEDS || process.argv[3] || "8", 10);

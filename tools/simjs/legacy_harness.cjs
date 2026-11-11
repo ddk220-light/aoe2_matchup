@@ -33,8 +33,8 @@ const REPO = path.resolve(__dirname, "..", "..");
 const JSDIR = path.join(REPO, "legacy", "client", "js");
 // The classic shared scripts simulate.js loads before itself are still published by
 // the live site, so they live with the live site's static files.
-const LIVE_JSDIR = path.join(REPO, "apps", "website", "static", "js");
-const LIVE_SCRIPTS = new Set(["constants.js", "unit_sprites.js", "api_client.js"]);
+const LIVE_JSDIR = path.join(REPO, "apps", "web", "static", "js");
+const LIVE_SCRIPTS = new Set(["constants.js", "api_client.js"]);
 
 const RAMP = "ship";      // PINNED (was: env RAMP / argv[2]) — "ship" applies no transform
 const MAX_S = 600;        // default fight cap in seconds; runFightCaptured takes its own

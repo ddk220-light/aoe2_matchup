@@ -1,0 +1,356 @@
+{
+  "version": 1,
+  "status": "verified_live",
+  "verifiedAtUtc": "2026-11-11 00:22:39 UTC",
+  "displayTimeZone": "America/Los_Angeles",
+  "authorization": "authorization.json",
+  "ownerInstruction": "Push and deploy",
+  "commit": "baf6c71c45e6cb3d5d01f51167ae353f29d9607f",
+  "sourceResearchCommit": "8f0f09930839f44da57ebc3df756917150f81fc5",
+  "publishedResearchCommit": "be3db171438da99dfc86f12535db168baba66822",
+  "sourceSnapshot": "correction-snapshots/002",
+  "servingDatabaseSha256": "bdbbeacfc8dffc190d3b477fc0e7657f1d324d69ec4704f43211af0a774f34ea",
+  "servingDatabaseBytes": 99188736,
+  "previousProductionCommit": "634554b39a46ad9d05081d5efcf1691a8fbd3c39",
+  "frozenComparisonSource": {
+    "commit": "c907cc23668611851a2112911893929c3b905696",
+    "databaseSha256": "36626bc0f74242de5482d98362695cec15226eb87cba8767371841a62bd231d5",
+    "unchanged": true
+  },
+  "recovery": {
+    "contexts": 36,
+    "displayedCells": 220,
+    "individualSeedRecords": 93,
+    "newMeasurements": 80,
+    "preservedOriginalMeasurements": 13,
+    "singleSeedConfirmations": 11,
+    "multiSeedValidations": 25,
+    "changedOutcomes": 2,
+    "retainedForecasts": 34,
+    "mixedWinnerContexts": 1,
+    "mixedEngineVersionSets": 6
+  },
+  "totalForecastCoverage": {
+    "frozenProtocolContexts": 39112,
+    "multiSeedValidations": 7242,
+    "recoveryContexts": 36,
+    "remainingContexts": 0,
+    "singleSeedConfirmations": 31906,
+    "totalContexts": 39148
+  },
+  "preservation": {
+    "previousForecastReviews": 39112,
+    "previousMismatchReviews": 10222,
+    "untouchedEvidenceBlobs": 68880,
+    "untouchedCells": 151003
+  },
+  "componentVersions": {
+    "advisor": "cae47bc6fcbb4948c0c132effd700d1c1e0e5952f85d3253a8b39f265f06577b",
+    "civilizations": "f957484383234147cb57dcd82c3a44e92c73674644e88f16b161352cab6e096b",
+    "engine": "bf6996344234f15fb07d6e6f4bdd1e1494d8820e0a6079ac3c29eb06a08e0941",
+    "media": "e41052b18ddd8cd22ee473f7fa0837a3b7771f8b2e34b1f157905a92c59dceca",
+    "rankings": "0a3ae65d69fd2d2c6a7d7acfa1915add3062640ee963675572d772b2bf08a3e8",
+    "simulator": "e93b2a31fef1d976d8d59526bb73af0ac5f15aab9fa5e9328f6a6d651f552dc0"
+  },
+  "previewVerification": "preview-verification.json",
+  "production": {
+    "domain": "https://aoe2matchup.com",
+    "deployment": {
+      "id": "dpl_CoUG4buEzuPwiUm4yMeTLDGaMMAX",
+      "name": "aoe2-matchup-migration",
+      "url": "aoe2-matchup-migration-7rnv0cjxo-ddk220.vercel.app",
+      "type": "LAMBDAS",
+      "state": "READY",
+      "createdAt": 1794356320760,
+      "creator": {
+        "uid": "95qIYJby0lhnwbLNAeLPGu7q",
+        "username": "ddk220-light"
+      },
+      "project": {
+        "id": "prj_rQ1c9XdtQK0SgAFn63UXWpkUvXtn",
+        "name": "aoe2-matchup-migration",
+        "framework": null
+      },
+      "meta": {
+        "githubCommitRef": "main",
+        "githubCommitSha": "baf6c71c45e6cb3d5d01f51167ae353f29d9607f",
+        "githubCommitMessage": "Publish all 36 recovered matchup contexts with per-run provenance",
+        "githubRepo": "aoe2_matchup",
+        "githubOrg": "ddk220-light"
+      },
+      "alias": [
+        "aoe2matchup.com",
+        "aoe2-matchup-migration.vercel.app",
+        "www.aoe2matchup.com",
+        "aoe2-matchup-migration-ddk220.vercel.app",
+        "aoe2-matchup-migration-git-main-ddk220.vercel.app"
+      ],
+      "target": "production",
+      "regions": [
+        "sfo1"
+      ],
+      "buildingAt": 1794356321695,
+      "ready": 1794356419319,
+      "readyState": "READY",
+      "source": "git",
+      "aliasError": null
+    },
+    "ciRunId": 42930331401,
+    "ciJobs": [
+      {
+        "id": 130227161751,
+        "name": "test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 130227162261,
+        "name": "vercel-build",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "endpoints": [
+      {
+        "path": "/",
+        "status": 200
+      },
+      {
+        "path": "/units",
+        "status": 200
+      },
+      {
+        "path": "/civilizations",
+        "status": 200
+      },
+      {
+        "path": "/matchup-advisor",
+        "status": 200
+      },
+      {
+        "path": "/api/advisor-catalog",
+        "status": 200
+      },
+      {
+        "path": "/data/release.json",
+        "status": 200
+      },
+      {
+        "path": "/api/ref/unit-line/militia",
+        "status": 200
+      },
+      {
+        "path": "/api/v3/arena-preview",
+        "status": 200
+      }
+    ],
+    "evidenceChecks": [
+      {
+        "evidenceId": 702,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 2811,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 2851,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 5486,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 5770,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 5792,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 5972,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 5982,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 6034,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 7113,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 10084,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 12926,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 21640,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 24352,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 26925,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 27295,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 27367,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 27391,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 27573,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 30125,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 30360,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 31261,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 31802,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 33648,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 34468,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 38293,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 40470,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 44562,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 48030,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 51708,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 53111,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 59745,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 61949,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 65839,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 65863,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      },
+      {
+        "evidenceId": 66981,
+        "status": 200,
+        "equalsVerifiedPreviewAndCommittedDatabase": true
+      }
+    ]
+  },
+  "runtimeErrorScan": {
+    "deploymentId": "dpl_CoUG4buEzuPwiUm4yMeTLDGaMMAX",
+    "since": "30m",
+    "levels": [
+      "error",
+      "fatal"
+    ],
+    "matchingLogs": 0,
+    "note": "No matching logs returned; not a claim of ongoing monitoring."
+  },
+  "localChecks": {
+    "websitePythonPassed": 522,
+    "websitePythonSkipped": 26,
+    "advisorModelPassed": 11,
+    "featureProjectionsValidated": 195
+  },
+  "limitations": [
+    "Recovery engine versions remain separate from the frozen campaign; six sets combine preserved and recovery versions.",
+    "Agreement-dependent stopping cannot estimate unbiased global forecast accuracy.",
+    "Remote battle-config POST was blocked by workspace network policy; packaged API and battle-config contracts passed in CI."
+  ],
+  "simulationExecutionsForRelease": 0,
+  "websitePhysicsOrFormulaChanges": false,
+  "recurringTasksRemainDisabled": true,
+  "futureAutomaticReleasesAuthorized": false,
+  "researchPushGuardSha256": "2f1bd8ee79d74e0bce72492574ec8c53164df0ceaff9fdd0ac45d1f7b03ad005"
+}

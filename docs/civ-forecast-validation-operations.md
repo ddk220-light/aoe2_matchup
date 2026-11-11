@@ -1,6 +1,36 @@
 # Validate the remaining matchup forecasts
 
-## Current owner instruction: one production data release, then recover the 36
+## Current owner instruction: publish and deploy the completed recovery
+
+The owner explicitly requested “Push and deploy” after all 36 recovery contexts
+completed. This authorizes one publication of the recovery archive and one
+production matchup-data release from recovery snapshot 002, source commit
+`8f0f09930839f44da57ebc3df756917150f81fc5`. The archive contains 93 reviewed seed
+records (80 new recovery runs and 13 preserved original runs). Six contexts
+combine engine versions; retain that provenance and the original candidate
+review status alongside the new release authorization. Do not relabel them as
+homogeneous frozen-engine validations or rewrite the frozen campaign ledger.
+
+The release adds 36 contexts / 220 cells to the 39,112 previously published
+forecast reviews. Recurring tasks stay disabled, all research runners stay
+stopped, and completed seeds must not be rerun. The research pre-push guard is
+restored after each exact authorized publication; research branches disable
+Vercel Git deployments. This instruction does not authorize future automatic
+builds, deployments or research pushes. No recommendation formulas, UI or
+website simulation-engine changes are included. Read the recovery campaign's
+`website-releases/2026-11-11/` authorization and verification receipts.
+
+The recovery release is now verified live at commit
+`baf6c71c45e6cb3d5d01f51167ae353f29d9607f`, serving DB SHA-256
+`bdbbeacfc8dffc190d3b477fc0e7657f1d324d69ec4704f43211af0a774f34ea`.
+All 36 production recovery evidence objects match the committed database,
+including all 93 seed records; both staging and main CI jobs passed. Total
+forecast coverage is 39,148 contexts. The production bookmark and immutable
+`website-releases/2026-11-11/verification.json` receipt supersede earlier serving
+DB expectations. This one release is complete; no future automatic release is
+authorized. Preserve the frozen comparison source and all historical reports.
+
+## Previous owner instruction: one production data release, then recover the 36
 
 The owner explicitly requested: “ok, then first update the matchup table, commit and push to git, and also deploy to prod with the latest validated data for matchups. then start on the 36.” This authorizes one production release of the complete reviewed-only snapshot 070 (39,112 contexts) and the required website commit/push, checks and deployment. The 36 unfinished contexts stay excluded. After production verification, begin the separately versioned recovery work reviewed on November 10. The owner also accepted the stated several-hour duration.
 

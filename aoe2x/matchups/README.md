@@ -1,4 +1,4 @@
-# aoe2x/matchups — repeatable matchup reruns (build steps 1–3)
+# aoe2x/matchups — repeatable matchup reruns (build steps 1–5)
 
 Tooling to re-run the unit-vs-unit civilization matchups behind the Matchup
 Advisor when a game patch, DLC, new civilization or balance change arrives, or
@@ -10,10 +10,11 @@ Owner defaults applied: the campaign's engine and unit data are pinned, so the
 2026 results stay reusable; frozen V3 engine; no ML forecasts (simulate); bulky
 run records stay out of the repo.
 
-**Built:** proposal §12 steps 1 (pinned engine), 2 (inputs and inventory) and
-3 (runner, supervisor, status, export).
-**Not built yet:** steps 4–5 — serving-DB build and audit, incremental diff and
-release. See "Seams for steps 4–5" below.
+**Built:** proposal §12 steps 1 (pinned engine), 2 (inputs and inventory),
+3 (runner, supervisor, status, export), 4 (serving-DB build and audit) and 5
+(bundle diff, incremental plan, release path). Step-by-step operations:
+[`docs/matchups/RUNBOOK.md`](../../docs/matchups/RUNBOOK.md). Which run records to keep:
+[`docs/matchups/RECORDS_TRIAGE.md`](../../docs/matchups/RECORDS_TRIAGE.md).
 
 Nothing here is part of the website: `scripts/migration/prepare_release.py`
 packages only a fixed list of `aoe2x/` sub-packages (not `matchups`), and the
@@ -43,6 +44,11 @@ pinned engine sits outside `aoe2x/js_simulation/src`, so the live `engine` and
 | `inventory.py` | Config + bundle → displayed cells → profile pairs → identity pairs + physical contexts; orientation tables. |
 | `results.py` | 2026 result-index importer (first-pass table + mismatch/forecast/recovery snapshots), mapped onto an inventory. |
 | `replay.py` | `replay-check`: stratified deterministic sample of archived seeds, exact comparison. |
+| `servingdb.py` | `build-db`: the advisor serving DB (same schema as `scripts/build_advisor_first_pass.py`) from a result index + run snapshots; merge rules, stable ids, compact evidence, flag 4. |
+| `audit.py` | `audit-db`: verify a built DB against its inputs; compare two DBs; markdown release summary. |
+| `apicheck.py` | The advisor API responses of any DB file through the Flask test client (service unchanged) and the export `advisor` component version. |
+| `plan.py` | `diff-bundles`: variant/profile diff, per-pair schedule (simulate/reuse/keep/identity), cost estimate, `contexts.json`, run config, optional `priors-file`; also the `run --dry-run` estimate. |
+| `archive.py` | `archive`: deterministic essential-records tarball of a run or of the 2026 campaigns; the RB triage rules. |
 | `cli.py`, `__main__.py` | `python -m aoe2x.matchups <command>`. |
 | `bundles/campaign-2026-185872-188329.json.gz` | 2026 mechanics bundle: 555 variants / 374 profiles / 56 civs, reference DB `234ad0a6…` (149 KB; 1.58 MB raw). |
 | `scenarios/frozen-ranking-scenarios-v1.json.gz` | The five 2026 arena scenarios (3 KB). |
@@ -50,6 +56,8 @@ pinned engine sits outside `aoe2x/js_simulation/src`, so the live `engine` and
 | `baselines/campaign-2026/orientation-published-results.json.gz` | Orientation of every published 2026 result (26,140 not sorted; 78 KB) — use it for incremental reruns so reused results need no reversal. |
 | `baselines/campaign-2026/adaptive-inventory-reproduction.json` | Receipt of `check-inventory-2026`. |
 | `baselines/campaign-2026/result-index.json` | Receipt of `import-results` (source hashes, counts, mapping, serving-DB cross-check, index sha256). |
+| `baselines/campaign-2026/serving-dataset.json` | The `dataset` metadata of the 2026 serving DB, verbatim (11.7 KB; served in `/api/advisor-catalog`): the base `build-db` updates. |
+| `baselines/campaign-2026/records-archive.json` | Receipt of `archive --rb-2026 --with-index` (sha256, sizes by class/kind; no file list). |
 | `configs/*.json` | `full-2026-reproduction`, `single-civ-example` (Franks vs everyone, reusing the 2026 result index), `units-vs-civs-example` (different conditions), `new-patch-template` (reference-DB input). |
 
 Generated, not committed (default `$MATCHUP_RUNS_STORE`, else `~/.cache/aoe2-matchup-runs`):
@@ -77,6 +85,10 @@ python -m aoe2x.matchups unlock    <config> [--records DIR]     # remove a dead 
 python -m aoe2x.matchups export    <config> [--records DIR] [--out DIR]
 python -m aoe2x.matchups reproduce-2026 DIR [--per-stratum 3]  # RB: sample 2026 contexts -> DIR/<rule>/config.json
 python -m aoe2x.matchups reproduce-2026 DIR --compare          # RB: after running both configs
+python -m aoe2x.matchups diff-bundles OLD NEW [--config C] [--out DIR [--run-id ID] [--priors]] [--resimulate-kept]
+python -m aoe2x.matchups build-db  <config> --out X.db [--snapshot DIR]... [--previous-db PUB] [--carry-unsimulated] [--costs reference-db|bundle] [--no-index]
+python -m aoe2x.matchups audit-db  X.db [--config C --snapshot DIR...] [--previous-db PUB | --compare DB] [--api] [--md F] [--json F]
+python -m aoe2x.matchups archive   <records> --out F.tar.gz [--config C]     # or --rb-2026 [--with-index] / --triage
 ```
 
 Typical run: `inventory <config>` (or let `run` build it), `run <config> --dry-run`
@@ -91,7 +103,7 @@ when the branch is missing (`--require-rb` makes that exit 3). Global options
 (`--rb-ref`, `--require-rb`) go before the command. A `<config>` is a path or a
 name under `configs/`.
 
-Tests: `pytest tests/test_matchups_tooling.py` (≈15 s; the runner tests drive
+Tests: `pytest tests/test_matchups_tooling.py tests/test_matchups_release.py` (≈15 s + ≈5 s; the runner tests drive
 an in-process scripted backend; sampling tables come from real 2026 seed sets in
 `tests/fixtures/matchups/sampling-2026.json`) and `node --test tests/js/matchups/*.test.mjs`
 (≈12 s; replays archived seeds, also through `--serve`).

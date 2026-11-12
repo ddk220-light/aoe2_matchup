@@ -1,6 +1,6 @@
 # Proposal: a repeatable matchup rerun system
 
-**Status:** design. Build steps 1–3 are built (see `aoe2x/matchups/README.md`); steps 4–5 are not. It is based on what the
+**Status:** build steps 1–5 are built (see `aoe2x/matchups/README.md`; operations: [RUNBOOK.md](RUNBOOK.md)). It is based on what the
 Oct 31 – Nov 11 campaigns actually did; read
 [HOW_THE_2026_CAMPAIGNS_RAN.md](HOW_THE_2026_CAMPAIGNS_RAN.md) first. `RB` means the
 research branch `origin/simulations/civ-forecast-recovery-2026-11-10`.

@@ -9,6 +9,7 @@ For the methodology behind the matchup baseline and the patch pipeline, see
 [`docs/matchup-baseline.md`](../matchup-baseline.md) and [`docs/patch-workflow.md`](../patch-workflow.md).
 Sibling architecture docs: [`data-pipeline.md`](data-pipeline.md), [`simulation-engines.md`](simulation-engines.md),
 [`derived-data.md`](derived-data.md), [`webapp.md`](webapp.md), [`operations.md`](operations.md).
+Matchup Advisor data (re-run unit-vs-unit matchups after a patch/DLC/new conditions, build and audit `data/golden/civ_matchups_first_pass.db`): [`docs/matchups/RUNBOOK.md`](../matchups/RUNBOOK.md).
 
 Conventions for every runbook below:
 

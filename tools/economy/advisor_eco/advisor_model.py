@@ -9,8 +9,11 @@
     ``wins`` (so it adds nothing to that enemy's threat weight) and is listed as
     ``semi_losses`` / ``semi_wins`` caveats. A unit with no remaining losses but
     at least one semi-loss is a *strong contender*.
-  * variant "eco_main": "eco" + the main unit is the best-ranked gold strong
-    contender with wins when one exists (otherwise the usual rule).
+  * variant "eco_lite": only the loser's side changes (the row leaves its
+    ``losses``); the winner keeps it as a win (score and threat unchanged).
+  * variant "eco_lite_main": "eco_lite" + the same main preference as below.
+  * variant "eco_main": "eco", and when the usual main still has losses, the
+    best-ranked gold strong contender with wins becomes main instead.
 
 Rows are the advisor API rows ``[a, b, outcome, evidence, count_a, count_b, tier, flags, evidence_id]``
 from the left civilization's perspective. ``semi`` is a set of (a, b) unit-id
@@ -80,10 +83,9 @@ def _recommend(own, enemy, units, variant):
         for key in ("wins", "losses", "close", "semi_losses", "semi_wins"):
             e[key] = sort_threats(e[key])
         e["contender"] = not e["losses"] and bool(e["semi_losses"])
-    main = None
-    if variant == "eco_main":
-        main = next((e for e in ranked if unit_weight(e["unit"]) == 1 and e["wins"] and e["contender"]), None)
-    main = main or next((e for e in ranked if unit_weight(e["unit"]) == 1 and e["wins"]), None) or (ranked[0] if ranked else None)
+    main = next((e for e in ranked if unit_weight(e["unit"]) == 1 and e["wins"]), None) or (ranked[0] if ranked else None)
+    if variant.endswith("_main") and main is not None and main["losses"]:
+        main = next((e for e in ranked if unit_weight(e["unit"]) == 1 and e["wins"] and e["contender"]), main)
     if main is None:
         return {"main": None, "sidekick": None, "alternatives": [], "threats": threats, "uncovered": [],
                 "additions": [], "unanswered": [], "ranked": ranked}
@@ -146,7 +148,8 @@ def build(rows, units, semi=None, variant="current"):
     if semi and variant != "current":
         for loser, winner in semi:
             flags.add((loser, winner))   # row from the loser's side: b_win -> semi loss
-            flags.add((winner, loser))   # row from the winner's side: a_win -> semi win
+            if not variant.startswith("eco_lite"):
+                flags.add((winner, loser))   # row from the winner's side: a_win -> semi win
     left = _group(rows, units, flags)
     right = _group([invert(r) for r in rows], units, flags)
     return {"left": _recommend(left, right, units, variant), "right": _recommend(right, left, units, variant)}

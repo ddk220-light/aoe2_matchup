@@ -9,22 +9,35 @@ Usage: python tools/economy/advisor_eco/impact.py
 """
 from __future__ import annotations
 
+import argparse
 import collections
 import itertools
 import json
 
 from advisor_model import build, summary
-from common import OUT, advisor_units, civ_documents, connect, read_cells
+from common import ECO_SAVING, HP_LIMIT, OUT, advisor_units, civ_documents, connect, read_cells
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cost", choices=["headline", "purchase"], default="headline",
+                        help="headline = owner's rule; purchase = army purchase bill only (sensitivity)")
+    args = parser.parse_args()
+    suffix = "" if args.cost == "headline" else "_purchase"
     db = connect()
     units = advisor_units(db)
     documents = civ_documents(db, units)
     cells = {(c["a"], c["b"]): c for c in read_cells()}
     semi = set()
     for c in cells.values():
-        if c["label"]:
+        if args.cost == "purchase":
+            if c["saving"] is None or c["hp_avg"] >= HP_LIMIT:
+                continue
+            loser = "b" if c["outcome"] == "a_win" else "a"
+            winner = "a" if loser == "b" else "b"
+            if 1 - c["army_vm_" + loser] / c["army_vm_" + winner] >= ECO_SAVING:
+                semi.add((c[loser], c[winner]))
+        elif c["label"]:
             semi.add((c["b"], c["a"]) if c["outcome"] == "a_win" else (c["a"], c["b"]))
 
     def cell(x, y):
@@ -47,23 +60,27 @@ def main():
     examples = collections.defaultdict(list)
     for left, right in itertools.combinations(sorted(documents), 2):
         rows = documents[left][right]
-        plans = {v: build(rows, units, semi, v) for v in ("current", "eco", "eco_main")}
+        plans = {v: build(rows, units, semi, v) for v in ("current", "eco_lite", "eco_lite_main", "eco", "eco_main")}
         for side, civ, enemy in (("left", left, right), ("right", right, left)):
-            before, eco, eco_main = (plans[v][side] for v in ("current", "eco", "eco_main"))
-            sb, se, sm = summary(before), summary(eco), summary(eco_main)
+            before, lite, lite_main, eco, eco_main = (plans[v][side] for v in ("current", "eco_lite", "eco_lite_main", "eco", "eco_main"))
+            sb, sl, slm, se, sm = summary(before), summary(lite), summary(lite_main), summary(eco), summary(eco_main)
             stats["plans"] += 1
             semis = [e for e in eco["ranked"] if e["semi_losses"]]
             contenders = [e for e in eco["ranked"] if e["contender"]]
             gold_contenders = [e for e in contenders if float(e["unit"]["costs"]["gold"]) > 0 and e["wins"]]
             stats["plans_with_any_semi_row"] += bool(semis)
             main_semi = eco["main"]["semi_losses"] if eco["main"] else []
+            lite_semi = lite_main["main"]["semi_losses"] if lite_main["main"] else []
+            stats["plans_lite_main_has_semi_caveat"] += bool(lite_semi)
+            stats["plans_lite_main_is_contender"] += bool(lite_main["main"] and lite_main["main"]["contender"])
+            stats["semi_caveats_on_lite_main"] += len(lite_semi)
             stats["plans_main_has_semi_caveat"] += bool(main_semi)
             stats["plans_with_contender"] += bool(contenders)
             stats["plans_with_gold_contender"] += bool(gold_contenders)
             stats["plans_eco_main_is_contender"] += bool(eco["main"] and eco["main"]["contender"])
             stats["plans_before_main_flawless"] += bool(before["main"] and not before["main"]["losses"])
             stats["plans_eco_main_flawless_or_contender"] += bool(eco["main"] and not eco["main"]["losses"])
-            for name, s in (("eco", se), ("eco_main", sm)):
+            for name, s in (("eco_lite", sl), ("eco_lite_main", slm), ("eco", se), ("eco_main", sm)):
                 stats[f"{name}: main changed"] += sb["main"] != s["main"]
                 stats[f"{name}: sidekick changed"] += sb["sidekick"] != s["sidekick"]
                 stats[f"{name}: additions changed"] += sorted(a[0] for a in sb["additions"]) != sorted(a[0] for a in s["additions"])
@@ -85,9 +102,22 @@ def main():
                               "additions": [[units[a]["name"], [units[x]["name"] for x in cov]] for a, cov in se["additions"]],
                               "main_losses": [units[x]["name"] for x in se["main_losses"]],
                               "main_caveats": [describe(r[0], r[1]) for r in main_semi]},
+                      "lite_main_caveats": [describe(r[0], r[1]) for r in lite_semi],
                       "eco_main": {"main": units[sm["main"]]["name"] if sm["main"] is not None else None},
+                      "eco_lite": {"main": units[sl["main"]]["name"] if sl["main"] is not None else None,
+                                   "sidekick": units[sl["sidekick"]]["name"] if sl["sidekick"] is not None else None,
+                                   "additions": [[units[a]["name"], [units[x]["name"] for x in cov]] for a, cov in sl["additions"]]},
                       "contenders": [{"unit": e["unit"]["name"], "wins": len(e["wins"]), "close": len(e["close"]),
                                       "caveats": [describe(r[0], r[1]) for r in e["semi_losses"]]} for e in contenders]}
+            if sb["main"] != slm["main"]:
+                record["eco_lite_main"] = {"main": units[slm["main"]]["name"],
+                                           "sidekick": units[slm["sidekick"]]["name"] if slm["sidekick"] is not None else None,
+                                           "additions": [[units[a]["name"], [units[x]["name"] for x in cov]] for a, cov in slm["additions"]]}
+                examples["main_changed_eco_lite_main"].append(record)
+            if sb["main"] != sl["main"]:
+                examples["main_changed_eco_lite"].append(record)
+            if len(sl["additions"]) < len(sb["additions"]):
+                examples["fewer_additions_lite"].append(record)
             if sb["main"] != se["main"]:
                 examples["main_changed_eco"].append(record)
             if sb["main"] != sm["main"]:
@@ -99,9 +129,9 @@ def main():
             if main_semi:
                 examples["main_with_caveat"].append(record)
     stats = dict(stats)
-    (OUT / "impact.json").write_text(json.dumps({"stats": stats, "semiCells": len(semi),
+    (OUT / f"impact{suffix}.json").write_text(json.dumps({"stats": stats, "semiCells": len(semi),
                                                  "exampleCounts": {k: len(v) for k, v in examples.items()}}, indent=1) + "\n")
-    (OUT / "impact_examples.json").write_text(json.dumps(examples, indent=1) + "\n")
+    (OUT / f"impact_examples{suffix}.json").write_text(json.dumps(examples, indent=1) + "\n")
     print(json.dumps(stats, indent=1))
     print({k: len(v) for k, v in examples.items()})
 

@@ -12,8 +12,8 @@ import math
 
 from common import ECO_NEAR, ECO_SAVING, HP_LIMIT, HP_NEAR, OUT, advisor_units, connect, read_cells
 
-FULL_RATIO = 0.67   # proposed note: one full package <= 67% of the other's ...
-FULL_ABS = 20.0     # ... and at least 20 weighted villager-minutes cheaper
+FULL_RATIO = 0.5    # proposed note: one full package <= 50% of the other's ...
+FULL_ABS = 60.0     # ... and at least 60 weighted villager-minutes cheaper
 
 
 def pct(n, d):
@@ -105,6 +105,45 @@ def main():
         ["variant: HP mean over won seeds only", alt_won, pct(alt_won, len(eco_ok)), ""],
         ["label cells whose seeds split", semi_split, pct(semi_split, len(semi)) + " of label", ""]]))
 
+    # What drives the eco edge: purchase bill vs 60-s production buildings vs common research
+    def parts(c, which):
+        x = "a" if (which == "loser") == (c["outcome"] == "b_win") else "b"
+        total, army, common = c["vm_" + x], c["army_vm_" + x], c["common_vm_" + x]
+        return total, army, common, max(total - army - common, 0.0)  # buildings ~ remainder (labor is not exactly additive)
+    army_only = [c for c in eco_ok if c["hp_avg"] < HP_LIMIT and 1 - parts(c, "loser")[1] / parts(c, "winner")[1] >= ECO_SAVING]
+    no_common = [c for c in eco_ok if c["hp_avg"] < HP_LIMIT and
+                 1 - (parts(c, "loser")[0] - parts(c, "loser")[2]) / (parts(c, "winner")[0] - parts(c, "winner")[2]) >= ECO_SAVING]
+    both_army = [c for c in semi if 1 - parts(c, "loser")[1] / parts(c, "winner")[1] >= ECO_SAVING]
+    build_share = sorted(parts(c, "winner")[3] / parts(c, "winner")[0] for c in semi)
+    build_dominant = sum(1 for c in semi if parts(c, "winner")[3] - parts(c, "loser")[3] > (parts(c, "winner")[0] - parts(c, "loser")[0]) / 2)
+    summary.update(semi_army_only=len(army_only), semi_without_common=len(no_common), semi_also_army_only=len(both_army),
+                   semi_buildings_dominant=build_dominant)
+    md.append("\n## What creates the cost gap\n")
+    md.append(table(["Variant of the cost test (HP < 33% unchanged)", "Label cells"], [
+        ["headline: purchase + 60-s buildings + common research (owner's rule)", len(semi)],
+        ["purchase + buildings, without common research", len(no_common)],
+        ["purchase bill only (what is actually re-bought after a fight)", len(army_only)],
+        ["label cells that also pass on the purchase bill only", f"{len(both_army)} ({pct(len(both_army), len(semi))})"],
+        ["label cells where more than half the gap is production buildings", f"{build_dominant} ({pct(build_dominant, len(semi))})"],
+        ["winner's buildings share of its headline in label cells (median)", f"{100*build_share[len(build_share)//2]:.0f}%" if build_share else "-"]]))
+
+    # Production buildings behind the label (re-evaluates the label cells' pairs)
+    from aoe2x.economy.matchup import RuntimeData, evaluate_matchup
+    from common import economics_map
+    data = RuntimeData()
+    emap, _ = economics_map(data, units)
+    routes = collections.Counter()
+    for c in semi:
+        w, l = ("a", "b") if c["outcome"] == "a_win" else ("b", "a")
+        r = evaluate_matchup(data, (*emap[c[w]], c["count_" + w]), (*emap[c[l]], c["count_" + l]))
+        p_w, p_l = r["teams"][0]["production"], r["teams"][1]["production"]
+        routes[(f'{p_w.get("buildingCount")}x {p_w.get("name")}', f'{p_l.get("buildingCount")}x {p_l.get("name")}')] += 1
+    army_cheaper = sum(1 for c in army_only if c["wcost_" + ("b" if c["outcome"] == "a_win" else "a")] < c["wcost_" + ("a" if c["outcome"] == "a_win" else "b")])
+    summary.update(semi_routes=[[f"{w} / {l}", n] for (w, l), n in routes.most_common(12)], army_only_loser_cheaper_unit=army_cheaper)
+    md.append("\nProduction needed in 60 s (winner / loser), most common in label cells:\n")
+    md.append(table(["Winner / loser buildings", "Label cells"], [[f"{w} / {l}", n] for (w, l), n in routes.most_common(10)]))
+    md.append(f"\nPurchase-bill-only variant: loser is the cheaper unit in {army_cheaper} of {len(army_only)} cells ({pct(army_cheaper, len(army_only))}).")
+
     # Unit class pairs (loser -> winner)
     def side(c, which):
         loser_is_a = c["outcome"] == "b_win"
@@ -163,8 +202,9 @@ def main():
     # Cheaper-to-fully-upgrade note (all cells: depends on units only)
     full = {}
     for c in cells:
-        full[c["a"]] = c["full_vm_a"]
-        full[c["b"]] = c["full_vm_b"]
+        for x in "ab":
+            if c["full_vm_" + x] is not None:
+                full[c[x]] = c["full_vm_" + x]
     missing = [u for u in units if u not in full]
     note = collections.Counter()
     ratios = []
@@ -180,7 +220,7 @@ def main():
             note["note_" + et_] += 1
         note["all"] += 1
     sweep = []
-    for r, ab in [(0.5, 20), (0.67, 0), (0.67, 20), (0.67, 40), (0.8, 20)]:
+    for r, ab in [(0.8, 20), (0.67, 20), (0.5, 40), (0.5, 60), (0.4, 60)]:
         n = 0
         for a, b, *_ in all_cells:
             fa, fb = full.get(a), full.get(b)
@@ -195,7 +235,7 @@ def main():
     md.append("\n## Note: cheaper to fully upgrade (all cells, unit-level)\n")
     md.append(table(["Threshold", "Cells with the note", "Share"], sweep))
     md.append(f"\nFull military research per unit, weighted villager-minutes (min / quartiles / max): "
-              + " / ".join(f"{x:.0f}" for x in summary["full_vm_quartiles"]) + f"; units without a value: {len(missing)}.")
+              + " / ".join(f"{x:.0f}" for x in summary["full_vm_quartiles"]) + f"; units without a value: {len(missing)} (" + ", ".join(units[u]["key"] for u in missing) + ").")
 
     text = "\n".join(md) + "\n"
     (OUT / "report.md").write_text(text)

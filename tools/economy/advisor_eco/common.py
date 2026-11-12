@@ -70,9 +70,9 @@ def economics_map(data, units):
 
 
 def read_cells(path=CELLS_CSV):
-    numeric = {"a", "b", "count_a", "count_b", "seeds", "seeds_won_a", "seeds_won_b", "evidence_id"}
+    numeric = {"a", "b", "count_a", "count_b", "seeds", "seeds_won_a", "seeds_won_b", "draws", "evidence_id", "gold_a", "gold_b"}
     floats = {"hp_avg", "hp_avg_won", "hp_min", "hp_max", "vm_a", "vm_b", "full_vm_a", "full_vm_b",
-              "wcost_a", "wcost_b", "saving"}
+              "wcost_a", "wcost_b", "saving", "army_vm_a", "army_vm_b", "common_vm_a", "common_vm_b"}
     with gzip.open(path, "rt", newline="") as handle:
         for row in csv.DictReader(handle):
             for key in numeric:

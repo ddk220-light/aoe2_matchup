@@ -1,0 +1,265 @@
+{
+  "parser_version": "0.9.9",
+  "scenario_format": "1.58",
+  "civilization": "Byzantines",
+  "cases": [
+    {
+      "name": "tc-none",
+      "file": "tc-none.aoe2scenario",
+      "sha256": "df171524f5b48fa33e0f7bf2c9d1a188336cf38da181471ce8ae288ab351630a",
+      "technology_ids": [],
+      "expected_food_per_farm": 175,
+      "expected_worker": {
+        "work_rate": 0.5299999713897705,
+        "speed": 0.800000011920929,
+        "carry_capacity": 10,
+        "radius": 0.20000000298023224,
+        "task_output_multiplier": 1
+      },
+      "workers": [
+        {
+          "index": 0,
+          "reference_id": 2,
+          "x": 35.5,
+          "y": 31.5,
+          "farm_origin": [
+            34,
+            30
+          ]
+        },
+        {
+          "index": 1,
+          "reference_id": 3,
+          "x": 38.5,
+          "y": 31.5,
+          "farm_origin": [
+            37,
+            30
+          ]
+        }
+      ],
+      "building_reference_id": 1,
+      "validation": "Parser round-trip and scenario structure passed; actual DE execution pending."
+    },
+    {
+      "name": "tc-wheelbarrow",
+      "file": "tc-wheelbarrow.aoe2scenario",
+      "sha256": "fac625a2805f87d60661a8c7e3f004d07b709ff1e2977d635b1e6b1632adc28a",
+      "technology_ids": [
+        14,
+        213
+      ],
+      "expected_food_per_farm": 250,
+      "expected_worker": {
+        "work_rate": 0.5299999713897705,
+        "speed": 0.8800000321865085,
+        "carry_capacity": 13,
+        "radius": 0.20000000298023224,
+        "task_output_multiplier": 1
+      },
+      "workers": [
+        {
+          "index": 0,
+          "reference_id": 2,
+          "x": 35.5,
+          "y": 31.5,
+          "farm_origin": [
+            34,
+            30
+          ]
+        },
+        {
+          "index": 1,
+          "reference_id": 3,
+          "x": 38.5,
+          "y": 31.5,
+          "farm_origin": [
+            37,
+            30
+          ]
+        }
+      ],
+      "building_reference_id": 1,
+      "validation": "Parser round-trip and scenario structure passed; actual DE execution pending."
+    },
+    {
+      "name": "tc-handcart",
+      "file": "tc-handcart.aoe2scenario",
+      "sha256": "535734e55da74af71a8ec371609fe1204b211cc588cfdab508b6ef12e5b5e910",
+      "technology_ids": [
+        14,
+        213,
+        13,
+        249
+      ],
+      "expected_food_per_farm": 375,
+      "expected_worker": {
+        "work_rate": 0.5299999713897705,
+        "speed": 0.9680000563859951,
+        "carry_capacity": 21,
+        "radius": 0.20000000298023224,
+        "task_output_multiplier": 1
+      },
+      "workers": [
+        {
+          "index": 0,
+          "reference_id": 2,
+          "x": 35.5,
+          "y": 31.5,
+          "farm_origin": [
+            34,
+            30
+          ]
+        },
+        {
+          "index": 1,
+          "reference_id": 3,
+          "x": 38.5,
+          "y": 31.5,
+          "farm_origin": [
+            37,
+            30
+          ]
+        }
+      ],
+      "building_reference_id": 1,
+      "validation": "Parser round-trip and scenario structure passed; actual DE execution pending."
+    },
+    {
+      "name": "mill-postimperial",
+      "file": "mill-postimperial.aoe2scenario",
+      "sha256": "301cc8721380336960270f7043e3c343f78fd0029b5b283c7fcc393247726b1b",
+      "technology_ids": [
+        14,
+        213,
+        13,
+        249,
+        12
+      ],
+      "expected_food_per_farm": 550,
+      "expected_worker": {
+        "work_rate": 0.5299999713897705,
+        "speed": 0.9680000563859951,
+        "carry_capacity": 21,
+        "radius": 0.20000000298023224,
+        "task_output_multiplier": 1
+      },
+      "workers": [
+        {
+          "index": 0,
+          "reference_id": 2,
+          "x": 28.5,
+          "y": 28.5,
+          "farm_origin": [
+            27,
+            27
+          ]
+        },
+        {
+          "index": 1,
+          "reference_id": 3,
+          "x": 31.5,
+          "y": 28.5,
+          "farm_origin": [
+            30,
+            27
+          ]
+        },
+        {
+          "index": 2,
+          "reference_id": 4,
+          "x": 34.5,
+          "y": 28.5,
+          "farm_origin": [
+            33,
+            27
+          ]
+        },
+        {
+          "index": 3,
+          "reference_id": 5,
+          "x": 33.5,
+          "y": 31.5,
+          "farm_origin": [
+            32,
+            30
+          ]
+        },
+        {
+          "index": 4,
+          "reference_id": 6,
+          "x": 33.5,
+          "y": 34.5,
+          "farm_origin": [
+            32,
+            33
+          ]
+        },
+        {
+          "index": 5,
+          "reference_id": 7,
+          "x": 30.5,
+          "y": 34.5,
+          "farm_origin": [
+            29,
+            33
+          ]
+        },
+        {
+          "index": 6,
+          "reference_id": 8,
+          "x": 27.5,
+          "y": 34.5,
+          "farm_origin": [
+            26,
+            33
+          ]
+        },
+        {
+          "index": 7,
+          "reference_id": 9,
+          "x": 28.5,
+          "y": 31.5,
+          "farm_origin": [
+            27,
+            30
+          ]
+        },
+        {
+          "index": 8,
+          "reference_id": 10,
+          "x": 25.5,
+          "y": 31.5,
+          "farm_origin": [
+            24,
+            30
+          ]
+        },
+        {
+          "index": 9,
+          "reference_id": 11,
+          "x": 36.5,
+          "y": 31.5,
+          "farm_origin": [
+            35,
+            30
+          ]
+        }
+      ],
+      "building_reference_id": 1,
+      "validation": "Parser round-trip and scenario structure passed; actual DE execution pending."
+    }
+  ],
+  "state": "awaiting_real_game_capture",
+  "protocol": [
+    "Load a scenario in current DE. Use the standard data set, no mods, no cheats, and fixed 1.7x game speed. Record the exact executable build.",
+    "Use Player 1; do not assign an AI or issue worker orders. Farms begin native construction at game time 10 seconds after selected upgrades are applied.",
+    "Record the whole test to at least 22 game-minutes for the two-farm cases, and 25 for the ten-farm post-Imperial case. Keep the game clock visible; save the replay if available.",
+    "Verify initial farm food, worker carry and speed against the case manifest. Stop comparison if these differ, or if foundation snapping changes the layout.",
+    "Measure each farm from its actual construction-completion time to depletion. Also capture the first work-spot position, each change of work spot, carried food, drop-off positions and final deposit.",
+    "Use harvested food (banked plus carried) for fixed-time comparisons. Do not mix this with banked-only food or depletion with final-deposit time.",
+    "The ten-farm setup is a no-reseeding diagnostic: wood becomes zero at 60 seconds. Compare before depletion, or match this setting in the model.",
+    "Repeat each two-farm case at least 10 times for an initial distribution. Increase repetitions if the uncertainty of the mean remains above 1%; do not select favorable individual runs.",
+    "Actual farm-creation, task and gather timestamps must be observed. Trigger scheduling and native construction are not presumed instantaneous or exactly 15 seconds in a live run."
+  ]
+}

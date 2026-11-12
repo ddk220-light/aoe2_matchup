@@ -1,0 +1,111 @@
+{
+  "counts": {
+    "civilizations": 56,
+    "unit_variants": 1030,
+    "resource_rows": 224,
+    "modeled_resource_rows": 223,
+    "source_battle_runs": 7600,
+    "matchup_rows": 3591,
+    "close_battle_contexts": 2280,
+    "close_matchup_directions": 781,
+    "economic_candidate_directions": 150,
+    "strongest_candidate_directions": 12,
+    "queue_advantage_directions": 96,
+    "shared_research_faster_directions": 30,
+    "shared_research_cheaper_directions": 157,
+    "gold_exhaustion_directions": 116,
+    "conditional_candidate_directions": 27,
+    "unresolved_close_contexts": 45
+  },
+  "game_source": {
+    "path": "/workspace/scratch/production-review/current-input/dat/empires2_x2_p1.dat",
+    "format_version": "VER 8.9",
+    "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+    "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+    "origin": "user-supplied Google Drive archive",
+    "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+    "archive_name": "aoe2_dat.zip",
+    "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+    "patch_signature": {
+      "format": "VER 8.9",
+      "units": {
+        "873": {
+          "hp": 220,
+          "speed": 0.8999999761581421,
+          "costs": [
+            {
+              "type": 0,
+              "amount": 70
+            },
+            {
+              "type": 3,
+              "amount": 80
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        },
+        "875": {
+          "hp": 270,
+          "speed": 0.8999999761581421,
+          "costs": [
+            {
+              "type": 0,
+              "amount": 70
+            },
+            {
+              "type": 3,
+              "amount": 80
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        },
+        "2569": {
+          "hp": 55,
+          "speed": 1.4500000476837158,
+          "costs": [
+            {
+              "type": 1,
+              "amount": 50
+            },
+            {
+              "type": 3,
+              "amount": 55
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        }
+      }
+    },
+    "game_tree_directory": "/workspace/scratch/production-review/current-input/dat/CivTechTrees",
+    "game_tree_count": 56
+  },
+  "source_hashes": {
+    "eco": "8cb78f4c4f173cb6a9ddb27aad8f4c8c9b27efc0bee1060d21ba8760a053bc00",
+    "production": "a5d64e68de9b5df75d7fdb1edc2a9c4a5bb7050ba73a9d8928896bed9c74a5d9",
+    "research": "1edf8511e1e9ce8e57881b9d70a8eb2215a832631ee42864f517d9bc2823c1c0"
+  },
+  "campaign_runs_sha256": "36e9313c17972009e83c3aad2fae3e11f149abdb849c0efc22e4ea50c436f2a8",
+  "assumptions": {
+    "age": "Post-Imperial, all available upgrades; research priced in Imperial",
+    "farm_scenario": "10 workers; 1800 game-seconds; 3 seeds; reseeding; generic 2x2 mill or 3x3 Folwark with 8 covered and 2 outer farms",
+    "wood_scenario": "10 workers; 8x6 forest, fixed camp; measured seconds 60\u2013600; 3 seeds",
+    "mining_scenario": "10 workers; four mineral tiles and camp one tile away; measured seconds 60\u2013240; 3 seeds",
+    "labor": "sum(resource cost / effective resource rate) + food cost * farm wood per food / wood rate; construction during reseeding is included in farm simulation",
+    "attrition": "Actual dead-unit counts, not remaining HP, determine replacement costs. Loser is an attrition candidate only if its replacement labor is lower.",
+    "production": "One selected cheapest production building per side; selected by wood + 2*stone. Alternative routes retained; queue time ignores affordability and transit.",
+    "upgrades": "Common tech IDs only for time and common cost; exclusive packages and distinct research buildings separate. Sums are research workload, not elapsed build order.",
+    "robustness": "Candidate must survive opposing \u00b15% rate perturbations; this is a sensitivity assumption, not a statistical confidence bound or game validation.",
+    "scope": "Village labor only; no allied team bonuses, relics, trade, market exchanges or aura coverage. Unresolved coupled income/refund mechanics flagged; no fabricated rates.",
+    "outcome": "No combat result is changed. Economic candidates require a repeated-battle/position scenario before claiming a military reversal.",
+    "source_warning": "Saved battle campaign mixes engine versions; equivalent combat profiles are expanded using each civilization's own economic inputs."
+  }
+}

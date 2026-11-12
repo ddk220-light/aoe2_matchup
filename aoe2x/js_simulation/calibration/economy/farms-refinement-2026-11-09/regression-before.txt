@@ -1,0 +1,61 @@
+✔ source profiles include Heavy Plow carry and separate farm/worker work (8.39361ms)
+✔ empty farm constrains fast worker; idle pool fills and pauses without losing food (0.444982ms)
+✔ exact pool integration handles reserve exhaustion, carry boundary and time partitioning (2.52026ms)
+✔ deposits occur only at mill contact, full loads except terminal depletion (50.921565ms)
+✔ standing time follows gathered portion and available pool, with explicit internal walks (24.947399ms)
+✔ outer farm spends longer dropping off and produces less without changing rates (106.398236ms)
+✔ reseeding consumes wood and construction time, preserving food accounting (20.44563ms)
+✔ crowd conservation, speed/collision bounds, reproducibility and production ceiling (405.254141ms)
+✔ overlapping farm/building layouts are rejected (3.51545ms)
+✖ harvest integration stops at the exact depletion time (1.121634ms)
+✖ depletion at a quarter-load boundary never schedules an empty work spot (6.802887ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 9
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 658.45737
+
+✖ failing tests:
+
+test at tools/farm-gathering-sim.test.mjs:68:1
+✖ harvest integration stops at the exact depletion time (1.121634ms)
+  AssertionError [ERR_ASSERTION]: 10 != 1
+      at close (file:///workspace/aoe2_matchup-advisor/tools/farm-gathering-sim.test.mjs:7:36)
+      at TestContext.<anonymous> (file:///workspace/aoe2_matchup-advisor/tools/farm-gathering-sim.test.mjs:71:24)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools/farm-gathering-sim.test.mjs:73:1
+✖ depletion at a quarter-load boundary never schedules an empty work spot (6.802887ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///workspace/aoe2_matchup-advisor/tools/farm-gathering-sim.test.mjs:76:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

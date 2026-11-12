@@ -1,0 +1,101 @@
+{
+  "created_at": "2026-11-09T21:08:19.788Z",
+  "source": {
+    "path": "/workspace/scratch/production-review/current-input/dat/empires2_x2_p1.dat",
+    "format_version": "VER 8.9",
+    "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+    "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+    "origin": "user-supplied Google Drive archive",
+    "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+    "archive_name": "aoe2_dat.zip",
+    "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+    "patch_signature": {
+      "format": "VER 8.9",
+      "units": {
+        "873": {
+          "hp": 220,
+          "speed": 0.8999999761581421,
+          "costs": [
+            {
+              "type": 0,
+              "amount": 70
+            },
+            {
+              "type": 3,
+              "amount": 80
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        },
+        "875": {
+          "hp": 270,
+          "speed": 0.8999999761581421,
+          "costs": [
+            {
+              "type": 0,
+              "amount": 70
+            },
+            {
+              "type": 3,
+              "amount": 80
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        },
+        "2569": {
+          "hp": 55,
+          "speed": 1.4500000476837158,
+          "costs": [
+            {
+              "type": 1,
+              "amount": 50
+            },
+            {
+              "type": 3,
+              "amount": 55
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        }
+      }
+    },
+    "game_tree_directory": "/workspace/scratch/production-review/current-input/dat/CivTechTrees",
+    "game_tree_count": 56
+  },
+  "assumptions": [
+    "Generic mining inputs from Byzantine records; no civilization/team bonuses used.",
+    "Carry rounded to nearest integer after each technology, consistent with historical community tests; current DE not captured.",
+    "Workers are rigid circles of source radius; minimum collision multiplier is preserved but not activated.",
+    "Gold and camp are rectangles; navigation uses conservative expanded-rectangle corners.",
+    "Continuous source work rate; instantaneous deposit and task switch at contact.",
+    "Workers return to their assigned gold object, selecting reachable contact points; retarget on depletion.",
+    "Visibility routing around current worker positions; blocked paths retry after 0.5 game-seconds.",
+    "Movement updates are sequential, priority rotates once per game-second; no physical pushing.",
+    "No parameter is fitted to the external reference; this is an unvalidated economic model."
+  ],
+  "runtime": "v24.19.0",
+  "reproduce": [
+    "python tools/export_gold_mining_fixture.py",
+    "node tools/gold-mining-sim.test.mjs",
+    "node tools/run_gold_mining_review.mjs",
+    "python tools/check_gold_playback.py",
+    "python tools/plot_gold_mining_review.py"
+  ],
+  "code_sha256": {
+    "tools/gold-mining-sim.mjs": "86569661a9ce9f19d33f1c3a3c60f44eb8e2c312d46ae670603b351e9db5d8ef",
+    "tools/run_gold_mining_review.mjs": "ef10df4657ae0a3b9f4005a8d9fb4493779cb390b6586ca3ea0dc41b73441661",
+    "tools/export_gold_mining_fixture.py": "43a09861977e52d4ace20bb79001f1b715e14b498d536269941a1e73ed273441",
+    "tools/gold-mining-sim.test.mjs": "170fe7ffa7c385f3f1a587e3989f227e34e4b131293e831accb12b81da57f1ea",
+    "tools/check_gold_playback.py": "30bb35ef8cc08964ffaf9bdbb7cf8fb80d66f775930364f1f27a72edd12b439c",
+    "tools/plot_gold_mining_review.py": "42a26c466c87dc127a275b34aa6313ad651eb4ab9910e7efd72ee02e4c7ff404"
+  }
+}

@@ -1,7 +1,8 @@
 import { buildSelectionPreviewUnits, createMapRenderer } from "/v3-runtime/viewer/map-renderer.js";
 import { WorkerSession } from "./worker-session.js";
 
-export function createPlaybackController({updateStats, syncPlayerControls, updateBattleWinner}) {
+export function createPlaybackController({updateStats, syncPlayerControls, updateBattleWinner,
+    consumeSnapshot = () => {}, resetEconomics = () => {}}) {
 function deepFreeze(value, visited = new Set()) {
     if (!value || typeof value !== "object" || visited.has(value)) return value;
     visited.add(value);
@@ -145,6 +146,7 @@ class PageSim {
 
     setup({ config, assets }) {
         this.stop();
+        resetEconomics();
         this.config = deepFreeze(config);
         this.unitIndex = this.buildUnitIndex(this.config);
         this.snapshots = [];
@@ -211,6 +213,7 @@ class PageSim {
 
     reset() {
         this.stop();
+        resetEconomics();
         this.config = null;
         this.snapshots = [];
         this.cursor = 0;
@@ -237,6 +240,9 @@ class PageSim {
             && this.snapshots[this.cursor].tick <= this.playheadTick
         ) {
             this.latestSnapshot = this.snapshots[this.cursor];
+            // Consume every crossed event-bearing snapshot, including a
+            // mounted death whose foot form appears before the next render.
+            consumeSnapshot(this.latestSnapshot, this.unitIndex);
             this.cursor += 1;
         }
         if (this.latestSnapshot) {

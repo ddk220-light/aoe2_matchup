@@ -1537,6 +1537,29 @@
 .home-about p { color: var(--text-muted); font-size: var(--fs-base); line-height: var(--lh-base); max-width: 820px; margin: 0 0 20px; }
 .home-about p a { color: var(--gold); white-space: nowrap; }
 .home-about-tools { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+
+/* Army economics stays inside the existing live rails; detail below arena. */
+.army-summary { border-top: 1px solid var(--border, #39342e); margin-top: 12px; padding-top: 10px; font-size: .8rem; }
+.army-summary[hidden], .army-economics[hidden] { display: none; }
+.army-summary > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; margin: 5px 0; }
+.army-summary strong { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.army-summary > small { display: block; opacity: .8; line-height: 1.45; }
+.army-summary p { font-size: .78rem; line-height: 1.5; margin: 8px 0; }
+.army-economics { margin: 16px auto; padding: 16px; border: 1px solid var(--border, #39342e); border-radius: 10px; }
+.army-economics > summary, .army-team-details > summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+.army-economics p, .army-economics li { font-size: .88rem; line-height: 1.55; }
+.army-economics h3, .army-economics h4 { margin: 18px 0 8px; }
+.army-table-wrap { max-width: 100%; overflow-x: auto; margin: 10px 0; }
+.army-economics table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.army-economics th, .army-economics td { text-align: left; vertical-align: top; padding: 8px; border-bottom: 1px solid var(--border, #39342e); overflow-wrap: anywhere; }
+.army-economics th { font-weight: 600; }
+.army-team-details { padding: 8px 0; border-top: 1px solid var(--border, #39342e); }
+.army-provenance { opacity: .7; overflow-wrap: anywhere; }
+.army-economics input { width: 90px; margin: 5px; }
+@media (max-width: 600px) {
+    .army-economics { margin-inline: 8px; padding: 10px; }
+    .army-economics th, .army-economics td { padding: 6px; font-size: .76rem; }
+}
 .home-about-tools a { display: block; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-warm); color: var(--text); text-decoration: none; transition: border-color 0.15s ease, background 0.15s ease; }
 .home-about-tools a:hover { border-color: var(--gold); background: var(--bg-hover); }
 .home-about-tools strong { display: block; color: var(--gold); font-size: var(--fs-md); margin-bottom: 2px; }

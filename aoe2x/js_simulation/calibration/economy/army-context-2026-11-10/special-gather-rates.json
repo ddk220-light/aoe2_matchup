@@ -1,0 +1,1070 @@
+{
+  "sourceHashes": {
+    "inputs": "48cd2e0f30216ffecb98960f5ee431904a836b1fbe5649cdbd47647d8fde9bca",
+    "evidence": "e3fbc6bbd20e2fc2137988657fb5d333b2d907cb89705b71c6ce7a18e00fa672",
+    "runner": "6667f51248a5287944fe68cc4856d2df5c6e58316b895823463cc46e92a01563",
+    "farm-gathering-sim.mjs": "809b3876fc3f6542201c3aa57d576935fe44c64aa98079b89af375fad473f23e",
+    "wood-gathering-sim.mjs": "a7f4a22e3220401cac3117f38659a77d31c53ad0314b5dcda26408314c14bd5c",
+    "gold-mining-sim.mjs": "ed0207e417e77aa7b37824c93c819c9f799fbd1d0d08b57e90ee64c38ee62898"
+  },
+  "rows": [
+    {
+      "civ": "Burgundians",
+      "resource": "food",
+      "engine": "farm",
+      "fixture": {
+        "name": "generic-farm-full",
+        "profile": "full",
+        "technology_ids": [
+          14,
+          213,
+          13,
+          249,
+          12
+        ],
+        "source": {
+          "database": "/workspace/scratch/economy-review/labor-inputs/labor-inputs.sqlite",
+          "civ_name": "Burgundians"
+        },
+        "worker": {
+          "work_rate": 0.5299999713897705,
+          "speed": 0.9680000563859951,
+          "carry_capacity": 21,
+          "radius": 0.20000000298023224,
+          "task_output_multiplier": 1
+        },
+        "farm": {
+          "food": 550,
+          "generation_rate": 0.4000000059604645,
+          "pool_capacity": 15,
+          "initial_pool": 0,
+          "half_width": 1.5,
+          "half_height": 1.5,
+          "wood_cost": 60,
+          "build_seconds": 12.499999503294646
+        },
+        "mill": {
+          "x0": 0,
+          "y0": 0,
+          "x1": 2,
+          "y1": 2,
+          "wood_cost": 100
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": -3,
+            "y0": -3,
+            "x1": 0,
+            "y1": 0,
+            "position": "inner"
+          },
+          {
+            "id": 1,
+            "x0": 0,
+            "y0": -3,
+            "x1": 3,
+            "y1": 0,
+            "position": "inner"
+          },
+          {
+            "id": 2,
+            "x0": 3,
+            "y0": -3,
+            "x1": 6,
+            "y1": 0,
+            "position": "inner"
+          },
+          {
+            "id": 3,
+            "x0": 2,
+            "y0": 0,
+            "x1": 5,
+            "y1": 3,
+            "position": "inner"
+          },
+          {
+            "id": 4,
+            "x0": 2,
+            "y0": 3,
+            "x1": 5,
+            "y1": 6,
+            "position": "inner"
+          },
+          {
+            "id": 5,
+            "x0": -1,
+            "y0": 3,
+            "x1": 2,
+            "y1": 6,
+            "position": "inner"
+          },
+          {
+            "id": 6,
+            "x0": -4,
+            "y0": 3,
+            "x1": -1,
+            "y1": 6,
+            "position": "inner"
+          },
+          {
+            "id": 7,
+            "x0": -3,
+            "y0": 0,
+            "x1": 0,
+            "y1": 3,
+            "position": "inner"
+          },
+          {
+            "id": 8,
+            "x0": -6,
+            "y0": 0,
+            "x1": -3,
+            "y1": 3,
+            "position": "outer"
+          },
+          {
+            "id": 9,
+            "x0": 5,
+            "y0": 0,
+            "x1": 8,
+            "y1": 3,
+            "position": "outer"
+          }
+        ],
+        "behavior": {
+          "work_spot_offsets": [
+            0.5,
+            1.5,
+            2.5
+          ],
+          "spots_per_load": 4,
+          "deposit_seconds": 0,
+          "blocked_retry_seconds": 0.5,
+          "auto_deposit": false
+        },
+        "assumptions": [
+          "Standard generic profile from Byzantine raw units; only explicit economic techs are replayed. Treadmill Crane is excluded.",
+          "Integer carry rounded after each upgrade: base 10, Wheelbarrow 13, Heavy Plow 14, Hand Cart 21. Engine rounding is historical evidence, not a current executable trace.",
+          "Farm replenishment and buffer are separate from worker harvesting. Initial available pool is zero; listed farm food includes all food in this model.",
+          "Centered 2x2 work area reflects DE update 50292. Nine grid points and uniform choice excluding the previous point are a community-informed approximation.",
+          "Four equal portions per load approximate observed quarter-load moves. Variable portion sizes and occasional fifth stops are unresolved, tested separately.",
+          "No fixed stand timer: harvest rate and pool availability determine time at each spot. Instant deposits at body contact; no invented deposit animation delay.",
+          "Rigid circular collisions and shortest visibility routes approximate engine pathing. Farms are passable; mill is solid. Dynamic priority rotates every second.",
+          "Starts: finished farms, empty food pools, empty-handed workers at farm centers; walk to first chosen working spot. Initial construction excluded.",
+          "Reseed diagnostic deposits any final partial load, returns to the previous working spot, rebuilds for 15 seconds, and pays 60 wood from an external wood budget.",
+          "Not current-DE trajectory validation; do not use as a calibrated civilization-bonus predictor yet."
+        ]
+      },
+      "scenarioSignature": "03205c6dd1644831044227765a8c349d4e77767cb1039ecf831caa23607e6523",
+      "status": "scenario_estimate",
+      "rate": 0.39236906366697455,
+      "activeFraction": 0.7888706874996202,
+      "runs": [
+        {
+          "seed": 0,
+          "rate": 0.3922694349664419,
+          "activeFraction": 0.7871873333359842,
+          "checks": {
+            "inventory_error": -8.119457106658956e-9,
+            "resource_error": 1.1651195563899819e-8,
+            "time_error": 3.2389380066888407e-9,
+            "max_overlap": 0,
+            "max_static_overlap": 0,
+            "max_speed_error": 5.811323644522304e-16
+          }
+        },
+        {
+          "seed": 1,
+          "rate": 0.392043823926673,
+          "activeFraction": 0.7888871530729177,
+          "checks": {
+            "inventory_error": -8.224617431551451e-9,
+            "resource_error": 1.1748170436476357e-8,
+            "time_error": 3.2378011383116245e-9,
+            "max_overlap": 0,
+            "max_static_overlap": 0,
+            "max_speed_error": 5.811323644522304e-16
+          }
+        },
+        {
+          "seed": 2,
+          "rate": 0.3927939321078088,
+          "activeFraction": 0.7905375760899588,
+          "checks": {
+            "inventory_error": -8.232831305576838e-9,
+            "resource_error": 1.1790461940108798e-8,
+            "time_error": 3.2537172955926508e-9,
+            "max_overlap": 0,
+            "max_static_overlap": 0,
+            "max_speed_error": 5.811323644522304e-16
+          }
+        }
+      ],
+      "auraApplied": false,
+      "auraBuildingCostIncluded": false,
+      "validation": "Controlled game observations still required"
+    },
+    {
+      "civ": "Vietnamese",
+      "resource": "wood",
+      "engine": "wood",
+      "fixture": {
+        "name": "generic-wood-w3-c2",
+        "upgrade_profile": {
+          "wood_level": 3,
+          "carry_level": 2,
+          "tech_ids": [
+            202,
+            203,
+            213,
+            221,
+            249
+          ]
+        },
+        "source": {
+          "database": "/workspace/scratch/economy-review/labor-inputs/labor-inputs.sqlite",
+          "civ_name": "Vietnamese"
+        },
+        "worker": {
+          "work_rate": 0.6177600398254391,
+          "speed": 0.9680000563859951,
+          "carry_capacity": 20,
+          "unrounded_carry": 19.042500257492065,
+          "carry_steps": [
+            {
+              "tech_id": 213,
+              "before": 10,
+              "after": 13,
+              "factor": 1.2695000171661377
+            },
+            {
+              "tech_id": 249,
+              "before": 13,
+              "after": 20,
+              "factor": 1.5
+            }
+          ],
+          "radius": 0.20000000298023224,
+          "damage_per_swing": 15,
+          "attack_period": 2,
+          "attack_animation_seconds": 2.0000001043081284,
+          "first_hit_delay": 1.0000000521540642,
+          "raw_frame_delay": 0,
+          "task_output_multiplier": 1
+        },
+        "tree": {
+          "name": "FOAK",
+          "hit_points": 20,
+          "half_width": 0.5,
+          "half_height": 0.5,
+          "wood": 100
+        },
+        "forest": {
+          "x": 10,
+          "y": 10,
+          "width": 8,
+          "depth": 6
+        },
+        "camp": {
+          "center": [
+            14,
+            18
+          ],
+          "half_width": 1,
+          "half_height": 1,
+          "gap": 1
+        },
+        "assumptions": [
+          "Generic Byzantine lumberjack values; only selected standard economic upgrades applied. Sappers is absent.",
+          "Live tree: source 20 HP and 100 wood. Felling HP and remaining wood are separate. Felled tree keeps its resource footprint until depleted.",
+          "No armor entries on tree; summed worker attack classes give 15 damage per swing, two swings to fell.",
+          "First swing assumed at half of the current DAT 2-second animation; subsequent swings use coded reload 2 seconds. Raw frame_delay=0 does not resolve worker-task impact timing.",
+          "Historical measured 2.25-second total felling is a separate sensitivity case, not silently imposed on the current DAT.",
+          "Rigid circular workers and conservative rectangular resource obstacles reuse the gold experiment geometry/pathfinder.",
+          "Instant deposits at contact. Partial loads continue to the next tree; all resources exhausted causes final partial deposit.",
+          "Workers return to their tree while it is available, choose another accessible tree on depletion or blocked destination, and retry blocked paths after 0.5 game-seconds.",
+          "No camp rebuilding. Depletion exposes inner trees and removes empty-tree obstacles; stumps do not obstruct.",
+          "One fixed camp, eight-tile-wide six-deep forest, workers initially spread on the front edge at 0.6-tile center spacing.",
+          "Observed rates are scenario/model estimates; the same-layout current DE trajectories have not been captured."
+        ]
+      },
+      "scenarioSignature": "ed78c8f74c35feb160384178fae7acf14fda8dbdef2e58d89eb71bc9bbf1df15",
+      "status": "scenario_estimate",
+      "rate": 0.5072333356610917,
+      "activeFraction": 0.8210847302524319,
+      "runs": [
+        {
+          "seed": 0,
+          "rate": 0.5085088699108894,
+          "activeFraction": 0.823149503250946,
+          "checks": {
+            "conservation_error": 8.161293862940511e-11,
+            "max_overlap": 5.960465898624534e-9,
+            "max_static_overlap": 0,
+            "max_speed_error": 1.9394208461420703e-15
+          }
+        },
+        {
+          "seed": 1,
+          "rate": 0.5074266584500411,
+          "activeFraction": 0.821397671809812,
+          "checks": {
+            "conservation_error": 9.191580829792656e-11,
+            "max_overlap": 5.960462345910855e-9,
+            "max_static_overlap": 0,
+            "max_speed_error": 2.4130003550837387e-15
+          }
+        },
+        {
+          "seed": 2,
+          "rate": 0.5057644786223447,
+          "activeFraction": 0.8187070156965376,
+          "checks": {
+            "conservation_error": 9.728751138027292e-11,
+            "max_overlap": 5.960465898624534e-9,
+            "max_static_overlap": 0,
+            "max_speed_error": 2.2429974544380116e-15
+          }
+        }
+      ],
+      "auraApplied": false,
+      "auraBuildingCostIncluded": false,
+      "validation": "Controlled game observations still required"
+    },
+    {
+      "civ": "Georgians",
+      "resource": "food",
+      "engine": "farm",
+      "fixture": {
+        "name": "generic-farm-full",
+        "profile": "full",
+        "technology_ids": [
+          14,
+          213,
+          13,
+          249,
+          12
+        ],
+        "source": {
+          "database": "/workspace/scratch/economy-review/labor-inputs/labor-inputs.sqlite",
+          "civ_name": "Georgians"
+        },
+        "worker": {
+          "work_rate": 0.5829999685287476,
+          "speed": 0.9680000563859951,
+          "carry_capacity": 21,
+          "radius": 0.20000000298023224,
+          "task_output_multiplier": 1
+        },
+        "farm": {
+          "food": 550,
+          "generation_rate": 0.4000000059604645,
+          "pool_capacity": 15,
+          "initial_pool": 0,
+          "half_width": 1.5,
+          "half_height": 1.5,
+          "wood_cost": 60,
+          "build_seconds": 11.36363591208604
+        },
+        "mill": {
+          "x0": 0,
+          "y0": 0,
+          "x1": 2,
+          "y1": 2,
+          "wood_cost": 100
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": -3,
+            "y0": -3,
+            "x1": 0,
+            "y1": 0,
+            "position": "inner"
+          },
+          {
+            "id": 1,
+            "x0": 0,
+            "y0": -3,
+            "x1": 3,
+            "y1": 0,
+            "position": "inner"
+          },
+          {
+            "id": 2,
+            "x0": 3,
+            "y0": -3,
+            "x1": 6,
+            "y1": 0,
+            "position": "inner"
+          },
+          {
+            "id": 3,
+            "x0": 2,
+            "y0": 0,
+            "x1": 5,
+            "y1": 3,
+            "position": "inner"
+          },
+          {
+            "id": 4,
+            "x0": 2,
+            "y0": 3,
+            "x1": 5,
+            "y1": 6,
+            "position": "inner"
+          },
+          {
+            "id": 5,
+            "x0": -1,
+            "y0": 3,
+            "x1": 2,
+            "y1": 6,
+            "position": "inner"
+          },
+          {
+            "id": 6,
+            "x0": -4,
+            "y0": 3,
+            "x1": -1,
+            "y1": 6,
+            "position": "inner"
+          },
+          {
+            "id": 7,
+            "x0": -3,
+            "y0": 0,
+            "x1": 0,
+            "y1": 3,
+            "position": "inner"
+          },
+          {
+            "id": 8,
+            "x0": -6,
+            "y0": 0,
+            "x1": -3,
+            "y1": 3,
+            "position": "outer"
+          },
+          {
+            "id": 9,
+            "x0": 5,
+            "y0": 0,
+            "x1": 8,
+            "y1": 3,
+            "position": "outer"
+          }
+        ],
+        "behavior": {
+          "work_spot_offsets": [
+            0.5,
+            1.5,
+            2.5
+          ],
+          "spots_per_load": 4,
+          "deposit_seconds": 0,
+          "blocked_retry_seconds": 0.5,
+          "auto_deposit": false
+        },
+        "assumptions": [
+          "Standard generic profile from Byzantine raw units; only explicit economic techs are replayed. Treadmill Crane is excluded.",
+          "Integer carry rounded after each upgrade: base 10, Wheelbarrow 13, Heavy Plow 14, Hand Cart 21. Engine rounding is historical evidence, not a current executable trace.",
+          "Farm replenishment and buffer are separate from worker harvesting. Initial available pool is zero; listed farm food includes all food in this model.",
+          "Centered 2x2 work area reflects DE update 50292. Nine grid points and uniform choice excluding the previous point are a community-informed approximation.",
+          "Four equal portions per load approximate observed quarter-load moves. Variable portion sizes and occasional fifth stops are unresolved, tested separately.",
+          "No fixed stand timer: harvest rate and pool availability determine time at each spot. Instant deposits at body contact; no invented deposit animation delay.",
+          "Rigid circular collisions and shortest visibility routes approximate engine pathing. Farms are passable; mill is solid. Dynamic priority rotates every second.",
+          "Starts: finished farms, empty food pools, empty-handed workers at farm centers; walk to first chosen working spot. Initial construction excluded.",
+          "Reseed diagnostic deposits any final partial load, returns to the previous working spot, rebuilds for 15 seconds, and pays 60 wood from an external wood budget.",
+          "Not current-DE trajectory validation; do not use as a calibrated civilization-bonus predictor yet."
+        ]
+      },
+      "scenarioSignature": "8daa101885bc2dea9889c8386f5ed872d47bf619aab57a87dc79bbfb12792322",
+      "status": "scenario_estimate",
+      "rate": 0.39538126619055824,
+      "activeFraction": 0.7882449336610078,
+      "runs": [
+        {
+          "seed": 0,
+          "rate": 0.395392282728846,
+          "activeFraction": 0.7860283987388662,
+          "checks": {
+            "inventory_error": -6.736172508681193e-9,
+            "resource_error": 1.0536155059526209e-8,
+            "time_error": 3.242348611820489e-9,
+            "max_overlap": 0,
+            "max_static_overlap": 0,
+            "max_speed_error": 5.811323644522304e-16
+          }
+        },
+        {
+          "seed": 1,
+          "rate": 0.39523688053901707,
+          "activeFraction": 0.7882328144163424,
+          "checks": {
+            "inventory_error": -7.250264388858341e-9,
+            "resource_error": 1.104558577935677e-8,
+            "time_error": 3.270770321250893e-9,
+            "max_overlap": 0,
+            "max_static_overlap": 0,
+            "max_speed_error": 5.811323644522304e-16
+          }
+        },
+        {
+          "seed": 2,
+          "rate": 0.39551463530381176,
+          "activeFraction": 0.7904735878278146,
+          "checks": {
+            "inventory_error": -7.094996590240044e-9,
+            "resource_error": 1.0893927537836134e-8,
+            "time_error": 3.2739535527070984e-9,
+            "max_overlap": 0,
+            "max_static_overlap": 0,
+            "max_speed_error": 5.811323644522304e-16
+          }
+        }
+      ],
+      "auraApplied": true,
+      "auraBuildingCostIncluded": false,
+      "validation": "Controlled game observations still required"
+    },
+    {
+      "civ": "Georgians",
+      "resource": "wood",
+      "engine": "wood",
+      "fixture": {
+        "name": "generic-wood-w3-c2",
+        "upgrade_profile": {
+          "wood_level": 3,
+          "carry_level": 2,
+          "tech_ids": [
+            202,
+            203,
+            213,
+            221,
+            249
+          ]
+        },
+        "source": {
+          "database": "/workspace/scratch/economy-review/labor-inputs/labor-inputs.sqlite",
+          "civ_name": "Georgians"
+        },
+        "worker": {
+          "work_rate": 0.6177600264358513,
+          "speed": 0.9680000563859951,
+          "carry_capacity": 20,
+          "unrounded_carry": 19.042500257492065,
+          "carry_steps": [
+            {
+              "tech_id": 213,
+              "before": 10,
+              "after": 13,
+              "factor": 1.2695000171661377
+            },
+            {
+              "tech_id": 249,
+              "before": 13,
+              "after": 20,
+              "factor": 1.5
+            }
+          ],
+          "radius": 0.20000000298023224,
+          "damage_per_swing": 15,
+          "attack_period": 2,
+          "attack_animation_seconds": 2.0000001043081284,
+          "first_hit_delay": 1.0000000521540642,
+          "raw_frame_delay": 0,
+          "task_output_multiplier": 1
+        },
+        "tree": {
+          "name": "FOAK",
+          "hit_points": 20,
+          "half_width": 0.5,
+          "half_height": 0.5,
+          "wood": 100
+        },
+        "forest": {
+          "x": 10,
+          "y": 10,
+          "width": 8,
+          "depth": 6
+        },
+        "camp": {
+          "center": [
+            14,
+            18
+          ],
+          "half_width": 0.5,
+          "half_height": 0.5,
+          "gap": 1
+        },
+        "assumptions": [
+          "Generic Byzantine lumberjack values; only selected standard economic upgrades applied. Sappers is absent.",
+          "Live tree: source 20 HP and 100 wood. Felling HP and remaining wood are separate. Felled tree keeps its resource footprint until depleted.",
+          "No armor entries on tree; summed worker attack classes give 15 damage per swing, two swings to fell.",
+          "First swing assumed at half of the current DAT 2-second animation; subsequent swings use coded reload 2 seconds. Raw frame_delay=0 does not resolve worker-task impact timing.",
+          "Historical measured 2.25-second total felling is a separate sensitivity case, not silently imposed on the current DAT.",
+          "Rigid circular workers and conservative rectangular resource obstacles reuse the gold experiment geometry/pathfinder.",
+          "Instant deposits at contact. Partial loads continue to the next tree; all resources exhausted causes final partial deposit.",
+          "Workers return to their tree while it is available, choose another accessible tree on depletion or blocked destination, and retry blocked paths after 0.5 game-seconds.",
+          "No camp rebuilding. Depletion exposes inner trees and removes empty-tree obstacles; stumps do not obstruct.",
+          "One fixed camp, eight-tile-wide six-deep forest, workers initially spread on the front edge at 0.6-tile center spacing.",
+          "Observed rates are scenario/model estimates; the same-layout current DE trajectories have not been captured."
+        ]
+      },
+      "scenarioSignature": "91324cb738941699ca634fd280a58f65b7f77487303cc799a5c2ca896a5bd668",
+      "status": "scenario_estimate",
+      "rate": 0.5014933600708552,
+      "activeFraction": 0.8117931536679492,
+      "runs": [
+        {
+          "seed": 0,
+          "rate": 0.49941163890984086,
+          "activeFraction": 0.8084233643129677,
+          "checks": {
+            "conservation_error": -5.506848310687928e-10,
+            "max_overlap": 5.960465898624534e-9,
+            "max_static_overlap": 0,
+            "max_speed_error": 2.003605614753212e-15
+          }
+        },
+        {
+          "seed": 1,
+          "rate": 0.5020515777488346,
+          "activeFraction": 0.8126967693991267,
+          "checks": {
+            "conservation_error": -5.497753363670199e-10,
+            "max_overlap": 5.960465898624534e-9,
+            "max_static_overlap": 0,
+            "max_speed_error": 2.4130003550837387e-15
+          }
+        },
+        {
+          "seed": 2,
+          "rate": 0.5030168635538903,
+          "activeFraction": 0.8142593272917533,
+          "checks": {
+            "conservation_error": -5.341718178897281e-10,
+            "max_overlap": 5.9604676749813734e-9,
+            "max_static_overlap": 0,
+            "max_speed_error": 2.0122792321330962e-15
+          }
+        }
+      ],
+      "auraApplied": true,
+      "auraBuildingCostIncluded": false,
+      "validation": "Controlled game observations still required"
+    },
+    {
+      "civ": "Georgians",
+      "resource": "gold",
+      "engine": "mine",
+      "fixture": {
+        "schema_version": 1,
+        "name": "generic-post-imperial-gold",
+        "source": {
+          "database": "/workspace/scratch/economy-review/labor-inputs/labor-inputs.sqlite",
+          "civ_name": "Georgians"
+        },
+        "worker": {
+          "work_rate": 0.4806999840021135,
+          "speed": 0.9680000563859951,
+          "radius": 0.20000000298023224,
+          "collision_size_y": 0.20000000298023224,
+          "minimum_collision_size_multiplier": 0.25,
+          "carry_capacity": 20,
+          "unrounded_carry": 19.042500257492065,
+          "carry_steps": [
+            {
+              "tech_id": 213,
+              "before": 10,
+              "factor": 1.2695000171661377,
+              "after": 13
+            },
+            {
+              "tech_id": 249,
+              "before": 13,
+              "factor": 1.5,
+              "after": 20
+            }
+          ],
+          "task_multiplier": 1,
+          "raw_gold_task": {
+            "task_type": 1,
+            "id": 2,
+            "is_default": 0,
+            "action_type": 5,
+            "class_id": -1,
+            "unit_id": 66,
+            "terrain_id": -1,
+            "resource_in": 3,
+            "resource_multiplier": 47,
+            "resource_out": -1,
+            "unused_resource": -1,
+            "work_value_1": 1,
+            "work_value_2": 0,
+            "work_range": 0,
+            "auto_search_targets": 1,
+            "search_wait_time": 3,
+            "enable_targeting": 0,
+            "combat_level_flag": 0,
+            "gather_type": 0,
+            "work_flag_2": 0,
+            "target_diplomacy": 3,
+            "carry_check": 1,
+            "pick_for_construction": 0,
+            "moving_graphic_id": -1,
+            "proceeding_graphic_id": 1606,
+            "working_graphic_id": -1,
+            "carrying_graphic_id": 1605,
+            "resource_gathering_sound_id": -1,
+            "resource_deposit_sound_id": -1,
+            "wwise_resource_gathering_sound_id": 0,
+            "wwise_resource_deposit_sound_id": 0,
+            "enabled": -1
+          },
+          "task_output_multiplier": 1
+        },
+        "gold": {
+          "half_width": 0.5,
+          "half_height": 0.5,
+          "amount": 800,
+          "centers": [
+            [
+              10.5,
+              10.5
+            ],
+            [
+              11.5,
+              10.5
+            ],
+            [
+              10.5,
+              11.5
+            ],
+            [
+              11.5,
+              11.5
+            ]
+          ]
+        },
+        "camp": {
+          "half_width": 0.5,
+          "half_height": 0.5,
+          "center": [
+            11,
+            14
+          ]
+        },
+        "starting_positions": [
+          [
+            10.3,
+            12.2
+          ],
+          [
+            10.9,
+            12.2
+          ],
+          [
+            11.5,
+            12.2
+          ],
+          [
+            12.2,
+            10.3
+          ],
+          [
+            12.2,
+            10.9
+          ],
+          [
+            12.2,
+            11.5
+          ],
+          [
+            10.3,
+            9.8
+          ],
+          [
+            11.2,
+            9.8
+          ],
+          [
+            9.8,
+            10.3
+          ],
+          [
+            9.8,
+            11.2
+          ]
+        ],
+        "reference": {
+          "name": "Forgotten Empires: Gold & Relics",
+          "url": "https://www.forgottenempires.net/strategy/age-of-empires-ii-strategy-center/gold-relics",
+          "seconds_per_10_gold": 20.5,
+          "gold_per_worker_minute": 29.26829268292683,
+          "conditions": "One tile from camp, both mining upgrades + Hand Cart, no bumping; patch unspecified"
+        },
+        "assumptions": [
+          "Generic mining inputs from Byzantine records; no civilization/team bonuses used.",
+          "Carry rounded to nearest integer after each technology, consistent with historical community tests; current DE not captured.",
+          "Workers are rigid circles of source radius; minimum collision multiplier is preserved but not activated.",
+          "Gold and camp are rectangles; navigation uses conservative expanded-rectangle corners.",
+          "Continuous source work rate; instantaneous deposit and task switch at contact.",
+          "Workers return to their assigned gold object, selecting reachable contact points; retarget on depletion.",
+          "Visibility routing around current worker positions; blocked paths retry after 0.5 game-seconds.",
+          "Movement updates are sequential, priority rotates once per game-second; no physical pushing.",
+          "No parameter is fitted to the external reference; this is an unvalidated economic model."
+        ]
+      },
+      "scenarioSignature": "370776c63676236fb6374c26235f7cac4fc33a945e3751876596d3247e9e6461",
+      "status": "scenario_estimate",
+      "rate": 0.4354614735644637,
+      "activeFraction": 0.9058903433669591,
+      "runs": [
+        {
+          "seed": 0,
+          "rate": 0.43669565950544315,
+          "activeFraction": 0.9084578199262535,
+          "checks": {
+            "conservation_error": -4.0607517348689726e-9,
+            "max_overlap": 5.960464122267695e-9,
+            "max_static_overlap": 2.980232949312267e-9,
+            "max_speed_error": 1.2351231148954867e-15
+          }
+        },
+        {
+          "seed": 1,
+          "rate": 0.43400889792169184,
+          "activeFraction": 0.9028685507913152,
+          "checks": {
+            "conservation_error": -4.04861566494219e-9,
+            "max_overlap": 5.960464122267695e-9,
+            "max_static_overlap": 2.980232949312267e-9,
+            "max_speed_error": 1.2351231148954867e-15
+          }
+        },
+        {
+          "seed": 2,
+          "rate": 0.4356798632662559,
+          "activeFraction": 0.9063446593833083,
+          "checks": {
+            "conservation_error": -4.062314928887645e-9,
+            "max_overlap": 5.960464122267695e-9,
+            "max_static_overlap": 2.980232949312267e-9,
+            "max_speed_error": 1.2351231148954867e-15
+          }
+        }
+      ],
+      "auraApplied": true,
+      "auraBuildingCostIncluded": false,
+      "validation": "Controlled game observations still required"
+    },
+    {
+      "civ": "Georgians",
+      "resource": "stone",
+      "engine": "mine",
+      "fixture": {
+        "schema_version": 1,
+        "name": "generic-post-imperial-gold",
+        "source": {
+          "database": "/workspace/scratch/economy-review/labor-inputs/labor-inputs.sqlite",
+          "civ_name": "Georgians"
+        },
+        "worker": {
+          "work_rate": 0.5237099990952009,
+          "speed": 0.9680000563859951,
+          "radius": 0.20000000298023224,
+          "collision_size_y": 0.20000000298023224,
+          "minimum_collision_size_multiplier": 0.25,
+          "carry_capacity": 20,
+          "unrounded_carry": 19.042500257492065,
+          "carry_steps": [
+            {
+              "tech_id": 213,
+              "before": 10,
+              "factor": 1.2695000171661377,
+              "after": 13
+            },
+            {
+              "tech_id": 249,
+              "before": 13,
+              "factor": 1.5,
+              "after": 20
+            }
+          ],
+          "task_multiplier": 1,
+          "raw_gold_task": {
+            "task_type": 1,
+            "id": 2,
+            "is_default": 0,
+            "action_type": 5,
+            "class_id": -1,
+            "unit_id": 66,
+            "terrain_id": -1,
+            "resource_in": 3,
+            "resource_multiplier": 47,
+            "resource_out": -1,
+            "unused_resource": -1,
+            "work_value_1": 1,
+            "work_value_2": 0,
+            "work_range": 0,
+            "auto_search_targets": 1,
+            "search_wait_time": 3,
+            "enable_targeting": 0,
+            "combat_level_flag": 0,
+            "gather_type": 0,
+            "work_flag_2": 0,
+            "target_diplomacy": 3,
+            "carry_check": 1,
+            "pick_for_construction": 0,
+            "moving_graphic_id": -1,
+            "proceeding_graphic_id": 1606,
+            "working_graphic_id": -1,
+            "carrying_graphic_id": 1605,
+            "resource_gathering_sound_id": -1,
+            "resource_deposit_sound_id": -1,
+            "wwise_resource_gathering_sound_id": 0,
+            "wwise_resource_deposit_sound_id": 0,
+            "enabled": -1
+          },
+          "task_output_multiplier": 1
+        },
+        "gold": {
+          "half_width": 0.5,
+          "half_height": 0.5,
+          "amount": 350,
+          "centers": [
+            [
+              10.5,
+              10.5
+            ],
+            [
+              11.5,
+              10.5
+            ],
+            [
+              10.5,
+              11.5
+            ],
+            [
+              11.5,
+              11.5
+            ]
+          ]
+        },
+        "camp": {
+          "half_width": 0.5,
+          "half_height": 0.5,
+          "center": [
+            11,
+            14
+          ]
+        },
+        "starting_positions": [
+          [
+            10.3,
+            12.2
+          ],
+          [
+            10.9,
+            12.2
+          ],
+          [
+            11.5,
+            12.2
+          ],
+          [
+            12.2,
+            10.3
+          ],
+          [
+            12.2,
+            10.9
+          ],
+          [
+            12.2,
+            11.5
+          ],
+          [
+            10.3,
+            9.8
+          ],
+          [
+            11.2,
+            9.8
+          ],
+          [
+            9.8,
+            10.3
+          ],
+          [
+            9.8,
+            11.2
+          ]
+        ],
+        "reference": {
+          "name": "Forgotten Empires: Gold & Relics",
+          "url": "https://www.forgottenempires.net/strategy/age-of-empires-ii-strategy-center/gold-relics",
+          "seconds_per_10_gold": 20.5,
+          "gold_per_worker_minute": 29.26829268292683,
+          "conditions": "One tile from camp, both mining upgrades + Hand Cart, no bumping; patch unspecified"
+        },
+        "assumptions": [
+          "Generic mining inputs from Byzantine records; no civilization/team bonuses used.",
+          "Carry rounded to nearest integer after each technology, consistent with historical community tests; current DE not captured.",
+          "Workers are rigid circles of source radius; minimum collision multiplier is preserved but not activated.",
+          "Gold and camp are rectangles; navigation uses conservative expanded-rectangle corners.",
+          "Continuous source work rate; instantaneous deposit and task switch at contact.",
+          "Workers return to their assigned gold object, selecting reachable contact points; retarget on depletion.",
+          "Visibility routing around current worker positions; blocked paths retry after 0.5 game-seconds.",
+          "Movement updates are sequential, priority rotates once per game-second; no physical pushing.",
+          "No parameter is fitted to the external reference; this is an unvalidated economic model."
+        ]
+      },
+      "scenarioSignature": "069dff77d33b2e82d597c737b9feb0624d82d9ae0b860ad1435bcd8303634581",
+      "status": "scenario_estimate",
+      "rate": 0.4659869756055229,
+      "activeFraction": 0.8897805587263843,
+      "runs": [
+        {
+          "seed": 0,
+          "rate": 0.4646225732162966,
+          "activeFraction": 0.8871752955242634,
+          "checks": {
+            "conservation_error": 1.2254730563654448e-9,
+            "max_overlap": 5.960464122267695e-9,
+            "max_static_overlap": 2.980232949312267e-9,
+            "max_speed_error": 1.2351231148954867e-15
+          }
+        },
+        {
+          "seed": 1,
+          "rate": 0.47136315634313963,
+          "activeFraction": 0.9000461269738922,
+          "checks": {
+            "conservation_error": 1.2201155641378136e-9,
+            "max_overlap": 5.960464122267695e-9,
+            "max_static_overlap": 2.980232949312267e-9,
+            "max_speed_error": 1.2351231148954867e-15
+          }
+        },
+        {
+          "seed": 2,
+          "rate": 0.4619751972571325,
+          "activeFraction": 0.8821202536809973,
+          "checks": {
+            "conservation_error": 1.2259206982889737e-9,
+            "max_overlap": 5.960464122267695e-9,
+            "max_static_overlap": 2.980232949312267e-9,
+            "max_speed_error": 1.2472661792273243e-15
+          }
+        }
+      ],
+      "auraApplied": true,
+      "auraBuildingCostIncluded": false,
+      "validation": "Controlled game observations still required"
+    }
+  ]
+}

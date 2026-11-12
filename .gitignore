@@ -150,3 +150,8 @@ data/local/matchup_db.db
 # gRPC mTLS client credentials (CadeRemote) — NEVER commit; live beside aoe2x/grpc/
 aoe2x/grpc/*.key
 aoe2x/grpc/*.pem
+
+# Economy review databases exceed GitHub's per-file limit. Their byte-identical
+# .sqlite.gz archives and restore manifest are tracked beside the review data.
+/aoe2x/js_simulation/calibration/economy/army-context-2026-11-09/army-context.sqlite
+/aoe2x/js_simulation/calibration/economy/army-context-2026-11-10/army-context.sqlite

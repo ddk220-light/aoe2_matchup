@@ -1,0 +1,1299 @@
+{
+  "schemaVersion": 3,
+  "trainingWindowSeconds": 60,
+  "resourceWeights": {
+    "food": 1,
+    "wood": 1,
+    "gold": 1.5,
+    "stone": 3
+  },
+  "releaseReady": true,
+  "blockers": [],
+  "scopeExceptions": [
+    {
+      "code": "unresolved_economy_mechanic",
+      "civ": "Wei",
+      "technologyId": 1061,
+      "effectId": 1061,
+      "detail": "Tuntian: parameter 287 +3 and hook 4; income source/counting semantics remain unresolved.",
+      "status": "excluded_by_user",
+      "decisionDate": "2026-11-11",
+      "reason": "Tuntian excluded from villager income; the remaining Wei economy is modeled without its income."
+    },
+    {
+      "code": "unresolved_training_route",
+      "civ": "Berbers",
+      "unitId": 1631,
+      "detail": "Xebec",
+      "status": "excluded_by_user",
+      "decisionDate": "2026-11-11",
+      "reason": "Unresolved production route excluded from release requirements; unit training remains unavailable."
+    },
+    {
+      "code": "unresolved_training_route",
+      "civ": "Chinese",
+      "unitId": 529,
+      "detail": "Fire Ship",
+      "status": "excluded_by_user",
+      "decisionDate": "2026-11-11",
+      "reason": "Unresolved production route excluded from release requirements; unit training remains unavailable."
+    },
+    {
+      "code": "dynamic_research_cost_unvalidated",
+      "civ": "Burgundians",
+      "technologyId": 755,
+      "detail": "Flemish Revolution",
+      "status": "excluded_by_user",
+      "decisionDate": "2026-11-11",
+      "reason": "Flemish Revolution cost verification excluded; variable source formula remains explicitly unverified."
+    }
+  ],
+  "auraAssumption": {
+    "coverage": 1.0,
+    "placementRequired": false,
+    "infrastructureCostIncluded": false,
+    "stacking": "one applicable benefit",
+    "source": "User instruction, 2026-11-11"
+  },
+  "gatheringValidationPolicy": {
+    "requiredForRelease": false,
+    "status": "deferred_by_user",
+    "decisionDate": "2026-11-11",
+    "source": "User instruction 2026-11-11: forget in-game measurements for now; use estimates and an online pasture rate.",
+    "accuracyClaim": "No claim of less-than-1% measured error."
+  },
+  "civilizationCount": 56,
+  "profileCount": 1031,
+  "source": {
+    "format_version": "VER 8.9",
+    "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+    "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+    "origin": "user-supplied Google Drive archive",
+    "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+    "archive_name": "aoe2_dat.zip",
+    "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+    "game_tree_count": 56
+  },
+  "sourceHashes": {
+    "review": "588ef3b905ae15a0cc5f04ca34393cb42854e268ed348503e6325754fc3f9bf2",
+    "reference": "234ad0a6c40e413563f737886f6eed2e71c0de41a6a373b569d34dbcaa5c0216",
+    "compiler": "f6f6e6d25c4766191375afc26385c981637b75aebc3a034014dd56a09b723e48",
+    "accounting": "7ac2e3c3aa8b17a6cb51282dfd2f8e8d64e3c6fa6eeae49f9c4a2079111bfb75",
+    "scopePolicy": "a9cfe0c955182528b7b35a84ffab8e5d1cedf12ab7824dda2ad817db927d6740",
+    "specialEconomy": "f24df6a9c5e54cbf2f65c53c1991ee0245245975e39094d33e250bdc92bc9b3b",
+    "pastureReference": "e2e382e5ae77de26fa0bd0cccf0b913cb5b77bba5acbaa2f7b7905dc1d88e8d2",
+    "scenarios": "9f2e3b7813995c5860c97479a00eb58dcb8f0682f37a08040bb6f0d93090f397",
+    "onlineEvidence": "e3fbc6bbd20e2fc2137988657fb5d333b2d907cb89705b71c6ce7a18e00fa672",
+    "observationValidator": "8bb5b290cd6aecae4d3da95460292418661982e3987e99f0b70b82e1b2026aae",
+    "formIdentityCatalog": "e1d47ea4753c0bc91cfdabd3f41a54982ecfe650fbc8e71ac33a87638dd4261d"
+  },
+  "priceCorrections": [
+    {
+      "civ": "Magyars",
+      "unitId": 871,
+      "mode": "default",
+      "before": {
+        "food": 35.0,
+        "gold": 45.0,
+        "wood": 0.0
+      },
+      "after": {
+        "food": 80.0,
+        "wood": 0.0,
+        "gold": 0.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "technology",
+          "tech_id": 514,
+          "effect_id": 571,
+          "command_index": 1,
+          "command": {
+            "type": 0,
+            "a": 871,
+            "b": -1,
+            "c": 105,
+            "d": 0.0
+          },
+          "before": {
+            "food": 35.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 45.0
+          },
+          "after": {
+            "food": 35.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 0.0
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 514,
+          "effect_id": 571,
+          "command_index": 3,
+          "command": {
+            "type": 0,
+            "a": 871,
+            "b": -1,
+            "c": 103,
+            "d": 80.0
+          },
+          "before": {
+            "food": 35.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 0.0
+          },
+          "after": {
+            "food": 80.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Mapuche",
+      "unitId": 2571,
+      "mode": "default",
+      "before": {
+        "food": 0.0,
+        "gold": 55.0,
+        "wood": 50.0
+      },
+      "after": {
+        "food": 0.0,
+        "wood": 43.0,
+        "gold": 47.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "technology",
+          "tech_id": 1380,
+          "effect_id": 1380,
+          "command_index": 2,
+          "command": {
+            "type": 15,
+            "a": 2571,
+            "b": -1,
+            "c": 100,
+            "d": 0.8500000238418579
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 50.0,
+            "stone": 0.0,
+            "gold": 55.0
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 42.500001192092896,
+            "stone": 0.0,
+            "gold": 46.750001311302185
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Mayans",
+      "unitId": 492,
+      "mode": "default",
+      "before": {
+        "food": 0.0,
+        "gold": 35.0,
+        "wood": 20.0
+      },
+      "after": {
+        "food": 0.0,
+        "wood": 18.0,
+        "gold": 32.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "civilization",
+          "tech_id": null,
+          "effect_id": 449,
+          "command_index": 27,
+          "command": {
+            "type": 5,
+            "a": 492,
+            "b": -1,
+            "c": 100,
+            "d": 0.8999999761581421
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 25.0,
+            "stone": 0.0,
+            "gold": 45.0
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 22.499999403953552,
+            "stone": 0.0,
+            "gold": 40.499998927116394
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 53,
+          "effect_id": 485,
+          "command_index": 2,
+          "command": {
+            "type": 5,
+            "a": 492,
+            "b": -1,
+            "c": 100,
+            "d": 0.8899999856948853
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 22.499999403953552,
+            "stone": 0.0,
+            "gold": 40.499998927116394
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 20.02499914765359,
+            "stone": 0.0,
+            "gold": 36.04499846577646
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 56,
+          "effect_id": 486,
+          "command_index": 2,
+          "command": {
+            "type": 5,
+            "a": 492,
+            "b": -1,
+            "c": 100,
+            "d": 0.8799999952316284
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 20.02499914765359,
+            "stone": 0.0,
+            "gold": 36.04499846577646
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 17.62199915444852,
+            "stone": 0.0,
+            "gold": 31.719598478007338
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Mayans",
+      "unitId": 765,
+      "mode": "default",
+      "before": {
+        "food": 0.0,
+        "gold": 43.0,
+        "wood": 43.0
+      },
+      "after": {
+        "food": 0.0,
+        "wood": 39.0,
+        "gold": 39.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "civilization",
+          "tech_id": null,
+          "effect_id": 449,
+          "command_index": 29,
+          "command": {
+            "type": 5,
+            "a": 765,
+            "b": -1,
+            "c": 100,
+            "d": 0.8999999761581421
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 55.0,
+            "stone": 0.0,
+            "gold": 55.0
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 49.499998688697815,
+            "stone": 0.0,
+            "gold": 49.499998688697815
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 53,
+          "effect_id": 485,
+          "command_index": 4,
+          "command": {
+            "type": 5,
+            "a": 765,
+            "b": -1,
+            "c": 100,
+            "d": 0.8899999856948853
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 49.499998688697815,
+            "stone": 0.0,
+            "gold": 49.499998688697815
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 44.054998124837894,
+            "stone": 0.0,
+            "gold": 44.054998124837894
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 56,
+          "effect_id": 486,
+          "command_index": 4,
+          "command": {
+            "type": 5,
+            "a": 765,
+            "b": -1,
+            "c": 100,
+            "d": 0.8799999952316284
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 44.054998124837894,
+            "stone": 0.0,
+            "gold": 44.054998124837894
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 38.76839813978675,
+            "stone": 0.0,
+            "gold": 38.76839813978675
+          }
+        }
+      ]
+    }
+  ],
+  "gatheringValidation": {
+    "targetRelativeError": 0.01,
+    "requiredForRelease": false,
+    "required": [
+      {
+        "modelKey": "51cda4887170eb98ac91f3ed2000f1be1d05099a691688e0be58a549304135bf",
+        "scenarioSignature": "98d1a1470829de7e8c7d16e9063e7cd8883cdcd3da3136739b3cfa528a1464d4",
+        "outputs": {
+          "food": 0.3927153780999418,
+          "wood": -0.06283446049599069,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Armenians",
+          "Britons",
+          "Japanese",
+          "Koreans",
+          "Shu",
+          "Tupi",
+          "Turks",
+          "Wu"
+        ]
+      },
+      {
+        "modelKey": "b9eabf5d5c392815a624f71ef089856a7153e69549f4e5699a05af8d8bb1a15d",
+        "scenarioSignature": "2834d5320a5770594c14b5dd0bb67f9d608990b338e2ada1cbab74cf9a872138",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5146891753303572,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Armenians"
+        ]
+      },
+      {
+        "modelKey": "c623a2d144e02bd2873384753da9a4b5b34c46fc26fc7abf13e421abdbfd243c",
+        "scenarioSignature": "f245fdd7baa4a860faa370d674b8ad0fd9fd0c79303c8e392f43994e724eb914",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.4908770656443018,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Armenians"
+        ]
+      },
+      {
+        "modelKey": "33179a4314f677448df8f2890ca037458fe80b351de771639bdbd9ebe220a626",
+        "scenarioSignature": "1430440beb7782ea7f5ed557de70d01e3acfcc7ed1841735a25cd6ac6c6370ed",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.3962110014958071
+        },
+        "civilizations": [
+          "Armenians"
+        ]
+      },
+      {
+        "modelKey": "68e3e3a1af03aad2f1945222a110040d5615b6d0b373ebe120b90b057a437357",
+        "scenarioSignature": "77f25ebfeb81b1fb638a319df483cc20303f31bce657306b8ca69b556ae3fa98",
+        "outputs": {
+          "food": 0.3953304358256921,
+          "wood": -0.043126956635530046,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Aztecs"
+        ]
+      },
+      {
+        "modelKey": "9f2ff23df3be73af0f81c83bfa95a8d6ec3e48dfd05f72f3cbdb6803980b3332",
+        "scenarioSignature": "1a8e0b4c0fdbbf798303419b393a7bab8f5f5226c78f17f00de6811eb67b8b7e",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.48550519700352107,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Aztecs"
+        ]
+      },
+      {
+        "modelKey": "4b5418fb572b554244033528a42d292b8ead1045625fa90469693b500c82eeed",
+        "scenarioSignature": "7ffa4f91fde4f3b6aa0c9096488909495e6b1aaec85131e53f212b451a42aa03",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.46028413007110247,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Aztecs"
+        ]
+      },
+      {
+        "modelKey": "f1d1dad2fc3ad312244416c57f6cd5a583d87c159bb99192e225828aefde31d4",
+        "scenarioSignature": "1144c507e6c31573a534cd444291b0bb9be173b2862933b0b67e31c390ff8b76",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.4332836983895536
+        },
+        "civilizations": [
+          "Aztecs"
+        ]
+      },
+      {
+        "modelKey": "c09b13d9bac55da1b355485e80730c6806f30ab65ae602770f8cbfe125e403f1",
+        "scenarioSignature": "a0edf9f43709b752c821dd1eca143adafa5b1fb602f7d1ecabe4f3f573eb6a80",
+        "outputs": {
+          "food": 0.39192305569891966,
+          "wood": -0.04275524243988214,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bengalis",
+          "Bulgarians",
+          "Cumans",
+          "Persians"
+        ]
+      },
+      {
+        "modelKey": "600f9f075ae004864bac311ae9bb8dc9f3e3ab13623b9a97ecbcb70cb0da0ebc",
+        "scenarioSignature": "ccb9bb43e4e1af0b3cbd0ef4f66328ce3d7fcca5b8b2dc312ed883539299b5c6",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5072333356610917,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bengalis",
+          "Britons",
+          "Burgundians",
+          "Burmese",
+          "Byzantines",
+          "Chinese",
+          "Cumans",
+          "Dravidians",
+          "Ethiopians",
+          "Goths",
+          "Hindustanis",
+          "Huns",
+          "Italians",
+          "Japanese",
+          "Jurchens",
+          "Khitans",
+          "Koreans",
+          "Lithuanians",
+          "Magyars",
+          "Muisca",
+          "Persians",
+          "Portuguese",
+          "Saracens",
+          "Saxons",
+          "Slavs",
+          "Spanish",
+          "Teutons",
+          "Tupi",
+          "Turks",
+          "Varangians",
+          "Vikings",
+          "Wu"
+        ]
+      },
+      {
+        "modelKey": "7cb8414a03273df3a3bde86fc02fe8f8d912fa4a17263fd72cf419d29e8c113e",
+        "scenarioSignature": "3b5834c74ae8291adf376ba8b7294007b9f32d7887016734680b5549a9428770",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.4509536291630542,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bengalis",
+          "Britons",
+          "Bulgarians",
+          "Burgundians",
+          "Burmese",
+          "Byzantines",
+          "Celts",
+          "Chinese",
+          "Cumans",
+          "Danes",
+          "Ethiopians",
+          "Franks",
+          "Gurjaras",
+          "Huns",
+          "Incas",
+          "Japanese",
+          "Jurchens",
+          "Khmer",
+          "Koreans",
+          "Magyars",
+          "Malay",
+          "Mapuche",
+          "Mongols",
+          "Persians",
+          "Saracens",
+          "Saxons",
+          "Shu",
+          "Sicilians",
+          "Slavs",
+          "Tatars",
+          "Tupi",
+          "Vikings",
+          "Wei",
+          "Wu"
+        ]
+      },
+      {
+        "modelKey": "6baa72125f5b32cbbb7e4b2775cfe3cf1cf7f9dff255bfd65e85baf39bf99580",
+        "scenarioSignature": "c615f313f28fccf0ef481a1fc4e05c4c0e5737fa0354f523471add90281d1eb8",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.37404656437438727
+        },
+        "civilizations": [
+          "Bengalis",
+          "Britons",
+          "Burmese",
+          "Cumans",
+          "Dravidians",
+          "Franks",
+          "Huns",
+          "Japanese",
+          "Magyars",
+          "Saracens",
+          "Saxons",
+          "Shu",
+          "Slavs",
+          "Tatars",
+          "Tupi",
+          "Turks",
+          "Vikings"
+        ]
+      },
+      {
+        "modelKey": "c29809f5640ee58582326e12d77831381641eb5562baa00b46e6f588c2d96fba",
+        "scenarioSignature": "b0ff8ffc2113ed63798f4e52bf8bc11ce5eced2e3b7310a1e16df993d2fa8580",
+        "outputs": {
+          "food": 0.3942629631222549,
+          "wood": -0.04301050506788235,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Berbers"
+        ]
+      },
+      {
+        "modelKey": "d9e904025dfc7f7bc3dd69599efdc455a5b5d7deac2daced6ff05485a2fece72",
+        "scenarioSignature": "51910705a698eb68b977a5b24b625ad78c2676284b088100c4cc30b30cec5653",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.477358297394518,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Berbers"
+        ]
+      },
+      {
+        "modelKey": "1bac0fdb209ec03570f4fa7505b1159ea5232f7405158673033596e033158a77",
+        "scenarioSignature": "b456a6ccd8417dc45323c9d9f3bd5131dcebaafb64042535abc5697985593314",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.455938785188232,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Berbers"
+        ]
+      },
+      {
+        "modelKey": "9bba93479c5e3982196eaf9c10313bd175a4717e2c2bb182263a8df013164e68",
+        "scenarioSignature": "837bbbb2aa79a8fc4f73a4275813a6df078a215c5d433bf97af6974ad420cc05",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.43278891147373894
+        },
+        "civilizations": [
+          "Berbers"
+        ]
+      },
+      {
+        "modelKey": "c774b3ee697d389a632b5c11a9a7357b2faa0975c69c5372e3c8379739cf4cec",
+        "scenarioSignature": "01c954d98e73fb4dd28a015705e146fca625e976a5d2fa6260a6e669eab2e8cd",
+        "outputs": {
+          "food": 0.39470822999451344,
+          "wood": -0.06315331679912214,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bohemians"
+        ]
+      },
+      {
+        "modelKey": "6b9511df567937141e6c3f3f7fbd0df3f3c30f12616f384e33661f96b6a5953f",
+        "scenarioSignature": "807e950c3a462848d15a6d6bbf89a29100d49caec2df09c8a1e115de228b2fb9",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5158499617462149,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bohemians"
+        ]
+      },
+      {
+        "modelKey": "cc1532c905dc423734ae93726cb858c223addcbed9886459496d814fafbb872e",
+        "scenarioSignature": "ae258063ec4d65ca64c930a4b67a7b76b90da5b6b63128ad11dc24e29ce59ce0",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.45664690849209716,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bohemians"
+        ]
+      },
+      {
+        "modelKey": "0d78e6696cecc55ae5df082e2a0cc91add3ecfb7ab098745cc8819784760f2b3",
+        "scenarioSignature": "2fe9a281b433f7b55f4438071033bb358730777b39f62d008eec1feec60c3140",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.43677963705070577
+        },
+        "civilizations": [
+          "Bohemians"
+        ]
+      },
+      {
+        "modelKey": "f0fbaa4f97a8678de59c4b711620ee52d81fbc6fb48d716f2607d7142160590c",
+        "scenarioSignature": "22d0cc3c8efba641e25e7ce73f3895b29060367497607290fc61714450eaa390",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.4707023136338783,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bulgarians",
+          "Danes",
+          "Franks",
+          "Gurjaras",
+          "Incas",
+          "Khmer",
+          "Malay",
+          "Malians",
+          "Mapuche",
+          "Mongols",
+          "Poles",
+          "Sicilians",
+          "Tatars",
+          "Wei"
+        ]
+      },
+      {
+        "modelKey": "8154733e88c93bebe4c9a2a73543b2a7859a85169444155e2374e8f552d4eea6",
+        "scenarioSignature": "542a12ff169093a213b3c59315c3c7a27818f98d60c8ffa577a1e348c6852f52",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.42645027729008284
+        },
+        "civilizations": [
+          "Bulgarians",
+          "Burgundians",
+          "Byzantines",
+          "Celts",
+          "Chinese",
+          "Danes",
+          "Ethiopians",
+          "Goths",
+          "Gurjaras",
+          "Hindustanis",
+          "Incas",
+          "Italians",
+          "Jurchens",
+          "Khitans",
+          "Khmer",
+          "Lithuanians",
+          "Malay",
+          "Malians",
+          "Mapuche",
+          "Mongols",
+          "Muisca",
+          "Persians",
+          "Portuguese",
+          "Sicilians",
+          "Spanish",
+          "Teutons",
+          "Varangians",
+          "Vietnamese",
+          "Wei",
+          "Wu"
+        ]
+      },
+      {
+        "modelKey": "a2e49056c8d46d15d921f9ba64479e6228f6f8a23a824a9601877d341a79c37a",
+        "scenarioSignature": "8635a33a71081d08dcacc7104222ba6db2f8444a54d09e689fb53b4b3c8e6b16",
+        "outputs": {
+          "food": 0.3923690636669745,
+          "wood": -0.04280389785457904,
+          "gold": 0.026295689583320674,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Burgundians"
+        ]
+      },
+      {
+        "modelKey": "2b2fcaf71e27f5dad4c77662f9112cf89a6ce2bb3af317a78ef417eb77c3f0b7",
+        "scenarioSignature": "b71b34bc38ee3f2b5ae9f7aec312d9859fc98a1bf914302387b80352b1f20b07",
+        "outputs": {
+          "food": 0.3923690636669745,
+          "wood": -0.04280389785457904,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Burmese",
+          "Byzantines",
+          "Franks",
+          "Goths",
+          "Gurjaras",
+          "Incas",
+          "Italians",
+          "Jurchens",
+          "Lithuanians",
+          "Magyars",
+          "Malay",
+          "Malians",
+          "Mapuche",
+          "Muisca",
+          "Portuguese",
+          "Saxons",
+          "Tatars",
+          "Varangians",
+          "Vietnamese",
+          "Vikings",
+          "Wei"
+        ]
+      },
+      {
+        "modelKey": "a2ebc29432263abf999f82380bab377bb97a743c92e87b14e37bdd440d56f11e",
+        "scenarioSignature": "1df62a730316cd0d68d12294bbfdf54b87729afe408e4e94fdc9fa3a461274e4",
+        "outputs": {
+          "food": 0.3921665004433394,
+          "wood": -0.0627466400709343,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Celts",
+          "Danes",
+          "Dravidians",
+          "Ethiopians",
+          "Hindustanis",
+          "Huns",
+          "Mongols",
+          "Saracens"
+        ]
+      },
+      {
+        "modelKey": "20c8a3f80b0cf091b864b46f31eb1996c3c97e535099e11f776b8da1299558de",
+        "scenarioSignature": "09b6fe21c0a44571f74858631bab29df886174c294c4acb2979617a7a2a634ba",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5234320099868606,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Celts"
+        ]
+      },
+      {
+        "modelKey": "3408cae8ebbbf597e2e9fbe0a3974e11decf92cc6106c399b03cd1916297e0d4",
+        "scenarioSignature": "ba52523f2ed4dd761af40e5ed9030ed250f9335064bc88d45fd38e95868c54ee",
+        "outputs": {
+          "food": 0.3921581314017981,
+          "wood": -0.05704118151301814,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Chinese"
+        ]
+      },
+      {
+        "modelKey": "517d58338a559b1f0b963832bffc18294e80dd8f9cb1b0f7a1212db9612f1976",
+        "scenarioSignature": "7b68fcdfc934fe018ead6a742651fe86b530c50f6fbd52f5a4c06e74c10f8af0",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.3958786033628152,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Dravidians",
+          "Goths",
+          "Italians",
+          "Khitans",
+          "Lithuanians",
+          "Poles",
+          "Portuguese",
+          "Spanish",
+          "Teutons",
+          "Varangians",
+          "Vietnamese"
+        ]
+      },
+      {
+        "modelKey": "04bfb3276640ff72c7aad7dfab1e2ae41fe6c1e8b17c554e5b4d1b34248d9329",
+        "scenarioSignature": "8daa101885bc2dea9889c8386f5ed872d47bf619aab57a87dc79bbfb12792322",
+        "outputs": {
+          "food": 0.39538126619055824,
+          "wood": -0.04313250176624272,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Georgians"
+        ]
+      },
+      {
+        "modelKey": "aa81b0eb0054a19174bed7953d36ac32372cfcc539b667f4fab9fdb7e24cf055",
+        "scenarioSignature": "91324cb738941699ca634fd280a58f65b7f77487303cc799a5c2ca896a5bd668",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5014933600708552,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Georgians"
+        ]
+      },
+      {
+        "modelKey": "647486c6733fc5eea6452670c2e10ad6b5727d2965cc220c548d20168499a58c",
+        "scenarioSignature": "370776c63676236fb6374c26235f7cac4fc33a945e3751876596d3247e9e6461",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.4354614735644637,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Georgians"
+        ]
+      },
+      {
+        "modelKey": "807b157442b89adf38a1ce75f32bc6adfb75aa46006670a86cae184993257b10",
+        "scenarioSignature": "069dff77d33b2e82d597c737b9feb0624d82d9ae0b860ad1435bcd8303634581",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.4659869756055229
+        },
+        "civilizations": [
+          "Georgians"
+        ]
+      },
+      {
+        "modelKey": "28bd5c32dfaf7633101012c4f560c63d1bdbcf892f0f020cb9ba32be4350d437",
+        "scenarioSignature": "c8f6549f60d71eccb606f4ad9cfed12310b0d83bf93d71822d5f11324314639b",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.48485826711692553,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Hindustanis"
+        ]
+      },
+      {
+        "modelKey": "3101c529cd67793a1a4a4702ed6ac23fde3134f8827e9090144a2f78fb7a5529",
+        "scenarioSignature": "de1b02c751a851936faf0e98207f22035c7a2fc7d223a428b9bde19737621729",
+        "outputs": {
+          "food": 0.42,
+          "wood": -0.04463768115942029,
+          "gold": 0,
+          "stone": 0
+        },
+        "civilizations": [
+          "Khitans"
+        ]
+      },
+      {
+        "modelKey": "dd7b9bb31926ce60469ca89b862095c8ed000c54c4fd37c2421fb146e3afb818",
+        "scenarioSignature": "448d8a88cfc70cbed1362b4c5b6385b8b55aca80399aafb38196e502ae4446d3",
+        "outputs": {
+          "food": 0.3963411024621896,
+          "wood": -0.04323721117769341,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Khmer"
+        ]
+      },
+      {
+        "modelKey": "74072f099d3c8f0fd817eaef952f5d8eaa0cb9f418fce59c452f6de811d20a00",
+        "scenarioSignature": "a3983de95dde1004ad14c4a66a033ea1301d3c5308b20dfe7dea2f63b541c679",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.5023430889733079
+        },
+        "civilizations": [
+          "Koreans"
+        ]
+      },
+      {
+        "modelKey": "7b4e6bf31aaf28652976a6a57d9de8db0e8b1565b7d453995631f1e8ecba0721",
+        "scenarioSignature": "3f0a468d69a323019c36bb85858db2b86a5ea4277f7d876830209ee24e0e0883",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.49604899207935965,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Malians"
+        ]
+      },
+      {
+        "modelKey": "b0c90170cfd19009fcfbd209595a474562634f15cd633ff5d4d2549e02b1b009",
+        "scenarioSignature": "b8754546614eb88105947d0a94465af0363668787855dc7df8e9f384ef7733a4",
+        "outputs": {
+          "food": 0.39073968167949785,
+          "wood": -0.037066215631335914,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Mayans"
+        ]
+      },
+      {
+        "modelKey": "4f88a6f70d48f90401739b530a75bf4679033002f52b3f3abc0a450f87b3d8b6",
+        "scenarioSignature": "22f8c1d68638ee830d71486361bb01872b2faadc61d8631d5646103c15c8ffe0",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5168315769929993,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Mayans"
+        ]
+      },
+      {
+        "modelKey": "bb1c4989f01821aa08058e322926496740bc84a8a31af959e2cd1ce36699761d",
+        "scenarioSignature": "df079c5cbe41c39a42237ee5dc4ee8e7bd0072e5921c4ec991c3aff602520031",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.39630568134452715,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Mayans"
+        ]
+      },
+      {
+        "modelKey": "37a1309a5d695d82db5cec818a34f87b510cb43f28e2647fba14fd7a0f9aa401",
+        "scenarioSignature": "6949a61a36dbf4917a103cf28d84cead8d001c476af7ded35b6c81bfa8b58e25",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.42985994027028823
+        },
+        "civilizations": [
+          "Mayans"
+        ]
+      },
+      {
+        "modelKey": "0f35445496a397eec0d6446e7d06b8cb1662a729fce4218b092043803abf715d",
+        "scenarioSignature": "9bc30c86f78602511a7463ba66d9e9d60baecb57df2c4f37587fabd6d38b8d69",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.451152092073684,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Muisca"
+        ]
+      },
+      {
+        "modelKey": "cba99049050280a39d03a83f0541bc5269092bfe79e99b5e3ff05f08919abe3c",
+        "scenarioSignature": "be189970a4ba496894d4754a89a1b916f0ea5b1e3b8fd575736d27473b9c10c6",
+        "outputs": {
+          "food": 0.4417999896729286,
+          "wood": -0.04819636250977403,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Poles"
+        ]
+      },
+      {
+        "modelKey": "fabe5e126c796e5f99132c54264e916ec82bac2e813c4f3573d7e2bdbbc19796",
+        "scenarioSignature": "90c807810c125796baab5ccf9daee7f5d71f4f36f862a7035c47e5e1cfb67f0d",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.1421499568651354,
+          "stone": 0.42645027729008284
+        },
+        "civilizations": [
+          "Poles"
+        ]
+      },
+      {
+        "modelKey": "f049601f5281aa511135c0a829d88f9c4f8b4c2bc2460ba55746e0ad703d3df7",
+        "scenarioSignature": "0a26fdba8a89f35be18f06b4ee42f4e66f19541a372943f74f8f637fa81a8760",
+        "outputs": {
+          "food": 0.4120893429849097,
+          "wood": -0.04495520105289924,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Romans"
+        ]
+      },
+      {
+        "modelKey": "b1a7f5ee07b2518b0119204ad49b561f9546409e340641439ceb25a14c23b9fa",
+        "scenarioSignature": "c67d80392e4b11fb574cf95c24e1e75ccd9dac80cc3c32141ce275378a76c7de",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.49064377786861835,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Romans"
+        ]
+      },
+      {
+        "modelKey": "5b5c02924ee57b0aeedefb4970c77a5b10c81a57c6284ca457b69a77ff30dcd1",
+        "scenarioSignature": "c10635bb1a5028827f893cba58f34297333865f8a92f5460e5f9791f3a011eb2",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.46897570181981835,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Romans"
+        ]
+      },
+      {
+        "modelKey": "fabbb8a2b282f914adb5e53f0c4ba1ba1c3ad07f0002978ae563213a04a3be35",
+        "scenarioSignature": "efbb073927b420a245279e29d5bb4f272525bb911f46d234c140210ba3ceddf7",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.39526143183408213
+        },
+        "civilizations": [
+          "Romans"
+        ]
+      },
+      {
+        "modelKey": "480bc091eb456af7e4892760394de204feb48ae18cdb72c62566a0938941bb34",
+        "scenarioSignature": "cdaccaecec3f83d25412ee72ba507bb4a23285db1484b960b82d7ae24e64ed2c",
+        "outputs": {
+          "food": 0.035506333496276424,
+          "wood": 0.5072333356610917,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Shu"
+        ]
+      },
+      {
+        "modelKey": "4f3111bd55a713e350b4e91f390d999647ed13575e5ad3ff7f8e98d1eb7aed92",
+        "scenarioSignature": "1d5dbe1614926ab8907a00e54c629912bd5a13c10eb0d6532ca410e560d16326",
+        "outputs": {
+          "food": 0.396735494619519,
+          "wood": -0.023366016861026885,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Sicilians"
+        ]
+      },
+      {
+        "modelKey": "33c8825afb528f5661ede32a8c1cb05b77debe86013df25acf76d7fbe1b3fe9d",
+        "scenarioSignature": "2d566b1d73c3c84a1dfa070c8cd5ff4a84c28938d12f2520558ae4d599bc7d6a",
+        "outputs": {
+          "food": 0.45156400189864687,
+          "wood": -0.049261527479852386,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Slavs"
+        ]
+      },
+      {
+        "modelKey": "c95327b2e33220b97fcf4330a43380b0adc648bc314ca9b2dea04e1d21355d72",
+        "scenarioSignature": "b3b4e9786a15bf6f2eb756abf4d955dcd3ddf006131297025bb88dfb0cd2e1e2",
+        "outputs": {
+          "food": 0.39289647570471375,
+          "wood": -0.0628634361127542,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Spanish"
+        ]
+      },
+      {
+        "modelKey": "b1b035d26032bc0b25745ba9b1c7a010748f7c618c1ad5a8a1dc8caecc779202",
+        "scenarioSignature": "0d627c964bd6eedb5bcd9d78a916e55f190f4fe5964d8d2f3df99af8df2b5f6d",
+        "outputs": {
+          "food": 0.39192305569891966,
+          "wood": -0.025653146483293702,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Teutons"
+        ]
+      },
+      {
+        "modelKey": "dca30e6cf2c7ff05fded663cc8c6d8c676f0d05e632602d546773605d118e1b0",
+        "scenarioSignature": "bafc3f159f8ecf20dfa2630fa931923d357f29cd73e3d9c5535f1064d3a5e0b2",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.5434864552163722,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Turks"
+        ]
+      },
+      {
+        "modelKey": "e3c1a4ab152957439ecc48aebb4d449906798650fc55d1073edb1aaf68285414",
+        "scenarioSignature": "8acdfd6e0c6cb03c57e6de0095c927b92b47d43feb9226f36979e501bcf03244",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5072333356610917,
+          "gold": 0.03251495860679557,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Vietnamese"
+        ]
+      }
+    ],
+    "comparisons": [],
+    "blockers": [],
+    "status": "deferred_by_user"
+  },
+  "assumptions": [
+    "Post-Imperial; all available upgrades; Imperial research pricing; own bonuses only.",
+    "The headline is weighted villager-minutes for the displayed army, production buildings completing it within 60 seconds, and common military upgrade net costs.",
+    "Apply food x1, wood x1, gold x1.5 and stone x3 to the combined resource bill before evaluating labor. These are scarcity preferences, not literal gathering delays.",
+    "Gathering uses the reviewed resource layouts, including reseeding downtime and recurring farm wood; resource coproducts satisfy the combined bill without resale credit.",
+    "Khitan pasture food uses an online lifecycle average of 25.2 food per villager-minute as a post-Imperial estimate, with immediate food credit and no external drop-off trip. Recurring pasture wood uses the supplied DAT cost and yield; rebuilding downtime is already in the reference rate.",
+    "Controlled in-game gathering measurements are deferred by user instruction. Release eligibility does not certify measured accuracy; gathering rates remain estimates.",
+    "Folwark: 8 of 10 farms covered. Applicable auras are assumed fully active, once, without placement requirements or aura-building costs (user instruction 2026-11-11).",
+    "Wei Tuntian income is excluded. Berber Xebec, Chinese Fire Ship and Flemish Revolution verification are excluded from release requirements; missing values remain unverified, not filled in.",
+    "Production uses complete purchase cycles: orders per building = floor(60 / training seconds); required buildings = ceil(orders / orders per building). A slower-than-60s purchase cannot meet the window.",
+    "Choose the route minimizing total weighted labor; ties use faster queue completion then building ID. Unresolved labor allows provisional resource-priced infrastructure only.",
+    "Buildings and common upgrades are one-time investments. Casualty replacement work charges neither again, carries initial batch surplus and rounds new purchases cumulatively. Extra units are not added to combat.",
+    "The 60-second window starts with buildings, upgrades and resources ready. Villager construction animations, rally travel, economic setup, research-building infrastructure and exclusive upgrades are separate from the headline.",
+    "Research time is summed workload, not a parallel build order. Refunds arrive after payment.",
+    "Passive income, relics, trade, combat rewards and early-game grants are outside villager labor."
+  ],
+  "contextVersion": "fca28cc7048b6ec607fa8b5314fa1c3c7b6c74be833e79229f1c262cd3516fb3"
+}

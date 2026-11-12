@@ -1,0 +1,1254 @@
+{
+  "engine_sha256": "bd2740603bde811b0ba309bf9b22e02a5397da8f96adc649b81cbebf02c5b70a",
+  "source": "https://www.reddit.com/r/aoe2/comments/18l91t2/did_some_farm_testing_wheelbarrow_math/",
+  "cases": [
+    {
+      "profile": "none",
+      "position": "near",
+      "food": 175,
+      "reference_seconds": 491,
+      "reference_rate": 21.384928716904277,
+      "model_rate": 20.719448946404654,
+      "model_seconds": 506.8121769051605,
+      "seed_min": 20.48875927398684,
+      "seed_max": 21.020304327650464,
+      "difference_percent": -3.1119101649077607
+    },
+    {
+      "profile": "none",
+      "position": "outer",
+      "food": 175,
+      "reference_seconds": 617,
+      "reference_rate": 17.01782820097245,
+      "model_rate": 16.65978693315273,
+      "model_seconds": 630.2818091283295,
+      "seed_min": 16.499750557443704,
+      "seed_max": 16.79873870366823,
+      "difference_percent": -2.103918688045392
+    },
+    {
+      "profile": "wheelbarrow",
+      "position": "near",
+      "food": 250,
+      "reference_seconds": 663,
+      "reference_rate": 22.624434389140273,
+      "model_rate": 23.045737925877983,
+      "model_seconds": 650.9567042810345,
+      "seed_min": 22.717379803789818,
+      "seed_max": 23.483702129246165,
+      "difference_percent": 1.8621616323806878
+    },
+    {
+      "profile": "wheelbarrow",
+      "position": "outer",
+      "food": 250,
+      "reference_seconds": 779,
+      "reference_rate": 19.255455712451862,
+      "model_rate": 19.40279489361796,
+      "model_seconds": 773.0920163469527,
+      "seed_min": 19.33982770969648,
+      "seed_max": 19.5155962188724,
+      "difference_percent": 0.7651814808559143
+    },
+    {
+      "profile": "full",
+      "position": "near",
+      "food": 375,
+      "reference_seconds": 937,
+      "reference_rate": 24.012806830309497,
+      "model_rate": 23.994826140670373,
+      "model_seconds": 937.7022897186191,
+      "seed_min": 23.97620903290877,
+      "seed_max": 24.000000357660422,
+      "difference_percent": -0.07487958307492715
+    },
+    {
+      "profile": "full",
+      "position": "outer",
+      "food": 375,
+      "reference_seconds": 956,
+      "reference_rate": 23.535564853556487,
+      "model_rate": 23.3520250636363,
+      "model_seconds": 963.5271584468064,
+      "seed_min": 23.21753847522644,
+      "seed_max": 23.450052603336882,
+      "difference_percent": -0.7798401740608751
+    }
+  ],
+  "runs": [
+    {
+      "profile": "none",
+      "seed": 0,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 0,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 512.476127011318,
+          "final_deposit_seconds": 515.3680607898361,
+          "food_per_minute": 20.48875927398684
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 636.3732568831488,
+          "final_deposit_seconds": 641.74825679933,
+          "food_per_minute": 16.499750557443704
+        }
+      ],
+      "checks": {
+        "inventory_error": 8.151346264639869e-11,
+        "resource_error": 1.7905676941154525e-11,
+        "time_error": 5.165929906070232e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.604228440844963e-16
+      }
+    },
+    {
+      "profile": "none",
+      "seed": 1,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 1,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 507.1318297115451,
+          "final_deposit_seconds": 508.7568296836055,
+          "food_per_minute": 20.70467555935577
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 625.0469267497555,
+          "final_deposit_seconds": 630.4219266659367,
+          "food_per_minute": 16.79873870366823
+        }
+      ],
+      "checks": {
+        "inventory_error": 8.162714948412031e-11,
+        "resource_error": 1.8559376258053817e-11,
+        "time_error": 5.375113687478006e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.604228440844963e-16
+      }
+    },
+    {
+      "profile": "none",
+      "seed": 2,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 2,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 499.51703059732216,
+          "final_deposit_seconds": 501.14203056938254,
+          "food_per_minute": 21.020304327650464
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 631.5313121991443,
+          "final_deposit_seconds": 635.6944877542622,
+          "food_per_minute": 16.626253991170238
+        }
+      ],
+      "checks": {
+        "inventory_error": 8.145661922753789e-11,
+        "resource_error": 1.8701484805205837e-11,
+        "time_error": 5.638867150992155e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.72565908416334e-16
+      }
+    },
+    {
+      "profile": "none",
+      "seed": 3,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 3,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 510.60528713790626,
+          "final_deposit_seconds": 510.98028712859303,
+          "food_per_minute": 20.56382936975762
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 629.4011806974564,
+          "final_deposit_seconds": 636.0261805950112,
+          "food_per_minute": 16.68252351920387
+        }
+      ],
+      "checks": {
+        "inventory_error": 8.145661922753789e-11,
+        "resource_error": 1.801936377887614e-11,
+        "time_error": 5.288711690809578e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.864436962241484e-16
+      }
+    },
+    {
+      "profile": "none",
+      "seed": 4,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 4,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 504.33061006771106,
+          "final_deposit_seconds": 507.20561002114505,
+          "food_per_minute": 20.819676201272568
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 629.0563691121429,
+          "final_deposit_seconds": 635.6813690096976,
+          "food_per_minute": 16.691667894277607
+        }
+      ],
+      "checks": {
+        "inventory_error": 8.162714948412031e-11,
+        "resource_error": 1.7848833522293717e-11,
+        "time_error": 5.438778316602111e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.604228440844963e-16
+      }
+    },
+    {
+      "profile": "none",
+      "seed": 0,
+      "diagnostic": "initial_pool_15",
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 0,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 15,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "checks": {
+        "inventory_error": 8.15703060652595e-11,
+        "resource_error": -5.076117304270156e-11,
+        "time_error": 5.252331902738661e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.604228440844963e-16
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 510.01126030075136,
+          "food_per_minute": 20.587780736072762
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 634.3471480169711,
+          "food_per_minute": 16.55245086672808
+        }
+      ]
+    },
+    {
+      "profile": "wheelbarrow",
+      "seed": 0,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 0,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 652.9552858416024,
+          "final_deposit_seconds": 654.4325585114564,
+          "food_per_minute": 22.972476561953716
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 775.6015319867299,
+          "final_deposit_seconds": 780.4878954409852,
+          "food_per_minute": 19.33982770969648
+        }
+      ],
+      "checks": {
+        "inventory_error": 3.2582647691015154e-10,
+        "resource_error": 1.0189182830799837e-10,
+        "time_error": 5.511537892743945e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.708311849403572e-16
+      }
+    },
+    {
+      "profile": "wheelbarrow",
+      "seed": 1,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 1,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 653.4992956968943,
+          "final_deposit_seconds": 653.8402047719478,
+          "food_per_minute": 22.95335297034091
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 768.6160254481168,
+          "final_deposit_seconds": 773.5023889023721,
+          "food_per_minute": 19.5155962188724
+        }
+      ],
+      "checks": {
+        "inventory_error": 3.255422598158475e-10,
+        "resource_error": 1.0220446711173281e-10,
+        "time_error": 5.275069270282984e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.673617379884035e-16
+      }
+    },
+    {
+      "profile": "wheelbarrow",
+      "seed": 2,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 2,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 638.740855996435,
+          "final_deposit_seconds": 639.0817650714885,
+          "food_per_minute": 23.483702129246165
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 772.9440604554155,
+          "final_deposit_seconds": 776.7287654234916,
+          "food_per_minute": 19.40632028553536
+        }
+      ],
+      "checks": {
+        "inventory_error": 3.262243808421772e-10,
+        "resource_error": 1.0487610779819079e-10,
+        "time_error": 5.381934897741303e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 9.003214840319629e-16
+      }
+    },
+    {
+      "profile": "wheelbarrow",
+      "seed": 3,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 3,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 660.2874156066903,
+          "final_deposit_seconds": 662.9010518713447,
+          "food_per_minute": 22.717379803789818
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 774.5799445635707,
+          "final_deposit_seconds": 780.6243414612684,
+          "food_per_minute": 19.365334857012854
+        }
+      ],
+      "checks": {
+        "inventory_error": 3.2599700716673397e-10,
+        "resource_error": 1.0160761121369433e-10,
+        "time_error": 5.534275260288268e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 9.003214840319629e-16
+      }
+    },
+    {
+      "profile": "wheelbarrow",
+      "seed": 4,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 4,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 649.30066826355,
+          "final_deposit_seconds": 651.9143045282045,
+          "food_per_minute": 23.10177816405931
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 773.7185192809305,
+          "final_deposit_seconds": 779.7629161786281,
+          "food_per_minute": 19.386895396972694
+        }
+      ],
+      "checks": {
+        "inventory_error": 3.2576963349129073e-10,
+        "resource_error": 1.0263079275318887e-10,
+        "time_error": 5.484253051690757e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.239936510889834e-16
+      }
+    },
+    {
+      "profile": "wheelbarrow",
+      "seed": 0,
+      "diagnostic": "initial_pool_15",
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 0,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 15,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "checks": {
+        "inventory_error": 3.261106940044556e-10,
+        "resource_error": 2.6773250283440575e-11,
+        "time_error": 5.466063157655299e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.673617379884035e-16
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 652.2892995660173,
+          "food_per_minute": 22.995931421809058
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 774.8729856382633,
+          "food_per_minute": 19.358011284448754
+        }
+      ]
+    },
+    {
+      "profile": "full",
+      "seed": 0,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 0,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 937.4999860288899,
+          "final_deposit_seconds": 938.8429611541945,
+          "food_per_minute": 24.000000357660422
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 969.0949806762648,
+          "final_deposit_seconds": 973.5371291747615,
+          "food_per_minute": 23.21753847522644
+        }
+      ],
+      "checks": {
+        "inventory_error": 7.665903467568569e-10,
+        "resource_error": 1.98667748918524e-10,
+        "time_error": 4.990852175978944e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.36136715420821e-16
+      }
+    },
+    {
+      "profile": "full",
+      "seed": 1,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 1,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 938.4302568065458,
+          "final_deposit_seconds": 940.8062897229144,
+          "food_per_minute": 23.97620903290877
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 959.4861205896957,
+          "final_deposit_seconds": 964.9810267412311,
+          "food_per_minute": 23.450052603336882
+        }
+      ],
+      "checks": {
+        "inventory_error": 7.605649443576112e-10,
+        "resource_error": 2.0867219063802622e-10,
+        "time_error": 5.029505700804293e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.135853102331225e-16
+      }
+    },
+    {
+      "profile": "full",
+      "seed": 2,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 2,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 937.5812336998786,
+          "final_deposit_seconds": 938.9242088251831,
+          "food_per_minute": 23.997920597461842
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 961.4301551705053,
+          "final_deposit_seconds": 965.8965623377518,
+          "food_per_minute": 23.402636040690577
+        }
+      ],
+      "checks": {
+        "inventory_error": 7.693188308621757e-10,
+        "resource_error": 1.9758772396016866e-10,
+        "time_error": 5.297806637827307e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.864436962241484e-16
+      }
+    },
+    {
+      "profile": "full",
+      "seed": 3,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 3,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 937.49998602889,
+          "final_deposit_seconds": 939.8760189452586,
+          "food_per_minute": 24.000000357660422
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 961.337569019077,
+          "final_deposit_seconds": 966.8324751706123,
+          "food_per_minute": 23.40488994199862
+        }
+      ],
+      "checks": {
+        "inventory_error": 7.636344889760949e-10,
+        "resource_error": 2.0543211576296017e-10,
+        "time_error": 4.920366336591542e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.673617379884035e-16
+      }
+    },
+    {
+      "profile": "full",
+      "seed": 4,
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 4,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 0,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 937.4999860288908,
+          "final_deposit_seconds": 938.8429611541953,
+          "food_per_minute": 24.0000003576604
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 966.2869667784895,
+          "final_deposit_seconds": 970.7291152769861,
+          "food_per_minute": 23.285008256928993
+        }
+      ],
+      "checks": {
+        "inventory_error": 7.672724677831866e-10,
+        "resource_error": 1.9900880943168886e-10,
+        "time_error": 5.068159225629643e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.673617379884035e-16
+      }
+    },
+    {
+      "profile": "full",
+      "seed": 0,
+      "diagnostic": "initial_pool_15",
+      "options": {
+        "duration": 1300,
+        "dt": 0.0125,
+        "seed": 0,
+        "collisions": true,
+        "reseed": false,
+        "spotsPerLoad": 4,
+        "initialPool": 15,
+        "poolCapacity": 15,
+        "depositSeconds": 0,
+        "workers": 2,
+        "mill": {
+          "x0": 0,
+          "x1": 4,
+          "y0": 0,
+          "y1": 4
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 4,
+            "x1": 7,
+            "y0": 0,
+            "y1": 3,
+            "position": "near"
+          },
+          {
+            "id": 1,
+            "x0": 7,
+            "x1": 10,
+            "y0": 0,
+            "y1": 3,
+            "position": "outer"
+          }
+        ]
+      },
+      "checks": {
+        "inventory_error": 7.649987310287543e-10,
+        "resource_error": 1.2505552149377763e-10,
+        "time_error": 3.3924152376130223e-10,
+        "max_overlap": 0,
+        "max_static_overlap": 0,
+        "max_speed_error": 8.673617379884035e-16
+      },
+      "per_farm": [
+        {
+          "id": 0,
+          "depletion_seconds": 901.4609509266061,
+          "food_per_minute": 24.959483798907087
+        },
+        {
+          "id": 1,
+          "depletion_seconds": 962.9084494105203,
+          "food_per_minute": 23.366707410007876
+        }
+      ]
+    }
+  ],
+  "broad_comparison": [
+    {
+      "profile": "none",
+      "reference": 20.3,
+      "model_harvested": 18.35794501111061,
+      "model_banked": 17.969999999996094,
+      "difference_percent": -9.56677334428272
+    },
+    {
+      "profile": "wheelbarrow",
+      "reference": 22.78,
+      "model_harvested": 20.713280703734945,
+      "model_banked": 20.099999999995173,
+      "difference_percent": -9.072516664903674
+    },
+    {
+      "profile": "wheelbarrow-plow",
+      "reference": 23.16,
+      "model_harvested": 21.926991661484465,
+      "model_banked": 21.28,
+      "difference_percent": -5.323870200844283
+    },
+    {
+      "profile": "full",
+      "reference": 24.4,
+      "model_harvested": 23.756632605307697,
+      "model_banked": 22.974,
+      "difference_percent": -2.636751617591404
+    }
+  ],
+  "limitations": [
+    "Reference is a single reported pair per upgrade level, not a published distribution or shared scenario.",
+    "Exact farm alignment, initial villager positions, civilization, pre-task idle duration, and executable build are unspecified. Scenario Editor mode is reported.",
+    "Our comparison uses east-side farms and the source TC outer box as a solid drop-contact proxy. TC annexes/passability and exact game deposit contact are not reconstructed.",
+    "Default initial pool is zero; separate full-pool diagnostics expose sensitivity to pre-task idle time.",
+    "Rates are recomputed from reported depletion times and standard DAT food budgets; some rounded rates in the post disagree with its times.",
+    "Our endpoint is depletion, before final partial-load deposit, matching the stated measurement as closely as possible.",
+    "The original ten-farm mill results remain unchanged. Similar output does not prove internal movement or civilization modifiers are correct."
+  ],
+  "independent_checks": [
+    {
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=1932327114",
+      "kind": "2019/2020 DE experiment",
+      "conditions": "8 farms around TC, 10min, warm-up and forced endpoint deposit; older farm placement mechanics, no ordinary reseeding. Broad comparison only."
+    },
+    {
+      "url": "https://forums.ageofempires.com/t/how-to-nerf-khitans/275361/183",
+      "kind": "2025 reported game testing",
+      "farm_rates": {
+        "base": 20.07,
+        "wheelbarrow_horse_collar": 22.34,
+        "hand_cart_heavy_plow": 23.62
+      },
+      "conditions": "Measured over pasture lifecycle; farm layout, endpoint inventories, farm reseeding and generic civ not specified. Context only, not an exact match."
+    },
+    {
+      "url": "https://www.reddit.com/r/aoe2/comments/1ipzw3v/nevermind_the_farming_cap_is_still_24_never/",
+      "kind": "2025 multiplayer follow-up",
+      "finding": "Supports approximately 24 food/min generic farm production cap; retracts higher single-player rates."
+    }
+  ]
+}

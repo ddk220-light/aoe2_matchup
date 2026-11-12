@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "name": "generic-post-imperial-gold",
+  "upgrade_profile": {
+    "mining_level": 1,
+    "carry_level": 1,
+    "tech_ids": [
+      55,
+      213
+    ]
+  },
+  "source": {
+    "database": "/workspace/scratch/economy-review/labor-inputs/labor-inputs.sqlite",
+    "game_source": {
+      "path": "/workspace/scratch/production-review/current-input/dat/empires2_x2_p1.dat",
+      "format_version": "VER 8.9",
+      "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+      "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+      "origin": "user-supplied Google Drive archive",
+      "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+      "archive_name": "aoe2_dat.zip",
+      "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+      "patch_signature": {
+        "format": "VER 8.9",
+        "units": {
+          "873": {
+            "hp": 220,
+            "speed": 0.8999999761581421,
+            "costs": [
+              {
+                "type": 0,
+                "amount": 70
+              },
+              {
+                "type": 3,
+                "amount": 80
+              },
+              {
+                "type": 4,
+                "amount": 1
+              }
+            ]
+          },
+          "875": {
+            "hp": 270,
+            "speed": 0.8999999761581421,
+            "costs": [
+              {
+                "type": 0,
+                "amount": 70
+              },
+              {
+                "type": 3,
+                "amount": 80
+              },
+              {
+                "type": 4,
+                "amount": 1
+              }
+            ]
+          },
+          "2569": {
+            "hp": 55,
+            "speed": 1.4500000476837158,
+            "costs": [
+              {
+                "type": 1,
+                "amount": 50
+              },
+              {
+                "type": 3,
+                "amount": 55
+              },
+              {
+                "type": 4,
+                "amount": 1
+              }
+            ]
+          }
+        }
+      },
+      "game_tree_directory": "/workspace/scratch/production-review/current-input/dat/CivTechTrees",
+      "game_tree_count": 56
+    },
+    "worker_ids": [
+      579,
+      581
+    ],
+    "gold_id": 66,
+    "camp_id": 584,
+    "effects": [
+      {
+        "source_kind": "technology",
+        "tech_id": 55,
+        "effect_id": 55,
+        "command_index": 1,
+        "command": {
+          "type": 5,
+          "a": 579,
+          "b": -1,
+          "c": 13,
+          "d": 1.149999976158142
+        },
+        "field": "work_rate",
+        "before": 0.3799999952316284,
+        "after": 0.4369999854564668
+      },
+      {
+        "source_kind": "technology",
+        "tech_id": 213,
+        "effect_id": 200,
+        "command_index": 0,
+        "command": {
+          "type": 5,
+          "a": -1,
+          "b": 4,
+          "c": 5,
+          "d": 1.100000023841858
+        },
+        "field": "movement_speed",
+        "before": 0.800000011920929,
+        "after": 0.8800000321865085
+      },
+      {
+        "source_kind": "technology",
+        "tech_id": 213,
+        "effect_id": 200,
+        "command_index": 1,
+        "command": {
+          "type": 5,
+          "a": -1,
+          "b": 4,
+          "c": 14,
+          "d": 1.2695000171661377
+        },
+        "field": "carry_capacity",
+        "before": 10,
+        "after": 12.695000171661377
+      }
+    ]
+  },
+  "worker": {
+    "work_rate": 0.4369999854564668,
+    "speed": 0.8800000321865085,
+    "radius": 0.20000000298023224,
+    "collision_size_y": 0.20000000298023224,
+    "minimum_collision_size_multiplier": 0.25,
+    "carry_capacity": 13,
+    "unrounded_carry": 12.695000171661377,
+    "carry_steps": [
+      {
+        "tech_id": 213,
+        "before": 10,
+        "factor": 1.2695000171661377,
+        "after": 13
+      }
+    ],
+    "task_multiplier": 1.0,
+    "raw_gold_task": {
+      "task_type": 1,
+      "id": 2,
+      "is_default": 0,
+      "action_type": 5,
+      "class_id": -1,
+      "unit_id": 66,
+      "terrain_id": -1,
+      "resource_in": 3,
+      "resource_multiplier": 47,
+      "resource_out": -1,
+      "unused_resource": -1,
+      "work_value_1": 1.0,
+      "work_value_2": 0.0,
+      "work_range": 0.0,
+      "auto_search_targets": 1,
+      "search_wait_time": 3.0,
+      "enable_targeting": 0,
+      "combat_level_flag": 0,
+      "gather_type": 0,
+      "work_flag_2": 0,
+      "target_diplomacy": 3,
+      "carry_check": 1,
+      "pick_for_construction": 0,
+      "moving_graphic_id": -1,
+      "proceeding_graphic_id": 1606,
+      "working_graphic_id": -1,
+      "carrying_graphic_id": 1605,
+      "resource_gathering_sound_id": -1,
+      "resource_deposit_sound_id": -1,
+      "wwise_resource_gathering_sound_id": 0,
+      "wwise_resource_deposit_sound_id": 0,
+      "enabled": -1
+    }
+  },
+  "gold": {
+    "half_width": 0.5,
+    "half_height": 0.5,
+    "amount": 800.0,
+    "centers": [
+      [
+        10.5,
+        10.5
+      ],
+      [
+        11.5,
+        10.5
+      ],
+      [
+        10.5,
+        11.5
+      ],
+      [
+        11.5,
+        11.5
+      ]
+    ]
+  },
+  "camp": {
+    "half_width": 1.0,
+    "half_height": 1.0,
+    "center": [
+      11,
+      14
+    ]
+  },
+  "starting_positions": [
+    [
+      10.3,
+      12.2
+    ],
+    [
+      10.9,
+      12.2
+    ],
+    [
+      11.5,
+      12.2
+    ],
+    [
+      12.2,
+      10.3
+    ],
+    [
+      12.2,
+      10.9
+    ],
+    [
+      12.2,
+      11.5
+    ],
+    [
+      10.3,
+      9.8
+    ],
+    [
+      11.2,
+      9.8
+    ],
+    [
+      9.8,
+      10.3
+    ],
+    [
+      9.8,
+      11.2
+    ]
+  ],
+  "reference": {
+    "name": "Forgotten Empires: Gold & Relics",
+    "url": "https://www.forgottenempires.net/strategy/age-of-empires-ii-strategy-center/gold-relics",
+    "seconds_per_10_gold": 23.8,
+    "gold_per_worker_minute": 25.210084033613445,
+    "conditions": "One tile from camp, mining level 1, carry level 1, no bumping; patch unspecified"
+  },
+  "assumptions": [
+    "Generic mining inputs from Byzantine records; no civilization/team bonuses used.",
+    "Carry rounded to nearest integer after each technology, consistent with historical community tests; current DE not captured.",
+    "Workers are rigid circles of source radius; minimum collision multiplier is preserved but not activated.",
+    "Gold and camp are rectangles; navigation uses conservative expanded-rectangle corners.",
+    "Continuous source work rate; instantaneous deposit and task switch at contact.",
+    "Workers return to their assigned gold object, selecting reachable contact points; retarget on depletion.",
+    "Visibility routing around current worker positions; blocked paths retry after 0.5 game-seconds.",
+    "Movement updates are sequential, priority rotates once per game-second; no physical pushing.",
+    "No parameter is fitted to the external reference; this is an unvalidated economic model."
+  ]
+}

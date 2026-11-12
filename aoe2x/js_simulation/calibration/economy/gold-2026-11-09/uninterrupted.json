@@ -1,0 +1,2152 @@
+{
+  "options": {
+    "workers": 1,
+    "gap": 1,
+    "dt": 0.0125,
+    "duration": 60,
+    "collisions": true,
+    "seed": 0,
+    "carry": 1000,
+    "workRate": 0.5025499728560453
+  },
+  "fixture": {
+    "schema_version": 1,
+    "name": "generic-post-imperial-gold",
+    "source": {
+      "database": "/workspace/scratch/economy-review/labor-inputs/labor-inputs.sqlite",
+      "game_source": {
+        "path": "/workspace/scratch/production-review/current-input/dat/empires2_x2_p1.dat",
+        "format_version": "VER 8.9",
+        "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+        "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+        "origin": "user-supplied Google Drive archive",
+        "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+        "archive_name": "aoe2_dat.zip",
+        "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+        "patch_signature": {
+          "format": "VER 8.9",
+          "units": {
+            "873": {
+              "hp": 220,
+              "speed": 0.8999999761581421,
+              "costs": [
+                {
+                  "type": 0,
+                  "amount": 70
+                },
+                {
+                  "type": 3,
+                  "amount": 80
+                },
+                {
+                  "type": 4,
+                  "amount": 1
+                }
+              ]
+            },
+            "875": {
+              "hp": 270,
+              "speed": 0.8999999761581421,
+              "costs": [
+                {
+                  "type": 0,
+                  "amount": 70
+                },
+                {
+                  "type": 3,
+                  "amount": 80
+                },
+                {
+                  "type": 4,
+                  "amount": 1
+                }
+              ]
+            },
+            "2569": {
+              "hp": 55,
+              "speed": 1.4500000476837158,
+              "costs": [
+                {
+                  "type": 1,
+                  "amount": 50
+                },
+                {
+                  "type": 3,
+                  "amount": 55
+                },
+                {
+                  "type": 4,
+                  "amount": 1
+                }
+              ]
+            }
+          }
+        },
+        "game_tree_directory": "/workspace/scratch/production-review/current-input/dat/CivTechTrees",
+        "game_tree_count": 56
+      },
+      "worker_ids": [
+        579,
+        581
+      ],
+      "gold_id": 66,
+      "camp_id": 584,
+      "effects": [
+        {
+          "source_kind": "technology",
+          "tech_id": 55,
+          "effect_id": 55,
+          "command_index": 1,
+          "command": {
+            "type": 5,
+            "a": 579,
+            "b": -1,
+            "c": 13,
+            "d": 1.149999976158142
+          },
+          "field": "work_rate",
+          "before": 0.3799999952316284,
+          "after": 0.4369999854564668
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 213,
+          "effect_id": 200,
+          "command_index": 0,
+          "command": {
+            "type": 5,
+            "a": -1,
+            "b": 4,
+            "c": 5,
+            "d": 1.100000023841858
+          },
+          "field": "movement_speed",
+          "before": 0.800000011920929,
+          "after": 0.8800000321865085
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 213,
+          "effect_id": 200,
+          "command_index": 1,
+          "command": {
+            "type": 5,
+            "a": -1,
+            "b": 4,
+            "c": 14,
+            "d": 1.2695000171661377
+          },
+          "field": "carry_capacity",
+          "before": 10,
+          "after": 12.695000171661377
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 182,
+          "effect_id": 178,
+          "command_index": 0,
+          "command": {
+            "type": 5,
+            "a": 579,
+            "b": -1,
+            "c": 13,
+            "d": 1.149999976158142
+          },
+          "field": "work_rate",
+          "before": 0.4369999854564668,
+          "after": 0.5025499728560453
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 249,
+          "effect_id": 238,
+          "command_index": 0,
+          "command": {
+            "type": 5,
+            "a": -1,
+            "b": 4,
+            "c": 14,
+            "d": 1.5
+          },
+          "field": "carry_capacity",
+          "before": 12.695000171661377,
+          "after": 19.042500257492065
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 249,
+          "effect_id": 238,
+          "command_index": 1,
+          "command": {
+            "type": 5,
+            "a": -1,
+            "b": 4,
+            "c": 5,
+            "d": 1.100000023841858
+          },
+          "field": "movement_speed",
+          "before": 0.8800000321865085,
+          "after": 0.9680000563859951
+        }
+      ]
+    },
+    "worker": {
+      "work_rate": 0.5025499728560453,
+      "speed": 0.9680000563859951,
+      "radius": 0.20000000298023224,
+      "collision_size_y": 0.20000000298023224,
+      "minimum_collision_size_multiplier": 0.25,
+      "carry_capacity": 20,
+      "unrounded_carry": 19.042500257492065,
+      "carry_steps": [
+        {
+          "tech_id": 213,
+          "before": 10,
+          "factor": 1.2695000171661377,
+          "after": 13
+        },
+        {
+          "tech_id": 249,
+          "before": 13,
+          "factor": 1.5,
+          "after": 20
+        }
+      ],
+      "task_multiplier": 1,
+      "raw_gold_task": {
+        "task_type": 1,
+        "id": 2,
+        "is_default": 0,
+        "action_type": 5,
+        "class_id": -1,
+        "unit_id": 66,
+        "terrain_id": -1,
+        "resource_in": 3,
+        "resource_multiplier": 47,
+        "resource_out": -1,
+        "unused_resource": -1,
+        "work_value_1": 1,
+        "work_value_2": 0,
+        "work_range": 0,
+        "auto_search_targets": 1,
+        "search_wait_time": 3,
+        "enable_targeting": 0,
+        "combat_level_flag": 0,
+        "gather_type": 0,
+        "work_flag_2": 0,
+        "target_diplomacy": 3,
+        "carry_check": 1,
+        "pick_for_construction": 0,
+        "moving_graphic_id": -1,
+        "proceeding_graphic_id": 1606,
+        "working_graphic_id": -1,
+        "carrying_graphic_id": 1605,
+        "resource_gathering_sound_id": -1,
+        "resource_deposit_sound_id": -1,
+        "wwise_resource_gathering_sound_id": 0,
+        "wwise_resource_deposit_sound_id": 0,
+        "enabled": -1
+      }
+    },
+    "gold": {
+      "half_width": 0.5,
+      "half_height": 0.5,
+      "amount": 800,
+      "centers": [
+        [
+          10.5,
+          10.5
+        ],
+        [
+          11.5,
+          10.5
+        ],
+        [
+          10.5,
+          11.5
+        ],
+        [
+          11.5,
+          11.5
+        ]
+      ]
+    },
+    "camp": {
+      "half_width": 1,
+      "half_height": 1,
+      "center": [
+        11,
+        14
+      ]
+    },
+    "starting_positions": [
+      [
+        10.3,
+        12.2
+      ],
+      [
+        10.9,
+        12.2
+      ],
+      [
+        11.5,
+        12.2
+      ],
+      [
+        12.2,
+        10.3
+      ],
+      [
+        12.2,
+        10.9
+      ],
+      [
+        12.2,
+        11.5
+      ],
+      [
+        10.3,
+        9.8
+      ],
+      [
+        11.2,
+        9.8
+      ],
+      [
+        9.8,
+        10.3
+      ],
+      [
+        9.8,
+        11.2
+      ]
+    ],
+    "reference": {
+      "name": "Forgotten Empires: Gold & Relics",
+      "url": "https://www.forgottenempires.net/strategy/age-of-empires-ii-strategy-center/gold-relics",
+      "seconds_per_10_gold": 20.5,
+      "gold_per_worker_minute": 29.26829268292683,
+      "conditions": "One tile from camp, both mining upgrades + Hand Cart, no bumping; patch unspecified"
+    },
+    "assumptions": [
+      "Generic mining inputs from Byzantine records; no civilization/team bonuses used.",
+      "Carry rounded to nearest integer after each technology, consistent with historical community tests; current DE not captured.",
+      "Workers are rigid circles of source radius; minimum collision multiplier is preserved but not activated.",
+      "Gold and camp are rectangles; navigation uses conservative expanded-rectangle corners.",
+      "Continuous source work rate; instantaneous deposit and task switch at contact.",
+      "Workers return to their assigned gold object, selecting reachable contact points; retarget on depletion.",
+      "Visibility routing around current worker positions; blocked paths retry after 0.5 game-seconds.",
+      "Movement updates are sequential, priority rotates once per game-second; no physical pushing.",
+      "No parameter is fitted to the external reference; this is an unvalidated economic model."
+    ]
+  },
+  "final": {
+    "t": 60,
+    "banked": 0,
+    "carried": 30.152998371363466,
+    "extracted": 30.152998371363466,
+    "remaining": [
+      800,
+      800,
+      769.8470016288411,
+      800
+    ],
+    "agents": [
+      {
+        "id": 0,
+        "x": 10.3,
+        "y": 12.2,
+        "state": "mining",
+        "target": 2,
+        "inventory": 30.152998371363466,
+        "banked": 0,
+        "working": 60.00000000000507,
+        "walking": 0,
+        "blocked": 0,
+        "idle": 0,
+        "distance": 0,
+        "deposits": 0
+      }
+    ]
+  },
+  "snapshots": [
+    {
+      "t": 0,
+      "banked": 0,
+      "carried": 0,
+      "extracted": 0,
+      "remaining": [
+        800,
+        800,
+        800,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "to_mine",
+          "target": 2,
+          "inventory": 0,
+          "banked": 0,
+          "working": 0,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 1,
+      "banked": 0,
+      "carried": 0.5025499728560455,
+      "extracted": 0.5025499728560455,
+      "remaining": [
+        800,
+        800,
+        799.4974500271474,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 0.5025499728560455,
+          "banked": 0,
+          "working": 0.9999999999999984,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 2,
+      "banked": 0,
+      "carried": 1.0050999457120868,
+      "extracted": 1.0050999457120868,
+      "remaining": [
+        800,
+        800,
+        798.9949000542947,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 1.0050999457120868,
+          "banked": 0,
+          "working": 1.999999999999995,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 3,
+      "banked": 0,
+      "carried": 1.507649918568128,
+      "extracted": 1.507649918568128,
+      "remaining": [
+        800,
+        800,
+        798.492350081442,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 1.507649918568128,
+          "banked": 0,
+          "working": 3.000000000000009,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 4,
+      "banked": 0,
+      "carried": 2.0101998914241697,
+      "extracted": 2.0101998914241697,
+      "remaining": [
+        800,
+        800,
+        797.9898001085894,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 2.0101998914241697,
+          "banked": 0,
+          "working": 4.000000000000023,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 5,
+      "banked": 0,
+      "carried": 2.5127498642802286,
+      "extracted": 2.5127498642802286,
+      "remaining": [
+        800,
+        800,
+        797.4872501357368,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 2.5127498642802286,
+          "banked": 0,
+          "working": 5.000000000000037,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 6,
+      "banked": 0,
+      "carried": 3.0152998371362876,
+      "extracted": 3.0152998371362876,
+      "remaining": [
+        800,
+        800,
+        796.9847001628841,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 3.0152998371362876,
+          "banked": 0,
+          "working": 6.0000000000000515,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 7,
+      "banked": 0,
+      "carried": 3.5178498099923465,
+      "extracted": 3.5178498099923465,
+      "remaining": [
+        800,
+        800,
+        796.4821501900315,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 3.5178498099923465,
+          "banked": 0,
+          "working": 7.000000000000066,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 8,
+      "banked": 0,
+      "carried": 4.020399782848405,
+      "extracted": 4.020399782848405,
+      "remaining": [
+        800,
+        800,
+        795.9796002171788,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 4.020399782848405,
+          "banked": 0,
+          "working": 8.00000000000008,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 9,
+      "banked": 0,
+      "carried": 4.522949755704464,
+      "extracted": 4.522949755704464,
+      "remaining": [
+        800,
+        800,
+        795.4770502443262,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 4.522949755704464,
+          "banked": 0,
+          "working": 9.000000000000023,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 10,
+      "banked": 0,
+      "carried": 5.025499728560523,
+      "extracted": 5.025499728560523,
+      "remaining": [
+        800,
+        800,
+        794.9745002714735,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 5.025499728560523,
+          "banked": 0,
+          "working": 9.999999999999966,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 11,
+      "banked": 0,
+      "carried": 5.528049701416582,
+      "extracted": 5.528049701416582,
+      "remaining": [
+        800,
+        800,
+        794.4719502986209,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 5.528049701416582,
+          "banked": 0,
+          "working": 10.99999999999991,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 12,
+      "banked": 0,
+      "carried": 6.030599674272641,
+      "extracted": 6.030599674272641,
+      "remaining": [
+        800,
+        800,
+        793.9694003257682,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 6.030599674272641,
+          "banked": 0,
+          "working": 11.999999999999853,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 13,
+      "banked": 0,
+      "carried": 6.5331496471287,
+      "extracted": 6.5331496471287,
+      "remaining": [
+        800,
+        800,
+        793.4668503529156,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 6.5331496471287,
+          "banked": 0,
+          "working": 12.999999999999796,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 14,
+      "banked": 0,
+      "carried": 7.035699619984759,
+      "extracted": 7.035699619984759,
+      "remaining": [
+        800,
+        800,
+        792.9643003800629,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 7.035699619984759,
+          "banked": 0,
+          "working": 13.999999999999739,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 15,
+      "banked": 0,
+      "carried": 7.538249592840818,
+      "extracted": 7.538249592840818,
+      "remaining": [
+        800,
+        800,
+        792.4617504072103,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 7.538249592840818,
+          "banked": 0,
+          "working": 14.999999999999682,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 16,
+      "banked": 0,
+      "carried": 8.040799565696876,
+      "extracted": 8.040799565696876,
+      "remaining": [
+        800,
+        800,
+        791.9592004343576,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 8.040799565696876,
+          "banked": 0,
+          "working": 15.999999999999625,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 17,
+      "banked": 0,
+      "carried": 8.543349538552935,
+      "extracted": 8.543349538552935,
+      "remaining": [
+        800,
+        800,
+        791.456650461505,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 8.543349538552935,
+          "banked": 0,
+          "working": 16.99999999999957,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 18,
+      "banked": 0,
+      "carried": 9.045899511408994,
+      "extracted": 9.045899511408994,
+      "remaining": [
+        800,
+        800,
+        790.9541004886523,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 9.045899511408994,
+          "banked": 0,
+          "working": 17.999999999999513,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 19,
+      "banked": 0,
+      "carried": 9.548449484265053,
+      "extracted": 9.548449484265053,
+      "remaining": [
+        800,
+        800,
+        790.4515505157997,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 9.548449484265053,
+          "banked": 0,
+          "working": 18.999999999999456,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 20,
+      "banked": 0,
+      "carried": 10.050999457121112,
+      "extracted": 10.050999457121112,
+      "remaining": [
+        800,
+        800,
+        789.949000542947,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 10.050999457121112,
+          "banked": 0,
+          "working": 19.9999999999994,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 21,
+      "banked": 0,
+      "carried": 10.55354942997717,
+      "extracted": 10.55354942997717,
+      "remaining": [
+        800,
+        800,
+        789.4464505700944,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 10.55354942997717,
+          "banked": 0,
+          "working": 20.999999999999343,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 22,
+      "banked": 0,
+      "carried": 11.05609940283323,
+      "extracted": 11.05609940283323,
+      "remaining": [
+        800,
+        800,
+        788.9439005972417,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 11.05609940283323,
+          "banked": 0,
+          "working": 21.999999999999286,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 23,
+      "banked": 0,
+      "carried": 11.558649375689289,
+      "extracted": 11.558649375689289,
+      "remaining": [
+        800,
+        800,
+        788.4413506243891,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 11.558649375689289,
+          "banked": 0,
+          "working": 22.99999999999923,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 24,
+      "banked": 0,
+      "carried": 12.061199348545347,
+      "extracted": 12.061199348545347,
+      "remaining": [
+        800,
+        800,
+        787.9388006515364,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 12.061199348545347,
+          "banked": 0,
+          "working": 23.999999999999172,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 25,
+      "banked": 0,
+      "carried": 12.563749321401406,
+      "extracted": 12.563749321401406,
+      "remaining": [
+        800,
+        800,
+        787.4362506786838,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 12.563749321401406,
+          "banked": 0,
+          "working": 24.999999999999115,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 26,
+      "banked": 0,
+      "carried": 13.066299294257465,
+      "extracted": 13.066299294257465,
+      "remaining": [
+        800,
+        800,
+        786.9337007058311,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 13.066299294257465,
+          "banked": 0,
+          "working": 25.99999999999906,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 27,
+      "banked": 0,
+      "carried": 13.568849267113524,
+      "extracted": 13.568849267113524,
+      "remaining": [
+        800,
+        800,
+        786.4311507329785,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 13.568849267113524,
+          "banked": 0,
+          "working": 26.999999999999,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 28,
+      "banked": 0,
+      "carried": 14.071399239969583,
+      "extracted": 14.071399239969583,
+      "remaining": [
+        800,
+        800,
+        785.9286007601258,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 14.071399239969583,
+          "banked": 0,
+          "working": 27.999999999998945,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 29,
+      "banked": 0,
+      "carried": 14.573949212825642,
+      "extracted": 14.573949212825642,
+      "remaining": [
+        800,
+        800,
+        785.4260507872732,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 14.573949212825642,
+          "banked": 0,
+          "working": 28.999999999998888,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 30,
+      "banked": 0,
+      "carried": 15.076499185681701,
+      "extracted": 15.076499185681701,
+      "remaining": [
+        800,
+        800,
+        784.9235008144205,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 15.076499185681701,
+          "banked": 0,
+          "working": 29.99999999999883,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 31,
+      "banked": 0,
+      "carried": 15.57904915853776,
+      "extracted": 15.57904915853776,
+      "remaining": [
+        800,
+        800,
+        784.4209508415679,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 15.57904915853776,
+          "banked": 0,
+          "working": 30.999999999998774,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 32,
+      "banked": 0,
+      "carried": 16.08159913139382,
+      "extracted": 16.08159913139382,
+      "remaining": [
+        800,
+        800,
+        783.9184008687153,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 16.08159913139382,
+          "banked": 0,
+          "working": 31.999999999998717,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 33,
+      "banked": 0,
+      "carried": 16.584149104249878,
+      "extracted": 16.584149104249878,
+      "remaining": [
+        800,
+        800,
+        783.4158508958626,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 16.584149104249878,
+          "banked": 0,
+          "working": 32.99999999999894,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 34,
+      "banked": 0,
+      "carried": 17.086699077105937,
+      "extracted": 17.086699077105937,
+      "remaining": [
+        800,
+        800,
+        782.91330092301,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 17.086699077105937,
+          "banked": 0,
+          "working": 33.99999999999917,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 35,
+      "banked": 0,
+      "carried": 17.589249049961996,
+      "extracted": 17.589249049961996,
+      "remaining": [
+        800,
+        800,
+        782.4107509501573,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 17.589249049961996,
+          "banked": 0,
+          "working": 34.999999999999396,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 36,
+      "banked": 0,
+      "carried": 18.091799022818055,
+      "extracted": 18.091799022818055,
+      "remaining": [
+        800,
+        800,
+        781.9082009773047,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 18.091799022818055,
+          "banked": 0,
+          "working": 35.99999999999962,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 37,
+      "banked": 0,
+      "carried": 18.594348995674114,
+      "extracted": 18.594348995674114,
+      "remaining": [
+        800,
+        800,
+        781.405651004452,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 18.594348995674114,
+          "banked": 0,
+          "working": 36.99999999999985,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 38,
+      "banked": 0,
+      "carried": 19.096898968530173,
+      "extracted": 19.096898968530173,
+      "remaining": [
+        800,
+        800,
+        780.9031010315994,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 19.096898968530173,
+          "banked": 0,
+          "working": 38.00000000000008,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 39,
+      "banked": 0,
+      "carried": 19.599448941386232,
+      "extracted": 19.599448941386232,
+      "remaining": [
+        800,
+        800,
+        780.4005510587467,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 19.599448941386232,
+          "banked": 0,
+          "working": 39.000000000000306,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 40,
+      "banked": 0,
+      "carried": 20.10199891424229,
+      "extracted": 20.10199891424229,
+      "remaining": [
+        800,
+        800,
+        779.8980010858941,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 20.10199891424229,
+          "banked": 0,
+          "working": 40.00000000000053,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 41,
+      "banked": 0,
+      "carried": 20.60454888709835,
+      "extracted": 20.60454888709835,
+      "remaining": [
+        800,
+        800,
+        779.3954511130414,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 20.60454888709835,
+          "banked": 0,
+          "working": 41.00000000000076,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 42,
+      "banked": 0,
+      "carried": 21.10709885995441,
+      "extracted": 21.10709885995441,
+      "remaining": [
+        800,
+        800,
+        778.8929011401888,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 21.10709885995441,
+          "banked": 0,
+          "working": 42.00000000000099,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 43,
+      "banked": 0,
+      "carried": 21.609648832810468,
+      "extracted": 21.609648832810468,
+      "remaining": [
+        800,
+        800,
+        778.3903511673361,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 21.609648832810468,
+          "banked": 0,
+          "working": 43.000000000001215,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 44,
+      "banked": 0,
+      "carried": 22.112198805666527,
+      "extracted": 22.112198805666527,
+      "remaining": [
+        800,
+        800,
+        777.8878011944835,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 22.112198805666527,
+          "banked": 0,
+          "working": 44.00000000000144,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 45,
+      "banked": 0,
+      "carried": 22.614748778522586,
+      "extracted": 22.614748778522586,
+      "remaining": [
+        800,
+        800,
+        777.3852512216308,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 22.614748778522586,
+          "banked": 0,
+          "working": 45.00000000000167,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 46,
+      "banked": 0,
+      "carried": 23.117298751378645,
+      "extracted": 23.117298751378645,
+      "remaining": [
+        800,
+        800,
+        776.8827012487782,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 23.117298751378645,
+          "banked": 0,
+          "working": 46.0000000000019,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 47,
+      "banked": 0,
+      "carried": 23.619848724234703,
+      "extracted": 23.619848724234703,
+      "remaining": [
+        800,
+        800,
+        776.3801512759255,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 23.619848724234703,
+          "banked": 0,
+          "working": 47.000000000002125,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 48,
+      "banked": 0,
+      "carried": 24.122398697090762,
+      "extracted": 24.122398697090762,
+      "remaining": [
+        800,
+        800,
+        775.8776013030729,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 24.122398697090762,
+          "banked": 0,
+          "working": 48.00000000000235,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 49,
+      "banked": 0,
+      "carried": 24.62494866994682,
+      "extracted": 24.62494866994682,
+      "remaining": [
+        800,
+        800,
+        775.3750513302202,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 24.62494866994682,
+          "banked": 0,
+          "working": 49.00000000000258,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 50,
+      "banked": 0,
+      "carried": 25.12749864280288,
+      "extracted": 25.12749864280288,
+      "remaining": [
+        800,
+        800,
+        774.8725013573676,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 25.12749864280288,
+          "banked": 0,
+          "working": 50.00000000000281,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 51,
+      "banked": 0,
+      "carried": 25.63004861565894,
+      "extracted": 25.63004861565894,
+      "remaining": [
+        800,
+        800,
+        774.3699513845149,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 25.63004861565894,
+          "banked": 0,
+          "working": 51.000000000003034,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 52,
+      "banked": 0,
+      "carried": 26.132598588515,
+      "extracted": 26.132598588515,
+      "remaining": [
+        800,
+        800,
+        773.8674014116623,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 26.132598588515,
+          "banked": 0,
+          "working": 52.00000000000326,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 53,
+      "banked": 0,
+      "carried": 26.635148561371057,
+      "extracted": 26.635148561371057,
+      "remaining": [
+        800,
+        800,
+        773.3648514388096,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 26.635148561371057,
+          "banked": 0,
+          "working": 53.00000000000349,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 54,
+      "banked": 0,
+      "carried": 27.137698534227116,
+      "extracted": 27.137698534227116,
+      "remaining": [
+        800,
+        800,
+        772.862301465957,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 27.137698534227116,
+          "banked": 0,
+          "working": 54.000000000003716,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 55,
+      "banked": 0,
+      "carried": 27.640248507083175,
+      "extracted": 27.640248507083175,
+      "remaining": [
+        800,
+        800,
+        772.3597514931043,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 27.640248507083175,
+          "banked": 0,
+          "working": 55.00000000000394,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 56,
+      "banked": 0,
+      "carried": 28.142798479939234,
+      "extracted": 28.142798479939234,
+      "remaining": [
+        800,
+        800,
+        771.8572015202517,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 28.142798479939234,
+          "banked": 0,
+          "working": 56.00000000000417,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 57,
+      "banked": 0,
+      "carried": 28.645348452795293,
+      "extracted": 28.645348452795293,
+      "remaining": [
+        800,
+        800,
+        771.354651547399,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 28.645348452795293,
+          "banked": 0,
+          "working": 57.0000000000044,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 58,
+      "banked": 0,
+      "carried": 29.147898425651352,
+      "extracted": 29.147898425651352,
+      "remaining": [
+        800,
+        800,
+        770.8521015745464,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 29.147898425651352,
+          "banked": 0,
+          "working": 58.000000000004626,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 59,
+      "banked": 0,
+      "carried": 29.65044839850741,
+      "extracted": 29.65044839850741,
+      "remaining": [
+        800,
+        800,
+        770.3495516016937,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 29.65044839850741,
+          "banked": 0,
+          "working": 59.00000000000485,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    },
+    {
+      "t": 60,
+      "banked": 0,
+      "carried": 30.152998371363466,
+      "extracted": 30.152998371363466,
+      "remaining": [
+        800,
+        800,
+        769.8470016288411,
+        800
+      ],
+      "agents": [
+        {
+          "id": 0,
+          "x": 10.3,
+          "y": 12.2,
+          "state": "mining",
+          "target": 2,
+          "inventory": 30.152998371363466,
+          "banked": 0,
+          "working": 60.00000000000507,
+          "walking": 0,
+          "blocked": 0,
+          "idle": 0,
+          "distance": 0,
+          "deposits": 0
+        }
+      ]
+    }
+  ],
+  "frames": [],
+  "events": [],
+  "checks": {
+    "conservation_error": -2.0456525362533284e-10,
+    "max_overlap": 0,
+    "max_static_overlap": 2.980232949312267e-9,
+    "max_speed_error": 0
+  },
+  "validation_status": "unvalidated_model; external_reference_comparison_only"
+}

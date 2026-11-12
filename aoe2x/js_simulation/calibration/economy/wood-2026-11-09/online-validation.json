@@ -1,0 +1,149 @@
+{
+  "checked_on": "2026-11-09",
+  "conclusion": "Partial corroboration of rates and basic mechanics; exact current-DE navigation/felling behavior remains unvalidated.",
+  "rate_unit": "wood per villager per game-minute",
+  "cases": [
+    {
+      "label": "Double-Bit Axe, four workers/camp, one-tile gap",
+      "model_trial": "double-bit-four-gap-one",
+      "model_window": [
+        0,
+        840
+      ],
+      "reference_rate": 23.5,
+      "model_banked_rate": 23.214285714285065,
+      "model_inventory_adjusted_rate": 23.677576079869866,
+      "banked_difference_percent": -1.2158054711273847,
+      "inventory_adjusted_difference_percent": 0.7556428930632686,
+      "source_url": "https://www.reddit.com/r/aoe2/comments/1ilig6h/i_did_the_math_food_is_40_more_valuable_than_wood/",
+      "evidence_type": "direct_in_game_measurement",
+      "comparability_limits": "Source says 12 workers, 3 camps, 14 minutes. Model uses one independent four-worker camp. Exact forest/camp spacing, civilization, some upgrade details and ending inventory treatment are unspecified. Sources may mean banked output or harvested output."
+    },
+    {
+      "label": "Fully upgraded, four workers/camp, one-tile gap",
+      "model_trial": "full-four-gap-one",
+      "model_window": [
+        0,
+        840
+      ],
+      "reference_rate": 31.6,
+      "model_banked_rate": 31.428571428571395,
+      "model_inventory_adjusted_rate": 32.563271099666814,
+      "banked_difference_percent": -0.5424954792044523,
+      "inventory_adjusted_difference_percent": 3.048326264768386,
+      "source_url": "https://www.reddit.com/r/aoe2/comments/1ilig6h/i_did_the_math_food_is_40_more_valuable_than_wood/",
+      "evidence_type": "direct_in_game_measurement",
+      "comparability_limits": "Source says 12 workers, 3 camps, 14 minutes. Model uses one independent four-worker camp. Exact forest/camp spacing, civilization, some upgrade details and ending inventory treatment are unspecified. Sources may mean banked output or harvested output."
+    },
+    {
+      "label": "Double-Bit Axe, adjacent camp alternative",
+      "model_trial": "double-bit-four-adjacent",
+      "model_window": [
+        0,
+        840
+      ],
+      "reference_rate": 23.5,
+      "model_banked_rate": 25.0,
+      "model_inventory_adjusted_rate": 25.288917903802638,
+      "banked_difference_percent": 6.382978723404253,
+      "inventory_adjusted_difference_percent": 7.612416611926109,
+      "source_url": "https://www.reddit.com/r/aoe2/comments/1ilig6h/i_did_the_math_food_is_40_more_valuable_than_wood/",
+      "evidence_type": "placement_sensitivity_of_same_reference",
+      "comparability_limits": "Source says 12 workers, 3 camps, 14 minutes. Model uses one independent four-worker camp. Exact forest/camp spacing, civilization, some upgrade details and ending inventory treatment are unspecified. Sources may mean banked output or harvested output."
+    },
+    {
+      "label": "Fully upgraded, adjacent camp alternative",
+      "model_trial": "full-four-adjacent",
+      "model_window": [
+        0,
+        840
+      ],
+      "reference_rate": 31.6,
+      "model_banked_rate": 32.857142857142854,
+      "model_inventory_adjusted_rate": 33.92096160725233,
+      "banked_difference_percent": 3.9783001808318064,
+      "inventory_adjusted_difference_percent": 7.344815212823819,
+      "source_url": "https://www.reddit.com/r/aoe2/comments/1ilig6h/i_did_the_math_food_is_40_more_valuable_than_wood/",
+      "evidence_type": "placement_sensitivity_of_same_reference",
+      "comparability_limits": "Source says 12 workers, 3 camps, 14 minutes. Model uses one independent four-worker camp. Exact forest/camp spacing, civilization, some upgrade details and ending inventory treatment are unspecified. Sources may mean banked output or harvested output."
+    },
+    {
+      "label": "12 workers, one camp, three minutes",
+      "model_trial": "none-twelve-three-minutes",
+      "model_window": [
+        0,
+        180
+      ],
+      "reference_rate": 20.944444444444446,
+      "model_banked_rate": 18.88888888888889,
+      "model_inventory_adjusted_rate": 20.08923561800356,
+      "banked_difference_percent": -9.814323607427067,
+      "inventory_adjusted_difference_percent": -4.083225166030758,
+      "source_url": "https://www.reddit.com/r/aoe2/comments/n3sb5f/vil_resource_pathing_is_better_on_de_than_voobly/",
+      "evidence_type": "direct_in_game_measurement",
+      "comparability_limits": "Source reports 754 wood, twelve workers, one camp, three-minute trials. Exact civilization, upgrades, forest and carried inventory are unspecified. Our no-upgrade branch is an assumption, so the difference is not a measured same-scenario simulation error."
+    },
+    {
+      "label": "Fully upgraded older analytical estimate",
+      "model_trial": "full-ten",
+      "model_window": [
+        0,
+        720
+      ],
+      "reference_rate": 30.42,
+      "model_banked_rate": 29.5,
+      "model_inventory_adjusted_rate": 30.285060408594326,
+      "banked_difference_percent": -3.024326101249186,
+      "inventory_adjusted_difference_percent": -0.44358840041313075,
+      "source_url": "https://www.reddit.com/r/aoe2/comments/fes2fb/real_wood_gathering_rate_analysis/",
+      "evidence_type": "analytical_reference",
+      "comparability_limits": "Source gives 0.507 wood/s under light congestion; exact geometry and horizon differ. Publication year is not confirmed by the fetched relative-date page; treat it as older analysis, not a current DE capture."
+    },
+    {
+      "label": "Without Two-Man Saw, older analytical estimate",
+      "model_trial": "bow-saw-ten",
+      "model_window": [
+        0,
+        720
+      ],
+      "reference_rate": 28.32,
+      "model_banked_rate": 27.166666666666668,
+      "model_inventory_adjusted_rate": 28.133580679898255,
+      "banked_difference_percent": -4.072504708097924,
+      "inventory_adjusted_difference_percent": -0.658260311093728,
+      "source_url": "https://www.reddit.com/r/aoe2/comments/fes2fb/real_wood_gathering_rate_analysis/",
+      "evidence_type": "analytical_reference",
+      "comparability_limits": "Source gives 0.472 wood/s; analytical/light-congestion assumptions differ from our finite forest. It is not an independent matching DE experiment."
+    }
+  ],
+  "measurement_issue": "Published collected amounts do not consistently specify carried inventory. Keep banked-only and inventory-adjusted values distinct; do not silently choose the closer number.",
+  "mechanics": [
+    {
+      "mechanic": "Tree HP and hit count",
+      "status": "corroborated_for_generic_flat_ground",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2169547705",
+      "evidence": "Guide reports 20-HP generic trees and 15 damage per hit, requiring two hits. This agrees with the extracted DAT fields and implemented count."
+    },
+    {
+      "mechanic": "Exact felling timing",
+      "status": "unresolved",
+      "source_url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2169547705",
+      "evidence": "Historical guide reports 1.5-second animations and 2.25-second two-hit felling. The supplied DAT has two-second animation/reload fields; the model assumes three seconds. The online timing does not directly validate the current assumption.",
+      "current_default_rate": 30.285060408594326,
+      "historical_timing_rate": 30.374929127116026,
+      "rate_change_percent": 0.29674274150102153
+    }
+  ],
+  "excluded_as_independent_validation": [
+    {
+      "source_url": "https://aoebuddy.com/villager-calculator",
+      "reason": "Page says its 3,000+ scenarios were run in its own game engine. Its October 25, 2026 measurement date does not establish that the rates were measured in the shipped DE executable. Treat as another model, not independent DE ground truth."
+    },
+    {
+      "source_url": "https://www.youtube.com/watch?v=_UEPVFjNgfs",
+      "reason": "Video fetch failed; no uninspected video numbers used."
+    }
+  ],
+  "engine_unchanged": true,
+  "code_sha256": "879ac70b34e0939463a7508010590f642dbb91c4ffd884f23c4648be5300cb0f"
+}

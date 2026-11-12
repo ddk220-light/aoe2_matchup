@@ -170,6 +170,10 @@ DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_units.db")
 REF_DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference.db")
 # Rankings retain their original reference until their own patch run is published.
 SIM_REF_DB_PATH = os.path.join(str(_GOLDEN_DIR), "aoe2_reference_simulation.db")
+app.config['ARMY_CONTEXT_DB'] = os.environ.get('ARMY_CONTEXT_DB', os.path.join(str(_GOLDEN_DIR), 'army_context.db'))
+# Review mode is explicit server configuration, never a public query parameter.
+# Released mode additionally requires the compiler's data validation gate.
+app.config['ARMY_ECONOMICS_MODE'] = os.environ.get('ARMY_ECONOMICS_MODE', 'off')
 RANKINGS_DERIVED_DB_PATH = os.path.join(str(_GOLDEN_DIR), "derived_data_v3.db")
 PATCHES_DB_PATH = os.path.join(str(_GOLDEN_DIR), "patches.db")
 
@@ -625,7 +629,8 @@ def get_units_by_age():
 def home():
     """Battle Sim is the homepage."""
     return render_template("simulate.html", active_nav="simulate",
-                           unit_search=_unit_search_index())
+                           unit_search=_unit_search_index(),
+                           army_economics_enabled=app.config['ARMY_ECONOMICS_MODE'] in ('review', 'released'))
 
 
 @app.route("/about")

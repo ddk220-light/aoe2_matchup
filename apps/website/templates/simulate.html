@@ -58,6 +58,7 @@
                         </div>
                     </div>
                     <ul class="matchup-callouts" id="prog1Callouts" aria-label="Team A special mechanics" hidden></ul>
+                    {% if army_economics_enabled %}{% set team_number = 1 %}{% include 'partials/army_economics_summary.html' %}{% endif %}
                 </div>
             </div>
         </aside>
@@ -202,12 +203,21 @@
                         </div>
                     </div>
                     <ul class="matchup-callouts" id="prog2Callouts" aria-label="Team B special mechanics" hidden></ul>
+                    {% if army_economics_enabled %}{% set team_number = 2 %}{% include 'partials/army_economics_summary.html' %}{% endif %}
                 </div>
             </div>
         </aside>
     </div>
 
 </div>
+
+{% if army_economics_enabled %}
+<details id="armyEconomics" class="army-economics container-wide" hidden>
+    <summary>Army economics — starting army and casualty replacements</summary>
+    <p id="armyEconomicsStatus" role="status"></p>
+    <div id="armyEconomicsBody"></div>
+</details>
+{% endif %}
 
 <section id="home-about" class="home-about" aria-label="About AoE2 Matchup">
     <div class="home-about-inner">

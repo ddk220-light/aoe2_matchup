@@ -15,6 +15,7 @@ import {ENABLED_CIVS, NAME_TO_ICON, UNIQUE_BUILDING, ICON_BASE, CIV_EMBLEM_BASE}
 
 import { createPlaybackController } from "./battle/playback.js";
 import { createStatisticsView } from "./battle/statistics.js";
+import { createArmyEconomicsView } from "./battle/army-economics.js";
 import { LatestRequest, requestJson } from "./shared/api.js";
 import { createTeamState, readBattleOptions } from "./battle/selection.js";
 
@@ -586,12 +587,14 @@ function setPlaybackSpeed(index) {
 
 const battleRequest = new LatestRequest();
 const previewRequest = new LatestRequest();
+const armyEconomics = createArmyEconomicsView();
 const civRequests = {1: new LatestRequest(), 2: new LatestRequest()};
 const buildBattlePayload = seed => readBattleOptions(teamState, seed);
 const fetchBattleConfig = (payload, signal) => requestJson("/api/v3/battle-config", {method:"POST", body:payload, signal});
 
 function cancelMatchupPreview() {
     previewRequest.cancel();
+    armyEconomics.clear();
     matchupPreviewSequence += 1;
     if (matchupPreviewTimer !== null) {
         clearTimeout(matchupPreviewTimer);
@@ -618,6 +621,7 @@ function scheduleMatchupPreview(delay = 100) {
             if (!ticket.isCurrent()) return;
             if (sequence !== matchupPreviewSequence || pageSim?.config) return;
             renderMatchupCards(config);
+            armyEconomics.load(config);
             pageSim?.showSelectionPreview(teamState, unitImages, config.teams.map(team => team.count));
         } catch (error) {
             if (sequence !== matchupPreviewSequence || error.name === "AbortError") return;
@@ -632,7 +636,11 @@ const {updateStats, renderMatchupCards} = createStatisticsView({
     getBattle: () => currentBattle, setBattle: value => {currentBattle = value;},
     getPageSim: () => pageSim, unitImages, unitIsSprite, setSimPhase,
 });
-const PageSim = createPlaybackController({updateStats, syncPlayerControls, updateBattleWinner});
+const PageSim = createPlaybackController({
+    updateStats: (...args) => { updateStats(...args); armyEconomics.renderLive(); },
+    syncPlayerControls, updateBattleWinner,
+    consumeSnapshot: armyEconomics.consume, resetEconomics: armyEconomics.resetLosses,
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
     const canvas = document.getElementById("battleCanvas");
@@ -888,6 +896,8 @@ async function startBattle() {
 
         updateOptionsCurrent();
         renderMatchupCards(config);
+
+        armyEconomics.load(config);
 
         battleLoading = false;
         setSimPhase(true);

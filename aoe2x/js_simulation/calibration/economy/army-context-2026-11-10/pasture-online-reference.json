@@ -1,0 +1,28 @@
+{
+  "checkedAt": "2026-11-11",
+  "status": "online_reference_estimate",
+  "foodPerVillagerMinute": 25.2,
+  "rateBasis": "Complete pasture lifecycle; includes seeding-to-depletion time. Do not add construction downtime again.",
+  "reference": {
+    "url": "https://forums.ageofempires.com/t/how-to-nerf-khitans/275361/183",
+    "author": "cmfrydos",
+    "publishedAt": "2025-06-26",
+    "setup": "Two herders, Hand Cart and second pasture upgrade, after update 147949",
+    "methodUrl": "https://forums.ageofempires.com/t/how-to-nerf-khitans/275361/191",
+    "method": "Author reports two runs, one additional repeat for an outlier, timing from seeding to depletion. Limited sample; animal placement affects walking.",
+    "patchContextUrl": "https://www.ageofempires.com/news/age-of-empires-ii-definitive-edition-update-147949/"
+  },
+  "assumptions": {
+    "source": "User instruction 2026-11-11: assume pasture food credit like Khmer; use online average rates; defer in-game measurements.",
+    "depositMode": "immediate_credit",
+    "externalDropoffTravelSeconds": 0,
+    "rateIncludesInternalMovement": true,
+    "rateIncludesRebuilding": true,
+    "postImperialProxy": "Use the reported fully upgraded carry rate as the post-Imperial average without an invented adjustment for fewer rebuilds. Use supplied DAT Imperial food yield and wood cost for renewal.",
+    "accuracy": "Approximate historical community measurement; not verified against the supplied DAT build or to less than 1%."
+  },
+  "rejectedAlternative": {
+    "url": "https://aoebuddy.com/villager-calculator?age=castle&civ=khitans",
+    "reason": "The calculator explicitly says pastures are not modeled; its displayed farmer rate is not a pasture reference."
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "created_at": "2026-11-09T21:33:01.935Z",
+  "source": {
+    "path": "/workspace/scratch/production-review/current-input/dat/empires2_x2_p1.dat",
+    "format_version": "VER 8.9",
+    "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+    "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+    "origin": "user-supplied Google Drive archive",
+    "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+    "archive_name": "aoe2_dat.zip",
+    "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+    "patch_signature": {
+      "format": "VER 8.9",
+      "units": {
+        "873": {
+          "hp": 220,
+          "speed": 0.8999999761581421,
+          "costs": [
+            {
+              "type": 0,
+              "amount": 70
+            },
+            {
+              "type": 3,
+              "amount": 80
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        },
+        "875": {
+          "hp": 270,
+          "speed": 0.8999999761581421,
+          "costs": [
+            {
+              "type": 0,
+              "amount": 70
+            },
+            {
+              "type": 3,
+              "amount": 80
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        },
+        "2569": {
+          "hp": 55,
+          "speed": 1.4500000476837158,
+          "costs": [
+            {
+              "type": 1,
+              "amount": 50
+            },
+            {
+              "type": 3,
+              "amount": 55
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        }
+      }
+    },
+    "game_tree_directory": "/workspace/scratch/production-review/current-input/dat/CivTechTrees",
+    "game_tree_count": 56
+  },
+  "sources": [
+    {
+      "title": "2025 wood gathering experiment",
+      "url": "https://www.reddit.com/r/aoe2/comments/1ilig6h/i_did_the_math_food_is_40_more_valuable_than_wood/",
+      "kind": "independent_in_game_measurement",
+      "workers": 12,
+      "camps": 3,
+      "minutes": 14,
+      "double_bit_rate": 23.5,
+      "full_rate": 31.6,
+      "limitations": "Forest shape, initial gap, technology completion timing and final inventory handling not specified. Four workers/camp matches density, not exact geometry. Compare gross 31.6, not the derived 30.1 net of camp investments."
+    },
+    {
+      "title": "2019 real wood gathering analysis",
+      "url": "https://www.reddit.com/r/aoe2/comments/fes2fb/real_wood_gathering_rate_analysis/",
+      "kind": "analytical_reference",
+      "full_rate": 30.42,
+      "no_two_man_saw_rate": 28.32,
+      "limitations": "Older analysis, light congestion, different/unspecified geometry and observation horizon; not an exact current DE test."
+    },
+    {
+      "title": "2021 DE vs Voobly gathering experiment",
+      "url": "https://www.reddit.com/r/aoe2/comments/n3sb5f/vil_resource_pathing_is_better_on_de_than_voobly/",
+      "kind": "independent_in_game_measurement",
+      "workers": 12,
+      "camps": 1,
+      "seconds": 180,
+      "total_wood": 754,
+      "rate": 20.944444444444446,
+      "limitations": "Exact woodline, upgrades and final carried-inventory handling not fully specified; no-upgrade branch is a diagnostic assumption."
+    },
+    {
+      "title": "2021 DE Infosheet: felling mechanics",
+      "url": "https://steamcommunity.com/sharedfiles/filedetails/?id=2169547705",
+      "kind": "historical_mechanics_measurement",
+      "felling_seconds": 2.25,
+      "limitations": "Reports 1.5-second lumberjack attack animation. Current supplied DAT has 2-second animations and 2-second reload, so current impact timing is uncertain. Historical timing tested separately."
+    }
+  ],
+  "assumptions": [
+    "Generic Byzantine lumberjack values; only selected standard economic upgrades applied. Sappers is absent.",
+    "Live tree: source 20 HP and 100 wood. Felling HP and remaining wood are separate. Felled tree keeps its resource footprint until depleted.",
+    "No armor entries on tree; summed worker attack classes give 15 damage per swing, two swings to fell.",
+    "First swing assumed at half of the current DAT 2-second animation; subsequent swings use coded reload 2 seconds. Raw frame_delay=0 does not resolve worker-task impact timing.",
+    "Historical measured 2.25-second total felling is a separate sensitivity case, not silently imposed on the current DAT.",
+    "Rigid circular workers and conservative rectangular resource obstacles reuse the gold experiment geometry/pathfinder.",
+    "Instant deposits at contact. Partial loads continue to the next tree; all resources exhausted causes final partial deposit.",
+    "Workers return to their tree while it is available, choose another accessible tree on depletion or blocked destination, and retry blocked paths after 0.5 game-seconds.",
+    "No camp rebuilding. Depletion exposes inner trees and removes empty-tree obstacles; stumps do not obstruct.",
+    "One fixed camp, eight-tile-wide six-deep forest, workers initially spread on the front edge at 0.6-tile center spacing.",
+    "Observed rates are scenario/model estimates; the same-layout current DE trajectories have not been captured."
+  ],
+  "code_sha256": {
+    "tools/gold-mining-sim.mjs": "86569661a9ce9f19d33f1c3a3c60f44eb8e2c312d46ae670603b351e9db5d8ef",
+    "tools/wood-gathering-sim.mjs": "a7f4a22e3220401cac3117f38659a77d31c53ad0314b5dcda26408314c14bd5c",
+    "tools/extract_wood_felling_source.py": "cbfdeaffe2473c63773d19cbf4d387bc45aea636b74a33a8c60368e628962b85",
+    "tools/export_wood_gathering_fixtures.py": "bcb3e7af421218245cdaacbc3407f86e5091630a31ba8a64babd9f8fe8ebbcab",
+    "tools/run_wood_gathering_review.mjs": "2f229a81f27266e4b7caa0aab6665e0f17517e4ce8134401541d3c0349e36253",
+    "tools/wood-gathering-sim.test.mjs": "6a902bd9f47b38967720ee0f5247258455eb5d4517becf37610de3e6b85be6dd",
+    "tools/render_wood_review.py": "c4c2df2bb2fc5d23d0349a8184d1c861e18d4bb2a1880b952080cb3cd89a5150",
+    "tools/check_wood_playback.py": "86e9bb2daad03e527fe0d4a4839809275c056dd83307b243e46ef1e422813ef4"
+  },
+  "artifact_sha256": {
+    "full-ten-historical-felling.json": "7b21bf1f47f66a53cf9f58de0221c60324f8b2d97fe853bc53588f2e8dd6b569",
+    "full-ten-walking.json": "334baa32a9a544ab1ca5a9d930ff19021dc13f5c703bc3cf33c8f7a035c01ebd",
+    "felling-source.json": "d26a6925b98f988ae987e228a1200dd3b597e184f475f023006ad09d84471c17",
+    "fixture-w1-c0.json": "e5ef07ff2bc87f5363addb3dbb2ce29cb10e3dd49e0cf1bcfe845aace8d42ba9",
+    "full-ten-prefelled.json": "91b295119171f053d1ec7ebb931245844cd692239001b78994ae3af0f72a1272",
+    "comparison.png": "8137289bfa7406fbcea09f1a1c17ef618fec1c7542d746c79d4902d537f8220c",
+    "fixture-w3-c2.json": "f09f3fa1741dd05234816d0806fd4e982c44d9a506215243f69ee6e72fe58209",
+    "full-ten.json": "82ca6c796f0952b48534e82957bc37347a67fd1ba4b5d18baaf6781d9f84d1b0",
+    "fixture-w0-c0.json": "e51e81c7031fd42d7892e6a7924f8b1ad79d67147e9017505c86b588b43a2972",
+    "double-bit-four-gap-one.json": "f534ac316df86c7841e2bdf3f0042b898cb3e397842c14000530603425c2670d",
+    "playback-desktop.png": "15b8428e1822168b24131ae9d10f82582180197a984bf96e49d514affcc5b2b1",
+    "fixture-w2-c0.json": "e6a759321ea20df20d28eec0af18e378d12c22680258a1ff1905189157236cb8",
+    "full-four-gap-one.json": "a577f5a47fa67d93d7c9f42224a042c86104fce110fd61a00df74def7307ffb9",
+    "fixture-w3-c0.json": "23bf49d163bb36355131b00613ba27b48f7645f0eae233066b7584a4bc9567cb",
+    "fixture-w1-c1.json": "9de733b2c52b5f4a273d7b12699da713c5d14ba309aa719aa8fe605c2af5df5e",
+    "results.csv": "d7fd205ea1d4a4eff38dce62c4def6b045cd9e0ab27a57dcd7443ddb715b1cac",
+    "fixture-w2-c2.json": "ad4aeba8af4aed961388772655d0ad39121e944a3b7e41ed92d5466c639d99cd",
+    "fixture-w0-c1.json": "341e3dc77031727445e2f606d5b1a0d6208de563e13cbdc05a578526499c2f48",
+    "none-twelve-three-minutes.json": "3e6e9ed03935afa95df504bbd9d5e71c5a1b8b6e3d2932cb9f59d683317f7c80",
+    "double-bit-four-adjacent.json": "a91732b5e3fb71c711f2a0855082ea7d295e19baa718532bf9165e610d8c2610",
+    "fixture-w3-c1.json": "b60529e3c5aaea22dbbcb820dc4e274496e8607d931f7c8902a31602c971dc5d",
+    "README.md": "e52498bc66101c39e8cb57d63821ded54e5c7487442809a659c846dc44d49978",
+    "none-ten.json": "e7968f103f9e7b5fbdef496eeeb5299dde50ae39b9319b60035d16beaead5d75",
+    "full-four-adjacent.json": "e7e9f339ef53cab9b5e1d4bda832f05c8d7d90d47559f130a43211e2937342e1",
+    "comparison.json": "18f74d584fbf818efed00817b528d8a6d376928a00d890625bdf30590d185fc7",
+    "fixture-w1-c2.json": "cc783c96e966d7a968177e19be21c185a91062b8aa304871d372d61f63a98e9e",
+    "browser-validation.json": "bf823cf0999d61be995bbc1d2eb727cfacddc0ef70c037f75dfe2eb5604fdb5d",
+    "playback-mobile.png": "ab085529b7c1c54135db6b968c4b98ca29f9fbfa745fcef392a475641dfcdddb",
+    "none-ten-walking.json": "1032af6b342cb69c961e1cd4bc6270f907431151e0caf579d006110a1975b0f5",
+    "bow-saw-ten.json": "f99aa014793f537c1e980eaf4d546064a743777304d4e1579a7c3eaa25c23b27",
+    "validation.json": "1df813b01ef6561733e34f1f282fc3c24ce1691523faaaa9eeab4328cbd6e038",
+    "fixture-w0-c2.json": "948131234c98196c2b78552fb05aa27aba323db1f435a3a5ef73365ad2ea542d",
+    "playback.html": "e27f7c9189954f384b8eb75169fc56e783d26d6b05f3b457f168ec78d833ff1c",
+    "fixture-w2-c1.json": "d12d60dcb9188f5a11b4cb3a2b8cd86da0b368ed3b2eea04b72e64210f5a507c",
+    "test-results.txt": "7a5a29324934edd776fe7ef3dd513a180e4bdc880ecced484087637b30b72fe7"
+  }
+}

@@ -162,7 +162,7 @@ def _weighted_cost(team):
 
 
 
-def build_battle_config(document, *, connect, valid_civs):
+def build_battle_config(document, *, connect, valid_civs, cost_resolver=None):
     if not isinstance(document, dict):
         raise ValueError("JSON object required")
     selections = document.get("teams")
@@ -195,6 +195,9 @@ def build_battle_config(document, *, connect, valid_civs):
                 "mechanics": combat["mechanics"],
                 "count": selection.get("count"),
             })
+        if cost_resolver is not None:
+            for team in teams:
+                cost_resolver(team)
         classes = (teams[0]["mechanics"]["behavior_class"], teams[1]["mechanics"]["behavior_class"])
         engine_family = _v3_engine_family(*classes)
         visual_family = _v3_visual_family(*classes)

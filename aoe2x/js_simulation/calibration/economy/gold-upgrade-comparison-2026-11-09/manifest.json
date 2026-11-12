@@ -1,0 +1,146 @@
+{
+  "created_at": "2026-11-09T21:14:41.078Z",
+  "source": {
+    "path": "/workspace/scratch/production-review/current-input/dat/empires2_x2_p1.dat",
+    "format_version": "VER 8.9",
+    "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+    "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+    "origin": "user-supplied Google Drive archive",
+    "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+    "archive_name": "aoe2_dat.zip",
+    "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+    "patch_signature": {
+      "format": "VER 8.9",
+      "units": {
+        "873": {
+          "hp": 220,
+          "speed": 0.8999999761581421,
+          "costs": [
+            {
+              "type": 0,
+              "amount": 70
+            },
+            {
+              "type": 3,
+              "amount": 80
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        },
+        "875": {
+          "hp": 270,
+          "speed": 0.8999999761581421,
+          "costs": [
+            {
+              "type": 0,
+              "amount": 70
+            },
+            {
+              "type": 3,
+              "amount": 80
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        },
+        "2569": {
+          "hp": 55,
+          "speed": 1.4500000476837158,
+          "costs": [
+            {
+              "type": 1,
+              "amount": 50
+            },
+            {
+              "type": 3,
+              "amount": 55
+            },
+            {
+              "type": 4,
+              "amount": 1
+            }
+          ]
+        }
+      }
+    },
+    "game_tree_directory": "/workspace/scratch/production-review/current-input/dat/CivTechTrees",
+    "game_tree_count": 56
+  },
+  "code_sha256": {
+    "tools/gold-mining-sim.mjs": "86569661a9ce9f19d33f1c3a3c60f44eb8e2c312d46ae670603b351e9db5d8ef",
+    "tools/export_gold_mining_fixture.py": "fc9b2c511d11ed71f0d52e0d6cf6fc6678fcc39e1a3004662a36aa46d74a11b7",
+    "tools/run_gold_upgrade_comparison.mjs": "6d2910a6419ec9b2e083063ed180f509579c16dd9a1617cfa255b676e86cf0ec",
+    "tools/plot_gold_upgrade_comparison.py": "70923a2263d00ab91d4cfe2972933d6fa49678106f94488f55688e23d08a4a19"
+  },
+  "fixture_sha256": {
+    "fixture-m0-c0.json": "aa7eea02688f98286a47443e719ab6ef81205dd11f39029c877b539d0f9a1c44",
+    "fixture-m0-c1.json": "3f25aa7dcc9596bb6ab66ae01baa84cf9e8b4b93c529a2c5ff00f11031b814b9",
+    "fixture-m0-c2.json": "d4d57b35c7c3aa4bf19209aaa854e23c91abbb7f98c5ae7fed8cbad997664ee2",
+    "fixture-m1-c0.json": "fc67ec3cf0f8b252733032576eaf6e33a6eaa57c8bcb17d144d079d475273922",
+    "fixture-m1-c1.json": "6e51c7dd1dc1209cc1d3d257cf252bdbebfd0cc67b44404ac7ab839cd362a35e",
+    "fixture-m1-c2.json": "78c1732c14c6140f974c9c153259c01a74153f886ff02984b6ed57d20851f41c",
+    "fixture-m2-c0.json": "2997ba2f39ffc33382a3aef003346fd1b2b34929478da6931a87470f206ec449",
+    "fixture-m2-c1.json": "43e5ffef545e32c8b9e250b375ed68e7930e06ea6e8c423caa401573987b6267",
+    "fixture-m2-c2.json": "85c4c9deb0be38b992fce1f0ce2f5c38d315ad9107542bf3c253b9f3fe6fbf77"
+  },
+  "sources": [
+    {
+      "title": "Forgotten Empires: Gold & Relics",
+      "url": "https://www.forgottenempires.net/strategy/age-of-empires-ii-strategy-center/gold-relics",
+      "kind": "published_no_bumping_rate_table",
+      "usable_for": "Compare one-worker completed collection cycles across nine upgrade states.",
+      "limitation": "Patch unspecified; expressly excludes bumping; precise footprint/contact definition not specified."
+    },
+    {
+      "title": "DE gold crowding test by akimbofmg9 (2020)",
+      "url": "https://www.reddit.com/r/aoe2/comments/hw06k7/villager_overcrowding_does_anyone_know_how_mining/",
+      "kind": "independent_in_game_measurement",
+      "workers": 8,
+      "seconds": 600,
+      "reported_rate_min": 20,
+      "reported_rate_max": 21.6,
+      "usable_for": "Independent qualitative crowding comparison: ten Arabia shapes plus a two-tile stress case; camp pre-built, workers pre-positioned.",
+      "limitation": "Layout differs; upgrade state and exact inventory-endpoint accounting are not explicit in the retrieved comment; rates are not a matched target for our square."
+    },
+    {
+      "title": "Four-tile, ten-worker mining camp test (2025)",
+      "url": "https://www.reddit.com/r/aoe2/comments/1ibcnqu/where_to_place_your_mining_camp_and_how_many/",
+      "kind": "independent_in_game_measurement",
+      "workers": 10,
+      "tiles": 4,
+      "gap": 1,
+      "reported_total": 890,
+      "usable_for": "Confirms someone tested the same tile/worker counts and gap without mining/Wheelbarrow/Hand Cart upgrades.",
+      "limitation": "No duration or exact mine shape supplied. The 890-gold total cannot be converted to gold/minute."
+    },
+    {
+      "title": "DE vs Voobly resource pathing test (2021)",
+      "url": "https://www.reddit.com/r/aoe2/comments/n3sb5f/vil_resource_pathing_is_better_on_de_than_voobly/",
+      "kind": "independent_in_game_measurement",
+      "workers": 24,
+      "tiles": 2,
+      "seconds": 180,
+      "reported_total": 836,
+      "normalized_rate": 11.611111111111112,
+      "usable_for": "Additional severe-crowding observation, about 11.61 gold/worker-minute.",
+      "limitation": "Different worker count and patch geometry; camp count/placement and upgrades are not fully specified. Not simulated as a matched scenario."
+    }
+  ],
+  "engine_modified": false,
+  "assumptions": [
+    "Generic mining inputs from Byzantine records; no civilization/team bonuses used.",
+    "Carry rounded to nearest integer after each technology, consistent with historical community tests; current DE not captured.",
+    "Workers are rigid circles of source radius; minimum collision multiplier is preserved but not activated.",
+    "Gold and camp are rectangles; navigation uses conservative expanded-rectangle corners.",
+    "Continuous source work rate; instantaneous deposit and task switch at contact.",
+    "Workers return to their assigned gold object, selecting reachable contact points; retarget on depletion.",
+    "Visibility routing around current worker positions; blocked paths retry after 0.5 game-seconds.",
+    "Movement updates are sequential, priority rotates once per game-second; no physical pushing.",
+    "No parameter is fitted to the external reference; this is an unvalidated economic model."
+  ]
+}

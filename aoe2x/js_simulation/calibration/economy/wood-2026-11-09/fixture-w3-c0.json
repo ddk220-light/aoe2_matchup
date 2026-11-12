@@ -1,0 +1,189 @@
+{
+  "name": "generic-wood-w3-c0",
+  "upgrade_profile": {
+    "wood_level": 3,
+    "carry_level": 0,
+    "tech_ids": [
+      202,
+      203,
+      221
+    ]
+  },
+  "source": {
+    "game_source": {
+      "path": "/workspace/scratch/production-review/current-input/dat/empires2_x2_p1.dat",
+      "format_version": "VER 8.9",
+      "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+      "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+      "origin": "user-supplied Google Drive archive",
+      "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+      "archive_name": "aoe2_dat.zip",
+      "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+      "patch_signature": {
+        "format": "VER 8.9",
+        "units": {
+          "873": {
+            "hp": 220,
+            "speed": 0.8999999761581421,
+            "costs": [
+              {
+                "type": 0,
+                "amount": 70
+              },
+              {
+                "type": 3,
+                "amount": 80
+              },
+              {
+                "type": 4,
+                "amount": 1
+              }
+            ]
+          },
+          "875": {
+            "hp": 270,
+            "speed": 0.8999999761581421,
+            "costs": [
+              {
+                "type": 0,
+                "amount": 70
+              },
+              {
+                "type": 3,
+                "amount": 80
+              },
+              {
+                "type": 4,
+                "amount": 1
+              }
+            ]
+          },
+          "2569": {
+            "hp": 55,
+            "speed": 1.4500000476837158,
+            "costs": [
+              {
+                "type": 1,
+                "amount": 50
+              },
+              {
+                "type": 3,
+                "amount": 55
+              },
+              {
+                "type": 4,
+                "amount": 1
+              }
+            ]
+          }
+        }
+      },
+      "game_tree_directory": "/workspace/scratch/production-review/current-input/dat/CivTechTrees",
+      "game_tree_count": 56
+    },
+    "worker_ids": [
+      123,
+      218
+    ],
+    "camp_id": 562,
+    "tree_id": 349,
+    "effects": [
+      {
+        "source_kind": "technology",
+        "tech_id": 202,
+        "effect_id": 195,
+        "command_index": 1,
+        "command": {
+          "type": 5,
+          "a": 123,
+          "b": -1,
+          "c": 13,
+          "d": 1.2000000476837158
+        },
+        "field": "work_rate",
+        "before": 0.38999998569488525,
+        "after": 0.4680000014305108
+      },
+      {
+        "source_kind": "technology",
+        "tech_id": 203,
+        "effect_id": 196,
+        "command_index": 1,
+        "command": {
+          "type": 5,
+          "a": 123,
+          "b": -1,
+          "c": 13,
+          "d": 1.2000000476837158
+        },
+        "field": "work_rate",
+        "before": 0.4680000014305108,
+        "after": 0.561600024032592
+      },
+      {
+        "source_kind": "technology",
+        "tech_id": 221,
+        "effect_id": 210,
+        "command_index": 0,
+        "command": {
+          "type": 5,
+          "a": 123,
+          "b": -1,
+          "c": 13,
+          "d": 1.100000023841858
+        },
+        "field": "work_rate",
+        "before": 0.561600024032592,
+        "after": 0.6177600398254391
+      }
+    ]
+  },
+  "worker": {
+    "work_rate": 0.6177600398254391,
+    "speed": 0.800000011920929,
+    "carry_capacity": 10,
+    "unrounded_carry": 10,
+    "carry_steps": [],
+    "radius": 0.20000000298023224,
+    "damage_per_swing": 15,
+    "attack_period": 2.0,
+    "attack_animation_seconds": 2.0000001043081284,
+    "first_hit_delay": 1.0000000521540642,
+    "raw_frame_delay": 0
+  },
+  "tree": {
+    "name": "FOAK",
+    "hit_points": 20,
+    "half_width": 0.5,
+    "half_height": 0.5,
+    "wood": 100.0
+  },
+  "forest": {
+    "x": 10,
+    "y": 10,
+    "width": 8,
+    "depth": 6
+  },
+  "camp": {
+    "center": [
+      14,
+      18
+    ],
+    "half_width": 1.0,
+    "half_height": 1.0,
+    "gap": 1
+  },
+  "assumptions": [
+    "Generic Byzantine lumberjack values; only selected standard economic upgrades applied. Sappers is absent.",
+    "Live tree: source 20 HP and 100 wood. Felling HP and remaining wood are separate. Felled tree keeps its resource footprint until depleted.",
+    "No armor entries on tree; summed worker attack classes give 15 damage per swing, two swings to fell.",
+    "First swing assumed at half of the current DAT 2-second animation; subsequent swings use coded reload 2 seconds. Raw frame_delay=0 does not resolve worker-task impact timing.",
+    "Historical measured 2.25-second total felling is a separate sensitivity case, not silently imposed on the current DAT.",
+    "Rigid circular workers and conservative rectangular resource obstacles reuse the gold experiment geometry/pathfinder.",
+    "Instant deposits at contact. Partial loads continue to the next tree; all resources exhausted causes final partial deposit.",
+    "Workers return to their tree while it is available, choose another accessible tree on depletion or blocked destination, and retry blocked paths after 0.5 game-seconds.",
+    "No camp rebuilding. Depletion exposes inner trees and removes empty-tree obstacles; stumps do not obstruct.",
+    "One fixed camp, eight-tile-wide six-deep forest, workers initially spread on the front edge at 0.6-tile center spacing.",
+    "Observed rates are scenario/model estimates; the same-layout current DE trajectories have not been captured."
+  ]
+}

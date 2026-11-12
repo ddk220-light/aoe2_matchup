@@ -1,0 +1,342 @@
+{
+  "name": "reference-lifetime-full",
+  "profile": "full",
+  "technology_ids": [
+    14,
+    213,
+    13,
+    249
+  ],
+  "source": {
+    "game_source": {
+      "path": "/workspace/scratch/production-review/current-input/dat/empires2_x2_p1.dat",
+      "format_version": "VER 8.9",
+      "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+      "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+      "origin": "user-supplied Google Drive archive",
+      "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+      "archive_name": "aoe2_dat.zip",
+      "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+      "patch_signature": {
+        "format": "VER 8.9",
+        "units": {
+          "873": {
+            "hp": 220,
+            "speed": 0.8999999761581421,
+            "costs": [
+              {
+                "type": 0,
+                "amount": 70
+              },
+              {
+                "type": 3,
+                "amount": 80
+              },
+              {
+                "type": 4,
+                "amount": 1
+              }
+            ]
+          },
+          "875": {
+            "hp": 270,
+            "speed": 0.8999999761581421,
+            "costs": [
+              {
+                "type": 0,
+                "amount": 70
+              },
+              {
+                "type": 3,
+                "amount": 80
+              },
+              {
+                "type": 4,
+                "amount": 1
+              }
+            ]
+          },
+          "2569": {
+            "hp": 55,
+            "speed": 1.4500000476837158,
+            "costs": [
+              {
+                "type": 1,
+                "amount": 50
+              },
+              {
+                "type": 3,
+                "amount": 55
+              },
+              {
+                "type": 4,
+                "amount": 1
+              }
+            ]
+          }
+        }
+      },
+      "game_tree_directory": "/workspace/scratch/production-review/current-input/dat/CivTechTrees",
+      "game_tree_count": 56
+    },
+    "worker_ids": [
+      214,
+      259
+    ],
+    "farm_id": 50,
+    "mill_id": 68,
+    "worker_effects": [
+      {
+        "source_kind": "technology",
+        "tech_id": 213,
+        "effect_id": 200,
+        "command_index": 0,
+        "command": {
+          "type": 5,
+          "a": -1,
+          "b": 4,
+          "c": 5,
+          "d": 1.100000023841858
+        },
+        "field": "movement_speed",
+        "before": 0.800000011920929,
+        "after": 0.8800000321865085,
+        "runtime_before": 0.800000011920929,
+        "runtime_after": 0.8800000321865085
+      },
+      {
+        "source_kind": "technology",
+        "tech_id": 213,
+        "effect_id": 200,
+        "command_index": 1,
+        "command": {
+          "type": 5,
+          "a": -1,
+          "b": 4,
+          "c": 14,
+          "d": 1.2695000171661377
+        },
+        "field": "carry_capacity",
+        "before": 10,
+        "after": 12.695000171661377,
+        "runtime_before": 10,
+        "runtime_after": 13
+      },
+      {
+        "source_kind": "technology",
+        "tech_id": 13,
+        "effect_id": 13,
+        "command_index": 4,
+        "command": {
+          "type": 4,
+          "a": 259,
+          "b": -1,
+          "c": 14,
+          "d": 1
+        },
+        "field": "carry_capacity",
+        "before": 12.695000171661377,
+        "after": 13.695000171661377,
+        "runtime_before": 13,
+        "runtime_after": 14
+      },
+      {
+        "source_kind": "technology",
+        "tech_id": 249,
+        "effect_id": 238,
+        "command_index": 0,
+        "command": {
+          "type": 5,
+          "a": -1,
+          "b": 4,
+          "c": 14,
+          "d": 1.5
+        },
+        "field": "carry_capacity",
+        "before": 13.695000171661377,
+        "after": 20.542500257492065,
+        "runtime_before": 14,
+        "runtime_after": 21
+      },
+      {
+        "source_kind": "technology",
+        "tech_id": 249,
+        "effect_id": 238,
+        "command_index": 1,
+        "command": {
+          "type": 5,
+          "a": -1,
+          "b": 4,
+          "c": 5,
+          "d": 1.100000023841858
+        },
+        "field": "movement_speed",
+        "before": 0.8800000321865085,
+        "after": 0.9680000563859951,
+        "runtime_before": 0.8800000321865085,
+        "runtime_after": 0.9680000563859951
+      }
+    ],
+    "farm_capacity_effects": [
+      {
+        "source_kind": "technology",
+        "tech_id": 14,
+        "effect_id": 14,
+        "command_index": 0,
+        "command": {
+          "type": 1,
+          "a": 36,
+          "b": 1,
+          "c": 69,
+          "d": 75
+        },
+        "before": 175,
+        "after": 250
+      },
+      {
+        "source_kind": "technology",
+        "tech_id": 13,
+        "effect_id": 13,
+        "command_index": 0,
+        "command": {
+          "type": 1,
+          "a": 36,
+          "b": 1,
+          "c": 69,
+          "d": 125
+        },
+        "before": 250,
+        "after": 375
+      }
+    ],
+    "scenario_override": "Two farms on east side of approximate TC outer box; no bonus changes"
+  },
+  "worker": {
+    "work_rate": 0.5299999713897705,
+    "speed": 0.9680000563859951,
+    "carry_capacity": 21,
+    "radius": 0.20000000298023224,
+    "task_output_multiplier": 1
+  },
+  "farm": {
+    "food": 375,
+    "generation_rate": 0.4000000059604645,
+    "pool_capacity": 15,
+    "initial_pool": 0,
+    "half_width": 1.5,
+    "half_height": 1.5,
+    "wood_cost": 60,
+    "build_seconds": 15
+  },
+  "mill": {
+    "x0": 0,
+    "y0": 0,
+    "x1": 2,
+    "y1": 2,
+    "wood_cost": 100
+  },
+  "farms": [
+    {
+      "id": 0,
+      "x0": -3,
+      "y0": -3,
+      "x1": 0,
+      "y1": 0,
+      "position": "inner"
+    },
+    {
+      "id": 1,
+      "x0": 0,
+      "y0": -3,
+      "x1": 3,
+      "y1": 0,
+      "position": "inner"
+    },
+    {
+      "id": 2,
+      "x0": 3,
+      "y0": -3,
+      "x1": 6,
+      "y1": 0,
+      "position": "inner"
+    },
+    {
+      "id": 3,
+      "x0": 2,
+      "y0": 0,
+      "x1": 5,
+      "y1": 3,
+      "position": "inner"
+    },
+    {
+      "id": 4,
+      "x0": 2,
+      "y0": 3,
+      "x1": 5,
+      "y1": 6,
+      "position": "inner"
+    },
+    {
+      "id": 5,
+      "x0": -1,
+      "y0": 3,
+      "x1": 2,
+      "y1": 6,
+      "position": "inner"
+    },
+    {
+      "id": 6,
+      "x0": -4,
+      "y0": 3,
+      "x1": -1,
+      "y1": 6,
+      "position": "inner"
+    },
+    {
+      "id": 7,
+      "x0": -3,
+      "y0": 0,
+      "x1": 0,
+      "y1": 3,
+      "position": "inner"
+    },
+    {
+      "id": 8,
+      "x0": -6,
+      "y0": 0,
+      "x1": -3,
+      "y1": 3,
+      "position": "outer"
+    },
+    {
+      "id": 9,
+      "x0": 5,
+      "y0": 0,
+      "x1": 8,
+      "y1": 3,
+      "position": "outer"
+    }
+  ],
+  "behavior": {
+    "work_spot_offsets": [
+      0.5,
+      1.5,
+      2.5
+    ],
+    "spots_per_load": 4,
+    "deposit_seconds": 0,
+    "blocked_retry_seconds": 0.5
+  },
+  "assumptions": [
+    "Standard generic profile from Byzantine raw units; only explicit economic techs are replayed. Treadmill Crane is excluded.",
+    "Integer carry rounded after each upgrade: base 10, Wheelbarrow 13, Heavy Plow 14, Hand Cart 21. Engine rounding is historical evidence, not a current executable trace.",
+    "Farm replenishment and buffer are separate from worker harvesting. Initial available pool is zero; listed farm food includes all food in this model.",
+    "Centered 2x2 work area reflects DE update 50292. Nine grid points and uniform choice excluding the previous point are a community-informed approximation.",
+    "Four equal portions per load approximate observed quarter-load moves. Variable portion sizes and occasional fifth stops are unresolved, tested separately.",
+    "No fixed stand timer: harvest rate and pool availability determine time at each spot. Instant deposits at body contact; no invented deposit animation delay.",
+    "Rigid circular collisions and shortest visibility routes approximate engine pathing. Farms are passable; mill is solid. Dynamic priority rotates every second.",
+    "Starts: finished farms, empty food pools, empty-handed workers at farm centers; walk to first chosen working spot. Initial construction excluded.",
+    "Reseed diagnostic deposits any final partial load, returns to the previous working spot, rebuilds for 15 seconds, and pays 60 wood from an external wood budget.",
+    "Not current-DE trajectory validation; do not use as a calibrated civilization-bonus predictor yet."
+  ]
+}

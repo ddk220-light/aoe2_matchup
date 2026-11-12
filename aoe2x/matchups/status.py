@@ -60,6 +60,7 @@ def report(records: Path) -> dict:
                                                     "exhausted", "lastProgress")} |
                              {"error": (a.get("error") or {}).get("name")})
         b["exhausted"] = b["exhausted"] or bool(a.get("exhausted"))
+    reviewed_ids = {x.stem for x in (R / "pair-reviews").glob("*.json")} if (R / "pair-reviews").exists() else set()
     supervisor = J.read_json(R / "supervisor.json")
     return {
         "records": str(R), "runId": state.get("runId"), "status": state.get("status"),
@@ -75,7 +76,8 @@ def report(records: Path) -> dict:
         "seedsPerHour": round(rate, 1) if rate else None,
         "estimatedRemainingSeeds": round(est_seeds) if est_seeds is not None else None, "eta": eta or None,
         "blocked": [b for b in blocked.values() if b["exhausted"]],
-        "retrying": [b for b in blocked.values() if not b["exhausted"]],
+        "retrying": [b for b in blocked.values() if not b["exhausted"] and b["jobId"] not in reviewed_ids],
+        "recoveredAfterTimeouts": sum(1 for b in blocked.values() if not b["exhausted"] and b["jobId"] in reviewed_ids),
         "active": state.get("active"), "sessions": sum(s.get("event") == "start" for s in sessions),
         "supervisor": {k: supervisor.get(k) for k in ("status", "pid", "heartbeatAt", "restarts", "lastExit")}
         if supervisor else None,
@@ -104,6 +106,8 @@ def render(r: dict) -> str:
         lines.append(f"BLOCKED {b['jobId']} seed {last['seed']}: {len(b['attempts'])} attempts, last "
                      f"{'watchdog' if last['watchdog'] else last['error']} at {last['limitSeconds']} s, "
                      f"lastProgress {last['lastProgress']}")
+    if r["recoveredAfterTimeouts"]:
+        lines.append(f"{r['recoveredAfterTimeouts']} context(s) finished after failed attempts")
     for b in r["retrying"]:
         lines.append(f"retrying {b['jobId']}: {len(b['attempts'])} failed attempt(s) so far")
     if r["supervisor"]:

@@ -416,30 +416,21 @@ selectors or new keyboard/focus interactions. The explicit-question rule in
   Keep the complete approved library on its existing branch; copy only the web
   bundle described below. No new sprite render or enhancement is needed.
 
-### Build the page supplement and selected media
+### Page supplement and selected media (builder removed)
 
-Run from the feature worktree with CPython, `genieutils-py`, and Pillow. Adapt
-absolute source paths to the installed game and approved asset checkout:
-
-```powershell
-python -m aoe2x.assets.build_civilization_release `
-  --dat D:/SteamLibrary/steamapps/common/AoE2DE/resources/_common/dat/empires2_x2_p1.dat `
-  --trees D:/SteamLibrary/steamapps/common/AoE2DE/resources/_common/dat/CivTechTrees `
-  --assets D:/AI/aoe2_matchup/graphics/units `
-  --output <static-layout dir> `
-  --extracted data/local/generated/civilizations-185872/extracted
-```
-
-`--output` takes one directory in the old website `static/` layout (`data/`, `js/`,
-`img/`, `anim/`); since the Flask site was deleted those parts live apart, so place the
-outputs as listed below. The default extracts into that ignored local directory. `--reuse-extracted` is
-only for an already extracted, identical DAT release, not a different game build.
-This builder is specifically the 185872 release; a later release needs its own
-reviewed identities/availability/provenance, not just a renamed JSON file.
+The 185872 supplement and its media were produced once by a one-off builder,
+`aoe2x/assets/build_civilization_release.py` (with a companion
+`build_simulator_sheets.py`), hard-wired to this build's Danes/Saxons/Varangians
+and to the old single website `static/` layout. Both scripts have since been
+removed; they are not part of the web app or the release build. The committed
+outputs are the source of truth: the supplement JSON in
+`apps/backend/aoe2_api/data/` and the media under `data/media/`. A future patch
+with new civilizations needs a new, reviewed builder (identities, availability,
+provenance) that writes directly to that layout, not a revival of the old one.
 
 Outputs:
 
-- `apps/backend/aoe2_api/data/civilizations-185872.json` (`<output>/data/` in the builder layout): 69 reference rows across
+- `apps/backend/aoe2_api/data/civilizations-185872.json`: 69 reference rows across
   16 affected civilizations. Danes, Saxons and Varangians each have 18 supported
   military rows at their highest available Imperial tier. Existing page combat
   categories exclude civilians, Monks, Petards and Siege Towers; Trebuchet uses
@@ -466,13 +457,6 @@ frames and timing. No originals are modified or regenerated.
 All cards use the same sprite catalog and hover animation lookup. Longship names
 are shared-catalog aliases of the existing Longboat assets. Ships without an
 attack entry in that catalog remain still, exactly as in the other civilizations.
-
-To publish only the ten selected idle sprites and media aliases (no DAT
-extraction, AI inference, stat changes, or attack conversion):
-
-```powershell
-python -m aoe2x.assets.build_civilization_release --output <static-layout dir> --assets D:/AI/aoe2_matchup/graphics/units --refresh-idles
-```
 
 The shared food/wood/gold cost images are three unchanged game files, copied once
 from `widgetui/textures/ingame/staticons/{food,wood,gold}.png` into
@@ -516,8 +500,8 @@ The civilization overview, selector and sitemap contain 56 civilizations; the
 engine/Advisor catalogs and `/api/civ-power-units` stay unchanged. Actual supplied
 rank fields continue to render normally. No scores or tiers are fabricated, and
 no “not ranked yet” or other interim status UI is introduced.
-The builder sets `published_at` to its generation date, so rebuilding identical
-inputs on another day changes affected civilization sitemap `lastmod` dates.
+The builder set `published_at` to its generation date, which drives affected
+civilization sitemap `lastmod` dates.
 The approved September 23 presentation release advances that date to 2026-09-23.
 The civilization overview and affected detail pages use the later of this date
 and the underlying data date; unrelated pages retain their own data date.
@@ -558,4 +542,4 @@ deploying, and obtain explicit approval for that production action.**
 | `.golden/capture_baseline.py` coverage or seed | §1, §2 |
 | `aoe2x/dbgen/patches/` gains a new surgical patch | §1 step 4.2, §7 (and `patch_pipeline.py` itself) |
 | Matchup DB schema or baseline workflow | §1, §7 (and `docs/matchup-baseline.md`) |
-| Civilization supplement builder, page composition or media contract | §8 |
+| Civilization supplement, page composition or media contract | §8 |

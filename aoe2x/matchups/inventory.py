@@ -86,6 +86,26 @@ def _matches(variant: dict, spec: dict) -> bool:
     return True
 
 
+def load_context_filter(ref: dict | None) -> set | None:
+    """``selection.contexts``: the pairKeys a run is restricted to (sha256-checked), or None."""
+    if not ref:
+        return None
+    from aoe2x.matchups.config import ConfigError, resolve_path
+    from aoe2x.matchups.paths import REPO_ROOT
+    path = resolve_path(ref["file"], REPO_ROOT)
+    raw = path.read_bytes()
+    if sha256_bytes(raw) != ref["sha256"]:
+        raise ConfigError(f"{path} has sha256 {sha256_bytes(raw)}, config expects {ref['sha256']}")
+    if path.suffix == ".gz":
+        raw = gzip.decompress(raw)
+    text = raw.decode()
+    if text.lstrip().startswith("["):
+        keys = json.loads(text)
+    else:
+        keys = [json.loads(line)["pairKey"] for line in text.splitlines() if line.strip()]
+    return set(keys)
+
+
 def select_variants(variants: list[dict], selection: dict) -> tuple[set, set]:
     excluded = set(selection.get("excludeUnits") or [])
     usable = [v for v in variants if v["key"] not in excluded and v["slug"] not in excluded]
@@ -121,6 +141,13 @@ def build(cfg: dict, bundle: dict, scenario_set: dict, orientation: dict | None 
             used_variants.update((a["key"], b["key"]))
             pk = key2(a["profileHash"], b["profileHash"])
             pairs.setdefault(pk, {"cells": 0})["cells"] += 1
+    only = load_context_filter(cfg["selection"].get("contexts"))
+    if only is not None:
+        missing = only - set(pairs)
+        if missing:
+            raise ValueError(f"selection.contexts names {len(missing)} pairKey(s) outside the selection, "
+                             f"e.g. {sorted(missing)[0]}")
+        pairs = {pk: v for pk, v in pairs.items() if pk in only}
     scenarios = Scenarios(scenario_set)
     context = ContextBuilder(mechanics, scenarios, cfg["battle"])
     orient = Orientation(orientation)

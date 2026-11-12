@@ -15,6 +15,27 @@ Schema: RERUN_SYSTEM_PROPOSAL.md section 4, with these concrete choices:
 * ``engine.nodeVersionPolicy`` is ``exact`` | ``verified`` | ``warn``.
 * ``output.records`` defaults to ``${MATCHUP_RUNS_STORE}/<runId>``; it must be
   outside the repository unless ``output.allowInsideRepo`` is true.
+
+Optional fields added for the runner (build step 3). They have no default, so
+configs that do not use them keep their earlier ``config_hash``:
+
+* ``selection.contexts`` ``{"file", "sha256"}``: restrict the run to these
+  ``pairKey``s (a JSON list, or JSONL[.gz] rows with ``pairKey``), e.g. a
+  reproduction sample.
+* ``selection.baselineResults`` ``{"index", "sha256"}``: a result index
+  (``import-results`` output). Inventory contexts whose ``resultKey`` has a
+  reusable result there are not run but recorded as reused, unless
+  ``selection.rerunReusable`` is true (or ``run --force``). With
+  ``sampling.forecastSource: "baseline-outcome"`` the index row of the same
+  context (``contextHash``) is the prior for the one-seed shortcut.
+* ``sampling.policy`` also accepts ``three-then-ten`` / ``one-three-ten``
+  (the names used in the runner docs; same rules as ``distinct-seeds-3-10`` /
+  ``distinct-seeds-1-3-10``).
+* ``sampling.forecastSource: "priors-file"`` with ``sampling.priors``
+  ``{"file", "sha256"}``: JSONL[.gz] rows ``{"contextHash"|"pairKey", "outcomes": [...]}``.
+* ``execution.diagnostics``: ``"after-first-timeout"`` (default behaviour),
+  ``"always"`` or ``"never"`` - when to write the 30-second diagnostic
+  progress snapshots (never results).
 """
 from __future__ import annotations
 
@@ -29,7 +50,12 @@ from aoe2x.matchups.canonical import digest
 from aoe2x.matchups.paths import REPO_ROOT, runs_store
 
 SCHEMA = "aoe2-matchup-run/v1"
-SAMPLING_POLICIES = ("distinct-seeds-1-3-10", "distinct-seeds-3-10")
+SAMPLING_POLICIES = ("distinct-seeds-1-3-10", "distinct-seeds-3-10", "one-three-ten", "three-then-ten")
+FORECAST_SOURCES = ("baseline-outcome", "none", "priors-file")
+DIAGNOSTICS = ("after-first-timeout", "always", "never")
+# Optional fields: validated when present, never filled in (keeps older config hashes stable).
+OPTIONAL = {"selection": {"contexts", "baselineResults", "rerunReusable"},
+            "sampling": {"priors"}, "execution": {"diagnostics"}}
 NODE_POLICIES = ("exact", "verified", "warn")
 ORIENTATION_RULES = ("sorted-profile-hash", "table")
 
@@ -60,7 +86,7 @@ class ConfigError(ValueError):
 
 def _merge(defaults: dict, value: dict | None, where: str) -> dict:
     value = value or {}
-    unknown = set(value) - set(defaults)
+    unknown = set(value) - set(defaults) - OPTIONAL.get(where, set())
     if unknown:
         raise ConfigError(f"{where}: unknown field(s) {sorted(unknown)}")
     merged = copy.deepcopy(defaults)
@@ -136,6 +162,14 @@ def validate(raw: dict) -> dict:
     _require(isinstance(sel["excludeUnits"], list), "selection.excludeUnits must be a list")
     if sel["mode"] == "incremental":
         _require(bool(sel["baselineResults"]), "incremental selection needs selection.baselineResults")
+    for field, key in (("contexts", "file"), ("baselineResults", "index")):
+        ref = sel.get(field)
+        if ref is not None:
+            _require(isinstance(ref, dict) and set(ref) == {key, "sha256"} and isinstance(ref[key], str)
+                     and isinstance(ref["sha256"], str) and len(ref["sha256"]) == 64,
+                     f"selection.{field} must be {{'{key}': <path>, 'sha256': <64 hex>}}")
+    if "rerunReusable" in sel:
+        _require(isinstance(sel["rerunReusable"], bool), "selection.rerunReusable must be true or false")
     cfg["selection"] = sel
 
     battle = _merge(DEFAULTS["battle"], raw.get("battle"), "battle")
@@ -178,7 +212,13 @@ def validate(raw: dict) -> dict:
 
     sampling = _merge(DEFAULTS["sampling"], raw.get("sampling"), "sampling")
     _require(sampling["policy"] in SAMPLING_POLICIES, f"sampling.policy must be one of {SAMPLING_POLICIES}")
-    _require(sampling["forecastSource"] in ("baseline-outcome", "none"), "sampling.forecastSource must be 'baseline-outcome' or 'none'")
+    _require(sampling["forecastSource"] in FORECAST_SOURCES, f"sampling.forecastSource must be one of {FORECAST_SOURCES}")
+    if sampling["forecastSource"] == "priors-file" or "priors" in sampling:
+        ref = sampling.get("priors")
+        _require(sampling["forecastSource"] == "priors-file" and isinstance(ref, dict)
+                 and set(ref) == {"file", "sha256"} and isinstance(ref["file"], str)
+                 and isinstance(ref["sha256"], str) and len(ref["sha256"]) == 64,
+                 "sampling.priors {'file', 'sha256'} goes with forecastSource 'priors-file'")
     seeds = sampling["initialSeeds"] + sampling["extraSeedsOnMixedWinners"]
     _require(all(isinstance(s, int) and 0 <= s <= 0xFFFFFFFF for s in seeds) and len(set(seeds)) == len(seeds),
              "sampling seeds must be distinct uint32 values")
@@ -192,6 +232,8 @@ def validate(raw: dict) -> dict:
     _require(isinstance(execution["phaseContexts"], int) and execution["phaseContexts"] >= 1, "execution.phaseContexts must be >= 1")
     _require(execution["maxOldSpaceMb"] is None or (isinstance(execution["maxOldSpaceMb"], int) and execution["maxOldSpaceMb"] >= 256),
              "execution.maxOldSpaceMb must be null or >= 256")
+    if "diagnostics" in execution:
+        _require(execution["diagnostics"] in DIAGNOSTICS, f"execution.diagnostics must be one of {DIAGNOSTICS}")
     cfg["execution"] = execution
 
     output = _merge(DEFAULTS["output"], raw.get("output"), "output")
@@ -215,6 +257,19 @@ def load(path: Path) -> dict:
 
 def config_hash(cfg: dict) -> str:
     return digest(cfg)
+
+
+def run_hash(cfg: dict) -> str:
+    """The run's identity in its journals (``campaignHash``): every field that decides which
+    battles run and how, i.e. the config without ``output`` (where records go) and
+    ``execution`` (worker count, memory, diagnostics), which cannot change a result."""
+    return digest({k: v for k, v in cfg.items() if k not in ("output", "execution", "description")})
+
+
+def selection_hash(cfg: dict) -> str:
+    """What decides the inventory besides the inputs (recorded in inventory-summary.json)."""
+    sel = {k: v for k, v in cfg["selection"].items() if k not in ("baselineResults", "rerunReusable")}
+    return digest({"selection": sel, "orientation": cfg["battle"]["orientation"]})
 
 
 def setup_identity(cfg: dict, engine_manifest: dict, scenario_set_hash: str) -> dict:

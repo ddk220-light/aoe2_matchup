@@ -84,8 +84,9 @@ def load_inputs(cfg: dict) -> dict:
 
 
 def _header(cfg: dict, inputs: dict) -> dict:
-    from aoe2x.matchups.config import config_hash
-    return {"runId": cfg["runId"], "configHash": config_hash(cfg), "bundleHash": inputs["bundle"]["bundleHash"],
+    from aoe2x.matchups.config import config_hash, selection_hash
+    return {"runId": cfg["runId"], "configHash": config_hash(cfg), "selectionHash": selection_hash(cfg),
+            "bundleHash": inputs["bundle"]["bundleHash"],
             "scenarioSetHash": inputs["scenarioSet"]["setHash"],
             "orientationTableHash": (inputs["orientation"] or {}).get("tableHash"),
             "engineId": inputs["engine"]["engineId"], "engineFilesDigest": inputs["engine"]["filesDigest"],

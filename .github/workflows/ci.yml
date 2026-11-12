@@ -44,6 +44,9 @@ jobs:
       - name: Retained legacy engine contracts
         run: node --test tests/js/engine/*.test.mjs
 
+      - name: Pinned matchup-campaign engine (aoe2x/matchups)
+        run: node --test tests/js/matchups/*.test.mjs
+
       - name: Active V3 mechanics and production presentation
         run: |
           node --test \

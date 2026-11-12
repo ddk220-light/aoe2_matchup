@@ -227,28 +227,70 @@ sorted rows, sorted keys, gzip mtime 0: the same journals give the same bytes.
 | Export determinism | Two exports of each reproduction run byte-identical (all four files). 102 contexts: results 63.8 KB + manifests 11.3 KB. The 58,678 observed 2026 rows in snapshot row shape: 19.8 MB → ≈ 23 MB for 68,871 contexts (2.1 seeds/context); ≈ 30 MB if every context needed 3.3 seeds. |
 | Throughput (4 workers) | three-then-ten 1,652 seeds/h (mean 8.6 s/seed), one-three-ten 1,375 seeds/h (10.3 s/seed; seed 0 runs alone before 1–2), 1,488 overall; per-seed wall 1.01× / 1.10× the 2026 host. With the 2026 per-seed means (15.1 s / 17.3 s): full rerun with prior ≈ 107,600 seeds ≈ 5 days, full 3/10 ≈ 227,000 seeds ≈ 12 days, one new civilization (no prior, 3/10) 7,100–12,000 seeds ≈ 9–16 h. Scales roughly linearly with workers on more cores. |
 
-## Seams for steps 4–5
+## Serving DB and release (steps 4–5)
 
-- **Serving DB (step 4):** start from the 2026 result index
-  (`results.write_index` rows) and replace rows by `pairKey` with each run
-  snapshot's `results.jsonl.gz` rows (same shape; `source: "run:<runId>"`,
-  `evidenceType: "observed"`, `seeds` in `SEED_FIELDS` order). Rows listed in
-  `reused.jsonl.gz` keep their index row; rows in `blocked.jsonl.gz` have no new
-  result (keep the baseline row, flag it "not re-simulated", or hold it —
-  owner decision). Check `manifest.json` hashes (`resultIndexSha256`,
-  `bundleHash`, `setupHash`, `engine.filesDigest`) before merging. The
-  serving-DB cross-check in `results.check_serving_db` is the audit template;
-  cells come from the inventory's displayed cells (`inventory.build` walks them).
-- **Snapshot size:** results rows carry `context`, `contextHash`, `resultKey`,
-  `pairKey` and two 64-hex hashes per seed; drop the derivable ones (resultKey
-  from contextHash + setupHash, pairKey from context.profiles) if a full-run
-  snapshot must be smaller.
-- **Diff / incremental (step 5):** `bundle.compare_bundles` lists changed
-  variants; changed profile hashes change pairKeys/contexts/resultKeys
-  automatically, so a run with `selection.baselineResults` already schedules
-  only contexts without a reusable result. For the one-seed shortcut on changed
-  pairs, write a `priors-file` keyed by the new `contextHash` with the
-  baseline's outcome for the same displayed cells (owner decision Q3: the
-  default is no prior, i.e. ≥ 3 seeds).
-- **Determinism check:** `sampling.sameSeedReplay` is validated but not acted
-  on yet; `reproduce-2026 --compare` / `replay-check` are the exact checks.
+**`build-db <config>`** builds `civ_matchups_first_pass.db` (schema of
+`scripts/build_advisor_first_pass.py`, 32 KiB pages) for the roster of the
+config's bundle from the result index plus `--snapshot` dirs. Merge rules
+(`servingdb.py` docstring): snapshot rows replace index rows by `pairKey`
+(manifest, file, bundle, setup, engine and index hashes checked first);
+`reused` rows keep the index row (checked); a `blocked` pair keeps its index
+row if it has one, else its cells keep the **previous release's** result
+(`--previous-db`); both get `flags` bit **4 = not re-simulated** (the site reads
+only columns 0–5 of a cell row, so it ignores the flag) and the evidence gets
+`rerun` / `carriedTo`. Cells of a pair with no result fail the build unless
+`--carry-unsimulated`. Every stored context must equal this config's context for
+the two profiles (a result from other battle rules is refused). Ids: without
+`--previous-db` the 2026 rule (units by key, evidence by first appearance);
+with it, every surviving unit key and `pairKey` keeps its id, new ones are
+appended, so untouched civilization pairs stay byte-identical in the API. The
+`dataset` metadata (served in the catalog) is the previous DB's (or the 2026
+one in `baselines/`) with recomputed counts, `matchupRuns` and
+`notResimulatedCells`; unchanged when nothing changed. A `matchup_build`
+metadata row (not served) records every input hash. Refuses ≥ 95 MiB.
+
+**Compact evidence** (`aoe2-advisor-evidence-compact/v1`). The 2026 DB is
+99.19 MB, 89.3 MB of it the `evidence` table (originalEvidence 97 MB raw,
+forecastValidation 70 MB, mismatchValidation 26 MB, …). `/api/advisor-evidence/<id>`
+has no caller in `apps/web` (grep). The compact row keeps `pairKey`, `outcome`,
+`evidenceType`, physical `context`, `source`, `jobId`, `evidenceLevel`,
+`validationMode`, `ruleId`/`ruleVersion`, engine labels `physics`, per-seed
+`[seed, winnerOwner, ticks, unit/opponent remaining HP, survivors, starting HP]`
+and mirror-validation seeds. It **drops**: per-seed `finalStateHash`/`eventLogHash`
+and record hashes (still in the result index and run snapshots, pinned by hash in
+`matchup_build`), `contextHash` (= digest of `context`), and the 2026 chains
+(`originalEvidence`, `originalPrediction`/`prediction*`, `sourceContext`,
+`sourceOutcome`, `rootAnchorIds`, `reasonCodes`, `sourceRunIds`/`validationRunIds`,
+`verified`/`needsValidation`, the forecast/mismatch/recovery review blocks with
+`reviewFile`, `reviewHash`, campaign hashes, exact-replay records); those stay in
+git history of the DB (`bdbbeacf…`) and in the records archive. Better zlib
+dictionary (profile + scenario hashes + vocabulary, 25.5 KB). Result: **19.56 MB**.
+Per added civilization (≈ 10 units): ≈ 5,550 cells × 62 B ≈ 0.34 MB plus 2,200–3,600
+new evidence rows × ≈ 160–170 B ≈ 0.4–0.6 MB, i.e. **≈ 0.7–1.0 MB per civilization**
+(60 MB would be reached after ≈ 40 more). The dictionary holds ≈ 110 more profiles
+before older hashes fall out (then ≈ +60 B per row that names them).
+
+**`audit-db`** verifies a DB against its inputs (inputs/hashes, roster, every
+displayed cell once, cell → evidence → index/snapshot row, orientation, counts,
+type, setup context, seed classification, dataset counts, flags, size) and,
+with `--previous-db`/`--compare`, compares two DBs by unit key (cells by status,
+civilization and evidence-type transition; re-simulated and carried contexts;
+`--api`: response-level and civilization-pair-level byte identity and the
+`advisor` component version). Writes a markdown release summary (`--md`).
+
+**`diff-bundles OLD NEW`**: variants changed (with the mechanics fields) /
+added / removed, profiles new/gone, and every profile pair of the new roster as
+`simulate` / `reuse` / `keep` (rule-inferred, ranking-era or recovery-engine
+result of two unchanged profiles) / `identity`; cost (expected seeds 3.3 per
+context without prior, 1.56 with; worker-hours at 1,490 seeds/h per 4 workers and
+conservatively 17.3 s/seed/worker) by civilization; `--out` writes `plan.md`,
+`plan.json`, `contexts.json` (for `selection.contexts`) and with `--run-id` a ready
+`config.json`; `--priors` a `priors-file` (previous outcomes of the same cells in
+the new pair order; off by default, owner Q3). `run --dry-run` prints the same
+estimate and a one-line `summary`.
+
+**`archive`**: [`docs/matchups/RECORDS_TRIAGE.md`](../../docs/matchups/RECORDS_TRIAGE.md).
+
+### Step 4–5 acceptance (this machine)
+
+E2E_PLACEHOLDER

@@ -414,6 +414,45 @@ def cmd_build_db(args) -> int:
     return 0
 
 
+def cmd_audit_db(args) -> int:
+    from aoe2x.matchups import audit as AU
+    from aoe2x.matchups import config as C
+    from aoe2x.matchups import servingdb as S
+    verification = comparison = api = None
+    previous = S.read_db(Path(args.previous_db)) if args.previous_db else None
+    if args.config:
+        cfg = C.load(_config_path(args.config))
+        inputs = load_inputs(cfg)
+        index_path, index_sha = default_index_ref(cfg)
+        if args.index:
+            index_path, index_sha = Path(args.index), args.index_sha256
+        index, sha = S.load_index(index_path, index_sha)
+        snapshots = [S.load_snapshot(Path(d)) for d in args.snapshot]
+        verification = AU.verify(Path(args.db), bundle=inputs["bundle"], scenario_set=inputs["scenarioSet"],
+                                 battle=cfg["battle"], setup_hash=inputs["setupHash"],
+                                 engine_files_digest=inputs["engine"]["filesDigest"], index=index, index_sha256=sha,
+                                 snapshots=snapshots, previous=previous)
+    compare_with = args.compare or args.previous_db
+    if compare_with:
+        old = previous if compare_with == args.previous_db else S.read_db(Path(compare_with))
+        comparison = AU.compare(old, S.read_db(Path(args.db)))
+        if args.api:
+            from aoe2x.matchups import apicheck
+            api = apicheck.compare(Path(compare_with), Path(args.db))
+    if verification is None and comparison is None:
+        print("audit-db: give --config (verify against inputs) and/or --previous-db/--compare (compare)",
+              file=sys.stderr)
+        return 2
+    text = AU.summary_markdown(verification, comparison, api)
+    if args.md:
+        Path(args.md).write_text(text)
+    if args.json:
+        Path(args.json).write_text(json.dumps({"verification": verification, "comparison": comparison, "api": api},
+                                              indent=2) + "\n")
+    print(text)
+    return 0 if verification is None or verification["ok"] else 1
+
+
 def cmd_reproduce_2026(args) -> int:
     from aoe2x.matchups import reproduce as RP
     rb = _rb(args)
@@ -534,6 +573,20 @@ def main(argv=None) -> int:
                         "instead of failing")
     p.add_argument("--max-mib", type=float, default=95.0, help="refuse to write a DB of this size or more")
     p.set_defaults(func=cmd_build_db)
+
+    p = sub.add_parser("audit-db", help="verify a built serving DB against its inputs; compare with the published DB")
+    p.add_argument("db", help="the built serving DB")
+    p.add_argument("--config", help="run config the DB was built for (enables verification against inputs)")
+    p.add_argument("--index", help="result index used by build-db (default as build-db)")
+    p.add_argument("--index-sha256")
+    p.add_argument("--snapshot", action="append", default=[], help="the snapshot dirs given to build-db, in order")
+    p.add_argument("--previous-db", help="the previous DB given to build-db; also the default --compare target")
+    p.add_argument("--compare", help="compare with this DB (default --previous-db)")
+    p.add_argument("--api", action="store_true", help="also compare the advisor API responses byte for byte "
+                                                     "and the export component version")
+    p.add_argument("--md", help="write the markdown release summary here")
+    p.add_argument("--json", help="write the full report as JSON here")
+    p.set_defaults(func=cmd_audit_db)
 
     p = sub.add_parser("reproduce-2026")
     p.add_argument("dir", help="working directory for the sample, configs and records (outside the repo)")

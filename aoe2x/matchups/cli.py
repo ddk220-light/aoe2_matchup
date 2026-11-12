@@ -1,4 +1,4 @@
-"""``python -m aoe2x.matchups <command>``: the matchup rerun tooling (build steps 1-2).
+"""``python -m aoe2x.matchups <command>``: the matchup rerun tooling (build steps 1-3).
 
 Commands (names follow RERUN_SYSTEM_PROPOSAL.md section 5 where it defines them):
 
@@ -12,6 +12,12 @@ Commands (names follow RERUN_SYSTEM_PROPOSAL.md section 5 where it defines them)
   inventory              config + bundle -> physical battle contexts in <records>/inventory/
   check-inventory-2026   compare a config's inventory with RB adaptive/inventory.jsonl.gz [needs RB]
   import-results         2026 reviewed results -> compact result index             [needs RB]
+  run                    run a config's inventory on the pinned engine (resumable)  [needs Node]
+  supervise              keep the runner alive; restart after crashes; STOP file / SIGTERM
+  status                 progress, rate, ETA, blocked contexts of a run
+  unlock                 remove a stale runner lock (refuses while the owner lives)
+  export                 deterministic reviewed-results snapshot of a run
+  reproduce-2026         sample 2026 contexts into reproduction configs; compare  [needs RB]
 
 Commands marked [needs RB] exit with status 0 and a "skipped" message when the
 research branch is not available (exit 3 with --require-rb).
@@ -291,6 +297,92 @@ def cmd_import_results(args) -> int:
     return 0 if receipt["mapping"]["unmapped"] == 0 and receipt["mapping"]["ambiguous"] == 0 else 1
 
 
+def _run_records(args, cfg):
+    from aoe2x.matchups import config as C
+    return Path(args.records) if getattr(args, "records", None) else C.records_dir(cfg)
+
+
+def cmd_run(args) -> int:
+    from aoe2x.matchups import config as C
+    from aoe2x.matchups import runner as RN
+    try:
+        cfg = C.load(_config_path(args.config))
+        run = RN.Run(cfg, records=_run_records(args, cfg), force=args.force)
+    except (C.ConfigError, RN.RunError) as error:
+        print(f"run error: {error}", file=sys.stderr)
+        return RN.EXIT_INTEGRITY
+    return RN.Runner(run, workers=args.workers, node=args.node, retry_blocked=args.retry_blocked).execute()
+
+
+def cmd_supervise(args) -> int:
+    from aoe2x.matchups import config as C
+    from aoe2x.matchups.supervisor import Supervisor
+    path = _config_path(args.config)
+    cfg = C.load(path)
+    extra = []
+    for flag, value in (("--records", args.records), ("--workers", args.workers), ("--node", args.node)):
+        if value:
+            extra += [flag, str(value)]
+    if args.force:
+        extra.append("--force")
+    return Supervisor(path.resolve(), _run_records(args, cfg), runner_args=extra, heartbeat=args.heartbeat,
+                      max_failures=args.max_failures).run()
+
+
+def cmd_status(args) -> int:
+    from aoe2x.matchups import config as C
+    from aoe2x.matchups import status as S
+    cfg = C.load(_config_path(args.config))
+    report = S.report(_run_records(args, cfg))
+    if args.json:
+        _print(report)
+    else:
+        print(S.render(report))
+    return 0
+
+
+def cmd_unlock(args) -> int:
+    from aoe2x.matchups import config as C
+    from aoe2x.matchups import journal as J
+    cfg = C.load(_config_path(args.config))
+    lock = J.RunnerLock(_run_records(args, cfg) / ".runner.lock")
+    try:
+        _print(lock.clear_stale())
+    except J.LockBusy as busy:
+        print(f"refused: {busy}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def cmd_export(args) -> int:
+    from aoe2x.matchups import config as C
+    from aoe2x.matchups import export as X
+    from aoe2x.matchups import runner as RN
+    cfg = C.load(_config_path(args.config))
+    records = _run_records(args, cfg)
+    try:
+        run = RN.Run(cfg, records=records)
+        out = Path(args.out) if args.out else records / "export"
+        manifest = X.write(run, out)
+    except RN.RunError as error:
+        print(f"export error: {error}", file=sys.stderr)
+        return 1
+    _print({"out": str(out), "snapshotHash": manifest["snapshotHash"], "complete": manifest["complete"],
+            "counts": manifest["counts"], "files": manifest["files"]})
+    return 0
+
+
+def cmd_reproduce_2026(args) -> int:
+    from aoe2x.matchups import reproduce as RP
+    rb = _rb(args)
+    if args.compare:
+        report = RP.compare(rb, Path(args.dir))
+        _print({k: v for k, v in report.items() if k != "contexts"})
+        return 0 if report["mismatches"] == 0 and report["missing"] == 0 else 1
+    _print(RP.prepare(rb, Path(args.dir), per_stratum=args.per_stratum))
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="python -m aoe2x.matchups", description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -348,6 +440,45 @@ def main(argv=None) -> int:
     p.add_argument("--no-serving-check", action="store_true", help="skip the cross-check with data/golden/civ_matchups_first_pass.db")
     p.add_argument("--write-receipt", action="store_true", help=f"write {artifacts.rel(artifacts.RESULT_INDEX_RECEIPT)}")
     p.set_defaults(func=cmd_import_results)
+
+    def run_options(p, *, force=True):
+        p.add_argument("config", help="config path or name under aoe2x/matchups/configs/")
+        p.add_argument("--records", help="records directory (default: the config's output.records)")
+        if force:
+            p.add_argument("--workers", type=int, help="override execution.workers")
+            p.add_argument("--node", help="Node binary (default $MATCHUP_NODE or node on PATH)")
+            p.add_argument("--force", action="store_true", help="re-run contexts the baseline index already has")
+
+    p = sub.add_parser("run")
+    run_options(p)
+    p.add_argument("--retry-blocked", action="store_true", help="give blocked contexts a fresh set of watchdog steps")
+    p.set_defaults(func=cmd_run)
+
+    p = sub.add_parser("supervise")
+    run_options(p)
+    p.add_argument("--heartbeat", type=float, default=30.0, help="seconds between supervisor.json updates")
+    p.add_argument("--max-failures", type=int, default=5, help="give up after this many crashes in a row without progress")
+    p.set_defaults(func=cmd_supervise)
+
+    p = sub.add_parser("status")
+    run_options(p, force=False)
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_status)
+
+    p = sub.add_parser("unlock")
+    run_options(p, force=False)
+    p.set_defaults(func=cmd_unlock)
+
+    p = sub.add_parser("export")
+    run_options(p, force=False)
+    p.add_argument("--out", help="snapshot directory (default <records>/export)")
+    p.set_defaults(func=cmd_export)
+
+    p = sub.add_parser("reproduce-2026")
+    p.add_argument("dir", help="working directory for the sample, configs and records (outside the repo)")
+    p.add_argument("--per-stratum", type=int, default=3)
+    p.add_argument("--compare", action="store_true", help="compare finished runs in DIR with the archived 2026 rows")
+    p.set_defaults(func=cmd_reproduce_2026)
 
     args = parser.parse_args(argv)
     return args.func(args)

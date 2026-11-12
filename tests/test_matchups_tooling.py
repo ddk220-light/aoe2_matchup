@@ -285,3 +285,428 @@ def test_rb_commands_skip_without_the_research_branch():
     out = subprocess.run([sys.executable, "-m", "aoe2x.matchups", "--rb-ref", "refs/heads/no-such-branch-xyz",
                           "--require-rb", "import-results"], cwd=REPO_ROOT, capture_output=True, text=True)
     assert out.returncode == 3
+
+
+# =================================================================== step 3
+# Runner, sampling, journals, lock, state, export: fast, no RB, no Node
+# (a scripted in-process backend stands in for run-battles.mjs --serve).
+
+import gzip
+import os
+import signal as _signal
+
+from aoe2x.matchups import export as X
+from aoe2x.matchups import journal as J
+from aoe2x.matchups import runner as RN
+from aoe2x.matchups import sampling as SP
+from aoe2x.matchups import status as ST
+from aoe2x.matchups.canonical import sha256_bytes
+
+SAMPLING_CASES = json.loads((FIXTURES / "sampling-2026.json").read_text())["cases"]
+
+
+def _policy(name):
+    return SP.Policy({"policy": name, "initialSeeds": [0, 1, 2], "extraSeedsOnMixedWinners": [3, 4, 5, 6, 7, 8, 9],
+                      "singleSeedMinimumWinnerHpFraction": 0.25})
+
+
+@pytest.mark.parametrize("case", SAMPLING_CASES, ids=[c["name"] for c in SAMPLING_CASES])
+def test_sampling_reproduces_2026_seed_sets(case):
+    """Driving the policy seed by seed from nothing reaches exactly the archived seed set,
+    decision and classification (RB forecast/mismatch reviews)."""
+    policy, job, prior = _policy(case["policy"]), case["job"], case["prior"]
+    by_seed = {s["seed"]: s for s in case["seeds"]}
+    rows = []
+    while True:
+        needed = policy.decision(job, rows, prior)["requiredSeeds"]
+        if not needed:
+            break
+        rows.extend(by_seed[s] for s in needed)  # a seed the archive lacks would raise KeyError
+    assert [r["seed"] for r in rows] == sorted(by_seed)
+    assert policy.outcome(job, rows, prior) == case["outcome"]
+    if case["samplingDecision"] is not None:
+        assert policy.decision(job, rows, prior) == case["samplingDecision"]
+
+
+@pytest.mark.parametrize("case", [c for c in SAMPLING_CASES if len(c["seeds"]) == 1], ids=lambda c: c["name"])
+def test_one_seed_shortcut_needs_an_agreeing_prior(case):
+    policy, job = _policy("one-three-ten"), case["job"]
+    first = case["seeds"][:1]
+    assert policy.decision(job, first, case["prior"])["evidenceLevel"] == SP.SINGLE
+    for prior in (None, [], ["a_win" if case["outcome"] == "b_win" else "b_win"], ["close_uncertain"],
+                  [case["outcome"], "close_uncertain"]):
+        d = policy.decision(job, first, prior)
+        assert d["evidenceLevel"] == SP.MULTI and d["requiredSeeds"] == [1, 2], prior
+    # a context without any prior may start its three initial seeds at once
+    assert policy.dispatchable(job, [], None) == [0, 1, 2]
+    assert policy.dispatchable(job, [], case["prior"]) == [0]
+    assert _policy("three-then-ten").decision(job, first, case["prior"])["requiredSeeds"] == [1, 2]
+
+
+def test_terminal_margin_and_classification_edges():
+    base = {"seed": 0, "winnerOwner": 2, "unitStartingHp": 100, "opponentStartingHp": 80, "unitRemainingHp": 25,
+            "opponentRemainingHp": 0, "unitSurvivors": 3, "opponentSurvivors": 0}
+    assert SP.terminal_margin(base) == 0.25
+    for change in ({"opponentSurvivors": 1}, {"opponentRemainingHp": 1}, {"unitSurvivors": 0}, {"unitRemainingHp": 0},
+                   {"unitRemainingHp": 101}, {"winnerOwner": None}, {"unitStartingHp": 0}):
+        assert SP.terminal_margin({**base, **change}) is None, change
+    job = {"pairKey": "a|b", "profileHashes": ["b", "a"]}
+    assert SP.physical_outcome(job, 2) == "b_win" and SP.physical_outcome(job, 3) == "a_win"
+    assert SP.classify(job, [{"winnerOwner": None}] * 3) == "close_uncertain"  # unanimous draws
+    assert SP.classify(job, [{"winnerOwner": 3}, {"winnerOwner": 3}]) == "a_win"
+    with pytest.raises(ValueError, match="duplicate seed"):
+        _policy("three-then-ten").decision(job, [base, base], None)
+    assert SP.policy_name("distinct-seeds-1-3-10") == "one-three-ten"
+
+
+# ------------------------------------------------------------- journal/lock
+
+def test_journal_repairs_only_a_torn_trailing_line(tmp_path):
+    path = tmp_path / "runs.jsonl"
+    j = J.Journal(path)
+    j.append({"a": 1})
+    j.append({"a": 2})
+    j.close()
+    good = path.read_bytes()
+    path.write_bytes(good + b'{"a": 3, "tor')
+    report = J.repair_journal(path)
+    assert report["repaired"] and report["lines"] == 2 and path.read_bytes() == good
+    path.write_bytes(good + b'{"a": \n')
+    assert J.repair_journal(path)["reason"] == "unparsable trailing line" and path.read_bytes() == good
+    assert J.repair_journal(path) == {"repaired": False, "lines": 2}
+    path.write_bytes(b'{"a": 1}\nnot json\n{"a": 3}\n')
+    assert not J.repair_journal(path)["repaired"]
+    with pytest.raises(J.IntegrityError, match="unparsable journal line"):
+        J.read_journal(path)
+    path.write_bytes(b'{"only": "tor')
+    assert J.repair_journal(path)["lines"] == 0 and path.read_bytes() == b""
+
+
+def test_atomic_json_write(tmp_path):
+    J.write_json_atomic(tmp_path / "s.json", {"x": 1})
+    J.write_json_atomic(tmp_path / "s.json", {"x": 2})
+    assert J.read_json(tmp_path / "s.json") == {"x": 2}
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["s.json"]
+
+
+def _dead_pid():
+    proc = subprocess.Popen([sys.executable, "-c", "pass"])
+    proc.wait()
+    return proc.pid
+
+
+def test_runner_lock_live_stale_and_recycled(tmp_path):
+    path = tmp_path / ".runner.lock"
+    lock = J.RunnerLock(path).acquire()
+    with pytest.raises(J.LockBusy):
+        J.RunnerLock(path).acquire()
+    with pytest.raises(J.LockBusy):
+        J.RunnerLock(path).clear_stale()
+    lock.release()
+    assert not path.exists()
+    # stale: dead owner
+    path.write_text(json.dumps({"pid": _dead_pid(), "startTime": "1", "host": os.uname().nodename}))
+    second = J.RunnerLock(path).acquire()
+    assert second.cleared and second.held
+    second.release()
+    # recycled PID: our own PID but another start time is not a live owner
+    path.write_text(json.dumps({"pid": os.getpid(), "startTime": "-1", "host": os.uname().nodename}))
+    assert J.RunnerLock(path).clear_stale()["cleared"]
+    assert J.RunnerLock(path).clear_stale() == {"cleared": False, "reason": "no lock"}
+
+
+# ---------------------------------------------------------- runner (fake)
+
+class FakeBackend:
+    """In-process stand-in for ``run-battles.mjs --serve``: deterministic results from (context, seed)."""
+
+    def __init__(self, script):
+        self.script = script  # (job_id, seed, limit, payload) -> result dict | failure dict
+        self.replies = []
+        self.submitted = []
+
+    def start(self):
+        manifest = E.load_engine_manifest()
+        return {"engineId": manifest["engineId"], "filesDigest": manifest["filesDigest"], "node": {"version": "vfake"}}
+
+    def submit(self, request):
+        self.submitted.append(request)
+        job_id, seed = request["payload"]["jobId"], request["payload"]["seed"]
+        out = self.script(job_id, seed, request["limitSeconds"], request["payload"])
+        if "outcome" in out:
+            self.replies.insert(0, {"key": request["key"], "ok": True, "result": out, "startedAt": "t", "wallSeconds": 0.5})
+        else:
+            self.replies.insert(0, {"key": request["key"], "ok": False, "startedAt": "t", "wallSeconds": request["limitSeconds"], **out})
+
+    def get(self, timeout):
+        return self.replies.pop() if self.replies else None
+
+    def stop(self):
+        pass
+
+    kill = stop
+
+
+def fake_result(job_id, seed, *_):
+    h = int(digest([job_id, seed])[:8], 16)
+    mixed = int(digest(job_id)[:2], 16) % 3 == 0  # a third of the contexts get mixed winners
+    winner = (2 if h % 2 else 3) if mixed else (2 if int(digest(job_id)[2:4], 16) % 2 else 3)
+    loser = 5 - winner
+    return {"outcome": "win", "winnerOwner": winner, "ticks": 1000 + h % 5000,
+            "startingHpByOwner": {"2": 1000, "3": 900},
+            "remainingByOwner": {str(winner): {"hp": 300 + h % 300, "units": 1 + h % 9}, str(loser): {"hp": 0, "units": 0}},
+            "finalStateHash": digest(["f", job_id, seed]), "eventLogHash": digest(["e", job_id, seed])}
+
+
+@pytest.fixture(scope="module")
+def small_inventory(full_config, bundle):
+    cfg, _ = _fixture_config(full_config)
+    inputs = load_inputs(cfg)
+    jobs = I.build(cfg, inputs["bundle"], inputs["scenarioSet"], inputs["orientation"], inputs["setupHash"])["jobs"]
+    return [j["pairKey"] for j in jobs[:12]], inputs["setupHash"]
+
+
+def _small_config(full_config, tmp_path, pair_keys, **sampling):
+    raw = copy.deepcopy(full_config)
+    raw["runId"] = "unit-small"
+    ctx = (json.dumps(sorted(pair_keys)) + "\n").encode()
+    (tmp_path / "contexts.json").write_bytes(ctx)
+    raw["selection"] = {"mode": "full", "civilizations": None, "units": None, "against": "*",
+                        "contexts": {"file": str(tmp_path / "contexts.json"), "sha256": sha256_bytes(ctx)}}
+    raw["sampling"].update(sampling)
+    raw["execution"]["workers"] = 3
+    raw["execution"]["phaseContexts"] = 5
+    raw["output"] = {"records": str(tmp_path / "records")}
+    path = tmp_path / "config.json"
+    path.write_text(json.dumps(raw))
+    return C.load(path)
+
+
+def _runner(cfg, script=fake_result, records=None, **kw):
+    run = RN.Run(cfg, records=records)
+    backend = FakeBackend(script)
+    return RN.Runner(run, backend_factory=lambda: backend, log=lambda m: None, **kw), backend
+
+
+def _journal_content(records):
+    return sorted((RN.content(r) for r in J.read_journal(records / "runs.jsonl")),
+                  key=lambda r: (r["matchupId"], r["seed"]))
+
+
+def test_runner_completes_and_writes_records(full_config, tmp_path, small_inventory):
+    cfg = _small_config(full_config, tmp_path, small_inventory[0])
+    runner, backend = _runner(cfg)
+    assert runner.execute() == RN.EXIT_DONE
+    R = tmp_path / "records"
+    state = J.read_json(R / "state.json")
+    assert state["status"] == "complete" and state["pid"] is None
+    assert state["contexts"] == {"total": 12, "complete": 12, "reviewed": 12, "reused": 0, "blocked": 0,
+                                 "remaining": 0, "active": 0}
+    rows = J.read_journal(R / "runs.jsonl")
+    assert state["seeds"]["saved"] == len(rows) == len(backend.submitted)
+    assert len({(r["matchupId"], r["seed"]) for r in rows}) == len(rows)
+    assert {len([r for r in rows if r["matchupId"] == j]) for j in {r["matchupId"] for r in rows}} <= {3, 10}
+    for field in ("campaignHash", "matchupId", "pairKey", "contextHash", "seed", "wallSeconds", "outcome", "winnerOwner",
+                  "unitStartingHp", "opponentRemainingHp", "unitSurvivors", "ticks", "simulationSeconds",
+                  "finalStateHash", "eventLogHash", "physicsVersion", "executionVersion", "engineId", "nodeVersion"):
+        assert field in rows[0]
+    assert rows[0]["nodeVersion"] == "vfake" and rows[0]["engineId"] == "frozen-civ-matchups-v3"
+    reviews = sorted((R / "pair-reviews").glob("*.json"))
+    assert len(reviews) == 12
+    review = json.loads(reviews[0].read_text())
+    assert review["reviewHash"] == digest({k: v for k, v in review.items() if k != "reviewHash"})
+    assert {"context", "contextHash", "pairKey", "jobId", "outcome", "seedResults", "physicsVersion",
+            "validationMode", "evidenceLevel", "samplingDecision"} <= set(review)
+    assert sorted(p.name for p in (R / "reviews").glob("*.json")) == ["001.json", "002.json", "003.json"]
+    assert J.read_json(R / "reviews/003.json")["plannedJobs"] == 2
+    assert not (R / ".runner.lock").exists()
+    # a second run is a no-op: nothing is re-run
+    again, backend2 = _runner(cfg)
+    assert again.execute() == RN.EXIT_DONE and backend2.submitted == []
+
+
+def test_runner_resume_after_interruptions_equals_uninterrupted(full_config, tmp_path, small_inventory):
+    cfg = _small_config(full_config, tmp_path, small_inventory[0])
+    reference, _ = _runner(cfg, records=tmp_path / "reference")
+    assert reference.execute() == RN.EXIT_DONE
+    R = tmp_path / "records"
+    for stop_after in (2, 7, 5, 11):
+        count = [0]
+
+        def script(job_id, seed, limit, payload, count=count, stop_after=stop_after):
+            count[0] += 1
+            if count[0] == stop_after:
+                runner.stopping, runner.stop_reason = True, "test kill"
+            return fake_result(job_id, seed)
+        runner, _ = _runner(cfg, script)
+        code = runner.execute()
+        if code == RN.EXIT_DONE:
+            break
+        assert code == RN.EXIT_STOPPED and J.read_json(R / "state.json")["status"] == "interrupted"
+        # simulate a kill in the middle of a write: a torn trailing line
+        with open(R / "runs.jsonl", "ab") as f:
+            f.write(b'{"campaignHash": "torn')
+    final, _ = _runner(cfg)
+    assert final.execute() == RN.EXIT_DONE
+    assert _journal_content(R) == _journal_content(tmp_path / "reference")
+    state = J.read_json(R / "state.json")
+    assert state["seeds"]["saved"] == len(_journal_content(R))
+    assert state["contexts"]["reviewed"] == 12
+    sessions = J.read_journal(R / "sessions.jsonl")
+    assert any(s.get("journalRepair") for s in sessions if s["event"] == "start")
+    # same journals -> byte-identical export, interrupted or not
+    a = X.build(RN.Run(cfg, records=R))[1]
+    b = X.build(RN.Run(cfg, records=tmp_path / "reference"))[1]
+    assert a == b
+
+
+def test_runner_refuses_duplicate_seed_lines_and_foreign_journals(full_config, tmp_path, small_inventory):
+    cfg = _small_config(full_config, tmp_path, small_inventory[0][:2])
+    runner, _ = _runner(cfg)
+    assert runner.execute() == RN.EXIT_DONE
+    R = tmp_path / "records"
+    lines = (R / "runs.jsonl").read_bytes().splitlines(keepends=True)
+    (R / "runs.jsonl").write_bytes(b"".join(lines) + lines[0])
+    runner, _ = _runner(cfg)
+    assert runner.execute() == RN.EXIT_INTEGRITY
+    (R / "runs.jsonl").write_bytes(b"".join(lines).replace(b'"campaignHash":"', b'"campaignHash":"x', 1))
+    runner, _ = _runner(cfg)
+    assert runner.execute() == RN.EXIT_INTEGRITY
+
+
+def test_runner_lock_blocks_second_runner(full_config, tmp_path, small_inventory):
+    cfg = _small_config(full_config, tmp_path, small_inventory[0][:2])
+    holder = J.RunnerLock(tmp_path / "records" / ".runner.lock").acquire()
+    runner, backend = _runner(cfg)
+    assert runner.execute() == RN.EXIT_LOCKED and backend.submitted == []
+    holder.release()
+    runner, _ = _runner(cfg)
+    assert runner.execute() == RN.EXIT_DONE
+
+
+def test_timeouts_escalate_then_block(full_config, tmp_path, small_inventory):
+    keys = small_inventory[0][:4]
+    cfg = _small_config(full_config, tmp_path, keys)
+    stuck = RN.Run(cfg).prepare(build=True).jobs[1]["id"]
+
+    def script(job_id, seed, limit, payload):
+        if job_id == stuck and seed == 1:
+            return {"watchdog": True, "lastProgress": {"tick": int(limit * 60)}}
+        return fake_result(job_id, seed)
+    runner, backend = _runner(cfg, script)
+    assert runner.execute() == RN.EXIT_DONE
+    R = tmp_path / "records"
+    attempts = J.read_journal(R / "attempts.jsonl")
+    assert [(a["matchupId"], a["seed"], a["limitSeconds"], a["exhausted"]) for a in attempts] == \
+        [(stuck, 1, 180, False), (stuck, 1, 600, False), (stuck, 1, 1800, False), (stuck, 1, 3600, True)]
+    state = J.read_json(R / "state.json")
+    assert state["status"] == "complete_with_blocked" and state["blockedJobs"] == [stuck]
+    assert state["contexts"]["reviewed"] == 3 and state["contexts"]["blocked"] == 1
+    assert not (R / "pair-reviews" / f"{stuck}.json").exists()
+    report = ST.report(R)
+    assert [b["jobId"] for b in report["blocked"]] == [stuck] and "BLOCKED " + stuck in ST.render(report)
+    # restart: the blocked context is not retried ...
+    again, backend2 = _runner(cfg, script)
+    assert again.execute() == RN.EXIT_DONE and backend2.submitted == []
+    # ... unless asked, and then it gets a fresh set of steps
+    retry, backend3 = _runner(cfg, fake_result, retry_blocked=True)
+    assert retry.execute() == RN.EXIT_DONE
+    assert J.read_json(R / "state.json")["status"] == "complete"
+    assert [r["limitSeconds"] for r in backend3.submitted][:1] == [180]
+    assert X.build(RN.Run(cfg, records=R))[0]["counts"]["blocked"] == 0
+
+
+def test_one_three_ten_priors_and_reuse(full_config, tmp_path, small_inventory):
+    keys, setup_hash = small_inventory
+    cfg0 = _small_config(full_config, tmp_path, keys)
+    jobs = RN.Run(cfg0).prepare(build=True).jobs
+    # baseline index: the first 4 contexts have reusable results, 4 more only a prior outcome
+    index = []
+    for i, j in enumerate(jobs[:8]):
+        winner = 2 if int(digest(j["id"])[2:4], 16) % 2 else 3
+        outcome = SP.physical_outcome(j, winner)
+        row = {"pairKey": j["pairKey"], "outcome": outcome, "evidenceType": "observed", "source": "test",
+               "context": {"profiles": j["profileHashes"]}, "contextHash": j["contextHash"], "seeds": [],
+               "reusable": i < 4}
+        if i < 4:
+            row["resultKey"] = j["resultKey"]
+        index.append(row)
+    data = gzip.compress("".join(json.dumps(r) + "\n" for r in index).encode(), mtime=0)
+    (tmp_path / "index.jsonl.gz").write_bytes(data)
+    raw = json.loads((tmp_path / "config.json").read_text())
+    raw["selection"]["baselineResults"] = {"index": str(tmp_path / "index.jsonl.gz"), "sha256": sha256_bytes(data)}
+    raw["sampling"].update(policy="one-three-ten", forecastSource="baseline-outcome")
+    (tmp_path / "config.json").write_text(json.dumps(raw))
+    cfg = C.load(tmp_path / "config.json")
+    runner, backend = _runner(cfg)
+    assert runner.execute() == RN.EXIT_DONE
+    R = tmp_path / "records"
+    reuse = J.read_json(R / "reuse.json")
+    assert reuse["reused"] == 4 and sorted(c[0] for c in reuse["contexts"]) == sorted(j["id"] for j in jobs[:4])
+    submitted = {r["payload"]["jobId"] for r in backend.submitted}
+    assert submitted == {j["id"] for j in jobs[4:]}
+    reviews = {p.stem: json.loads(p.read_text()) for p in (R / "pair-reviews").glob("*.json")}
+    for j in jobs[4:]:
+        r = reviews[j["id"]]
+        if j in jobs[4:8] and r["seedCount"] == 1:
+            assert r["evidenceLevel"] == SP.SINGLE and r["priorOutcomes"] == [r["outcome"]]
+        if j in jobs[8:]:
+            assert r["priorOutcomes"] is None and r["seedCount"] >= 3  # no prior: never one seed
+    assert any(r["seedCount"] == 1 for r in reviews.values())
+    state = J.read_json(R / "state.json")
+    assert state["contexts"]["reused"] == 4 and state["contexts"]["complete"] == 12
+    manifest, files = X.build(RN.Run(cfg, records=R))
+    assert manifest["counts"]["reused"] == 4 and manifest["counts"]["reviewed"] == 8 and manifest["complete"]
+    # --force re-runs the reusable contexts too (fresh records)
+    forced, backend = _runner(cfg, records=tmp_path / "forced")
+    forced.run.force = True
+    assert forced.execute() == RN.EXIT_DONE
+    assert {r["payload"]["jobId"] for r in backend.submitted} == {j["id"] for j in jobs}
+
+
+def test_export_is_deterministic(full_config, tmp_path, small_inventory):
+    cfg = _small_config(full_config, tmp_path, small_inventory[0][:6])
+    runner, _ = _runner(cfg)
+    assert runner.execute() == RN.EXIT_DONE
+    run = RN.Run(cfg)
+    first = X.write(run, tmp_path / "e1")
+    second = X.write(RN.Run(cfg), tmp_path / "e2")
+    assert first == second
+    for name in ("manifest.json", "results.jsonl.gz", "reused.jsonl.gz", "blocked.jsonl.gz"):
+        assert (tmp_path / "e1" / name).read_bytes() == (tmp_path / "e2" / name).read_bytes()
+    rows = [json.loads(l) for l in gzip.decompress((tmp_path / "e1/results.jsonl.gz").read_bytes()).decode().splitlines()]
+    assert len(rows) == 6 and rows == sorted(rows, key=lambda r: r["pairKey"])
+    assert all(len(s) == len(X.SEED_FIELDS) for r in rows for s in r["seeds"])
+    assert first["journal"]["runsSha256"] == sha256_bytes((tmp_path / "records/runs.jsonl").read_bytes())
+    # a tampered review is refused
+    review = sorted((tmp_path / "records/pair-reviews").glob("*.json"))[0]
+    body = json.loads(review.read_text())
+    body["outcome"] = "close_uncertain"
+    review.write_text(json.dumps(body))
+    with pytest.raises(RN.RunError, match="failed verification"):
+        X.build(RN.Run(cfg))
+
+
+def test_runner_stops_on_sigterm_and_stop_file(full_config, tmp_path, small_inventory):
+    cfg = _small_config(full_config, tmp_path, small_inventory[0])
+
+    def script(job_id, seed, limit, payload):
+        if len(backend.submitted) == 4:
+            os.kill(os.getpid(), _signal.SIGTERM)
+        return fake_result(job_id, seed)
+    runner, backend = _runner(cfg, script)
+    assert runner.execute() == RN.EXIT_STOPPED
+    state = J.read_json(tmp_path / "records/state.json")
+    assert state["status"] == "interrupted" and state["stopReason"] == "SIGTERM"
+    (tmp_path / "records/STOP").write_text("")
+    runner, backend = _runner(cfg)
+    assert runner.execute() == RN.EXIT_STOPPED and backend.submitted == []
+    (tmp_path / "records/STOP").unlink()
+    runner, backend = _runner(cfg)
+    assert runner.execute() == RN.EXIT_DONE
+
+
+def test_runner_and_supervisor_commands_exist():
+    out = subprocess.run([sys.executable, "-m", "aoe2x.matchups", "--help"], cwd=REPO_ROOT, capture_output=True, text=True)
+    for command in ("run", "supervise", "status", "unlock", "export", "reproduce-2026"):
+        assert command in out.stdout

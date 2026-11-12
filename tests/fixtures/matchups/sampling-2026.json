@@ -1,0 +1,1015 @@
+{
+ "description": "Real 2026 seed sets (RB mismatch snapshot review-ready-2026-11-07 and forecast snapshot 070, via reproduce-2026 sample) for table-driven sampling/classification tests. 'samplingDecision' is the archived 2026 decision (one-three-ten only).",
+ "cases": [
+  {
+   "name": "one-three-ten 1 seeds, first seed agrees=True",
+   "source": "RB forecast review fv_0467e12dda6b5bfce8c66138",
+   "policy": "one-three-ten",
+   "job": {
+    "pairKey": "8b7ca2dba60271513f27cb656e81a8e204a6391e6d15a86818b6b87eb097a6cb|fd1364bf3da6c499e2c5a8f614ac796b1624ed045e0d6ccc8a6f5b8b6a1774d2",
+    "profileHashes": [
+     "8b7ca2dba60271513f27cb656e81a8e204a6391e6d15a86818b6b87eb097a6cb",
+     "fd1364bf3da6c499e2c5a8f614ac796b1624ed045e0d6ccc8a6f5b8b6a1774d2"
+    ]
+   },
+   "prior": [
+    "b_win"
+   ],
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 945,
+     "opponentStartingHp": 1900,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 1774.066666666708,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 19
+    }
+   ],
+   "outcome": "b_win",
+   "samplingDecision": {
+    "evidenceLevel": "single_seed_confirmation",
+    "firstSeedAgrees": true,
+    "firstSeedOutcome": "b_win",
+    "firstSeedWinnerHpFraction": 0.9337192982456358,
+    "minimumWinnerHpFraction": 0.25,
+    "reason": "decisive_forecast_agreement",
+    "requiredSeeds": []
+   }
+  },
+  {
+   "name": "one-three-ten 10 seeds, first seed agrees=True",
+   "source": "RB forecast review fv_0709dcbb2f410c0887c74d48",
+   "policy": "one-three-ten",
+   "job": {
+    "pairKey": "61e714087091096d75c8bbe6a173eb8ed01a22ec5a6faeee5c90c6c4ed4ab2ab|72c73189706df329e93e98156f819f01690a3807f1c69ab7e6d52c74ed2588c0",
+    "profileHashes": [
+     "61e714087091096d75c8bbe6a173eb8ed01a22ec5a6faeee5c90c6c4ed4ab2ab",
+     "72c73189706df329e93e98156f819f01690a3807f1c69ab7e6d52c74ed2588c0"
+    ]
+   },
+   "prior": [
+    "a_win"
+   ],
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 660,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 1,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 1615,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 8
+    },
+    {
+     "seed": 2,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 1115,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 7
+    },
+    {
+     "seed": 3,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 975,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 6
+    },
+    {
+     "seed": 4,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 795,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 6
+    },
+    {
+     "seed": 5,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 730,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 5
+    },
+    {
+     "seed": 6,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 102.5,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 2,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 7,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 464,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 8,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 508,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 8,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 9,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 3105,
+     "opponentStartingHp": 5060,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 190,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 2
+    }
+   ],
+   "outcome": "close_uncertain",
+   "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "firstSeedAgrees": true,
+    "firstSeedOutcome": "a_win",
+    "firstSeedWinnerHpFraction": 0.21256038647342995,
+    "minimumWinnerHpFraction": 0.25,
+    "reason": "additional_seed_evidence",
+    "requiredSeeds": []
+   }
+  },
+  {
+   "name": "one-three-ten 3 seeds, first seed agrees=False",
+   "source": "RB forecast review fv_08fe7c429f656c45bb67e8bc",
+   "policy": "one-three-ten",
+   "job": {
+    "pairKey": "1c2b8d5357695308ac37e5ae7593ccdc76b03a65417aa245b944f9d3e59d6df1|e2a3d77c27a8f61a60af2e69a79eb9442aadd05949d1364049217831cf8d9e63",
+    "profileHashes": [
+     "e2a3d77c27a8f61a60af2e69a79eb9442aadd05949d1364049217831cf8d9e63",
+     "1c2b8d5357695308ac37e5ae7593ccdc76b03a65417aa245b944f9d3e59d6df1"
+    ]
+   },
+   "prior": [
+    "a_win"
+   ],
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1830.5999999999992,
+     "opponentStartingHp": 4800,
+     "unitRemainingHp": 252.42531026684145,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 1,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1830.5999999999992,
+     "opponentStartingHp": 4800,
+     "unitRemainingHp": 255.90063989951054,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 2,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1830.5999999999992,
+     "opponentStartingHp": 4800,
+     "unitRemainingHp": 252.42531026684145,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    }
+   ],
+   "outcome": "b_win",
+   "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "firstSeedAgrees": false,
+    "firstSeedOutcome": "b_win",
+    "firstSeedWinnerHpFraction": 0.1378921174843448,
+    "minimumWinnerHpFraction": 0.25,
+    "reason": "additional_seed_evidence",
+    "requiredSeeds": []
+   }
+  },
+  {
+   "name": "one-three-ten 10 seeds, first seed agrees=False",
+   "source": "RB forecast review fv_27d4ea9ca15d536054d4b79d",
+   "policy": "one-three-ten",
+   "job": {
+    "pairKey": "9f99987d467a0b9fb721b4f31e8ce680f16abc64f77aa03716a52638bb49f971|a4a7103e960f06e95a10a13b2ed659aedb22d048c86994b08dfdcc0836b09f8a",
+    "profileHashes": [
+     "9f99987d467a0b9fb721b4f31e8ce680f16abc64f77aa03716a52638bb49f971",
+     "a4a7103e960f06e95a10a13b2ed659aedb22d048c86994b08dfdcc0836b09f8a"
+    ]
+   },
+   "prior": [
+    "a_win"
+   ],
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 137,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 4
+    },
+    {
+     "seed": 1,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 120,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 2,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 2,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 360,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 9
+    },
+    {
+     "seed": 3,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 408,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 6,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 4,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 369,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 9
+    },
+    {
+     "seed": 5,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 227,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 4
+    },
+    {
+     "seed": 6,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 149,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 4
+    },
+    {
+     "seed": 7,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 137,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 4
+    },
+    {
+     "seed": 8,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 246,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 6
+    },
+    {
+     "seed": 9,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1920,
+     "opponentStartingHp": 1755,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 360,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 9
+    }
+   ],
+   "outcome": "close_uncertain",
+   "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "firstSeedAgrees": false,
+    "firstSeedOutcome": "b_win",
+    "firstSeedWinnerHpFraction": 0.07806267806267807,
+    "minimumWinnerHpFraction": 0.25,
+    "reason": "additional_seed_evidence",
+    "requiredSeeds": []
+   }
+  },
+  {
+   "name": "one-three-ten 3 seeds, first seed agrees=True",
+   "source": "RB forecast review fv_298657627422ed551104bf9a",
+   "policy": "one-three-ten",
+   "job": {
+    "pairKey": "b16283f103e02c511ea69495e16205eecb923fde3b569dfee78fea5fa54e3283|df2b56e68f789abb4ad55e28945b36c23602c852a154b46834a90fe135a502ab",
+    "profileHashes": [
+     "df2b56e68f789abb4ad55e28945b36c23602c852a154b46834a90fe135a502ab",
+     "b16283f103e02c511ea69495e16205eecb923fde3b569dfee78fea5fa54e3283"
+    ]
+   },
+   "prior": [
+    "a_win"
+   ],
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 2470,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 345,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 6
+    },
+    {
+     "seed": 1,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 2470,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 230,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 3
+    },
+    {
+     "seed": 2,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 2470,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 438,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 6
+    }
+   ],
+   "outcome": "a_win",
+   "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "firstSeedAgrees": true,
+    "firstSeedOutcome": "a_win",
+    "firstSeedWinnerHpFraction": 0.1396761133603239,
+    "minimumWinnerHpFraction": 0.25,
+    "reason": "additional_seed_evidence",
+    "requiredSeeds": []
+   }
+  },
+  {
+   "name": "three-then-ten 3 seeds",
+   "source": "RB forecast review fv_4c88bba8c33a515987ee7f76",
+   "policy": "three-then-ten",
+   "job": {
+    "pairKey": "0d6e8a0ae4e70329840bc6f3158819eeeb3918a7208ec3ff83e847c395a0ca21|22e93497a29c77ffdf199b01f2b3afb4c2067ff42846feb99204f37963d3571f",
+    "profileHashes": [
+     "0d6e8a0ae4e70329840bc6f3158819eeeb3918a7208ec3ff83e847c395a0ca21",
+     "22e93497a29c77ffdf199b01f2b3afb4c2067ff42846feb99204f37963d3571f"
+    ]
+   },
+   "prior": null,
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 3060,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 1395,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 14
+    },
+    {
+     "seed": 1,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 3060,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 1395,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 14
+    },
+    {
+     "seed": 2,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 3060,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 1395,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 14
+    }
+   ],
+   "outcome": "b_win",
+   "samplingDecision": null
+  },
+  {
+   "name": "one-three-ten 10 seeds with draw, first seed agrees=False",
+   "source": "RB forecast review fv_4cdd47b7ff24419f6558c94e",
+   "policy": "one-three-ten",
+   "job": {
+    "pairKey": "821fc8351719e9aa4fd9ddb5b6ddcf109a21b7d6912f491dadf00fd85959b46e|a0a898015ba7a22d114caea6f30e36f438d2802e6a8c44e5dfb6ead688a1b9f4",
+    "profileHashes": [
+     "821fc8351719e9aa4fd9ddb5b6ddcf109a21b7d6912f491dadf00fd85959b46e",
+     "a0a898015ba7a22d114caea6f30e36f438d2802e6a8c44e5dfb6ead688a1b9f4"
+    ]
+   },
+   "prior": [
+    "a_win"
+   ],
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 88,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 4
+    },
+    {
+     "seed": 1,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 250.0000000000017,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 4,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 2,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 155.00000000000966,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 3,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 3,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 22.499999999995996,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 2,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 4,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 147.50000000000313,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 2,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 5,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 245.0000000000037,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 6,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 39,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 3
+    },
+    {
+     "seed": 7,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 222.49999999999324,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 5,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 8,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 162.49999999999636,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 4,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 9,
+     "outcome": "draw",
+     "winnerOwner": null,
+     "unitStartingHp": 2040,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 0
+    }
+   ],
+   "outcome": "close_uncertain",
+   "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "firstSeedAgrees": false,
+    "firstSeedOutcome": "b_win",
+    "firstSeedWinnerHpFraction": 0.08148148148148149,
+    "minimumWinnerHpFraction": 0.25,
+    "reason": "additional_seed_evidence",
+    "requiredSeeds": []
+   }
+  },
+  {
+   "name": "one-three-ten 10 seeds with draw, first seed agrees=True",
+   "source": "RB forecast review fv_601380a938d6099c84dcb804",
+   "policy": "one-three-ten",
+   "job": {
+    "pairKey": "8b1e9a4feb53de6641054031638f909e0ccc0d67611fadeadf5308027ffcfd13|a0a898015ba7a22d114caea6f30e36f438d2802e6a8c44e5dfb6ead688a1b9f4",
+    "profileHashes": [
+     "8b1e9a4feb53de6641054031638f909e0ccc0d67611fadeadf5308027ffcfd13",
+     "a0a898015ba7a22d114caea6f30e36f438d2802e6a8c44e5dfb6ead688a1b9f4"
+    ]
+   },
+   "prior": [
+    "b_win"
+   ],
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 222,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 6
+    },
+    {
+     "seed": 1,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 188,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 5
+    },
+    {
+     "seed": 2,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 82.99999999999847,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 3,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 3,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 162,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 6
+    },
+    {
+     "seed": 4,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 240,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 6
+    },
+    {
+     "seed": 5,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 112,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 4
+    },
+    {
+     "seed": 6,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 106,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 4
+    },
+    {
+     "seed": 7,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 204,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 6
+    },
+    {
+     "seed": 8,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 130,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 4
+    },
+    {
+     "seed": 9,
+     "outcome": "draw",
+     "winnerOwner": null,
+     "unitStartingHp": 1610,
+     "opponentStartingHp": 1080,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 0
+    }
+   ],
+   "outcome": "close_uncertain",
+   "samplingDecision": {
+    "evidenceLevel": "multi_seed_validation",
+    "firstSeedAgrees": true,
+    "firstSeedOutcome": "b_win",
+    "firstSeedWinnerHpFraction": 0.20555555555555555,
+    "minimumWinnerHpFraction": 0.25,
+    "reason": "additional_seed_evidence",
+    "requiredSeeds": []
+   }
+  },
+  {
+   "name": "three-then-ten 10 seeds",
+   "source": "RB forecast review fv_76c736597c7d0655040d8c05",
+   "policy": "three-then-ten",
+   "job": {
+    "pairKey": "a8c6769ba28a051adb3be02a2883b86b5e1ba911f802b0d0fa0230e33d3d3cec|db3a6bd98e07e51db827833fcd8f6686376664125fc6451b99a475499bff4eef",
+    "profileHashes": [
+     "db3a6bd98e07e51db827833fcd8f6686376664125fc6451b99a475499bff4eef",
+     "a8c6769ba28a051adb3be02a2883b86b5e1ba911f802b0d0fa0230e33d3d3cec"
+    ]
+   },
+   "prior": null,
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 82,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 1
+    },
+    {
+     "seed": 1,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 242,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 2,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 242,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 3,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 242,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 4,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 242,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 5,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 242,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 6,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 242,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 7,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 82,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 1
+    },
+    {
+     "seed": 8,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 242,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 7,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 9,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1485,
+     "opponentStartingHp": 2380,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 82,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 1
+    }
+   ],
+   "outcome": "close_uncertain",
+   "samplingDecision": null
+  },
+  {
+   "name": "three-then-ten 10 seeds with draw",
+   "source": "RB mismatch review mv_97b30b2cd73c07445cb47053",
+   "policy": "three-then-ten",
+   "job": {
+    "pairKey": "6b49bea11ff75983dda0a1498b6e0b10363336c12c7c164276b99fb984e31448|cd7d53d5f42f97df3997c6191308a334997e30f652e5444d8e7cfa32b470c8b4",
+    "profileHashes": [
+     "cd7d53d5f42f97df3997c6191308a334997e30f652e5444d8e7cfa32b470c8b4",
+     "6b49bea11ff75983dda0a1498b6e0b10363336c12c7c164276b99fb984e31448"
+    ]
+   },
+   "prior": null,
+   "seeds": [
+    {
+     "seed": 0,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 80,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 2,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 1,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 40,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 1,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 2,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 103,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 5
+    },
+    {
+     "seed": 3,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 105,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 5,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 4,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 5,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 1
+    },
+    {
+     "seed": 5,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 9,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 1,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 6,
+     "outcome": "win",
+     "winnerOwner": 2,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 76.5,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 2,
+     "opponentSurvivors": 0
+    },
+    {
+     "seed": 7,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 22,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 2
+    },
+    {
+     "seed": 8,
+     "outcome": "loss",
+     "winnerOwner": 3,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 25,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 1
+    },
+    {
+     "seed": 9,
+     "outcome": "draw",
+     "winnerOwner": null,
+     "unitStartingHp": 1080,
+     "opponentStartingHp": 3360,
+     "unitRemainingHp": 0,
+     "opponentRemainingHp": 0,
+     "unitSurvivors": 0,
+     "opponentSurvivors": 0
+    }
+   ],
+   "outcome": "close_uncertain",
+   "samplingDecision": null
+  }
+ ]
+}

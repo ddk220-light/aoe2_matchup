@@ -458,10 +458,27 @@ def test_sitemap_without_patches_db(tmp_path):
 # ---- the build boundary ---------------------------------------------------
 
 def test_build_never_renders_or_reads_the_flask_website():
+    legacy = 'apps/' + 'website'  # the retired Flask site
+    assert not (ROOT / legacy).exists()
     sources_of_build = [*(ROOT / 'scripts/migration').glob('*.py'), *(ROOT / 'scripts/migration/site').glob('*.py')]
     for path in sources_of_build:
         text = path.read_text()
-        for forbidden in ('render_template', 'apps/website/templates', 'static/js/matchup.js', 'base_url=', 'HTMLParser'):
+        for forbidden in ('render_template', 'static/js/matchup.js', 'base_url=', 'HTMLParser',
+                          legacy.replace('/', '.'), 'import app\n', 'import app as'):
             assert forbidden not in text, (path.name, forbidden)
+        if path.name == 'export_data.py':
+            # Only the simulator data version's legacy hash labels keep the old path.
+            assert sorted(re.findall(legacy + r'/[\w/.]+', text)) == [
+                legacy + '/services/', legacy + '/services/battles.py', legacy + '/services/mechanics.py']
+        else:
+            assert legacy not in text, path.name
     for path in (ROOT / 'scripts/migration/site/templates').glob('*.html'):
         assert '{% extends' not in path.read_text() and 'url_for' not in path.read_text(), path.name
+
+
+def test_published_pages_use_the_current_site_name(every_page):
+    texts = [json.dumps(page) for page in every_page.values()]
+    texts += [pages.simulator_about(), pages.about()['body'], pages.rankings_overview_section()]
+    for text in texts:
+        assert 'AoE2 Unit Analyzer' not in text and 'AoE2 Analyzer' not in text
+    assert meta(pages.simulator_frame(), 'og:site_name') == 'AoE2 Matchup'

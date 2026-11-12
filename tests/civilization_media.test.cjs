@@ -89,7 +89,7 @@ test('choosing another civilization on a detail page stays in place', () => {
         window: { PRESELECT_CIV: 'Danes' },
         onCivClick: name => { selected = name; },
     });
-    const source = fs.readFileSync(path.join(__dirname, '../apps/website/static/js/matchup.js'), 'utf8');
+    const source = fs.readFileSync(path.join(__dirname, '../legacy/client/js/matchup.js'), 'utf8');
     // Exercise the actual picker registration, isolated from its asynchronous data loader.
     vm.runInContext(source.slice(source.indexOf('CIVS.forEach('),
         source.indexOf('/* ---- Per-civ landing page preselect')), picker);

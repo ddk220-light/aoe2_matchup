@@ -22,7 +22,7 @@ jobs:
       # The deployable suite runs entirely from committed artifacts (DBs/JSON).
       # Replay parsing, historical calibration archives and superseded Python
       # simulation/pipeline contracts are intentionally outside this gate;
-      # none is required by the staged website runtime.
+      # none is required by the deployed API or the site build.
       - name: Install Python deps
         run: pip install -r requirements-ci.txt
 

@@ -11,32 +11,28 @@ import pytest
 MODULE = 'aoe2x.assets.build_civilization_release'
 
 
-def test_every_civilization_uses_the_same_editorial_description_in_html_and_api(client):
-    import app
-    import html
-    import re
-    from apps.website.services.civilizations import load_civilization_descriptions
+def test_every_civilization_uses_the_same_editorial_description_in_pages_and_api(client):
+    import aoe2_api.web as app
+    from aoe2_api.services.civilizations import load_civilization_descriptions
+    from scripts.migration.site import pages
 
     descriptions = load_civilization_descriptions()
     assert set(descriptions) == set(app._get_page_civs())
     assert len(set(descriptions.values())) == len(descriptions)
-    overview = {row['name']: row['description'] for row in app.get_civ_overview_data()}
+    overview = {row['name']: row for row in app.get_civ_overview_data()}
     for name, description in descriptions.items():
-        response = client.get(f'/civilizations/{name.lower()}')
-        assert response.status_code == 200, name
-        body = response.get_data(as_text=True)
-        narrative = re.search(r'<div class="analysis-hero-narrative">(.*?)</div>', body, re.S)
-        assert narrative is not None, name
-        assert html.unescape(narrative.group(1)) == description, name
-        assert overview[name] == description, name
+        # The published page renders the API's strategic description (apps/web reads the export).
+        assert overview[name]['description'] == description, name
         assert client.get(f'/api/civilizations/{name}').get_json()['strategic_description'] == description, name
-        assert description.split('. ', 1)[0] in html.unescape(body.split('</head>', 1)[0]), name
+        head = pages.civilization_head(overview[name])
+        assert description.split('. ', 1)[0] in next(
+            tag['content'] for tag in head['meta'] if tag.get('name') == 'description'), name
 
 
 @pytest.mark.parametrize('enabled', [False, True])
 def test_civilization_emblems_use_configured_asset_bucket(monkeypatch, enabled):
     from aoe2x.assets import config
-    from apps.website.services.civilizations import load_civilization_supplement
+    from aoe2_api.services.civilizations import load_civilization_supplement
     monkeypatch.setattr(config, 'assets_enabled', lambda: enabled)
     release = load_civilization_supplement()
     prefix = '/assets' if enabled else '/static'
@@ -89,7 +85,7 @@ def test_committed_frank_mounted_crossbow_row_explains_gold_discount():
 
 
 def test_page_composition_leaves_unaffected_civilization_and_input_unchanged():
-    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    from aoe2_api.services.civilizations import compose_civilization_analysis, load_civilization_supplement
     baseline = {'civ_name': 'Aztecs', 'age': 'imperial', 'strategic_description': 'Original',
                 'power_units': {'infantry': {'militia': [
                     {'unit_name': 'Elite Jaguar Warrior', 'unit_slug': 'elite_jaguar_warrior_aztecs',
@@ -103,7 +99,7 @@ def test_page_composition_leaves_unaffected_civilization_and_input_unchanged():
 
 
 def test_page_composition_replaces_affected_cavalry_archer_without_changing_other_rows():
-    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    from aoe2_api.services.civilizations import compose_civilization_analysis, load_civilization_supplement
     paladin = {'unit_name': 'Paladin', 'unit_slug': 'paladin', 'score': 75.5,
                'rank': 8, 'tier': 'signature'}
     baseline = {'civ_name': 'Franks', 'age': 'imperial', 'strategic_description': 'Old description',
@@ -130,7 +126,7 @@ def test_page_composition_replaces_affected_cavalry_archer_without_changing_othe
     ('Varangians', 'elite_jarl', 'cavalry'),
 ])
 def test_new_civilization_composes_complete_roster_and_explicit_buildings(name, unique_slug, unique_column):
-    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    from aoe2_api.services.civilizations import compose_civilization_analysis, load_civilization_supplement
     supplement = load_civilization_supplement()
     result = compose_civilization_analysis(name, 'imperial', {}, supplement)
     rows = [row for lines in result['power_units'].values() for units in lines.values() for row in units]
@@ -147,7 +143,7 @@ def test_new_civilization_composes_complete_roster_and_explicit_buildings(name, 
 
 
 def test_new_civilization_keeps_actual_supplied_rank_fields():
-    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    from aoe2_api.services.civilizations import compose_civilization_analysis, load_civilization_supplement
     scored = {'unit_slug': 'elite_jomsviking', 'unit_name': 'Old Jomsviking',
               'score': 91.2, 'rank': 2, 'percentile': 97.0, 'tier': 'signature',
               'median_delta': 34.5}
@@ -165,7 +161,7 @@ def test_new_civilization_keeps_actual_supplied_rank_fields():
 
 
 def test_viking_longship_alias_preserves_actual_longboat_rank():
-    from apps.website.services.civilizations import compose_civilization_analysis, load_civilization_supplement
+    from aoe2_api.services.civilizations import compose_civilization_analysis, load_civilization_supplement
     baseline = {'civ_name': 'Vikings', 'age': 'imperial', 'power_units': {
         'navy': {'galleon': [{'unit_slug': 'elite_longboat_vikings', 'unit_name': 'Elite Longboat',
                              'score': 100.0, 'rank': 1, 'percentile': 100.0,
@@ -179,7 +175,7 @@ def test_viking_longship_alias_preserves_actual_longboat_rank():
 
 
 def test_page_names_add_only_supplement_civilizations():
-    from apps.website.services.civilizations import civilization_page_names, load_civilization_supplement
+    from aoe2_api.services.civilizations import civilization_page_names, load_civilization_supplement
     assert civilization_page_names(['Franks', 'Aztecs'], load_civilization_supplement())[:2] == [
         'Aztecs', 'Bohemians']
     names = civilization_page_names(['Franks', 'Aztecs'], load_civilization_supplement())
@@ -188,7 +184,7 @@ def test_page_names_add_only_supplement_civilizations():
 
 
 def test_explicit_building_overrides_unique_unit_default():
-    from apps.website.services.catalog import building_for_unit
+    from aoe2_api.services.catalog import building_for_unit
     assert building_for_unit({'unit_name': 'Varangian Guard', 'is_unique': True,
                               'building': 'barracks'}, 'infantry', 'varangian_guard') == 'barracks'
 
@@ -333,7 +329,7 @@ def test_generated_release_contract_and_visible_longship_icons():
         assert set(media) == {'icon', 'icon_transparent', 'idle', 'attack'}
     for civ in ('Danes', 'Saxons', 'Varangians', 'Vikings'):
         ship = next(u for u in release['civilizations'][civ]['units'] if u['unit_name'] == 'Elite Longship')
-        from apps.website.services.catalog import presentation
+        from aoe2_api.services.catalog import presentation
         assert presentation()['icon_names'][ship['unit_name']] == 'Elite_Longboat'
     for civ, record in release['civilizations'].items():
         assert record['complete_roster'] == (civ in {'Danes', 'Saxons', 'Varangians'})

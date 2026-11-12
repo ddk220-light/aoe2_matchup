@@ -288,7 +288,7 @@ def test_civilization_pages_keep_owner_approved_copy():
 def test_civilization_tiers_and_line_names():
     assert list(content.TIERS) == ['signature', 'good', 'generic', 'bad', 'situational', 'worst']
     assert all(set(value) == {'label', 'hint'} for value in content.TIERS.values())
-    from apps.website.services.civilizations import civilization_page_analysis
+    from aoe2_api.services.civilizations import civilization_page_analysis
     standard = {line for column in civilization_page_analysis('Franks')['power_units'].values() for line in column}
     # Lines without a display name (e.g. mounted_crossbowman) fall back to "unit" in Astro.
     assert standard - set(content.LINE_NAMES) == {'mounted_crossbowman'}

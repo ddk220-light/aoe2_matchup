@@ -9,8 +9,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'apps/website'))
-import app as web
+sys.path.insert(0, str(ROOT / 'apps/backend'))
+import aoe2_api.web as web
 
 API_DIGESTS = {"/api/ref/civ/Spanish": [200, "00594672454a6fb06e75ee7b25f3f322506ce4396d6f237a34ac03f3457db741"], "/api/ref/combat-unit/Spanish/champion": [200, "9db1a26a508f642f9755d0e483ba9f0f52717e2a8642312f2f656bce9b40bf82"], "/api/ref/unit-line/infantry": [200, "155361ae66462a85e8794dd6bc067e75765fed60d9f8d4c91a7adddcdee55bc4"], "/api/ref/unit-line/archery": [200, "b7a0c3db25e220165d9fad74de2407370fa6105b224571fef973ac20c6a41757"], "/api/ref/unit-line/stable": [200, "7253c9540977837ca2530e5c5361767777e90b19a84bd9aaf3a05c14fc6009c2"], "/api/v3/arena-preview": [200, "6b4eb89cc0d536e0165ff4dd243889d6d74457d67a54d02aeb032d797b12b63d"]}
 

@@ -1,5 +1,10 @@
-"""Thin Vercel entrypoint around the frozen, read-only domain application."""
-import importlib.util
+"""Thin Vercel entrypoint around the frozen, read-only API package.
+
+The API package (aoe2_api) and the aoe2x library are imported from the sealed
+runtime/ directory that scripts/migration/prepare_release.py writes, never from
+the source tree next to this file.
+"""
+import importlib
 import json
 from pathlib import Path
 import sys
@@ -15,10 +20,11 @@ BOOT_ID = uuid.uuid4().hex
 
 RUNTIME = Path(__file__).resolve().parent/'runtime'
 RELEASE = json.loads((RUNTIME/'release.json').read_text())
-sys.path.insert(0, str(RUNTIME))
-spec = importlib.util.spec_from_file_location('aoe2_legacy_web', RUNTIME/'apps/website/app.py')
-website = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(website)
+# runtime/ mirrors repo-relative paths: aoe2x/ at its root (so aoe2x.paths.REPO_ROOT
+# is runtime/) and the API package at runtime/apps/backend/aoe2_api.
+sys.path[:0] = [str(RUNTIME), str(RUNTIME/'apps/backend')]
+website = importlib.import_module('aoe2_api.web')
+assert Path(website.__file__).resolve().is_relative_to(RUNTIME), website.__file__
 PUBLIC_CATALOG = json.loads((RUNTIME/'public-catalog.json').read_text())
 # Freeze the existing projection; the server must not scan unpublished images
 # or consult Railway to construct asset metadata. M3 publishes the media bytes.

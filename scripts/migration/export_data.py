@@ -12,11 +12,28 @@ import sys
 import subprocess
 
 ROOT=Path(__file__).resolve().parents[2]
-sys.path[:0]=[str(ROOT/'apps/website'),str(ROOT)]
-import app as website
+sys.path[:0]=[str(ROOT),str(ROOT/'apps/backend')]
+import aoe2_api.web as website
 from aoe2x.sim.unit_lines import UNIT_LINES
-from apps.website.services.release import release_metadata
-from apps.website.services.advisor import advisor_catalog
+from aoe2_api.services.release import release_metadata
+from aoe2_api.services.advisor import advisor_catalog
+
+# The simulator data version hashes these configuration inputs keyed by path.
+# The two API services kept their pre-move labels (the files moved byte-identical
+# from apps/website/services/ to apps/backend/aoe2_api/services/): changing a key
+# would change the simulator version, hence the /data/<version>/ URLs and the
+# X-AoE2-Simulation-Version header, and open tabs of the previous release would
+# get 409 responses although nothing they depend on changed.
+SIMULATOR_CONFIGURATION_INPUTS={
+    'data/golden/aoe2_reference_simulation.db':'data/golden/aoe2_reference_simulation.db',
+    'apps/website/services/battles.py':'apps/backend/aoe2_api/services/battles.py',
+    'aoe2x/js_simulation/scenario_config.py':'aoe2x/js_simulation/scenario_config.py',
+    'apps/website/services/mechanics.py':'apps/backend/aoe2_api/services/mechanics.py',
+    'aoe2x/dbgen/v3_mechanics.py':'aoe2x/dbgen/v3_mechanics.py',
+    'aoe2x/js_simulation/fixtures/golden_map.json':'aoe2x/js_simulation/fixtures/golden_map.json',
+    'aoe2x/js_simulation/fixtures/golden_formation_27v27.json':'aoe2x/js_simulation/fixtures/golden_formation_27v27.json',
+    'aoe2x/js_simulation/fixtures/current_ranged_golden_formations.json':'aoe2x/js_simulation/fixtures/current_ranged_golden_formations.json',
+}
 
 def encode(value): return json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode()
 def sha(data): return hashlib.sha256(data).hexdigest()
@@ -59,13 +76,8 @@ def export(destination):
         inputs={name:sha(data) for name,data in sorted(files.items())}
         configuration_inputs={}
         if group=='simulator':
-            for name in ['data/golden/aoe2_reference_simulation.db',
-                'apps/website/services/battles.py','aoe2x/js_simulation/scenario_config.py',
-                'apps/website/services/mechanics.py','aoe2x/dbgen/v3_mechanics.py',
-                'aoe2x/js_simulation/fixtures/golden_map.json',
-                'aoe2x/js_simulation/fixtures/golden_formation_27v27.json',
-                'aoe2x/js_simulation/fixtures/current_ranged_golden_formations.json']:
-                configuration_inputs[name]=sha((ROOT/name).read_bytes())
+            for name,path in SIMULATOR_CONFIGURATION_INPUTS.items():
+                configuration_inputs[name]=sha((ROOT/path).read_bytes())
             inputs['configuration_inputs']=configuration_inputs
         version=sha(encode(inputs))
         folder=destination/'data'/version

@@ -1,15 +1,17 @@
 import os
 import sys
 
-# Make the website app importable bare (import app) and the aoe2x package
-# importable from the repo root — the root is NOT on sys.path when the suite
-# is launched as plain `pytest` (e.g. CI) instead of `python -m pytest`.
+# Make the API package (apps/backend/aoe2_api) and the aoe2x package importable
+# from the repo root — the root is NOT on sys.path when the suite is launched as
+# plain `pytest` (e.g. CI) instead of `python -m pytest`. Tests import the API as
+# `aoe2_api.web`, never a bare `import app` (apps/backend/app.py is the deployed
+# entrypoint and needs the sealed runtime/, which the test job does not build).
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(_ROOT, "apps", "website"))
+sys.path.insert(0, os.path.join(_ROOT, "apps", "backend"))
 sys.path.insert(0, _ROOT)
 
 import pytest
-import app as flask_app
+import aoe2_api.web as flask_app
 
 @pytest.fixture
 def client():

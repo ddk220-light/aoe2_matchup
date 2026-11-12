@@ -1,12 +1,12 @@
 """Shared civilization identity and presentation metadata, never combat rules."""
 import json
 from functools import lru_cache
-from pathlib import Path
+from aoe2x.paths import REPO_ROOT
 from .database import connect_readonly
 
 @lru_cache(maxsize=1)
 def presentation():
-    return json.loads((Path(__file__).resolve().parents[3] / 'aoe2x/assets/presentation.json').read_text(encoding='utf-8'))
+    return json.loads((REPO_ROOT / 'aoe2x/assets/presentation.json').read_text(encoding='utf-8'))
 
 @lru_cache(maxsize=4)
 def site_catalog(reference_path):

@@ -60,12 +60,13 @@ engine_prefix=f'/releases/engine/{engine_version}'
 about = site_pages.about()
 
 backend_sources = set()
+# The API package lands at runtime/apps/backend/aoe2_api (apps/backend/app.py imports it from there).
 for base in ['aoe2x/advisor', 'aoe2x/assets', 'aoe2x/batch', 'aoe2x/dbgen', 'aoe2x/rank', 'aoe2x/sim',
-             'apps/website/services', 'apps/website/routes']:
+             'apps/backend/aoe2_api']:
     backend_sources.update(p for p in (ROOT/base).rglob('*.py') if '__pycache__' not in p.parts)
 for name in ['aoe2x/__init__.py', 'aoe2x/paths.py', 'aoe2x/storage.py',
              'aoe2x/assets/presentation.json', 'aoe2x/js_simulation/__init__.py',
-             'aoe2x/js_simulation/scenario_config.py', 'apps/website/app.py']:
+             'aoe2x/js_simulation/scenario_config.py']:
     path = ROOT/name
     if path.exists(): backend_sources.add(path)
 backend_sources.update(p for p in (ROOT/'data/golden').rglob('*') if p.is_file() and p.suffix in ['.db', '.json'])
@@ -115,6 +116,8 @@ for base in ['apps/web/src']:
     source_files.update(p for p in (ROOT/base).rglob('*') if p.is_file()
                         and not any(x in ['generated', '__pycache__'] or re.fullmatch(r'generated [0-9]+', x) for x in p.parts))
 source_files.update(ROOT/'apps/backend'/p for p in ['app.py', 'advisor_cache.py', 'pyproject.toml', 'uv.lock', 'requirements.txt', '.python-version'])
+# Every API package file (sources and data), so `check_release.mjs backend` sees any change after sealing.
+source_files.update(p for p in (ROOT/'apps/backend/aoe2_api').rglob('*') if p.is_file() and '__pycache__' not in p.parts)
 source_files.update(ROOT/p for p in ['vercel.json', 'apps/web/astro.config.mjs', 'apps/web/package.json',
                                     'apps/web/package-lock.json', 'scripts/migration/prepare_release.py',
                                     'scripts/migration/check_release.mjs', 'scripts/migration/build_service.sh', 'scripts/migration/export_data.py',

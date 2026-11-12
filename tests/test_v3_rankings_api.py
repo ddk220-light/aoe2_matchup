@@ -58,7 +58,7 @@ def test_older_line_links_keep_their_units_and_use_merged_ranks(client, alias, c
 
 
 def test_ranking_stat_chain_uses_the_campaign_reference(client):
-    import app
+    import aoe2_api.web as app
     rows = client.get('/api/ref/unit-line/archery').get_json()['imperial']
     row = next(r for r in rows if r['civ_name'] == 'Varangians' and 'jarl' in r['unit_slug'])
     chain = client.get(f"/api/ref/stat-chain/{row['id']}?source=rankings").get_json()
@@ -101,7 +101,10 @@ def test_unit_row_keeps_missing_tech_details(client):
     assert isinstance(champion["missing_techs"], list)
 
 
-def test_seo_line_page_describes_population_and_cost_balanced_scoring(client):
-    body = client.get("/units/militia").get_data(as_text=True)
-    assert "population- and cost-balanced" in body.lower()
-    assert "equal numbers" not in body.lower()
+def test_seo_line_page_describes_population_and_cost_balanced_scoring():
+    from scripts.migration.site import content, pages
+    head = pages.unit_line_head(next(p for p in content.UNIT_LINE_PAGES if p["url"] == "militia"))
+    text = " ".join(str(tag.get("content", "")) for tag in head["meta"]) + " ".join(head["structured"])
+    text += pages.rankings_overview_section()
+    assert "population- and cost-balanced" in text.lower()
+    assert "equal numbers" not in text.lower()

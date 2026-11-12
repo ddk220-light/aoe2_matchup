@@ -120,10 +120,9 @@ def test_arena_preview_exposes_map_and_empty_formation_slots(client):
     assert all("rotation" in slot for slot in payload["placementByOwner"]["2"])
 
 
-def test_battle_page_uses_player_controls_and_public_defaults(client):
-    response = client.get("/")
-    assert response.status_code == 200
-    body = response.data.decode()
+def test_battle_page_uses_player_controls_and_public_defaults():
+    # The battle page is the Astro simulator page (prerendered at /).
+    body = (ROOT / "apps" / "web" / "src" / "pages" / "index.astro").read_text()
     assert 'id="restartBtn"' in body
     assert 'id="playPauseBtn"' in body
     assert 'id="speedBtn"' in body

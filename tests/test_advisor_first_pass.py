@@ -3,7 +3,7 @@ from collections import Counter
 import json
 import sqlite3
 
-from apps.website.services.advisor import (
+from aoe2_api.services.advisor import (
     DATASET, advisor_catalog, advisor_evidence, advisor_matchups,
 )
 from aoe2x.paths import MEDIA_DIR
@@ -100,13 +100,19 @@ def test_canonical_unit_icons_and_existing_siege_reference_are_complete():
 
 
 def test_advisor_never_starts_a_legacy_simulation(client, monkeypatch):
-    import app
+    import aoe2_api.web as app
     def forbidden(*args, **kwargs):
         raise AssertionError('The advisor must only read saved evidence')
     monkeypatch.setattr(app, 'get_matchup_sims', forbidden)
     monkeypatch.setattr(app, 'get_matchup_recommendations', forbidden)
-    for path in ['/matchup-advisor', '/api/advisor-catalog', '/api/advisor-matchups/Varangians']:
+    import aoe2x.advisor.best_units as best_units
+    monkeypatch.setattr(best_units, 'get_matchup_sims', forbidden)
+    monkeypatch.setattr(best_units, 'get_matchup_recommendations', forbidden)
+    for path in ['/api/advisor-catalog', '/api/advisor-matchups/Varangians']:
         response = client.get(path)
         assert response.status_code == 200
+    # The published /matchup-advisor page data is built from the same saved evidence.
+    from scripts.migration.site import pages
+    assert pages.advisor()['frame']['title']
     assert client.get('/api/advisor-matchups/Unknown').status_code == 404
     assert client.get('/api/advisor-evidence/999999').status_code == 404

@@ -44,7 +44,7 @@ def test_asset_base_rewrites_to_broker_route():
     ('Elite Jomsviking', 'elite_jomsviking', 'Elite_Jomsviking'),
 ])
 def test_new_units_resolve_through_the_same_catalog_as_existing_units(name, slug, icon):
-    from apps.website.services.catalog import presentation
+    from aoe2_api.services.catalog import presentation
     cat = catalog.synthesize_local(asset_base='/assets', build='177723')
     assert presentation()['icon_names'][name] == icon
     assert cat['sprites'][name]['url'] == f'/assets/img/unit_sprites/{slug}.png'
@@ -53,7 +53,7 @@ def test_new_units_resolve_through_the_same_catalog_as_existing_units(name, slug
 
 
 def test_longship_names_reuse_shared_longboat_assets():
-    from apps.website.services.catalog import presentation
+    from aoe2_api.services.catalog import presentation
     cat = catalog.synthesize_local(asset_base='/assets', build='177723')
     for new, old in [('Longship', 'Longboat'), ('Elite Longship', 'Elite Longboat')]:
         assert cat['sprites'][new] == cat['sprites'][old]

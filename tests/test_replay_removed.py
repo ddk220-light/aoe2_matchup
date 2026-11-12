@@ -8,13 +8,13 @@ def test_replay_routes_are_not_registered(client):
     assert client.get("/replay/api/default").status_code == 404
 
 
-def test_replay_is_not_linked_from_public_pages(client):
-    for path in ("/", "/about"):
-        body = client.get(path).data.decode()
-        assert "Replay Analyzer" not in body
-        assert 'href="/replay"' not in body
+def test_replay_is_not_linked_from_public_pages():
+    from scripts.migration.site import pages
+    for text in (pages.simulator_about(), pages.about()['body']):
+        assert "Replay Analyzer" not in text
+        assert 'href="/replay"' not in text
 
 
-def test_replay_is_not_in_sitemap(client):
-    body = client.get("/sitemap.xml").data.decode()
-    assert "/replay" not in body
+def test_replay_is_not_in_sitemap():
+    from scripts.migration.site import sitemap
+    assert "/replay" not in sitemap.sitemap_xml()

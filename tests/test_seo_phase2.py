@@ -1,5 +1,5 @@
-# tests/test_seo_phase2.py
-import json
+# tests/test_seo_phase2.py — the unit-line API behind the published rankings pages.
+# The rankings overview data, section and ItemList are covered in tests/test_site_builders.py.
 
 
 def test_unit_line_api_parity(client):
@@ -12,39 +12,8 @@ def test_unit_line_api_parity(client):
 
 
 def test_get_unit_line_data_matches_api(client):
-    import app
+    import aoe2_api.web as app
     api = client.get("/api/ref/unit-line/infantry").get_json()
     helper = app.get_unit_line_data("infantry")
     assert helper == api
 
-
-def test_rankings_overview_shape(client):
-    import app
-    data = app.get_rankings_overview_data(top_n=8)
-    labels = [g["label"] for g in data]
-    assert labels == ["Infantry", "Archers & Gunpowder", "Cavalry", "Siege", "Naval"]
-    for g in data:
-        assert g["units"], f"{g['label']} has no ranked units"
-        assert len(g["units"]) <= 8
-        scores = [u["score"] for u in g["units"]]
-        assert scores == sorted(scores, reverse=True)
-        u = g["units"][0]
-        assert set(u.keys()) == {"civ", "name", "slug", "score"}
-        assert isinstance(u["score"], (int, float))
-
-
-def test_rankings_ssr_renders(client):
-    import app
-    body = client.get("/units").data.decode()
-    assert 'id="rankings-ssr"' in body
-    assert "Simulation V3" in body
-    assert "population- and cost-balanced" in body
-    assert "three seeded runs" in body
-    ov = app.get_rankings_overview_data()
-    top = next(g["units"][0]["name"] for g in ov if g["units"])
-    assert top in body
-
-
-def test_rankings_ssr_itemlist_jsonld(client):
-    body = client.get("/units").data.decode()
-    assert '"@type": "ItemList"' in body

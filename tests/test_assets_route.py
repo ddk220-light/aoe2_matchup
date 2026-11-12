@@ -7,8 +7,8 @@ _BUCKET_KEYS = ("BUCKET_ENDPOINT", "BUCKET_ACCESS_KEY_ID", "BUCKET_SECRET_ACCESS
 def _client(monkeypatch):
     for k in _BUCKET_KEYS:
         monkeypatch.delenv(k, raising=False)  # force fallback mode
-    sys.path.insert(0, os.path.join(os.getcwd(), "apps", "website"))
-    app_mod = importlib.import_module("app")
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "apps", "backend"))
+    app_mod = importlib.import_module("aoe2_api.web")
     importlib.reload(app_mod)
     app_mod.app.config["TESTING"] = True
     return app_mod.app.test_client()
@@ -25,8 +25,9 @@ def test_catalog_fallback_shape(monkeypatch):
     assert any_sprite["url"].startswith("/static/img/unit_sprites/")
 
 
-def test_asset_broker_404_when_disabled(monkeypatch):
-    # With no bucket configured, the /assets broker route must not try to presign.
+def test_asset_broker_route_is_not_served(monkeypatch):
+    # The Railway bucket broker (/assets/<key>) is retired: media is served from Blob.
     c = _client(monkeypatch)
+    assert not any(str(rule).startswith("/assets/") for rule in c.application.url_map.iter_rules())
     r = c.get("/assets/img/unit_sprites/knight.png")
     assert r.status_code == 404

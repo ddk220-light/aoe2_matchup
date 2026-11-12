@@ -26,11 +26,15 @@ def test_runtime_geometry_matches_extracted_evidence():
         assert f'"{slug}": {entry["height"]},' in runtime
 
 
-def test_sprite_geometry_module_is_served_without_exposing_source_assets():
-    from apps.website.app import app
-    client = app.test_client()
-    response = client.get('/v3-runtime/viewer/unit-sprite-geometry.js')
-    assert response.status_code == 200
-    assert b'NATIVE_SPRITE_HEIGHTS' in response.data
-    assert client.get('/v3-runtime/viewer/battle-state.js').status_code == 404
-    assert client.get('/v3-runtime/tests/production-mobile-presentation.test.mjs').status_code == 404
+def test_sprite_geometry_module_is_published_without_exposing_source_assets():
+    # /v3-runtime/ is published by the release build: engine src/*.js plus exactly
+    # two viewer modules; fixtures, tests and other viewer files stay unpublished.
+    import re
+    module = (ROOT / 'aoe2x/js_simulation/viewer/unit-sprite-geometry.js').read_text()
+    assert 'NATIVE_SPRITE_HEIGHTS' in module
+    release = (ROOT / 'scripts/migration/prepare_release.py').read_text()
+    viewer = re.search(r"for name in \[([^\]]*)\]:\n    public_sources\['v3-runtime/viewer/'\+name\]", release)
+    assert viewer, 'prepare_release must publish an explicit viewer allowlist'
+    assert sorted(re.findall(r"'([^']+)'", viewer.group(1))) == ['map-renderer.js', 'unit-sprite-geometry.js']
+    assert "for path in (engine/'src').rglob('*.js'):" in release
+    assert (ROOT / 'aoe2x/js_simulation/viewer/battle-state.js').exists()  # exists, but is not published

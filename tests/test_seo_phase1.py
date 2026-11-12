@@ -1,9 +1,10 @@
-# tests/test_seo_phase1.py
+# tests/test_seo_phase1.py — the civilization overview data behind the published /civilizations pages.
+# The page head, ItemList and per-civ links are covered in tests/test_site_builders.py.
 PAGE_ONLY_CIVS = ["Danes", "Saxons", "Varangians"]
 
 
 def test_get_civ_overview_data_shape(client):
-    import app
+    import aoe2_api.web as app
     data = app.get_civ_overview_data()
     # Page-only additions do not expand the simulation reference catalog.
     civs = sorted(app._get_ref_civs() + PAGE_ONLY_CIVS)
@@ -21,20 +22,3 @@ def test_get_civ_overview_data_shape(client):
     assert set(unit.keys()) == {"name", "slug", "tier", "is_unique"}
     assert unit["name"]
 
-
-def test_civ_picker_renders_all_civ_links_without_duplicate_overview(client):
-    import app
-    civs = sorted(app._get_ref_civs() + PAGE_ONLY_CIVS)
-    body = client.get("/civilizations").data.decode()
-    for civ in civs:
-        assert f'data-civ="{civ}"' in body, f"{civ} missing from civ picker"
-        assert f'href="/civilizations/{civ.lower()}"' in body
-    assert 'id="civ-ssr"' not in body
-
-
-def test_civ_overview_itemlist_jsonld(client):
-    import app
-    n = len(app._get_ref_civs()) + len(PAGE_ONLY_CIVS)
-    body = client.get("/civilizations").data.decode()
-    assert '"@type": "ItemList"' in body
-    assert f'"numberOfItems": {n}' in body

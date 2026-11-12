@@ -1,7 +1,7 @@
-from apps.website.services.battles import _v3_counts
+from aoe2_api.services.battles import _v3_counts
 from aoe2x.js_simulation.scenario_config import build_scenario_payload
 from pathlib import Path
-import app as website
+import aoe2_api.web as website
 
 
 def team(food=0, wood=0, gold=0):

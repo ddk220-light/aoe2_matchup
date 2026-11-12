@@ -50,3 +50,24 @@ def test_set_current_build_unknown_raises(tmp_path):
     with pytest.raises(ValueError):
         patches_db.set_current_build(conn, "does_not_exist")
     conn.close()
+
+
+# Moved from tests/test_patch_routes.py (its route tests are covered by tests/test_site_builders.py).
+def test_committed_patches_have_ranking_rows():
+    """Guard against the 177723 regression: every patch in the COMMITTED
+    patches.db that records unit changes must also carry ranking-diff rows
+    (patch_unit_ranking sat empty for build 177723 because the data was
+    written by an ad-hoc finalize script that skipped pipeline step 8)."""
+    db = os.path.join(os.path.dirname(__file__), "..", "data", "golden", "patches.db")
+    if not os.path.exists(db):
+        import pytest
+        pytest.skip("committed patches.db not present")
+    import sqlite3
+    conn = sqlite3.connect(db)
+    missing = conn.execute(
+        "SELECT p.build_number FROM patches p "
+        "WHERE EXISTS (SELECT 1 FROM patch_unit_changes c WHERE c.patch_id=p.id) "
+        "AND NOT EXISTS (SELECT 1 FROM patch_unit_ranking r WHERE r.patch_id=p.id)"
+    ).fetchall()
+    conn.close()
+    assert not missing, f"patches with unit changes but no ranking rows: {missing}"

@@ -58,7 +58,8 @@ CONFIG = {
     "lo": 0.5, "hi": 1.5,     # strength range
     "gold_main": True,        # prefer a gold main with at least one win
     "struggle_hp": 0.50,      # a win where the main keeps < this share of HP is a struggle
-    "struggle_power": True,   # a power win (main's army >= 25% dearer) is a struggle
+    "struggle_power": True,   # a power win (main's army >= 25% dearer) is a struggle ...
+    "struggle_power_hp": 1.01,  # ... when the main keeps < this share of HP (1.01 = always)
     "struggle_close": True,   # a close result is a struggle
     "help_hp_margin": 0.15,   # same result: support keeps >= 15 HP points more
     "help_eco": 0.25,         # same result: support army >= 25% cheaper (60-s investment)
@@ -178,7 +179,7 @@ def struggles(info, cfg):
         return cfg["struggle_close"]
     if cat not in WIN_CATS:
         return False
-    if cat == "power_win" and cfg["struggle_power"]:
+    if cat == "power_win" and cfg["struggle_power"] and (info["hp_own"] is None or info["hp_own"] < cfg["struggle_power_hp"]):
         return True
     return info["hp_own"] is not None and info["hp_own"] < cfg["struggle_hp"]
 

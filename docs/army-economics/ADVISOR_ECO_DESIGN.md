@@ -1,5 +1,290 @@
 # Matchup Advisor × army economics: "narrow loss, cheaper to rebuild"
 
+## Revision 4 — scoring model (owner request 2026-11-12)
+
+**Status:** scratch model and analysis only; no site code or published data changed.
+Model: `tools/economy/advisor_eco/advisor_model_rev4.py` (Python only; no JS twin yet —
+worth writing once the weights are agreed). Runner: `impact_rev4.py` (≈ 1 min,
+single process). Per-plan output for all 3,080 plans:
+`docs/army-economics/advisor-plans-rev4.json.gz` (default weights in full, plus the live
+plan, the Revision 3 plan and the main/support under the eco and combat weight sets).
+Summary numbers: `advisor-plans-rev4-summary.json`. Categories are the Revision 3 ones
+(`classify.py`: HP < 50%, eco ≥ 25%, kite eligibility, dominance needs ≥ 50% HP).
+
+### The scoring in plain language
+
+1. **Category per matchup.** For a plan "civ X against civ Y", every X unit against every Y
+   unit gets one category from X's side: Complete dominance, Clear win (kite), Plain win,
+   Power win, Eco win (narrow loss but ≥ 25% cheaper), Close, Cheap loss, Plain loss,
+   Kited loss, Outclassed loss. Inferred (pending re-simulation) cells count as Plain
+   win / Plain loss and are flagged in the output; identity and close cells are Close;
+   "Cheap loss (HP unknown)" counts as Cheap loss.
+2. **Base score** of a unit = sum of the category weights over the opponent civ's roster.
+3. **Opponent strength.** Each Y unit's base score (computed the same way against X's
+   roster) is mapped onto 0.5–1.5 across Y's roster: weakest unit 0.5, strongest 1.5,
+   linear in between (min-max). All units equal → 1.0.
+4. **Advantage score** = sum over the opponent's units of weight × multiplier. For a positive
+   weight (wins, eco win) the multiplier is the opponent's strength: beating the strongest
+   enemy unit counts 1.5×, beating the weakest 0.5×. For a negative weight (losses) it is
+   the mirror, 2 − strength: losing to the enemy's strongest unit counts 0.5×, losing to
+   its weakest 1.5× ("credit grows with the opponent's strength, blame with its weakness").
+5. **Main unit** = highest advantage score among eligible units, ties broken by base score,
+   gold first, name, id. Not eligible: **Scorpion** (16 civ entries: Aztecs, Burgundians,
+   Byzantines, Cumans, Hindustanis, Huns, Italians, Khitans, Koreans, Lithuanians, Malians,
+   Poles, Portuguese, Saracens, Spanish, Vietnamese) and **Heavy Scorpion** (39 civ entries)
+   — 55 advisor units, matched by name. The "prefer a gold main with at least one win" rule
+   is kept (see below).
+6. **Support targets** = every enemy unit the main loses to (any loss category, eco win
+   included) plus every enemy unit the main **struggles** against: a Close result, a
+   Power win (main's army ≥ 25% dearer), or any win where the main keeps < 50% HP.
+7. **Support candidates** = no-gold units and Scorpion / Heavy Scorpion (never the main).
+   A candidate **helps** against a target if
+   - its category weight against the target is higher than the main's (e.g. it wins where
+     the main loses, dominates where the main only wins, or loses only cheaply where the
+     main is outclassed) — help = the weight difference; or
+   - both win with the same category weight and the candidate keeps ≥ 15 HP points more,
+     or its army is ≥ 25% cheaper (60-s investment) — help = 0.25 (tie bonus).
+   Support score = sum over helped targets of opponent strength × help. Highest score wins
+   (ties: number of losses turned into wins, then the ranking order). No candidate with a
+   positive score → no support.
+8. **Additions** (kept): greedy counters, any unit except the main and the support, for the
+   main's *real* losses (eco wins need no counter, as in Revision 2) that the support does
+   not beat; an addition must win its matchup; ranked by the summed strength of what it
+   covers. Struggles get a support but never an addition.
+
+**Gold / no-gold weighting.** Dropped for scoring. The old threat weight
+(`weight(b) × (1 + our units b beats)`) is replaced by opponent strength, which already
+measures how much an enemy unit hurts our roster, whether it costs gold or not (a
+Halberdier that beats our cavalry is a strong enemy). The gold distinction survives in
+two places: the main must cost gold (when a gold unit has a win) and the support must be
+trash or a Scorpion.
+
+**Gold-main preference: kept.** Without it 40 of 3,080 plans (default weights) would get a
+trash main (89 with the eco set): Halberdiers, Elite Skirmishers and Hussars often score
+higher because their wins against dearer armies are dominance wins. It is not redundant.
+
+### Weights (one config dict, `WEIGHT_SETS`)
+
+| Category | Default | Eco | Combat | Rationale (default) |
+|---|---:|---:|---:|---|
+| Complete dominance | +1.5 | +2.0 | +1.0 | win, ≥ 25% cheaper army and ≥ 50% HP left: the best trade |
+| Clear win (kite) | +1.5 | +1.5 | +1.0 | the melee unit can never catch it: as good as dominance |
+| Plain win | +1.0 | +1.0 | +1.0 | the reference unit: a win at similar cost |
+| Power win | +0.6 | +0.3 | +1.0 | a win, but the army cost ≥ 25% more (often Castles): worth less than a plain win |
+| Eco win (narrow loss, cheaper) | +0.25 | +0.6 | −0.5 | lost, but traded efficiently: slightly positive |
+| Close | 0 | 0 | 0 | coin flip |
+| Cheap loss | −0.25 | 0 | −0.5 | lost clearly, but little was spent |
+| Plain loss | −0.5 | −0.5 | −0.5 | losses count half a win: a unit is judged mainly by what it beats |
+| Kited loss | −0.75 | −0.75 | −0.5 | cannot engage at all |
+| Outclassed loss | −0.75 | −1.0 | −0.5 | lost to a cheaper army that kept ≥ 50% HP: the worst trade |
+
+Other settings (`CONFIG`): strength min-max to [0.5, 1.5]; struggle = close, power win, or
+win with < 50% HP; help margins 15 HP points / 25% cheaper army, tie bonus 0.25.
+
+### Results (all 1,540 pairs, 3,080 plans)
+
+| | Default | Eco | Combat |
+|---|---:|---:|---:|
+| main changed vs live / vs Revision 3 | 1,298 / 1,280 | 1,574 / 1,548 | 442 / 490 |
+| support changed vs live sidekick / Rev 3 | 1,475 / 1,468 | 1,530 / 1,525 | 1,616 / 1,637 |
+| additions changed vs live / Rev 3 | 929 / 836 | 1,170 / 1,081 | 566 / 502 |
+| any of main / support / additions changed vs live | 2,081 | 2,293 | 1,777 |
+| additions in total (live 968, Rev 3 848) | 951 | 1,201 | 732 |
+| unanswered losses in total (live 944) | 769 | 772 | 805 |
+| support is trash / Scorpion line / none | 2,187 / 851 / 42 | 2,316 / 721 / 43 | 1,660 / 1,391 / 29 |
+| plans with no support target at all | 3 | 3 | 3 |
+| main has no loss / no real loss (eco wins allowed) | 517 / 649 | 440 / 578 | 750 / 818 |
+| best eligible unit was trash (gold preference applied) | 40 | 89 | 10 |
+| best unit overall was a Scorpion (exclusion applied) | 302 | 229 | 313 |
+| single-civ (unique) unit as main (live 1,148, Rev 3 1,143) | 532 | 368 | 1,274 |
+| main changed vs default weights | — | 361 | 1,113 |
+
+- **Scorpion mains:** 285 plans in the live advisor (296 in Revision 3) had a Heavy Scorpion
+  main; all now get another main (Heavy Scorpion → Champion 65, → Paladin 41, → Cavalier 37,
+  → Elite Champi Warrior 29, → Legionary 24 …). The live sidekick was never a Scorpion (it
+  had to be no-gold); now a Scorpion is the support in 851 plans (28%).
+- **Why so many mains change (default):** 753 of the 1,298 changes are live mains whose wins
+  are mostly *Power wins* — their 60-second army costs ≥ 25% more, almost always because
+  of the Castles needed to train unique units — so they score 0.6 per win instead of 1.0;
+  285 are the Scorpion exclusion; 53 are mains with fewer losses; 207 other (category mix,
+  opponent strength). The combat set, which ignores cost, changes only 442 mains (285 of
+  them Scorpions).
+- **Other slow siege as main** (not excluded; question for the owner): Elite Hussite Wagon
+  31 plans (live 50), War Chariot 24 (live 22), Elite Organ Gun 2 (live 14), Elite Ballista
+  Elephant 0 (live 37), Mounted Trebuchet 0. With the combat set: Hussite Wagon 54,
+  Ballista Elephant 39, War Chariot 23, Organ Gun 17. No Mangonel / Onager / Bombard Cannon
+  is in the advisor catalog. The catalog's own `line: scorpion` also contains War Chariot,
+  Elite Ballista Elephant and Mounted Trebuchet; excluding those too changes 24 more mains.
+
+Main units, top 20:
+
+| # | Live | Revision 3 | Rev 4 default | Rev 4 eco | Rev 4 combat |
+|---:|---|---|---|---|---|
+| 1 | Cavalier 436 | Cavalier 417 | Champion 466 | Champion 653 | Cavalier 452 |
+| 2 | Heavy Scorpion 285 | Heavy Scorpion 296 | Cavalier 465 | Cavalier 415 | Paladin 300 |
+| 3 | Paladin 258 | Paladin 251 | Paladin 446 | Paladin 414 | Champion 221 |
+| 4 | Elite Battle Elephant 222 | Elite Battle Elephant 223 | Elite Battle Elephant 261 | Elite Battle Elephant 260 | Elite Battle Elephant 220 |
+| 5 | Champion 176 | Champion 197 | Elite Steppe Lancer 141 | Elite Steppe Lancer 150 | Elite Elephant Archer 98 |
+| 6 | Heavy Camel Rider 121 | Heavy Camel Rider 121 | Heavy Camel Rider 135 | Elite Champi Warrior 138 | Heavy Camel Rider 94 |
+| 7 | Elite Elephant Archer 93 | Elite Elephant Archer 95 | Elite Champi Warrior 107 | Heavy Camel Rider 134 | Elite Steppe Lancer 80 |
+| 8 | Elite Steppe Lancer 73 | Elite Steppe Lancer 71 | Heavy Hei-Kuang Cavalry 104 | Elite Fire Lancer 98 | Heavy Hei-Kuang Cavalry 69 |
+| 9 | Heavy Hei-Kuang Cavalry 66 | Heavy Hei-Kuang Cavalry 66 | Elite Elephant Archer 103 | Elite Elephant Archer 98 | Elite Eagle Warrior 55 |
+| 10 | Elite War Elephant 55 | Elite War Elephant 55 | Elite Fire Lancer 81 | Heavy Hei-Kuang Cavalry 93 | Elite War Elephant 55 |
+| 11 | Elite Konnik 51 | Elite Konnik 52 | Heavy Cavalry Archer 65 | Heavy Cavalry Archer 77 | Elite Hussite Wagon 54 |
+| 12 | Elite Leitis 51 | Elite Leitis 51 | Elite Eagle Warrior 60 | Elite Eagle Warrior 60 | Elite Konnik 52 |
+| 13 | Elite Hussite Wagon 50 | Elite Hussite Wagon 50 | Elite Temple Guard 53 | Elite Temple Guard 53 | Elite Leitis 52 |
+| 14 | Elite Coustillier 50 | Imperial Camel Rider 50 | Imperial Camel Rider 51 | Savar 52 | Elite Temple Guard 52 |
+| 15 | Imperial Camel Rider 50 | Elite Coustillier 49 | Savar 51 | Imperial Camel Rider 50 | Elite Kamayuk 51 |
+| 16 | Elite Eagle Warrior 49 | Elite Temple Guard 48 | Grenadier 38 | Legionary 48 | Elite Champi Warrior 51 |
+| 17 | Elite Temple Guard 48 | Elite Eagle Warrior 47 | Legionary 38 | Grenadier 39 | Elite Coustillier 50 |
+| 18 | Elite Mameluke 47 | Elite Kamayuk 46 | Elite Varangian Guard 35 | Arbalester 32 | Imperial Camel Rider 50 |
+| 19 | Elite Kamayuk 45 | Elite Mameluke 46 | Elite Hussite Wagon 31 | Hand Cannoneer 28 | Elite Mameluke 48 |
+| 20 | Elite War Wagon 45 | Elite War Wagon 45 | Elite Kamayuk 27 | Elite Varangian Guard 26 | Elite Cataphract 47 |
+
+### Sensitivity (default weights; plans whose main / support change vs the default run)
+
+| Variant | Main | Support | No support | Unique-unit mains |
+|---|---:|---:|---:|---:|
+| default (min-max 0.5–1.5) | — | — | 42 | 532 |
+| strength rank-based 0.5–1.5 | 57 | 88 | 42 | 523 |
+| strength min-max 0.75–1.25 | 77 | 134 | 42 | 520 |
+| strength min-max 0.25–1.75 | 82 | 138 | 42 | 552 |
+| no strength (advantage = base) | 172 | 352 | 43 | 490 |
+| no gold-main preference | 40 | 21 | 43 | 526 |
+| struggle at HP < 33% / < 66% | 0 | 172 / 113 | 90 / 23 | 532 |
+| power win is not a struggle | 0 | 203 | 79 | 532 |
+| power win is a struggle only below 75% HP | 0 | 162 | 63 | 532 |
+| close is not a struggle | 0 | 117 | 64 | 532 |
+| help margin 25 HP points / eco 33% | 0 | 63 / 49 | 53 / 51 | 532 |
+| no same-result help (tie bonus 0) | 0 | 366 | 238 | 532 |
+| power win weight 0.8 | 373 | 360 | 40 | 809 |
+| power win weight 1.0 (= plain win) | 825 | 846 | 22 | 1,148 |
+| eco win weight 0 | 79 | 124 | 42 | 535 |
+| losses × 2 | 172 | 186 | 42 | 601 |
+| categories on army purchase price only (no Castles) | 1,113 | 1,032 | 7 | 1,302 |
+| also exclude War Chariot, Ballista Elephant, Mounted Trebuchet | 24 | 7 | 42 | 512 |
+
+Strength normalisation is a second-order choice (rank vs min-max: 57 mains); the
+power-win weight and the cost basis are first-order (hundreds of mains).
+
+### Biggest changes vs the live advisor (default weights)
+
+Selection: largest advantage gain of the new main over the old main (both scored with the
+default weights), at most one plan per old → new main pair, plus the two largest Scorpion
+exclusions and the two earlier questionable cases. "adv" = advantage score. Full text of
+every help ("why"), all scores and every main matchup are in `advisor-plans-rev4.json.gz`.
+
+| Civ vs enemy | Main live → Rev 4 (adv) | Rev 3 | eco / combat set | Support live → Rev 4 | Support helps against |
+|---|---|---|---|---|---|
+| Burgundians vs Italians | Elite Coustillier (6.1) → **Paladin** (10.9) | Paladin | Paladin / Elite Coustillier | Halberdier → Halberdier | Cavalier (struggle) |
+| Jurchens vs Vikings | Elite Iron Pagoda (6.8) → **Grenadier** (11.4) | Elite Iron Pagoda | Grenadier / Elite Iron Pagoda | Hussar → Hussar | Heavy Scorpion (struggle); Arbalester (struggle) |
+| Khmer vs Turks | Elite Ballista Elephant (7.6) → **Elite Battle Elephant** (12.1) | Elite Ballista Elephant | Elite Battle Elephant / Elite Ballista Elephant | Halberdier → Hussar | Heavy Scorpion (struggle); Skirmisher (struggle) |
+| Mayans vs Portuguese | Elite Plumed Archer (2.9) → **Elite Eagle Warrior** (7.3) | Elite Plumed Archer | Elite Eagle Warrior / Elite Eagle Warrior | Halberdier → Halberdier | Cavalier (loss) |
+| Khitans vs Italians | Elite Liao Dao (6.1) → **Elite Steppe Lancer** (10.4) | Elite Liao Dao | Elite Steppe Lancer / Elite Steppe Lancer | Elite Skirmisher → Elite Skirmisher | Elite Genoese Crossbowman (loss); Pikeman (struggle) |
+| Saracens vs Shu | Elite Mameluke (5.5) → **Champion** (9.8) | Champion | Champion / Elite Mameluke | Elite Skirmisher → Hussar | Arbalester (struggle) |
+| Goths vs Shu | Cavalier (5.2) → **Elite Huskarl** (9.4) | Elite Huskarl | Elite Huskarl / Cavalier | Halberdier → Halberdier | Heavy Hei-Kuang Cavalry (loss) |
+| Lithuanians vs Mongols | Elite Leitis (6.4) → **Paladin** (10.6) | Elite Leitis | Paladin / Elite Leitis | Halberdier → Halberdier | Heavy Camel Rider (loss); Pikeman (struggle) |
+| Portuguese vs Khitans | Elite Organ Gun (3.9) → **Champion** (8.0) | Elite Organ Gun | Champion / Elite Organ Gun | Halberdier → Halberdier | Elite Steppe Lancer (loss); Hussar (struggle); Mounted Trebuchet (struggle) |
+| Tatars vs Italians | Elite Keshik (5.7) → **Elite Steppe Lancer** (9.7) | Elite Keshik | Elite Steppe Lancer / Elite Keshik | Elite Skirmisher → Heavy Scorpion | Elite Genoese Crossbowman (loss) |
+| Persians vs Vikings | Elite War Elephant (7.2) → **Savar** (11.2) | Elite War Elephant | Savar / Elite War Elephant | Hussar → Heavy Scorpion | Elite Berserk (struggle) |
+| Saracens vs Mapuche | Elite Mameluke (4.4) → **Heavy Camel Rider** (8.4) | Elite Mameluke | Heavy Camel Rider / Elite Mameluke | Elite Skirmisher → Elite Skirmisher | Halberdier (loss) |
+| Wei vs Saxons | Elite Tiger Cavalry (6.1) → **Heavy Hei-Kuang Cavalry** (9.8) | Elite Tiger Cavalry | Heavy Hei-Kuang Cavalry / Elite Tiger Cavalry | Elite Skirmisher → Elite Skirmisher | Heavy Mounted Crossbowman (struggle); Halberdier (loss) |
+| Magyars vs Ethiopians | Elite Magyar Huszar (4.0) → **Heavy Cavalry Archer** (7.7) | Elite Magyar Huszar | Heavy Cavalry Archer / Elite Magyar Huszar | Halberdier → Heavy Scorpion | Heavy Camel Rider (loss); Elite Shotel Warrior (loss) |
+| Italians vs Malians | Elite Genoese Crossbowman (4.3) → **Condottiero** (8.0) | Elite Genoese Crossbowman | Condottiero / Elite Genoese Crossbowman | Elite Skirmisher → Hussar | Scorpion (struggle) |
+| Mongols vs Georgians | Elite Mangudai (5.9) → **Elite Steppe Lancer** (9.3) | Elite Mangudai | Elite Steppe Lancer / Elite Mangudai | Hussar → Pikeman | Cavalier (struggle) |
+| Jurchens vs Britons | Elite Iron Pagoda (6.5) → **Elite Steppe Lancer** (9.9) | Elite Iron Pagoda | Elite Steppe Lancer / Elite Iron Pagoda | Hussar → Elite Skirmisher | Halberdier (struggle) |
+| Aztecs vs Byzantines | Elite Jaguar Warrior (6.3) → **Champion** (9.8) | Elite Jaguar Warrior | Champion / Elite Jaguar Warrior | Elite Skirmisher → Elite Skirmisher | Hand Cannoneer (loss) |
+| Portuguese vs Saracens | Elite Organ Gun (5.4) → **Cavalier** (8.8) | Elite Organ Gun | Cavalier / Elite Organ Gun | Halberdier → Halberdier | Heavy Camel Rider (loss); Elite Mameluke (loss); Pikeman (struggle) |
+| Burmese vs Saracens | Elite Arambai (3.7) → **Elite Battle Elephant** (7.1) | Elite Arambai | Elite Battle Elephant / Elite Arambai | Halberdier → Halberdier | Heavy Camel Rider (loss); Elite Mameluke (loss); Pikeman (struggle) |
+| Poles vs Italians | Elite Obuch (5.7) → **Cavalier** (9.0) | Elite Obuch | Cavalier / Elite Obuch | Winged Hussar → Winged Hussar | Cavalier (loss) |
+| Celts vs Saracens | Heavy Scorpion (12.7) → **Paladin** (9.6) | Heavy Scorpion | Paladin / Paladin | Halberdier → Heavy Scorpion | Heavy Cavalry Archer (struggle); Elite Mameluke (loss); Heavy Camel Rider (loss); Knight (struggle) |
+| Romans vs Danes | Heavy Scorpion (12.6) → **Legionary** (10.3) | Heavy Scorpion | Legionary / Legionary | Light Cavalry → Heavy Scorpion | Elite Varangian Guard (struggle); Champion (struggle); Elite Jomsviking (struggle); Heavy Scorpion (loss); Heavy Mounted Crossbowman (loss); Knight (struggle) |
+| Goths vs Tupi | Cavalier (6.4) → **Elite Huskarl** (7.4) | Champion | Elite Huskarl / Cavalier | Elite Skirmisher → Heavy Scorpion | Elite Ibirapema Warrior (loss) |
+| Romans vs Berbers | Elite Centurion (6.0) → **Cavalier** (8.1) | Legionary | Legionary / Elite Centurion | Halberdier → Halberdier | Cavalier (loss); Heavy Camel Rider (loss); Elite Camel Archer (struggle); Pikeman (struggle) |
+
+**The two earlier questionable cases**
+
+- **Goths vs Tupi.** Live: Cavalier (+ Elite Skirmisher); Revision 3: Champion (4 wins and
+  3 eco-win caveats). Revision 4: **Elite Huskarl** (adv 7.4: 2 dominance, 5 plain wins, 1
+  plain loss to Elite Ibirapema Warrior); Cavalier 6.4 second, Champion only 4.75. The
+  support is **Heavy Scorpion**: it beats the Ibirapema Warrior (61% HP left) where the
+  Huskarl loses. The combat set keeps Cavalier. Revision 4 removes the weak Champion
+  pick of Revision 3: a unit with few wins can no longer win just by having no "real" loss.
+- **Romans vs Berbers.** Live: Elite Centurion (1 plain win, 10 power wins — its Castles —
+  and 1 outclassed loss); Revision 3: Legionary. Revision 4: **Cavalier** (10 plain wins,
+  plain losses to Berber Cavalier and Heavy Camel Rider), Legionary close second (7.7 vs
+  8.1), Elite Centurion 6.0. Heavy Scorpion would rank first (9.2) but is excluded. The
+  support Halberdier covers both losses (Heavy Camel Rider simulated; Cavalier pending
+  re-simulation) and two struggles. The eco set picks Legionary, the combat set keeps
+  the Centurion.
+
+### Support call-outs (format of the per-plan "helps" text)
+
+1. **Khitans vs Italians** — main Elite Steppe Lancer, support **Elite Skirmisher**:
+   - *Elite Genoese Crossbowman* (main loss): Skirmisher Complete dominance, keeps 54% HP,
+     army 263 vs 625 VM; Steppe Lancer Cheap loss (winner keeps 77% HP).
+   - *Pikeman* (main struggles): both win, Skirmisher keeps 80% HP, Steppe Lancer 34%.
+2. **Romans vs Berbers** — main Cavalier, support **Halberdier**: beats Heavy Camel Rider
+   (55% HP) and Cavalier (pending) where Cavalier loses; beats Elite Camel Archer with a
+   ≥ 25% cheaper army (118 vs 226 VM); beats Pikeman keeping 59% HP where Cavalier keeps 17%.
+3. **Celts vs Saracens** — main Paladin (Heavy Scorpion excluded as main), support
+   **Heavy Scorpion**: beats Elite Mameluke (35% HP) where Paladin has a cheap loss; beats
+   Heavy Camel Rider where Paladin loses (pending); beats Heavy Cavalry Archer keeping 61%
+   HP where Paladin keeps 34%; beats Knight keeping 57% where Paladin keeps 42%.
+
+### Odd cases and open questions (each with a recommendation)
+
+1. **Castle cost makes unique units lose the main slot (biggest effect).** Under the 60-s
+   investment (owner decision 1) most unique-unit wins are *Power wins*, so with Power win
+   at 0.6 the unique unit loses to a generic unit with plain wins: single-civ mains fall
+   from 1,148 to 532 (Elite Leitis → Paladin 49 plans, Elite Coustillier → Paladin 47,
+   Elite War Elephant → Savar 51, Elite Tiger Cavalry → Heavy Hei-Kuang Cavalry 42…).
+   Power win at 0.8 → 809; at 1.0 → 1,148 (but then Ballista Elephants, Hussite Wagons and
+   Organ Guns return: 120 slow-siege mains). Scoring the categories on army purchase price
+   only gives 1,302 unique mains. *Recommendation:* decide this first. If "Castle units
+   are worse value" is intended, keep 0.6; if not, use 0.8, or classify on purchase price
+   for the scoring only (badges can keep the 60-s basis).
+2. **Weights to discuss.** Default makes a loss worth half a win (so broad winners stay
+   ahead) and cost-efficiency worth about half a win. *Recommendation:* agree on three
+   numbers first — Power win, Eco win and the loss scale; the rest follows (eco win 0 vs
+   0.25 moves 79 mains, losses × 2 moves 172).
+3. **Strength normalisation.** Min-max 0.5–1.5 keeps magnitudes (a unit that beats
+   everything stands out); rank-based gives almost the same plans (57 mains differ) and is
+   robust to one outlier. Narrower or wider ranges move ~80 mains; no multiplier moves 172.
+   *Recommendation:* keep min-max 0.5–1.5. Losses use the mirrored multiplier
+   (2 − strength); *recommendation:* keep — it is symmetric and bounded.
+4. **"Struggles".** Half of the power-win struggles (1,564 of 2,983) have the main at
+   ≥ 75% HP (example: Khmer Elite Battle Elephant beats Turkish Skirmishers keeping 97% HP,
+   yet the Skirmisher counts as a target because the elephants cost more).
+   *Recommendation:* power win counts as a struggle only below 75% HP (162 supports change,
+   no-support plans 42 → 63); keep close and "< 50% HP" as struggles.
+5. **Scorpions as support: 851 plans (28%).** Heavy Scorpions beat most infantry and many
+   cavalry, so they win the support slot often. *Recommendation:* fine if intended; else
+   prefer trash on ties or cap the Scorpion help at its no-gold equivalent.
+6. **Other slow siege as main** (not excluded): Elite Hussite Wagon 31, War Chariot 24,
+   Elite Organ Gun 2 (default). The catalog `line: scorpion` also holds War Chariot, Elite
+   Ballista Elephant and Mounted Trebuchet. *Question for the owner:* exclude War Chariot
+   and Hussite Wagon too? (Excluding the three `scorpion`-line extras changes 24 mains.)
+7. **No support in 42 plans.** 3 have no target at all (the main wins everything
+   comfortably: Bengalis vs Poles, Gurjaras vs Poles, Gurjaras vs Turks). In the other 39 no
+   trash unit or Scorpion does better than the main against any target (e.g. Aztecs vs
+   Britons, main Champion: targets Heavy Scorpion, Champion, Cavalier, Arbalester, Elite
+   Longbowman). *Recommendation:* show "no support
+   needed" for the 3, and the best trash unit by advantage without a call-out for the rest.
+8. **Pending cells.** 649 support helps (9%) rest on an inferred cell (support or main side);
+   they are flagged "[pending re-sim]" in the text. *Recommendation:* rerun after the
+   re-simulation lands; no rule change.
+9. **Mirror losses.** A main can lose to the enemy's version of the same unit (Romans
+   Cavalier vs Berbers Cavalier); the support then answers it like any other loss.
+
+### Reproduce (Revision 4)
+
+```sh
+export ADVISOR_ECO_OUT=/path/to/scratch   # holds cells.csv.gz from extract_cells.py
+python tools/economy/advisor_eco/impact_rev4.py   # ≈ 1 min; writes impact_rev4.json, changes_rev4*.md and docs/army-economics/advisor-plans-rev4.json.gz
+cp $ADVISOR_ECO_OUT/impact_rev4.json docs/army-economics/advisor-plans-rev4-summary.json
+```
+
 ## Revision 3 — owner decisions 2026-11-12 (later the same day)
 
 - **Kite rule:** only real ranged skirmishers qualify. Siege-class ranged units (War Chariot,

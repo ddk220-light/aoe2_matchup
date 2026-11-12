@@ -49,10 +49,10 @@ def main():
         for side, civ, enemy in (("left", left, right), ("right", right, left)):
             old_plans[(civ, enemy)] = {"live": old.summary(live[side]), "rev3": old.summary(rev3[side])}
 
-    def run(weights="default", cfg=None, keep=False):
+    def run(weights="default", cfg=None, keep=False, cells_idx=None):
         plans = {}
         for left, right in pairs:
-            res = m4.build(documents[left][right], units, idx, weights, cfg)
+            res = m4.build(documents[left][right], units, cells_idx or idx, weights, cfg)
             for side, civ, enemy in (("left", left, right), ("right", right, left)):
                 p = res[side]
                 plans[(civ, enemy)] = p if keep else m4.summary(p)
@@ -144,6 +144,7 @@ def main():
         "struggle HP < 33%": {"struggle_hp": 0.33},
         "struggle HP < 66%": {"struggle_hp": 0.66},
         "power win is not a struggle": {"struggle_power": False},
+        "power win is a struggle only below 75% HP": {"struggle_power_hp": 0.75},
         "close is not a struggle": {"struggle_close": False},
         "help HP margin 25 pts": {"help_hp_margin": 0.25},
         "help eco 33%": {"help_eco": 0.33},
@@ -155,6 +156,15 @@ def main():
     for wname, wpatch in (("power win weight 0.8", {"power_win": 0.8}), ("power win weight 1.0 (= plain win)", {"power_win": 1.0}),
                           ("eco win weight 0 (= close)", {"eco_win": 0.0}), ("losses x2", {k: 2 * v for k, v in m4.WEIGHT_SETS["default"].items() if v < 0})):
         variants_cfg[wname] = ({**m4.WEIGHT_SETS["default"], **wpatch}, {})
+    # Cost basis for the categories: army purchase only (no Castles / production buildings).
+    idx_purchase = m4.cell_index([{**c, "vm_a": c["army_vm_a"], "vm_b": c["army_vm_b"]} for c in cells_list], mo, classify)
+    for ws in m4.WEIGHT_SETS:
+        variants_cfg[f"{ws} weights, categories on army purchase price only"] = (ws, None, False, idx_purchase)
+    single_civ = collections.Counter(u["name"] for u in units.values())
+    out["singleCivUnitMains"] = {"live": sum(single_civ[name(o["live"]["main"])] == 1 for o in old_plans.values()),
+                                 "rev3": sum(single_civ[name(o["rev3"]["main"])] == 1 for o in old_plans.values())}
+    for ws in m4.WEIGHT_SETS:
+        out["singleCivUnitMains"][ws] = sum(single_civ[p["main"]["unit"]["name"]] == 1 for p in full[ws].values())
     for label, cfg in variants_cfg.items():
         plans = run(*cfg) if isinstance(cfg, tuple) else run("default", cfg)
         st = collections.Counter()
@@ -168,6 +178,7 @@ def main():
             st["mains that are trash"] += not m4.is_gold(units[sm["main"]])
             if name(sm["main"]) in SLOW_SIEGE:
                 st["slow-siege mains"] += 1
+            st["single-civ unit mains"] += single_civ[name(sm["main"])] == 1
         out["sensitivity"][label] = dict(st)
         print(label, dict(st))
 

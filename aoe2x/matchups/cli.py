@@ -311,6 +311,9 @@ def cmd_run(args) -> int:
     except (C.ConfigError, RN.RunError) as error:
         print(f"run error: {error}", file=sys.stderr)
         return RN.EXIT_INTEGRITY
+    if args.dry_run:
+        _print(run.plan())
+        return 0
     return RN.Runner(run, workers=args.workers, node=args.node, retry_blocked=args.retry_blocked).execute()
 
 
@@ -377,7 +380,7 @@ def cmd_reproduce_2026(args) -> int:
     rb = _rb(args)
     if args.compare:
         report = RP.compare(rb, Path(args.dir))
-        _print({k: v for k, v in report.items() if k != "contexts"})
+        _print({k: v for k, v in report.items() if k != "problems"} | {"firstProblems": report["problems"][:5]})
         return 0 if report["mismatches"] == 0 and report["missing"] == 0 else 1
     _print(RP.prepare(rb, Path(args.dir), per_stratum=args.per_stratum))
     return 0
@@ -452,6 +455,7 @@ def main(argv=None) -> int:
     p = sub.add_parser("run")
     run_options(p)
     p.add_argument("--retry-blocked", action="store_true", help="give blocked contexts a fresh set of watchdog steps")
+    p.add_argument("--dry-run", action="store_true", help="print what would be scheduled (reused vs new); run nothing")
     p.set_defaults(func=cmd_run)
 
     p = sub.add_parser("supervise")

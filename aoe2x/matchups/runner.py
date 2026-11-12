@@ -260,6 +260,10 @@ class Run:
                 raise RunError(f"{jobs_path} is missing; run `python -m aoe2x.matchups inventory <config>`")
             result = I.build(self.cfg, self.inputs["bundle"], self.inputs["scenarioSet"], self.inputs["orientation"],
                              self.inputs["setupHash"])
+            if build == "memory":
+                data = gzip.compress("".join(json.dumps(r, separators=(",", ":")) + "\n"
+                                             for r in result["jobs"]).encode(), compresslevel=9, mtime=0)
+                return result["jobs"], sha256_bytes(data)
             I.write(result, directory, header)
         summary = json.loads(summary_path.read_text())
         for field in ("bundleHash", "setupHash", "selectionHash", "orientationTableHash", "scenarioSetHash", "engineId"):
@@ -274,6 +278,22 @@ class Run:
             if j.get("resultKey") != digest({"contextHash": j["contextHash"], "setupHash": self.inputs["setupHash"]}):
                 raise RunError(f"{j['id']}: resultKey does not match the setup")
         return jobs, sha256_bytes(raw)
+
+    def plan(self) -> dict:
+        """What ``run`` would schedule, without touching the records (``run --dry-run``)."""
+        self.prepare(build="memory")
+        R = self.records
+        done = {p.stem for p in (R / "pair-reviews").glob("*.json")} if (R / "pair-reviews").exists() else set()
+        reused = [] if self.force else [j for j in self.jobs if j["resultKey"] in self.reusable and j["id"] not in done]
+        reused_ids = {j["id"] for j in reused}
+        todo = [j for j in self.jobs if j["id"] not in done and j["id"] not in reused_ids]
+        with_prior = sum(self.prior(j)[0] is not None for j in todo)
+        return {"runId": self.cfg["runId"], "runHash": self.run_hash, "records": str(R),
+                "samplingPolicy": self.policy.name, "contexts": len(self.jobs), "alreadyReviewed": len(done),
+                "reusableResultsInIndex": len(self.reusable), "reused": len(reused), "forced": self.force,
+                "scheduled": len(todo), "scheduledWithPrior": with_prior,
+                "scheduledByFamily": dict(sorted(Counter(j["family"] for j in todo).items())),
+                "resultIndexSha256": self.index_sha256}
 
     def prior(self, job: dict):
         """Prior outcomes for the one-seed shortcut, or None (never a guess)."""

@@ -1,12 +1,18 @@
 {
   "schema": "aoe2-matchup-run/v1",
   "runId": "single-civ-example-franks",
-  "description": "Example: only the Franks' units against every unit of every other civilization, on the frozen 2026 inputs, oriented like the published 2026 results so every reusable 2026 result applies without reversal. A new civilization or a one-civ balance change would look like this with a new bundle.",
+  "description": "Example: only the Franks' units against every unit of every other civilization, on the frozen 2026 inputs, oriented like the published 2026 results so every reusable 2026 result applies without reversal; contexts with a reusable 2026 result (baselineResults, built by `import-results`) are recorded as reused, not run, unless `run --force`. A new civilization or a one-civ balance change would look like this with a new bundle.",
   "game": {
     "bundle": "aoe2x/matchups/bundles/campaign-2026-185872-188329.json.gz",
     "bundleHash": "201cec0cdfac7ad218748051451350070e6a353f833d52d97094f74ddb23b813"
   },
-  "selection": {"mode": "full", "civilizations": ["Franks"], "units": null, "against": "*"},
+  "selection": {
+    "mode": "full", "civilizations": ["Franks"], "units": null, "against": "*",
+    "baselineResults": {
+      "index": "${MATCHUP_RUNS_STORE}/baselines/campaign-2026/result-index.jsonl.gz",
+      "sha256": "d672f22616757fa3dd68e2e74de22d831cb651ce0442c70ea715e5caac99a9b6"
+    }
+  },
   "battle": {
     "scenarioSet": "aoe2x/matchups/scenarios/frozen-ranking-scenarios-v1.json.gz",
     "scenarioSetHash": "f8b09a201ba63cc3227628ddd10699bc9821da26c0dbcb87dcd4b4daf37137ab",

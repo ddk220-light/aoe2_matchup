@@ -259,7 +259,7 @@ def compare(rb, directory: Path) -> dict:
         groups[group] = g
         for k in ("contexts", "seeds", "mismatches", "missing"):
             totals[k] += g[k]
-    report = {**totals, "groups": groups, "contexts": details, "comparedFields": list(COMPARED),
+    report = {**totals, "groups": groups, "problems": details, "comparedFields": list(COMPARED),
               "expectedSha256": sha256_bytes((directory / "expected.jsonl.gz").read_bytes()), "rbTip": rb.commit()}
     (directory / "comparison.json").write_text(json.dumps(report, indent=2) + "\n")
     return report

@@ -260,7 +260,7 @@ every help ("why"), all scores and every main matchup are in `advisor-plans-rev4
    no-support plans 42 → 63); keep close and "< 50% HP" as struggles.
 5. **Scorpions as support: 851 plans (28%).** Heavy Scorpions beat most infantry and many
    cavalry, so they win the support slot often. *Recommendation:* fine if intended; else
-   prefer trash on ties or cap the Scorpion help at its no-gold equivalent.
+   count a Scorpion's help at half value, or allow it only when no trash unit helps.
 6. **Other slow siege as main** (not excluded): Elite Hussite Wagon 31, War Chariot 24,
    Elite Organ Gun 2 (default). The catalog `line: scorpion` also holds War Chariot, Elite
    Ballista Elephant and Mounted Trebuchet. *Question for the owner:* exclude War Chariot

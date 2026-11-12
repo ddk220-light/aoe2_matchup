@@ -425,3 +425,11 @@ def test_every_unit_carries_its_full_research_package_figures(data):
         assert s["technologyCount"] == unit["research"]["military"]["totals"]["technologyCount"]
         if s["technologyCount"] and s["costIsFixed"] and s["weightedCost"] > 0:
             assert s["villagerMinutes"] > 0
+
+
+def test_generated_rate_tables_are_current():
+    import subprocess, sys
+    from aoe2x.economy.paths import REPO_ROOT
+    if RUNTIME != RUNTIME_DB:
+        pytest.skip("checks the committed runtime only")
+    subprocess.run([sys.executable, str(REPO_ROOT / "tools/economy/summarize_runtime.py"), "--check"], check=True)

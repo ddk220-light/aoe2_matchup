@@ -1,0 +1,3215 @@
+{
+  "schemaVersion": 4,
+  "trainingWindowSeconds": 60,
+  "resourceWeights": {
+    "food": 1,
+    "wood": 1,
+    "gold": 1.5,
+    "stone": 3
+  },
+  "releaseReady": true,
+  "blockers": [],
+  "scopeExceptions": [
+    {
+      "code": "unresolved_economy_mechanic",
+      "civ": "Wei",
+      "technologyId": 1061,
+      "effectId": 1061,
+      "detail": "Tuntian: parameter 287 +3 and hook 4; income source/counting semantics remain unresolved.",
+      "status": "excluded_by_user",
+      "decisionDate": "2026-11-11",
+      "reason": "Tuntian excluded from villager income; the remaining Wei economy is modeled without its income."
+    },
+    {
+      "code": "dynamic_research_cost_unvalidated",
+      "civ": "Burgundians",
+      "technologyId": 755,
+      "detail": "Flemish Revolution",
+      "status": "excluded_by_user",
+      "decisionDate": "2026-11-11",
+      "reason": "Flemish Revolution cost verification excluded; variable source formula remains explicitly unverified."
+    }
+  ],
+  "auraAssumption": {
+    "coverage": 1.0,
+    "placementRequired": false,
+    "infrastructureCostIncluded": false,
+    "stacking": "one applicable benefit",
+    "source": "User instruction, 2026-11-11"
+  },
+  "gatheringValidationPolicy": {
+    "requiredForRelease": false,
+    "status": "deferred_by_user",
+    "decisionDate": "2026-11-11",
+    "source": "User instruction 2026-11-11: forget in-game measurements for now; use estimates and an online pasture rate.",
+    "accuracyClaim": "No claim of less-than-1% measured error."
+  },
+  "civilizationCount": 56,
+  "profileCount": 1029,
+  "source": {
+    "format_version": "VER 8.9",
+    "sha256": "d0aefd92428e2215d6f4d9b1d544901e6f171e19183f9e0b88218de5153a337f",
+    "game_patch": "Contains verified patch 188329 balance changes; exact executable build not embedded in DAT",
+    "origin": "user-supplied Google Drive archive",
+    "drive_url": "https://drive.google.com/file/d/1OQSKmNacywATiLjMBxUoVHRvtwdz7X9o/view",
+    "archive_name": "aoe2_dat.zip",
+    "archive_dat_timestamp": "2026-10-29 10:20:46 (ZIP timestamp; timezone unspecified)",
+    "game_tree_count": 56
+  },
+  "sourceHashes": {
+    "review": "588ef3b905ae15a0cc5f04ca34393cb42854e268ed348503e6325754fc3f9bf2",
+    "reference": "b3b2f34db5384f03a42d8869004ba18f6953bcacc2c2b227fb71b18ef2dc6507",
+    "compiler": "627b1f86247e48568b0b0c049d0a22e691d727094014250298cad6f5b1fd6bf7",
+    "accounting": "42af7b8e502f131a5a6a60688548b21a6dd2a7ee26fb37b98c12bc0d403b0572",
+    "scopePolicy": "c0e2655f055845d2c1a10ebe9cbb7e9ac37a1f82c0cb6f81f2920c7b3961af8e",
+    "specialEconomy": "73e787ac1c31ae04f4af132f30c36e772c34bacdc81e07f463dae65605c85574",
+    "curated": "cf49747f6b7daa6bce0d09f027cf953ce65bb0e2fbe006a2ea97afbf530cb1fe",
+    "pastureReference": "e2e382e5ae77de26fa0bd0cccf0b913cb5b77bba5acbaa2f7b7905dc1d88e8d2",
+    "scenarios": "5f55b51fd9a09c4b0f74bb50161aba454bce7c588061f588d0de5f3a32615aba",
+    "onlineEvidence": "e3fbc6bbd20e2fc2137988657fb5d333b2d907cb89705b71c6ce7a18e00fa672",
+    "observationValidator": "8bb5b290cd6aecae4d3da95460292418661982e3987e99f0b70b82e1b2026aae",
+    "formIdentityCatalog": "e1d47ea4753c0bc91cfdabd3f41a54982ecfe650fbc8e71ac33a87638dd4261d"
+  },
+  "priceCorrections": [
+    {
+      "civ": "Bengalis",
+      "unitId": 875,
+      "mode": "default",
+      "before": {
+        "food": 60.0,
+        "gold": 80.0,
+        "wood": 0.0
+      },
+      "after": {
+        "food": 70.0,
+        "wood": 0.0,
+        "gold": 80.0,
+        "stone": 0.0
+      },
+      "evidence": []
+    },
+    {
+      "civ": "Dravidians",
+      "unitId": 875,
+      "mode": "default",
+      "before": {
+        "food": 60.0,
+        "gold": 80.0,
+        "wood": 0.0
+      },
+      "after": {
+        "food": 70.0,
+        "wood": 0.0,
+        "gold": 80.0,
+        "stone": 0.0
+      },
+      "evidence": []
+    },
+    {
+      "civ": "Gurjaras",
+      "unitId": 875,
+      "mode": "default",
+      "before": {
+        "food": 45.0,
+        "gold": 80.0,
+        "wood": 0.0
+      },
+      "after": {
+        "food": 53.0,
+        "wood": 0.0,
+        "gold": 80.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "technology",
+          "tech_id": 835,
+          "effect_id": 854,
+          "command_index": 3,
+          "command": {
+            "type": 5,
+            "a": -1,
+            "b": 36,
+            "c": 103,
+            "d": 0.75
+          },
+          "before": {
+            "food": 70.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 80.0
+          },
+          "after": {
+            "food": 52.5,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 80.0
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Gurjaras",
+      "unitId": 1753,
+      "mode": "default",
+      "before": {
+        "food": 52.0,
+        "gold": 30.0,
+        "wood": 0.0
+      },
+      "after": {
+        "food": 53.0,
+        "wood": 0.0,
+        "gold": 30.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "technology",
+          "tech_id": 835,
+          "effect_id": 854,
+          "command_index": 5,
+          "command": {
+            "type": 5,
+            "a": -1,
+            "b": 12,
+            "c": 103,
+            "d": 0.75
+          },
+          "before": {
+            "food": 70.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 30.0
+          },
+          "after": {
+            "food": 52.5,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 30.0
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Koreans",
+      "unitId": 359,
+      "mode": "default",
+      "before": {
+        "food": 35.0,
+        "gold": 0.0,
+        "wood": 12.0
+      },
+      "after": {
+        "food": 35.0,
+        "wood": 13.0,
+        "gold": 0.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "technology",
+          "tech_id": 390,
+          "effect_id": 561,
+          "command_index": 1,
+          "command": {
+            "type": 5,
+            "a": -1,
+            "b": 6,
+            "c": 104,
+            "d": 0.5
+          },
+          "before": {
+            "food": 35.0,
+            "wood": 25.0,
+            "stone": 0.0,
+            "gold": 0.0
+          },
+          "after": {
+            "food": 35.0,
+            "wood": 12.5,
+            "stone": 0.0,
+            "gold": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Koreans",
+      "unitId": 1903,
+      "mode": "default",
+      "before": {
+        "food": 0.0,
+        "gold": 45.0,
+        "wood": 22.0
+      },
+      "after": {
+        "food": 0.0,
+        "wood": 23.0,
+        "gold": 45.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "technology",
+          "tech_id": 390,
+          "effect_id": 561,
+          "command_index": 1,
+          "command": {
+            "type": 5,
+            "a": -1,
+            "b": 6,
+            "c": 104,
+            "d": 0.5
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 45.0,
+            "stone": 0.0,
+            "gold": 45.0
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 22.5,
+            "stone": 0.0,
+            "gold": 45.0
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Koreans",
+      "unitId": 492,
+      "mode": "default",
+      "before": {
+        "food": 0.0,
+        "gold": 45.0,
+        "wood": 12.0
+      },
+      "after": {
+        "food": 0.0,
+        "wood": 13.0,
+        "gold": 45.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "technology",
+          "tech_id": 390,
+          "effect_id": 561,
+          "command_index": 0,
+          "command": {
+            "type": 5,
+            "a": -1,
+            "b": 0,
+            "c": 104,
+            "d": 0.5
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 25.0,
+            "stone": 0.0,
+            "gold": 45.0
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 12.5,
+            "stone": 0.0,
+            "gold": 45.0
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Magyars",
+      "unitId": 871,
+      "mode": "default",
+      "before": {
+        "food": 35.0,
+        "gold": 45.0,
+        "wood": 0.0
+      },
+      "after": {
+        "food": 80.0,
+        "wood": 0.0,
+        "gold": 0.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "technology",
+          "tech_id": 514,
+          "effect_id": 571,
+          "command_index": 1,
+          "command": {
+            "type": 0,
+            "a": 871,
+            "b": -1,
+            "c": 105,
+            "d": 0.0
+          },
+          "before": {
+            "food": 35.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 45.0
+          },
+          "after": {
+            "food": 35.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 0.0
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 514,
+          "effect_id": 571,
+          "command_index": 3,
+          "command": {
+            "type": 0,
+            "a": 871,
+            "b": -1,
+            "c": 103,
+            "d": 80.0
+          },
+          "before": {
+            "food": 35.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 0.0
+          },
+          "after": {
+            "food": 80.0,
+            "wood": 0.0,
+            "stone": 0.0,
+            "gold": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Mapuche",
+      "unitId": 2568,
+      "mode": "default",
+      "before": {
+        "food": 65.0,
+        "gold": 40.0,
+        "wood": 0.0
+      },
+      "after": {
+        "food": 55.0,
+        "wood": 0.0,
+        "gold": 34.0,
+        "stone": 0.0
+      },
+      "evidence": []
+    },
+    {
+      "civ": "Mapuche",
+      "unitId": 2571,
+      "mode": "default",
+      "before": {
+        "food": 0.0,
+        "gold": 55.0,
+        "wood": 50.0
+      },
+      "after": {
+        "food": 0.0,
+        "wood": 43.0,
+        "gold": 47.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "technology",
+          "tech_id": 1380,
+          "effect_id": 1380,
+          "command_index": 2,
+          "command": {
+            "type": 15,
+            "a": 2571,
+            "b": -1,
+            "c": 100,
+            "d": 0.8500000238418579
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 50.0,
+            "stone": 0.0,
+            "gold": 55.0
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 42.500001192092896,
+            "stone": 0.0,
+            "gold": 46.750001311302185
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Mayans",
+      "unitId": 492,
+      "mode": "default",
+      "before": {
+        "food": 0.0,
+        "gold": 35.0,
+        "wood": 20.0
+      },
+      "after": {
+        "food": 0.0,
+        "wood": 18.0,
+        "gold": 32.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "civilization",
+          "tech_id": null,
+          "effect_id": 449,
+          "command_index": 27,
+          "command": {
+            "type": 5,
+            "a": 492,
+            "b": -1,
+            "c": 100,
+            "d": 0.8999999761581421
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 25.0,
+            "stone": 0.0,
+            "gold": 45.0
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 22.499999403953552,
+            "stone": 0.0,
+            "gold": 40.499998927116394
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 53,
+          "effect_id": 485,
+          "command_index": 2,
+          "command": {
+            "type": 5,
+            "a": 492,
+            "b": -1,
+            "c": 100,
+            "d": 0.8899999856948853
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 22.499999403953552,
+            "stone": 0.0,
+            "gold": 40.499998927116394
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 20.02499914765359,
+            "stone": 0.0,
+            "gold": 36.04499846577646
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 56,
+          "effect_id": 486,
+          "command_index": 2,
+          "command": {
+            "type": 5,
+            "a": 492,
+            "b": -1,
+            "c": 100,
+            "d": 0.8799999952316284
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 20.02499914765359,
+            "stone": 0.0,
+            "gold": 36.04499846577646
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 17.62199915444852,
+            "stone": 0.0,
+            "gold": 31.719598478007338
+          }
+        }
+      ]
+    },
+    {
+      "civ": "Mayans",
+      "unitId": 765,
+      "mode": "default",
+      "before": {
+        "food": 0.0,
+        "gold": 43.0,
+        "wood": 43.0
+      },
+      "after": {
+        "food": 0.0,
+        "wood": 39.0,
+        "gold": 39.0,
+        "stone": 0.0
+      },
+      "evidence": [
+        {
+          "source_kind": "civilization",
+          "tech_id": null,
+          "effect_id": 449,
+          "command_index": 29,
+          "command": {
+            "type": 5,
+            "a": 765,
+            "b": -1,
+            "c": 100,
+            "d": 0.8999999761581421
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 55.0,
+            "stone": 0.0,
+            "gold": 55.0
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 49.499998688697815,
+            "stone": 0.0,
+            "gold": 49.499998688697815
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 53,
+          "effect_id": 485,
+          "command_index": 4,
+          "command": {
+            "type": 5,
+            "a": 765,
+            "b": -1,
+            "c": 100,
+            "d": 0.8899999856948853
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 49.499998688697815,
+            "stone": 0.0,
+            "gold": 49.499998688697815
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 44.054998124837894,
+            "stone": 0.0,
+            "gold": 44.054998124837894
+          }
+        },
+        {
+          "source_kind": "technology",
+          "tech_id": 56,
+          "effect_id": 486,
+          "command_index": 4,
+          "command": {
+            "type": 5,
+            "a": 765,
+            "b": -1,
+            "c": 100,
+            "d": 0.8799999952316284
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 44.054998124837894,
+            "stone": 0.0,
+            "gold": 44.054998124837894
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 38.76839813978675,
+            "stone": 0.0,
+            "gold": 38.76839813978675
+          }
+        }
+      ]
+    }
+  ],
+  "curatedCorrections": [
+    {
+      "kind": "prerequisite_rule_activation",
+      "decisionDate": "2026-11-12",
+      "civ": "Danes",
+      "technologyId": 1494,
+      "name": "C-Bonus, Villagers & Fishing Ships +10% food"
+    },
+    {
+      "kind": "research_location",
+      "decisionDate": "2026-11-12",
+      "civ": "Mapuche",
+      "technologyId": 98,
+      "fromBuilding": 2556,
+      "toBuilding": 87,
+      "fromSeconds": 50.0,
+      "toSeconds": 37.593984
+    },
+    {
+      "kind": "research_location",
+      "decisionDate": "2026-11-12",
+      "civ": "Mapuche",
+      "technologyId": 197,
+      "fromBuilding": 2556,
+      "toBuilding": 12,
+      "fromSeconds": 35.0,
+      "toSeconds": 26.315789
+    },
+    {
+      "kind": "research_location",
+      "decisionDate": "2026-11-12",
+      "civ": "Mapuche",
+      "technologyId": 429,
+      "fromBuilding": 2556,
+      "toBuilding": 12,
+      "fromSeconds": 50.0,
+      "toSeconds": 37.593984
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Poles",
+      "unitId": 1707,
+      "technologyId": 786,
+      "name": "Winged Hussar",
+      "net": {
+        "food": 300.0,
+        "wood": 0.0,
+        "gold": 800.0,
+        "stone": 0.0
+      },
+      "seconds": 45.1127805,
+      "reason": "Unit-line upgrade Light Cavalry -> Winged Hussar; absent from the extracted civ tech table.",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): unit_upgrades[1707] = tech 786, 600F 800G, 60 s",
+        "DAT tech 786 (Stable 101, 600F/800G, 60 s); DAT effect 801 (Poles) cmd 26: tech 786 food x0.5",
+        "army-economics-review 4e3ca13de RESEARCH.md error 1"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Lithuanians",
+      "unitId": 1707,
+      "technologyId": 786,
+      "name": "Winged Hussar",
+      "net": {
+        "food": 600.0,
+        "wood": 0.0,
+        "gold": 800.0,
+        "stone": 0.0
+      },
+      "seconds": 45.1127805,
+      "reason": "Unit-line upgrade Light Cavalry -> Winged Hussar; absent from the extracted civ tech table.",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): unit_upgrades[1707] = tech 786, 600F 800G, 60 s",
+        "DAT tech 786 (Stable 101, 600F/800G, 60 s); DAT effect 801 (Poles) cmd 26: tech 786 food x0.5",
+        "army-economics-review 4e3ca13de RESEARCH.md error 1"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Danes",
+      "unitId": 567,
+      "technologyId": 1484,
+      "name": "Hamask",
+      "net": {
+        "food": 250.0,
+        "wood": 0.0,
+        "gold": 450.0,
+        "stone": 0.0
+      },
+      "seconds": 26.315789,
+      "reason": "Infantry deal more damage as they lose HP (engine flag, DAT resource 33 = 30).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Infantry deal more damage as they lose HP.'",
+        "data/golden/aoe2_reference_simulation.db ref_techs_applied: Champion, Halberdier, Elite Jomsviking, Elite Varangian Guard",
+        "army-economics-review 4e3ca13de RESEARCH.md error 2"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Danes",
+      "unitId": 359,
+      "technologyId": 1484,
+      "name": "Hamask",
+      "net": {
+        "food": 250.0,
+        "wood": 0.0,
+        "gold": 450.0,
+        "stone": 0.0
+      },
+      "seconds": 26.315789,
+      "reason": "Infantry deal more damage as they lose HP (engine flag, DAT resource 33 = 30).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Infantry deal more damage as they lose HP.'",
+        "data/golden/aoe2_reference_simulation.db ref_techs_applied: Champion, Halberdier, Elite Jomsviking, Elite Varangian Guard",
+        "army-economics-review 4e3ca13de RESEARCH.md error 2"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Danes",
+      "unitId": 2712,
+      "technologyId": 1484,
+      "name": "Hamask",
+      "net": {
+        "food": 250.0,
+        "wood": 0.0,
+        "gold": 450.0,
+        "stone": 0.0
+      },
+      "seconds": 26.315789,
+      "reason": "Infantry deal more damage as they lose HP (engine flag, DAT resource 33 = 30).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Infantry deal more damage as they lose HP.'",
+        "data/golden/aoe2_reference_simulation.db ref_techs_applied: Champion, Halberdier, Elite Jomsviking, Elite Varangian Guard",
+        "army-economics-review 4e3ca13de RESEARCH.md error 2"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Danes",
+      "unitId": 2704,
+      "technologyId": 1484,
+      "name": "Hamask",
+      "net": {
+        "food": 250.0,
+        "wood": 0.0,
+        "gold": 450.0,
+        "stone": 0.0
+      },
+      "seconds": 26.315789,
+      "reason": "Infantry deal more damage as they lose HP (engine flag, DAT resource 33 = 30).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Infantry deal more damage as they lose HP.'",
+        "data/golden/aoe2_reference_simulation.db ref_techs_applied: Champion, Halberdier, Elite Jomsviking, Elite Varangian Guard",
+        "army-economics-review 4e3ca13de RESEARCH.md error 2"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Saxons",
+      "unitId": 567,
+      "technologyId": 1464,
+      "name": "Shield Wall",
+      "net": {
+        "food": 525.0,
+        "wood": 0.0,
+        "gold": 475.0,
+        "stone": 0.0
+      },
+      "seconds": 33.834585,
+      "reason": "Infantry gain additional armor when massed (engine flag, DAT resource 33 = 31).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Infantry gain additional armor when massed.'",
+        "data/golden/aoe2_reference_simulation.db ref_techs_applied: Champion, Halberdier, Elite Hearth Troop, Elite Varangian Guard",
+        "WIKI: Shield Wall",
+        "army-economics-review 4e3ca13de RESEARCH.md error 3"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Saxons",
+      "unitId": 359,
+      "technologyId": 1464,
+      "name": "Shield Wall",
+      "net": {
+        "food": 525.0,
+        "wood": 0.0,
+        "gold": 475.0,
+        "stone": 0.0
+      },
+      "seconds": 33.834585,
+      "reason": "Infantry gain additional armor when massed (engine flag, DAT resource 33 = 31).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Infantry gain additional armor when massed.'",
+        "data/golden/aoe2_reference_simulation.db ref_techs_applied: Champion, Halberdier, Elite Hearth Troop, Elite Varangian Guard",
+        "WIKI: Shield Wall",
+        "army-economics-review 4e3ca13de RESEARCH.md error 3"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Saxons",
+      "unitId": 2706,
+      "technologyId": 1464,
+      "name": "Shield Wall",
+      "net": {
+        "food": 525.0,
+        "wood": 0.0,
+        "gold": 475.0,
+        "stone": 0.0
+      },
+      "seconds": 33.834585,
+      "reason": "Infantry gain additional armor when massed (engine flag, DAT resource 33 = 31).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Infantry gain additional armor when massed.'",
+        "data/golden/aoe2_reference_simulation.db ref_techs_applied: Champion, Halberdier, Elite Hearth Troop, Elite Varangian Guard",
+        "WIKI: Shield Wall",
+        "army-economics-review 4e3ca13de RESEARCH.md error 3"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Saxons",
+      "unitId": 2704,
+      "technologyId": 1464,
+      "name": "Shield Wall",
+      "net": {
+        "food": 525.0,
+        "wood": 0.0,
+        "gold": 475.0,
+        "stone": 0.0
+      },
+      "seconds": 33.834585,
+      "reason": "Infantry gain additional armor when massed (engine flag, DAT resource 33 = 31).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Infantry gain additional armor when massed.'",
+        "data/golden/aoe2_reference_simulation.db ref_techs_applied: Champion, Halberdier, Elite Hearth Troop, Elite Varangian Guard",
+        "WIKI: Shield Wall",
+        "army-economics-review 4e3ca13de RESEARCH.md error 3"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Khitans",
+      "unitId": 441,
+      "technologyId": 1007,
+      "name": "Ordo Cavalry",
+      "net": {
+        "food": 600.0,
+        "wood": 0.0,
+        "gold": 300.0,
+        "stone": 0.0
+      },
+      "seconds": 33.834585,
+      "reason": "Non-projectile cavalry regenerate HP in combat (engine flag, DAT resource 33 = 3). Heavy Cavalry Archer and Mounted Trebuchet are projectile units and are not included.",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Cavalry regenerates HP in combat.'",
+        "WIKI: Ordo Cavalry ('Non-projectile cavalry regenerate...')",
+        "army-economics-review 4e3ca13de RESEARCH.md error 4"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Khitans",
+      "unitId": 1372,
+      "technologyId": 1007,
+      "name": "Ordo Cavalry",
+      "net": {
+        "food": 600.0,
+        "wood": 0.0,
+        "gold": 300.0,
+        "stone": 0.0
+      },
+      "seconds": 33.834585,
+      "reason": "Non-projectile cavalry regenerate HP in combat (engine flag, DAT resource 33 = 3). Heavy Cavalry Archer and Mounted Trebuchet are projectile units and are not included.",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Cavalry regenerates HP in combat.'",
+        "WIKI: Ordo Cavalry ('Non-projectile cavalry regenerate...')",
+        "army-economics-review 4e3ca13de RESEARCH.md error 4"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Khitans",
+      "unitId": 330,
+      "technologyId": 1007,
+      "name": "Ordo Cavalry",
+      "net": {
+        "food": 600.0,
+        "wood": 0.0,
+        "gold": 300.0,
+        "stone": 0.0
+      },
+      "seconds": 33.834585,
+      "reason": "Non-projectile cavalry regenerate HP in combat (engine flag, DAT resource 33 = 3). Heavy Cavalry Archer and Mounted Trebuchet are projectile units and are not included.",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Cavalry regenerates HP in combat.'",
+        "WIKI: Ordo Cavalry ('Non-projectile cavalry regenerate...')",
+        "army-economics-review 4e3ca13de RESEARCH.md error 4"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Shu",
+      "unitId": 359,
+      "technologyId": 1070,
+      "name": "Coiled Serpent Array",
+      "net": {
+        "food": 350.0,
+        "wood": 0.0,
+        "gold": 300.0,
+        "stone": 0.0
+      },
+      "seconds": 30.075187,
+      "reason": "Spearman-line and White Feather Guards gain HP when near each other (engine flag, resource 33 = 6).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Spearman-line and White Feather Guards gain additional HP when near each other.'",
+        "WIKI: Coiled Serpent Array",
+        "army-economics-review 4e3ca13de RESEARCH.md error 5"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Shu",
+      "unitId": 1961,
+      "technologyId": 1070,
+      "name": "Coiled Serpent Array",
+      "net": {
+        "food": 350.0,
+        "wood": 0.0,
+        "gold": 300.0,
+        "stone": 0.0
+      },
+      "seconds": 30.075187,
+      "reason": "Spearman-line and White Feather Guards gain HP when near each other (engine flag, resource 33 = 6).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Spearman-line and White Feather Guards gain additional HP when near each other.'",
+        "WIKI: Coiled Serpent Array",
+        "army-economics-review 4e3ca13de RESEARCH.md error 5"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Mapuche",
+      "unitId": 2568,
+      "technologyId": 1380,
+      "name": "Butalmapu",
+      "net": {
+        "food": 500.0,
+        "wood": 0.0,
+        "gold": 450.0,
+        "stone": 0.0
+      },
+      "seconds": 33.834585,
+      "reason": "Team Castle unique units and Bolas Riders cost -15%. The Bolas Rider part is an explicit DAT price command and is already linked; the Castle-unique-unit part (Kona) is engine hook 51.",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Team Castle Unique Units and Bolas Riders cost -15%.'",
+        "WIKI: Butalmapu; Kona (55F 34G with Butalmapu)",
+        "army-economics-review 4e3ca13de RESEARCH.md error 6, PRODUCTION.md error 3"
+      ]
+    },
+    {
+      "kind": "research_added",
+      "decisionDate": "2026-11-12",
+      "civ": "Wu",
+      "unitId": 528,
+      "technologyId": 1080,
+      "name": "Red Cliffs Tactics",
+      "net": {
+        "food": 400.0,
+        "wood": 0.0,
+        "gold": 250.0,
+        "stone": 0.0
+      },
+      "seconds": 30.075187,
+      "reason": "Demolition Ships and Fire Archers deal fire damage (already linked to the Fire Archer).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): 'Demolition Ships and Fire Archers deal fire damage to ships and buildings.' (400F 250G)",
+        "army-economics-review 4e3ca13de RESEARCH.md error 7"
+      ]
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Armenians",
+      "referenceUnitId": 2,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_building",
+      "decisionDate": "2026-11-12",
+      "civ": "Armenians",
+      "unitId": 1811,
+      "fromBuilding": 104,
+      "toBuilding": 1806,
+      "before": {
+        "food": 0.0,
+        "wood": 175.0,
+        "gold": 0.0,
+        "stone": 0.0
+      },
+      "after": {
+        "food": 0.0,
+        "wood": 200.0,
+        "gold": 0.0,
+        "stone": 0.0
+      },
+      "reason": "Armenians cannot build a Monastery; the Warrior Priest trains at the Fortified Church (200 wood).",
+      "evidence": [
+        "DAT effect 941 'C-Bonus, Fortified Church' (type 3, 104 -> 1806)",
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): Armenian building list has 1806, not 104",
+        "WIKI: Warrior Priest (Building = Fortified Church)",
+        "army-economics-review 4e3ca13de PRODUCTION.md error 1"
+      ]
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Aztecs",
+      "referenceUnitId": 20,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Bengalis",
+      "referenceUnitId": 35,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Berbers",
+      "referenceUnitId": 53,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Bohemians",
+      "referenceUnitId": 76,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Britons",
+      "referenceUnitId": 95,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Bulgarians",
+      "referenceUnitId": 111,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Burgundians",
+      "referenceUnitId": 129,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Burmese",
+      "referenceUnitId": 148,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Byzantines",
+      "referenceUnitId": 168,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Celts",
+      "referenceUnitId": 189,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Chinese",
+      "referenceUnitId": 205,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Cumans",
+      "referenceUnitId": 223,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Danes",
+      "referenceUnitId": 244,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Dravidians",
+      "referenceUnitId": 260,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Ethiopians",
+      "referenceUnitId": 280,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Franks",
+      "referenceUnitId": 300,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Georgians",
+      "referenceUnitId": 318,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Goths",
+      "referenceUnitId": 336,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Gurjaras",
+      "referenceUnitId": 355,
+      "unitId": 93,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Hindustanis",
+      "referenceUnitId": 375,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Huns",
+      "referenceUnitId": 394,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Incas",
+      "referenceUnitId": 410,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Italians",
+      "referenceUnitId": 427,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Japanese",
+      "referenceUnitId": 446,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Jurchens",
+      "referenceUnitId": 464,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Khitans",
+      "referenceUnitId": 484,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Khmer",
+      "referenceUnitId": 504,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Koreans",
+      "referenceUnitId": 523,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Lithuanians",
+      "referenceUnitId": 543,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Magyars",
+      "referenceUnitId": 562,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Malay",
+      "referenceUnitId": 579,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Malians",
+      "referenceUnitId": 598,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Mapuche",
+      "referenceUnitId": 617,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Mayans",
+      "referenceUnitId": 634,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Mongols",
+      "referenceUnitId": 649,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Muisca",
+      "referenceUnitId": 667,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_work_rate",
+      "decisionDate": "2026-11-12",
+      "civ": "Persians",
+      "unitId": 2628,
+      "building": 45,
+      "fromSeconds": 25.714286882050235,
+      "toSeconds": 22.499999105930364,
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): Persians 'Docks work +5/10/15/20% faster in Dark/Feudal/Castle/Imperial Age'",
+        "army-economics-review 4e3ca13de PRODUCTION.md error 4"
+      ]
+    },
+    {
+      "kind": "route_work_rate",
+      "decisionDate": "2026-11-12",
+      "civ": "Persians",
+      "unitId": 691,
+      "building": 45,
+      "fromSeconds": 43.80952579904855,
+      "toSeconds": 38.33333181010358,
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): Persians 'Docks work +5/10/15/20% faster in Dark/Feudal/Castle/Imperial Age'",
+        "army-economics-review 4e3ca13de PRODUCTION.md error 4"
+      ]
+    },
+    {
+      "kind": "route_work_rate",
+      "decisionDate": "2026-11-12",
+      "civ": "Persians",
+      "unitId": 532,
+      "building": 45,
+      "fromSeconds": 25.714286882050235,
+      "toSeconds": 22.499999105930364,
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): Persians 'Docks work +5/10/15/20% faster in Dark/Feudal/Castle/Imperial Age'",
+        "army-economics-review 4e3ca13de PRODUCTION.md error 4"
+      ]
+    },
+    {
+      "kind": "route_work_rate",
+      "decisionDate": "2026-11-12",
+      "civ": "Persians",
+      "unitId": 442,
+      "building": 45,
+      "fromSeconds": 25.714286882050235,
+      "toSeconds": 22.499999105930364,
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): Persians 'Docks work +5/10/15/20% faster in Dark/Feudal/Castle/Imperial Age'",
+        "army-economics-review 4e3ca13de PRODUCTION.md error 4"
+      ]
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Persians",
+      "referenceUnitId": 684,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_work_rate",
+      "decisionDate": "2026-11-12",
+      "civ": "Persians",
+      "unitId": 528,
+      "building": 45,
+      "fromSeconds": 29.5238108645762,
+      "toSeconds": 25.833332306808938,
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): Persians 'Docks work +5/10/15/20% faster in Dark/Feudal/Castle/Imperial Age'",
+        "army-economics-review 4e3ca13de PRODUCTION.md error 4"
+      ]
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Poles",
+      "referenceUnitId": 705,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Portuguese",
+      "referenceUnitId": 723,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Romans",
+      "referenceUnitId": 741,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Saracens",
+      "referenceUnitId": 758,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Saxons",
+      "referenceUnitId": 780,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Shu",
+      "referenceUnitId": 796,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Slavs",
+      "referenceUnitId": 830,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Spanish",
+      "referenceUnitId": 848,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Tatars",
+      "referenceUnitId": 866,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Teutons",
+      "referenceUnitId": 887,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Tupi",
+      "referenceUnitId": 904,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Turks",
+      "referenceUnitId": 921,
+      "unitId": 93,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Varangians",
+      "referenceUnitId": 943,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Vietnamese",
+      "referenceUnitId": 959,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Vikings",
+      "referenceUnitId": 981,
+      "unitId": 358,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Wei",
+      "referenceUnitId": 997,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_dropped",
+      "decisionDate": "2026-11-12",
+      "civ": "Wu",
+      "referenceUnitId": 1014,
+      "unitId": 359,
+      "building": "Donjon",
+      "reason": "Production building not available to this civilization"
+    },
+    {
+      "kind": "route_restored",
+      "decisionDate": "2026-11-12",
+      "civ": "Mapuche",
+      "unitId": 359,
+      "building": "Barracks",
+      "secondsPerOrder": 16.542552254148077,
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): Mapuche 'Settlements can train Spearman-line and Skirmishers'",
+        "WIKI: Settlement (trains them in addition to regular production buildings)",
+        "army-economics-review 4e3ca13de PRODUCTION.md error 2"
+      ]
+    },
+    {
+      "kind": "route_restored",
+      "decisionDate": "2026-11-12",
+      "civ": "Mapuche",
+      "unitId": 6,
+      "building": "Archery Range",
+      "secondsPerOrder": 16.542552254148077,
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): Mapuche 'Settlements can train Spearman-line and Skirmishers'",
+        "WIKI: Settlement (trains them in addition to regular production buildings)",
+        "army-economics-review 4e3ca13de PRODUCTION.md error 2"
+      ]
+    },
+    {
+      "kind": "production_rebate",
+      "decisionDate": "2026-11-12",
+      "civ": "Wu",
+      "technologyId": 1084,
+      "perBuilding": {
+        "10": 55.0,
+        "12": 55.0,
+        "14": 55.0,
+        "20": 55.0,
+        "45": 55.0,
+        "47": 55.0,
+        "49": 55.0,
+        "51": 55.0,
+        "86": 55.0,
+        "87": 55.0,
+        "101": 55.0,
+        "132": 55.0,
+        "133": 55.0,
+        "150": 55.0,
+        "153": 55.0,
+        "498": 55.0
+      },
+      "reason": "Wu military buildings and Docks give +55 food when completed; credited as a rebate on each production building."
+    },
+    {
+      "kind": "price_multiplier",
+      "decisionDate": "2026-11-12",
+      "civ": "Mapuche",
+      "unitId": 2568,
+      "multiplier": 0.85,
+      "technologyId": 1380,
+      "before": {
+        "food": 65.0,
+        "wood": 0.0,
+        "gold": 40.0,
+        "stone": 0.0
+      },
+      "after": {
+        "food": 55.0,
+        "wood": 0.0,
+        "gold": 34.0,
+        "stone": 0.0
+      },
+      "reason": "Butalmapu: Team Castle unique units cost -15% (Elite Kona 65F 40G -> 55F 34G).",
+      "evidence": [
+        "aoe2techtree.net data.json (DE update 188329, fetched 2026-11-12): Butalmapu text",
+        "WIKI: Kona (55F 34G with Butalmapu)",
+        "army-economics-review 4e3ca13de PRODUCTION.md error 3"
+      ]
+    }
+  ],
+  "droppedProfiles": [
+    {
+      "civ": "Berbers",
+      "unitId": 1631,
+      "name": "Xebec",
+      "reason": "Not a post-Imperial Berber unit: unit 1631 is absent from the Berber game tree (owner decision 8).",
+      "mode": "default",
+      "decisionDate": "2026-11-12"
+    },
+    {
+      "civ": "Chinese",
+      "unitId": 529,
+      "name": "Fire Ship",
+      "reason": "Chinese Fire Ships upgrade automatically to the Dragon Ship (unit 1302) in the Imperial Age (owner decision 8). The Dragon Ship is not added: the combat reference DB has no Dragon Ship profile/mechanics to attach it to (follow-up).",
+      "mode": "default",
+      "decisionDate": "2026-11-12"
+    }
+  ],
+  "researchCandidateReview": [
+    {
+      "technologyId": 21,
+      "decision": "excluded",
+      "reason": "Atheism (Huns): relic/wonder victory timer and Spies cost; no unit stat.",
+      "civilizations": [
+        "Huns"
+      ]
+    },
+    {
+      "technologyId": 28,
+      "decision": "excluded",
+      "reason": "Bimaristan (Saracens): Monks heal several units; no roster combat stat.",
+      "civilizations": [
+        "Saracens"
+      ]
+    },
+    {
+      "technologyId": 45,
+      "decision": "keep_existing_links",
+      "reason": "Faith: conversion resistance; Monks are not in the combat roster.",
+      "civilizations": [
+        "Armenians",
+        "Aztecs",
+        "Bengalis",
+        "Berbers",
+        "Bohemians",
+        "Britons",
+        "Burgundians",
+        "Burmese",
+        "Byzantines",
+        "Celts",
+        "Chinese",
+        "Cumans",
+        "Dravidians",
+        "Ethiopians",
+        "Franks",
+        "Georgians",
+        "Goths",
+        "Hindustanis",
+        "Huns",
+        "Incas",
+        "Italians",
+        "Japanese",
+        "Khitans",
+        "Khmer",
+        "Koreans",
+        "Lithuanians",
+        "Malay",
+        "Malians",
+        "Mapuche",
+        "Mayans",
+        "Mongols",
+        "Muisca",
+        "Persians",
+        "Poles",
+        "Portuguese",
+        "Romans",
+        "Saracens",
+        "Saxons",
+        "Shu",
+        "Sicilians",
+        "Slavs",
+        "Spanish",
+        "Teutons",
+        "Tupi",
+        "Turks",
+        "Varangians",
+        "Vietnamese",
+        "Vikings",
+        "Wei",
+        "Wu"
+      ]
+    },
+    {
+      "technologyId": 46,
+      "decision": "keep_existing_links",
+      "reason": "Devotion: conversion resistance; Monks are not in the combat roster.",
+      "civilizations": [
+        "Armenians",
+        "Aztecs",
+        "Bengalis",
+        "Berbers",
+        "Bohemians",
+        "Britons",
+        "Bulgarians",
+        "Burgundians",
+        "Burmese",
+        "Byzantines",
+        "Celts",
+        "Chinese",
+        "Cumans",
+        "Danes",
+        "Dravidians",
+        "Ethiopians",
+        "Franks",
+        "Georgians",
+        "Goths",
+        "Gurjaras",
+        "Hindustanis",
+        "Huns",
+        "Incas",
+        "Italians",
+        "Japanese",
+        "Jurchens",
+        "Khitans",
+        "Khmer",
+        "Koreans",
+        "Lithuanians",
+        "Magyars",
+        "Malay",
+        "Malians",
+        "Mapuche",
+        "Mayans",
+        "Mongols",
+        "Muisca",
+        "Persians",
+        "Poles",
+        "Portuguese",
+        "Romans",
+        "Saracens",
+        "Saxons",
+        "Shu",
+        "Sicilians",
+        "Slavs",
+        "Spanish",
+        "Tatars",
+        "Teutons",
+        "Tupi",
+        "Turks",
+        "Varangians",
+        "Vietnamese",
+        "Vikings",
+        "Wei",
+        "Wu"
+      ]
+    },
+    {
+      "technologyId": 47,
+      "decision": "keep_existing_links",
+      "reason": "Chemistry: already linked where it changes projectiles or unlocks gunpowder.",
+      "civilizations": [
+        "Armenians",
+        "Aztecs",
+        "Bengalis",
+        "Berbers",
+        "Bohemians",
+        "Britons",
+        "Bulgarians",
+        "Burgundians",
+        "Burmese",
+        "Byzantines",
+        "Celts",
+        "Chinese",
+        "Cumans",
+        "Danes",
+        "Dravidians",
+        "Ethiopians",
+        "Franks",
+        "Georgians",
+        "Goths",
+        "Gurjaras",
+        "Hindustanis",
+        "Huns",
+        "Incas",
+        "Italians",
+        "Japanese",
+        "Jurchens",
+        "Khitans",
+        "Khmer",
+        "Koreans",
+        "Lithuanians",
+        "Magyars",
+        "Malay",
+        "Malians",
+        "Mapuche",
+        "Mayans",
+        "Mongols",
+        "Muisca",
+        "Persians",
+        "Poles",
+        "Portuguese",
+        "Romans",
+        "Saracens",
+        "Saxons",
+        "Shu",
+        "Sicilians",
+        "Slavs",
+        "Spanish",
+        "Tatars",
+        "Teutons",
+        "Tupi",
+        "Turks",
+        "Varangians",
+        "Vietnamese",
+        "Vikings",
+        "Wei",
+        "Wu"
+      ]
+    },
+    {
+      "technologyId": 52,
+      "decision": "keep_existing_links",
+      "reason": "Rocketry (Chinese): already linked to the units it changes.",
+      "civilizations": [
+        "Chinese"
+      ]
+    },
+    {
+      "technologyId": 207,
+      "decision": "keep_existing_links",
+      "reason": "Long Swordsman (Wei): already linked as a line upgrade.",
+      "civilizations": [
+        "Wei"
+      ]
+    },
+    {
+      "technologyId": 316,
+      "decision": "keep_existing_links",
+      "reason": "Redemption: Monk conversion of buildings/siege; no roster combat stat.",
+      "civilizations": [
+        "Armenians",
+        "Aztecs",
+        "Bengalis",
+        "Berbers",
+        "Bohemians",
+        "Bulgarians",
+        "Burgundians",
+        "Burmese",
+        "Byzantines",
+        "Danes",
+        "Georgians",
+        "Gurjaras",
+        "Hindustanis",
+        "Incas",
+        "Italians",
+        "Japanese",
+        "Khmer",
+        "Lithuanians",
+        "Malay",
+        "Malians",
+        "Muisca",
+        "Poles",
+        "Romans",
+        "Saracens",
+        "Saxons",
+        "Slavs",
+        "Spanish",
+        "Teutons",
+        "Tupi",
+        "Turks",
+        "Wu"
+      ]
+    },
+    {
+      "technologyId": 319,
+      "decision": "keep_existing_links",
+      "reason": "Atonement: Monk conversion of Monks; no roster combat stat.",
+      "civilizations": [
+        "Armenians",
+        "Aztecs",
+        "Bengalis",
+        "Berbers",
+        "Bohemians",
+        "Burgundians",
+        "Burmese",
+        "Byzantines",
+        "Chinese",
+        "Cumans",
+        "Dravidians",
+        "Ethiopians",
+        "Gurjaras",
+        "Huns",
+        "Italians",
+        "Japanese",
+        "Jurchens",
+        "Khitans",
+        "Lithuanians",
+        "Malay",
+        "Malians",
+        "Mapuche",
+        "Mayans",
+        "Mongols",
+        "Muisca",
+        "Portuguese",
+        "Romans",
+        "Saracens",
+        "Saxons",
+        "Shu",
+        "Slavs",
+        "Spanish",
+        "Tatars",
+        "Teutons",
+        "Turks",
+        "Varangians",
+        "Vietnamese",
+        "Vikings",
+        "Wu"
+      ]
+    },
+    {
+      "technologyId": 438,
+      "decision": "keep_existing_links",
+      "reason": "Theocracy: Monk faith recharge; no roster combat stat.",
+      "civilizations": [
+        "Armenians",
+        "Aztecs",
+        "Bengalis",
+        "Berbers",
+        "Bohemians",
+        "Britons",
+        "Bulgarians",
+        "Burmese",
+        "Byzantines",
+        "Chinese",
+        "Danes",
+        "Dravidians",
+        "Ethiopians",
+        "Franks",
+        "Georgians",
+        "Goths",
+        "Gurjaras",
+        "Hindustanis",
+        "Incas",
+        "Italians",
+        "Japanese",
+        "Jurchens",
+        "Khitans",
+        "Khmer",
+        "Koreans",
+        "Lithuanians",
+        "Magyars",
+        "Malians",
+        "Mapuche",
+        "Mayans",
+        "Muisca",
+        "Persians",
+        "Poles",
+        "Portuguese",
+        "Saracens",
+        "Saxons",
+        "Shu",
+        "Slavs",
+        "Spanish",
+        "Teutons",
+        "Tupi",
+        "Turks",
+        "Varangians",
+        "Vietnamese",
+        "Wei",
+        "Wu"
+      ]
+    },
+    {
+      "technologyId": 439,
+      "decision": "keep_existing_links",
+      "reason": "Heresy: converted units die; conversion is not simulated.",
+      "civilizations": [
+        "Armenians",
+        "Aztecs",
+        "Berbers",
+        "Bohemians",
+        "Bulgarians",
+        "Byzantines",
+        "Celts",
+        "Cumans",
+        "Ethiopians",
+        "Franks",
+        "Georgians",
+        "Gurjaras",
+        "Huns",
+        "Incas",
+        "Khitans",
+        "Lithuanians",
+        "Magyars",
+        "Malay",
+        "Malians",
+        "Mapuche",
+        "Mayans",
+        "Mongols",
+        "Muisca",
+        "Portuguese",
+        "Saracens",
+        "Saxons",
+        "Shu",
+        "Spanish",
+        "Teutons",
+        "Tupi",
+        "Turks",
+        "Vikings"
+      ]
+    },
+    {
+      "technologyId": 464,
+      "decision": "keep_existing_links",
+      "reason": "Greek Fire (Byzantines): already linked to fire ships.",
+      "civilizations": [
+        "Byzantines"
+      ]
+    },
+    {
+      "technologyId": 482,
+      "decision": "excluded",
+      "reason": "Stronghold (Celts): Castle/tower bonuses near buildings; not a field-army stat.",
+      "civilizations": [
+        "Celts"
+      ]
+    },
+    {
+      "technologyId": 492,
+      "decision": "keep_existing_links",
+      "reason": "Supremacy (Spanish): already linked.",
+      "civilizations": [
+        "Spanish"
+      ]
+    },
+    {
+      "technologyId": 578,
+      "decision": "excluded",
+      "reason": "Kasbah (Berbers): production/research speed, modeled in the production review.",
+      "civilizations": [
+        "Berbers"
+      ]
+    },
+    {
+      "technologyId": 629,
+      "decision": "excluded",
+      "reason": "Paper Money (Vietnamese): villager gold, modeled in the special economy.",
+      "civilizations": [
+        "Vietnamese"
+      ]
+    },
+    {
+      "technologyId": 688,
+      "decision": "keep_existing_links",
+      "reason": "Tatars unique technology stored under the 'Malay UT' internal name: already linked.",
+      "civilizations": [
+        "Tatars"
+      ]
+    },
+    {
+      "technologyId": 690,
+      "decision": "excluded",
+      "reason": "Cuman Mercenaries: one-time free Kipchaks per Castle; one-time grants are not repeatable production.",
+      "civilizations": [
+        "Cumans"
+      ]
+    },
+    {
+      "technologyId": 754,
+      "decision": "excluded",
+      "reason": "Burgundian Vineyards: villager gold, modeled in the special economy.",
+      "civilizations": [
+        "Burgundians"
+      ]
+    },
+    {
+      "technologyId": 755,
+      "decision": "keep_existing_links",
+      "reason": "Flemish Revolution: already linked; variable cost remains an owner scope exception.",
+      "civilizations": [
+        "Burgundians"
+      ]
+    },
+    {
+      "technologyId": 756,
+      "decision": "excluded",
+      "reason": "First Crusade (Sicilians): one-time Serjeant spawns; not repeatable production.",
+      "civilizations": [
+        "Sicilians"
+      ]
+    },
+    {
+      "technologyId": 1007,
+      "decision": "added",
+      "reason": "Ordo Cavalry: see ADDED_RESEARCH.",
+      "civilizations": [
+        "Khitans"
+      ]
+    },
+    {
+      "technologyId": 1010,
+      "decision": "excluded",
+      "reason": "Dragon Ship (Chinese): automatic Fire Ship -> Dragon Ship upgrade; the Fire Ship row is dropped and a Dragon Ship combat profile does not exist yet (follow-up).",
+      "civilizations": [
+        "Chinese"
+      ]
+    },
+    {
+      "technologyId": 1061,
+      "decision": "excluded",
+      "reason": "Tuntian (Wei): income excluded by the owner (2026-11-11).",
+      "civilizations": [
+        "Wei"
+      ]
+    },
+    {
+      "technologyId": 1070,
+      "decision": "added",
+      "reason": "Coiled Serpent Array: see ADDED_RESEARCH.",
+      "civilizations": [
+        "Shu"
+      ]
+    },
+    {
+      "technologyId": 1080,
+      "decision": "added",
+      "reason": "Red Cliffs Tactics: see ADDED_RESEARCH (Fire Archer link kept).",
+      "civilizations": [
+        "Wu"
+      ]
+    },
+    {
+      "technologyId": 1380,
+      "decision": "added",
+      "reason": "Butalmapu: see ADDED_RESEARCH (Bolas Rider link kept) and KONA price.",
+      "civilizations": [
+        "Mapuche"
+      ]
+    },
+    {
+      "technologyId": 1393,
+      "decision": "keep_existing_links",
+      "reason": "Curare (Tupi): already linked.",
+      "civilizations": [
+        "Tupi"
+      ]
+    },
+    {
+      "technologyId": 1404,
+      "decision": "excluded",
+      "reason": "Circumnavigation (Portuguese): ship training speed, modeled in the production review.",
+      "civilizations": [
+        "Portuguese"
+      ]
+    },
+    {
+      "technologyId": 1462,
+      "decision": "keep_existing_links",
+      "reason": "Elite Hearth Troop (Saxons): already linked as a line upgrade.",
+      "civilizations": [
+        "Saxons"
+      ]
+    },
+    {
+      "technologyId": 1464,
+      "decision": "added",
+      "reason": "Shield Wall: see ADDED_RESEARCH.",
+      "civilizations": [
+        "Saxons"
+      ]
+    },
+    {
+      "technologyId": 1484,
+      "decision": "added",
+      "reason": "Hamask: see ADDED_RESEARCH.",
+      "civilizations": [
+        "Danes"
+      ]
+    }
+  ],
+  "roundingRule": "Discounted unit prices are rounded half up (x.5 -> x+1) after all multipliers, per resource. The previous policy used Python round() (half to even). The game's own rule is not verified in game; the change moves at most 1 resource per unit and only affects exact halves.",
+  "excludedIncome": "Not counted as villager labor: relics, trade (Caravanserai, trade carts/cogs), Feitoria and other trickle buildings, Wei Tuntian, Gurjara livestock in Mills, fishing/fish traps, combat rewards, one-time grants (e.g. Cuman Mercenaries, First Crusade) and the Tupi casualty refund.",
+  "researchHeadlinePolicy": {
+    "inHeadline": "common",
+    "decisionDate": "2026-11-12",
+    "detail": "Only research both armies share (common technology IDs) enters the headline. Each unit carries research.military.summary (full package); aoe2x.economy.matchup reports common, exclusive and full research per army (cost, weighted villager-minutes, time)."
+  },
+  "gatheringValidation": {
+    "targetRelativeError": 0.01,
+    "requiredForRelease": false,
+    "required": [
+      {
+        "modelKey": "51cda4887170eb98ac91f3ed2000f1be1d05099a691688e0be58a549304135bf",
+        "scenarioSignature": "98d1a1470829de7e8c7d16e9063e7cd8883cdcd3da3136739b3cfa528a1464d4",
+        "outputs": {
+          "food": 0.3927153780999418,
+          "wood": -0.06283446049599069,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Armenians",
+          "Britons",
+          "Japanese",
+          "Koreans",
+          "Shu",
+          "Tupi",
+          "Turks",
+          "Wu"
+        ]
+      },
+      {
+        "modelKey": "b9eabf5d5c392815a624f71ef089856a7153e69549f4e5699a05af8d8bb1a15d",
+        "scenarioSignature": "2834d5320a5770594c14b5dd0bb67f9d608990b338e2ada1cbab74cf9a872138",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5146891753303572,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Armenians"
+        ]
+      },
+      {
+        "modelKey": "c623a2d144e02bd2873384753da9a4b5b34c46fc26fc7abf13e421abdbfd243c",
+        "scenarioSignature": "f245fdd7baa4a860faa370d674b8ad0fd9fd0c79303c8e392f43994e724eb914",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.4908770656443018,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Armenians"
+        ]
+      },
+      {
+        "modelKey": "33179a4314f677448df8f2890ca037458fe80b351de771639bdbd9ebe220a626",
+        "scenarioSignature": "1430440beb7782ea7f5ed557de70d01e3acfcc7ed1841735a25cd6ac6c6370ed",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.3962110014958071
+        },
+        "civilizations": [
+          "Armenians"
+        ]
+      },
+      {
+        "modelKey": "68e3e3a1af03aad2f1945222a110040d5615b6d0b373ebe120b90b057a437357",
+        "scenarioSignature": "77f25ebfeb81b1fb638a319df483cc20303f31bce657306b8ca69b556ae3fa98",
+        "outputs": {
+          "food": 0.3953304358256921,
+          "wood": -0.043126956635530046,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Aztecs"
+        ]
+      },
+      {
+        "modelKey": "9f2ff23df3be73af0f81c83bfa95a8d6ec3e48dfd05f72f3cbdb6803980b3332",
+        "scenarioSignature": "1a8e0b4c0fdbbf798303419b393a7bab8f5f5226c78f17f00de6811eb67b8b7e",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.48550519700352107,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Aztecs"
+        ]
+      },
+      {
+        "modelKey": "4b5418fb572b554244033528a42d292b8ead1045625fa90469693b500c82eeed",
+        "scenarioSignature": "7ffa4f91fde4f3b6aa0c9096488909495e6b1aaec85131e53f212b451a42aa03",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.46028413007110247,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Aztecs"
+        ]
+      },
+      {
+        "modelKey": "f1d1dad2fc3ad312244416c57f6cd5a583d87c159bb99192e225828aefde31d4",
+        "scenarioSignature": "1144c507e6c31573a534cd444291b0bb9be173b2862933b0b67e31c390ff8b76",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.4332836983895536
+        },
+        "civilizations": [
+          "Aztecs"
+        ]
+      },
+      {
+        "modelKey": "c09b13d9bac55da1b355485e80730c6806f30ab65ae602770f8cbfe125e403f1",
+        "scenarioSignature": "a0edf9f43709b752c821dd1eca143adafa5b1fb602f7d1ecabe4f3f573eb6a80",
+        "outputs": {
+          "food": 0.39192305569891966,
+          "wood": -0.04275524243988214,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bengalis",
+          "Bulgarians",
+          "Cumans",
+          "Persians"
+        ]
+      },
+      {
+        "modelKey": "600f9f075ae004864bac311ae9bb8dc9f3e3ab13623b9a97ecbcb70cb0da0ebc",
+        "scenarioSignature": "ccb9bb43e4e1af0b3cbd0ef4f66328ce3d7fcca5b8b2dc312ed883539299b5c6",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5072333356610917,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bengalis",
+          "Britons",
+          "Burgundians",
+          "Burmese",
+          "Byzantines",
+          "Chinese",
+          "Cumans",
+          "Dravidians",
+          "Ethiopians",
+          "Goths",
+          "Hindustanis",
+          "Huns",
+          "Italians",
+          "Japanese",
+          "Jurchens",
+          "Khitans",
+          "Koreans",
+          "Lithuanians",
+          "Magyars",
+          "Muisca",
+          "Persians",
+          "Portuguese",
+          "Saracens",
+          "Saxons",
+          "Slavs",
+          "Spanish",
+          "Teutons",
+          "Tupi",
+          "Turks",
+          "Varangians",
+          "Vikings",
+          "Wu"
+        ]
+      },
+      {
+        "modelKey": "7cb8414a03273df3a3bde86fc02fe8f8d912fa4a17263fd72cf419d29e8c113e",
+        "scenarioSignature": "3b5834c74ae8291adf376ba8b7294007b9f32d7887016734680b5549a9428770",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.4509536291630542,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bengalis",
+          "Britons",
+          "Bulgarians",
+          "Burgundians",
+          "Burmese",
+          "Byzantines",
+          "Celts",
+          "Chinese",
+          "Cumans",
+          "Danes",
+          "Ethiopians",
+          "Franks",
+          "Gurjaras",
+          "Huns",
+          "Incas",
+          "Japanese",
+          "Jurchens",
+          "Khmer",
+          "Koreans",
+          "Magyars",
+          "Malay",
+          "Mapuche",
+          "Mongols",
+          "Persians",
+          "Saracens",
+          "Saxons",
+          "Shu",
+          "Sicilians",
+          "Slavs",
+          "Tatars",
+          "Tupi",
+          "Vikings",
+          "Wei",
+          "Wu"
+        ]
+      },
+      {
+        "modelKey": "6baa72125f5b32cbbb7e4b2775cfe3cf1cf7f9dff255bfd65e85baf39bf99580",
+        "scenarioSignature": "c615f313f28fccf0ef481a1fc4e05c4c0e5737fa0354f523471add90281d1eb8",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.37404656437438727
+        },
+        "civilizations": [
+          "Bengalis",
+          "Britons",
+          "Burmese",
+          "Cumans",
+          "Dravidians",
+          "Franks",
+          "Huns",
+          "Japanese",
+          "Magyars",
+          "Saracens",
+          "Saxons",
+          "Shu",
+          "Slavs",
+          "Tatars",
+          "Tupi",
+          "Turks",
+          "Vikings"
+        ]
+      },
+      {
+        "modelKey": "c29809f5640ee58582326e12d77831381641eb5562baa00b46e6f588c2d96fba",
+        "scenarioSignature": "b0ff8ffc2113ed63798f4e52bf8bc11ce5eced2e3b7310a1e16df993d2fa8580",
+        "outputs": {
+          "food": 0.3942629631222549,
+          "wood": -0.04301050506788235,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Berbers"
+        ]
+      },
+      {
+        "modelKey": "d9e904025dfc7f7bc3dd69599efdc455a5b5d7deac2daced6ff05485a2fece72",
+        "scenarioSignature": "51910705a698eb68b977a5b24b625ad78c2676284b088100c4cc30b30cec5653",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.477358297394518,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Berbers"
+        ]
+      },
+      {
+        "modelKey": "1bac0fdb209ec03570f4fa7505b1159ea5232f7405158673033596e033158a77",
+        "scenarioSignature": "b456a6ccd8417dc45323c9d9f3bd5131dcebaafb64042535abc5697985593314",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.455938785188232,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Berbers"
+        ]
+      },
+      {
+        "modelKey": "9bba93479c5e3982196eaf9c10313bd175a4717e2c2bb182263a8df013164e68",
+        "scenarioSignature": "837bbbb2aa79a8fc4f73a4275813a6df078a215c5d433bf97af6974ad420cc05",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.43278891147373894
+        },
+        "civilizations": [
+          "Berbers"
+        ]
+      },
+      {
+        "modelKey": "c774b3ee697d389a632b5c11a9a7357b2faa0975c69c5372e3c8379739cf4cec",
+        "scenarioSignature": "01c954d98e73fb4dd28a015705e146fca625e976a5d2fa6260a6e669eab2e8cd",
+        "outputs": {
+          "food": 0.39470822999451344,
+          "wood": -0.06315331679912214,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bohemians"
+        ]
+      },
+      {
+        "modelKey": "6b9511df567937141e6c3f3f7fbd0df3f3c30f12616f384e33661f96b6a5953f",
+        "scenarioSignature": "807e950c3a462848d15a6d6bbf89a29100d49caec2df09c8a1e115de228b2fb9",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5158499617462149,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bohemians"
+        ]
+      },
+      {
+        "modelKey": "cc1532c905dc423734ae93726cb858c223addcbed9886459496d814fafbb872e",
+        "scenarioSignature": "ae258063ec4d65ca64c930a4b67a7b76b90da5b6b63128ad11dc24e29ce59ce0",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.45664690849209716,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bohemians"
+        ]
+      },
+      {
+        "modelKey": "0d78e6696cecc55ae5df082e2a0cc91add3ecfb7ab098745cc8819784760f2b3",
+        "scenarioSignature": "2fe9a281b433f7b55f4438071033bb358730777b39f62d008eec1feec60c3140",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.43677963705070577
+        },
+        "civilizations": [
+          "Bohemians"
+        ]
+      },
+      {
+        "modelKey": "f0fbaa4f97a8678de59c4b711620ee52d81fbc6fb48d716f2607d7142160590c",
+        "scenarioSignature": "22d0cc3c8efba641e25e7ce73f3895b29060367497607290fc61714450eaa390",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.4707023136338783,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Bulgarians",
+          "Danes",
+          "Franks",
+          "Gurjaras",
+          "Incas",
+          "Khmer",
+          "Malay",
+          "Malians",
+          "Mapuche",
+          "Mongols",
+          "Poles",
+          "Sicilians",
+          "Tatars",
+          "Wei"
+        ]
+      },
+      {
+        "modelKey": "8154733e88c93bebe4c9a2a73543b2a7859a85169444155e2374e8f552d4eea6",
+        "scenarioSignature": "542a12ff169093a213b3c59315c3c7a27818f98d60c8ffa577a1e348c6852f52",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.42645027729008284
+        },
+        "civilizations": [
+          "Bulgarians",
+          "Burgundians",
+          "Byzantines",
+          "Celts",
+          "Chinese",
+          "Danes",
+          "Ethiopians",
+          "Goths",
+          "Gurjaras",
+          "Hindustanis",
+          "Incas",
+          "Italians",
+          "Jurchens",
+          "Khitans",
+          "Khmer",
+          "Lithuanians",
+          "Malay",
+          "Malians",
+          "Mapuche",
+          "Mongols",
+          "Muisca",
+          "Persians",
+          "Portuguese",
+          "Sicilians",
+          "Spanish",
+          "Teutons",
+          "Varangians",
+          "Vietnamese",
+          "Wei",
+          "Wu"
+        ]
+      },
+      {
+        "modelKey": "698af83676aaac8580d726c73627a0e324eac063f0133817a9b3db74412e0a39",
+        "scenarioSignature": "13c234663055e1e31f91111342d45793b10d4625f4aea237f3f9533f4f5e2830",
+        "outputs": {
+          "food": 0.3923690636669745,
+          "wood": -0.04280389785457904,
+          "gold": 0.026295689583320674,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Burgundians"
+        ]
+      },
+      {
+        "modelKey": "2b2fcaf71e27f5dad4c77662f9112cf89a6ce2bb3af317a78ef417eb77c3f0b7",
+        "scenarioSignature": "b71b34bc38ee3f2b5ae9f7aec312d9859fc98a1bf914302387b80352b1f20b07",
+        "outputs": {
+          "food": 0.3923690636669745,
+          "wood": -0.04280389785457904,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Burmese",
+          "Byzantines",
+          "Franks",
+          "Goths",
+          "Gurjaras",
+          "Incas",
+          "Italians",
+          "Jurchens",
+          "Lithuanians",
+          "Magyars",
+          "Malay",
+          "Malians",
+          "Mapuche",
+          "Muisca",
+          "Portuguese",
+          "Saxons",
+          "Tatars",
+          "Varangians",
+          "Vietnamese",
+          "Vikings",
+          "Wei"
+        ]
+      },
+      {
+        "modelKey": "a2ebc29432263abf999f82380bab377bb97a743c92e87b14e37bdd440d56f11e",
+        "scenarioSignature": "1df62a730316cd0d68d12294bbfdf54b87729afe408e4e94fdc9fa3a461274e4",
+        "outputs": {
+          "food": 0.3921665004433394,
+          "wood": -0.0627466400709343,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Celts",
+          "Dravidians",
+          "Ethiopians",
+          "Hindustanis",
+          "Huns",
+          "Mongols",
+          "Saracens"
+        ]
+      },
+      {
+        "modelKey": "20c8a3f80b0cf091b864b46f31eb1996c3c97e535099e11f776b8da1299558de",
+        "scenarioSignature": "09b6fe21c0a44571f74858631bab29df886174c294c4acb2979617a7a2a634ba",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5234320099868606,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Celts"
+        ]
+      },
+      {
+        "modelKey": "3408cae8ebbbf597e2e9fbe0a3974e11decf92cc6106c399b03cd1916297e0d4",
+        "scenarioSignature": "ba52523f2ed4dd761af40e5ed9030ed250f9335064bc88d45fd38e95868c54ee",
+        "outputs": {
+          "food": 0.3921581314017981,
+          "wood": -0.05704118151301814,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Chinese"
+        ]
+      },
+      {
+        "modelKey": "a162fab1f3578c8fb5f95cce5d3f30e30aa1af2bf6149ff972eab48f1eba95fa",
+        "scenarioSignature": "c0b8462e97c4873a27c2f900e38139a894b9895850991b21304003d8261f8486",
+        "outputs": {
+          "food": 0.41177482546550637,
+          "wood": -0.0627466400709343,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Danes"
+        ]
+      },
+      {
+        "modelKey": "517d58338a559b1f0b963832bffc18294e80dd8f9cb1b0f7a1212db9612f1976",
+        "scenarioSignature": "7b68fcdfc934fe018ead6a742651fe86b530c50f6fbd52f5a4c06e74c10f8af0",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.3958786033628152,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Dravidians",
+          "Goths",
+          "Italians",
+          "Khitans",
+          "Lithuanians",
+          "Poles",
+          "Portuguese",
+          "Spanish",
+          "Teutons",
+          "Varangians",
+          "Vietnamese"
+        ]
+      },
+      {
+        "modelKey": "22a0e04ba099169dbd8fc64b41ee2be8d40ae1aa20145d51179794facff8cc3f",
+        "scenarioSignature": "a5ed3ed1fbe33339dfa05560fab608d2068e7dd9dbf7594f63da685da9527987",
+        "outputs": {
+          "food": 0.39538126619055824,
+          "wood": -0.04313250176624272,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Georgians"
+        ]
+      },
+      {
+        "modelKey": "44c9848ff914814f9892463e2a746fffd41ffe72870093c3d49bfbfc0e50b9dc",
+        "scenarioSignature": "bf715f114c1f519f21e16c66cbb55030a25b74b452aa96a40201ebc278aa1ddf",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5014933600708552,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Georgians"
+        ]
+      },
+      {
+        "modelKey": "1eeadb1528926e42678da69b1af09ebd3f3b55fc7f725a3f1712c58ce30bed21",
+        "scenarioSignature": "4dced380e366d24a705fdaddf212ec11b39a76eb8b199840bb127e9b4c9fb344",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.4354614735644637,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Georgians"
+        ]
+      },
+      {
+        "modelKey": "90b0a0cb665a69d6f9b8fee41dac93f0680406861365bf6cf6f1c545486d50b2",
+        "scenarioSignature": "26fda33831865f5ec4a3cc107c0eb5f81fcce5267e246758cba8e1bde979a216",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.4659869756055229
+        },
+        "civilizations": [
+          "Georgians"
+        ]
+      },
+      {
+        "modelKey": "28bd5c32dfaf7633101012c4f560c63d1bdbcf892f0f020cb9ba32be4350d437",
+        "scenarioSignature": "c8f6549f60d71eccb606f4ad9cfed12310b0d83bf93d71822d5f11324314639b",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.48485826711692553,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Hindustanis"
+        ]
+      },
+      {
+        "modelKey": "3101c529cd67793a1a4a4702ed6ac23fde3134f8827e9090144a2f78fb7a5529",
+        "scenarioSignature": "de1b02c751a851936faf0e98207f22035c7a2fc7d223a428b9bde19737621729",
+        "outputs": {
+          "food": 0.42,
+          "wood": -0.04463768115942029,
+          "gold": 0,
+          "stone": 0
+        },
+        "civilizations": [
+          "Khitans"
+        ]
+      },
+      {
+        "modelKey": "dd7b9bb31926ce60469ca89b862095c8ed000c54c4fd37c2421fb146e3afb818",
+        "scenarioSignature": "448d8a88cfc70cbed1362b4c5b6385b8b55aca80399aafb38196e502ae4446d3",
+        "outputs": {
+          "food": 0.3963411024621896,
+          "wood": -0.04323721117769341,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Khmer"
+        ]
+      },
+      {
+        "modelKey": "74072f099d3c8f0fd817eaef952f5d8eaa0cb9f418fce59c452f6de811d20a00",
+        "scenarioSignature": "a3983de95dde1004ad14c4a66a033ea1301d3c5308b20dfe7dea2f63b541c679",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.5023430889733079
+        },
+        "civilizations": [
+          "Koreans"
+        ]
+      },
+      {
+        "modelKey": "e263b53797800d6c260b33b0971d56284ad78aefdc62fc3500ad631b2a95f741",
+        "scenarioSignature": "6af0642b94bff7e030f5f6fcfeeea195d5e479c36be10cb82f0f0d77f430abc5",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.49604899207935965,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Malians"
+        ]
+      },
+      {
+        "modelKey": "b0c90170cfd19009fcfbd209595a474562634f15cd633ff5d4d2549e02b1b009",
+        "scenarioSignature": "b8754546614eb88105947d0a94465af0363668787855dc7df8e9f384ef7733a4",
+        "outputs": {
+          "food": 0.39073968167949785,
+          "wood": -0.037066215631335914,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Mayans"
+        ]
+      },
+      {
+        "modelKey": "4f88a6f70d48f90401739b530a75bf4679033002f52b3f3abc0a450f87b3d8b6",
+        "scenarioSignature": "22f8c1d68638ee830d71486361bb01872b2faadc61d8631d5646103c15c8ffe0",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5168315769929993,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Mayans"
+        ]
+      },
+      {
+        "modelKey": "bb1c4989f01821aa08058e322926496740bc84a8a31af959e2cd1ce36699761d",
+        "scenarioSignature": "df079c5cbe41c39a42237ee5dc4ee8e7bd0072e5921c4ec991c3aff602520031",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.39630568134452715,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Mayans"
+        ]
+      },
+      {
+        "modelKey": "37a1309a5d695d82db5cec818a34f87b510cb43f28e2647fba14fd7a0f9aa401",
+        "scenarioSignature": "6949a61a36dbf4917a103cf28d84cead8d001c476af7ded35b6c81bfa8b58e25",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.42985994027028823
+        },
+        "civilizations": [
+          "Mayans"
+        ]
+      },
+      {
+        "modelKey": "0f35445496a397eec0d6446e7d06b8cb1662a729fce4218b092043803abf715d",
+        "scenarioSignature": "9bc30c86f78602511a7463ba66d9e9d60baecb57df2c4f37587fabd6d38b8d69",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.451152092073684,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Muisca"
+        ]
+      },
+      {
+        "modelKey": "290fc881616c0e2757cec76e209796145ba8aee63ec3d9a566d0e068d8c4bb9e",
+        "scenarioSignature": "0260d2d8ef576fae5740c85d8910522d97ef07e87857e405d9c65a7eb63eedf8",
+        "outputs": {
+          "food": 0.42847178527441804,
+          "wood": -0.046742376575391056,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Poles"
+        ]
+      },
+      {
+        "modelKey": "fabe5e126c796e5f99132c54264e916ec82bac2e813c4f3573d7e2bdbbc19796",
+        "scenarioSignature": "90c807810c125796baab5ccf9daee7f5d71f4f36f862a7035c47e5e1cfb67f0d",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.1421499568651354,
+          "stone": 0.42645027729008284
+        },
+        "civilizations": [
+          "Poles"
+        ]
+      },
+      {
+        "modelKey": "f049601f5281aa511135c0a829d88f9c4f8b4c2bc2460ba55746e0ad703d3df7",
+        "scenarioSignature": "0a26fdba8a89f35be18f06b4ee42f4e66f19541a372943f74f8f637fa81a8760",
+        "outputs": {
+          "food": 0.4120893429849097,
+          "wood": -0.04495520105289924,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Romans"
+        ]
+      },
+      {
+        "modelKey": "b1a7f5ee07b2518b0119204ad49b561f9546409e340641439ceb25a14c23b9fa",
+        "scenarioSignature": "c67d80392e4b11fb574cf95c24e1e75ccd9dac80cc3c32141ce275378a76c7de",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.49064377786861835,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Romans"
+        ]
+      },
+      {
+        "modelKey": "5b5c02924ee57b0aeedefb4970c77a5b10c81a57c6284ca457b69a77ff30dcd1",
+        "scenarioSignature": "c10635bb1a5028827f893cba58f34297333865f8a92f5460e5f9791f3a011eb2",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.46897570181981835,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Romans"
+        ]
+      },
+      {
+        "modelKey": "fabbb8a2b282f914adb5e53f0c4ba1ba1c3ad07f0002978ae563213a04a3be35",
+        "scenarioSignature": "efbb073927b420a245279e29d5bb4f272525bb911f46d234c140210ba3ceddf7",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.0,
+          "stone": 0.39526143183408213
+        },
+        "civilizations": [
+          "Romans"
+        ]
+      },
+      {
+        "modelKey": "480bc091eb456af7e4892760394de204feb48ae18cdb72c62566a0938941bb34",
+        "scenarioSignature": "cdaccaecec3f83d25412ee72ba507bb4a23285db1484b960b82d7ae24e64ed2c",
+        "outputs": {
+          "food": 0.035506333496276424,
+          "wood": 0.5072333356610917,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Shu"
+        ]
+      },
+      {
+        "modelKey": "4f3111bd55a713e350b4e91f390d999647ed13575e5ad3ff7f8e98d1eb7aed92",
+        "scenarioSignature": "1d5dbe1614926ab8907a00e54c629912bd5a13c10eb0d6532ca410e560d16326",
+        "outputs": {
+          "food": 0.396735494619519,
+          "wood": -0.023366016861026885,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Sicilians"
+        ]
+      },
+      {
+        "modelKey": "33c8825afb528f5661ede32a8c1cb05b77debe86013df25acf76d7fbe1b3fe9d",
+        "scenarioSignature": "2d566b1d73c3c84a1dfa070c8cd5ff4a84c28938d12f2520558ae4d599bc7d6a",
+        "outputs": {
+          "food": 0.45156400189864687,
+          "wood": -0.049261527479852386,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Slavs"
+        ]
+      },
+      {
+        "modelKey": "c95327b2e33220b97fcf4330a43380b0adc648bc314ca9b2dea04e1d21355d72",
+        "scenarioSignature": "b3b4e9786a15bf6f2eb756abf4d955dcd3ddf006131297025bb88dfb0cd2e1e2",
+        "outputs": {
+          "food": 0.39289647570471375,
+          "wood": -0.0628634361127542,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Spanish"
+        ]
+      },
+      {
+        "modelKey": "b1b035d26032bc0b25745ba9b1c7a010748f7c618c1ad5a8a1dc8caecc779202",
+        "scenarioSignature": "0d627c964bd6eedb5bcd9d78a916e55f190f4fe5964d8d2f3df99af8df2b5f6d",
+        "outputs": {
+          "food": 0.39192305569891966,
+          "wood": -0.025653146483293702,
+          "gold": 0.0,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Teutons"
+        ]
+      },
+      {
+        "modelKey": "dca30e6cf2c7ff05fded663cc8c6d8c676f0d05e632602d546773605d118e1b0",
+        "scenarioSignature": "bafc3f159f8ecf20dfa2630fa931923d357f29cd73e3d9c5535f1064d3a5e0b2",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.0,
+          "gold": 0.5434864552163722,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Turks"
+        ]
+      },
+      {
+        "modelKey": "028898c2604a9d27785d5c75db4fd4683d39c9a11c759912103b333562d947d1",
+        "scenarioSignature": "9f6b7485ac892f4a8fabd464806e9a285ef8907eec816149193bc1561d115fa3",
+        "outputs": {
+          "food": 0.0,
+          "wood": 0.5072333356610917,
+          "gold": 0.03251495860679557,
+          "stone": 0.0
+        },
+        "civilizations": [
+          "Vietnamese"
+        ]
+      }
+    ],
+    "comparisons": [],
+    "blockers": [],
+    "status": "deferred_by_user"
+  },
+  "assumptions": [
+    "Post-Imperial; all available upgrades; Imperial research pricing; own bonuses only.",
+    "The headline is weighted villager-minutes for the displayed army, production buildings completing it within 60 seconds, and common military upgrade net costs.",
+    "Apply food x1, wood x1, gold x1.5 and stone x3 to the combined resource bill before evaluating labor. These are scarcity preferences, not literal gathering delays.",
+    "Gathering uses the reviewed resource layouts, including reseeding downtime and recurring farm wood; resource coproducts satisfy the combined bill without resale credit.",
+    "Khitan pasture food uses an online lifecycle average of 25.2 food per villager-minute as a post-Imperial estimate, with immediate food credit and no external drop-off trip. Recurring pasture wood uses the supplied DAT cost and yield; rebuilding downtime is already in the reference rate.",
+    "Controlled in-game gathering measurements are deferred by user instruction. Release eligibility does not certify measured accuracy; gathering rates remain estimates.",
+    "Folwark: 10% instant food (DAT), 8 of 10 farms covered, taken out of the farm, measured over a steady-state window (1800-9000 s) so it is credited once per farm cycle (owner decision 2026-11-12). Applicable auras are assumed fully active, once, without placement requirements or aura-building costs (user instruction 2026-11-11).",
+    "Wei Tuntian income is excluded. Flemish Revolution cost verification is excluded from release requirements; its variable cost remains unverified. The Berber Xebec and Chinese Fire Ship rows are dropped (not post-Imperial units; owner decision 2026-11-12).",
+    "Research package corrections (owner decisions 2026-11-12): Winged Hussar, Hamask, Shield Wall, Ordo Cavalry, Coiled Serpent Array, Butalmapu and Red Cliffs Tactics added to the units they affect; Crenellations and Aznauri Cavalry removed (no field-combat effect).",
+    "Wu production buildings are charged net of the +55 food each one grants when built. Danes villagers drop off +5% food. Elite Kona costs -15% (Butalmapu).",
+    "Discounted unit prices round half up.",
+    "Age-ups are outside the headline; civilization age-up discounts are listed in civilization notes.",
+    "Saxon foot soldiers assume the maximum -20% discount (four controlled Town Centers/Castles).",
+    "Production uses complete purchase cycles: orders per building = floor(60 / training seconds); required buildings = ceil(orders / orders per building). A slower-than-60s purchase cannot meet the window.",
+    "Choose the route minimizing total weighted labor; ties use faster queue completion then building ID. Unresolved labor allows provisional resource-priced infrastructure only.",
+    "Buildings and common upgrades are one-time investments. Casualty replacement work charges neither again, carries initial batch surplus and rounds new purchases cumulatively. Extra units are not added to combat.",
+    "The 60-second window starts with buildings, upgrades and resources ready. Villager construction animations, rally travel, economic setup, research-building infrastructure and exclusive upgrades are separate from the headline.",
+    "Research time is summed workload, not a parallel build order. Refunds arrive after payment.",
+    "Passive income, relics, trade, combat rewards and early-game grants are outside villager labor. Not counted as villager labor: relics, trade (Caravanserai, trade carts/cogs), Feitoria and other trickle buildings, Wei Tuntian, Gurjara livestock in Mills, fishing/fish traps, combat rewards, one-time grants (e.g. Cuman Mercenaries, First Crusade) and the Tupi casualty refund.",
+    "Lithuanian combat stats elsewhere in the project assume 4 relics (aoe2x/dbgen/config_constants.py LITHUANIAN_RELIC_COUNT); relic income is not counted here."
+  ],
+  "contextVersion": "d2cd7ef11e2688b3e433503ff70e6d2ce93f89d49cc9ce10c1090830cc2f4443"
+}

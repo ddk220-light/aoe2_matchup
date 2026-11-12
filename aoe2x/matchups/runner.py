@@ -288,11 +288,21 @@ class Run:
         reused_ids = {j["id"] for j in reused}
         todo = [j for j in self.jobs if j["id"] not in done and j["id"] not in reused_ids]
         with_prior = sum(self.prior(j)[0] is not None for j in todo)
+        from aoe2x.matchups.plan import civ_breakdown, estimate
+        # The one-seed shortcut exists only under one-three-ten; three-then-ten always needs >= 3 seeds.
+        cost = estimate(len(todo), with_prior if self.policy.name == "one-three-ten" else 0,
+                        self.cfg["execution"]["workers"])
         return {"runId": self.cfg["runId"], "runHash": self.run_hash, "records": str(R),
                 "samplingPolicy": self.policy.name, "contexts": len(self.jobs), "alreadyReviewed": len(done),
                 "reusableResultsInIndex": len(self.reusable), "reused": len(reused), "forced": self.force,
                 "scheduled": len(todo), "scheduledWithPrior": with_prior,
                 "scheduledByFamily": dict(sorted(Counter(j["family"] for j in todo).items())),
+                "estimate": cost,
+                "summary": (f"{len(todo):,} battles to simulate (~{cost['expectedSeeds']:,} seeds, "
+                            f"~{cost['workerHours']:,} worker-hours, ~{next(iter(cost['wallHours'].values())):,} h "
+                            f"on {self.cfg['execution']['workers']} workers; conservative "
+                            f"~{next(iter(cost['conservativeWallHours'].values())):,} h); {len(reused):,} reused"),
+                "scheduledByCivilization": civ_breakdown(self.inputs["bundle"], {j["pairKey"] for j in todo}),
                 "resultIndexSha256": self.index_sha256}
 
     def prior(self, job: dict):

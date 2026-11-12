@@ -414,6 +414,40 @@ def cmd_build_db(args) -> int:
     return 0
 
 
+def cmd_diff_bundles(args) -> int:
+    from aoe2x.matchups import bundle as B
+    from aoe2x.matchups import config as C
+    from aoe2x.matchups import plan as P
+    from aoe2x.matchups import servingdb as S
+    old, new = B.load_bundle(Path(args.old)), B.load_bundle(Path(args.new))
+    cfg_path = _config_path(args.config)
+    raw = json.loads(cfg_path.read_text())
+    cfg = C.load(cfg_path)
+    scenario_set = B.load_scenario_set(C.resolve_path(cfg["battle"]["scenarioSet"], REPO_ROOT))
+    index_path, index_sha = default_index_ref(cfg)
+    if args.index:
+        index_path, index_sha = Path(args.index), args.index_sha256
+    index, sha = S.load_index(index_path, index_sha)
+    plan = P.build_plan(old, new, scenario_set, cfg["battle"], index, workers=args.workers,
+                        resimulate_kept=args.resimulate_kept)
+    if args.out:
+        published = {"rule": "table", "table": artifacts.rel(artifacts.PUBLISHED_ORIENTATION),
+                     "tableHash": json.loads(json.dumps(B.read_json_any(artifacts.PUBLISHED_ORIENTATION)))["tableHash"]}
+        written = P.write_outputs(plan, Path(args.out), old=old, new=new, index=index, with_priors=args.priors,
+                                  base_config=raw if args.run_id else None, new_bundle_path=str(Path(args.new).resolve()),
+                                  index_ref={"index": str(index_path.resolve()), "sha256": sha}, run_id=args.run_id,
+                                  orientation=published)
+        plan["written"] = {"dir": str(Path(args.out).resolve()), "files": written}
+    if args.json:
+        _print({k: v for k, v in plan.items() if k not in ("_pairs", "schedule")} |
+               {"scheduleSample": plan["schedule"][:5]})
+    else:
+        print(P.render(plan))
+        if plan.get("written"):
+            print(f"written: {plan['written']['dir']} ({', '.join(plan['written']['files'])})")
+    return 0
+
+
 def cmd_audit_db(args) -> int:
     from aoe2x.matchups import audit as AU
     from aoe2x.matchups import config as C
@@ -574,7 +608,26 @@ def main(argv=None) -> int:
     p.add_argument("--max-mib", type=float, default=95.0, help="refuse to write a DB of this size or more")
     p.set_defaults(func=cmd_build_db)
 
-    p = sub.add_parser("audit-db", help="verify a built serving DB against its inputs; compare with the published DB")
+    p = sub.add_parser("diff-bundles", help="units added/removed/changed between two bundles and the rerun plan")
+    p.add_argument("old", help="the bundle the baseline results were simulated with")
+    p.add_argument("new", help="the new bundle")
+    p.add_argument("--config", default="full-2026-reproduction",
+                   help="config giving the battle setup (and default result index); with --run-id also the "
+                        "template of the generated run config")
+    p.add_argument("--index", help="result index (default: the config's baselineResults, else the 2026 index)")
+    p.add_argument("--index-sha256")
+    p.add_argument("--workers", type=int, default=4, help="workers for the wall-clock estimate")
+    p.add_argument("--resimulate-kept", action="store_true",
+                   help="also schedule pairs whose stored result is rule-inferred or from another engine")
+    p.add_argument("--out", help="write plan.json, plan.md and contexts.json (selection.contexts) here")
+    p.add_argument("--run-id", help="with --out: also write config.json, a ready run config for the schedule")
+    p.add_argument("--priors", action="store_true",
+                   help="with --out: write priors.jsonl.gz (previous outcomes of the same cells) and use it in "
+                        "config.json (one-seed shortcut; owner default is no prior)")
+    p.add_argument("--json", action="store_true", help="print JSON instead of the readable plan")
+    p.set_defaults(func=cmd_diff_bundles)
+
+    p = sub.add_parser("audit-db",help="verify a built serving DB against its inputs; compare with the published DB")
     p.add_argument("db", help="the built serving DB")
     p.add_argument("--config", help="run config the DB was built for (enables verification against inputs)")
     p.add_argument("--index", help="result index used by build-db (default as build-db)")

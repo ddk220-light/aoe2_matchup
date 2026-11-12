@@ -1,0 +1,23 @@
+{
+  "schema": "aoe2-matchup-run/v1",
+  "runId": "patch-NNNNNN",
+  "description": "Template for a new game build: point game.referenceDb at a frozen copy of the new reference DB (never the live data/golden file while it may change) and fill in its sha256. `freeze` exports and stores the mechanics bundle in the run's records.",
+  "game": {
+    "referenceDb": "${MATCHUP_RUNS_STORE}/inputs/aoe2_reference_simulation-NNNNNN.db",
+    "referenceDbSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "gameBuild": "NNNNNN"
+  },
+  "roster": {"rule": "ranking-roster-v1"},
+  "selection": {"mode": "full"},
+  "battle": {
+    "scenarioSet": "aoe2x/matchups/scenarios/frozen-ranking-scenarios-v1.json.gz",
+    "scenarioSetHash": "f8b09a201ba63cc3227628ddd10699bc9821da26c0dbcb87dcd4b4daf37137ab",
+    "orientation": {
+      "rule": "table",
+      "table": "aoe2x/matchups/baselines/campaign-2026/orientation-adaptive-inventory.json.gz",
+      "tableHash": "969bd5e4ff180a1bbc707794814626fcb3c4d659a48b1040704266305dce7500"
+    }
+  },
+  "engine": {"id": "frozen-civ-matchups-v3", "nodeVersionPolicy": "verified"},
+  "sampling": {"policy": "distinct-seeds-1-3-10", "forecastSource": "baseline-outcome"}
+}

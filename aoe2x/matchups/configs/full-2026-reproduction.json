@@ -1,0 +1,42 @@
+{
+  "schema": "aoe2-matchup-run/v1",
+  "runId": "full-2026-reproduction",
+  "description": "The Oct 31 - Nov 11, 2026 civ-matchup setup: 555 variants of 56 civilizations, every cross-civilization cell, 27-unit cap with geometric cost scaling, frozen V3 engine, the 2026 adaptive inventory's physical orientation. Its inventory reproduces RB adaptive/inventory.jsonl.gz row for row.",
+  "game": {
+    "bundle": "aoe2x/matchups/bundles/campaign-2026-185872-188329.json.gz",
+    "bundleHash": "201cec0cdfac7ad218748051451350070e6a353f833d52d97094f74ddb23b813"
+  },
+  "selection": {"mode": "full", "civilizations": null, "units": null, "against": "*"},
+  "battle": {
+    "scenarioSet": "aoe2x/matchups/scenarios/frozen-ranking-scenarios-v1.json.gz",
+    "scenarioSetHash": "f8b09a201ba63cc3227628ddd10699bc9821da26c0dbcb87dcd4b4daf37137ab",
+    "armyCap": 27,
+    "resourceWeights": {"food": 1, "wood": 0.9, "gold": 1.1},
+    "costBasis": "mechanics.cost",
+    "bufferUnits": 0,
+    "disableKiting": true,
+    "disableAiOrders": true,
+    "preserveOwnerOrientation": true,
+    "orientation": {
+      "rule": "table",
+      "table": "aoe2x/matchups/baselines/campaign-2026/orientation-adaptive-inventory.json.gz",
+      "tableHash": "969bd5e4ff180a1bbc707794814626fcb3c4d659a48b1040704266305dce7500"
+    }
+  },
+  "engine": {
+    "id": "frozen-civ-matchups-v3",
+    "nodeVersionPolicy": "verified",
+    "maxSimulationTicks": "unbounded",
+    "wallTimeoutSteps": [180, 600, 1800, 3600],
+    "environment": {}
+  },
+  "sampling": {
+    "policy": "distinct-seeds-3-10",
+    "forecastSource": "none",
+    "initialSeeds": [0, 1, 2],
+    "extraSeedsOnMixedWinners": [3, 4, 5, 6, 7, 8, 9],
+    "sameSeedReplay": "sample:50"
+  },
+  "execution": {"workers": 4, "phaseContexts": 128, "maxOldSpaceMb": 3072},
+  "output": {"records": "${MATCHUP_RUNS_STORE}/${runId}"}
+}

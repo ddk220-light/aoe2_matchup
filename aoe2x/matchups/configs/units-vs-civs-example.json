@@ -1,0 +1,18 @@
+{
+  "schema": "aoe2-matchup-run/v1",
+  "runId": "units-vs-civs-example",
+  "description": "Example of different conditions: Paladins and Arbalesters of every civilization against the Britons, Franks and Mongols only, with a 20-unit cap and sorted-hash orientation. Changed battle settings give new setup and context hashes, so nothing from 2026 is reused by accident.",
+  "game": {
+    "bundle": "aoe2x/matchups/bundles/campaign-2026-185872-188329.json.gz",
+    "bundleHash": "201cec0cdfac7ad218748051451350070e6a353f833d52d97094f74ddb23b813"
+  },
+  "selection": {"units": ["paladin", "arbalester"], "against": {"civilizations": ["Britons", "Franks", "Mongols"]}},
+  "battle": {
+    "scenarioSet": "aoe2x/matchups/scenarios/frozen-ranking-scenarios-v1.json.gz",
+    "scenarioSetHash": "f8b09a201ba63cc3227628ddd10699bc9821da26c0dbcb87dcd4b4daf37137ab",
+    "armyCap": 20,
+    "orientation": {"rule": "sorted-profile-hash"}
+  },
+  "engine": {"id": "frozen-civ-matchups-v3", "nodeVersionPolicy": "verified"},
+  "sampling": {"policy": "distinct-seeds-3-10", "forecastSource": "none"}
+}

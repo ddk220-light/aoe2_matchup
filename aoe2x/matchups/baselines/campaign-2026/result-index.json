@@ -1,0 +1,158 @@
+{
+  "schema": "aoe2-matchup-result-index/v1",
+  "seedFields": [
+    "seed",
+    "winnerOwner",
+    "ticks",
+    "unitRemainingHp",
+    "opponentRemainingHp",
+    "unitSurvivors",
+    "opponentSurvivors",
+    "unitStartingHp",
+    "opponentStartingHp",
+    "finalStateHash",
+    "eventLogHash",
+    "physicsVersion"
+  ],
+  "sources": {
+    "firstPass": {
+      "path": "aoe2x/js_simulation/calibration/reports/civ-matchups-first-pass-provisional-2026-11-02/profile-table.jsonl.gz",
+      "sha256": "31c68191944915d6d99389c56126da4fd9ec623704e74667fb9657a3acf8dac6",
+      "manifestSha256": "34aba757e0fd665f2a4dccf978b291e3083c002d29fc1f4655a380d579aff275",
+      "rows": 68916
+    },
+    "mismatch": {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-mismatch-validation-2026-11-05/correction-snapshots/review-ready-2026-11-07",
+      "manifestSha256": "9f19d592d404aaf54a7e983d8e1b787ba884f5ed8ecc7339d12ec7a295a86741",
+      "files": {
+        "reviewed-contexts.jsonl.gz": "65142e437eb7c1dfd10bd2e1a9d1d1a7007b78885d66989f5ba0ba8006d36a58"
+      },
+      "rows": 10222,
+      "campaignHash": "89c515d0a0341957f5cb86f4ab0f87537f824646fb808ebe0e1b666ccaf0cc7a",
+      "version": "civ-matchup-mismatch-corrections-v1"
+    },
+    "forecast": {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/correction-snapshots/070",
+      "manifestSha256": "f55861c9cc1d8a528776bf98b27ae267799a90b9428a8ef8f0cf38ec9ab6e763",
+      "files": {
+        "reviewed-contexts.jsonl.gz": "0c46030db92e594cfd5828036c6379a3f8eabb17121475c5d56544faf2ca3877"
+      },
+      "rows": 39112,
+      "campaignHash": "d6c03bd7b04066005a7b9d12f9bd7e1f2264ddd64b0c2a9264ecdd66ba8cc123",
+      "version": "civ-matchup-forecast-corrections-v3"
+    },
+    "recovery": {
+      "path": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-recovery-2026-11-10/correction-snapshots/002",
+      "matchupReviewsSha256": "a2395f922939be648f5aec04bad951f63c3fa512f862ba29cee0aa3a46e78ec1",
+      "rows": 36,
+      "runsSha256": "00e6bc0c0339b979825a5a0e4edf0f2f3c014adcd254fa55f1cf66a9a6c6e307",
+      "contextsFrom": "aoe2x/js_simulation/calibration/campaigns/civ-matchups-forecast-validation-2026-11-07/all-forecast-contexts.jsonl.gz",
+      "contextsSha256": "1d702ed518ac2b8f41c7903cb34b628f37d0c133da53208e429bfe9418c88ca0"
+    }
+  },
+  "rb": {
+    "ref": "origin/simulations/civ-forecast-recovery-2026-11-10",
+    "tip": "3344324fa93fd75c212a8e84eccaae566f7efadd"
+  },
+  "layers": {
+    "firstPass": 68916,
+    "mismatch": 10215,
+    "mismatchIdentityMirrors": 7,
+    "forecast": 39112,
+    "recovery": 36
+  },
+  "replaced": {
+    "forecast<-first-pass-forecast": 39112,
+    "mismatch<-first-pass-forecast": 6748,
+    "mismatch<-first-pass-inference": 1004,
+    "mismatch<-first-pass-observed": 2463,
+    "mismatch<-identity": 7,
+    "recovery<-first-pass-forecast": 36
+  },
+  "rows": 68916,
+  "evidenceTypes": {
+    "identity": 45,
+    "inferred": 10193,
+    "observed": 58678
+  },
+  "finalSources": {
+    "first-pass-inference": 10193,
+    "first-pass-observed": 9315,
+    "forecast-recovery": 36,
+    "forecast-validation": 39112,
+    "identity": 45,
+    "mismatch-validation": 10215
+  },
+  "outcomes": {
+    "a_win": 33741,
+    "b_win": 33213,
+    "close_uncertain": 1917,
+    "equivalent": 45
+  },
+  "seedRecords": 125641,
+  "physicsVersions": {
+    "forecast-recovery-inherited-ranged-core-v1": 1,
+    "forecast-recovery-local-refinement-v3": 2,
+    "forecast-recovery-path-patrol-v2": 77,
+    "frozen-civ-matchups-v3": 94655,
+    "frozen-civ-matchups-v3:adaptive-2026-10-31": 30612,
+    "ranking-corrected-engine-2026-10-29": 294
+  },
+  "reusable": 58544,
+  "mapping": {
+    "same": 47958,
+    "reversed": 20913,
+    "identity": 45,
+    "unmapped": 0,
+    "ambiguous": 0,
+    "outsideSelection": 0,
+    "inventoryPairsWithoutResult": 0,
+    "bySource": {
+      "first-pass-inference": {
+        "reversed": 3235,
+        "same": 6958
+      },
+      "first-pass-observed": {
+        "same": 9315
+      },
+      "forecast-recovery": {
+        "same": 25,
+        "reversed": 11
+      },
+      "forecast-validation": {
+        "same": 24282,
+        "reversed": 14830
+      },
+      "identity": {
+        "identity": 45
+      },
+      "mismatch-validation": {
+        "same": 7378,
+        "reversed": 2837
+      }
+    }
+  },
+  "remainingForecasts": 0,
+  "setupHash": "04440c5cd45a93d8783c3839788686c8dc8bde5373bebde2f4d60ef93b9683b3",
+  "bundleHash": "201cec0cdfac7ad218748051451350070e6a353f833d52d97094f74ddb23b813",
+  "servingDbCheck": {
+    "path": "data/golden/civ_matchups_first_pass.db",
+    "sha256": "bdbbeacfc8dffc190d3b477fc0e7657f1d324d69ec4704f43211af0a774f34ea",
+    "rows": 68916,
+    "outcomeEqual": 68916,
+    "evidenceTypeEqual": 68916,
+    "contextEqual": 68916,
+    "firstDifference": {}
+  },
+  "index": {
+    "file": "result-index.jsonl.gz",
+    "sha256": "d672f22616757fa3dd68e2e74de22d831cb651ce0442c70ea715e5caac99a9b6",
+    "bytes": 21827631,
+    "rows": 68916
+  },
+  "publishedOrientation": {
+    "tableHash": "8ff7a54e234a4113f7486f9a42d4c21d2d7f5abcd8c42823305ea6225aeb33f3",
+    "reversedFromSorted": 26140,
+    "pairs": 68871
+  }
+}

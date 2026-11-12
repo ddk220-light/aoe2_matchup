@@ -1,7 +1,7 @@
 {
   "schema": "aoe2-matchup-run/v1",
   "runId": "single-civ-example-franks",
-  "description": "Example: only the Franks' units against every unit of every other civilization, on the frozen 2026 inputs. A new civilization or a one-civ balance change would look like this with a new bundle.",
+  "description": "Example: only the Franks' units against every unit of every other civilization, on the frozen 2026 inputs, oriented like the published 2026 results so every reusable 2026 result applies without reversal. A new civilization or a one-civ balance change would look like this with a new bundle.",
   "game": {
     "bundle": "aoe2x/matchups/bundles/campaign-2026-185872-188329.json.gz",
     "bundleHash": "201cec0cdfac7ad218748051451350070e6a353f833d52d97094f74ddb23b813"
@@ -12,8 +12,8 @@
     "scenarioSetHash": "f8b09a201ba63cc3227628ddd10699bc9821da26c0dbcb87dcd4b4daf37137ab",
     "orientation": {
       "rule": "table",
-      "table": "aoe2x/matchups/baselines/campaign-2026/orientation-adaptive-inventory.json.gz",
-      "tableHash": "969bd5e4ff180a1bbc707794814626fcb3c4d659a48b1040704266305dce7500"
+      "table": "aoe2x/matchups/baselines/campaign-2026/orientation-published-results.json.gz",
+      "tableHash": "8ff7a54e234a4113f7486f9a42d4c21d2d7f5abcd8c42823305ea6225aeb33f3"
     }
   },
   "engine": {"id": "frozen-civ-matchups-v3", "nodeVersionPolicy": "verified"},

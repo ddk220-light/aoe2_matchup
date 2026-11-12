@@ -273,7 +273,17 @@ def cmd_import_results(args) -> int:
                                     REPO_ROOT / "data/golden/civ_matchups_first_pass.db")
     out = Path(args.out) if args.out else runs_store() / "baselines" / "campaign-2026" / "result-index.jsonl.gz"
     receipt = RES.write_index(index, out, report)
+    # The physical orientation of every published measured/inferred result: a run whose
+    # inventory uses this table can reuse all reusable 2026 results without reversing any.
+    table = I.orientation_table({r["pairKey"]: r["context"]["profiles"] for r in index
+                                 if r["context"] is not None and r["evidenceType"] != "identity"},
+                                {"kind": "2026 published result orientation (serving DB contexts)",
+                                 "resultIndexSha256": receipt["index"]["sha256"], "branchTip": receipt["rb"]["tip"]})
+    receipt["publishedOrientation"] = {"tableHash": table["tableHash"], "reversedFromSorted": len(table["reversed"]),
+                                       "pairs": table["pairs"]}
     if args.write_receipt:
+        from aoe2x.matchups.bundle import write_json_gz
+        write_json_gz(table, artifacts.PUBLISHED_ORIENTATION)
         artifacts.RESULT_INDEX_RECEIPT.parent.mkdir(parents=True, exist_ok=True)
         artifacts.RESULT_INDEX_RECEIPT.write_text(json.dumps(receipt, indent=2) + "\n")
     _print(receipt | {"out": str(out)})

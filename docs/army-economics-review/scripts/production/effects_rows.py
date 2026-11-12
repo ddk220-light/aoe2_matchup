@@ -1,0 +1,45 @@
+import csv
+P='/home/user/aoe2_matchup/docs/army-economics-review/production-comparison.csv'
+E=[
+('All 56','Conscription (tech 315)','work rate x1.33 at Barracks/Archery Range/Stable/Castle/Krepost/Donjon; not Siege Workshop, Dock, Monastery, Settlement','DAT effect 315: x1.33 on 12/498/132/20, 87/10/14, 101/86/153, 82, 1251, 1665 (+Chronicles shipyards)','fandom: "Military buildings (except Siege Workshops) work +33% faster"; does not affect Docks','match','1.33 (not 4/3) makes 20 s units take 15.04 s, i.e. 3 (not 4) per minute; see open question on the 60-s cliff'),
+('Shipwright civs (25)','Shipwright (tech 373)','ships (classes 2,20,21,22) train time x0.65; -20% wood','DAT effect 371 x0.65','fandom Lou Chuan: Shipwright creation +54%, wood -20%','match','Civs without Shipwright per aoe2techtree (e.g. Vikings, Portuguese, Wu, Wei, Armenians, Huns) correctly get no reduction'),
+('Aztecs','Civ bonus: military units train faster','train time x0.8696 (=1/1.15) on infantry, archers, cavalry, cav archers, siege, warships','DAT effect 447 x0.8695652','aoe2techtree: "Military Units train +15% faster"','match',''),
+('Britons','Team bonus','Archery Range work x1.10','DAT effect 399 x1.10 on 87/10/14','aoe2techtree: "Archery Ranges work +10% faster"','match',''),
+('Celts','Team bonus','Siege Workshop work x1.20','DAT effect 401 x1.20 on 49/150','aoe2techtree: "Siege Workshops work +20% faster"','match',''),
+('Goths','Team bonus','Barracks work x1.20','DAT effect 405 x1.20','aoe2techtree: "Barracks work +20% faster"','match',''),
+('Goths','Perfusion (UT)','Barracks work x2.0 (stacks multiplicatively: 1.33*1.2*2 = 3.19)','DAT effect 513 x2.0','aoe2techtree: "Perfusion (Barracks work +100% faster)"','match','Goths Halberdier 6.89 s, Elite Huskarl (Barracks) 5.01 s'),
+('Goths','Anarchy (UT)','Huskarl trainable at Barracks, base 16 s','DAT: second train slot set to Barracks, 16 s','fandom Huskarl: Barracks base 16 s','match',''),
+('Huns','Team bonus','Stable work x1.20','DAT effect 484 x1.20 on 101/86/153','aoe2techtree: "Stables work +20% faster"','match',''),
+('Huns','Marauders (UT)','Tarkan trainable at Stable, base 24 s (Elite)','DAT slot reassigned to Stable, 24 s','fandom Tarkan: Stable 24 s (Elite)','match',''),
+('Franks','Chivalry (UT)','Stable work x1.40','DAT effect 548 x1.40','aoe2techtree: "Chivalry (Stables work +40% faster)"','match',''),
+('Berbers','Kasbah (UT)','Castle work x1.25 (team)','DAT effect 607 team x1.25','aoe2techtree: "Kasbah (Team Castles work +25% faster)"','match',''),
+('Lithuanians','Team bonus','Monastery work x1.20','DAT effect 713 x1.20 (also Fortified Church)','aoe2techtree: "Monasteries work +20% faster"','match','No Lithuanian roster unit is trained at a Monastery'),
+('Persians','Civ bonus: TC and Dock work rate','Dock work x1.05 applied in Imperial (Dark-Age value)','DAT effect 421: Dock 45 x1.05, 133 x1.10, 47 x1.15, 51 x1.20; Imperial Age upgrades Dock 45->51','aoe2techtree + fandom: "Docks work +5/10/15/20% faster in Dark/Feudal/Castle/Imperial Age"','mismatch','Should be x1.20. Affects 5 Persian ships (e.g. Galleon 25.71 s -> 22.50 s). No change in buildings required for any army size 1-27, so no headline change.'),
+('Magyars','Team bonus','Mounted archers (class 36) train time x0.8','DAT effect 6 x0.8','aoe2techtree: "Mounted Archers train +25% faster"','match',''),
+('Turks','Team bonus','Gunpowder units train time x0.8','DAT effect 410 x0.8 (unit list)','aoe2techtree: "Gunpowder Units train +25% faster"','match',''),
+('Gurjaras','Team bonus','Camel and elephant units train time x0.8','DAT effect 843 x0.8 (unit list)','aoe2techtree: "Camel and Elephant Units train +25% faster"','match',''),
+('Khitans','Civ bonus','Skirmisher, Spearman and Scout lines train time x0.8696','DAT effect 1011 x0.8695652','aoe2techtree: "train and upgrade +15% faster"','match',''),
+('Cumans','Steppe Husbandry (UT)','Scout line, Steppe Lancers, Cavalry Archers train time x0.5','DAT effect 726 x0.5','aoe2techtree: "train +100% faster"','match',''),
+('Romans','Comitatenses (UT)','Militia line, Knight line, Centurions train time x0.6667','DAT effect 895 x0.6667','aoe2techtree: "train +50% faster"','match',''),
+('Muisca','Huaracas (UT)','Slingers train time x0.6667','DAT effect 1366 x0.6667','aoe2techtree: "Slingers ... train +50% faster"','match','No Muisca Slinger in roster'),
+('Portuguese','Circumnavigation (UT)','Ships train time x0.75','DAT effect 1404 x0.75','aoe2techtree: "Ships train +33% faster"','match',''),
+('Saxons','Clerical Recruitment (UT)','Monks train time x0.75','DAT effect 1491 x0.75 (class 18)','aoe2techtree: "Monks ... train +33% faster"','match','No Saxon monk in roster'),
+('Mapuche','Civ bonus: Settlements train Spearman/Skirmisher lines','Settlement 22 s in Imperial; regular Barracks/Archery Range routes removed','DAT 1405-1407: x2.15, x0.75, x0.6202 (=1.00 in Imperial); effect 1382 adds a Settlement slot','aoe2techtree: "Settlements can train Spearman-line and Skirmishers"; fandom: "2.15x/1.61x/same time as regular production buildings"','mismatch','Timing correct; route set wrong (see unit rows)'),
+('Burgundians','Flemish Militia Age3','Flemish Militia train time x0.875 (16 -> 14 s)','DAT effect 799 x0.875','fandom Flemish Militia: 16 s Feudal, 14 s from Castle Age','match',''),
+('Sicilians','Donjon','Elite Serjeant 12 s at Donjon or Castle; spearmen at Donjon','DAT train slots','fandom Serjeant: Donjon 12 s from Castle Age','match',''),
+('Bulgarians','Krepost','Konnik 16 s at Krepost (350 stone) or Castle','DAT train slots','fandom Konnik: Castle/Krepost 16 s; Krepost 350 stone (aoe2techtree)','match',''),
+('Italians / Vietnamese / Berbers','Team-bonus regional units','Condottiero at Barracks 18 s; Imperial Skirmisher at Archery Range 22 s; Genitour at Archery Range 23 s','DAT train slots','aoe2techtree team-bonus texts and TrainTime','match',''),
+('Tupi','Blackwood Archer pairs','2 units per purchase at 40W+45G; Elite 14 s at Castle','DAT 40W 45G, 14 s','fandom: "Trained in pairs", 40W+45G per pair since update 185872, Elite 14 s','match','Batch rounding verified: 27 units -> 14 orders, 28 units'),
+('Armenians','Fortified Church replaces Monastery','Warrior Priest trained at Monastery (175W)','DAT effect 941 upgrades Monastery 104 -> Fortified Church 1806 (200W)','fandom Warrior Priest: Building = Fortified Church; Fortified Church 200 wood','mismatch','+25 wood per building (+350 W for 27 units, +11.3 villager-minutes, +5.7%)'),
+('Mapuche','Butalmapu (UT): team Castle unique units -15%','not applied to Elite Kona (65F 40G)','DAT tech 1380: explicit x0.85 only for Bolas Riders; castle-UU part is engine hook 51','aoe2techtree: "Team Castle Unique Units and Bolas Riders cost -15%"; fandom Kona: 55F 34G with Butalmapu','mismatch','-21.5 villager-minutes (-3.6%) for 27 Elite Kona; also changes resource-based army counts'),
+('Wu','Civ bonus: military buildings and Docks give +55 food when built','not modeled (building cost 175W/200W/150W, no food credit)','DAT tech 1084: attribute 27 +55 on Barracks/AR/Stable/SW/Dock IDs','aoe2techtree: "Military production buildings and Docks provide +55 food when built"','not-verifiable','Owner decision. If credited, Wu food-costing armies drop 14-20% (e.g. 27 Halberdiers 119.0 -> 95.4 VM); no change for armies that need no food (no resale rule)'),
+('Cumans','Cuman Mercenaries (UT)','not modeled','DAT tech 727: engine hook 53 only','aoe2techtree: "All team members can train 5 free Elite Kipchaks per Castle"; fandom: 12 s, no resource cost','not-verifiable','Owner decision: one-time per-Castle grant; would make up to 5 Kipchaks per Castle free'),
+('Tupi','Civ bonus: fallen units return 15% of cost','not modeled','DAT tech 1396: hook 27, parameter 295 = 0.15','aoe2techtree: "Fallen units return 15% of their cost"','not-verifiable','Affects live replacement work only (not the 60-s headline); recorded in the dataset as conditional_not_credited'),
+('Sicilians','First Crusade (UT)','not modeled','DAT hook 54','aoe2techtree: "Up to 5 Town Centers spawn 5 Serjeants each"','not-verifiable','One-time grant; exclusion consistent with the dataset rule for one-time spawns'),
+('Saxons','Civ bonus: Foot Soldiers -5% per TC/Castle (max -20%)','-20% applied to unit classes 0, 6, 44 (archers, infantry, hand cannoneers) by policy','DAT hooks 38/39 (Castle/TC built/destroyed): conditional, class list not in static data','aoe2techtree text','not-verifiable','Arithmetic verified (base x0.8 rounded); class scope and 4-building assumption are owner decisions'),
+('Chinese / Berbers','Excluded routes','Chinese Fire Ship and Berber Xebec have no route','Chinese Fire Ship upgrades to Dragon Ship (DAT effect 1010); Xebec 1631 absent from Berber game tree','aoe2techtree: Berbers lack unit 1631; Chinese Dragon Ship 75W 45G 27 s','not-verifiable','Excluded by user; both roster rows are not real post-Imperial units'),
+]
+with open(P,'a',newline='') as f:
+    w=csv.writer(f)
+    for civ,eff,ds,a,b,v,n in E: w.writerow([civ,'(production effect) '+eff,'effect_magnitude_and_scope',ds,a,b,v,n])
+print(len(E))

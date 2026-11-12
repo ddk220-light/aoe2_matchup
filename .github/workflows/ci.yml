@@ -53,10 +53,12 @@ jobs:
             aoe2x/js_simulation/tests/conditional-damage-reduction.test.mjs \
             aoe2x/js_simulation/tests/production-mobile-presentation.test.mjs
 
-      # Offline army-economics gathering simulations (small fixtures; no SciPy).
-      # The Python army-economics tests run in the pytest step and skip the
-      # SciPy/restored-snapshot checks cleanly.
-      - name: Army economics gathering simulations
+      # Army economics: offline gathering simulations (small fixtures; no SciPy)
+      # and the browser pair calculation (apps/web/src/features/economy/)
+      # against the Python-reference fixture for 2,874 pairs. The Python
+      # army-economics tests (artefact, /api/economy, fixture freshness) run in
+      # the pytest step and skip the SciPy/restored-snapshot checks cleanly.
+      - name: Army economics gathering simulations and browser pair calculation
         run: node --test tests/economy/*.test.mjs
 
       - name: Frontend integration tests

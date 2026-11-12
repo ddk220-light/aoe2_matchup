@@ -15,7 +15,7 @@ Full workflow details and hard-won lessons: [`docs/flux2-unit-art-workflow.md`](
 | [`generate.py`](generate.py) | Generate raw renders for a batch of units |
 | [`cut_renders.py`](cut_renders.py) | Background-remove renders → save `_bg` / `_nobg` / `_icon` |
 | [`critique_panel.py`](critique_panel.py) | Build side-by-side review panel (sprite \| icon \| render) |
-| [`make_icons.py`](make_icons.py) | Promote finished icons to `apps/website/static/img/units/` |
+| [`make_icons.py`](make_icons.py) | Promote finished icons to `data/media/img/units/` |
 
 Outputs live in:
 - `graphics/flux2/renders/<batch>/` — raw renders (gitignored)
@@ -118,7 +118,7 @@ Send to phone via Taildrop:
 ## Inputs
 
 - **Sprites**: `graphics/game_raw_files/u_*_elite_idleA_x2.sld` (5,674 files)
-- **Icons**: `apps/website/static/img/units/Elite_<Name>.png`
+- **Icons**: `data/media/img/units/Elite_<Name>.png`
 
 Both are available locally. The SLD files are NOT committed to git (large binary assets);
 see `graphics/game_raw_files/` which is gitignored.

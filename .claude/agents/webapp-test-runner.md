@@ -1,6 +1,6 @@
 ---
 name: webapp-test-runner
-description: "Use this agent when the user wants to set up the webapp locally and run specific validation or test checks against it. This includes starting the Flask server, running API endpoint tests, verifying database integrity, checking simulation results, or validating any webapp functionality. The agent handles the full lifecycle: setup, test execution, and reporting results.\\n\\nExamples:\\n\\n- User: \"Can you verify that the matchup API returns correct data for knights vs pikemen?\"\\n  Assistant: \"I'll use the Task tool to launch the webapp-test-runner agent to set up the webapp, run the matchup API validation, and report the results.\"\\n\\n- User: \"Test that the combat simulation endpoint works correctly\"\\n  Assistant: \"Let me use the Task tool to launch the webapp-test-runner agent to stand up the local server and validate the combat simulation endpoint.\"\\n\\n- User: \"Check if the database has all 50 civilizations loaded correctly\"\\n  Assistant: \"I'll use the Task tool to launch the webapp-test-runner agent to set up the webapp and verify the database contains all expected civilizations.\"\\n\\n- User: \"Run a quick sanity check on the webapp APIs\"\\n  Assistant: \"Let me use the Task tool to launch the webapp-test-runner agent to start the server and run sanity checks across the API endpoints.\"\\n\\n- After making code changes to simulation.py:\\n  Assistant: \"Since simulation logic was modified, let me use the Task tool to launch the webapp-test-runner agent to verify the changes haven't broken any existing functionality.\""
+description: "Use this agent when the user wants to set up the webapp locally and run specific validation or test checks against it. This includes sealing a local release, running the packaged Flask API, running API endpoint tests, verifying database integrity, checking simulation results, or validating any webapp functionality. The agent handles the full lifecycle: setup, test execution, and reporting results.\\n\\nExamples:\\n\\n- User: \"Can you verify that the matchup API returns correct data for knights vs pikemen?\"\\n  Assistant: \"I'll use the Task tool to launch the webapp-test-runner agent to set up the webapp, run the matchup API validation, and report the results.\"\\n\\n- User: \"Test that the combat simulation endpoint works correctly\"\\n  Assistant: \"Let me use the Task tool to launch the webapp-test-runner agent to stand up the local API and validate the combat simulation endpoint.\"\\n\\n- User: \"Check if the database has all 56 civilizations loaded correctly\"\\n  Assistant: \"I'll use the Task tool to launch the webapp-test-runner agent to verify the reference databases contain all expected civilizations.\"\\n\\n- User: \"Run a quick sanity check on the webapp APIs\"\\n  Assistant: \"Let me use the Task tool to launch the webapp-test-runner agent to seal a release, start the API and run sanity checks across the API endpoints.\"\\n\\n- After making code changes to simulation.py:\\n  Assistant: \"Since simulation logic was modified, let me use the Task tool to launch the webapp-test-runner agent to verify the changes haven't broken any existing functionality.\""
 model: opus
 color: yellow
 memory: project
@@ -14,10 +14,11 @@ You set up the AoE2 Unit Analyzer webapp in a local environment, gather input on
 
 ## Environment Context
 
-- **Python**: This is a Windows environment — use the conda `python` (it has flask, numpy, and genieutils-py)
-- **Port**: Default local dev port is 5002 (`PORT=5002 python apps/website/app.py`); pick another free port if occupied
-- **Webapp location**: `apps/website/` directory contains `app.py` (Flask app), the committed SQLite DBs, `simulation.py`, templates, etc.
-- **Databases**: the app serves `data/golden/aoe2_reference.db` (combat data), `derived_data.db` (rankings), `pool_scores.db`, `patches.db` — all committed. `aoe2_units.db` is legacy (no app route reads it)
+- **Layout**: the site is the Astro frontend `apps/web` plus the Flask JSON API `apps/backend` (`app.py` Vercel entrypoint + the `aoe2_api` package: `web.py`, `routes/`, `services/`, `data/`). The old `apps/website` Flask site is deleted. Production is Vercel; see `docs/vercel-deployment.md`.
+- **Python**: Python 3.13 for the packaged backend (`apps/backend/pyproject.toml`); CI runs pytest on 3.11. Use the conda `python` only when `genieutils-py` is needed.
+- **Node**: Node 24 for `apps/web` (Astro).
+- **Port**: suggested local API port is 5002 (`flask --app app run --port 5002` from `apps/backend`); pick another free port if occupied.
+- **Databases**: the API serves `data/golden/aoe2_reference.db`, `aoe2_reference_simulation.db` / `aoe2_reference_rankings.db` (56 civs), `derived_data_v3.db`, `derived_data.db`, `pool_scores.db`, `patches.db`, `civ_matchups_first_pass.db` — all committed, read from the sealed `apps/backend/runtime/` copy. `aoe2_units.db` is read only for `unit_verifications`.
 
 ## Setup Procedure
 
@@ -26,12 +27,14 @@ Follow these steps precisely:
 1. **Check prerequisites**:
    - Verify `data/golden/aoe2_reference.db` exists (it is committed; if missing the checkout is broken).
    - Do NOT run the regeneration pipeline (`aoe2x/dbgen/generate_reference.py` / `generate_main_db.py`) to "fix" anything — a full regen clobbers surgical combat-prop patches in the committed DBs. Inform the user instead.
+   - If dependencies are missing: `pip install -r apps/backend/requirements.txt`, `npm ci --prefix scripts/migration`, `npm ci --prefix apps/web`.
 
-2. **Start the webapp**:
-   - From the repo root: `PORT=5002 python apps/website/app.py` (or set another free port)
-   - If app.py doesn't accept a port argument, you may need to modify the startup or use environment variables
-   - Start the server in the background so you can run tests against it
-   - Verify the server is responding by hitting the root endpoint
+2. **Seal a release and start the API**:
+   - From the repo root: `python scripts/migration/prepare_release.py` (writes `apps/web/src/generated/`, `apps/web/public/`, `apps/backend/runtime/`, and rewrites `vercel.json` — run `git checkout vercel.json` afterwards unless the data changed).
+   - Quick smoke without a server: `python scripts/migration/verify_build.py`.
+   - For a live server: `cd apps/backend && flask --app app run --port 5002`, started in the background; verify with `curl -s localhost:5002/api/release`. Every non-`/api/` path returns 404 there by design.
+   - Pages: `npm run dev --prefix apps/web` serves the Astro pages, but it does not proxy `/api/*` to Flask, so API-driven pages (simulator, rankings, advisor) must be checked end to end on a Vercel preview deployment. `npm run build --prefix apps/web` verifies the production build.
+   - Alternatively, test API routes in-process with the pytest `client` fixture (`tests/conftest.py` imports `aoe2_api.web`).
 
 3. **Gather test input**:
    - Ask the user what specific validation they want to run if not already specified
@@ -40,14 +43,15 @@ Follow these steps precisely:
 4. **Execute the test**:
    - Use `curl`, `python` scripts, or direct database queries as appropriate
    - For API tests, hit endpoints like:
-     - `/api/combat-unit?slug=<slug>&age=<age>&civ=<civ>`
-     - `/api/matchup?unit1=<slug>&unit2=<slug>&age=<age>`
-     - Other endpoints as documented in `app.py`
+     - `/api/ref/combat-unit/<civ>/<slug>?age=imperial`
+     - `/api/ref/unit-line/<line>`, `/api/ref/civ/<civ>`, `/api/civilizations/<civ>`
+     - `POST /api/v3/battle-config`, `POST /api/matchup-sims`
+     - Other endpoints as documented in `apps/backend/aoe2_api/web.py`, `aoe2_api/routes/` and `docs/architecture/webapp.md`
    - For database validation, query `data/golden/aoe2_reference.db` (table `ref_units`) directly with `sqlite3` or Python
-   - For simulation tests, import and call functions from `simulation.py`
+   - For simulation tests, import and call functions from `aoe2x/sim/simulation.py` / `simulation_real.py`, or run the V3 engine with `node aoe2x/js_simulation/node/headless-runner.mjs --input <battle-config.json>`
 
 5. **Clean up**:
-   - Stop the Flask server when testing is complete
+   - Stop the Flask server when testing is complete and restore `vercel.json` (`git checkout vercel.json`) if the seal rewrote it
    - Report any temporary files created
 
 ## Test Execution Guidelines
@@ -88,7 +92,7 @@ After running tests, provide a clear report:
 
 Be prepared to run these common validations:
 
-- **Civ count**: Database should have 50 civilizations
+- **Civ count**: the simulation/rankings reference DBs and the civilization pages have 56 civilizations (the older `aoe2_reference.db` has 53)
 - **Unit stats**: Verify specific unit stats match expected values
 - **Matchup symmetry**: A vs B damage should differ from B vs A (unless identical units)
 - **Simulation determinism**: Same inputs should produce same outputs
@@ -97,7 +101,7 @@ Be prepared to run these common validations:
 
 ## Important Caveats
 
-- The simulation in `simulation.py` is damage-only (no positions/movement)
+- The simulation in `aoe2x/sim/simulation.py` is damage-only (no positions/movement); the live Battle Sim page uses the V3 JS engine `aoe2x/js_simulation/src/`
 - Resource cost formula: Castle age = `wood + 1.5*food + gold`, Imperial = `wood + food + gold`
 - Unit slugs for unique units have civ suffix (e.g., `leitis_lithuanians`)
 - Age-filtered queries for unique units MUST include `AND age=?` when same slug exists in both ages

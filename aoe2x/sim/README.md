@@ -7,7 +7,7 @@ pin them; a mechanic change is incomplete until all three + `.golden/baseline.js
 |---|---|---|
 | Abstract tick (no positions) | `simulation.py` | live `/api/matchup-sims` (via aoe2x.advisor) |
 | Position-based 2D | `simulation_real.py` | ALL batch matchup data (aoe2x.batch, PyPy3) |
-| Frontend canvas | `apps/website/static/js/simulate.js` | the interactive Battle Sim page |
+| V3 JS engine | `aoe2x/js_simulation/src/` | the interactive Battle Sim page (the retired canvas engine `legacy/client/js/engine/` backs only the parity panel and research tools) |
 
 **In:** combat dicts from `combat_unit_loader.build_combat_dict_from_ref(row)`
 (a `ref_units` sqlite row from `data/golden/aoe2_reference.db`).
@@ -22,7 +22,7 @@ INVARIANTS:
   `__init__.py` — that's why this package aliases the module.)
 - `simulation.py` is NOT hashed; its only guard is the golden baseline.
 - `unit_lines.py` UNIT_LINES has a manually-synced JS copy in
-  `apps/website/static/js/rankings.js` — update both.
+  `apps/web/src/features/rankings/render.mjs` — update both.
 
 Determinism: single sims are seed-deterministic; batch data uses 8→40
 escalating multi-seed; golden tests pin `GOLDEN_SEED=20260411`.

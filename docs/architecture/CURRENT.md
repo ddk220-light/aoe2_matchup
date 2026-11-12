@@ -2,6 +2,9 @@
 
 Flask, SQLite and the shared V3 JavaScript engine remain in place. This cleanup
 changes boundaries, not simulation rules, published scores, URLs or visual design.
+Since November 2026 the pages are served by the Astro app `apps/web` and the
+Flask API by `apps/backend` (package `aoe2_api`), both on Vercel; the former
+`apps/website` Flask site is deleted. Paths below reflect that layout.
 
 ## Ownership
 
@@ -13,9 +16,9 @@ changes boundaries, not simulation rules, published scores, URLs or visual desig
 | Published rankings | `data/golden/derived_data.db` and `derived_data_v3.metadata.json` | Frozen published values; no browser recomputation. |
 | Ranking methodology | `aoe2x/rank/ranking_methods.json` -> serving builder -> published metadata | Opponents, settings, weights, normalization and source engine ship with scores. Historical categories remain labeled. |
 | Historical features | Existing advisor, patch and replay databases/modules | Retained; not implicitly regenerated or migrated to V3. |
-| Read-only access | `aoe2x/storage.py`; website DB configuration in `app.py` | URI `mode=ro` and `query_only`; generation tools own writes. |
-| Application services | `apps/website/services/` | Battle construction, mechanics, ranking reads, civilization analysis, catalog, SEO and release identity. |
-| Feature routes | `apps/website/routes/` | Battle/civilization blueprints adapt services to HTTP; `app.py` remains composition and other compatibility routes. |
+| Read-only access | `aoe2x/storage.py`; API DB configuration in `apps/backend/aoe2_api/web.py` | URI `mode=ro` and `query_only`; generation tools own writes. |
+| Application services | `apps/backend/aoe2_api/services/` | Battle construction, mechanics, ranking reads, civilization analysis, catalog, SEO and release identity. |
+| Feature routes | `apps/backend/aoe2_api/routes/` | Battle/civilization blueprints adapt services to HTTP; `aoe2_api/web.py` remains composition and the other API routes; `apps/backend/app.py` is the Vercel entrypoint. |
 | Catalog | `aoe2x/assets/presentation.json`, `services/catalog.py` | One icon/building catalog and reference-derived civilization roster; old global helpers are adapters. |
 
 No database layouts were changed or databases regenerated. Live captures,
@@ -23,18 +26,21 @@ calibration evidence and hidden Advisor/Patch implementations are preserved.
 
 ## Frontend boundaries
 
-- `simulate.js`: composition, roster controls and options wiring.
-- `battle/selection.js`: team state and option serialization.
-- `shared/api.js`: HTTP errors, timeouts, cancellation and latest-request tickets.
-- `battle/worker-session.js`: owns one worker and rejects older-run messages.
-- `battle/playback.js`: selecting, loading, playing, paused, completed and failed
+Astro page code in `apps/web/src/features/`:
+
+- `simulator/enhance.js`: composition, roster controls and options wiring.
+- `simulator/selection.js`: team state and option serialization.
+- `simulator/api.mjs`: HTTP errors, timeouts, cancellation and latest-request tickets.
+- `simulator/worker-session.js`: owns one worker and rejects older-run messages.
+- `simulator/playback.js`: selecting, loading, playing, paused, completed and failed
   states, snapshot playback and renderer integration.
-- `battle/statistics.js`: matchup explanations and live team cards.
-- `shared/catalog.js`: explicit catalog imports for the battle page.
-- `shared/page-data.js`: bootstrap/cache access and stale selection rejection.
-- `matchup.js` / `civilization-view.js`: civilization controller / presentation.
-- `rankings.js` / `rankings-view.js`: ranking controller/table / hover presentation.
-- `rankings_score_method.js`: renders published methodology, not a second model.
+- `simulator/statistics.js`: matchup explanations and live team cards.
+- `simulator/catalog.mjs`: explicit catalog imports for the battle page.
+- `rankings/page-data.mjs`: bootstrap/cache access and stale selection rejection.
+- `civilizations/enhance.ts`: civilization controller / presentation.
+- `rankings/enhance.js` / `rankings/render.mjs`: ranking controller/table / shared
+  SSR + browser renderer; `rankings/model.mjs` renders published methodology, not
+  a second model.
 
 Roster edits and army-option changes invalidate the old config. Starting a run
 cancels stale requests and workers. Pause preserves the run; restart requests a
@@ -42,15 +48,17 @@ new randomized seed. Rendering retains approved sprites, scales, projectiles and
 responsive CSS. Physics is not changed to fit outcomes.
 
 This is an incremental extraction, not a rewrite: classic-script helpers and
-legacy endpoints remain where older pages consume them. Migrate callers before
-removing adapters. `static/js/engine/` is retained legacy code, not the active
-`aoe2x/js_simulation/src/` engine.
+legacy endpoints remain where older callers consume them. Migrate callers before
+removing adapters. `legacy/client/js/engine/` (with the old page scripts in
+`legacy/client/js/`) is retained legacy code for parity/research tests, not the
+active `aoe2x/js_simulation/src/` engine, and is never published.
 
 ## Crawlers and deployment
 
-Civilization detail routes render descriptions and grouped units from the same
-analysis service used by the API. `CIV_ANALYSIS` bootstraps the interactive page
-without an extra request; JavaScript enhances/replaces the same container. The
+Civilization detail pages render descriptions and grouped units at build time
+from the same analysis service used by the API. The static HTML holds the
+content; `features/civilizations/enhance.ts` switches civilizations in place by
+fetching the target page's HTML and replacing the same container. The
 removed all-civilizations summary stays removed. Civilization navigation remains
 real canonical links. Ranking and matchup landing SSR is preserved.
 
@@ -59,7 +67,8 @@ exclude API/query variants and aliases. Dates use recorded data revisions or pat
 release dates, never filesystem mtimes; unknown dates are omitted. Preserve
 canonical metadata, structured data, 404s and permanent redirects.
 
-Set `SITE_URL` to the production canonical origin. Set `SEARCH_INDEXING=false` on
+Set `SITE_URL` to the production canonical origin (read at build time by
+`scripts/migration/site/config.py`). Set `SEARCH_INDEXING=false` on
 staging and `true` on production explicitly. Without an override, only the canonical
 host in a production environment is indexable. Staging sends HTML noindex metadata
 and `X-Robots-Tag: noindex, nofollow`. Assets remain crawlable: blocking all robots

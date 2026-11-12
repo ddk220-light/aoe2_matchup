@@ -8,6 +8,9 @@ This backlog merges two sources: (1) a 7-area multi-agent code review in which e
 
 Phases 1–2 were executed per [docs/plans/2026-06-10-improvement-execution-plan.md](../plans/2026-06-10-improvement-execution-plan.md).
 The findings below are kept as written (they document the pre-fix state); this table is the ledger.
+Paths such as `apps/website/...`, `railway.json` and the Procfile are historical: since
+2026-11 the site is `apps/web` (Astro) + `apps/backend` (Flask API) on Vercel — see
+[webapp.md](webapp.md) and [../vercel-deployment.md](../vercel-deployment.md).
 
 **Done** (suite green; CI added):
 

@@ -11,7 +11,7 @@ empires2_x2_p1.dat
             └─ python3 -m aoe2x.dbgen.generate_main_db → data/golden/aoe2_units.db    (flat unit_stats)
 ```
 
-The `.dat` file lives at `data/inputs/empires2_x2_p1.dat` and is **not** committed; copy it from a local AoE2:DE install. Parsing requires `genieutils-py` (`from genieutils.datfile import DatFile`), which is in neither `requirements.txt` nor `apps/website/requirements.txt` — install it manually before rebuilding, and note no version is pinned anywhere.
+The `.dat` file lives at `data/inputs/empires2_x2_p1.dat` and is **not** committed; copy it from a local AoE2:DE install. Parsing requires `genieutils-py` (`from genieutils.datfile import DatFile`), which is in neither `requirements.txt` nor `apps/backend/requirements.txt` — install it manually before rebuilding, and note no version is pinned anywhere.
 
 ## Stage 1 — Extraction (`aoe2x/extract/`)
 
@@ -32,7 +32,7 @@ The `.dat` file lives at `data/inputs/empires2_x2_p1.dat` and is **not** committ
 
 ### The 53-civ mapping
 
-`extract_constants.CIV_NAMES` is a 60-slot list matching dat civ ids. Skipped slots: index 0 (Gaia) and the six `None` slots — 46–48 (Achaemenids, Athenians, Spartans; Chronicles: Age of Antiquity) and 54–56 (Macedonians, Thracians, Puru; Chronicles: Alexander). That leaves **53 playable civs**, which is the count everywhere downstream (`civilizations.json`, `ORIGINAL_13_CIVS`, the `civilizations` table). The pipeline's civ list constant is `ORIGINAL_13_CIVS` in `aoe2x/dbgen/config_constants.py` — the name is historical; it is now **derived** from `CIV_NAMES` (`sorted(c for c in CIV_NAMES[1:] if c)`), so a new civ added at its dat slot flows through automatically. (The old duplicate copy in `apps/website/app.py` was deleted.)
+`extract_constants.CIV_NAMES` is a 60-slot list matching dat civ ids. Skipped slots: index 0 (Gaia) and the six `None` slots — 46–48 (Achaemenids, Athenians, Spartans; Chronicles: Age of Antiquity) and 54–56 (Macedonians, Thracians, Puru; Chronicles: Alexander). That leaves **53 playable civs**, which is the count everywhere downstream (`civilizations.json`, `ORIGINAL_13_CIVS`, the `civilizations` table). The pipeline's civ list constant is `ORIGINAL_13_CIVS` in `aoe2x/dbgen/config_constants.py` — the name is historical; it is now **derived** from `CIV_NAMES` (`sorted(c for c in CIV_NAMES[1:] if c)`), so a new civ added at its dat slot flows through automatically. (The old duplicate copy in the former Flask website's `app.py` was deleted.)
 
 ## Stage 2 — Reference DB (`aoe2x/dbgen/generate_reference.py`)
 

@@ -37,14 +37,16 @@ they are not the current public battle simulator.
 AoE2 game data
     -> extraction and reference-data generation
     -> versioned SQLite statistics + validated runtime mechanics
-         -> Flask services -> HTML pages and JSON APIs
+         -> build-time exports -> Astro pages (apps/web)
+         -> Flask API (apps/backend) -> JSON APIs
          -> shared V3 engine -> browser playback or Node batch results
 
 Controlled live-game captures -> comparison and validation evidence
 Published ranking results + methodology -> website ranking pages
 ```
 
-The website uses **Flask and SQLite**. Battles run in a **browser Web Worker**
+The website is an **Astro** frontend with a **Flask and SQLite** API, deployed
+on Vercel as two services. Battles run in a **browser Web Worker**
 using the same **V3 JavaScript engine** that runs headlessly in Node.js.
 The renderer consumes simulation snapshots; animation does not determine damage
 or change the battle outcome.
@@ -65,8 +67,8 @@ they are not silently described as new V3 results.
 | --- | --- | --- |
 | Build an AoE2 data explorer or compare civilization-specific stats | [Reference data](data/golden/README.md), [database generators](aoe2x/dbgen/) | SQLite datasets and the code that generates fully upgraded reference statistics and runtime mechanics. |
 | Run battles without the website | [V3 runtime](aoe2x/js_simulation/src/), [Node runner](aoe2x/js_simulation/node/headless-runner.mjs) | Seeded simulation, parallel workers, outcomes and deterministic event/final-state hashes. |
-| Embed or adapt a battle viewer | [Golden Arena renderer](aoe2x/js_simulation/viewer/map-renderer.js), [playback modules](apps/website/static/js/battle/) | Snapshot-driven rendering, playback, worker lifecycle and team statistics, separate from combat rules. |
-| Build another UI or consume matchup configuration | [Website services](apps/website/services/), [feature routes](apps/website/routes/) | Shared battle configuration, reference-data access, civilization analysis and ranking services behind HTML/API adapters. |
+| Embed or adapt a battle viewer | [Golden Arena renderer](aoe2x/js_simulation/viewer/map-renderer.js), [simulator page modules](apps/web/src/features/simulator/) | Snapshot-driven rendering, playback, worker lifecycle and team statistics, separate from combat rules. |
+| Build another UI or consume matchup configuration | [API services](apps/backend/aoe2_api/services/), [API routes](apps/backend/aoe2_api/routes/) | Shared battle configuration, reference-data access, civilization analysis and ranking services behind JSON API adapters. |
 | Understand or extend ranking publication | [Ranking tools](aoe2x/rank/), [published methodology](data/golden/derived_data_v3.metadata.json) | Serving-database construction and explicit provenance for the displayed scores. |
 | Compare simulations with the real game | [AOE2 Lab guide](docs/aoe2-lab.md), [lab package](aoe2x/lab/) | Configurable matchup plans, live captures, simulation batches, comparison outputs and optional Tailnet viewing. |
 | Analyze recorded games | [Replay tooling](aoe2x/replay/), [legacy viewer host](apps/viewer/) | Replay classification and viewer components retained independently of the public site. |
@@ -79,9 +81,9 @@ See the component documentation before moving a module into another project.
 
 ## Run the website locally
 
-Use **Python 3.11+** and **Node.js 22+** for the current development/test setup.
-A game installation is not required to serve the committed website data or
-run the JavaScript simulator.
+Use **Python 3.13** and **Node.js 24** (the versions the deployment build uses;
+the CI test job also runs on Python 3.11 / Node 22). A game installation is not
+required to build the committed website data or run the JavaScript simulator.
 
 From the repository root:
 
@@ -92,13 +94,22 @@ python -m venv .venv
 # macOS/Linux: source .venv/bin/activate
 
 python -m pip install -e .
-python -m pip install -r apps/website/requirements.txt
-python apps/website/app.py
+python -m pip install -r apps/backend/requirements.txt
+npm ci --prefix scripts/migration
+npm ci --prefix apps/web
+
+python scripts/migration/prepare_release.py      # generate page data, public files and the API runtime
+npm run dev --prefix apps/web                    # Astro pages
+(cd apps/backend && flask --app app run --port 5002)   # JSON API from the sealed runtime
 ```
 
-Open **http://localhost:5000**. Use [`.env.example`](.env.example) as a configuration
-reference; keep credentials and machine-specific settings out of Git.
-Some asset-storage and live-capture workflows require additional configuration.
+The Astro dev server does not proxy `/api/*` to Flask, so API-driven parts of
+the pages (simulator, rankings, advisor) are best checked on a Vercel preview
+deployment. `npm run build --prefix apps/web` produces the production build;
+rerun `prepare_release.py` after changing sources. See
+[Vercel deployment](docs/vercel-deployment.md). Use [`.env.example`](.env.example)
+as a configuration reference; keep credentials and machine-specific settings out
+of Git. Some asset-storage and live-capture workflows require additional configuration.
 
 For a headless battle, pass a V3 battle configuration to the Node runner:
 
@@ -132,7 +143,7 @@ module ownership, data contracts, frontend lifecycle and release procedures.
   engine source and published ranking metadata.
 
 The active engine lives in **`aoe2x/js_simulation/src/`**. Older Python engines
-under `aoe2x/sim/` and browser code under `static/js/engine/` remain for
+under `aoe2x/sim/` and the retired browser client under `legacy/client/` remain for
 historical features and compatibility. They are not the engine powering today's
 interactive battle page. Older dated architecture/calibration documents should
 be read in that context.
@@ -155,7 +166,7 @@ The [browser smoke test](tests/browser/architecture-smoke.cjs) checks laptop/mob
 playback, selection changes, randomized restart and JavaScript-disabled
 civilization content. See the architecture guide for its Playwright setup.
 
-Changes are reviewed on **staging** before promotion to **main**.
+Changes are reviewed on **staging** (a Vercel preview) before promotion to **main** (production).
 Do not commit local credentials, raw experimental recordings, per-matchup
 simulation dumps or generated screenshots. Preserve intentional calibration
 evidence and compact validation statistics according to the lab workflow.

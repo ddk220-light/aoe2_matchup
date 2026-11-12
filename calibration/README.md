@@ -2,7 +2,7 @@
 
 This directory is the complete non-production workspace for comparing the
 JavaScript battle simulator with the locked FINAL standard-unit recordings.
-The production engine remains in `apps/website/static/js/engine/`; this
+The production engine remains in `legacy/client/js/engine/`; this
 workspace only supplies calibration inputs, generated fixtures, runs, and
 reports.
 

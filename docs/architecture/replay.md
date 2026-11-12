@@ -6,7 +6,7 @@ The Replay Analyzer is a self-contained subsystem that downloads or accepts AoE2
 
 ## Mounting and routes
 
-`aoe2x/replay/blueprint.py` defines a Flask `Blueprint` named `replay`. It is not imported or registered by `apps/website/app.py`. A separate host may still register it explicitly, but must install the replay-specific dependencies from `apps/viewer/requirements.txt`.
+`aoe2x/replay/blueprint.py` defines a Flask `Blueprint` named `replay`. It is not imported or registered by the site's API (`apps/backend/aoe2_api/web.py`); the old Flask website that once mounted it has been deleted and `/replay` now 301-redirects to `/`. A separate host may still register it explicitly, but must install the replay-specific dependencies from `apps/viewer/requirements.txt`.
 
 The dependencies live in `apps/viewer/requirements.txt`: `requests`, Pillow, `imageio-ffmpeg`, and `mgz` pinned to the `sanduckhan/aoc-mgz` fork at a specific commit for DE save-version 67.x support. `aocref` (object/terrain name tables) arrives transitively with `mgz`; every use of it is wrapped in try/except and degrades to empty name maps.
 
@@ -74,7 +74,7 @@ The legacy fallback (`_classify_units`) is a simpler three-step version: behavio
 
 ## Frontend SPA: `aoe2x/replay/public/`
 
-The `/replay` page (`apps/website/templates/replay.html`) embeds `/static/replay/index.html` in an iframe sized to fill the viewport below the nav. The iframe exists purely for CSS isolation — the SPA is full-screen with its own stylesheet (`style.css`) and would collide with the analyzer's per-template styles. `app.py replay()` whitelists and forwards the `match`, `profile`, and `t` query params into the iframe `src`.
+Historically, the `/replay` page of the deleted Flask website (`replay.html`) embedded `/static/replay/index.html` in an iframe sized to fill the viewport below the nav. The iframe exists purely for CSS isolation — the SPA is full-screen with its own stylesheet (`style.css`) and would collide with the analyzer's per-template styles. Its `replay()` view whitelisted and forwarded the `match`, `profile`, and `t` query params into the iframe `src`.
 
 | File | Lines | Role |
 |---|---|---|
@@ -92,13 +92,13 @@ The `/replay` page (`apps/website/templates/replay.html`) embeds `/static/replay
 
 ## Clip export: `aoe2x/replay/clip_export.py`
 
-`build_clip(match, focus_player, out_path)` renders a shareable WebM with pure Python (Pillow frames piped to ffmpeg) — no headless browser, so it runs on the python-slim Railway image.
+`build_clip(match, focus_player, out_path)` renders a shareable WebM with pure Python (Pillow frames piped to ffmpeg) — no headless browser, so it runs on a slim Python image (it ran on Railway while the old site mounted the blueprint).
 
 - **Engagement detection** (`_windows`): attack orders are bucketed into 6 s bins; the densest bins (expanded one bin back, two forward) are chosen until the game-time budget — `MAX_OUT_SEC (30) × SPEED (4.0)` = 120 game-seconds — is filled, then merged and the last window trimmed to budget.
 - **Camera** (`_focus_points` + `_camera`): each window frames the *engagement*, not the whole map — seeded on the focus player's attack locations (or all attacks if they issued fewer than 3), keeping only units near the battle centroid, projected isometrically with 4/96-percentile bounds and a zoom ceiling of `MAX_TW = 17` px/tile.
 - **Rendering**: 960×540 at 20 fps; terrain re-uses `_terrain_hex`/`_load_terrain_names` imported from `replay_core`; units use the same `sprites.json` assets as the web UI (player-colored disc + sprite, focus player outlined white, villagers smaller); attack flashes decay over 1.2 s; a skip-aware timeline bar at the bottom shows the selected windows. Unit positions come from a clip-local rebuild (`_build`) that re-runs `unit_classifier.build_type_map`.
 - **Encoding** (`_encode`): PNG frames → `libvpx-vp9` (`-crf 34`), via the `imageio_ffmpeg` bundled binary (system `ffmpeg` as fallback), written to a `.tmp.webm` and atomically renamed so a killed worker never leaves a half-written file in cache.
-- **Caching**: `make_clip` writes `aoe2x/replay/public/clips/{matchId}_{sanitized_player}.webm` and reuses it on later requests. The response returns `clip_url` (the static file) and `view_url` (`/replay?match=&profile=` deep link), honoring `X-Forwarded-Proto` so shared links are https behind Railway.
+- **Caching**: `make_clip` writes `aoe2x/replay/public/clips/{matchId}_{sanitized_player}.webm` and reuses it on later requests. The response returns `clip_url` (the static file) and `view_url` (`/replay?match=&profile=` deep link), honoring `X-Forwarded-Proto` so shared links are https behind a TLS-terminating proxy.
 - Note a cosmetic inconsistency: the route docstring and the SPA modal text say "8× speed" but `SPEED = 4.0` in `clip_export.py` — clips are actually 4×.
 
 The clip button is only enabled for replays loaded by match id (browser or deep link), because the server re-downloads the replay by id; uploads and local files cannot generate clips.
@@ -112,7 +112,7 @@ The clip button is only enabled for replays loaded by match id (browser or deep 
 - `unit_classifier.py` is imported only by `replay_core.py` and `clip_export.py` (grep over all `*.py`). Nothing in the simulation engines, analysis pipeline, or other webapp routes uses it. Its one inbound data dependency on the rest of the project is `aoe2x/replay/train_times.json`, which was extracted from the .dat database offline.
 - Nothing flows from the replay subsystem into the sims, the databases, or the derived-data jobs. The replay JSON is ephemeral (returned to the browser, never stored server-side except the raw-replay temp cache and the clips directory).
 - `clip_export.py` imports two color/name helpers from `replay_core.py`; otherwise the three replay modules are self-contained.
-- `aoe2x/replay/public/assets/` (sprites, civ emblems) is private to this subsystem; the rest of the site uses `apps/website/static/img/units/` icons instead.
+- `aoe2x/replay/public/assets/` (sprites, civ emblems) is private to this subsystem; the rest of the site uses the shared unit icons (authoring copy `data/media/img/units/`) instead.
 
 ## Update triggers
 
@@ -124,6 +124,6 @@ The clip button is only enabled for replays loaded by match id (browser or deep 
 | `DEATH_THRESHOLD` or `playback.js getState()` idle rules | Death heuristic paragraphs (server and client) |
 | aoe.ms URL, cache location, or retry policy | Replay sources, cache, and rate limiting |
 | Clip constants (`W/H`, `FPS`, `SPEED`, `MAX_OUT_SEC`, codec) | Clip export (and fix the 8×/4× UI text if touched) |
-| `mgz` fork pin or new optional dependency in `apps/website/requirements.txt` | Mounting and routes (dependency paragraph) |
+| `mgz` fork pin or new optional dependency in `apps/viewer/requirements.txt` | Mounting and routes (dependency paragraph) |
 | SPA file roles or storyteller re-enabled | Frontend SPA table |
 | `players.csv` usage changes (endpoint adopted or deleted) | Replay sources (watchlist) and the legacy-route note |

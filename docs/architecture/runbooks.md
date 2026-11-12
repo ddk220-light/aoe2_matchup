@@ -20,8 +20,8 @@ Production actions always require the owner's specific approval.
 - "CPython" means a regular Python with `genieutils-py` installed (the conda `python` on this
   machine); "PyPy" means `pypy3` — the matchup sim runners hard-exit if not run under PyPy.
 - The working matchup DB lives **outside the repo** (e.g. `D:/AI/matchup_db.db`,
-  `D:/AI/matchup_baseline_177723.db`). A small `apps/website/matchup_db.db` is tracked in git, but the
-  patch and baseline pipelines should be pointed at the external copy via `--matchup-db`/`--db`.
+  `D:/AI/matchup_baseline_177723.db`). No matchup DB is tracked in git (the old in-repo stub was
+  removed 2026-06-11); point the patch and baseline pipelines at the external copy via `--matchup-db`/`--db`.
 - `derive_unit_rankings.py` / `derive_pool_scores.py` now **require** `--matchup-db` and
   pre-flight the source DB (`matchup_db.preflight_derive_guard`): <40 distinct `my_civ`
   values aborts (anti-Armenians-stub guard; override `--allow-small-db`), and any rows at a
@@ -55,14 +55,14 @@ tail are manual. Deep detail: [`docs/patch-workflow.md`](../patch-workflow.md).
    and `--pypy` (defaults to `pypy3` on PATH). It runs, in order:
 
    1. Archives `data/inputs/extracted_data/` → `data/local/extracted_data_prev/` and
-      `data/golden/aoe2_reference.db` → `apps/website/aoe2_reference_prev.db` (both untracked "before" snapshots).
+      `data/golden/aoe2_reference.db` → `data/local/aoe2_reference_prev.db` (both untracked "before" snapshots).
    2. `python -m aoe2x.extract.run` → `python -m aoe2x.dbgen.generate_reference` →
       the surgical ref patches (idempotent: `aoe2x/dbgen/patches/patch_mayan_archer_cost.py`,
       `patch_rocket_cart_volley.py`) → `python -m aoe2x.dbgen.generate_main_db`
       (patches run BEFORE the main-db flatten so `aoe2_units.db` picks them up).
-   3. Diffs `ref_units` before/after → stat deltas + `apps/website/changed_units_<build>.json`.
+   3. Diffs `ref_units` before/after → stat deltas + `data/local/changed_units_<build>.json`.
    4. Snapshots before-outcomes from the matchup DB for the changed slugs.
-   5. `pypy3 -m aoe2x.batch.run_matchup_battles --force --changed-units apps/website/changed_units_<build>.json --db <matchup-db>`
+   5. `pypy3 -m aoe2x.batch.run_matchup_battles --force --changed-units data/local/changed_units_<build>.json --db <matchup-db>`
       — the **incremental** re-sim (only matchups touching a changed slug).
    6. Diffs matchup outcomes → `patch_matchup_changes`.
    7. `carry_forward_battle_scores` (copies the prior build's `battle_scores` rows — including
@@ -95,11 +95,13 @@ tail are manual. Deep detail: [`docs/patch-workflow.md`](../patch-workflow.md).
      a stat change legitimately alters `get_matchup_sims` output:
      `python .golden/capture_baseline.py`, then commit `.golden/baseline.json`.
 7. **Verify.** `pytest`; spot-check availability (`/api/top-unit/Koreans/knight` → Cavalier);
-   `PORT=5002 python apps/website/app.py` and smoke-test `/patches`, `/matchup-advisor`, rankings.
+   `python scripts/migration/prepare_release.py && python scripts/migration/verify_build.py`, then
+   `npm run build --prefix apps/web` (and `git checkout vercel.json` unless the data changed);
+   smoke-test `/patches`, `/matchup-advisor` and rankings on the staging preview deployment.
 8. **Commit on `staging` and promote.** Commit set: `data/golden/aoe2_reference.db`,
    `data/golden/aoe2_units.db`, `data/golden/derived_data.db`, `data/golden/pool_scores.db`,
    `data/golden/patches.db`, `data/golden/civ_power_units/<build>.json`, plus `data/golden/civ_top_units.json`
-   and `.golden/baseline.json` if regenerated. Verify on the staging URL, then
+   and `.golden/baseline.json` if regenerated. Verify on the staging preview deployment, then
    `git checkout main && git merge --ff-only staging && git push origin main && git checkout staging`.
 
 **Build-number touchpoints** (everything is build-versioned; the UI reads
@@ -111,21 +113,22 @@ tail are manual. Deep detail: [`docs/patch-workflow.md`](../patch-workflow.md).
 | `data/golden/derived_data.db` | `battle_scores.build_number` column |
 | `data/golden/pool_scores.db` | build column written by `derive_pool_scores --build` |
 | `data/golden/civ_power_units/<build>.json` | filename |
-| `apps/website/changed_units_<build>.json` | filename (input for incremental re-sims) |
+| `data/local/changed_units_<build>.json` | filename (input for incremental re-sims) |
 | `D:/AI/matchup_baseline_<build>.db` | filename (local baseline-of-record, not committed) |
 
 ---
 
 ## 2. Simulation logic / combat mechanic change
 
-Three engines exist; decide which ones the change applies to (details:
+Three active engines exist, plus the retired legacy client engine; decide which ones the change applies to (details:
 [`simulation-engines.md`](simulation-engines.md)):
 
 | Engine | File | Consumed by |
 |---|---|---|
 | Abstract tick sim | `aoe2x/sim/simulation.py` | `best_units.get_matchup_sims` (default `sim_func`) → the live `/api/matchup-sims` advisor endpoint; `aoe2x/rank/compute_battle_scores.py`; the golden baseline |
 | Position-based sim | `aoe2x/sim/simulation_real.py` | `aoe2x/batch/run_matchup_battles.py`, `aoe2x/batch/rebuild_matchup_baseline.py`, `aoe2x/batch/patch_resim.py`, `aoe2x/batch/verify_flips.py` → matchup DB → all derive scripts |
-| Frontend canvas sim | `apps/website/static/js/engine/` (`battle_unit.js`, `sim.js`) — `simulate.js` is now just the page shell, `sim_renderer.js` the drawing layer | the Battle Sim page at `/` (legacy `/simulate` 301-redirects there), the lab harness `/static/lab/sim_harness.html`, and headless node runs (`tools/simjs/headless.mjs`); fetches stats from `/api/ref/combat-unit/<civ>/<slug>` |
+| V3 JS engine (active) | `aoe2x/js_simulation/src/` | the Battle Sim page at `/` (browser worker `apps/web/static/js/v3_sim_worker.js`, config from `POST /api/v3/battle-config`) and Node batch runs |
+| Legacy client engine (retired) | `legacy/client/js/engine/` (`battle_unit.js`, `sim.js`; old page shell `legacy/client/js/simulate.js`, renderer `sim_renderer.js`) | parity panel (`tools/simjs/parity_check.mjs`), headless research runs (`tools/simjs/headless.mjs`), the unpublished lab harness `legacy/client/lab/`; reads `/api/ref/combat-unit/<civ>/<slug>` dicts |
 
 *Condensed from [simulation-engines.md](simulation-engines.md) §4 — update both together.*
 
@@ -149,8 +152,8 @@ Steps:
    The derive CLIs enforce this: rows at a non-current `sim_version` abort the run unless
    `--allow-stale` is passed (and a <40-civ source DB aborts unless `--allow-small-db`).
 6. The legacy round-robin/benchmark JSON chain is gone: `battle_scores.json` and its
-   `app.py` loader were deleted — `/api/ref/unit-line` scores come solely from
-   `derived_data.db` (plus the empty reference-DB fallback). Do not run
+   old Flask loader were deleted — `/api/ref/unit-line` scores come solely from
+   the derived DBs (plus the empty reference-DB fallback). Do not run
    `compute_battle_scores.py`.
 
 ### 2a. Carry-forward — re-simulating only what a change can touch
@@ -243,8 +246,8 @@ chain is GENERATED from the ability registry — the old 6-file hand-sync is gon
 3. **One handler per engine that models it** — `aoe2x/sim/simulation.py` (also add the key to its
    `_PREPARE_SCALAR_KEYS` pin in the same file: the abstract engine consumes a deliberate
    subset of the registry), `aoe2x/sim/simulation_real.py`, and
-   `apps/website/static/js/engine/battle_unit.js` `BattleUnit` (**not** `simulate.js` — that is
-   only the page shell now; `tests/test_ability_registry.py` scans the engine modules plus the
+   `legacy/client/js/engine/battle_unit.js` `BattleUnit` (**not** `simulate.js` — that is
+   only the old page shell; `tests/test_ability_registry.py` scans the engine modules plus the
    page shell as its "js" source, so a key read only in the page — e.g. `pop_space` — still
    counts). Declare non-implementing engines honestly in the registry `engines` tuple and
    `tests/test_ability_registry.py::KNOWN_ENGINE_GAPS` — the presence-parity test fails on
@@ -277,39 +280,47 @@ chain is GENERATED from the ability registry — the old 6-file hand-sync is gon
 3. **`aoe2x/dbgen/config_combat.py`** — abilities the dat cannot express (runbook 3).
 4. **`aoe2x/sim/unit_lines.py`** — register the unit in `UNIT_LINES` (line membership,
    `unique_units` per civ) and add any tech-tree gaps to `CIV_MISSING_UNITS`. This module is the
-   single Python source for line definitions (imported by `app.py`, all derive scripts, and the
-   sim runners).
-5. **`apps/website/static/js/constants.js`** — `ENABLED_CIVS` (new civ), `NAME_TO_ICON` (new units),
-   `UNIQUE_BUILDING` (only for unique units not trained at the Castle).
+   single Python source for line definitions (imported by `apps/backend/aoe2_api/web.py`, all derive scripts, the build exports and the
+   sim runners). If a line is added or renamed, also update the live JS copy in
+   `apps/web/src/features/rankings/render.mjs`.
+5. **`aoe2x/assets/presentation.json`** — `icon_names` (new units) and `unique_buildings` (only for
+   unique units not trained at the Castle). The frontend civ list (`ENABLED_CIVS`) is derived from
+   `aoe2_reference_simulation.db` by `site_catalog()` (`apps/backend/aoe2_api/services/catalog.py`)
+   and reaches `apps/web/static/js/constants.js` as `window.SITE_CATALOG` — no hand edit.
 6. **Icons/art** — runbook 5.
 7. Rebuild everything (runbook 1 steps 4–8: extraction → ref → main → full baseline re-sim,
    since a new roster invalidates the matchup universe → derive at the current/new build), then
    `python -m aoe2x.advisor.top_units` to refresh `data/golden/civ_top_units.json`.
 8. SEO pages need **no manual step**: `/sitemap.xml` and the `/vs/...` landing pages are derived
-   live from `ref_units` unique-unit rows (`apps/website/app.py` `_matchup_seed_pairs`).
+   at build time from `ref_units` unique-unit rows (`matchup_seed_pairs()` in
+   `scripts/migration/site/data.py`, run by `prepare_release.py`).
 
 Note: the pipeline civ list (`ORIGINAL_13_CIVS` in `aoe2x/dbgen/config_constants.py`) is now
-derived from `extraction.extract_constants.CIV_NAMES`, so step 1 covers it automatically —
-no separate `config_constants.py` edit. Webapp civ validation reads the reference DB via
-`_valid_civs()`; the old dead copy in `apps/website/app.py` was deleted.
+derived from `aoe2x.extract.extract_constants.CIV_NAMES`, so step 1 covers it automatically —
+no separate `config_constants.py` edit. API civ validation reads the reference DBs via
+`_valid_civs()` / `_sim_civs()` in `apps/backend/aoe2_api/web.py`.
 
 ---
 
 ## 5. New unit icon / art
 
-Icon files are flat PNGs in `apps/website/static/img/units/` (213 files), named by display name with
-underscores (`Long_Swordsman.png`). The **single registry** is `NAME_TO_ICON` in
-`apps/website/static/js/constants.js` (218 entries, display name → file basename); no template carries
-its own copy. `getIconUrl()` in the same file builds the URL, and every page's JS
-(`rankings.js`, `simulate.js`, `civ-detail.js`, `matchup.js`, `matchup_advisor.js`) consumes it.
+Icon files are flat PNGs whose authoring copy lives in `data/media/img/units/` (published to the
+Blob media store; visitors never load them from the repo), named by display name with underscores
+(`Long_Swordsman.png`). The **single registry** is `icon_names` in `aoe2x/assets/presentation.json`
+(230 entries); `site_catalog()` ships it to the browser as `window.SITE_CATALOG.icon_names`, which
+`apps/web/static/js/constants.js` exposes as `NAME_TO_ICON`. `getIconUrl()` in the same file builds
+the URL for every page (simulator, rankings, civilization pages).
 
 1. Find the icon ID from the dat via genieutils (conda python):
    `dat.civs[0].units[UNIT_ID].icon_id`.
 2. Fetch `https://aoe2techtree.net/img/Unit/{icon_id}.png` (fallback: Fandom wiki API).
-3. Save as `apps/website/static/img/units/<Display_Name>.png` (underscores for spaces).
-4. Add the entry to `NAME_TO_ICON` in `apps/website/static/js/constants.js`. The key is the
+3. Save as `data/media/img/units/<Display_Name>.png` (underscores for spaces) and publish it to the
+   public media store (production serves media from Blob URLs verified against SHA-256
+   manifests at build — see `docs/vercel-deployment.md`).
+4. Add the entry to `icon_names` in `aoe2x/assets/presentation.json`. The key is the
    **display name** as it appears in `ref_units.unit_name` (e.g. `"Elite Plumed Archer"`).
-5. Verify on `/simulate` (unit picker) and a civ detail page — a missing entry renders no image
+5. Re-seal (`python scripts/migration/prepare_release.py`) and verify on the Battle Sim unit picker
+   and a civ detail page of the preview deployment — a missing entry renders no image
    (`getIconUrl` returns `null`).
 
 Generated portrait art (FLUX.2 hybrid renders) is a separate asset family under
@@ -324,15 +335,17 @@ The old "keep four templates in sync" rule is obsolete. Today's single sources:
 
 | Constant | Single source | Consumers |
 |---|---|---|
-| `ENABLED_CIVS` (53) | `apps/website/static/js/constants.js` | civ dropdowns in `simulate.js`, `rankings.js` |
-| `NAME_TO_ICON` (218) | `apps/website/static/js/constants.js` | all page JS via `getIconUrl()` |
-| `UNIQUE_BUILDING` (13) | `apps/website/static/js/constants.js` | `simulate.js`, `civ-detail.js` |
-| `UNIT_LINES` / `CIV_MISSING_UNITS` / `NAVAL_UNIT_LINES` | `aoe2x/sim/unit_lines.py` | `app.py`, `compute_battle_scores.py`, `derive_*`, `run_matchup_battles.py`, `top_units.py`, `best_units.py` |
+| `ENABLED_CIVS` (56) | civ roster of `data/golden/aoe2_reference_simulation.db` via `site_catalog()` (`apps/backend/aoe2_api/services/catalog.py`) → `window.SITE_CATALOG.civilizations` → `apps/web/static/js/constants.js` | simulator and rankings civ pickers |
+| `NAME_TO_ICON` (230) | `icon_names` in `aoe2x/assets/presentation.json` → same path | all page JS via `getIconUrl()` |
+| `UNIQUE_BUILDING` (13) | `unique_buildings` in `aoe2x/assets/presentation.json` → same path | simulator, civilization grouping (`building_for_unit()` in `catalog.py`) |
+| `UNIT_LINES` / `CIV_MISSING_UNITS` / `NAVAL_UNIT_LINES` | `aoe2x/sim/unit_lines.py` | `aoe2_api/web.py`, `aoe2_api/services/rankings.py`, build exports, `compute_battle_scores.py`, `derive_*`, `run_matchup_battles.py`, `top_units.py`, `best_units.py` |
+| `UNIT_LINES` (JS) | `apps/web/src/features/rankings/render.mjs` | rankings page |
 
-The one cross-language sync that remains: `ENABLED_CIVS` (JS) must match the civs present in
-`data/golden/aoe2_reference.db` (which come from `extraction/extract_constants.py` `CIV_NAMES`).
-There is no automated check — after changing either side, load `/simulate` and confirm the civ
-list, and run `pytest tests/test_footer.py` plus a quick `/api/ref/civ/<NewCiv>` call.
+The one cross-language sync that remains: the rankings-page `UNIT_LINES` in `render.mjs` must
+match the Python lines. The civ list is derived, so a new civ appears once it is in the
+simulation reference DB. After changing either, re-seal with `python scripts/migration/prepare_release.py`,
+check the simulator civ list and `/units` on a preview deployment, and run a quick
+`/api/ref/civ/<NewCiv>` call (e.g. via the pytest `client` fixture; `tests/test_architecture_baseline.py` shows the pattern).
 
 ---
 
@@ -413,30 +426,33 @@ python -m aoe2x.assets.build_civilization_release `
   --dat D:/SteamLibrary/steamapps/common/AoE2DE/resources/_common/dat/empires2_x2_p1.dat `
   --trees D:/SteamLibrary/steamapps/common/AoE2DE/resources/_common/dat/CivTechTrees `
   --assets D:/AI/aoe2_matchup/graphics/units `
-  --output apps/website/static `
+  --output <static-layout dir> `
   --extracted data/local/generated/civilizations-185872/extracted
 ```
 
-The default extracts into that ignored local directory. `--reuse-extracted` is
+`--output` takes one directory in the old website `static/` layout (`data/`, `js/`,
+`img/`, `anim/`); since the Flask site was deleted those parts live apart, so place the
+outputs as listed below. The default extracts into that ignored local directory. `--reuse-extracted` is
 only for an already extracted, identical DAT release, not a different game build.
 This builder is specifically the 185872 release; a later release needs its own
 reviewed identities/availability/provenance, not just a renamed JSON file.
 
 Outputs:
 
-- `apps/website/static/data/civilizations-185872.json`: 69 reference rows across
+- `apps/backend/aoe2_api/data/civilizations-185872.json` (`<output>/data/` in the builder layout): 69 reference rows across
   16 affected civilizations. Danes, Saxons and Varangians each have 18 supported
   military rows at their highest available Imperial tier. Existing page combat
   categories exclude civilians, Monks, Petards and Siege Towers; Trebuchet uses
   the existing combat representation.
-- Ten base/elite forms use the standard shared paths: `static/img/units/<Name>.png`
-  and `<Name>_transparent.png`, `static/img/unit_sprites/<slug>.png`, and
-  `static/anim/<slug>.webp`. The existing presentation icon map, `unit_sprites.json`
-  / `unit_sprites.js`, and `unit_anims.json` register them just like older units.
+- Ten base/elite forms use the standard shared paths (authoring copy under `data/media/`):
+  `img/units/<Name>.png` and `<Name>_transparent.png`, `img/unit_sprites/<slug>.png`, and
+  `anim/<slug>.webp`, published at `/static/...` / `/assets/...` URLs. The existing presentation
+  icon map, `data/media/data/unit_sprites.json` (the published `unit_sprites.js` is generated
+  by `prepare_release.py`), and `data/media/data/unit_anims.json` register them just like older units.
   Conversion preserves all 390 source frames, alpha, durations and loop settings.
   The release's media inventory is build provenance, not a separate runtime lookup.
   Civilization rows carry no media overrides; cards show the available unit tier.
-- `apps/website/static/img/civilizations/185872/`: three finished shields from
+- `data/media/img/civilizations/185872/`: three finished shields from
   `widgetui/textures/menu/civs/`, **not** the mask textures in `ingame/emblems`.
 - These 43 files total 15,763,368 bytes; exact sources, hashes and animation
   metadata are recorded in the supplement's `media_inventory`.
@@ -455,12 +471,12 @@ To publish only the ten selected idle sprites and media aliases (no DAT
 extraction, AI inference, stat changes, or attack conversion):
 
 ```powershell
-python -m aoe2x.assets.build_civilization_release --output apps/website/static --assets D:/AI/aoe2_matchup/graphics/units --refresh-idles
+python -m aoe2x.assets.build_civilization_release --output <static-layout dir> --assets D:/AI/aoe2_matchup/graphics/units --refresh-idles
 ```
 
 The shared food/wood/gold cost images are three unchanged game files, copied once
 from `widgetui/textures/ingame/staticons/{food,wood,gold}.png` into
-`apps/website/static/img/resources/` (not generated by the release builder):
+`data/media/img/resources/` (not generated by the release builder):
 
 | File | Bytes | SHA256 |
 | --- | ---: | --- |
@@ -511,7 +527,7 @@ Run only the focused checks for this page release:
 ```powershell
 python -B -m pytest tests/test_civilization_release.py tests/test_seo_civ_pages.py -q -p no:cacheprovider
 node --test tests/civilization_media.test.cjs
-python -B -m flask --app apps.website.app run --host 127.0.0.1 --port 5011 --no-debugger
+python scripts/migration/prepare_release.py; python scripts/migration/verify_build.py
 ```
 
 The historical September 22 smoke check included preview controls and changed
@@ -536,7 +552,7 @@ deploying, and obtain explicit approval for that production action.**
 | `aoe2x/batch/patch_pipeline.py` steps or flags | §1 (and `docs/patch-workflow.md`) |
 | `aoe2x/sim/sim_version.py` `DEFAULT_FILES` | §2, §3, §7 |
 | `aoe2x/sim/combat_unit_loader.py` or either `prepare_combat_unit` | §3 |
-| `apps/website/static/js/constants.js` structure (registries move/split) | §5, §6 |
+| `aoe2x/assets/presentation.json`, `site_catalog()` or `apps/web/static/js/constants.js` structure (registries move/split) | §5, §6 |
 | `aoe2x/sim/unit_lines.py` location or shape | §4, §6 |
 | Derive scripts gain/lose argparse flags | §1, §2 (re-verify every command) |
 | `.golden/capture_baseline.py` coverage or seed | §1, §2 |

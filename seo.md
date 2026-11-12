@@ -128,7 +128,8 @@ These are almost certainly the real reason the site isn't appearing yet:
    `https://aoe2matchup.com/sitemap.xml`, and "Request Indexing" on top URLs.
    You may be able to verify instantly via the existing GA tag
    (`G-MYNEW08LBR`) if it's the same Google account; otherwise set
-   `GOOGLE_SITE_VERIFICATION` in Railway (meta tag support shipped this branch).
+   `GOOGLE_SITE_VERIFICATION` in the Vercel project (read at build time by
+   `scripts/migration/site/config.py`; meta tag support shipped this branch).
 2. **Bing Webmaster Tools** — submit the sitemap. Bing feeds ChatGPT; Google's
    index feeds Gemini.
 3. **Backlinks / authority** — new sites rank slowly until linked. Post to

@@ -4,12 +4,13 @@
 - Python: `python3` (macOS, `python` not in PATH)
 - Virtual env: `venv/` (has flask + numpy), `.venv/` (flask only). Use `venv/`.
 - Port 5000: AirPlay Receiver. Ports 5001-5003 often occupied by prior Flask runs. Use 5010+.
-- Flask start: `cd apps/website && PORT=5010 python3 app.py`
-- DB: `data/golden/aoe2_units.db` (SQLite)
+- API start (2026-11, after the Flask site was deleted): `python3 scripts/migration/prepare_release.py`, then `cd apps/backend && flask --app app run --port 5010`; restore `vercel.json` with `git checkout vercel.json` afterwards
+- Only `/api/*` and `/_internal/release` respond on the API; pages are Astro (`npm run dev --prefix apps/web`, no `/api` proxy)
+- DBs: `data/golden/aoe2_reference*.db` (SQLite, read from the sealed `apps/backend/runtime/` copy)
 
 ## Simulation Testing
 - No direct simulation API endpoint. Backend `simulate_battle()` is used internally only.
-- Frontend (`simulate.html`) runs simulation in JavaScript (BattleUnit class).
+- The live Battle Sim runs the V3 JS engine (`aoe2x/js_simulation/src/`) in a Web Worker; the old `BattleUnit` engine is in `legacy/client/js/engine/`.
 - To test simulation: import directly from `simulation.py` via Python script.
 - `sqlite3.Row` does NOT support `.get()`. Must convert to `dict()` before calling `prepare_combat_unit()`.
 - Missing fields to add when querying unit_stats directly: `accuracy`, `attack_bonus_nearby`, `nearby_bonus_count`, `damage_reflect_percent`, `bonus_hp_nearby`, `nearby_hp_bonus_count` (default to 0).
@@ -23,11 +24,11 @@
 - `/api/ref/unit-line/stable` - virtual stable line, 127 imperial units, 16 score types
 - `/api/ref/unit-line/all_cavalry` - REMOVED (returns 404). Replaced by "stable" virtual line.
 - Individual sub-lines still work: knight (54), camel (13), light_cav (48), steppe_lancer (5), elephant (6)
-- Server responds at `/` with 200
+- (Old Flask site) server responded at `/` with 200 — the API now 404s `/`
 
 ## Unit Rankings Page (`/units`)
-- Route: `/units` -> `apps/website/templates/rankings.html` (renamed from index.html 2026-06-10), title "Unit Rankings"
-- Client-side SPA: JS fetches `/api/ref/unit-line/{slug}` on click (no auto-load)
+- Route: `/units` -> `apps/web/src/pages/units/index.astro`, title "Unit Rankings"
+- Line data is snapshotted at build (`scripts/migration/export_data.py`); page code in `apps/web/src/features/rankings/`
 - 18 lines in frontend UNIT_LINES; 21 in backend (militia/spear/shock_infantry are sub_lines of infantry aggregates)
 - Knight line imperial_slug=paladin: only Paladin-tier civs in imperial (by design)
 - API response: `{line_name, building, castle: [...], imperial: [...]}`
@@ -55,7 +56,7 @@
 - Top: Ratha (70.2), Leitis (68.9), Monaspa (67.6), Konnik (66.6). Bottom: Viking Hussar (22.7)
 - Scoring DB: `data/golden/aoe2_reference.db` (NOT aoe2_units.db)
 - compute_battle_scores.py --roles-only: runs infantry(~6s) + archery(~9s) + stable(~4.6s) = ~20s total
-- Stale .pyc files can cause errors after code changes; if you see unexpected KeyErrors, try `find webapp -name '*.pyc' -delete`
+- Stale .pyc files can cause errors after code changes; if you see unexpected KeyErrors, try `find apps/backend aoe2x -name '*.pyc' -delete`
 
 ## New Civs (verified 2026-04-12)
 - 53 total civs (was 50). Added: Muisca, Mapuche, Tupi.
@@ -76,7 +77,7 @@
 - Same-civ test: symmetric (left and right win sets identical)
 - Error handling: empty JSON->400, missing fields->400, non-JSON Content-Type->415 HTML (Flask default)
 - Invalid civ/age: returns 200 with empty `{left:{}, right:{}, name_map:{}}` (soft fail)
-- Page: `GET /matchup-advisor` -> 200, 5.7KB HTML
+- Page: `/matchup-advisor` is now an Astro page (`apps/web/src/pages/matchup-advisor.astro`)
 
 ## Team Analysis API (verified 2026-02-16)
 - Endpoint: `/api/team-analysis?team1=...&team2=...&stage=...&tab=...`

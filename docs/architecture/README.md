@@ -2,7 +2,10 @@
 
 > Historical architecture (June 2026). Start with [Current website architecture](CURRENT.md)
 > for the active V3 runtime, module ownership, crawler configuration and release gates.
-> The engine/frontend ownership below describes the earlier implementation.
+> The engine/frontend ownership below describes the earlier implementation. Since
+> 2026-11 the site is the Astro app `apps/web` plus the Flask API `apps/backend`
+> on Vercel; the old `apps/website` Flask site is deleted and its browser client
+> lives on as research code in `legacy/client/` (see [webapp.md](webapp.md)).
 
 *Last verified: 2026-06-09 · game build 177723 · branch `staging`*
 
@@ -15,12 +18,14 @@ together. Each subsystem has its own deep-dive doc (index below), and
 
 A data-engineering pipeline disguised as a website ([aoe2matchup.com](https://aoe2matchup.com)).
 Offline stages turn the game's binary `.dat` file into fully-upgraded per-civ unit
-stats (53 civilizations), two custom battle-sim engines turn those stats into
-hundreds of thousands of pre-computed matchup outcomes, and a Flask app serves the
-results as six tools: battle simulator, unit rankings, civ pages, matchup advisor,
-patch tracker, and a replay analyzer. All serving data is committed SQLite/JSON —
+stats (56 civilizations in the simulation/rankings reference DBs; 53 in the older
+`aoe2_reference.db`), two custom battle-sim engines turn those stats into
+hundreds of thousands of pre-computed matchup outcomes, and an Astro site backed
+by a Flask JSON API serves the results as five tools: battle simulator, unit
+rankings, civ pages, matchup advisor and patch tracker (the replay analyzer is no
+longer mounted). All serving data is committed SQLite/JSON —
 **committing regenerated artifacts on a branch IS the deployment mechanism**
-(Railway auto-deploys `staging` → staging env, `main` → production).
+(Vercel builds `staging` → preview deployment, `main` → production).
 
 ## System diagram
 
@@ -42,8 +47,9 @@ patch tracker, and a replay analyzer. All serving data is committed SQLite/JSON 
    ▼                          ├────────────────────────────┐
 data/golden/aoe2_units.db          │                            │
 (unit_stats; legacy,          ▼                            ▼
- no app route reads it)   Flask app.py            batch sim runners (PyPy)
-                          /api/ref/* routes       run_matchup_battles.py
+ no app route reads it)   Flask API               batch sim runners (PyPy)
+                          aoe2_api/web.py         run_matchup_battles.py
+                          /api/ref/* routes
                               │                   rebuild_matchup_baseline.py
                               │                       │ engine: simulation_real.py
                               │                       │ (multi-seed, sim_version-stamped)
@@ -60,8 +66,9 @@ data/golden/aoe2_units.db          │                            │
                               │     └─────────────────┴──────────────────────┘
                               │                  (committed, build-versioned)
                               ▼
-            templates/*.html + static/js/*.js + static/css/*.css
-            (interactive battle sim runs CLIENT-SIDE in static/js/engine/)
+            scripts/migration/prepare_release.py (build-time exports + page metadata)
+              → Astro apps/web (pages, styles, src/features/*)
+            (interactive battle sim runs CLIENT-SIDE in aoe2x/js_simulation/src/, V3)
 
   Side systems:
   • patches.db ← patch_pipeline.py (per-patch stat diffs, ranking deltas, matchup swings)
@@ -69,18 +76,21 @@ data/golden/aoe2_units.db          │                            │
   • apps/video/ (validates sims against the real game), graphics/ (sprites + FLUX.2 art)
 ```
 
-### Frontend battle-sim engine (client-side, extracted 2026-07-28)
+### Retired frontend battle-sim engine (extracted 2026-07-28; now `legacy/client/`)
+
+The live Battle Sim page runs the V3 engine `aoe2x/js_simulation/src/` in the
+worker `apps/web/static/js/v3_sim_worker.js` (see [CURRENT.md](CURRENT.md)).
+The earlier client engine is kept, unpublished, for parity, calibration and research:
 
 | Path | One-liner |
 |---|---|
-| `apps/website/static/js/engine/` | **The** frontend engine: pure ESM, DOM-free, deterministic — `rng.js` (seeded mulberry32), `constants.js`, `projectile.js`, `melee_effect.js`, `battle_unit.js`, `sim.js` (`Simulation` + `stateHash` + combat counters), `scenario.js` (`createSimulation`), `index.js` (public API). Runs unchanged in the browser and under node. |
-| `apps/website/static/js/sim_renderer.js` | Browser-only `SimRenderer` — every canvas draw call, sprite/asset ownership, HP bars. The engine never touches the DOM; the renderer never mutates sim state (one documented exception: `unit.faceRight`). |
-| `apps/website/static/js/simulate.js` | Battle Sim **page shell** only — civ/unit pickers, count modes, deep-link autorun, stats/debug panels, `PageSim` wrapper around the engine. No engine classes live here. |
-| `apps/website/static/lab/sim_harness.html` + `.js` + `sim_worker.js` | Standalone diagnostic harness at `/static/lab/sim_harness.html` — presets, three count modes, seed control + single-step, path/target overlays, multi-seed worker scoreboard. Not linked from the site nav. |
+| `legacy/client/js/engine/` | The retired frontend engine: pure ESM, DOM-free, deterministic — `rng.js` (seeded mulberry32), `constants.js`, `projectile.js`, `melee_effect.js`, `battle_unit.js`, `sim.js` (`Simulation` + `stateHash` + combat counters), `scenario.js` (`createSimulation`), `index.js` (public API). Runs unchanged under node. |
+| `legacy/client/js/sim_renderer.js`, `legacy/client/js/simulate.js` | The old canvas renderer and Battle Sim page shell (no longer served). |
+| `legacy/client/lab/sim_harness.html` + `.js` + `sim_worker.js` | The old diagnostic harness (presets, count modes, seed control, overlays, multi-seed scoreboard). No longer served by the site. |
 | `tools/simjs/` | Engine tooling: `golden/` (205-fight parity panel + `panel.meta.json` provenance), `parity_check.mjs` (**the gate** — bit-exact replay, exit 0/1/2), `headless.mjs` (node engine runner), `parity_capture.mjs` + `legacy_harness.cjs` (one-off pre-extraction capture), `audit_panel.mjs`, `ability_coverage.py`, `dump_combat_dicts.py` (dumps the ref-DB combat dicts the runners feed the engine). |
-| `tests/js/engine/*.test.mjs` | 17 node unit tests — `node --test tests/js/engine/`. |
+| `tests/js/engine/*.test.mjs` | Node unit tests — `node --test tests/js/engine/`. |
 
-**Standing rule:** any edit under `engine/` must re-run `node tools/simjs/parity_check.mjs`.
+**Standing rule:** any edit under `legacy/client/js/engine/` must re-run `node tools/simjs/parity_check.mjs`.
 A behavior change is *supposed* to fail it — re-capture the golden panel and say why.
 
 ## Document index
@@ -90,9 +100,9 @@ A behavior change is *supposed* to fail it — re-capture the golden panel and s
 | [data-pipeline.md](data-pipeline.md) | Stages 1–3: dat extraction, tech-effect application, armor/attack derivation, unit availability per civ, config override layers, DB schemas |
 | [simulation-engines.md](simulation-engines.md) | The three sim implementations (abstract tick, position-based, frontend JS), damage formula, special abilities, who uses which engine |
 | [derived-data.md](derived-data.md) | Matchup baseline, rankings/pool-scores/advisor derive chain, build-number versioning, patches.db |
-| [webapp.md](webapp.md) | Flask routes, templates, static assets, central registries, env vars, live sync rules |
+| [webapp.md](webapp.md) | Astro frontend, Flask API routes, build-time exports, central registries, env vars, live sync rules |
 | [replay.md](replay.md) | Replay analyzer: mgz parsing, unit classifier, playback SPA, clip export |
-| [operations.md](operations.md) | Railway deployment, git/data-shipping workflow, tests + golden baseline, scenario builder, graphics, reference corpus |
+| [operations.md](operations.md) | Deployment (now Vercel — see [../vercel-deployment.md](../vercel-deployment.md)), git/data-shipping workflow, tests + golden baseline, scenario builder, graphics, reference corpus |
 | [runbooks.md](runbooks.md) | **When X changes, update Y** — step-by-step checklists with exact commands |
 | [data-model-review.md](data-model-review.md) | Deep critique of the stage 1–3 data model: derive-vs-store verdicts, availability resolver, ability registry, multi-form tech gap, migration plan |
 | [../../simulation_v2/CHANGELIST.md](../../simulation_v2/CHANGELIST.md) | **Staged, not live:** the V2 engine — every fix/model change vs the engines that produced current data, affected units, and the full-rerun protocol |
@@ -108,19 +118,19 @@ Where to look (and what to edit) for each kind of fact:
 | Fact | Source of truth | Notes |
 |---|---|---|
 | Civ list (pipeline) | `CIV_NAMES` in `extraction/extract_constants.py` | 60 dat slots → 53 playable civs (Gaia + 6 Chronicles slots skipped) |
-| Civ list (frontend) | `ENABLED_CIVS` in `apps/website/static/js/constants.js` | 53 entries; server-side validation derives from `aoe2_reference.db` via `_valid_civs()` in `app.py` |
+| Civ list (frontend) | `ENABLED_CIVS` in `apps/web/static/js/constants.js` ← `window.SITE_CATALOG.civilizations` | 56 entries from `site_catalog()` (`apps/backend/aoe2_api/services/catalog.py`) over `aoe2_reference_simulation.db`; server-side validation also derives from the reference DBs (`_valid_civs()` / `_sim_civs()` in `apps/backend/aoe2_api/web.py`) |
 | Extractable units | `UNIT_NAMES` in `extraction/extract_units.py` | 256 dat unit ids; absent here = never enters the pipeline |
 | Unit rosters & upgrade chains | `CASTLE_UNITS` / `IMPERIAL_UNITS` / `UNIQUE_UNITS` / `NAVAL_*` in `aoe2x/dbgen/config_units.py` | Slugs, base ids, availability techs, alternates, civ upgrades |
 | Per-civ availability fixes | `_AVAILABILITY_OVERRIDES` in `aoe2x/dbgen/config_units.py` | Allowlist pinning 17 auto-enabled lines to explicit civ lists |
 | Hardcoded combat properties | `COMBAT_PROPERTIES` / `UNIQUE_COMBAT_PROPERTIES` / `CIV_COMBAT_PROPERTIES` in `aoe2x/dbgen/config_combat.py` | 30/52/89 entries; later layer wins; hashed into `sim_version` |
 | Base-stat dat corrections | `UNIT_STAT_OVERRIDES` in `aoe2x/dbgen/config_units.py` | 4 entries |
 | Armor/attack classes | `ARMOR_CLASSES` in `extraction/extract_constants.py` | 40 classes; used by every per-class attack/armor list |
-| Unit lines (Python) | `UNIT_LINES` + `CIV_MISSING_UNITS` in `aoe2x/sim/unit_lines.py` | Imported by 8 modules. ⚠ A JS copy lives in `static/js/rankings.js` — update both |
-| Unit icons | `NAME_TO_ICON` (218) + `getIconUrl()` in `apps/website/static/js/constants.js` | PNGs in `apps/website/static/img/units/`; no template copies exist anymore |
-| Unique-unit buildings | `UNIQUE_BUILDING` (13) in `apps/website/static/js/constants.js` | |
-| Civ emblems | `CIV_EMBLEM_BASE` in `apps/website/static/js/constants.js` | aoe2companion CDN |
+| Unit lines (Python) | `UNIT_LINES` + `CIV_MISSING_UNITS` in `aoe2x/sim/unit_lines.py` | Imported by 12 modules. ⚠ The live JS copy lives in `apps/web/src/features/rankings/render.mjs` — update both |
+| Unit icons | `icon_names` (230) in `aoe2x/assets/presentation.json` → `NAME_TO_ICON` + `getIconUrl()` in `apps/web/static/js/constants.js` | Authoring PNGs in `data/media/img/units/` (served from Blob) |
+| Unique-unit buildings | `unique_buildings` (13) in `aoe2x/assets/presentation.json` → `UNIQUE_BUILDING` in `apps/web/static/js/constants.js` | |
+| Civ emblems | `CIV_EMBLEM_BASE` in `apps/web/static/js/constants.js` | aoe2companion CDN |
 | Unit display names | `ref_units.unit_name` in `data/golden/aoe2_reference.db` | Per civ×slug×age (e.g. Koreans `paladin` → "Cavalier"); resolved by `_ref_unit_name()` |
-| Combat-dict mapping | `build_combat_dict_from_ref()` in `aoe2x/sim/combat_unit_loader.py` | Shared by app.py, best_units, batch runners; `aoe2x/dbgen/generate_main_db.py` has a same-named sibling that must stay in sync |
+| Combat-dict mapping | `build_combat_dict_from_ref()` in `aoe2x/sim/combat_unit_loader.py` | Shared by `aoe2_api/web.py`, best_units, batch runners; `aoe2x/dbgen/generate_main_db.py` has a same-named sibling that must stay in sync |
 | Current build number | `patches_db.get_current_build()` (`data/golden/patches.db`, `is_current=1`) | Every build-versioned artifact keys off this |
 | Sim cache key | `compute_sim_version()` in `aoe2x/sim/sim_version.py` | Hashes `simulation_real.py` + `aoe2x/dbgen/config_combat.py` — **not** `simulation.py` |
 | Pool scoring spec | constants in `aoe2x/rank/pool_scores_lib.py` | λ=2 loss aversion, pool roles/weights |
@@ -134,15 +144,17 @@ Where to look (and what to edit) for each kind of fact:
 1. **The app serves combat data from `aoe2_reference.db`**, not `aoe2_units.db`.
    `/api/ref/combat-unit/<civ>/<slug>` reads `ref_units` through
    `combat_unit_loader.build_combat_dict_from_ref()`. No route queries `unit_stats`.
-2. **The interactive battle sim is client-side.** The page at `/` fetches combat
-   dicts as JSON and runs the fight in `static/js/engine/` (`BattleUnit`), drawn by
-   `sim_renderer.js`. The Python engines never run during page sims.
+2. **The interactive battle sim is client-side.** The page at `/` posts the
+   selection to `/api/v3/battle-config` and runs the fight in the V3 engine
+   (`aoe2x/js_simulation/src/`) inside a Web Worker. The Python engines never run
+   during page sims.
 3. **Three engines, three jobs.** `simulation.py` (abstract tick) backs
    `/api/matchup-sims`; `simulation_real.py` (position-based) backs all batch
-   matchup data; the JS engine in `static/js/engine/` backs the interactive page,
-   the lab harness, and headless node runs. A mechanic change is
+   matchup data; the V3 JS engine backs the interactive page and node batch runs
+   (the retired `legacy/client/js/engine/` backs only the parity panel and
+   headless research tools). A mechanic change is
    incomplete until all three (plus `.golden/baseline.json`) agree — see
-   [runbooks.md](runbooks.md) §2. Editing the JS engine additionally requires the
+   [runbooks.md](runbooks.md) §2. Editing the legacy JS engine additionally requires the
    parity gate (`node tools/simjs/parity_check.mjs`).
 4. **`sim_version` self-heals the matchup data.** Any edit to `simulation_real.py`
    or `aoe2x/dbgen/config_combat.py` changes the hash; stale rows are re-simmed on

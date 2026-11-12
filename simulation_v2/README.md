@@ -3,7 +3,8 @@
 The V2 simulation engine, packaged so a build machine can pull `staging` and
 run it **without touching anything the site serves**. The webapp does not
 import this directory; the production engines (`aoe2x/sim/simulation_real.py`,
-`aoe2x/sim/simulation.py`, live `apps/website/static/js/simulate.js`) and all
+`aoe2x/sim/simulation.py`, the browser engine — formerly `apps/website/static/js/simulate.js`,
+now retired to `legacy/client/js/simulate.js`) and all
 committed DBs remain the source of every number on the site until the full
 rerun.
 
@@ -45,7 +46,7 @@ runFight(cd["Incas/elite_champi_warrior"], "elite_champi_warrior", "Incas", 21,
 ```
 
 `JSDIR` points the harness at `engine_base/`; without it the harness reads
-`apps/website/static/js/` (the live, unfixed engine — fine on the dev branch,
+`legacy/client/js/` (the retired, unfixed client engine — fine on the dev branch,
 wrong here). Multi-seed batches: see `run_pool_v2.js` header for the
 `SUBJECT/WORKDIR/START/COUNT` env contract (its `combat_dicts_all.json` +
 `pool_meta.json` inputs are produced by `build_v2_categorization.py` on the

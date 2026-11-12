@@ -2,7 +2,7 @@
 
 *Last verified: 2026-07-30 · branch `improved-simulation` · corpus: 155 fights / 92 matchups*
 
-Fits the JS battle engine (`apps/website/static/js/engine/`) to REAL Age of Empires II
+Fits the JS battle engine (`legacy/client/js/engine/`) to REAL Age of Empires II
 fights recorded at ~60 Hz, by scoring the engine's own emitted combat events against the
 recording's events through **one shared metric implementation**. Supersedes the old
 outcome-only tape corpus (`aoe2x/validation/tape_corpus.json`, 38 win/loss rows) as the
@@ -35,7 +35,7 @@ Five independently-testable stages, each its own module:
 |---|---|---|
 | Ingest a drop, resolve civs, build the manifest | `aoe2x/calibration/ingest.py` | 1 |
 | The shared metric extractor | `aoe2x/calibration/extract.py` | 2 |
-| Engine event recorder (opt-in `sim.eventLog`) | `apps/website/static/js/engine/{sim,battle_unit}.js` | 3 |
+| Engine event recorder (opt-in `sim.eventLog`) | `legacy/client/js/engine/{sim,battle_unit}.js` | 3 |
 | 20-seed sim runner over the manifest | `tools/simjs/calib_runner.mjs` (+ `dump_calib_dicts.py`, `dump_calib_spawns.py`) | 4 |
 | **Scorer + BASELINE scoreboard** | `aoe2x/calibration/score.py` | **5 (this doc)** |
 
@@ -272,7 +272,7 @@ scoreboard's `mismatch_ranking` field.
 
 - `swing_interval_median`/`churn` dominate because **the JS engine has no crowd-churn
   mechanism at all** (Task 6, not yet done) — `simulation_real.py` has one
-  (`CHURN_MAX`), the JS engine does not (`grep -i churn apps/website/static/js/engine/*.js`
+  (`CHURN_MAX`), the JS engine does not (`grep -i churn legacy/client/js/engine/*.js`
   returns nothing). This is the single largest, already-diagnosed gap.
 - `effective_accuracy` mismatches concentrate on ranged units firing at large targets
   (Elite Fire Lancer, Heavy Scorpion, Arbalester) — the known "hit-capture vs. target

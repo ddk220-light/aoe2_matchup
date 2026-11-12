@@ -12,8 +12,8 @@ See also: [`matchup-baseline.md`](matchup-baseline.md) for the baseline methodol
 
 | Branch    | Role |
 |-----------|------|
-| `staging` | All work lands here. Auto-deploys to the staging URL. |
-| `main`    | Production. **Frozen** — only updated by `git merge --ff-only staging`. Never commit directly. |
+| `staging` | All work lands here. Every push builds a Vercel preview deployment. |
+| `main`    | Production (Vercel, aoe2matchup.com). **Frozen** — only updated by `git merge --ff-only staging`. Never commit directly. |
 
 Promotion is **fast-forward only**. If `--ff-only` refuses, the branches diverged — stop
 and reconcile (a parallel session may have pushed; merge `origin/staging` into staging,
@@ -126,16 +126,19 @@ name (resolved from `ref_units`, not the line slug).
 ## 9. Verify → ship
 
 ```
-PORT=5002 python3 apps/website/app.py     # smoke-test rankings, advisor, patch page locally
+python3 scripts/migration/prepare_release.py   # regenerate page data + API runtime from the new DBs
+python3 scripts/migration/verify_build.py      # smoke the packaged API
+npm run build --prefix apps/web                # Astro build (then `git checkout vercel.json` unless the data changed)
 ```
 
-Commit on `staging`, push, verify on the staging URL, then promote:
+Commit on `staging`, push, verify rankings, advisor and the patch page on the staging
+preview deployment, then promote:
 
 ```
 git checkout main && git merge --ff-only staging && git push origin main && git checkout staging
 ```
 
-(Stash the noisy `apps/website/matchup_db.db` modification before switching branches.)
+(Local matchup DBs live under `data/local/` or outside the repo and are gitignored, so nothing needs stashing before switching branches.)
 
 ---
 

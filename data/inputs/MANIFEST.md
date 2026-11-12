@@ -19,7 +19,7 @@ lands, and what consumes it.
 | aoe.ms replay downloads | `https://aoe.ms/replay?gameId=…&profileId=…` (rate-limited; responses cached in `%TEMP%/aoe2_replay_cache`) | `aoe2x/replay/blueprint.py`, `tools/download_replays.py` |
 | aoe2techtree data | `https://raw.githubusercontent.com/SiegeEngineers/aoe2techtree/master/data/…` | `scripts/build_reference_docs.py`, `tools/analyzers/unit_analyzer.py` |
 | Fandom wiki scraping | unit descriptions/flavor text | `scripts/build_reference_docs.py` |
-| Civ emblem CDN | `https://backend.cdn.aoe2companion.com/...` (hotlinked by the frontend) | `apps/website/static/js/constants.js` |
+| Civ emblem CDN | `https://backend.cdn.aoe2companion.com/...` (hotlinked by the frontend) | `apps/web/static/js/constants.js` (`CIV_EMBLEM_BASE`) |
 
 ## Live local-machine inputs
 
@@ -33,7 +33,7 @@ lands, and what consumes it.
 
 | Asset | Origin | Lives at |
 |---|---|---|
-| 248 unit icon PNGs | scraped (wiki), curated | `apps/website/static/img/units/` |
+| unit icon PNGs | scraped (wiki), curated | `data/media/img/units/` (authoring copy; served from Blob) |
 | viewer sprites/terrain | extracted + upscaled game art (see `graphics/`) | `aoe2x/replay/public/assets/` |
 | scenario template | self-authored | `apps/video/templates/default3.aoe2scenario` |
 
@@ -48,8 +48,10 @@ lands, and what consumes it.
 
 ## Secrets (env vars, never committed)
 
-`CONTACT_FORM_ENDPOINT`, `SOCIAL_DISCORD_URL`, `SOCIAL_YOUTUBE_URL`,
-`SOCIAL_INSTAGRAM_URL`, `SITE_URL` — read by `apps/website/app.py`.
+`SOCIAL_DISCORD_URL`, `SOCIAL_YOUTUBE_URL`, `SOCIAL_INSTAGRAM_URL`, `SITE_URL`,
+`SEARCH_INDEXING`, `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` — read at
+build time by `scripts/migration/site/config.py` (and `SITE_URL`/`SEARCH_INDEXING`
+by `apps/backend/aoe2_api/web.py`); set them in the Vercel project.
 gRPC mTLS keypair — files beside `aoe2x/grpc/`.
 
 ## Generated-but-external (size)

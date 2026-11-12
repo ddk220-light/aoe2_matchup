@@ -13,17 +13,35 @@ not a deployment dependency. Media and retained client assets are downloaded
 from the existing public Blob URLs and verified against their SHA-256 manifests.
 
 The `vercel-build` CI job generates both services, verifies their manifests,
-smokes the packaged API and builds Astro from a clean checkout. The original
-website/engine contract tests also remain required validation.
+smokes the packaged API and builds Astro from a clean checkout. The `test` job's
+API contract tests (which import `aoe2_api.web` directly) and the retained
+legacy engine contracts remain required validation.
 
 Website presentation lives only in the Astro app (`apps/web`): the site header,
-footer, base styles (`apps/web/src/styles/`) and every page's markup and
-scripts. Do not mirror presentation changes into `apps/website`; its templates
-are no longer shown to visitors. `apps/website` is still required at build time
-for the API routes, the exported data and each page's title/meta/structured
-data, and several contract tests still read its legacy scripts, so it cannot be
-deleted outright yet. Preview checks must cover affected pages and API calls,
-plus a completed simulator battle.
+footer (`apps/web/src/components/site/`), base styles (`apps/web/src/styles/`),
+every page's markup and scripts (`src/pages/`, `src/features/`) and the live
+public files in `apps/web/static/{img,js}`. The Flask service (`apps/backend`:
+`app.py` plus the `aoe2_api` package) serves only `/api/*` and
+`/_internal/release`; every other path 404s there. Page titles, meta, links,
+JSON-LD, page fragments and the sitemap are produced at build time by
+`scripts/migration/prepare_release.py` (the `export_*.py` scripts and the
+builders in `scripts/migration/site/`, whose only templates are the verbatim
+snippets in `scripts/migration/site/templates/`). The former `apps/website`
+Flask site has been deleted. The retired browser engine and page scripts live in
+`legacy/client/` for parity and research tests only and are never published;
+authoring copies of unit art, animations and media manifests live in
+`data/media/`. Preview checks must cover affected pages and API calls, plus a
+completed simulator battle.
+
+Locally, `python scripts/migration/prepare_release.py` followed by
+`npm run dev --prefix apps/web` serves the pages, and
+`cd apps/backend && flask --app app run` serves the packaged API from the sealed
+`runtime/` (Python 3.13). The Astro dev server does not proxy `/api/*`, so
+check API-driven pages end to end on a preview deployment.
+`python scripts/migration/verify_build.py` smokes the packaged API, and
+`npm run build --prefix apps/web` refuses sources changed after sealing. Restore
+`vercel.json` with `git checkout vercel.json` after a local seal unless the data
+itself changed.
 
 For a release, check the exact branch commit and both CI jobs, then verify its
 Vercel deployment. A READY state alone is insufficient: request `/`, `/units`,

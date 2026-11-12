@@ -7,7 +7,7 @@ description: Use when pulling unit stats, civ bonuses, unique techs, armor class
 
 Four external sources are used for AoE2 data. Each has different strengths. Always cross-reference at least two sources before drawing conclusions.
 
-**Important:** These sources are for pulling EXTERNAL data to compare against our local database (`data/golden/aoe2_reference.db`, `data/golden/aoe2_units.db`). Do NOT use our own Railway API (aoe2.up.railway.app) as the source — that only reflects what we already have. The goal is to validate our DB against the authoritative external sources.
+**Important:** These sources are for pulling EXTERNAL data to compare against our local database (`data/golden/aoe2_reference.db`, `data/golden/aoe2_units.db`). Do NOT use our own site API (aoe2matchup.com `/api/...`) as the source — that only reflects what we already have. The goal is to validate our DB against the authoritative external sources.
 
 ---
 

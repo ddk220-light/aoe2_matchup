@@ -10,13 +10,14 @@ another corpus. If verification fails, stop and ask. Full policy:
 `calibration/docs/TAPE_SOURCE_OF_TRUTH.md`.
 
 ## Project Overview
-This project is a web application (aoe2matchup.com) that analyzes Age of Empires II: Definitive Edition unit matchups. It uses the game's binary data file (`empires2_x2_p1.dat`) to extract unit stats, computes fully-upgraded stats for all 53 civilizations, pre-simulates ~500k unit matchups, and provides web tools for battle simulation, unit rankings, matchup advising, and patch tracking. Replay tooling remains in the monorepo but is not mounted by the website.
+This project is a web application (aoe2matchup.com) that analyzes Age of Empires II: Definitive Edition unit matchups. It uses the game's binary data file (`empires2_x2_p1.dat`) to extract unit stats, computes fully-upgraded stats for all 56 civilizations, pre-simulates ~500k unit matchups, and provides web tools for battle simulation, unit rankings, matchup advising, and patch tracking. Replay tooling remains in the monorepo but is not mounted by the website.
 
 **Authoritative architecture docs: `docs/architecture/README.md` (system map + single-sources-of-truth table) and `docs/architecture/runbooks.md` (when-X-changes-update-Y checklists).**
 
 ## Tech Stack
-- **Backend:** Python 3.8+, Flask, SQLite (committed pre-computed databases)
-- **Frontend:** Jinja2 templates + shared static assets (`apps/website/static/js/*.js`, `static/css/*.css`); the interactive battle sim runs client-side in `static/js/simulate.js`
+- **Backend:** Python 3.13, Flask API in `apps/backend` (`app.py` Vercel entrypoint + the `aoe2_api` package), SQLite (committed pre-computed databases)
+- **Frontend:** Astro app `apps/web` (pages, header/footer, styles, page code in `src/features/`); page metadata and data are generated at build time by `scripts/migration/prepare_release.py`. The interactive battle sim runs client-side in the V3 engine `aoe2x/js_simulation/src/` (worker `apps/web/static/js/v3_sim_worker.js`)
+- **Hosting:** Vercel, two services defined in the root `vercel.json` (see `docs/vercel-deployment.md`)
 - **Data extraction:** `genieutils-py` (conda python); **batch sims:** PyPy; **replays:** `mgz` fork
 
 ## Architecture & Pipeline
@@ -24,12 +25,12 @@ This project is a web application (aoe2matchup.com) that analyzes Age of Empires
 2. **Reference DB (`aoe2x/dbgen/generate_reference.py`):** Applies tech effects/civ bonuses per civ into `data/golden/aoe2_reference.db` with a full audit trail. Hardcoded combat properties layer on from `aoe2x/dbgen/config_combat.py`.
 3. **Main DB (`aoe2x/dbgen/generate_main_db.py`):** Flattens into `aoe2_units.db` (legacy — app routes read `aoe2_reference.db`).
 4. **Sim data:** Batch matchup sims (`aoe2x/sim/simulation_real.py`, position-based engine) → `derive_unit_rankings.py` / `derive_pool_scores.py` / `best_units.py` → `derived_data.db` / `pool_scores.db` / `civ_power_units/<build>.json`, all keyed by build number (`patches.db`).
-5. **Serving (`apps/website/app.py`):** Flask website routes only; the replay blueprint is intentionally not mounted. Note: `compute_battle_scores.py` is retired; `battle_scores.json` was deleted (scores live in `derived_data.db`).
+5. **Serving:** `apps/backend` serves `/api/*` only (routes in `apps/backend/aoe2_api/web.py` and `aoe2_api/routes/`); `apps/web` serves every page. The replay blueprint is intentionally not mounted. Note: `compute_battle_scores.py` is retired; `battle_scores.json` was deleted (scores live in `derived_data.db`).
 
 ## Guidelines for AI Assistant (Gemini)
 1. **Data Pipeline Awareness:** Data flows strictly `extraction` → `analysis` → sim batch → derive → `webapp`. Stat/logic changes usually require rebuilding databases — follow `docs/architecture/runbooks.md`.
-2. **Three sim engines:** `simulation.py` (abstract, backs /api/matchup-sims), `simulation_real.py` (position-based, backs all batch matchup data, hashed into `sim_version`), `static/js/simulate.js` (interactive page). A mechanic change must touch all three.
+2. **Three sim engines:** `simulation.py` (abstract, backs /api/matchup-sims), `simulation_real.py` (position-based, backs all batch matchup data, hashed into `sim_version`), `aoe2x/js_simulation/src/` (V3 engine behind the interactive page). The retired client engine in `legacy/client/js/engine/` is kept for parity/research (`node tools/simjs/parity_check.mjs`). A mechanic change must touch all three active engines.
 3. **Configuration over Hardcoding:** Don't hardcode stats in databases; update `analysis/config_*.py` and regenerate.
 4. **Rebuilding stats DBs:** `python -m aoe2x.extract.run`, `python -m aoe2x.dbgen.generate_reference`, `python -m aoe2x.dbgen.generate_main_db`. Rankings need the sim-data chain (runbooks §1), not `compute_battle_scores.py`.
-5. **Running the webapp:** `PORT=5002 python apps/website/app.py`. Tests: `pytest`.
-6. **Git:** work on `staging`; never push `main` (production auto-deploys).
+5. **Running the webapp:** `python scripts/migration/prepare_release.py`, then `npm run dev --prefix apps/web` (frontend) and `cd apps/backend && flask --app app run --port 5002` (API). Tests: `pytest`.
+6. **Git:** work on `staging` (Vercel preview); never push `main` (Vercel production auto-deploys).

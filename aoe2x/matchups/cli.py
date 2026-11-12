@@ -375,6 +375,45 @@ def cmd_export(args) -> int:
     return 0
 
 
+def default_index_ref(cfg: dict | None) -> tuple[Path, str | None]:
+    """The result index a build/plan uses: the config's ``baselineResults``, else the 2026 index
+    in the runs store (checked against the committed receipt)."""
+    from aoe2x.matchups import config as C
+    ref = (cfg or {}).get("selection", {}).get("baselineResults")
+    if ref:
+        return C.resolve_path(ref["index"], REPO_ROOT), ref["sha256"]
+    receipt = json.loads(artifacts.RESULT_INDEX_RECEIPT.read_text())
+    return runs_store() / "baselines" / "campaign-2026" / "result-index.jsonl.gz", receipt["index"]["sha256"]
+
+
+def cmd_build_db(args) -> int:
+    from aoe2x.matchups import config as C
+    from aoe2x.matchups import servingdb as S
+    cfg = C.load(_config_path(args.config))
+    inputs = load_inputs(cfg)
+    index_path, index_sha = default_index_ref(cfg)
+    if args.index:
+        index_path, index_sha = Path(args.index), args.index_sha256
+    if not index_path.exists():
+        print(f"build-db: result index {index_path} is missing (python -m aoe2x.matchups import-results)",
+              file=sys.stderr)
+        return 2
+    try:
+        index, sha = S.load_index(index_path, index_sha)
+        snapshots = [S.load_snapshot(Path(d)) for d in args.snapshot]
+        previous = S.read_db(Path(args.previous_db)) if args.previous_db else None
+        record = S.build(bundle=inputs["bundle"], scenario_set=inputs["scenarioSet"], battle=cfg["battle"],
+                         setup_hash=inputs["setupHash"], engine_files_digest=inputs["engine"]["filesDigest"],
+                         index=index, index_sha256=sha, snapshots=snapshots, out=Path(args.out), previous=previous,
+                         costs=args.costs, costs_db=Path(args.costs_db), carry_unsimulated=args.carry_unsimulated,
+                         max_bytes=int(args.max_mib * 1024 * 1024))
+    except S.BuildError as error:
+        print(f"build-db error: {error}", file=sys.stderr)
+        return 1
+    _print({k: record[k] for k in ("out", "bytes", "sha256", "counts", "resultIndex", "snapshots", "previousDb")})
+    return 0
+
+
 def cmd_reproduce_2026(args) -> int:
     from aoe2x.matchups import reproduce as RP
     rb = _rb(args)
@@ -477,6 +516,24 @@ def main(argv=None) -> int:
     run_options(p, force=False)
     p.add_argument("--out", help="snapshot directory (default <records>/export)")
     p.set_defaults(func=cmd_export)
+
+    p = sub.add_parser("build-db", help="build the advisor serving DB from a result index + run snapshots")
+    p.add_argument("config", help="run config whose bundle (roster) and battle setup the DB is for")
+    p.add_argument("--out", required=True, help="output DB path (write a scratch path; copying it to "
+                                                "data/golden/ is the release step)")
+    p.add_argument("--index", help="result index (default: the config's baselineResults, else the 2026 index)")
+    p.add_argument("--index-sha256", help="expected sha256 of --index")
+    p.add_argument("--snapshot", action="append", default=[], help="an `export` snapshot dir (repeatable, in order)")
+    p.add_argument("--previous-db", help="the currently published DB: keeps unit/evidence ids stable and is "
+                                         "the source of kept results for blocked/unsimulated cells")
+    p.add_argument("--costs", choices=("reference-db", "bundle"), default="reference-db",
+                   help="where units.data.costs come from (2026 builder: the reference DB)")
+    p.add_argument("--costs-db", default=str(REPO_ROOT / "data/golden/aoe2_reference_simulation.db"))
+    p.add_argument("--carry-unsimulated", action="store_true",
+                   help="cells of pairs without any result keep the previous release's result (flag 4) "
+                        "instead of failing")
+    p.add_argument("--max-mib", type=float, default=95.0, help="refuse to write a DB of this size or more")
+    p.set_defaults(func=cmd_build_db)
 
     p = sub.add_parser("reproduce-2026")
     p.add_argument("dir", help="working directory for the sample, configs and records (outside the repo)")

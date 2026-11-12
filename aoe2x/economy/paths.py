@@ -3,14 +3,19 @@
 Committed:
   data/army_economics/sources/army-context-2026-11-10/  reviewed source snapshot (.gz) and sidecar JSON
   data/army_economics/sources/handoff-data-2026-11-12/  upstream extraction inputs (.tar.gz) + manifest
-  data/army_economics/army_context.db                   compiled runtime database (+ .validation.json)
+  data/army_economics/army_context.jsonl.gz             compiled runtime (source of truth; see artefact.py)
+  data/army_economics/army_context.validation.json      its metadata report
+
+Local build output (git-ignored), written by the compiler next to the artefact:
+  data/army_economics/army_context.db                   the same runtime as SQLite
 
 Restored (git-ignored) by ``python -m aoe2x.economy.restore``:
   data/army_economics/sources/army-context-2026-11-10/army-context.sqlite
   data/local/army-economics/scratch/{production,research,economy}-review/   (with --include-sources)
 
-The runtime database deliberately lives outside ``data/golden``: the release
-builder packages every ``data/golden/*.db`` into the deployed backend.
+The runtime deliberately lives outside ``data/golden``: the release builder
+packages every ``data/golden/*.db`` into the deployed backend and hashes it into
+other components. The release step ships the artefact explicitly (economy component).
 """
 import os
 from pathlib import Path
@@ -22,7 +27,8 @@ SNAPSHOT_DIR = SOURCES_DIR / "army-context-2026-11-10"
 REVIEW_DB = SNAPSHOT_DIR / "army-context.sqlite"
 HANDOFF_DIR = SOURCES_DIR / "handoff-data-2026-11-12"
 MANIFEST = HANDOFF_DIR / "manifest.json"
-RUNTIME_DB = DATA_DIR / "army_context.db"
+RUNTIME_ARTEFACT = DATA_DIR / "army_context.jsonl.gz"
+RUNTIME_DB = DATA_DIR / "army_context.db"  # local build output, git-ignored
 REFERENCE_DB = REPO_ROOT / "data" / "golden" / "aoe2_reference_simulation.db"
 TOOLS_DIR = REPO_ROOT / "tools" / "economy"
 CALIBRATION_ROOT = REPO_ROOT / "aoe2x" / "js_simulation" / "calibration"

@@ -168,3 +168,9 @@ scripts/migration/node_modules
 # Army economics: restored review DB (compressed copy is committed) and build temporaries
 data/army_economics/sources/army-context-2026-11-10/army-context.sqlite
 data/army_economics/*.building.sqlite
+
+# Army economics: the compiler's local SQLite build output; the committed source
+# of truth is data/army_economics/army_context.jsonl.gz (aoe2x/economy/artefact.py)
+data/army_economics/army_context.db
+data/army_economics/*.building
+data/army_economics/*.building.sqlite

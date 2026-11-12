@@ -1,4 +1,4 @@
-"""Compile the reviewed source ledger into the army-economics runtime database.
+"""Compile the reviewed source ledger into the army-economics runtime (committed artefact + local SQLite).
 
     python -m aoe2x.economy.compiler [--require-release-ready]
 
@@ -24,7 +24,9 @@ from aoe2x.economy.accounting import (
 from aoe2x.dbgen.config_units import PAIRED_UNITS
 from aoe2x.economy import curated
 from aoe2x.economy.observations import validate_observations
-from aoe2x.economy.paths import CALIBRATION_ROOT, REFERENCE_DB, REPO_ROOT as ROOT, REVIEW_DB, RUNTIME_DB, TOOLS_DIR
+from aoe2x.economy import artefact as runtime_artefact
+from aoe2x.economy.paths import (CALIBRATION_ROOT, REFERENCE_DB, REPO_ROOT as ROOT, REVIEW_DB, RUNTIME_ARTEFACT,
+                                  RUNTIME_DB, TOOLS_DIR)
 from aoe2x.economy.policy import AURA_ASSUMPTION, GATHERING_VALIDATION_POLICY, excluded_record, exclusion_reason
 from aoe2x.economy.special_economy import apply_special_economy, pasture_activity
 
@@ -735,7 +737,8 @@ class Compiler:
                 "research": research, "lookup": lookups, "laborStatus": economy["laborStatus"]}
 
 
-def compile_database(review, reference, output, observations=None):
+def compile_database(review, reference, output, observations=None, artefact=None):
+    """Write the SQLite runtime ``output`` (+ ``.validation.json``) and, if given, the committed ``artefact``."""
     compiler = Compiler(review, reference)
     civilizations = {civ: compiler.civilization(civ) for civ in sorted(compiler.parameters)}
     profiles = rows(compiler.ref, "ref_unit_mechanics")
@@ -820,6 +823,10 @@ def compile_database(review, reference, output, observations=None):
         if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
             raise RuntimeError("runtime database integrity check failed")
     temporary.replace(output)
+    if artefact is not None:
+        if Path(artefact).resolve() in (Path(review).resolve(), Path(reference).resolve()):
+            raise ValueError("artefact must not overwrite a source database")
+        runtime_artefact.write(artefact, metadata, civilizations, units)
     report = output.with_suffix(".validation.json")
     report.write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + "\n")
     compiler.db.close()
@@ -831,11 +838,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--review", type=Path, default=DEFAULT_REVIEW)
     parser.add_argument("--reference", type=Path, default=REFERENCE_DB)
-    parser.add_argument("--output", type=Path, default=RUNTIME_DB)
+    parser.add_argument("--output", type=Path, default=RUNTIME_DB, help="local SQLite runtime (git-ignored)")
+    parser.add_argument("--artefact", type=Path, default=RUNTIME_ARTEFACT,
+                        help="committed JSON Lines artefact (aoe2x/economy/artefact.py)")
     parser.add_argument("--require-release-ready", action="store_true")
     parser.add_argument("--observations", type=Path, help="Independent controlled game measurement manifest")
     args = parser.parse_args()
-    metadata = compile_database(args.review, args.reference, args.output, args.observations)
+    metadata = compile_database(args.review, args.reference, args.output, args.observations, args.artefact)
     print(json.dumps({k: metadata[k] for k in ("civilizationCount", "profileCount", "releaseReady", "contextVersion")}, indent=2))
     print(f"Release blockers: {len(metadata['blockers'])}; price corrections: {len(metadata['priceCorrections'])}")
     if args.require_release_ready and not metadata["releaseReady"]:

@@ -1,4 +1,4 @@
-"""Contract of the compiled runtime database (data/army_economics/army_context.db).
+"""Contract of the compiled runtime (committed data/army_economics/army_context.jsonl.gz).
 
 Ported from matchup-timings 829c65bec ``tests/test_army_economics.py``. The
 former page/API tests (``apps.website`` ArmyContext, Flask endpoint, battle
@@ -14,18 +14,28 @@ import sqlite3
 import pytest
 
 from aoe2x.economy.accounting import add_costs, compiled_labor, weighted_cost
-from aoe2x.economy.paths import REFERENCE_DB, RUNTIME_DB
+from aoe2x.economy.paths import REFERENCE_DB, RUNTIME_ARTEFACT
 
-RUNTIME = Path(os.environ.get("ARMY_CONTEXT_DB", RUNTIME_DB))
-pytestmark = pytest.mark.skipif(not RUNTIME.exists(), reason="army_context.db not built")
+# ARMY_CONTEXT_DB may name another runtime: an artefact or a locally compiled army_context.db.
+RUNTIME = Path(os.environ.get("ARMY_CONTEXT_DB", RUNTIME_ARTEFACT))
+pytestmark = pytest.mark.skipif(not RUNTIME.exists(), reason="army economics runtime not found")
 needs_scipy = pytest.mark.skipif(__import__("importlib").util.find_spec("scipy") is None,
                                  reason="SciPy (requirements-economy.txt) is an offline-only dependency")
 
 
 @pytest.fixture(scope="module")
 def data():
+    return runtime()
+
+
+_RUNTIME = []
+
+
+def runtime():
     from aoe2x.economy.matchup import RuntimeData
-    return RuntimeData(RUNTIME)
+    if not _RUNTIME:
+        _RUNTIME.append(RuntimeData(RUNTIME))
+    return _RUNTIME[0]
 
 
 def pair(data, left, right=None, count=27):
@@ -37,13 +47,11 @@ def pair(data, left, right=None, count=27):
 
 
 def civ(name):
-    with sqlite3.connect(RUNTIME) as c:
-        return json.loads(c.execute("SELECT payload FROM civilizations WHERE civ=?", (name,)).fetchone()[0])
+    return runtime().civilization(name)
 
 
-def units(where="1=1", args=()):
-    with sqlite3.connect(RUNTIME) as c:
-        return [json.loads(r[0]) for r in c.execute(f"SELECT payload FROM units WHERE {where}", args)]
+def units(civ_name=None):
+    return [runtime().unit(*key) for key in runtime().keys() if civ_name in (None, key[0])]
 
 
 def test_actual_profile_coverage_and_source_join(data):
@@ -103,7 +111,7 @@ def test_batch_and_conditional_cost_policies(data):
     assert losses[2]["surplusUnits"] == 1
     assert losses[3]["surplusUnits"] == 0
     assert losses[4]["orders"] == 2
-    discounted = [u for u in units("civ='Saxons'") if u["pricing"]["conditionalMultiplier"] == .8]
+    discounted = [u for u in units("Saxons") if u["pricing"]["conditionalMultiplier"] == .8]
     assert len(discounted) == 6
     assert all(u["pricing"]["conditionalContext"] for u in discounted)
 
@@ -209,8 +217,7 @@ def test_investment_uses_only_common_techs_and_correct_infrastructure(data, left
 @needs_scipy
 def test_all_compiled_economies_match_offline_solver():
     from aoe2x.economy.accounting import solve_labor
-    with sqlite3.connect(RUNTIME) as db:
-        economies = [json.loads(r[0]) for r in db.execute("SELECT payload FROM civilizations")]
+    economies = [civ(name) for name in sorted({key[0] for key in runtime().keys()})]
     for economy in economies:
         if economy["blockers"]:
             assert economy["laborPrices"] is None
@@ -430,6 +437,6 @@ def test_every_unit_carries_its_full_research_package_figures(data):
 def test_generated_rate_tables_are_current():
     import subprocess, sys
     from aoe2x.economy.paths import REPO_ROOT
-    if RUNTIME != RUNTIME_DB:
+    if RUNTIME != RUNTIME_ARTEFACT:
         pytest.skip("checks the committed runtime only")
     subprocess.run([sys.executable, str(REPO_ROOT / "tools/economy/summarize_runtime.py"), "--check"], check=True)

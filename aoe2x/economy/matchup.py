@@ -19,22 +19,41 @@ from aoe2x.economy.accounting import (
     CONTEXT_SCHEMA_VERSION, add_costs, army_investment, compare_research, investment_comparison,
     queue_seconds, research_infrastructure, research_summary, research_totals, select_investment_route,
 )
-from aoe2x.economy.paths import RUNTIME_DB
+from aoe2x.economy.artefact import Artefact
+from aoe2x.economy.paths import RUNTIME_ARTEFACT
 
 
 class RuntimeData:
-    """Read-only access to ``army_context.db`` (metadata, civilizations, units)."""
+    """Read-only access to the compiled runtime (metadata, civilizations, units).
 
-    def __init__(self, path=RUNTIME_DB):
+    Reads the committed ``army_context.jsonl.gz`` by default; a path ending in
+    ``.db`` reads a locally compiled SQLite runtime with the same payloads.
+    """
+
+    def __init__(self, path=RUNTIME_ARTEFACT):
         self.path = Path(path).resolve()
         if not self.path.exists():
-            raise FileNotFoundError(f"Army context database not found: {self.path}")
-        self.metadata = self._read("metadata", ())
+            raise FileNotFoundError(f"Army context runtime not found: {self.path}")
+        self.artefact = None if self.path.suffix == ".db" else Artefact(self.path)
+        self.metadata = self.artefact.metadata if self.artefact else self._read("metadata", ())
         if self.metadata.get("schemaVersion") != CONTEXT_SCHEMA_VERSION:
             raise ValueError("Unsupported army context schema")
+        if self.artefact:
+            self._units = {}
+            for civ in self.artefact.civilizations:
+                for index, unit in enumerate(self.artefact.record(civ)["units"]):
+                    self._units[(civ, unit["unitId"], unit["mode"])] = index
 
     @lru_cache(maxsize=4096)
     def _read(self, table, keys):
+        if self.artefact:
+            try:
+                if table == "metadata":
+                    return self.metadata
+                record = self.artefact.record(keys[0])
+                return record["civilization"] if table == "civilizations" else record["units"][self._units[keys]]
+            except KeyError:
+                raise KeyError(f"{table} row missing: {keys}") from None
         predicates = {"metadata": "id=1", "civilizations": "civ=?", "units": "civ=? AND unit_id=? AND mode=?"}
         with sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True) as db:
             row = db.execute(f"SELECT payload FROM {table} WHERE {predicates[table]}", keys).fetchone()
@@ -49,6 +68,8 @@ class RuntimeData:
         return self._read("civilizations", (civ,))
 
     def keys(self):
+        if self.artefact:
+            return sorted(self._units)
         with sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True) as db:
             return [tuple(r) for r in db.execute("SELECT civ, unit_id, mode FROM units ORDER BY civ, unit_id, mode")]
 

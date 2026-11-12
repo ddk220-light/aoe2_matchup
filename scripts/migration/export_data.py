@@ -17,6 +17,7 @@ import aoe2_api.web as website
 from aoe2x.sim.unit_lines import UNIT_LINES
 from aoe2_api.services.release import release_metadata
 from aoe2_api.services.advisor import advisor_catalog
+from aoe2_api.services.economy import economy_civilizations
 
 # The simulator data version hashes these configuration inputs keyed by path.
 # The two API services kept their pre-move labels (the files moved byte-identical
@@ -44,7 +45,7 @@ def export(destination):
     # Draft exports are disposable. Published retention comes only from an
     # explicit archive, so reruns cannot collect stray old component versions.
     shutil.rmtree(destination/'data',ignore_errors=True)
-    groups={key:{} for key in ['civilizations','rankings','simulator','advisor']}
+    groups={key:{} for key in ['civilizations','rankings','simulator','advisor','economy']}
     provenance={key:[] for key in groups}
     def api(group,name,url):
         with website.app.test_client() as client:
@@ -55,6 +56,8 @@ def export(destination):
         encoded=encode(data)
         assert json.loads(encoded)==data,url
         groups[group][name]=encoded
+        # Economy files are the API's canonical bytes, so static and API copies are identical.
+        if group=='economy':assert encoded==response.data,url
         provenance[group].append({'name':name,'source_endpoint':url,'sha256':sha(encoded)})
     page_names=website._get_page_civs()
     ranking_names=website._get_ref_civs()
@@ -69,8 +72,14 @@ def export(destination):
     api('advisor', 'catalog', '/api/advisor-catalog')
     for name in calculation:
         api('advisor', name.lower(), '/api/advisor-matchups/' + name)
+    # Army economics: one document per civilization + shared metadata, read by
+    # apps/web/src/features/economy/ (static file first, API fallback).
+    economy=economy_civilizations()
+    api('economy','metadata','/api/economy')
+    for name in economy:
+        api('economy',name.lower(),'/api/economy/'+name)
     rosters={'civilizations':page_names,'rankings':ranking_names,'simulator':sim_names,
-             'advisor':calculation}
+             'advisor':calculation,'economy':economy}
     components={}
     for group,files in groups.items():
         inputs={name:sha(data) for name,data in sorted(files.items())}
@@ -93,6 +102,10 @@ def export(destination):
     components['advisor']['calculation_civilizations']=sorted(calculation)
     components['advisor']['schema_version']=2
     components['advisor']['source']='Saved provisional first-pass matchup evidence; no live simulations'
+    economy_metadata=json.loads(groups['economy']['metadata'])['metadata']
+    components['economy']['source']='Compiled army-economics runtime (data/army_economics/army_context.jsonl.gz); pair calculation runs in the browser'
+    components['economy']['context_version']=economy_metadata['contextVersion']
+    components['economy']['context_schema_version']=economy_metadata['schemaVersion']
     legacy=release_metadata(ROOT,ROOT/'data/golden')
     components['rankings']['published_metadata']=legacy['rankings']
     components['simulator']['reference_sha256']=sha((ROOT/'data/golden/aoe2_reference_simulation.db').read_bytes())

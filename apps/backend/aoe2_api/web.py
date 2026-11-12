@@ -603,6 +603,21 @@ def api_advisor_evidence(identifier):
         return jsonify(error='Unknown matchup'), 404
 
 
+@app.get('/api/economy')
+def api_economy_metadata():
+    from .services.economy import economy_metadata
+    return app.response_class(economy_metadata(), mimetype='application/json')
+
+
+@app.get('/api/economy/<civilization>')
+def api_economy(civilization):
+    from .services.economy import economy_civilization
+    try:
+        return app.response_class(economy_civilization(civilization), mimetype='application/json')
+    except LookupError:
+        return jsonify(error='Unknown civilization'), 404
+
+
 @app.route("/api/civ-power-units/<civ_name>")
 def api_civ_power_units(civ_name):
     """Get pre-computed power units for a civilization."""

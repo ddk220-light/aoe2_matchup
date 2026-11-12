@@ -20,7 +20,16 @@ with module.app.test_client() as client:
         assert response.headers['X-AoE2-Release'] == release['release_id']
     rows = client.get('/api/ref/unit-line/militia').get_json()['imperial']
     assert any(row['civ_name'] == 'Varangians' for row in rows)
+    # Army economics: the packaged API returns the published static bytes.
+    economy = release['components']['economy']
+    for name, path in [('metadata', '/api/economy'), ('franks', '/api/economy/Franks'), ('wu', '/api/economy/Wu')]:
+        response = client.get(path)
+        assert response.status_code == 200 and response.is_json, path
+        assert response.headers['Cache-Control'] == 'no-store', path
+        static = root / 'apps/web/public' / economy['files'][name]['url'].removeprefix('/')
+        assert response.data == static.read_bytes(), path
+    assert client.get('/api/economy/franks').status_code == 404
     response = client.post('/api/v3/battle-config', json={}, headers={'X-AoE2-Engine-Version': 'obsolete'})
     assert response.status_code == 409
     assert response.headers['Cache-Control'] == 'no-store'
-print('Packaged API, finalized rankings, release identity and old-client boundary passed')
+print('Packaged API, finalized rankings, economy files, release identity and old-client boundary passed')

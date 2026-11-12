@@ -34,6 +34,12 @@ if (service === 'frontend' && hash(resolve(generated, 'about.json')) !== manifes
   throw new Error('Unsealed about page');
 }
 if (service === 'frontend') {
+  // Every published data file (advisor, economy, ...) is sealed with the hash release.json declares.
+  for (const [feature, component] of Object.entries(manifest.components)) {
+    for (const [name, file] of Object.entries(component.files || {})) {
+      if (manifest.frontend[file.url.slice(1)] !== file.sha256) throw new Error(`Unsealed ${feature} file: ${name}`);
+    }
+  }
   for (const [name,expected] of Object.entries(manifest.generated)) {
     if (hash(resolve(generated,name)) !== expected) throw new Error(`Unsealed generated data: ${name}`);
   }

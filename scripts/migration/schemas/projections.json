@@ -29,6 +29,30 @@
     "simulator": {
       "type": "object", "required": ["civ_name", "units_by_age", "total_units"],
       "properties": {"civ_name": {"type": "string"}, "units_by_age": {"type": "object"}, "total_units": {"type": "integer", "minimum": 1}}
-    }
+    },
+    "economy": {"oneOf": [
+      {"type":"object","required":["civilizations","metadata"],"additionalProperties":false,"properties":{
+        "civilizations":{"type":"array","minItems":56,"maxItems":56,"uniqueItems":true,"items":{"type":"string"}},
+        "metadata":{"type":"object","required":["schemaVersion","contextVersion","trainingWindowSeconds","resourceWeights",
+            "releaseReady","assumptions","civilizationCount","profileCount","sourceHashes"],"properties":{
+          "schemaVersion":{"const":4},"contextVersion":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+          "trainingWindowSeconds":{"const":60},"releaseReady":{"const":true},"civilizationCount":{"const":56},
+          "profileCount":{"type":"integer","minimum":1},"assumptions":{"type":"array","minItems":1,"items":{"type":"string"}},
+          "resourceWeights":{"type":"object","required":["food","wood","gold","stone"],"additionalProperties":false,
+            "properties":{"food":{"type":"number"},"wood":{"type":"number"},"gold":{"type":"number"},"stone":{"type":"number"}}}}}}},
+      {"type":"object","required":["civ","civilization","units","contextVersion","schemaVersion"],"additionalProperties":false,"properties":{
+        "civ":{"type":"string"},"contextVersion":{"type":"string","pattern":"^[a-f0-9]{64}$"},"schemaVersion":{"const":4},
+        "civilization":{"type":"object","required":["civ","activities","laborPrices","laborStatus","technologies","notes"],"properties":{
+          "civ":{"type":"string"},"activities":{"type":"array"},"technologies":{"type":"array"},
+          "laborPrices":{"type":["array","null"],"items":{"type":"array","minItems":4,"maxItems":4,"items":{"type":"number"}}}}},
+        "units":{"type":"array","minItems":1,"items":{"type":"object",
+          "required":["civ","unitId","mode","name","slug","pricing","productionRoutes","research","lookup"],"properties":{
+            "civ":{"type":"string"},"unitId":{"type":"integer"},"mode":{"type":"string"},"name":{"type":"string"},
+            "pricing":{"type":"object","required":["unitsPerPurchase"],"properties":{"unitsPerPurchase":{"type":"integer","minimum":1}}},
+            "productionRoutes":{"type":"array","items":{"type":"object","required":["id","secondsPerOrder","cost"]}},
+            "research":{"type":"object","required":["military","production","economicSetup"]},
+            "lookup":{"type":"array","minItems":28,"maxItems":28,"items":{"type":"object",
+              "required":["count","orders","producedUnits","surplusUnits","cost"]}}}}}}}
+    ]}
   }
 }

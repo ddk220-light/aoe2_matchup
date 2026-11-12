@@ -71,6 +71,11 @@ for name in ['aoe2x/__init__.py', 'aoe2x/paths.py', 'aoe2x/storage.py',
     if path.exists(): backend_sources.add(path)
 backend_sources.update(p for p in (ROOT/'data/golden').rglob('*') if p.is_file() and p.suffix in ['.db', '.json'])
 backend_sources.update((ROOT/'apps/backend/aoe2_api/data').glob('*.json'))
+# Army economics (/api/economy): the committed artefact and its stdlib-only reader.
+# Deliberately not a data/golden or aoe2x/js_simulation input, so no other
+# component version (simulator, engine, rankings) hashes it.
+backend_sources.update(ROOT/name for name in ['aoe2x/economy/__init__.py', 'aoe2x/economy/artefact.py',
+                                              'data/army_economics/army_context.jsonl.gz'])
 backend_sources.update((ROOT/'aoe2x/js_simulation').glob('*.py'))
 # The existing release API fingerprints these sources; retain the same identity.
 backend_sources.update((ROOT/'aoe2x/js_simulation/src').rglob('*.js'))

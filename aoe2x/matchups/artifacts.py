@@ -11,6 +11,7 @@ ADAPTIVE_ORIENTATION = BASELINE_2026 / "orientation-adaptive-inventory.json.gz"
 PUBLISHED_ORIENTATION = BASELINE_2026 / "orientation-published-results.json.gz"
 RESULT_INDEX_RECEIPT = BASELINE_2026 / "result-index.json"
 INVENTORY_RECEIPT = BASELINE_2026 / "adaptive-inventory-reproduction.json"
+RECORDS_ARCHIVE_RECEIPT = BASELINE_2026 / "records-archive.json"
 
 
 def rel(path) -> str:

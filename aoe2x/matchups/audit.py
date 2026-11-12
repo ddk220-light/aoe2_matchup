@@ -336,6 +336,13 @@ def summary_markdown(verification: dict | None, comparison: dict | None, api: di
                   + (" (unchanged)." if api["componentVersionOld"] == api["componentVersionNew"] else "."), ""]
             if api["different"]:
                 L += ["  Changed responses: " + ", ".join(f"`{n}`" for n in api["different"]), ""]
+            cp = api.get("civilizationPairs")
+            if cp:
+                sets = [set(p.split(":")) for p in cp["differentPairs"]]
+                common = sorted(set.intersection(*sets)) if sets else []
+                L += [f"- Per civilization pair (one civilization's rows against one opponent): "
+                      f"{cp['identical']:,} identical, {cp['different']:,} different"
+                      + (f"; every different pair involves {', '.join(common)}" if common else "") + ".", ""]
         L += ["## Cells", "", "| Status | Cells |", "|---|---:|"]
         L += [f"| {k} | {v:,} |" for k, v in c["cells"].items()]
         u = c["units"]

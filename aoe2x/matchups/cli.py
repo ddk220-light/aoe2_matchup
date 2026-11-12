@@ -394,12 +394,12 @@ def cmd_build_db(args) -> int:
     index_path, index_sha = default_index_ref(cfg)
     if args.index:
         index_path, index_sha = Path(args.index), args.index_sha256
-    if not index_path.exists():
+    if not args.no_index and not index_path.exists():
         print(f"build-db: result index {index_path} is missing (python -m aoe2x.matchups import-results)",
               file=sys.stderr)
         return 2
     try:
-        index, sha = S.load_index(index_path, index_sha)
+        index, sha = ([], None) if args.no_index else S.load_index(index_path, index_sha)
         snapshots = [S.load_snapshot(Path(d)) for d in args.snapshot]
         previous = S.read_db(Path(args.previous_db)) if args.previous_db else None
         record = S.build(bundle=inputs["bundle"], scenario_set=inputs["scenarioSet"], battle=cfg["battle"],
@@ -467,6 +467,10 @@ def cmd_archive(args) -> int:
         if args.with_index:
             index, _ = default_index_ref(None)
         side = AR.archive_rb(rb.ref, rb.commit(), Path(args.out), with_index=index)
+        if args.write_receipt:
+            receipt = {k: v for k, v in side.items() if k != "files"}
+            receipt["files"] = len(side["files"])
+            artifacts.RECORDS_ARCHIVE_RECEIPT.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
     else:
         if not args.records:
             print("archive: give a records directory or --rb-2026", file=sys.stderr)
@@ -488,7 +492,7 @@ def cmd_audit_db(args) -> int:
         index_path, index_sha = default_index_ref(cfg)
         if args.index:
             index_path, index_sha = Path(args.index), args.index_sha256
-        index, sha = S.load_index(index_path, index_sha)
+        index, sha = ([], None) if args.no_index else S.load_index(index_path, index_sha)
         snapshots = [S.load_snapshot(Path(d)) for d in args.snapshot]
         verification = AU.verify(Path(args.db), bundle=inputs["bundle"], scenario_set=inputs["scenarioSet"],
                                  battle=cfg["battle"], setup_hash=inputs["setupHash"],
@@ -625,6 +629,8 @@ def main(argv=None) -> int:
     p.add_argument("--index", help="result index (default: the config's baselineResults, else the 2026 index)")
     p.add_argument("--index-sha256", help="expected sha256 of --index")
     p.add_argument("--snapshot", action="append", default=[], help="an `export` snapshot dir (repeatable, in order)")
+    p.add_argument("--no-index", action="store_true",
+                   help="no baseline: every result comes from the snapshots (a full run under new conditions)")
     p.add_argument("--previous-db", help="the currently published DB: keeps unit/evidence ids stable and is "
                                          "the source of kept results for blocked/unsimulated cells")
     p.add_argument("--costs", choices=("reference-db", "bundle"), default="reference-db",
@@ -662,6 +668,8 @@ def main(argv=None) -> int:
     p.add_argument("--rb-2026", action="store_true", help="archive the essential 2026 records from RB  [needs RB]")
     p.add_argument("--with-index", action="store_true", help="with --rb-2026: include the 2026 result index")
     p.add_argument("--triage", action="store_true", help="print the RB records triage table (no archive)  [needs RB]")
+    p.add_argument("--write-receipt", action="store_true",
+                   help="with --rb-2026: write aoe2x/matchups/baselines/campaign-2026/records-archive.json")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_archive)
 
@@ -671,6 +679,7 @@ def main(argv=None) -> int:
     p.add_argument("--index", help="result index used by build-db (default as build-db)")
     p.add_argument("--index-sha256")
     p.add_argument("--snapshot", action="append", default=[], help="the snapshot dirs given to build-db, in order")
+    p.add_argument("--no-index", action="store_true", help="build-db was given --no-index")
     p.add_argument("--previous-db", help="the previous DB given to build-db; also the default --compare target")
     p.add_argument("--compare", help="compare with this DB (default --previous-db)")
     p.add_argument("--api", action="store_true", help="also compare the advisor API responses byte for byte "

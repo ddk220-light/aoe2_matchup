@@ -80,7 +80,19 @@ def compare(old: Path, new: Path, evidence_ids: tuple = (0,)) -> dict:
     fa, fb = a["files"], b["files"]
     names = sorted(set(fa) | set(fb))
     identical = [n for n in names if fa.get(n) == fb.get(n)]
+    # Finer grain: one civilization's rows against one opponent (a response holds all opponents).
+    pairs_same, pairs_diff = 0, []
+    for n in names:
+        if n == "catalog" or n not in fa or n not in fb:
+            continue
+        oa, ob = json.loads(fa[n])["opponents"], json.loads(fb[n])["opponents"]
+        for opp in sorted(set(oa) | set(ob)):
+            if _encode(oa.get(opp)) == _encode(ob.get(opp)):
+                pairs_same += 1
+            else:
+                pairs_diff.append(f"{n}:{opp.lower()}")
     return {"files": len(names), "identical": len(identical),
+            "civilizationPairs": {"identical": pairs_same, "different": len(pairs_diff), "differentPairs": pairs_diff},
             "different": [n for n in names if n in fa and n in fb and fa[n] != fb[n]],
             "onlyOld": sorted(set(fa) - set(fb)), "onlyNew": sorted(set(fb) - set(fa)),
             "bytesOld": sum(map(len, fa.values())), "bytesNew": sum(map(len, fb.values())),

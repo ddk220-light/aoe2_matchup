@@ -468,9 +468,7 @@ def build(*, bundle: dict, scenario_set: dict, battle: dict, setup_hash: str, en
                   "evidenceCounts": dict(sorted(ev_types.items())), "profilePairs": len(evidence),
                   "variants": len(roster), "civPairs": len(civs) * (len(civs) - 1) // 2}
     updated = dict(dataset)
-    for k, v in recomputed.items():
-        if k in updated or snapshots:
-            updated[k] = v
+    updated.update(recomputed)
     if snapshots:
         runs = list(updated.get("matchupRuns", []))
         known = {r["snapshotHash"] for r in runs}

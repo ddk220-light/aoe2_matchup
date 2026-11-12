@@ -355,10 +355,15 @@ class Compiler:
                 raise ValueError(f"Cannot restore {civ} {entry['unitId']} route; source data changed")
             settlement, tpl = existing[0], source[0]
             rate = tpl["final_building_work_rate"]
-            seconds = entry["baseTrainSeconds"] / rate
+            # The unit-level train-time multipliers (DAT effects 1405-1407: x2.15 x0.75 x0.6202 by Imperial)
+            # apply wherever the unit trains; keep them, as the Settlement route does.
+            if settlement["base_train_seconds"] != entry["baseTrainSeconds"]:
+                raise ValueError(f"{civ} {entry['unitId']}: unexpected base train time")
+            modified = settlement["modified_train_seconds"]
+            seconds = modified / rate
             restored = {**settlement, "building_id": tpl["building_id"], "building": tpl["building"],
                         "building_cost_unit_id": tpl["building_cost_unit_id"], "location_index": 0,
-                        "base_train_seconds": entry["baseTrainSeconds"], "modified_train_seconds": entry["baseTrainSeconds"],
+                        "base_train_seconds": entry["baseTrainSeconds"], "modified_train_seconds": modified,
                         "base_building_work_rate": 1.0, "final_building_work_rate": rate, "final_train_seconds": seconds,
                         "units_per_game_minute": 60 / seconds,
                         **{f"{p}building_{k}": tpl[f"{p}building_{k}"] for p in ("base_", "") for k in RESOURCES},

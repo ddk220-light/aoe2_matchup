@@ -361,7 +361,7 @@ def test_production_fixes(data):
     for uid, building in ((359, "Barracks"), (6, "Archery Range")):
         unit = data.unit("Mapuche", uid)
         assert unit["production"]["name"] == building
-        assert unit["production"]["secondsPerOrder"] == pytest.approx(16.541, abs=1e-3)
+        assert unit["production"]["secondsPerOrder"] == pytest.approx(16.5426, abs=1e-3)  # 22 x 1.00007 / 1.33
         assert "SETTL1" in {r["name"] for r in unit["productionRoutes"]}
     assert data.unit("Persians", 442)["production"]["secondsPerOrder"] == pytest.approx(22.5, abs=1e-4)
     for unit in units():

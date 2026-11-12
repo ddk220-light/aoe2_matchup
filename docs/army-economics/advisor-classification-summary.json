@@ -1,0 +1,398 @@
+{
+ "thresholds": {
+  "hpBelow": 0.5,
+  "ecoCheaperBy": 0.25,
+  "badgeRatio": 0.5
+ },
+ "bundle": {
+  "ref": "matchup-runs",
+  "path": "aoe2x/matchups/bundles/campaign-2026-185872-188329.json.gz",
+  "hash": "201cec0cdfac7ad218748051451350070e6a353f833d52d97094f74ddb23b813",
+  "fields": [
+   "mechanics.behavior_class",
+   "mechanics.speed_tiles_per_second",
+   "mechanics.attack_delay_seconds",
+   "mechanics.reload_seconds",
+   "mechanics.attack_range_tiles",
+   "group"
+  ]
+ },
+ "checks": {
+  "family agrees with bundle class": 130756,
+  "contexts with disableKiting": 58678,
+  "contexts": 58678
+ },
+ "coverage": {
+  "all": 151223,
+  "identity": 820,
+  "inferred_pending": 19647,
+  "observed": 130756,
+  "observed_close": 4786,
+  "decided": 125970,
+  "decided_no_seed_hp": 962,
+  "decided_eco_unavailable": 0
+ },
+ "sensitivity": {
+  "hp<0.33 eco>=0.25": {
+   "Plain win / Plain loss": 84072,
+   "Power win / Cheap loss": 27057,
+   "Complete dominance / Outclassed loss": 10569,
+   "Power win / Eco win": 3933,
+   "Clear win (kite) / Kited loss": 223,
+   "Power win / Cheap loss (HP unknown)": 116
+  },
+  "hp<0.33 eco>=0.33": {
+   "Plain win / Plain loss": 96900,
+   "Power win / Cheap loss": 18345,
+   "Complete dominance / Outclassed loss": 7498,
+   "Power win / Eco win": 2906,
+   "Clear win (kite) / Kited loss": 223,
+   "Power win / Cheap loss (HP unknown)": 98
+  },
+  "hp<0.40 eco>=0.25": {
+   "Plain win / Plain loss": 84072,
+   "Power win / Cheap loss": 25490,
+   "Complete dominance / Outclassed loss": 10569,
+   "Power win / Eco win": 5500,
+   "Clear win (kite) / Kited loss": 223,
+   "Power win / Cheap loss (HP unknown)": 116
+  },
+  "hp<0.40 eco>=0.33": {
+   "Plain win / Plain loss": 96900,
+   "Power win / Cheap loss": 17059,
+   "Complete dominance / Outclassed loss": 7498,
+   "Power win / Eco win": 4192,
+   "Clear win (kite) / Kited loss": 223,
+   "Power win / Cheap loss (HP unknown)": 98
+  },
+  "hp<0.50 eco>=0.25": {
+   "Plain win / Plain loss": 84072,
+   "Power win / Cheap loss": 22367,
+   "Power win / Eco win": 8623,
+   "Complete dominance / Outclassed loss": 10569,
+   "Clear win (kite) / Kited loss": 223,
+   "Power win / Cheap loss (HP unknown)": 116
+  },
+  "hp<0.50 eco>=0.33": {
+   "Plain win / Plain loss": 96900,
+   "Power win / Cheap loss": 14659,
+   "Power win / Eco win": 6592,
+   "Complete dominance / Outclassed loss": 7498,
+   "Clear win (kite) / Kited loss": 223,
+   "Power win / Cheap loss (HP unknown)": 98
+  }
+ },
+ "categories": [
+  {
+   "winner": "Plain win",
+   "loser": "Plain loss",
+   "cells": 84072,
+   "contexts": 35105,
+   "unitNamePairs": 2417
+  },
+  {
+   "winner": "Power win",
+   "loser": "Cheap loss",
+   "cells": 22367,
+   "contexts": 10926,
+   "unitNamePairs": 2006
+  },
+  {
+   "winner": "Complete dominance",
+   "loser": "Outclassed loss",
+   "cells": 10569,
+   "contexts": 6874,
+   "unitNamePairs": 1698
+  },
+  {
+   "winner": "Power win",
+   "loser": "Eco win",
+   "cells": 8623,
+   "contexts": 4888,
+   "unitNamePairs": 1342
+  },
+  {
+   "winner": "Clear win (kite)",
+   "loser": "Kited loss",
+   "cells": 223,
+   "contexts": 168,
+   "unitNamePairs": 70
+  },
+  {
+   "winner": "Power win",
+   "loser": "Cheap loss (HP unknown)",
+   "cells": 116,
+   "contexts": 22,
+   "unitNamePairs": 21
+  }
+ ],
+ "kite": {
+  "stats": {
+   "melee beats ranged": 39165,
+   "ranged beats melee": 23269,
+   "ranged beats melee, too slow to kite": 23046,
+   "melee beats ranged that could out-kite it (odd)": 392,
+   "  ... melee winner group Infantry": 345,
+   "kite rule applies": 223,
+   "without rule would be: Power win / Eco win": 97,
+   "category changed vs no-kite rule (not plain)": 219,
+   "eco-win label removed by kite rule": 97,
+   "without rule would be: Power win / Cheap loss": 120,
+   "  ... melee winner group Cavalry": 47,
+   "without rule would be: Plain win / Plain loss": 4,
+   "without rule would be: Complete dominance / Outclassed loss": 2,
+   "close cells where the ranged side could out-kite the melee side": 53
+  },
+  "meleeLoserGroup": {
+   "Infantry": 215,
+   "Cavalry": 8
+  },
+  "topPairs": [
+   [
+    "Elite Mameluke",
+    "Champion",
+    29
+   ],
+   [
+    "Elite Conquistador",
+    "Champion",
+    28
+   ],
+   [
+    "War Chariot",
+    "Champion",
+    24
+   ],
+   [
+    "War Chariot",
+    "Two-Handed Swordsman",
+    10
+   ],
+   [
+    "Elite Conquistador",
+    "Two-Handed Swordsman",
+    10
+   ],
+   [
+    "Elite Kipchak",
+    "Pikeman",
+    9
+   ],
+   [
+    "Elite Mameluke",
+    "Pikeman",
+    9
+   ],
+   [
+    "Elite Mameluke",
+    "Halberdier",
+    8
+   ],
+   [
+    "Elite Mameluke",
+    "Elite Battle Elephant",
+    5
+   ],
+   [
+    "Elite Mameluke",
+    "Elite Varangian Guard",
+    5
+   ],
+   [
+    "Elite Kipchak",
+    "Two-Handed Swordsman",
+    4
+   ],
+   [
+    "War Chariot",
+    "Halberdier",
+    4
+   ],
+   [
+    "Elite Arambai",
+    "Halberdier",
+    3
+   ],
+   [
+    "Elite Kipchak",
+    "Champion",
+    3
+   ],
+   [
+    "Elite Kipchak",
+    "Halberdier",
+    3
+   ]
+  ],
+  "ecoWinRemovedPairs": [
+   [
+    "Elite Conquistador",
+    "Champion",
+    25
+   ],
+   [
+    "Elite Kipchak",
+    "Pikeman",
+    8
+   ],
+   [
+    "Elite Mameluke",
+    "Halberdier",
+    8
+   ],
+   [
+    "War Chariot",
+    "Champion",
+    7
+   ],
+   [
+    "Elite Mameluke",
+    "Champion",
+    5
+   ],
+   [
+    "Elite Mameluke",
+    "Elite Battle Elephant",
+    4
+   ],
+   [
+    "Elite Mameluke",
+    "Elite Varangian Guard",
+    4
+   ],
+   [
+    "Elite Arambai",
+    "Halberdier",
+    3
+   ],
+   [
+    "Elite Kipchak",
+    "Champion",
+    3
+   ],
+   [
+    "Elite Kipchak",
+    "Halberdier",
+    3
+   ],
+   [
+    "Elite Conquistador",
+    "Two-Handed Swordsman",
+    3
+   ],
+   [
+    "War Chariot",
+    "Two-Handed Swordsman",
+    2
+   ],
+   [
+    "Elite Conquistador",
+    "Elite Varangian Guard",
+    2
+   ],
+   [
+    "Elite Mameluke",
+    "Warrior Priest",
+    1
+   ],
+   [
+    "War Chariot",
+    "Warrior Priest",
+    1
+   ]
+  ],
+  "oddRangedLosesButCanKite": [
+   [
+    "Elite Genitour",
+    "Halberdier",
+    43
+   ],
+   [
+    "Elite Conquistador",
+    "Halberdier",
+    42
+   ],
+   [
+    "Elite Kipchak",
+    "Champion",
+    34
+   ],
+   [
+    "Elite Kipchak",
+    "Halberdier",
+    33
+   ],
+   [
+    "Elite Genitour",
+    "Champion",
+    33
+   ],
+   [
+    "Elite Mameluke",
+    "Halberdier",
+    14
+   ],
+   [
+    "Elite Conquistador",
+    "Pikeman",
+    10
+   ],
+   [
+    "War Chariot",
+    "Champion",
+    9
+   ],
+   [
+    "Elite Genitour",
+    "Pikeman",
+    9
+   ],
+   [
+    "Elite Genitour",
+    "Elite Battle Elephant",
+    5
+   ],
+   [
+    "Elite Kipchak",
+    "Elite Battle Elephant",
+    5
+   ],
+   [
+    "War Chariot",
+    "Elite Battle Elephant",
+    5
+   ],
+   [
+    "Elite Conquistador",
+    "Elite Battle Elephant",
+    5
+   ],
+   [
+    "Elite Genitour",
+    "Elite Fire Lancer",
+    5
+   ],
+   [
+    "Elite Genitour",
+    "Two-Handed Swordsman",
+    5
+   ]
+  ],
+  "oddRangedLosesButCanKiteCells": 392
+ },
+ "badge": {
+  "unitsWithFullCost": 554,
+  "unitsWithout": [
+   "Burgundians|flemish_militia"
+  ],
+  "allNonIdentityCells": 150403,
+  "cellsWithBadgeEitherSide": 23399,
+  "decidedCells": 125970,
+  "decidedWithBadgeEitherSide": 19724,
+  "decidedBadgeOnWinner": 4513,
+  "decidedBadgeOnLoser": 15211,
+  "allCellsRatio<=0.4": 12236,
+  "allCellsRatio<=0.5": 23399,
+  "allCellsRatio<=0.67": 57574
+ }
+}

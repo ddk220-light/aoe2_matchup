@@ -1,5 +1,345 @@
 # Matchup Advisor × army economics: "narrow loss, cheaper to rebuild"
 
+## Revision 2 — owner decisions 2026-11-12
+
+**Status, 2026-11-12 (evening):** analysis only, as before. No site code, data
+or published output changed. This revision applies the owner's decisions on the
+first analysis (kept below, "Revision 1", for history). New scripts in
+`tools/economy/advisor_eco/`: `classify.py`, `examples_rev2.py`,
+`impact_rev2.py`, `model_rev2.mjs` (scratch copy of the advisor model) and
+`dump_js_plans_rev2.mjs`. Browsable export:
+`docs/army-economics/advisor-classification.csv.gz` (4.2 MB, one row per decided
+cell) and `advisor-classification-summary.json`.
+
+### Decisions applied
+
+1. **Cost basis unchanged:** the whole-army 60-second investment, production
+   buildings (Castles) included. Dravidians Elite Elephant Archer vs Italians
+   Genoese is treated as correct.
+2. **Wider thresholds:** the winner keeps **under 50%** of its starting HP (seed
+   mean; lost seeds count 0; one seed is enough) and the cheaper army costs **at
+   least 25% less** villager time (`cheaper ≤ 0.75 × dearer`).
+3. **Kite rule (new).** For a ranged unit beating a melee unit:
+   `effective kite speed = speed × (1 − attack delay / base reload)`
+   (`simulation_real.BattleUnit.effective_kite_speed`; base reload =
+   1/attack_speed = `reload_seconds`). If it is **greater** than the melee
+   unit's movement speed, the cell is a **Clear win (kite)**: no eco override and
+   no narrow label. Important context: every 2026 campaign context was simulated
+   with `disableKiting` (all 58,678 contexts), so the simulated battles are
+   stand-and-fight battles.
+   - **Data:** the frozen bundle the campaigns used, `git show
+     matchup-runs:aoe2x/matchups/bundles/campaign-2026-185872-188329.json.gz`
+     (`bundleHash 201cec0c…`, checked). All 555 advisor units match a variant
+     by `civilization|slug`, and their `profileHash` matches. Fields:
+     `mechanics.speed_tiles_per_second`, `attack_delay_seconds`,
+     `reload_seconds`, `behavior_class`, `attack_range_tiles`, plus `group`.
+   - **Ranged vs melee:** the campaigns' own rule (`isRangedClass`,
+     `aoe2x/matchups/battle.py`): `behavior_class` ∈ {`mobile_ranged`,
+     `siege_ranged`}. For all 555 variants this is the same as range > 1 tile,
+     and for all 130,756 simulated cells it reproduces the evidence `family`
+     (melee_vs_ranged etc.). Melee units split into Infantry (147 variants) and
+     Cavalry (134) by `group`.
+   - The live simulator DB gives other values for some of these fields (example:
+     Heavy Cavalry Archer attack delay 0.767 s live vs 0.897 s in the bundle;
+     Elite Conquistador 0.217 vs 0.404). The bundle values are used.
+4. **Categories** (below), from both sides of every cell.
+5. **Badge "cheaper to fully upgrade":** own full research package ≤ 50% of the
+   opponent's, no minimum gap.
+6. **Recommendations:** eco-win losses need no counter (caveat); a unit whose
+   only losses are eco wins is a strong contender and replaces the usual main
+   only when that main has a real loss; kite clear wins are full wins.
+
+### Category mapping (winner side ↔ loser side)
+
+Checked in this order for every decided cell:
+
+| # | Condition | Winner side | Loser side |
+|---|---|---|---|
+| 1 | ranged winner, melee loser, winner's kite speed > loser's speed | **Clear win (kite)** | **Kited loss** *(new name)* |
+| 2 | winner's army ≥ 25% cheaper | **Complete dominance** | **Outclassed loss** *(new name)* |
+| 3 | loser's army ≥ 25% cheaper, winner HP < 50% | **Power win** | **Eco win** |
+| 4 | loser's army ≥ 25% cheaper, winner HP ≥ 50% | **Power win** | **Cheap loss** *(added: not in the owner's list)* |
+| 5 | loser's army ≥ 25% cheaper, no seed HP record in git | **Power win** | **Cheap loss (HP unknown)** *(added)* |
+| 6 | costs within ±25% | **Plain win** | **Plain loss** |
+| — | `close_uncertain` / `equivalent`, identity (mirror profile) | Close | Close |
+| — | inferred (never simulated) | Pending re-simulation | Pending re-simulation |
+
+Additions to the taxonomy, and why:
+- **Cheap loss.** The owner's list defines "power win" for the winner whatever its
+  HP, but names the loser's side only when the winner keeps < 50% ("eco win").
+  When the winner keeps ≥ 50%, the cheaper army simply loses. That case is
+  "Cheap loss", the largest non-plain group.
+- **Cheap loss (HP unknown).** 962 decided cells have no seed HP record in git
+  (ranking-era seeds; the `matchup-runs` archive has them). Only 116 of them
+  need HP (case 5); the other 846 are classified without it.
+- **Loser-side names** "Kited loss" and "Outclassed loss" are mine; rename freely.
+
+### Category counts (HP < 50%, eco ≥ 25%)
+
+| Winner / loser | Cells | Share of decided | Simulated contexts | Unit-name pairings |
+|---|---:|---:|---:|---:|
+| Plain win / Plain loss | 84,072 | 66.7% | 35,105 | 2,417 |
+| Power win / Cheap loss | 22,367 | 17.8% | 10,926 | 2,006 |
+| Complete dominance / Outclassed loss | 10,569 | 8.4% | 6,874 | 1,698 |
+| **Power win / Eco win** | **8,623** | **6.8%** | **4,888** | **1,342** |
+| Clear win (kite) / Kited loss | 223 | 0.2% | 168 | 70 |
+| Power win / Cheap loss (HP unknown) | 116 | 0.1% | 22 | 21 |
+| **decided cells** | **125,970** | | | |
+| Close (close_uncertain 4,786 + identity 820) | 5,606 | | | |
+| Pending re-simulation (inferred) | 19,647 | | | |
+| **all advisor cells** | **151,223** | | | |
+
+"Simulated contexts" are distinct battles (one battle serves every civ pair whose
+units have identical mechanics); "unit-name pairings" ignore the civilization.
+The 8,623 eco wins are 3,927 with HP < 33% (the old rule's band), 1,567 at
+33–40% and 3,129 at 40–50%; 2,458 rest on a single seed, and 580 have at least
+one seed at ≥ 50% HP.
+
+### Sensitivity (cells)
+
+| Winner HP below / eco at least | Dominance / Outclassed | **Power / Eco win** | Power / Cheap loss | Power / Cheap (HP unknown) | Plain | Kite |
+|---|---:|---:|---:|---:|---:|---:|
+| 33% / 25% | 10,569 | 3,933 | 27,057 | 116 | 84,072 | 223 |
+| 33% / 33% | 7,498 | 2,906 | 18,345 | 98 | 96,900 | 223 |
+| 40% / 25% | 10,569 | 5,500 | 25,490 | 116 | 84,072 | 223 |
+| 40% / 33% | 7,498 | 4,192 | 17,059 | 98 | 96,900 | 223 |
+| **50% / 25% (current)** | **10,569** | **8,623** | **22,367** | **116** | **84,072** | **223** |
+| 50% / 33% | 7,498 | 6,592 | 14,659 | 98 | 96,900 | 223 |
+
+The HP threshold only moves cells between "Eco win" and "Cheap loss"; the eco
+threshold moves cells into or out of "Plain". At 33%/33% the count is 2,906
+eco wins: the Revision 1 figure (2,943) minus 37 cells that the kite rule now
+takes out.
+
+### Kite rule
+
+| | Cells |
+|---|---:|
+| ranged unit beats melee unit (simulated, decided) | 23,269 |
+| — of which the ranged unit can out-kite the melee unit → **Clear win (kite)** | **223** (1.0%) |
+| — too slow to kite (rule does not apply) | 23,046 |
+| kite cells that would otherwise be Power win / Eco win (eco label removed) | 97 |
+| … Power win / Cheap loss | 120 |
+| … Plain win / Plain loss | 4 |
+| … Complete dominance (ranged winner was also cheaper; now labelled kite) | 2 |
+| Kited losers: infantry / cavalry | 215 / 8 (6 Battle Elephants, 1 Paladin, 1 Cavalier) |
+| kite clear wins where the winner kept ≥ 50% HP anyway | 123 |
+
+- **Winners:** Elite Mameluke 82, Elite Conquistador 50, War Chariot 44, Elite
+  Kipchak 23, Elite Arambai 8, Elite Mangudai 7, Elite Camel Archer 4, Elite
+  Genitour 3, Hand Cannoneer 1, Heavy Scorpion 1.
+- **Top pairs:** Elite Mameluke > Champion 29, Elite Conquistador > Champion
+  28, War Chariot > Champion 24, War Chariot > Two-Handed Swordsman 10, Elite
+  Conquistador > Two-Handed Swordsman 10, Elite Kipchak > Pikeman 9, Elite
+  Mameluke > Pikeman 9, Elite Mameluke > Halberdier 8.
+- **Eco labels removed** most often: Elite Conquistador > Champion 25, Elite
+  Kipchak > Pikeman 8, Elite Mameluke > Halberdier 8, War Chariot > Champion 7.
+- **Kite speeds** (bundle): Elite Mameluke 1.386, Elite Genitour 1.238, Elite
+  Conquistador 1.231, Elite Kipchak 1.196, War Chariot 1.096, Elite Mangudai
+  1.003, Elite Arambai 1.001. Every other ranged unit is under 1.0: Heavy
+  Cavalry Archer 0.58–0.85, Arbalester ≤ 0.88, Hand Cannoneer ≤ 0.95. Melee
+  speeds start at 0.88 (Elite Teutonic Knight, Elite War Elephant), then
+  Champion 0.96–1.15, Halberdier 1.00–1.21.
+- **Champions vs Conquistadors (owner's example):** of 31 decided Champion ×
+  Elite Conquistador cells, **28 are Clear win (kite)** for the Conquistador
+  (kite 1.231 > Champion 1.056 or slower). The other 3 (Armenians, Dravidians
+  and Vikings Champions) were **won by the Champions** in the no-kite
+  simulation. The rule needs the ranged unit to win, so they stay Complete
+  dominance for the Champion. There are also 3 close cells and 4 pending cells.
+  See odd case 1.
+
+### Examples
+
+VM = weighted villager-minutes of the 60-second army investment (army purchase
+alone in brackets). HP is the winner's remaining HP, seed mean (range).
+
+1. **Kite: Aztecs Champion vs Spanish Elite Conquistador.** 19 Conquistadors beat
+   27 Champions keeping 12% (3 seeds, 5–21%). VM 673 vs 133 (140 vs 91).
+   Without the kite rule this was Power win / Eco win. Now **Clear win (kite) /
+   Kited loss**: kite speed 1.23 > 1.06. Conquistador also gets the badge
+   (upgrades 118 vs 249 VM).
+2. **Kite, odd: Saracens Elite Mameluke vs Aztecs Champion.** 19 Mamelukes beat 27
+   Champions keeping 51% (49–53%). VM 798 vs 182 (139 vs 91). Clear win (kite).
+   The Mameluke counts as ranged (range 3, `mobile_ranged`) and is the most
+   frequent kite winner (82 cells).
+3. **Kite, odd: Shu War Chariot vs Bengalis Champion.** 17 War Chariots beat 27
+   Champions keeping 90% (1 seed). VM 252 vs 151. Clear win (kite). The War
+   Chariot is a `siege_ranged` unit with a 6.5 s reload, so its windup tax is
+   small (kite 1.096).
+4. **Eco win: Burmese Champion vs Mapuche Heavy Scorpion.** 19 Heavy Scorpions beat
+   27 Champions keeping 33% (26–39%). VM 200 vs 144 (130 vs 92). The Champions
+   are cheaper on purchase price too. **Power win / Eco win.** In the advisor,
+   Champion becomes Burmese main vs Mapuche (it replaces Cavalier, which loses
+   to Halberdier).
+5. **Eco win, Castle-driven (accepted): Dravidians Elite Elephant Archer vs Italians
+   Elite Genoese Crossbowman.** 27 Genoese beat 20 Elephant Archers keeping 14%
+   (13–17%). VM 721 vs 396; purchase 108 vs **168**. Power win / Eco win, and
+   Elephant Archer becomes Dravidian main vs Italians.
+6. **Eco win in the new 40–50% band: Slavs Champion vs Lithuanians Elite Leitis.**
+   20 Leitis beat 27 Champions keeping 49% (1 seed). VM 533 vs 158 (128 vs 85).
+   Power win / Eco win.
+7. **Power win / Cheap loss: Bengalis Heavy Scorpion vs Armenians Halberdier.** 17
+   Heavy Scorpions beat 27 Halberdiers keeping 88% (87–89%). VM 172 vs 118
+   (113 vs 67). The cheaper Halberdiers are beaten soundly.
+8. **Power win, Castle-driven: Armenians Elite Composite Bowman vs Danes Knight.**
+   27 Composite Bowmen beat 20 Knights keeping 59% (56–61%). VM 421 vs 200,
+   but purchase 92 vs **138**. The winner's "power" label comes from its
+   Castles; on purchase price it is the cheaper army.
+9. **Dominance: Armenians Halberdier vs Georgians Cavalier.** 27 Halberdiers beat 17
+   Cavaliers keeping 46%. VM 166 vs 222 (67 vs 120). Complete dominance /
+   Outclassed loss. Halberdier > Cavalier is the most common dominance pair
+   (405 cells).
+10. **Dominance, odd: Armenians Champion vs Gurjaras Elite Chakram Thrower.** 27
+    Champions beat 25 Chakram Throwers keeping **2.5%** (1–4%). VM 213 vs 550
+    (92 vs 98). This is a near-draw, yet it is labelled "complete dominance"
+    because dominance has no HP condition.
+11. **Odd: Vikings Champion vs Spanish Elite Conquistador.** 27 Champions beat 19
+    Conquistadors keeping 24% (22–26%). VM 144 vs 673. Complete dominance for
+    the Champion, although the Conquistador out-kites it (1.231 > 1.056) and
+    in the game would not stand and fight.
+12. **Odd: Armenians Halberdier vs Berbers Elite Genitour.** 27 Halberdiers beat 24
+    Genitours keeping 53%. VM 118 vs 122. Plain win / Plain loss, although the
+    Genitour (kite 1.238) out-runs the Halberdier (1.10).
+
+### Odd cases for the owner to review
+
+1. **Kite-capable ranged units that lose the no-kite battle: 392 cells** (melee
+   winner infantry 345, cavalry 47), plus 53 close cells.
+   - Top pairs: Halberdier > Elite Genitour 43, Halberdier > Elite
+     Conquistador 42, Champion > Elite Kipchak 34, Halberdier > Elite Kipchak
+     33, Champion > Elite Genitour 33.
+   - The rule as decided needs the ranged unit to win. In the game these ranged
+     units would keep retreating too. Champions vs Conquistadors has 3 such
+     cells.
+   - *Option:* extend the rule to "ranged out-kites melee ⇒ clear win for the
+     ranged unit whoever won the simulation". That would also flip these 392
+     cells, but it would be a prediction, not a simulated result. A kiting
+     re-simulation would answer it properly.
+2. **Mameluke and War Chariot as kiters.** Together they are 126 of the 223 kite
+   cells.
+   - The Mameluke (range 3) is ranged by the campaigns' class rule, and its
+     0.2 s windup gives it the highest kite speed (1.386). Its 8 kited cavalry
+     cells include a Teutons Paladin and a Vikings Cavalier (speed 1.35, no
+     Husbandry).
+   - The War Chariot is a `siege_ranged` unit. With a 6.5 s reload its windup
+     tax is about 4%.
+   - Whether either really kites in play is a game-knowledge call.
+3. **Heavy Cavalry Archers never qualify** for the kite rule.
+   - Their bundle windup (0.897 s of a 1.8 s cycle) gives a kite speed of
+     0.58–0.85, below every Champion. Mongol HCA (faster reload, 1.44 s) gets
+     only 0.58, which only the slingers undercut: the formula penalises faster
+     firing.
+   - This is the formula as decided, but it runs against the usual game
+     intuition that cavalry archers kite infantry.
+4. **Dominance has no HP condition.** 6,926 of the 10,569 dominance cells have a
+   winner under 50% HP, 3,698 under 33% and 380 under 10% (example 10).
+   - The mirror rule to "eco win" would be a "narrow win, cheaper army" label.
+   - Proposal: keep "Complete dominance" only when the winner keeps ≥ 50%, and
+     call the rest "Eco-favoured win".
+5. **Castle-driven labels.** These are accepted under decision 1, and listed only
+   so the size is known.
+   - 2,569 of 8,623 eco wins (30%) have a loser whose army purchase alone is
+     *not* cheaper.
+   - 4,817 of 31,106 power wins have a winner whose purchase is cheaper than or
+     equal to the loser's (example 8).
+6. **Threshold edges.**
+   - 161 eco wins have a seed-mean HP in [49.5%, 50%). Example: 23 Berbers Hand
+     Cannoneers beat 27 Slavs Champions with exactly 50.0% (seeds 46–55%).
+   - 2,458 eco wins rest on one seed.
+7. **Contender mains can carry several caveats.** With the wider thresholds, 24
+   of the 61 swapped mains have 2–4 eco-win losses. Example: Goths vs Poles,
+   Champion replaces Cavalier with 4 caveats (Cavalier, Elite Obuch,
+   Arbalester, Winged Hussar).
+   - In 22 of the 61 swaps the old main's only real losses were to
+     Halberdier/Pikeman/Spearman.
+   - In 40 of the 61 the old plan needed no addition (the sidekick already
+     covered the loss).
+   - Paladin → Heavy Scorpion (7 plans, Celts/Teutons) makes a siege unit the
+     main.
+   - *Option:* require at most one or two eco-win caveats for a contender to
+     replace the main.
+
+### "Cheaper to fully upgrade" badge (≤ 50%, no floor)
+
+| Scope | Cells with the badge (either side) | Share |
+|---|---:|---:|
+| all non-identity cells (incl. close and pending) | 23,399 of 150,403 | 15.6% |
+| decided cells | 19,724 of 125,970 | 15.7% |
+| — badge on the battle winner / on the loser | 4,513 / 15,211 | |
+| sensitivity: ≤ 40% / ≤ 67% (all cells) | 12,236 / 57,574 | 8.1% / 38.3% |
+
+- **Units without a value:** 554 of 555 units have a full package. Flemish Militia
+  has none: its Flemish Revolution cost is variable.
+- **Effect of dropping the floor:** dropping the old 60-VM floor adds only 249
+  cells (23,150 → 23,399). As a badge it appears on about one in six cells,
+  mostly on gunpowder and siege units facing cavalry archers and elephants.
+
+### Recommendation impact (1,540 pairs, 3,080 plans)
+
+Rule: `model_rev2.mjs` (a scratch copy of `apps/web/src/features/advisor/model.mjs`;
+Python twin `advisor_model.py` variant `eco_lite_main`). **JS vs Python: 0
+differences on all 3,080 plans.**
+
+| Plans changed (headline 50% / 25%) | Caveat only ("lite") | **Lite + contender main (decided)** |
+|---|---:|---:|
+| main unit | 0 | **61** |
+| sidekick | 20 | **38** |
+| additions (all fewer) | 97 | **118** |
+| any of main / sidekick / additions | 100 | **160** (5.2%) |
+| additions in total | 968 → 871 | **968 → 850** |
+| unanswered threats in total | 944 → 788 | **944 → 783** |
+| main shows ≥ 1 eco-win caveat | | 402 |
+| plans with a strong contender | | 179 |
+| main is a strong contender | | 126 |
+| main has no real loss (before → after) | | 776 → 902 |
+
+| Thresholds (HP / eco) | Eco-win cells | Plans changed: lite | **Lite + contender main**: main | sidekick | fewer additions | any | Additions | Main caveat | Contender plans | Main is contender |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 33% / 25% | 3,933 | 55 | 31 | 15 | 64 | 85 | 968 → 904 | 210 | 97 | 72 |
+| 33% / 33% | 2,906 | 41 | 26 | 11 | 48 | 66 | 968 → 920 | 176 | 80 | 58 |
+| 40% / 25% | 5,500 | 81 | 41 | 23 | 93 | 121 | 968 → 875 | 289 | 126 | 92 |
+| 40% / 33% | 4,192 | 59 | 30 | 16 | 67 | 88 | 968 → 901 | 240 | 96 | 68 |
+| **50% / 25%** | **8,623** | **100** | **61** | **38** | **118** | **160** | **968 → 850** | **402** | **179** | **126** |
+| 50% / 33% | 6,592 | 77 | 35 | 24 | 88 | 111 | 968 → 880 | 326 | 121 | 85 |
+
+- **Main changes**, most frequent:
+  - Cavalier → Champion 8;
+  - Paladin → Heavy Scorpion 7;
+  - Elite Centurion → Legionary 4;
+  - Cavalier → Heavy Scorpion 4;
+  - Heavy Scorpion → Champion 3;
+  - Elite Boyar → Champion 3;
+  - then 1–2 each: Jaguar/Eagle Warrior → Champion, Elite Steppe Lancer →
+    Grenadier, Champion → Elite Elephant Archer (Dravidians vs Italians),
+    Elite Tiger Cavalry → Heavy Hei-Kuang Cavalry.
+- **Effect of the kite rule on plans:** without it the same thresholds give 8,720
+  eco-win cells and 167 changed plans (64 mains). The kite rule therefore keeps a
+  net 7 plans from changing: their counters against Conquistadors, Mamelukes and
+  War Chariots stay.
+
+### Reproduce (Revision 2)
+
+```sh
+export ADVISOR_ECO_OUT=/tmp/advisor-eco
+python tools/economy/advisor_eco/extract_cells.py --jobs 1   # ≈ 10 min single-process; output byte-identical to Revision 1
+python tools/economy/advisor_eco/classify.py                 # categories, sensitivity, kite, badge (≈ 15 s; reads the bundle from branch matchup-runs)
+python tools/economy/advisor_eco/examples_rev2.py            # per-category tops, odd-case counts, curated examples
+python tools/economy/advisor_eco/impact_rev2.py              # plan impact, threshold grid, JS parity of model_rev2.mjs (≈ 1 min)
+cp $ADVISOR_ECO_OUT/classification.csv.gz docs/army-economics/advisor-classification.csv.gz
+```
+
+CSV columns: `civ_a, unit_a, civ_b, unit_b, count_a, count_b, winner (a/b),
+winner_unit, family, hp_avg_pct, hp_min_pct, hp_max_pct, seeds, vm_a, vm_b`
+(60-s investment), `army_vm_a, army_vm_b` (purchase only),
+`loser_to_winner_vm_ratio, class_a, class_b` (ranged / melee-infantry /
+melee-cavalry), `speed_a, speed_b, kite_speed_a, kite_speed_b` (ranged only),
+`category_a, category_b, category_without_kite_rule_a/_b, full_upgrade_vm_a/_b,
+badge_cheaper_upgrade_a/_b, a_id, b_id, evidence_id`.
+
+---
+
+# Revision 1 (2026-11-12, kept for history)
+
 **Status, 2026-11-12:** analysis and design only. No site code, data or published
 output changed. Scripts: `tools/economy/advisor_eco/` (stdlib Python + the
 existing `aoe2x.economy`; one small Node harness to check the Python copy of the

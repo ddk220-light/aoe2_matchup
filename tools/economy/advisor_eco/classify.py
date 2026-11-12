@@ -195,6 +195,7 @@ def main():
             kite_stats["melee beats ranged"] += 1
             if ml["kite"] > mw["speed"]:
                 kite_stats["melee beats ranged that could out-kite it (odd)"] += 1
+                kite_stats[f"  ... melee winner group {units[c[w]]['group']}"] += 1
                 ranged_loses_but_can_kite[(units[c[l]]["name"], units[c[w]]["name"])] += 1
         if lk == "eco":
             eco_wins.append([c[l], c[w]])
@@ -225,6 +226,12 @@ def main():
         writer.writeheader()
         writer.writerows(rows_out)
 
+    for c in cells:  # close cells where a ranged side could out-kite the melee side
+        if c["outcome"] in ("a_win", "b_win"):
+            continue
+        for x, y in (("a", "b"), ("b", "a")):
+            if mo[c[x]]["ranged"] and not mo[c[y]]["ranged"] and mo[c[x]]["kite"] > mo[c[y]]["speed"]:
+                kite_stats["close cells where the ranged side could out-kite the melee side"] += 1
     summary["categories"] = [{"winner": WIN[wk], "loser": LOSS[lk], "cells": n, "contexts": len(ctx_sets[(wk, lk)]),
                               "unitNamePairs": len(name_sets[(wk, lk)])} for (wk, lk), n in combos.most_common()]
     summary["kite"] = {"stats": dict(kite_stats), "meleeLoserGroup": dict(kite_melee),

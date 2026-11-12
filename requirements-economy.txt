@@ -1,0 +1,4 @@
+# Offline army-economics pipeline only (python -m aoe2x.economy.compiler).
+# Not needed by the website, the API or CI; tests that need it skip without it.
+scipy>=1.10,<2
+numpy

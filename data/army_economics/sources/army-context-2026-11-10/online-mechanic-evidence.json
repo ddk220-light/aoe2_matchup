@@ -1,0 +1,55 @@
+{
+  "checkedAt": "2026-11-11",
+  "source": {
+    "url": "https://github.com/SiegeEngineers/aoe2techtree/blob/3bb43b1439eef88dfe7fe892d7f7dc41ac9dd76f/data/locales/en/strings.json",
+    "commit": "3bb43b1439eef88dfe7fe892d7f7dc41ac9dd76f",
+    "blob": "c3db0331c195b389615f3353c76561f57556ec02"
+  },
+  "strings": {
+    "26895": "Build <b>Pasture</b> (‹cost›)<br>\nKhitan unique renewable food source. Provides a limited amount of food before it must be rebuilt. Only two Villagers may work a Pasture at a time. Cannot be converted by enemy Monks.<br>\n<i>Upgrades: food (Mill).</i>‹DEFAULT›<br>\n‹hp› ‹attack› ‹armor› ‹piercearmor› ‹range›",
+    "28298": "Research <b>Paper Money</b> (‹cost›)<br>\nLumberjacks slowly generate gold in addition to wood.",
+    "28342": "Research <b>Burgundian Vineyards</b> (‹cost›)<br>\nFarmers slowly generate gold in addition to food.",
+    "28484": "Research <b>Domestication</b> (‹cost›)<br>\nNew Pastures provide +1 animal. Existing Pastures provide a smaller food amount.",
+    "28485": "Research <b>Pastoralism</b> (‹cost›)<br>\nNew Pastures provide +2 animals. Existing Pastures provide a smaller food amount.",
+    "28486": "Research <b>Transhumance</b> (‹cost›)<br>\nNew Pastures provide +3 animals. Existing Pastures provide a smaller food amount.",
+    "120175": "Infantry civilization<br>\n<br>\n• Buildings cost -15% wood<br>\n• Villagers drop off +10% more gold<br>\n• Barracks Units +1/+2/+3 pierce armor in Feudal/<br>\nCastle/Imperial Age<br>\n<br>\n<b>Unique Unit:</b> <br>\nGbeto (Infantry)<br>\n<br>\n<b>Unique Techs:</b> <br>\n• Tigui (Town Centers fire arrows without garrison)<br>\n• Farimba (Cavalry +5 attack)<br>\n<br>\n<b>Team Bonus:</b> <br>\nUniversities work +80% faster",
+    "120187": "Cavalry civilization<br>\n<br>\n• Folwark replaces Mill<br>\n•Villagers regenerate 10/15/20 HP in Feudal/Castle/Imperial Age<br>\n• Stone Miners generate gold in addition to stone<br>\n• Bloodlines and Scout Cavalry-line upgrades cost -50% food<br>\n<br>\n<b>Unique Units:</b><br>\nObuch (Infantry), Winged Hussar (Cavalry)<br>\n<br>\n<b>Unique Techs:</b><br>\n• Szlachta Privileges (Knight-line costs -60% gold)<br>\n• Lechitic Legacy (Scout Cavalry-line deals trample damage)<br>\n<br>\n<b>Team Bonus:</b><br>\nScout Cavalry-line +1 attack vs. Ranged Soldiers",
+    "120194": "Defensive and Cavalry civilization<br>\n<br>\n• Start with a Mule Cart<br>\n• Units and buildings receive -15% damage when located on higher elevation<br>\n• Mounted Units regenerate 2/8/14 HP per minute in Feudal/Castle/Imperial Age<br>\n• Fortified Churches provide Villagers in a 9 tiles radius with +10% work rate<br>\n<br>\n<b>Unique Unit:</b><br>\nMonaspa (Cavalry)<br>\n<br>\n<b>Unique Techs:</b><br>\n• Svan Towers (Fortifications +2 attack; Watch Tower-line deals pass through damage)<br>\n• Aznauri Cavalry (Mounted Units take -20% population space)<br>\n<br>\n<b>Team Bonus:</b><br>\nBuilding repairs cost -25%",
+    "120198": "Archer and Siege civilization<br>\n<br>\n• Lumberjacks generate food in addition to wood<br>\n• Archery Unit technologies at the Archery Range and Blacksmith cost -25%<br>\n• Siege Weapons and Siege Warships move +10/15% faster in Castle/Imperial Age<br>\n<br>\n<b>Unique Units:</b><br>\nWhite Feather Guard (Infantry), War Chariot (Siege Weapon), Liu Bei (Hero)<br>\n<br>\n<b>Unique Techs:</b><br>\n• Coiled Serpent Array (Spearman-line and White Feather Guards gain additional HP when near each other)<br>\n• Bolt Magazine (Archer-line, War Chariots and Lou Chuans fire additional projectiles)<br>\n<br>\n<b>Team Bonus:</b><br>\nFoot Archers +2 line of sight",
+    "120202": "Infantry and Cavalry civilization<br>\n<br>\n• Pastures replace Farms<br>\n• Melee attack upgrade effects are doubled<br>\n• Skirmishers, Spearman-, and Scout Cavalry-line train and upgrade +15% faster<br>\n• Heavy Cavalry Archer upgrade available in Castle Age and costs -50%<br>\n<br>\n<b>Unique Units:</b><br>\nLiao Dao (Infantry), Mounted Trebuchet (Siege Cavalry)<br>\n<br>\n<b>Unique Techs:</b><br>\n• Lamellar Armor (Infantry and Skirmishers reflect 25% melee damage back to the attacker)<br>\n• Ordo Cavalry (Cavalry regenerates HP in combat)<br>\n<br>\n<b>Team Bonus:</b><br>\nInfantry +2 attack vs. Ranged Soldiers"
+  },
+  "interpretation": {
+    "Georgians": {
+      "workRateMultiplier": 1.1,
+      "coverage": 1,
+      "coverageSource": "User instruction 2026-11-11",
+      "confidence": "online_game_text"
+    },
+    "Malians": {
+      "goldCreditMultiplier": 1.1,
+      "confidence": "online_game_text"
+    },
+    "timedGold": {
+      "activeGatheringOnly": true,
+      "source": "User confirmation 2026-11-11; online text says farmers/lumberjacks generate gold",
+      "excludedTime": [
+        "walking",
+        "drop-off",
+        "construction",
+        "idle",
+        "tree felling"
+      ],
+      "exactRatesSource": "Supplied DAT; numerical rates are not independently confirmed by the online descriptions"
+    },
+    "Khitans": {
+      "maxWorkers": 2,
+      "confidence": "online_game_text",
+      "unresolved": [
+        "shared food generation",
+        "movement and drop-off cycle",
+        "renewal behavior"
+      ]
+    }
+  },
+  "validation": "Source and mechanism evidence only; not a controlled gathering-rate observation."
+}

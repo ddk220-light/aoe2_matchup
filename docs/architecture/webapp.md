@@ -9,7 +9,7 @@ This document covers the public website: the Astro frontend in `apps/web`, the F
 | Piece | Path | Role |
 |---|---|---|
 | Frontend | `apps/web/` (Astro 7, Node 24) | Every visitor-facing page. Layout `src/layouts/BaseLayout.astro`, header/footer `src/components/site/`, shared styles `src/styles/`, page code `src/features/<page>/`, routes `src/pages/`. Live public files (favicon, OG image, `constants.js`, `api_client.js`, `v3_sim_worker.js`) are in `static/{img,js}/` and published under `/static/...`. |
-| API | `apps/backend/` (Flask 3, Python 3.13) | `app.py` is the Vercel entrypoint: it imports the sealed copy of `aoe2_api` from `runtime/`, adds `X-AoE2-*` release headers, rejects stale simulator versions with 409, serves `/_internal/release` and `/api/cached-advisor/<revision>/...`, and 404s every non-`/api/` path. The package `aoe2_api/` holds `web.py` (app + API routes), `routes/` (`battles.py`, `civilizations.py` blueprints), `services/` (battles, mechanics, rankings, civilizations, catalog, advisor, database, release, seo) and `data/` (civilization JSONs). |
+| API | `apps/backend/` (Flask 3, Python 3.13) | `app.py` is the Vercel entrypoint: it imports the sealed copy of `aoe2_api` from `runtime/`, adds `X-AoE2-*` release headers, rejects stale simulator versions with 409, serves `/_internal/release` and `/api/cached-advisor/<revision>/...`, and 404s every non-`/api/` path. The package `aoe2_api/` holds `web.py` (app + API routes), `routes/` (`battles.py`, `civilizations.py` blueprints), `services/` (battles, mechanics, rankings, civilizations, catalog, advisor, economy, database, release, seo) and `data/` (civilization JSONs). |
 | Build | `scripts/migration/` | `build_service.sh` → `prepare_release.py`, which runs `export_data.py`, `export_civilization_pages.py`, `export_ranking_pages.py`, `export_simulator_page.py`, `export_remaining_pages.py` and the page/metadata/sitemap builders in `site/` (verbatim Jinja snippets in `site/templates/`), then seals `apps/web/src/generated/*.json`, `apps/web/public/` and `apps/backend/runtime/` and rewrites `vercel.json`. |
 
 Page titles, meta, canonical links, JSON-LD, the about/ranking/simulator HTML fragments and the sitemap are computed at build time, not per request. There is no login, no session and no write path.
@@ -50,6 +50,7 @@ Page titles, meta, canonical links, JSON-LD, the about/ranking/simulator HTML fr
 | `/api/release` | GET | release identity | simulator (`src/features/simulator/api.mjs`) |
 | `/api/assets/catalog` | GET | frozen public catalog | `apps/web/static/js/api_client.js` |
 | `/api/advisor-catalog`, `/api/advisor-matchups/<civ>`, `/api/advisor-evidence/<id>` | GET | `civ_matchups_first_pass.db` | advisor (`src/features/advisor/view.js`; catalog/matchups also snapshotted by `export_data.py`) |
+| `/api/economy`, `/api/economy/<civ>` | GET | `data/army_economics/army_context.jsonl.gz` via `services/economy.py` (canonical bytes; unknown civ → 404 `{"error":"Unknown civilization"}`) | not read by any page yet; snapshotted by `export_data.py` (economy component) for `src/features/economy/loader.mjs` |
 | `/api/civilizations/<civ>` | GET | civilization analysis service | snapshotted per civ by `export_data.py` (`aoe2_api/routes/civilizations.py`) |
 | `/api/v3/arena-preview`, `/api/v3/battle-config` | GET / POST | `aoe2_reference_simulation.db` via `services/battles.py` + `services/mechanics.py` | simulator (`src/features/simulator/enhance.js`) → `v3_sim_worker.js` |
 
@@ -81,6 +82,47 @@ The replay blueprint (`aoe2x/replay/blueprint.py`) is not mounted; see [replay.m
 
 `prepare_release.py` imports `aoe2_api.web` and the builders in `scripts/migration/site/` (`config.py` env policy, `metadata.py` head/JSON-LD, `pages.py` page bodies, `patches.py` patch pages and the Battle Sim deep link, `sitemap.py`, `sources.py`, `content.py`, `templating.py`) and writes `apps/web/src/generated/` (`about.json`, `civilization-pages.json`, `ranking-pages.json`, `simulator-page.json`, `remaining-pages.json`, `release.json`, `public-catalog.json`, `data-manifest.json`, `media-manifest.json`, `gallery.json`). Astro pages read only these JSON files; changing a page title or JSON-LD means editing the builder (or its verbatim snippet in `scripts/migration/site/templates/`), not an Astro page.
 
+## How site data is published (standard for new data components)
+
+Data that pages load at run time is published twice from the same bytes, and a
+new data component should follow this pattern (the Matchup Advisor and army
+economics are the examples):
+
+1. **API route** in `aoe2_api/web.py` backed by a service in
+   `aoe2_api/services/` that reads a committed artefact from the packaged
+   runtime (`data/golden/civ_matchups_first_pass.db` for the advisor,
+   `data/army_economics/army_context.jsonl.gz` for economy; a file outside
+   `data/golden` must be added to `backend_sources` in `prepare_release.py`).
+   One document per civilization (`/api/advisor-matchups/<Civ>`,
+   `/api/economy/<Civ>`) plus a shared one (`/api/advisor-catalog`,
+   `/api/economy`). Civ names are case-sensitive; unknown → 404
+   `{"error": "Unknown civilization"}`. API responses are `Cache-Control: no-store`
+   (set by `apps/backend/app.py`).
+2. **Static files**: `scripts/migration/export_data.py` calls those routes with
+   the test client and writes canonical JSON (sorted keys, compact, UTF-8) to
+   `/data/<version>/<name>.json`, where `<name>` is the lower-case civ name or the
+   shared file's name and `<version>` is the SHA-256 of the component's file
+   hashes. Economy responses are already canonical, so the static file and the API
+   body are byte-identical (asserted by the export and `verify_build.py`).
+3. **Release registration**: the component (files with url/sha256/bytes/gzip_bytes,
+   roster, version) lands in `apps/web/src/generated/data-manifest.json`,
+   `release.json` and `/data/release.json`; `validate_exports.mjs` checks every
+   file against `$defs/<component>` in `scripts/migration/schemas/projections.json`;
+   `check_release.mjs` checks the seal (including every component file's hash);
+   `prepare_release.py` gives every `/data/<version>/` path a one-year immutable
+   `Cache-Control` in the generated `vercel.json` headers.
+4. **Browser loader**: the page passes `data.components.<component>.files` into
+   its config and fetches `files[civ.toLowerCase()].url`, falling back to the API
+   URL; one cached promise per document, dropped on failure so it can be retried
+   (`src/features/advisor/view.js`, `src/features/economy/loader.mjs`).
+
+Keep each component's inputs separate: a component's version hashes only its own
+files, so adding or changing one never moves another's `/data/<version>/` URLs
+(economics deliberately lives outside `data/golden/` and `aoe2x/js_simulation/`,
+which the simulator and engine versions hash). Where the browser computes from
+the data (economy), the Python code stays the reference and a committed fixture
+pins the JS port to it (`tests/economy/matchup-parity.test.mjs`).
+
 ## Static and media assets
 
 | Path | Role |
@@ -105,6 +147,7 @@ All connections are short-lived read-only SQLite connections (`connect_readonly(
 | `get_rankings_derived_db()` (`aoe2_api/web.py`) | `data/golden/derived_data_v3.db` | published ranking scores (see [derived-data.md](derived-data.md)) |
 | `patches_db.get_current_build()` | `data/golden/patches.db` | `patches` etc. `get_current_build()` is the single build resolver every score lookup goes through; patch pages are built at build time by `scripts/migration/site/patches.py` |
 | advisor service (`aoe2_api/services/advisor.py`) | `data/golden/civ_matchups_first_pass.db` | `/api/advisor-*` |
+| economy service (`aoe2_api/services/economy.py`) | `data/army_economics/army_context.jsonl.gz` (gzip JSON Lines, not SQLite; `aoe2x/economy/artefact.py`) | `/api/economy*` |
 | `best_units.py` module paths | `aoe2_reference.db`, `derived_data.db`, `pool_scores.db` | advisor recommendations and percentiles |
 
 JSON artifacts read at runtime: `civ_power_units/<build>.json` (per-build only — the legacy flat `civ_power_units.json` fallback was removed) and `civ_top_units.json`. (`battle_scores.json` and its old Flask loader were deleted — role scores come from `derived_data.db`.) Matchup DBs live outside the repo at `D:/AI/` (the committed 3.9 MB stub was removed 2026-06-11); they and `battle_cache.json` are **not** read by any route — they feed the offline derive jobs only.

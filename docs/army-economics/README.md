@@ -1,9 +1,10 @@
 # Army economics (backend data)
 
-**Status, 2026-11-12:** offline data pipeline only. Nothing here is served by the
-API or shown on the site; storage and UI integration are the next, owner-led
-steps. All gathering rates are estimates (`status: estimate`); no in-game
-measurement has been made.
+**Status, 2026-11-12:** compiled offline; published as a release data component
+(static `/data/<version>/` files + `/api/economy`) with a browser pair calculation
+(`apps/web/src/features/economy/`). **No page reads it yet**: the UI integration
+is the next, owner-led step. All gathering rates are estimates
+(`status: estimate`); no in-game measurement has been made.
 
 ## What the data is
 
@@ -27,19 +28,76 @@ weighted villager-minutes and research time.
 |---|---|---:|
 | `aoe2x/economy/` | importable code: `accounting` (bills, 60-s production, labor LP and its compiled dual), `compiler`, `curated` (owner decisions + cited corrections), `matchup` (evaluate a pair), `special_economy`, `policy`, `observations`, `restore`, `paths` | — |
 | `tools/economy/` | offline scripts: DAT extraction (`build_{production,upgrade,economy,labor_inputs}_review.py`), gathering simulations (`farm-/wood-gathering-sim.mjs`, `gold-mining-sim.mjs`), `run_special_economy.mjs`, `impact_report.py`, `summarize_runtime.py` | — |
-| `data/army_economics/army_context.db` | compiled runtime database (56 civilizations, 1,029 unit profiles) | 32 MiB |
+| `data/army_economics/army_context.jsonl.gz` | **committed** compiled runtime (56 civilizations, 1,029 unit profiles); format below | 3.3 MiB (31 MiB raw) |
+| `data/army_economics/army_context.db` | the same runtime as SQLite: local compiler output, git-ignored (the file in commits before 2026-11-12 is history only) | 32 MiB |
 | `data/army_economics/army_context.validation.json` | its metadata: assumptions, every curated correction, dropped rows, price corrections, scope exceptions | 0.1 MiB |
+| `apps/backend/aoe2_api/services/economy.py` | `/api/economy` (metadata) and `/api/economy/<Civ>` | — |
+| `apps/web/src/features/economy/` | browser pair calculation: `accounting.mjs`, `matchup.mjs` (`evaluateMatchup`), `loader.mjs` | — |
+| `tests/economy/fixtures/matchup-parity.json` | Python-reference expectations for 2,874 pairs (`tools/economy/build_matchup_parity_fixture.py`) | 0.8 MiB |
 | `data/army_economics/civilization-rates.csv` | generated rate table (below) | 4 KiB |
 | `data/army_economics/sources/army-context-2026-11-10/` | reviewed source snapshot `army-context.sqlite.gz` (restores to 146 MiB) + `eco-inputs.json`, `special-gather-rates.json`, `online-mechanic-evidence.json`, `pasture-online-reference.json` | 9.9 MiB + 1.5 MiB |
 | `data/army_economics/sources/handoff-data-2026-11-12/` | upstream extraction inputs (`production/research/economy-review.tar.gz`) + checksum manifest | 6.4 + 11 + 13 MiB |
-| `tests/test_army_economics_*.py`, `tests/economy/` | Python and JS tests (+ small gathering fixtures) | — |
+| `tests/test_army_economics_*.py`, `tests/test_economy_api.py`, `tests/economy/` | Python and JS tests (+ small gathering fixtures, parity fixture) | — |
 | `docs/army-economics/impact-2026-11-12.csv`, `reverification/` | before/after impact of the 2026-11-12 changes; re-run of the independent review | — |
 
-The runtime database is deliberately **not** in `data/golden/`:
-`scripts/migration/prepare_release.py` ships every `data/golden/*.db` with the
-backend. `aoe2x/economy/` is likewise outside the packaged `aoe2x` subpackages,
-so this branch does not change the release (`apps/web/src/generated/release.json`
-is identical before and after).
+The runtime is deliberately **not** in `data/golden/`: `prepare_release.py`
+ships every `data/golden/*` file with the backend and the simulator/engine
+versions hash `data/golden` and `aoe2x/js_simulation` inputs. The release step
+adds only `data/army_economics/army_context.jsonl.gz`, `aoe2x/economy/__init__.py`
+and the stdlib-only `aoe2x/economy/artefact.py` to the backend (+3.4 MB); the
+rest of `aoe2x/economy/` (compiler, SciPy) is never packaged. Adding the
+`economy` component left every other component in `release.json` (advisor,
+rankings, civilizations, simulator, engine, media) byte-identical.
+
+## Storage, publication, API and browser calculation
+
+**Committed artefact** (`aoe2x/economy/artefact.py`): gzip (level 9, `mtime` 0,
+no file name) of UTF-8 JSON Lines. Line 1 is
+`{"format":"aoe2matchup.army-context","formatVersion":1,"metadata":{...}}`; then
+one line per civilization, sorted by name,
+`{"civ":"Armenians","civilization":{...},"units":[...]}` with units sorted by
+`(unitId, mode)`. Every line is canonical JSON (sorted keys, no whitespace, no
+NaN), the same encoding as the SQLite payload columns, so the payloads are
+byte-identical in both forms. Rebuilding gives the same bytes (checked by
+`tests/test_army_economics_compiler.py` with the same zlib build).
+`RuntimeData()` reads the artefact by default; `RuntimeData("…/army_context.db")`
+reads a locally compiled SQLite runtime.
+
+**Published documents** (release component `economy`, `schema_version` 1, in
+`release.json`/`data-manifest.json` with `context_version` and
+`context_schema_version`):
+
+| File | API | Content |
+|---|---|---|
+| `/data/<version>/metadata.json` | `GET /api/economy` | `{"civilizations": [56 names], "metadata": {...}}` — assumptions, weights, exclusions, curated corrections, source hashes (provenance), `contextVersion`, `schemaVersion` |
+| `/data/<version>/<civ>.json` (lower-case name) | `GET /api/economy/<Civ>` (case-sensitive; unknown → 404 `{"error":"Unknown civilization"}`) | `{"civ", "civilization", "units", "contextVersion", "schemaVersion"}` — every unit payload of that civilization and its economy payload, unchanged |
+
+The API returns the canonical bytes, so the static file and the API body are
+byte-identical (asserted by `export_data.py`, `verify_build.py` and
+`tests/test_economy_api.py`). No field is dropped: `evaluate_matchup` returns
+whole unit and economy payloads, so a smaller file would change its result; the
+only provenance-only fields (`sourceMechanicsHash`, a few bytes per unit) are not
+worth a second format. Sizes: civilization files 467–794 KB raw (Tupi–Chinese,
+median 575 KB), 48–84 KB gzipped (median 62 KB); metadata 65 KB / 16 KB; all 57
+files 32.6 MB / 3.5 MB. `<version>` is the SHA-256 of the files' hashes;
+`/data/<version>/` paths are cached for a year as immutable.
+
+**Browser calculation** (`apps/web/src/features/economy/`): `matchup.mjs`
+`evaluateMatchup(data, [civ, unitId, mode, count], [...], populations)` returns
+exactly what `aoe2x.economy.matchup.evaluate_matchup` returns (headline
+investment and comparison, purchase bill, production route and alternatives,
+common/exclusive/full research, replacement lookup, research infrastructure).
+`createRuntimeData(metadataDocument, civilizationDocuments)` refuses documents of
+another `contextVersion`. `loader.mjs` `createEconomyLoader({files})` fetches
+`files[civ.toLowerCase()].url` (from `data.components.economy.files`) and falls
+back to `/api/economy/<Civ>`, like the advisor. Python stays the reference:
+`tests/economy/matchup-parity.test.mjs` compares the SHA-256 of the complete JS
+result with the Python result for 2,874 pairs (every civilization, unit and mode;
+777 mirrors; army sizes 0–27; Wu, Winged Hussar, Mapuche routes, Kona, Blackwood
+Archer batches, Konnik, Flemish Revolution populations, error cases): **exact**.
+Exactness needs CPython ≥ 3.12, whose float `sum()` is compensated (Neumaier);
+`accounting.mjs` `pySum` mirrors it. On Python 3.11 the reference itself differs
+in the last bits (the CI test job compares headlines to 1e-12 there).
 
 The compressed archives are byte-identical to the blobs on branch
 `matchup-timings` (829c65bec), so they add no new objects to the repository.
@@ -238,8 +296,19 @@ pip install -r requirements-economy.txt            # SciPy (offline only)
 python -m aoe2x.economy.restore                    # verify + restore army-context.sqlite (146 MiB)
 python -m aoe2x.economy.compiler --require-release-ready
 python tools/economy/summarize_runtime.py           # regenerate the rate table
-pytest -q tests/test_army_economics_*.py && node --test tests/economy/*.test.mjs
+python tools/economy/build_matchup_parity_fixture.py   # regenerate the browser parity fixture (Python >= 3.12)
+pytest -q tests/test_army_economics_*.py tests/test_economy_api.py && node --test tests/economy/*.test.mjs
 ```
+
+The compiler writes `army_context.jsonl.gz` (commit it), the local
+`army_context.db` and `army_context.validation.json` (commit it). Any compiler or
+accounting change changes `contextVersion`, so regenerate the parity fixture in
+the same commit. To republish: commit on `staging`, then the usual release flow
+(`python scripts/migration/prepare_release.py`, `node scripts/migration/check_release.mjs frontend|backend`,
+`python scripts/migration/verify_build.py`, `npm run build --prefix apps/web`,
+`git checkout vercel.json`); only the `economy` component version changes.
+To write the artefact from an existing local database:
+`python -m aoe2x.economy.artefact --from-db data/army_economics/army_context.db`.
 
 After changing gathering inputs or simulations: `node tools/economy/run_special_economy.mjs`
 (stale scenario hashes make the compiler fail). To re-run the DAT extraction:
@@ -269,4 +338,4 @@ branch's reference DB the economics are identical; only 136 mechanics hashes and
 - **Ordo Cavalry scope:** economics uses non-projectile cavalry (Hussar, Elite Steppe Lancer, Heavy Camel Rider). `data/golden/aoe2_reference_simulation.db` currently gives combat regeneration to the Khitan Heavy Cavalry Archer and Mounted Trebuchet too (matchup-timings had set those to 0) — worth reconciling in the combat data.
 - Rounding of exact halves and the Saxon "foot soldier" scope (foot archers?) are not verified in game.
 - Not modeled by decision: Cuman Mercenaries, First Crusade, Tupi refund; units over 60 s have no headline (a "one building per unit" fallback is an option).
-- **Next owner-led steps:** decide storage for the runtime database (32 MiB, outside `data/golden/`) and integrate it into the API/UI (the deleted `matchup-timings` page is the reference design).
+- **Next owner-led step:** show it on a page (the deleted `matchup-timings` page is the reference design): pass `data.components.economy.files` into the page config and call `createEconomyLoader({files}).evaluate(left, right)`.

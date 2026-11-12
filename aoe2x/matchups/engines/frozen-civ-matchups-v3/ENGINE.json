@@ -26,7 +26,64 @@
   "simulationEnvironment": {},
   "node": {
     "pinned": "v24.19.0",
-    "verified": []
+    "verified": [
+      {
+        "version": "v22.23.4",
+        "checkedAt": "2026-11-12T02:10:15+00:00",
+        "seeds": 60,
+        "identical": 60,
+        "sampler": "replay-check-strata-v1",
+        "sampleDigest": "7958fd22af86e9add3cade0881312ff09468e2a227ba4e2371c42892ffc85b8d",
+        "comparedFields": [
+          "outcome",
+          "winnerOwner",
+          "ticks",
+          "unitStartingHp",
+          "opponentStartingHp",
+          "unitRemainingHp",
+          "opponentRemainingHp",
+          "unitSurvivors",
+          "opponentSurvivors",
+          "finalStateHash",
+          "eventLogHash"
+        ],
+        "platform": {
+          "system": "Linux",
+          "machine": "x86_64",
+          "python": "3.13.18"
+        },
+        "longestArchivedTicks": 11880,
+        "evidence": "aoe2x matchups replay-check (archived mismatch + forecast seeds)"
+      },
+      {
+        "version": "v24.22.1",
+        "checkedAt": "2026-11-12T02:13:32+00:00",
+        "seeds": 60,
+        "identical": 60,
+        "sampler": "replay-check-strata-v1",
+        "sampleDigest": "7958fd22af86e9add3cade0881312ff09468e2a227ba4e2371c42892ffc85b8d",
+        "comparedFields": [
+          "outcome",
+          "winnerOwner",
+          "ticks",
+          "unitStartingHp",
+          "opponentStartingHp",
+          "unitRemainingHp",
+          "opponentRemainingHp",
+          "unitSurvivors",
+          "opponentSurvivors",
+          "finalStateHash",
+          "eventLogHash"
+        ],
+        "platform": {
+          "system": "Linux",
+          "machine": "x86_64",
+          "python": "3.13.18"
+        },
+        "longestArchivedTicks": 11880,
+        "evidence": "aoe2x matchups replay-check (archived mismatch + forecast seeds)"
+      }
+    ]
   },
   "entry": "aoe2x/js_simulation/node/run-job.mjs",
   "hooks": {

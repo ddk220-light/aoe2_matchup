@@ -39,8 +39,8 @@ def engine_dir(engine_id: str = DEFAULT_ENGINE) -> Path:
     return ENGINES_DIR / engine_id
 
 
-def load_engine_manifest(engine_id: str = DEFAULT_ENGINE) -> dict:
-    path = engine_dir(engine_id) / "ENGINE.json"
+def load_engine_manifest(engine_id: str = DEFAULT_ENGINE, root: Path | None = None) -> dict:
+    path = (root or engine_dir(engine_id)) / "ENGINE.json"
     manifest = json.loads(path.read_text())
     if manifest.get("schema") != ENGINE_SCHEMA:
         raise ValueError(f"{path}: unknown schema {manifest.get('schema')!r}")
@@ -51,13 +51,14 @@ def files_digest(files: list[dict]) -> str:
     return digest([{"path": f["path"], "sha256": f["sha256"]} for f in files])
 
 
-def verify_engine(engine_id: str = DEFAULT_ENGINE, campaign_runtime_files: list[dict] | None = None) -> dict:
+def verify_engine(engine_id: str = DEFAULT_ENGINE, campaign_runtime_files: list[dict] | None = None,
+                  root: Path | None = None) -> dict:
     """Check every pinned file against ENGINE.json (and optionally a campaign manifest).
 
     Returns a report; ``report["ok"]`` is False on any difference.
     """
-    root = engine_dir(engine_id)
-    manifest = load_engine_manifest(engine_id)
+    root = root or engine_dir(engine_id)
+    manifest = load_engine_manifest(engine_id, root)
     problems = []
     listed = {f["path"] for f in manifest["files"]}
     for f in manifest["files"]:

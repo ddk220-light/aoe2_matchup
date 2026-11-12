@@ -1,0 +1,81 @@
+{
+  "description": "Two archived 2026 seeds (fast fights) replayed by tests/js/matchups/engine.test.mjs without RB; full replay-check: python -m aoe2x.matchups replay-check.",
+  "seeds": [
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "job": {
+        "id": "fv_90da111ba0fb6c665d8cbc60",
+        "pairKey": "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1|0d6e8a0ae4e70329840bc6f3158819eeeb3918a7208ec3ff83e847c395a0ca21",
+        "teamKeys": [
+          "Portuguese|elite_organ_gun_portuguese",
+          "Hindustanis|halberdier"
+        ],
+        "profileHashes": [
+          "05bae9f75e40e6756c20af6899b727badd469a9766104cb205ba92754b88a2d1",
+          "0d6e8a0ae4e70329840bc6f3158819eeeb3918a7208ec3ff83e847c395a0ca21"
+        ],
+        "counts": [
+          18,
+          27
+        ],
+        "scenarioHash": "a200814a9afc51a4006d0f95fb205ae75c57d0013c0b679094d0b3f66af5576d",
+        "family": "ranged_vs_melee",
+        "engineFamily": "siege"
+      },
+      "seed": 0,
+      "expected": {
+        "outcome": "win",
+        "winnerOwner": 2,
+        "ticks": 627,
+        "unitStartingHp": 1260,
+        "opponentStartingHp": 1485,
+        "unitRemainingHp": 1260,
+        "opponentRemainingHp": 0,
+        "unitSurvivors": 18,
+        "opponentSurvivors": 0,
+        "finalStateHash": "4c35aca64c585dcdfbcce13b78642bbd1fddfd9b8ddfbbfe59b8a7e38a90fd1f",
+        "eventLogHash": "8b2816c7e1a8280731bfdd89e156c0fae9d3b8bbcce29ce92af006afc58f7576"
+      },
+      "source": "RB forecast-validation-2026-11-07/runs.jsonl matchupId fv_90da111ba0fb6c665d8cbc60 seed 0",
+      "archivedWallSeconds": 1.3728980639874935
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "job": {
+        "id": "mv_195613ded46e9172f6439e30",
+        "pairKey": "80f921d97ed5e700a148d6b67a1d56be7745743133695a8b696506228932a48f|96b52a2ec845eb2d38e1e42e1545400ed99f1ad5b7c0218fc3619799315c3d33",
+        "teamKeys": [
+          "Japanese|halberdier",
+          "Byzantines|elite_cataphract_byzantines"
+        ],
+        "profileHashes": [
+          "80f921d97ed5e700a148d6b67a1d56be7745743133695a8b696506228932a48f",
+          "96b52a2ec845eb2d38e1e42e1545400ed99f1ad5b7c0218fc3619799315c3d33"
+        ],
+        "counts": [
+          27,
+          17
+        ],
+        "scenarioHash": "0642f2928ee8ce4aa2729b2f3d23eecc477c2ccd56d3af0f42763fd20bb4d1ef",
+        "family": "melee_vs_melee",
+        "engineFamily": "waves"
+      },
+      "seed": 2,
+      "expected": {
+        "outcome": "loss",
+        "winnerOwner": 3,
+        "ticks": 980,
+        "unitStartingHp": 1620,
+        "opponentStartingHp": 2550,
+        "unitRemainingHp": 0,
+        "opponentRemainingHp": 1641,
+        "unitSurvivors": 0,
+        "opponentSurvivors": 15,
+        "finalStateHash": "b1cb13602b88483fb79cae191a20a73200abe341fe7164ea414700e6d8f7da78",
+        "eventLogHash": "332db96a0bac35c02be3743da58448721b6af089fa191141c7f7c0d6fdd53651"
+      },
+      "source": "RB mismatch-validation-2026-11-05/runs.jsonl matchupId mv_195613ded46e9172f6439e30 seed 2",
+      "archivedWallSeconds": 7.473284440000017
+    }
+  ]
+}

@@ -6,15 +6,15 @@ import {fileURLToPath} from 'node:url';
 import {simulateFarms} from './farm-gathering-sim.mjs';
 import {simulateWood,woodWindow} from './wood-gathering-sim.mjs';
 import {simulate,windowSummary} from './gold-mining-sim.mjs';
-const root=path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const out=process.env.ARMY_CONTEXT_OUT??path.join(root,'aoe2x/js_simulation/calibration/economy/army-context-2026-11-10');
+const here=path.dirname(fileURLToPath(import.meta.url));
+const out=process.env.ARMY_CONTEXT_OUT??path.join(here,'../../data/army_economics/sources/army-context-2026-11-10');
 const hash=value=>crypto.createHash('sha256').update(value).digest('hex');
 const fileHash=name=>hash(fs.readFileSync(name));
 const inputs=path.join(out,'eco-inputs.json'), evidencePath=path.join(out,'online-mechanic-evidence.json');
 const evidence=JSON.parse(fs.readFileSync(evidencePath));
 const specs=JSON.parse(fs.readFileSync(inputs));
 const result={sourceHashes:{inputs:fileHash(inputs),evidence:fileHash(evidencePath),runner:fileHash(fileURLToPath(import.meta.url)),
-  ...Object.fromEntries(['farm-gathering-sim.mjs','wood-gathering-sim.mjs','gold-mining-sim.mjs'].map(n=>[n,fileHash(path.join(root,'tools',n))]))},rows:[]};
+  ...Object.fromEntries(['farm-gathering-sim.mjs','wood-gathering-sim.mjs','gold-mining-sim.mjs'].map(n=>[n,fileHash(path.join(here,n))]))},rows:[]};
 const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
 for(const civ of ['Burgundians','Vietnamese','Georgians']){
  const spec=specs.find(s=>s.civ_name===civ);

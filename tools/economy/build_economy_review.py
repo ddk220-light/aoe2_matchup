@@ -13,7 +13,7 @@ from pathlib import Path as _Path
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
 from aoe2x.economy.paths import scratch_path, dat_path  # noqa: E402
 
-from build_production_review import AGES, OPS, RESOURCES, apply, match, costs, sql_table, attach_game_trees
+from build_production_review import AGES, OPS, RESOURCES, apply, match, costs, sql_table, attach_game_trees, prerequisites_met
 from build_upgrade_review import command_source
 
 DEFAULT = scratch_path('economy-review')
@@ -75,8 +75,8 @@ def corrected_commands(raw, base, evaluation, research_rows):
             if any(v>1e-6 for v in price.values()) or any(v>1e-6 for v in times):
                 remove[tid]='hidden_technology_not_free_and_instant'
                 continue
-            req=[r for r in t['required_techs'] if r>=0];required=t['required_tech_count']
-            if sum(r in active for r in req)<(required if required>0 else len(req)):
+            # Same rule as the production review: count 0 means no prerequisite.
+            if not prerequisites_met(t,active):
                 remove[tid]='prerequisite_not_active_after_hidden_gate_filter'
         if not remove:break
         active-=remove.keys();removed.update(remove)

@@ -101,6 +101,21 @@ def attach_game_trees(data, directory):
     data["source"]["game_tree_count"] = sum("game_tree" in c for c in data["civs"].values())
 
 
+
+def prerequisites_met(tech, active):
+    """Genie prerequisite rule: ``required_tech_count`` of the listed techs must be active.
+
+    A count of 0 means "no prerequisite", whatever the slots contain (the only
+    non-empty such slot in this DAT is tech 0, the dummy "New Research"); -1 is
+    empty. No tech with a positive count lists slot 0, so that rule is unchanged.
+    (Fixed 2026-11-12: the earlier rule read count 0 as "all listed slots", so a
+    slot holding 0 blocked e.g. the Danes +5% food drop-off bonus, tech 1494.)
+    """
+    count = tech["required_tech_count"]
+    if count <= 0:
+        return True
+    return sum(r in active for r in tech["required_techs"] if r >= 0) >= count
+
 class CivState:
     def __init__(self, data, civ):
         self.data, self.civ = data, civ
@@ -142,10 +157,7 @@ class CivState:
                         continue
                     if not any(loc["location_id"] >= 0 for loc in t["research_locations"]) and not self.hidden_tech_is_automatic(tid):
                         continue
-                    req = [r for r in t["required_techs"] if r >= 0]
-                    count = t["required_tech_count"]
-                    if (sum(r in self.active for r in req) >= count if count > 0
-                            else all(r in self.active for r in req)):
+                    if prerequisites_met(t, self.active):
                         self.fire(tid, "technology")
                 # The game ships regional grants and available upgrades outside
                 # the DAT. In this fully researched scenario, stage those grants

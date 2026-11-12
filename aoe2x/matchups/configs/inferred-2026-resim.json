@@ -1,0 +1,53 @@
+{
+  "schema": "aoe2-matchup-run/v1",
+  "runId": "inferred-2026-resim",
+  "description": "Owner request 2026-11-12: simulate the 10,193 profile pairs (19,647 displayed cells) whose published 2026 outcome was rule-inferred (result index evidenceType 'inferred', source first-pass-inference), so every cell gets real outcomes and remaining-HP/survivor data. Same pinned 2026 inputs: frozen 2026 mechanics bundle, the five frozen arena scenarios, 27-unit geometric-cost battle rules, frozen-civ-matchups-v3 engine. Orientation = the published 2026 results table, so each context is the exact stored context of its serving-DB evidence row (verified by `python -m aoe2x.matchups.inferred_2026 verify inferred-2026-resim`). Sampling = the 2026 forecast campaign's one-three-ten: seed 0 alone is accepted only when it agrees with the prior (the rule-inferred outcome), the loser is wiped out and the winner keeps >= 25% HP; otherwise seeds 0-2, then 3-9 on mixed winners. Selection and priors files are generated outside git by `python -m aoe2x.matchups.inferred_2026 build` from the 2026 result index (sha256 d672f226...). Results are for owner review only; nothing feeds the website DB. Operator note: aoe2x/matchups/RUN_INFERRED_2026.md.",
+  "game": {
+    "bundle": "aoe2x/matchups/bundles/campaign-2026-185872-188329.json.gz",
+    "bundleHash": "201cec0cdfac7ad218748051451350070e6a353f833d52d97094f74ddb23b813"
+  },
+  "selection": {
+    "mode": "full", "civilizations": null, "units": null, "against": "*",
+    "contexts": {
+      "file": "/home/user/matchup-runs-records/inputs/inferred-2026-resim/contexts.jsonl.gz",
+      "sha256": "a45dfebaebb4ecdf920f103655900f6222c96e6c06f514094d2870a5894846d0"
+    }
+  },
+  "battle": {
+    "scenarioSet": "aoe2x/matchups/scenarios/frozen-ranking-scenarios-v1.json.gz",
+    "scenarioSetHash": "f8b09a201ba63cc3227628ddd10699bc9821da26c0dbcb87dcd4b4daf37137ab",
+    "armyCap": 27,
+    "resourceWeights": {"food": 1, "wood": 0.9, "gold": 1.1},
+    "costBasis": "mechanics.cost",
+    "bufferUnits": 0,
+    "disableKiting": true,
+    "disableAiOrders": true,
+    "preserveOwnerOrientation": true,
+    "orientation": {
+      "rule": "table",
+      "table": "aoe2x/matchups/baselines/campaign-2026/orientation-published-results.json.gz",
+      "tableHash": "8ff7a54e234a4113f7486f9a42d4c21d2d7f5abcd8c42823305ea6225aeb33f3"
+    }
+  },
+  "engine": {
+    "id": "frozen-civ-matchups-v3",
+    "nodeVersionPolicy": "verified",
+    "maxSimulationTicks": "unbounded",
+    "wallTimeoutSteps": [180, 600, 1800, 3600],
+    "environment": {}
+  },
+  "sampling": {
+    "policy": "one-three-ten",
+    "forecastSource": "priors-file",
+    "priors": {
+      "file": "/home/user/matchup-runs-records/inputs/inferred-2026-resim/priors.jsonl.gz",
+      "sha256": "b2c933454fb3853ea55cf58042bd202be82d2bad946622754523ea04d3ed612c"
+    },
+    "singleSeedMinimumWinnerHpFraction": 0.25,
+    "initialSeeds": [0, 1, 2],
+    "extraSeedsOnMixedWinners": [3, 4, 5, 6, 7, 8, 9],
+    "sameSeedReplay": "none"
+  },
+  "execution": {"workers": 3, "phaseContexts": 128, "maxOldSpaceMb": 3072},
+  "output": {"records": "/home/user/matchup-runs-records/inferred-2026-resim"}
+}

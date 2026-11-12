@@ -1,4 +1,4 @@
-# aoe2x/matchups — repeatable matchup reruns (build steps 1–5)
+# aoe2x/matchups — repeatable matchup reruns
 
 Tooling to re-run the unit-vs-unit civilization matchups behind the Matchup
 Advisor when a game patch, DLC, new civilization or balance change arrives, or
@@ -10,9 +10,12 @@ Owner defaults applied: the campaign's engine and unit data are pinned, so the
 2026 results stay reusable; frozen V3 engine; no ML forecasts (simulate); bulky
 run records stay out of the repo.
 
-**Built:** proposal §12 steps 1 (pinned engine), 2 (inputs and inventory),
-3 (runner, supervisor, status, export), 4 (serving-DB build and audit) and 5
-(bundle diff, incremental plan, release path). Step-by-step operations:
+**Status (parked 2026-11-12):** steps 1 (pinned engine), 2 (inputs and
+inventory) and 3 (runner, supervisor, status, export) are built and verified —
+see their acceptance sections below. Steps 4 (`build-db`, `audit-db`) and 5
+(`diff-bundles`, incremental plan) plus `archive` were written but the work was
+paused before their acceptance checks ran: **treat them as unverified drafts**
+and verify them before relying on them for a website update. Step-by-step operations:
 [`docs/matchups/RUNBOOK.md`](../../docs/matchups/RUNBOOK.md). Which run records to keep:
 [`docs/matchups/RECORDS_TRIAGE.md`](../../docs/matchups/RECORDS_TRIAGE.md).
 
@@ -291,6 +294,10 @@ estimate and a one-line `summary`.
 
 **`archive`**: [`docs/matchups/RECORDS_TRIAGE.md`](../../docs/matchups/RECORDS_TRIAGE.md).
 
-### Step 4–5 acceptance (this machine)
+### Step 4–5 acceptance
 
-E2E_PLACEHOLDER
+Not yet run. Planned checks: a DB built from the 2026 result index alone has the
+same 151,223 cells as `data/golden/civ_matchups_first_pass.db` and byte-identical
+advisor API output; a synthetic one-unit patch schedules only that profile's
+partner contexts; an end-to-end slice (run → export → build-db → audit-db) reports
+exactly the re-simulated contexts.

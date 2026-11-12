@@ -90,7 +90,16 @@ def main():
                 s["targets that are losses"] += sum(1 for t in p["targets"] if t[1] == "loss")
                 s["targets that are struggles"] += sum(1 for t in p["targets"] if t[1] == "struggle")
                 s["plans with no targets"] += not p["targets"]
+                s["struggle targets that are power wins with main HP >= 75%"] += sum(
+                    1 for t, k in p["targets"] if k == "struggle" and p["main"]["vs"][t]["cat"] == "power_win"
+                    and (p["main"]["vs"][t]["hp_own"] or 0) >= 0.75)
+                s["struggle targets that are power wins"] += sum(
+                    1 for t, k in p["targets"] if k == "struggle" and p["main"]["vs"][t]["cat"] == "power_win")
+                s["struggle targets that are close"] += sum(1 for t, k in p["targets"] if p["main"]["vs"][t]["cat"] == "close")
                 if p["support"]:
+                    s["support helps resting on a pending (inferred) cell"] += sum(
+                        1 for h in p["support"]["helps"] if p["support"]["entry"]["vs"][h["opp"]].get("pending")
+                        or p["main"]["vs"][h["opp"]].get("pending"))
                     s["support helps total"] += len(p["support"]["helps"])
                     for h in p["support"]["helps"]:
                         s[f"help reason {h['why']}"] += 1
@@ -256,7 +265,18 @@ def main():
     changed.sort(key=lambda t: (-t[0], t[1]["civ"], t[1]["enemy"]))
     out["mainChangePairs"] = collections.Counter(
         f"{r['live']['main']} -> {r['rev4']['main']['unit']}" for _, r in changed).most_common(30)
-    picks = [r for _, r in changed[:23]]
+    picks, seen_pairs = [], set()
+    for _, r in changed:  # biggest advantage gain, at most one plan per (old main -> new main) pair
+        key = (r["live"]["main"], r["rev4"]["main"]["unit"])
+        if key in seen_pairs or (r["civ"], r["enemy"]) in FOCUS or r["live"]["main"] in SCORPIONS:
+            continue
+        seen_pairs.add(key)
+        picks.append(r)
+        if len(picks) == 21:
+            break
+    scorp = sorted((r for _, r in changed if r["live"]["main"] in SCORPIONS),
+                   key=lambda r: (-r["live"]["mainScoresRev4"]["advantage"], r["civ"], r["enemy"]))
+    picks += scorp[:2]
     for civ, enemy in FOCUS:
         r = next(x for x in records if x["civ"] == civ and x["enemy"] == enemy)
         if r not in picks:
@@ -278,6 +298,18 @@ def main():
         lines.append(f"- Additions: {[a[0] for a in lv['additions']]} → {[a[0] for a in n4['additions']]}; "
                      f"unanswered {n4['unanswered']}\n")
     (OUT / "changes_rev4.md").write_text("\n".join(lines))
+    table = ["| Civ vs enemy | Main live → Rev 4 (adv) | Rev 3 | eco / combat set | Support live → Rev 4 | Support helps against |",
+             "|---|---|---|---|---|---|"]
+    for r in picks:
+        lv, n4 = r["live"], r["rev4"]
+        sup = n4["support"]
+        helped = "; ".join(h.split(" (strength")[0] + " (" + h.split("main ")[1].split(")")[0] + ")" for h in (sup["helps"] if sup else []))
+        table.append(f"| {r['civ']} vs {r['enemy']} | {lv['main']} ({lv['mainScoresRev4']['advantage']:.1f}) → **{n4['main']['unit']}** "
+                     f"({n4['main']['advantage']:.1f}) | {r['rev3']['main']} | {r['eco']['main']} / {r['combat']['main']} | "
+                     f"{lv['sidekick']} → {sup['unit'] if sup else '—'} | {helped or '—'} |")
+    (OUT / "changes_rev4_table.md").write_text("\n".join(table) + "\n")
+    out["noSupportPlans"] = [[r["civ"], r["enemy"], r["rev4"]["main"]["unit"], r["rev4"]["targets"]]
+                             for r in records if r["rev4"]["support"] is None]
     out["changeListPlans"] = [[r["civ"], r["enemy"]] for r in picks]
     (OUT / "impact_rev4.json").write_text(json.dumps(out, indent=1, ensure_ascii=False) + "\n")
     print(json.dumps({k: out[k] for k in ("scorpionMains", "slowSiegeMains", "sidekickScorpionLive", "noSidekickLive")}, indent=1))

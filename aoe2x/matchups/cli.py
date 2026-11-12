@@ -448,6 +448,34 @@ def cmd_diff_bundles(args) -> int:
     return 0
 
 
+def cmd_archive(args) -> int:
+    from aoe2x.matchups import archive as AR
+    if args.rb_2026 or args.triage:
+        rb = _rb(args)
+        if args.triage:
+            t = AR.triage_rb(rb.ref)
+            if args.json:
+                _print(t)
+            else:
+                print("| Campaign | Kind | Class | Archived | Files | MB |\n|---|---|---|---|---:|---:|")
+                for r in t["rows"]:
+                    print(f"| {r['campaign']} | {r['kind']} | {r['class']} | {'yes' if r['archived'] else 'no'} | "
+                          f"{r['files']:,} | {r['bytes'] / 1e6:,.2f} |")
+                print({k: round(v / 1e6, 1) for k, v in t["totals"].items()})
+            return 0
+        index = None
+        if args.with_index:
+            index, _ = default_index_ref(None)
+        side = AR.archive_rb(rb.ref, rb.commit(), Path(args.out), with_index=index)
+    else:
+        if not args.records:
+            print("archive: give a records directory or --rb-2026", file=sys.stderr)
+            return 2
+        side = AR.archive_run(Path(args.records), Path(args.out), Path(args.config) if args.config else None)
+    _print({"archive": side["archive"], "totals": side["totals"], "skippedBytes": side.get("skippedBytes")})
+    return 0
+
+
 def cmd_audit_db(args) -> int:
     from aoe2x.matchups import audit as AU
     from aoe2x.matchups import config as C
@@ -627,7 +655,17 @@ def main(argv=None) -> int:
     p.add_argument("--json", action="store_true", help="print JSON instead of the readable plan")
     p.set_defaults(func=cmd_diff_bundles)
 
-    p = sub.add_parser("audit-db",help="verify a built serving DB against its inputs; compare with the published DB")
+    p = sub.add_parser("archive", help="essential run records (or the 2026 campaigns) as one deterministic tarball")
+    p.add_argument("records", nargs="?", help="a run's records directory")
+    p.add_argument("--out", help="archive path (.tar.gz); a <out>.manifest.json sidecar is written next to it")
+    p.add_argument("--config", help="also store this run config in the archive")
+    p.add_argument("--rb-2026", action="store_true", help="archive the essential 2026 records from RB  [needs RB]")
+    p.add_argument("--with-index", action="store_true", help="with --rb-2026: include the 2026 result index")
+    p.add_argument("--triage", action="store_true", help="print the RB records triage table (no archive)  [needs RB]")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_archive)
+
+    p = sub.add_parser("audit-db", help="verify a built serving DB against its inputs; compare with the published DB")
     p.add_argument("db", help="the built serving DB")
     p.add_argument("--config", help="run config the DB was built for (enables verification against inputs)")
     p.add_argument("--index", help="result index used by build-db (default as build-db)")

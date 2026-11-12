@@ -1,5 +1,29 @@
 # Matchup Advisor × army economics: "narrow loss, cheaper to rebuild"
 
+## Revision 3 — owner decisions 2026-11-12 (later the same day)
+
+- **Kite rule:** only real ranged skirmishers qualify. Siege-class ranged units (War Chariot,
+  Scorpions) and short-range units (Elite Mameluke, range 3) never get the clear-win credit
+  (`classify.kite_eligible`: not `siege_ranged` and range > 3 tiles). Clear kite wins: 223 → 97 cells.
+- **Ranged units that could kite but lost the simulated battle keep the loss** (confirmed).
+- **Complete dominance needs a comfortable win:** the winner keeps at least 50% HP. A cheaper winner
+  that finishes below 50% (or has no HP record) is a plain win. Dominance: 10,569 → 3,580 cells.
+- Thresholds unchanged: winner < 50% HP, cheaper army ≥ 25% cheaper; upgrade badge at ≤ 50%.
+
+| Winner / loser | Cells | Distinct battles |
+|---|---:|---:|
+| Plain win / Plain loss | 91,062 | 39,185 |
+| Power win / Cheap loss | 22,452 | 10,985 |
+| Power win / Eco win | 8,663 | 4,920 |
+| Complete dominance / Outclassed loss | 3,580 | 2,507 |
+| Power win / Cheap loss (HP unknown) | 116 | 22 |
+| Clear win (kite) / Kited loss | 97 | 76 |
+
+Recommendation impact (all 1,540 civ pairs, 3,080 plans): 86 plans change their main unit or
+sidekick; 64 main units change. Full list: `advisor-plan-changes-rev3.json`
+(script `tools/economy/advisor_eco/list_changes_rev3.py`). Per-cell table regenerated in
+`advisor-classification.csv.gz`.
+
 ## Revision 2 — owner decisions 2026-11-12
 
 **Status, 2026-11-12 (evening):** analysis only, as before. No site code, data

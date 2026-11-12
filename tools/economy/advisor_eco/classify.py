@@ -7,7 +7,7 @@ and the frozen 2026 mechanics bundle (``matchup-runs`` branch) for the kite rule
 Categories (winner side <-> loser side), checked in this order:
   kite        Clear win (kite)       <-> Kited loss          ranged winner, melee loser, ranged
                                                              effective kite speed > melee movement speed
-  dominance   Complete dominance     <-> Outclassed loss     winner's army >= ECO cheaper
+  dominance   Complete dominance     <-> Outclassed loss     winner's army >= ECO cheaper AND winner keeps >= HP
   power/eco   Power win              <-> Eco win             loser's army >= ECO cheaper, winner HP < HP_LIMIT
   power/cheap Power win              <-> Cheap loss          loser's army >= ECO cheaper, winner HP >= HP_LIMIT
   power/nohp  Power win              <-> Cheap loss (HP unknown)  no seed HP record in git
@@ -71,16 +71,30 @@ def motion(variant):
             "behavior": m["behavior_class"]}
 
 
+KITE_MIN_RANGE = 3.0  # tiles; owner 2026-11-12: Mameluke (range 3) does not kite
+
+
+def kite_eligible(m):
+    """Owner 2026-11-12: only real ranged skirmishers kite. Siege-class ranged units
+    (War Chariot, Scorpions) and very short-range units (Elite Mameluke, range 3)
+    never get the clear-win kite credit."""
+    return m["ranged"] and m["behavior"] != "siege_ranged" and float(m["range"] or 0) > KITE_MIN_RANGE
+
+
 def classify(c, mo, hp_limit=HP_LIMIT, eco=ECO):
     """Return (winner_key, loser_key, winner_side 'a'/'b') for a decided cell."""
     w = "a" if c["outcome"] == "a_win" else "b"
     l = "b" if w == "a" else "a"
     mw, ml = mo[c[w]], mo[c[l]]
-    if mw["ranged"] and not ml["ranged"] and mw["kite"] > ml["speed"]:
+    if kite_eligible(mw) and not ml["ranged"] and mw["kite"] > ml["speed"]:
         return "kite", "kite", w
     vw, vl = c["vm_" + w], c["vm_" + l]
     if vw <= (1 - eco) * vl:
-        return "dominance", "dominance", w
+        # Owner 2026-11-12: dominance also needs a comfortable win (winner keeps >= hp_limit).
+        # A cheaper winner that finishes below it (or with no HP record) is a plain win.
+        if c["hp_avg"] is not None and c["hp_avg"] >= hp_limit:
+            return "dominance", "dominance", w
+        return "plain", "plain", w
     if vl <= (1 - eco) * vw:
         if c["hp_avg"] is None:
             return "power", "nohp", w
@@ -230,7 +244,7 @@ def main():
         if c["outcome"] in ("a_win", "b_win"):
             continue
         for x, y in (("a", "b"), ("b", "a")):
-            if mo[c[x]]["ranged"] and not mo[c[y]]["ranged"] and mo[c[x]]["kite"] > mo[c[y]]["speed"]:
+            if kite_eligible(mo[c[x]]) and not mo[c[y]]["ranged"] and mo[c[x]]["kite"] > mo[c[y]]["speed"]:
                 kite_stats["close cells where the ranged side could out-kite the melee side"] += 1
     summary["categories"] = [{"winner": WIN[wk], "loser": LOSS[lk], "cells": n, "contexts": len(ctx_sets[(wk, lk)]),
                               "unitNamePairs": len(name_sets[(wk, lk)])} for (wk, lk), n in combos.most_common()]

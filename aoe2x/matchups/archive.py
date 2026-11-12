@@ -84,7 +84,9 @@ RB_RULES = [
     (r"^monitor-reports/", "monitor reports", DISPOSABLE, False),
     (r"(^|/)(runs\.jsonl(\.gz)?|runs/[^/]+\.jsonl|additional-recorded-runs\.jsonl)$", "seed journals", ESSENTIAL, True),
     (r"(^|/)attempts\.jsonl?(\.gz)?$", "failed attempts", ESSENTIAL, True),
-    (r"(^|/)pair-reviews/", "pair reviews", ESSENTIAL, True),
+    # Every 2026 pair review is contained, field for field, in its campaign's final correction snapshot
+    # (reviewed-contexts rows carry the review plus reviewFile/reviewFileSha256).
+    (r"(^|/)pair-reviews/", "pair reviews (contained in the final snapshot)", DERIVABLE, False),
     (r"(^|/)diagnostics?/|^recovery-review/|^diagnosis/", "diagnoses", ESSENTIAL, True),
     (r"^correction-snapshots/", "intermediate correction snapshots", DERIVABLE, False),
     (r"^(predictions|estimates|refinement)/", "selector predictions/estimates/refinement", DISPOSABLE, False),

@@ -433,7 +433,8 @@ def test_archive_is_deterministic_and_keeps_the_essential_records(tmp_path):
     (AR.CAMPAIGNS["recovery"] + "correction-snapshots/002/runs.jsonl.gz", "final correction snapshot", AR.ESSENTIAL, True),
     (AR.CAMPAIGNS["adaptive"] + "predictions/031/profile-table.jsonl.gz", "selector predictions/estimates/refinement",
      AR.DISPOSABLE, False),
-    (AR.CAMPAIGNS["mismatch"] + "pair-reviews/mv_1.json", "pair reviews", AR.ESSENTIAL, True),
+    (AR.CAMPAIGNS["mismatch"] + "pair-reviews/mv_1.json", "pair reviews (contained in the final snapshot)",
+     AR.DERIVABLE, False),
     (AR.CAMPAIGNS["forecast"] + "monitor-reports/milestone-001000.json", "monitor reports", AR.DISPOSABLE, False),
 ])
 def test_rb_triage_rules(path, kind, cls, archived):

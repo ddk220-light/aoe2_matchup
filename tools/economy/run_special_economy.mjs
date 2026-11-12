@@ -54,4 +54,28 @@ for(const civ of ['Burgundians','Vietnamese','Georgians']){
   console.log(civ,resource,JSON.stringify({rate:result.rows.at(-1).rate,activeFraction:result.rows.at(-1).activeFraction}));
  }
 }
+// Poles Folwark (owner decision 2026-11-12): the reviewed 0-1800 s farm window credits each covered
+// farm's instant 10% twice (at t=0 and at its single reseed). Measure a steady-state window instead,
+// so the instant food is credited once per farm cycle. Folwark stays 10% (DAT), 8 of 10 farms
+// covered, taken out of the farm; the fixture is unchanged, only the window differs.
+const STEADY={start:1800,end:9000};
+for(const civ of ['Poles']){
+ const {engine,fixture}=structuredClone(specs.find(s=>s.civ_name===civ).jobs.food);
+ if(engine!=='farm')throw Error(`${civ} food is not a farm scenario`);
+ const runs=[];
+ for(let seed=0;seed<3;seed++){
+  const run=simulateFarms(fixture,{duration:STEADY.end,seed,reseed:true});
+  const at=t=>run.snapshots.find(x=>Math.abs(x.t-t)<1e-6);
+  const workers=run.final.agents.length,span=STEADY.end-STEADY.start;
+  const harvested=at(STEADY.end).harvested-at(STEADY.start).harvested;
+  const working=run.final.agents.reduce((s,a)=>s+a.working,0);
+  runs.push({seed,rate:harvested/span/workers,windowRate0to1800:at(1800).harvested/1800/workers,
+   reseeds:run.final.farms.map(f=>f.reseeds),activeFraction:working/(STEADY.end*workers),checks:run.checks});
+ }
+ result.rows.push({civ,resource:'food',engine,purpose:'steady_state_window',window:STEADY,fixture,
+  scenarioSignature:hash(JSON.stringify({engine,fixture,window:STEADY,sourceHashes:result.sourceHashes})),
+  status:'scenario_estimate',rate:mean(runs.map(r=>r.rate)),activeFraction:mean(runs.map(r=>r.activeFraction)),runs,
+  auraApplied:false,auraBuildingCostIncluded:false,validation:'Controlled game observations still required'});
+ console.log(civ,'food steady state',JSON.stringify({rate:result.rows.at(-1).rate*60,window0to1800:mean(runs.map(r=>r.windowRate0to1800))*60}));
+}
 fs.writeFileSync(path.join(out,'special-gather-rates.json'),JSON.stringify(result,null,2)+'\n');

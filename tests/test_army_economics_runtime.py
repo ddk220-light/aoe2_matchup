@@ -224,8 +224,9 @@ def test_all_compiled_economies_match_offline_solver():
 
 def test_explicit_scope_exceptions_do_not_pretend_validation(data):
     excluded = data.metadata["scopeExceptions"]
+    # Owner decision 8 (2026-11-12): Xebec and Chinese Fire Ship rows are dropped, not waived.
     assert {(r["civ"], r.get("unitId"), r.get("technologyId")) for r in excluded} == {
-        ("Wei", None, 1061), ("Berbers", 1631, None), ("Chinese", 529, None), ("Burgundians", None, 755)}
+        ("Wei", None, 1061), ("Burgundians", None, 755)}
     assert all(r["status"] == "excluded_by_user" for r in excluded)
     assert data.metadata["blockers"] == []
     assert data.metadata["gatheringValidation"]["status"] == "deferred_by_user"
@@ -297,3 +298,130 @@ def test_research_summary_reports_common_exclusive_and_full(data):
         assert s["full"]["villagerMinutes"] > 0
         assert s["exclusive"]["villagerMinutes"] > 0
         assert team["investment"]["components"]["commonResearch"] == s["common"]["net"]
+
+
+# ---------------------------------------------------------------------------
+# Owner decisions and review fixes of 2026-11-12 (aoe2x/economy/curated.py).
+
+def techs(unit, package="military"):
+    return {t["id"]: t for t in unit["research"][package]["technologies"]}
+
+
+def test_dropped_roster_rows(data):
+    keys = set(data.keys())
+    assert ("Berbers", 1631, "default") not in keys and ("Chinese", 529, "default") not in keys
+    assert {(d["civ"], d["unitId"]) for d in data.metadata["droppedProfiles"]} == {("Berbers", 1631), ("Chinese", 529)}
+    assert data.metadata["profileCount"] == 1029 == len(keys)
+
+
+@pytest.mark.parametrize("civ_name,uid,tid,net,seconds", [
+    ("Poles", 1707, 786, {"food": 300, "gold": 800}, 45.11),
+    ("Lithuanians", 1707, 786, {"food": 600, "gold": 800}, 45.11),
+    ("Danes", 567, 1484, {"food": 250, "gold": 450}, 26.32), ("Danes", 359, 1484, None, None),
+    ("Danes", 2712, 1484, None, None), ("Danes", 2704, 1484, None, None),
+    ("Saxons", 567, 1464, {"food": 525, "gold": 475}, 33.83), ("Saxons", 359, 1464, None, None),
+    ("Saxons", 2706, 1464, None, None), ("Saxons", 2704, 1464, None, None),
+    ("Khitans", 441, 1007, {"food": 600, "gold": 300}, 33.83), ("Khitans", 1372, 1007, None, None),
+    ("Khitans", 330, 1007, None, None),
+    ("Shu", 359, 1070, {"food": 350, "gold": 300}, 30.08), ("Shu", 1961, 1070, None, None),
+    ("Mapuche", 2568, 1380, {"food": 500, "gold": 450}, 33.83),
+    ("Wu", 528, 1080, {"food": 400, "gold": 250}, 30.08),
+])
+def test_missing_technologies_added(data, civ_name, uid, tid, net, seconds):
+    t = techs(data.unit(civ_name, uid))[tid]
+    if net:
+        assert {r: t["net"][r] for r in net} == net
+        assert t["seconds"] == pytest.approx(seconds, abs=0.01)
+
+
+@pytest.mark.parametrize("civ_name,uid,tid", [("Khitans", 474, 1007), ("Khitans", 1923, 1007)])
+def test_projectile_cavalry_do_not_get_ordo_cavalry(data, civ_name, uid, tid):
+    assert tid not in techs(data.unit(civ_name, uid))
+
+
+@pytest.mark.parametrize("civ_name,uid,tid", [("Teutons", 567, 11), ("Teutons", 359, 11), ("Teutons", 554, 11),
+                                              ("Georgians", 283, 924), ("Georgians", 441, 924),
+                                              ("Georgians", 474, 924), ("Georgians", 1805, 924)])
+def test_non_combat_research_removed(data, civ_name, uid, tid):
+    unit = data.unit(civ_name, uid)
+    assert tid not in techs(unit) and tid not in techs(unit, "production")
+    assert tid in {t["id"] for t in unit["research"]["excludedNonCombat"]}
+
+
+def test_every_flagged_research_candidate_has_a_decision(data):
+    review = {r["technologyId"]: r for r in data.metadata["researchCandidateReview"]}
+    assert {1484, 1464, 1007, 1070, 1380, 1080} <= {t for t, r in review.items() if r["decision"] == "added"}
+    assert all(r["reason"] for r in review.values())
+
+
+def test_production_fixes(data):
+    priest = data.unit("Armenians", 1811)
+    assert priest["production"]["name"] == "Fortified Church"
+    assert priest["production"]["cost"]["wood"] == 200
+    for uid, building in ((359, "Barracks"), (6, "Archery Range")):
+        unit = data.unit("Mapuche", uid)
+        assert unit["production"]["name"] == building
+        assert unit["production"]["secondsPerOrder"] == pytest.approx(16.541, abs=1e-3)
+        assert "SETTL1" in {r["name"] for r in unit["productionRoutes"]}
+    assert data.unit("Persians", 442)["production"]["secondsPerOrder"] == pytest.approx(22.5, abs=1e-4)
+    for unit in units():
+        names = {r["name"] for r in unit["productionRoutes"]}
+        assert unit["civ"] == "Sicilians" or "Donjon" not in names
+    assert "Donjon" in {r["name"] for r in data.unit("Sicilians", 359)["productionRoutes"]}
+
+
+def test_mapuche_line_upgrades_research_at_the_regular_building(data):
+    assert techs(data.unit("Mapuche", 6))[98]["building"]["name"] == "Archery Range"
+    assert techs(data.unit("Mapuche", 6))[98]["seconds"] == pytest.approx(37.594, abs=1e-3)
+    assert techs(data.unit("Mapuche", 359))[429]["seconds"] == pytest.approx(37.594, abs=1e-3)
+
+
+def test_price_corrections_and_half_up_rounding(data):
+    assert data.unit("Mapuche", 2568)["pricing"]["physicalUnitCost"] == {"food": 55, "wood": 0, "gold": 34, "stone": 0}
+    assert data.unit("Gurjaras", 875)["pricing"]["physicalUnitCost"]["food"] == 53   # 52.5
+    assert data.unit("Koreans", 359)["pricing"]["physicalUnitCost"]["wood"] == 13    # 12.5
+    assert data.unit("Koreans", 6)["pricing"]["physicalUnitCost"]["wood"] == 18      # 17.5 (unchanged)
+
+
+def test_wu_production_buildings_are_charged_net_of_the_food_grant(data):
+    unit = data.unit("Wu", 359)
+    p = unit["production"]
+    assert p["completionRebate"]["food"] == 55
+    assert p["investmentCost"]["food"] == -55 * p["buildingCount"]
+    assert p["grossInvestmentCost"]["wood"] == 175 * p["buildingCount"]
+    assert data.unit("Wu", 1970)["production"]["completionRebate"] is None  # Castle: no grant
+    assert data.unit("Chinese", 359)["production"]["completionRebate"] is None
+
+
+def test_danes_food_dropoff_and_poles_steady_state(data):
+    danes = next(a for a in civ("Danes")["activities"] if a["id"] == "food")
+    assert danes["outputs"]["food"] * 60 == pytest.approx(24.71, abs=0.01)
+    assert -danes["outputs"]["wood"] / danes["outputs"]["food"] == pytest.approx(0.1524, abs=1e-3)
+    mechanic = next(m for m in danes["appliedMechanics"] if m["kind"] == "extra_dropoff_credit")
+    assert mechanic["creditPercent"] == 5 and mechanic["technologyIds"] == [1494]
+    poles = next(a for a in civ("Poles")["activities"] if a["id"] == "food")
+    assert poles["outputs"]["food"] * 60 == pytest.approx(25.71, abs=0.01)
+    assert poles["appliedMechanics"][0]["kind"] == "steady_state_window"
+
+
+def test_notes_and_assumptions_are_recorded(data):
+    assert "-15%" in civ("Italians")["notes"]["ageUp"]["text"]
+    assert civ("Byzantines")["notes"]["ageUp"]["datModifiers"]
+    assert civ("Ethiopians")["notes"]["ageUp"]["source"].startswith("aoe2techtree")
+    assert civ("Franks")["notes"]["ageUp"] is None
+    assert any("4 relics" in n for n in civ("Lithuanians")["notes"]["civilization"])
+    assert any("four controlled" in n for n in civ("Saxons")["notes"]["civilization"])
+    assert any("lowest-confidence" in n for n in civ("Khitans")["notes"]["civilization"])
+    assert "Feitoria" in civ("Portuguese")["notes"]["excludedIncome"]
+    assert "Caravanserai" in data.metadata["excludedIncome"]
+    assert data.metadata["gatheringValidationPolicy"]["status"] == "deferred_by_user"
+    assert all(a["status"] in ("scenario_estimate", "online_reference_estimate")
+               for e in map(civ, ("Khitans", "Danes", "Poles")) for a in e["activities"])
+
+
+def test_every_unit_carries_its_full_research_package_figures(data):
+    for unit in units():
+        s = unit["research"]["military"]["summary"]
+        assert s["technologyCount"] == unit["research"]["military"]["totals"]["technologyCount"]
+        if s["technologyCount"] and s["costIsFixed"] and s["weightedCost"] > 0:
+            assert s["villagerMinutes"] > 0

@@ -1,4 +1,8 @@
-"""User-approved analysis scope; exclusions never become validation evidence."""
+"""User-approved analysis scope; exclusions never become validation evidence.
+
+2026-11-12: the Berber Xebec and Chinese Fire Ship waivers were removed; those
+roster rows are now dropped by the owner (curated.PROFILE_DROPS).
+"""
 
 DECISION_DATE = "2026-11-11"
 AURA_ASSUMPTION = {
@@ -18,10 +22,6 @@ GATHERING_VALIDATION_POLICY = {
 
 
 def exclusion_reason(issue):
-    if issue["code"] == "unresolved_training_route" and (
-        issue.get("civ"), issue.get("unitId")
-    ) in {("Berbers", 1631), ("Chinese", 529)}:
-        return "Unresolved production route excluded from release requirements; unit training remains unavailable."
     if issue["code"] == "dynamic_research_cost_unvalidated" and (
         issue.get("civ"), issue.get("technologyId")
     ) == ("Burgundians", 755):

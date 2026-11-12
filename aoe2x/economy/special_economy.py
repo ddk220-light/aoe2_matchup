@@ -10,6 +10,17 @@ import math
 # Resource IDs describe reusable engine hooks. Values come from DAT replay.
 TIMED_GOLD = {236: "food", 266: "wood"}
 COPRODUCT = {241: ("stone", "gold"), 502: ("wood", "food")}
+# Extra credit on deposit: Malians +10% gold (276); Danes +5% food (299, added
+# 2026-11-12 once the extractor prerequisite fix activated tech 1494). Physical
+# carry, work rate and depletion are unchanged; recurring farm wood per
+# villager-second is unchanged, so farm wood per credited food falls.
+DEPOSIT_CREDIT = {276: "gold", 299: "food"}
+
+
+def credit_percent(value):
+    """DAT percentages carry a float guard (Danes stores 5.01 for +5%)."""
+    nearest = round(value)
+    return float(nearest) if abs(value - nearest) <= 0.011 else value
 
 
 def pasture_activity(source, reference):
@@ -51,9 +62,22 @@ def apply_special_economy(activities, parameters, scenarios, pending, online_sou
                                               "technologyIds": [934], "source": online_source,
                                               "includesReseedingWork": True}])
         resolved.add(939)
+    for resource, scenario in scenarios.items():
+        if scenario.get("purpose") != "steady_state_window":
+            continue
+        # Same fixture as the reviewed rate, measured over a steady-state window
+        # (Poles Folwark: instant farm food credited once per farm cycle).
+        activity = by_resource[resource]
+        scale = scenario["rate"] / activity["outputs"][resource]
+        activity["outputs"] = {r: v * scale for r, v in activity["outputs"].items()}
+        activity.setdefault("appliedMechanics", []).append({
+            "kind": "steady_state_window", "window": scenario["window"], "rateScale": scale,
+            "reason": "The reviewed 0-1800 s window credited each covered farm's instant Folwark food twice; "
+                      "the steady-state window credits it once per farm cycle (owner decision 2026-11-12)."})
+        activity["scenarioSignature"] = scenario["scenarioSignature"]
     for rid, parameter in parameters.items():
         value = parameter["final_parameter_value"]
-        if value <= 0 or rid not in (*TIMED_GOLD, *COPRODUCT, 276):
+        if value <= 0 or rid not in (*TIMED_GOLD, *COPRODUCT, *DEPOSIT_CREDIT):
             continue
         evidence = json.loads(parameter["evidence"])
         mechanic = {"resourceParameterId": rid, "value": value, "evidence": evidence,
@@ -79,10 +103,13 @@ def apply_special_economy(activities, parameters, scenarios, pending, online_sou
             activity["outputs"][secondary] += activity["outputs"][resource] * value / 100
             mechanic.update(kind="coproduct", primary=resource, secondary=secondary, ratio=value / 100)
         else:
-            activity = by_resource["gold"]
-            activity["outputs"]["gold"] *= 1 + value / 100
-            mechanic.update(kind="extra_dropoff_credit", carryAndWorkRateUnchanged=True,
-                            timing="Bonus is credited on deposit; output is the long-run credited yield, including eventual deposit of carried gold.")
+            resource = DEPOSIT_CREDIT[rid]
+            percent = credit_percent(value)
+            activity = by_resource[resource]
+            activity["outputs"][resource] *= 1 + percent / 100
+            mechanic.update(kind="extra_dropoff_credit", carryAndWorkRateUnchanged=True, resource=resource,
+                            creditPercent=percent,
+                            timing=f"Bonus is credited on deposit; output is the long-run credited yield, including eventual deposit of carried {resource}.")
         activity.setdefault("appliedMechanics", []).append(mechanic)
         activity["scenarioSignature"] = hashlib.sha256(json.dumps(
             {"base": activity["scenarioSignature"], "mechanic": mechanic}, sort_keys=True).encode()).hexdigest()

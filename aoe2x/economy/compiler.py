@@ -19,10 +19,10 @@ import sqlite3
 from aoe2x.economy.accounting import (
     CONTEXT_SCHEMA_VERSION, TRAINING_WINDOW_SECONDS, RESOURCE_WEIGHTS, MAX_ARMY, RESOURCES, building_value,
     select_investment_route, compile_labor_prices, compiled_labor, weighted_cost, purchase_bill,
-    queue_seconds, research_infrastructure, research_totals, resources, solve_labor,
+    queue_seconds, research_infrastructure, research_summary, research_totals, resources, solve_labor,
 )
-from aoe2x.js_simulation.battle_setup import effective_cost
 from aoe2x.dbgen.config_units import PAIRED_UNITS
+from aoe2x.economy import curated
 from aoe2x.economy.observations import validate_observations
 from aoe2x.economy.paths import CALIBRATION_ROOT, REFERENCE_DB, REPO_ROOT as ROOT, REVIEW_DB, RUNTIME_DB, TOOLS_DIR
 from aoe2x.economy.policy import AURA_ASSUMPTION, GATHERING_VALIDATION_POLICY, excluded_record, exclusion_reason
@@ -30,7 +30,31 @@ from aoe2x.economy.special_economy import apply_special_economy, pasture_activit
 
 DEFAULT_REVIEW = REVIEW_DB
 AGE_TECHS = {101, 102, 103, 104}
+RES_TYPES = {0: "food", 1: "wood", 2: "stone", 3: "gold"}
 BLOCKING_SCOPES = {"conditional_land_income", "pasture_model_required", "review_scope_required"}
+
+
+def round_half_up(value):
+    """Exact halves round up. DAT multipliers are float32 approximations of decimal
+    percentages, so values within 1e-6 of a half count as exact halves."""
+    return math.floor(round(value, 6) + 0.5)
+
+
+def unit_price(reference, multiplier=1.0):
+    """Physical unit price and purchase policy.
+
+    Same policy as ``aoe2x.js_simulation.battle_setup.effective_cost`` (Saxon
+    maximum conditional discount on classes 0/6/44, Blackwood Archer pairs) plus
+    curated engine-hook multipliers, with round-half-up instead of half-to-even
+    (owner decision 2026-11-12, curated.ROUNDING_RULE).
+    """
+    purchase = {r: reference[f"final_cost_{r}"] for r in ("food", "wood", "gold")}
+    conditional = 0.8 if reference["civ_name"] == "Saxons" and reference["unit_class"] in (0, 6, 44) else 1
+    batch = 2 if reference["unit_master"] in (2579, 2581) else 1
+    costs = {r: round_half_up(value * conditional * multiplier) / batch for r, value in purchase.items()}
+    return costs, dict(referencePurchaseCost=purchase, unitsPerPurchase=batch, conditionalMultiplier=conditional,
+                       conditionalContext="four controlled Town Centers/Castles; maximum 20% discount (assumption)"
+                       if conditional != 1 else None)
 
 
 def encode(value):
@@ -126,6 +150,257 @@ class Compiler:
         self.unique_eco = defaultdict(list)
         for r in rows(self.db, "late_unique_eco_technologies"):
             self.unique_eco[r["civ_name"]].append(r)
+        self.corrections = []
+        self.dropped_profiles = []
+        self.apply_curated_corrections()
+
+    # ------------------------------------------------------------------
+    # Curated corrections (aoe2x/economy/curated.py). The snapshot is read-only;
+    # every change is made on the in-memory rows and reported in metadata.
+    def note(self, kind, **detail):
+        self.corrections.append({"kind": kind, "decisionDate": curated.DECISION_DATE, **detail})
+
+    def apply_curated_corrections(self):
+        self.civ_ids = {r["civ_name"]: r["source_civ_id"]
+                        for r in rows(self.db, "production_civilization_evaluation")}
+        self.prod_effects = {r["effect_id"]: json.loads(r["commands"]) for r in rows(self.db, "production_raw_effects")}
+        self.prerequisite_rule_activations()
+        self.research_location_rule()
+        self.check_candidate_decisions()
+        self.curate_research()
+        self.curate_routes()
+
+    def prerequisite_rule_activations(self):
+        """Apply the corrected extractor rule (required_tech_count 0 = no prerequisite).
+
+        Re-running tools/economy/build_{production,economy}_review.py with the fix
+        activates exactly curated.PREREQUISITE_RULE_ACTIVATIONS; this replays the
+        same activation on the snapshot and fails on anything unexpected.
+        """
+        raw = {r["tech_id"]: json.loads(r["definition"]) for r in rows(self.db, "eco_raw_technologies")}
+        effects = {r["effect_id"]: json.loads(r["definition"]) for r in rows(self.db, "eco_raw_effects")}
+        active = defaultdict(set)
+        for civ, tid in self.db.execute("SELECT civ_name, tech_id FROM eco_technology_activation"):
+            active[civ].add(tid)
+        found = set()
+        self.extra_effects = defaultdict(list)
+        for civ, cid in self.civ_ids.items():
+            for tid, t in raw.items():
+                if (t["civ"] != cid or t["required_tech_count"] != 0 or t["effect_id"] < 0 or tid in active[civ]
+                        or t["full_tech_mode"] not in (0, 1)
+                        or any(loc["location_id"] >= 0 for loc in t["research_locations"])):
+                    continue
+                commands = effects.get(t["effect_id"], {}).get("effect_commands", [])
+                if not commands:
+                    continue
+                found.add((civ, tid))
+                for index, cmd in enumerate(commands):
+                    if cmd["type"] == 1 and cmd["a"] != 33:
+                        current = self.resource_parameters[civ].get(cmd["a"])
+                        before = current["final_parameter_value"] if current else 0.0
+                        after = cmd["d"] if cmd["b"] == 0 else before + cmd["d"]
+                        evidence = (json.loads(current["evidence"]) if current else []) + [
+                            {"source_kind": "technology", "tech_id": tid, "effect_id": t["effect_id"],
+                             "command_index": index, "command": cmd, "before": before, "after": after,
+                             "activation": "required_tech_count 0 = no prerequisite (extractor fix 2026-11-12)"}]
+                        self.resource_parameters[civ][cmd["a"]] = {
+                            "civ_name": civ, "resource_id": cmd["a"], "base_value": 0.0,
+                            "final_parameter_value": after, "evidence": json.dumps(evidence)}
+                self.extra_effects[civ].append({
+                    "technologyId": tid, "effectId": t["effect_id"], "name": t["name"], "scope": "sustained_land_income",
+                    "description": "Villagers and Fishing Ships drop off +5% food (DAT stores 5.01); activated by the "
+                                   "corrected prerequisite rule." if (civ, tid) == ("Danes", 1494) else t["name"],
+                    "evidence": [{"effectId": t["effect_id"], "commands": commands}]})
+                self.note("prerequisite_rule_activation", civ=civ, technologyId=tid, name=t["name"])
+        if found != curated.PREREQUISITE_RULE_ACTIVATIONS:
+            raise ValueError(f"Prerequisite-rule activations changed: {sorted(found)}; review curated.py")
+
+    def research_location_rule(self):
+        """Research where it is fastest; ties keep the snapshot's (cheapest-building) choice.
+
+        The snapshot chose the cheapest building, which picked the Mapuche
+        Settlement (no Conscription) over the Barracks/Archery Range for
+        Pikeman, Halberdier and Elite Skirmisher. Only those three change.
+        """
+        locations = defaultdict(list)
+        for r in rows(self.db, "research_research_locations"):
+            if r["final_seconds"] is not None:
+                locations[r["civ_name"], r["tech_id"]].append(r)
+        def cost(civ, bid):
+            b = self.buildings.get((civ, bid))
+            return building_value({k: b["cost_" + k] for k in RESOURCES}) if b else math.inf
+        best = {k: min(v, key=lambda r: (round(r["final_seconds"], 6), cost(k[0], r["building_id"]), r["building_id"]))
+                for k, v in locations.items() if len(v) > 1}
+        changed = set()
+        for row in [*self.techs.values(), *(r for rs in self.upgrades.values() for r in rs)]:
+            choice = best.get((row["civ_name"], row["tech_id"]))
+            # Only a strictly faster location replaces the snapshot's choice; ties keep it.
+            if choice is None or row["automatic_free"] or row["final_seconds"] <= choice["final_seconds"] + 1e-6:
+                continue
+            changed.add((row["civ_name"], row["tech_id"], row["selected_building_id"], choice["building_id"],
+                         row["final_seconds"], choice["final_seconds"]))
+            row["selected_building_id"], row["final_seconds"] = choice["building_id"], choice["final_seconds"]
+        for civ, tid, a, b, x, y in sorted(changed):
+            self.note("research_location", civ=civ, technologyId=tid, fromBuilding=a, toBuilding=b,
+                      fromSeconds=x, toSeconds=y)
+
+    def check_candidate_decisions(self):
+        flagged = {(r["civ_name"], r["tech_id"]) for r in rows(self.db, "research_unit_upgrade_candidates")
+                   if r["reason"].endswith("needs_review")}
+        undecided = sorted({tid for _, tid in flagged} - set(curated.CANDIDATE_DECISIONS))
+        if undecided:
+            raise ValueError(f"Technologies flagged 'needs review' without a curated decision: {undecided}")
+        self.candidate_review = [{"technologyId": tid, "decision": d, "reason": why,
+                                  "civilizations": sorted(c for c, t in flagged if t == tid)}
+                                 for tid, (d, why) in sorted(curated.CANDIDATE_DECISIONS.items())]
+
+    def curate_research(self):
+        self.added_research = defaultdict(list)
+        unit_keys = {(r["civ_name"], r["unit_id"]): r["research_unit_key"] for r in self.units.values()}
+        for entry in curated.ADDED_RESEARCH:
+            tid = entry["techId"]
+            raw = self.rawtechs[tid]
+            base = {RES_TYPES[c["type"]]: c["amount"] for c in raw["resource_costs"] if c["type"] in RES_TYPES and c["flag"]}
+            seconds = {loc["location_id"]: loc["research_time"] for loc in raw["research_locations"]}
+            expected = entry["expected"]
+            if any(base.get(k, 0) != expected.get(k, 0) for k in RESOURCES) or seconds.get(entry["building"]) != expected["seconds"]:
+                raise ValueError(f"{entry['name']}: DAT cost/time {base} {seconds} disagrees with the curated source")
+            for civ in entry["civs"]:
+                row = self.techs.get((civ, tid)) or self.synthesize_tech(civ, tid, entry, base)
+                for uid in entry["units"]:
+                    key = unit_keys.get((civ, uid))
+                    if key is None:
+                        raise ValueError(f"{entry['name']}: {civ} unit {uid} is not in the roster")
+                    if any(r["tech_id"] == tid for r in self.upgrades[key]):
+                        raise ValueError(f"{entry['name']}: already linked to {civ} {uid}; remove the curated entry")
+                    self.added_research[key].append({**row, "scope": "direct", "reasons": json.dumps(["curated_addition"])})
+                    self.note("research_added", civ=civ, unitId=uid, technologyId=tid, name=entry["name"],
+                              net={k: row["net_" + k] for k in RESOURCES}, seconds=row["final_seconds"],
+                              reason=entry["reason"], evidence=entry["evidence"])
+        self.removed_research = {(civ, e["techId"]): e for e in curated.REMOVED_RESEARCH for civ in e["civs"]}
+
+    def synthesize_tech(self, civ, tid, entry, base):
+        """Build a civ tech row the extraction omitted (Winged Hussar), from DAT commands only."""
+        raw = self.rawtechs[tid]
+        upfront = dict(base)
+        modifiers = []
+        for eid in self.tech_tree_effects(civ):
+            for index, cmd in enumerate(self.prod_effects.get(eid, [])):
+                if cmd["type"] == 101 and cmd["a"] == tid and cmd["c"] == 2:
+                    resource = RES_TYPES[cmd["b"]]
+                    upfront[resource] = upfront.get(resource, 0) * cmd["d"]
+                    modifiers.append({"source_kind": "civilization", "tech_id": None, "effect_id": eid,
+                                      "command_index": index, "command": cmd, "target": "cost_time_or_completion_reward"})
+        # Same building work rate as the civ's other Stable research (Husbandry, 39).
+        template = self.techs[civ, 39]
+        if template["selected_building_id"] != entry["building"]:
+            raise ValueError(f"{civ}: Husbandry template is not researched at building {entry['building']}")
+        rate = template["base_seconds"] / template["final_seconds"]
+        seconds = raw["research_locations"][0]["research_time"]
+        row = {**template, "tech_id": tid, "technology": entry["name"], "raw_name": raw["name"], "is_civ_unique": 0,
+               "free": 0, "instant": 0, "automatic_free": 0, "base_seconds": seconds, "final_seconds": seconds / rate,
+               "cost_is_fixed": 1, "pricing_tech_ids": "[]", "modifiers": json.dumps(modifiers),
+               "flags": json.dumps(["curated_synthesized_from_DAT"])}
+        for k in RESOURCES:
+            row["base_" + k] = float(base.get(k, 0))
+            row["upfront_" + k] = float(upfront.get(k, 0))
+            row["reward_" + k] = 0.0
+            row["net_" + k] = float(upfront.get(k, 0))
+        return row
+
+    def tech_tree_effects(self, civ):
+        """The civilization's DAT tech-tree effect (where civ technology discounts live)."""
+        found = [eid for eid, name in self.db.execute("SELECT effect_id, name FROM production_raw_effects")
+                 if name == f"{civ} Tech Tree"]
+        if len(found) != 1:
+            raise ValueError(f"{civ}: tech tree effect not found")
+        return found
+
+    def curate_routes(self):
+        flag = "production_building_availability_needs_review"
+        templates = {}
+        for key, candidates in list(self.routes.items()):
+            civ = key[0]
+            kept = []
+            for r in candidates:
+                r = dict(r)
+                if flag in json.loads(r["flags"]):
+                    self.note("route_dropped", civ=civ, referenceUnitId=key[1], unitId=r["source_unit_id"],
+                              building=r["building"], reason="Production building not available to this civilization")
+                    continue
+                for sub in curated.BUILDING_SUBSTITUTIONS:
+                    if sub["civ"] == civ and r["building_id"] == sub["from"]:
+                        if [3, sub["from"], sub["to"]] not in [[c["type"], c["a"], c["b"]] for c in self.prod_effects[sub["effectId"]]]:
+                            raise ValueError("Building substitution is not in the DAT effect")
+                        b = self.buildings[civ, sub["to"]]
+                        before = {k: r["building_" + k] for k in RESOURCES}
+                        r.update(building_id=sub["to"], building=b["building_name"],
+                                 **{"building_" + k: b["cost_" + k] for k in RESOURCES})
+                        self.note("route_building", civ=civ, unitId=r["source_unit_id"], fromBuilding=sub["from"],
+                                  toBuilding=sub["to"], before=before, after={k: r["building_" + k] for k in RESOURCES},
+                                  reason=sub["reason"], evidence=sub["evidence"])
+                for fix in curated.AGE_VARIANT_WORK_RATE:
+                    if fix["civ"] == civ and r["building_id"] == fix["building"]:
+                        r = self.imperial_work_rate(r, fix)
+                kept.append(r)
+            self.routes[key] = kept
+        for entry in curated.RESTORED_ROUTES:
+            civ = entry["civ"]
+            unit = self.units[civ, entry["unitId"]]
+            template = self.units[entry["template"]["civ"], entry["template"]["unitId"]]
+            source = self.routes[civ, template["reference_unit_id"]]
+            source = [r for r in source if r["building_id"] == entry["building"]]
+            existing = self.routes[civ, unit["reference_unit_id"]]
+            if len(source) != 1 or any(r["building_id"] == entry["building"] for r in existing) or len(existing) != 1:
+                raise ValueError(f"Cannot restore {civ} {entry['unitId']} route; source data changed")
+            settlement, tpl = existing[0], source[0]
+            rate = tpl["final_building_work_rate"]
+            seconds = entry["baseTrainSeconds"] / rate
+            restored = {**settlement, "building_id": tpl["building_id"], "building": tpl["building"],
+                        "building_cost_unit_id": tpl["building_cost_unit_id"], "location_index": 0,
+                        "base_train_seconds": entry["baseTrainSeconds"], "modified_train_seconds": entry["baseTrainSeconds"],
+                        "base_building_work_rate": 1.0, "final_building_work_rate": rate, "final_train_seconds": seconds,
+                        "units_per_game_minute": 60 / seconds,
+                        **{f"{p}building_{k}": tpl[f"{p}building_{k}"] for p in ("base_", "") for k in RESOURCES},
+                        "building_wood_equivalent": tpl["building_wood_equivalent"],
+                        "applied": tpl["applied"], "flags": json.dumps(["curated_restored_regular_route"]),
+                        "route_id": None, "selected": 0}
+            existing.append(restored)
+            self.note("route_restored", civ=civ, unitId=entry["unitId"], building=tpl["building"],
+                      secondsPerOrder=seconds, evidence=curated.RESTORED_ROUTE_EVIDENCE)
+        self.rebates = {}
+        for entry in curated.PRODUCTION_REBATES:
+            amounts = {}
+            for row in self.db.execute("SELECT command FROM eco_active_effect_commands WHERE civ_name=? AND tech_id=?",
+                                       (entry["civ"], entry["techId"])):
+                cmd = json.loads(row[0])
+                if cmd["type"] == 4 and cmd["c"] == 27:
+                    amounts[cmd["a"]] = cmd["d"]
+            if not amounts:
+                raise ValueError(f"{entry['civ']}: production rebate technology {entry['techId']} is not active")
+            self.rebates[entry["civ"]] = {"resource": entry["resource"], "byBuilding": amounts, "reason": entry["reason"],
+                                          "evidence": entry["evidence"], "technologyId": entry["techId"]}
+            self.note("production_rebate", civ=entry["civ"], technologyId=entry["techId"],
+                      perBuilding={str(k): v for k, v in sorted(amounts.items())}, reason=entry["reason"])
+
+    def imperial_work_rate(self, r, fix):
+        commands = self.prod_effects[fix["effectId"]]
+        imperial = [c for c in commands if c["type"] == 5 and c["a"] == fix["imperialBuilding"] and c["c"] == 13]
+        if len(imperial) != 1:
+            raise ValueError("Imperial work-rate command missing")
+        applied = json.loads(r["applied"])
+        hits = [m for m in applied if m["effect_id"] == fix["effectId"] and m["command"]["a"] == fix["building"]]
+        if len(hits) != 1:
+            raise ValueError("Age-variant work-rate modifier not found on the route")
+        old, new = hits[0]["command"]["d"], imperial[0]["d"]
+        hits[0].update(command=imperial[0], after=hits[0]["before"] * new,
+                       note=f"Imperial Age building {fix['imperialBuilding']} value replaces the Dark Age value of building {fix['building']}")
+        before = r["final_train_seconds"]
+        r = {**r, "applied": json.dumps(applied), "final_building_work_rate": r["final_building_work_rate"] / old * new,
+             "final_train_seconds": before * old / new, "units_per_game_minute": 60 / (before * old / new)}
+        self.note("route_work_rate", civ=fix["civ"], unitId=r["source_unit_id"], building=fix["building"],
+                  fromSeconds=before, toSeconds=r["final_train_seconds"], evidence=fix["evidence"])
+        return r
 
     def record_issue(self, issue):
         reason = exclusion_reason(issue)
@@ -251,7 +526,8 @@ class Compiler:
             technologies.setdefault(t["id"], t)
         effects = [{"technologyId": r["tech_id"], "effectId": r["effect_id"],
                     "name": r["mechanic"], "scope": r["scope"], "description": r["description"],
-                    "evidence": json.loads(r["evidence"])} for r in self.by_civ[civ]]
+                    "evidence": json.loads(r["evidence"])} for r in self.by_civ[civ]] + [
+                   dict(e) for e in self.extra_effects.get(civ, [])]
         blockers = [{"code": "unresolved_economy_mechanic", "civ": civ,
                      "technologyId": r["tech_id"], "effectId": r["effect_id"],
                      "detail": r["description"]} for r in pending]
@@ -265,7 +541,7 @@ class Compiler:
             if effect["technologyId"] in excluded_ids:
                 effect["calculationStatus"] = "excluded_by_user"
                 effect["description"] += " Excluded from villager income at the user's request."
-        return {"civ": civ, "activities": activities,
+        return {"civ": civ, "activities": activities, "notes": self.civ_notes(civ),
                 "scopeExceptions": excluded, "auraAssumption": AURA_ASSUMPTION,
                 "pastureSourceInputs": pasture_source, "pastureModel": pasture_model,
                 "laborPrices": compile_labor_prices(activities) if not blockers else None,
@@ -273,6 +549,28 @@ class Compiler:
                 "blockers": blockers, "effects": effects,
                 "technologies": list(technologies.values()), "missingTechnologies": missing,
                 "totals": research_totals(list(technologies.values()))}
+
+    def civ_notes(self, civ):
+        """Owner decisions 4, 7, 9, 10: notes for the UI; none of them changes the headline."""
+        dat = []
+        for row in self.db.execute("SELECT tech_id, effect_id, effect_name, command FROM eco_active_effect_commands "
+                                   "WHERE civ_name=? AND is_civilization_specific=1 ORDER BY sequence", (civ,)):
+            cmd = json.loads(row[3])
+            if cmd["type"] in (101, 103) and cmd["a"] in (101, 102, 103):
+                dat.append({"ageTechnologyId": cmd["a"], "kind": "cost" if cmd["type"] == 101 else "time",
+                            "resource": RES_TYPES.get(cmd["b"], "all") if cmd["type"] == 101 else None,
+                            "multiplier": cmd["d"], "effectId": row[1], "effectName": row[2]})
+        text = curated.AGE_UP_TEXT.get(civ)
+        if dat and not text:
+            raise ValueError(f"{civ}: DAT age-up modifier without a curated age-up note")
+        age_up = None if not text else {"text": text, "datModifiers": dat,
+                                        "source": "DAT" if dat else "aoe2techtree civ text (update 188329)"}
+        rebate = self.rebates.get(civ)
+        return {"ageUp": age_up, "ageUpPolicy": curated.AGE_UP_NOTE,
+                "civilization": curated.CIV_NOTES.get(civ, []),
+                "excludedIncome": curated.EXCLUDED_INCOME,
+                "productionRebate": rebate and {"resource": rebate["resource"], "technologyId": rebate["technologyId"],
+                                                "perBuilding": {str(k): v for k, v in sorted(rebate["byBuilding"].items())}}}
 
     def route(self, unit):
         candidates = self.routes[unit["civ_name"], unit["reference_unit_id"]]
@@ -295,8 +593,12 @@ class Compiler:
                                 "displayUnitId": unit["unit_id"], "trainedUnitId": paired}
         valid.sort(key=lambda r: (building_value({k: r["building_" + k] for k in RESOURCES}),
                                   r["final_train_seconds"], r["building_id"], r["source_unit_id"]))
+        rebate = self.rebates.get(unit["civ_name"])
         def convert(r):
+            amount = rebate["byBuilding"].get(r["building_id"]) if rebate else None
             return {"id": r["building_id"], "name": r["building"],
+                    "completionRebate": {**resources({rebate["resource"]: amount}), "technologyId": rebate["technologyId"],
+                                         "reason": rebate["reason"]} if amount else None,
                     "trainedUnitId": r["source_unit_id"], "secondsPerOrder": r["final_train_seconds"],
                     "baseTrainSeconds": r["base_train_seconds"],
                     "cost": {k: r["building_" + k] for k in RESOURCES},
@@ -308,7 +610,13 @@ class Compiler:
     def research(self, unit, production):
         civ = unit["civ_name"]
         packages = {"military": {}, "production": {}}
-        for row in self.upgrades[unit["research_unit_key"]]:
+        excluded = []
+        for row in self.upgrades[unit["research_unit_key"]] + self.added_research.get(unit["research_unit_key"], []):
+            removal = self.removed_research.get((civ, row["tech_id"]))
+            if removal:
+                excluded.append({"id": row["tech_id"], "name": removal["name"], "reason": removal["reason"],
+                                 "net": {k: row["net_" + k] for k in RESOURCES}})
+                continue
             t = self.tech(row)
             # A technology enabling the selected cheaper training location is
             # part of the required military setup (Anarchy / Marauders).
@@ -323,7 +631,7 @@ class Compiler:
         # the unit. Already-associated prerequisites remain deduplicated.
         visited = set()
         def require(tid):
-            if tid in visited or tid in AGE_TECHS or tid is None:
+            if tid in visited or tid in AGE_TECHS or tid is None or (civ, tid) in self.removed_research:
                 return
             visited.add(tid)
             if (civ, tid) in self.techs:
@@ -343,11 +651,16 @@ class Compiler:
                              "infrastructure": research_infrastructure(techs, production)}
         result["infrastructure"] = research_infrastructure(
             result["military"]["technologies"] + result["production"]["technologies"], production)
+        result["excludedNonCombat"] = excluded
         return result
 
     def unit(self, profile, economy):
         mechanics = json.loads(profile["mechanics_json"])
         civ, uid = mechanics["civilization"], mechanics["unit_master"]
+        drop = next((d for d in curated.PROFILE_DROPS if (d["civ"], d["unitId"]) == (civ, uid)), None)
+        if drop:
+            self.dropped_profiles.append({**drop, "mode": profile["mode"], "decisionDate": curated.DECISION_DATE})
+            return None
         reference = dict(self.ref.execute("SELECT * FROM ref_units WHERE id=?", (profile["ref_unit_id"],)).fetchone())
         # Explicit profile FK identifies alternate modes of the same purchased
         # unit (War Chariot barrage); never join forms by their display name.
@@ -356,11 +669,18 @@ class Compiler:
         source_cost = self.costs[civ, source_uid]
         for r in ("food", "wood", "gold"):
             reference["final_cost_" + r] = source_cost[r]
-        physical_cost, policy = effective_cost(reference)
+        price_fix = next((p for p in curated.PRICE_MULTIPLIERS if (p["civ"], p["unitId"]) == (civ, source_uid)), None)
+        physical_cost, policy = unit_price(reference, price_fix["multiplier"] if price_fix else 1.0)
+        if price_fix:
+            self.note("price_multiplier", civ=civ, unitId=uid, multiplier=price_fix["multiplier"],
+                      technologyId=price_fix["techId"], before=resources(source_cost), after=resources(physical_cost),
+                      reason=price_fix["reason"], evidence=price_fix["evidence"])
         batch = policy["unitsPerPurchase"]
-        purchase = {r: physical_cost[r] * batch if r in physical_cost else round(source_cost[r]) for r in RESOURCES}
+        purchase = {r: physical_cost[r] * batch if r in physical_cost else round_half_up(source_cost[r]) for r in RESOURCES}
         physical = {r: purchase[r] / batch for r in RESOURCES}
         pricing = {"purchaseCost": purchase, "unitsPerPurchase": batch, "physicalUnitCost": physical,
+                   "priceCorrection": price_fix and {k: price_fix[k] for k in ("multiplier", "techId", "reason")},
+                   "rounding": "half_up",
                    "conditionalMultiplier": policy["conditionalMultiplier"],
                    "conditionalContext": policy["conditionalContext"],
                    "sourceCost": resources(source_cost), "evidence": json.loads(source_cost["cost_evidence"])}
@@ -384,6 +704,10 @@ class Compiler:
                                      "infrastructure": research_infrastructure(eco, production)}
         research["allInfrastructure"] = research_infrastructure(
             research["military"]["technologies"] + research["production"]["technologies"] + eco, production)
+        # Owner decision 1: the full combat research package as its own figure
+        # (cost, weighted cost, weighted villager-minutes, summed research time).
+        # Common/exclusive parts depend on the opponent: aoe2x.economy.matchup.
+        research["military"]["summary"] = research_summary(research["military"]["totals"], economy["laborPrices"])
         # Homogeneous linear program: solve one purchase, scale for integer
         # purchase orders. This also preserves indivisible batch purchases.
         lookups = []
@@ -411,6 +735,7 @@ def compile_database(review, reference, output, observations=None):
     civilizations = {civ: compiler.civilization(civ) for civ in sorted(compiler.parameters)}
     profiles = rows(compiler.ref, "ref_unit_mechanics")
     units = [compiler.unit(p, civilizations[json.loads(p["mechanics_json"])["civilization"]]) for p in profiles]
+    units = [u for u in units if u is not None]
     # Captures only validate; they never provide runtime model parameters.
     observation_review = validate_observations(civilizations, observations, compiler.game_source["sha256"],
                                               CALIBRATION_ROOT,
@@ -434,10 +759,20 @@ def compile_database(review, reference, output, observations=None):
                                  "accounting": sha(ROOT / "aoe2x/economy/accounting.py"),
                                  "scopePolicy": sha(ROOT / "aoe2x/economy/policy.py"),
                                  "specialEconomy": sha(ROOT / "aoe2x/economy/special_economy.py"),
+                                 "curated": sha(ROOT / "aoe2x/economy/curated.py"),
                                  **compiler.special_hashes,
                                  "observationValidator": sha(ROOT / "aoe2x/economy/observations.py"),
                                  "formIdentityCatalog": sha(ROOT / "aoe2x/dbgen/config_units.py")},
                 "priceCorrections": compiler.audit,
+                "curatedCorrections": compiler.corrections,
+                "droppedProfiles": compiler.dropped_profiles,
+                "researchCandidateReview": compiler.candidate_review,
+                "roundingRule": curated.ROUNDING_RULE,
+                "excludedIncome": curated.EXCLUDED_INCOME,
+                "researchHeadlinePolicy": {"inHeadline": "common", "decisionDate": curated.DECISION_DATE,
+                    "detail": "Only research both armies share (common technology IDs) enters the headline. Each unit "
+                              "carries research.military.summary (full package); aoe2x.economy.matchup reports "
+                              "common, exclusive and full research per army (cost, weighted villager-minutes, time)."},
                 "gatheringValidation": observation_review,
                 "assumptions": ["Post-Imperial; all available upgrades; Imperial research pricing; own bonuses only.",
                     "The headline is weighted villager-minutes for the displayed army, production buildings completing it within 60 seconds, and common military upgrade net costs.",
@@ -445,14 +780,20 @@ def compile_database(review, reference, output, observations=None):
                     "Gathering uses the reviewed resource layouts, including reseeding downtime and recurring farm wood; resource coproducts satisfy the combined bill without resale credit.",
                     "Khitan pasture food uses an online lifecycle average of 25.2 food per villager-minute as a post-Imperial estimate, with immediate food credit and no external drop-off trip. Recurring pasture wood uses the supplied DAT cost and yield; rebuilding downtime is already in the reference rate.",
                     "Controlled in-game gathering measurements are deferred by user instruction. Release eligibility does not certify measured accuracy; gathering rates remain estimates.",
-                    "Folwark: 8 of 10 farms covered. Applicable auras are assumed fully active, once, without placement requirements or aura-building costs (user instruction 2026-11-11).",
-                    "Wei Tuntian income is excluded. Berber Xebec, Chinese Fire Ship and Flemish Revolution verification are excluded from release requirements; missing values remain unverified, not filled in.",
+                    "Folwark: 10% instant food (DAT), 8 of 10 farms covered, taken out of the farm, measured over a steady-state window (1800-9000 s) so it is credited once per farm cycle (owner decision 2026-11-12). Applicable auras are assumed fully active, once, without placement requirements or aura-building costs (user instruction 2026-11-11).",
+                    "Wei Tuntian income is excluded. Flemish Revolution cost verification is excluded from release requirements; its variable cost remains unverified. The Berber Xebec and Chinese Fire Ship rows are dropped (not post-Imperial units; owner decision 2026-11-12).",
+                    "Research package corrections (owner decisions 2026-11-12): Winged Hussar, Hamask, Shield Wall, Ordo Cavalry, Coiled Serpent Array, Butalmapu and Red Cliffs Tactics added to the units they affect; Crenellations and Aznauri Cavalry removed (no field-combat effect).",
+                    "Wu production buildings are charged net of the +55 food each one grants when built. Danes villagers drop off +5% food. Elite Kona costs -15% (Butalmapu).",
+                    "Discounted unit prices round half up.",
+                    "Age-ups are outside the headline; civilization age-up discounts are listed in civilization notes.",
+                    "Saxon foot soldiers assume the maximum -20% discount (four controlled Town Centers/Castles).",
                     "Production uses complete purchase cycles: orders per building = floor(60 / training seconds); required buildings = ceil(orders / orders per building). A slower-than-60s purchase cannot meet the window.",
                     "Choose the route minimizing total weighted labor; ties use faster queue completion then building ID. Unresolved labor allows provisional resource-priced infrastructure only.",
                     "Buildings and common upgrades are one-time investments. Casualty replacement work charges neither again, carries initial batch surplus and rounds new purchases cumulatively. Extra units are not added to combat.",
                     "The 60-second window starts with buildings, upgrades and resources ready. Villager construction animations, rally travel, economic setup, research-building infrastructure and exclusive upgrades are separate from the headline.",
                     "Research time is summed workload, not a parallel build order. Refunds arrive after payment.",
-                    "Passive income, relics, trade, combat rewards and early-game grants are outside villager labor."]}
+                    "Passive income, relics, trade, combat rewards and early-game grants are outside villager labor. " + curated.EXCLUDED_INCOME,
+                    "Lithuanian combat stats elsewhere in the project assume 4 relics (aoe2x/dbgen/config_constants.py LITHUANIAN_RELIC_COUNT); relic income is not counted here."]}
     metadata["contextVersion"] = hashlib.sha256(encode({"metadata": metadata, "units": units, "civilizations": civilizations}).encode()).hexdigest()
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)

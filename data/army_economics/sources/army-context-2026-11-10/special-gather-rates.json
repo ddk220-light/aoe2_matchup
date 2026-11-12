@@ -2,7 +2,7 @@
   "sourceHashes": {
     "inputs": "48cd2e0f30216ffecb98960f5ee431904a836b1fbe5649cdbd47647d8fde9bca",
     "evidence": "e3fbc6bbd20e2fc2137988657fb5d333b2d907cb89705b71c6ce7a18e00fa672",
-    "runner": "17adb9d6f3507d8fda22dade73e6c0299a6514eb51a8953eed9c685a6781af48",
+    "runner": "afc71f46fe5026c002b9e65007295e53a44cb81b40ed5b33269682d83dd01a6b",
     "farm-gathering-sim.mjs": "809b3876fc3f6542201c3aa57d576935fe44c64aa98079b89af375fad473f23e",
     "wood-gathering-sim.mjs": "a7f4a22e3220401cac3117f38659a77d31c53ad0314b5dcda26408314c14bd5c",
     "gold-mining-sim.mjs": "ed0207e417e77aa7b37824c93c819c9f799fbd1d0d08b57e90ee64c38ee62898"
@@ -156,7 +156,7 @@
           "Not current-DE trajectory validation; do not use as a calibrated civilization-bonus predictor yet."
         ]
       },
-      "scenarioSignature": "87168783f60b18861dbee8aa7ef59954dbdba20c82af871c0626d250420b8d1f",
+      "scenarioSignature": "1c26900f3a5313529abbf1fe6ff704249f75b39aa82dd96e64f0286a1e309c86",
       "status": "scenario_estimate",
       "rate": 0.39236906366697455,
       "activeFraction": 0.7888706874996202,
@@ -289,7 +289,7 @@
           "Observed rates are scenario/model estimates; the same-layout current DE trajectories have not been captured."
         ]
       },
-      "scenarioSignature": "d609332ca17e0d68ed4ef5a56b49c8ee06d66fadea0b1ef60917be2a023ebba2",
+      "scenarioSignature": "a4aa8cc06c998c78da27074726c95e067da9fdd993c5a7c10f41b75aee2fb5d7",
       "status": "scenario_estimate",
       "rate": 0.5072333356610917,
       "activeFraction": 0.8210847302524319,
@@ -480,7 +480,7 @@
           "Not current-DE trajectory validation; do not use as a calibrated civilization-bonus predictor yet."
         ]
       },
-      "scenarioSignature": "b8c6cf79393cafc22c5b2c7f78fa81833592387c7ec70c4f8237cf47dfbced0f",
+      "scenarioSignature": "a5ed3ed1fbe33339dfa05560fab608d2068e7dd9dbf7594f63da685da9527987",
       "status": "scenario_estimate",
       "rate": 0.39538126619055824,
       "activeFraction": 0.7882449336610078,
@@ -613,7 +613,7 @@
           "Observed rates are scenario/model estimates; the same-layout current DE trajectories have not been captured."
         ]
       },
-      "scenarioSignature": "ee48e8927cca91042b85a6dd72531568a57fc32fea874c32159957af531aafb7",
+      "scenarioSignature": "bf715f114c1f519f21e16c66cbb55030a25b74b452aa96a40201ebc278aa1ddf",
       "status": "scenario_estimate",
       "rate": 0.5014933600708552,
       "activeFraction": 0.8117931536679492,
@@ -818,7 +818,7 @@
           "No parameter is fitted to the external reference; this is an unvalidated economic model."
         ]
       },
-      "scenarioSignature": "c00ff5fcfc2efd6aa77d6af36250341689980024bdc1b0ca63ac35c5ae0254d9",
+      "scenarioSignature": "4dced380e366d24a705fdaddf212ec11b39a76eb8b199840bb127e9b4c9fb344",
       "status": "scenario_estimate",
       "rate": 0.4354614735644637,
       "activeFraction": 0.9058903433669591,
@@ -1023,7 +1023,7 @@
           "No parameter is fitted to the external reference; this is an unvalidated economic model."
         ]
       },
-      "scenarioSignature": "b23d8bcfb1326d043ada17beaab462b5373d77e6b3fc7bd3728ca98b08e51e61",
+      "scenarioSignature": "26fda33831865f5ec4a3cc107c0eb5f81fcce5267e246758cba8e1bde979a216",
       "status": "scenario_estimate",
       "rate": 0.4659869756055229,
       "activeFraction": 0.8897805587263843,
@@ -1063,6 +1063,256 @@
         }
       ],
       "auraApplied": true,
+      "auraBuildingCostIncluded": false,
+      "validation": "Controlled game observations still required"
+    },
+    {
+      "civ": "Poles",
+      "resource": "food",
+      "engine": "farm",
+      "purpose": "steady_state_window",
+      "window": {
+        "start": 1800,
+        "end": 9000
+      },
+      "fixture": {
+        "name": "generic-farm-full",
+        "profile": "full",
+        "technology_ids": [
+          14,
+          213,
+          13,
+          249,
+          12
+        ],
+        "source": {
+          "database": "/workspace/scratch/economy-review/labor-inputs/labor-inputs.sqlite",
+          "civ_name": "Poles"
+        },
+        "worker": {
+          "work_rate": 0.5299999713897705,
+          "speed": 0.9680000563859951,
+          "carry_capacity": 21,
+          "radius": 0.20000000298023224,
+          "task_output_multiplier": 1
+        },
+        "farm": {
+          "food": 550,
+          "generation_rate": 0.4000000059604645,
+          "pool_capacity": 15,
+          "initial_pool": 0,
+          "half_width": 1.5,
+          "half_height": 1.5,
+          "wood_cost": 60,
+          "build_seconds": 12.499999503294646
+        },
+        "mill": {
+          "x0": 0,
+          "y0": 0,
+          "x1": 3,
+          "y1": 3
+        },
+        "farms": [
+          {
+            "id": 0,
+            "x0": 0,
+            "y0": -3,
+            "x1": 3,
+            "y1": 0,
+            "position": "inner",
+            "instant_food": 55.000000819563866
+          },
+          {
+            "id": 1,
+            "x0": 3,
+            "y0": 0,
+            "x1": 6,
+            "y1": 3,
+            "position": "inner",
+            "instant_food": 55.000000819563866
+          },
+          {
+            "id": 2,
+            "x0": 0,
+            "y0": 3,
+            "x1": 3,
+            "y1": 6,
+            "position": "inner",
+            "instant_food": 55.000000819563866
+          },
+          {
+            "id": 3,
+            "x0": -3,
+            "y0": 0,
+            "x1": 0,
+            "y1": 3,
+            "position": "inner",
+            "instant_food": 55.000000819563866
+          },
+          {
+            "id": 4,
+            "x0": 3,
+            "y0": -3,
+            "x1": 6,
+            "y1": 0,
+            "position": "inner",
+            "instant_food": 55.000000819563866
+          },
+          {
+            "id": 5,
+            "x0": 3,
+            "y0": 3,
+            "x1": 6,
+            "y1": 6,
+            "position": "inner",
+            "instant_food": 55.000000819563866
+          },
+          {
+            "id": 6,
+            "x0": -3,
+            "y0": 3,
+            "x1": 0,
+            "y1": 6,
+            "position": "inner",
+            "instant_food": 55.000000819563866
+          },
+          {
+            "id": 7,
+            "x0": -3,
+            "y0": -3,
+            "x1": 0,
+            "y1": 0,
+            "position": "inner",
+            "instant_food": 55.000000819563866
+          },
+          {
+            "id": 8,
+            "x0": -6,
+            "y0": 0,
+            "x1": -3,
+            "y1": 3,
+            "position": "outer",
+            "instant_food": 0
+          },
+          {
+            "id": 9,
+            "x0": 6,
+            "y0": 0,
+            "x1": 9,
+            "y1": 3,
+            "position": "outer",
+            "instant_food": 0
+          }
+        ],
+        "behavior": {
+          "work_spot_offsets": [
+            0.5,
+            1.5,
+            2.5
+          ],
+          "spots_per_load": 4,
+          "deposit_seconds": 0,
+          "blocked_retry_seconds": 0.5,
+          "auto_deposit": false
+        },
+        "assumptions": [
+          "Standard generic profile from Byzantine raw units; only explicit economic techs are replayed. Treadmill Crane is excluded.",
+          "Integer carry rounded after each upgrade: base 10, Wheelbarrow 13, Heavy Plow 14, Hand Cart 21. Engine rounding is historical evidence, not a current executable trace.",
+          "Farm replenishment and buffer are separate from worker harvesting. Initial available pool is zero; listed farm food includes all food in this model.",
+          "Centered 2x2 work area reflects DE update 50292. Nine grid points and uniform choice excluding the previous point are a community-informed approximation.",
+          "Four equal portions per load approximate observed quarter-load moves. Variable portion sizes and occasional fifth stops are unresolved, tested separately.",
+          "No fixed stand timer: harvest rate and pool availability determine time at each spot. Instant deposits at body contact; no invented deposit animation delay.",
+          "Rigid circular collisions and shortest visibility routes approximate engine pathing. Farms are passable; mill is solid. Dynamic priority rotates every second.",
+          "Starts: finished farms, empty food pools, empty-handed workers at farm centers; walk to first chosen working spot. Initial construction excluded.",
+          "Reseed diagnostic deposits any final partial load, returns to the previous working spot, rebuilds for 15 seconds, and pays 60 wood from an external wood budget.",
+          "Not current-DE trajectory validation; do not use as a calibrated civilization-bonus predictor yet."
+        ]
+      },
+      "scenarioSignature": "0260d2d8ef576fae5740c85d8910522d97ef07e87857e405d9c65a7eb63eedf8",
+      "status": "scenario_estimate",
+      "rate": 0.42847178527441804,
+      "activeFraction": 0.8017997363882946,
+      "runs": [
+        {
+          "seed": 0,
+          "rate": 0.428450690711094,
+          "windowRate0to1800": 0.44230130172707705,
+          "reseeds": [
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            6,
+            6
+          ],
+          "activeFraction": 0.8018543584069852,
+          "checks": {
+            "inventory_error": 3.940732824503357e-7,
+            "resource_error": -3.457330421952065e-7,
+            "time_error": 7.317976269405335e-8,
+            "max_overlap": 0,
+            "max_static_overlap": 0,
+            "max_speed_error": 8.448103328007051e-16
+          }
+        },
+        {
+          "seed": 1,
+          "rate": 0.4283847604807347,
+          "windowRate0to1800": 0.44162774405818245,
+          "reseeds": [
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            6,
+            6
+          ],
+          "activeFraction": 0.8012769524914766,
+          "checks": {
+            "inventory_error": 3.930204144353411e-7,
+            "resource_error": -3.4469758247723803e-7,
+            "time_error": 7.340713636949658e-8,
+            "max_overlap": 0,
+            "max_static_overlap": 0,
+            "max_speed_error": 8.448103328007051e-16
+          }
+        },
+        {
+          "seed": 2,
+          "rate": 0.42857990463142553,
+          "windowRate0to1800": 0.4414709232335263,
+          "reseeds": [
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            7,
+            6,
+            6
+          ],
+          "activeFraction": 0.8022678982664219,
+          "checks": {
+            "inventory_error": 3.9353847114398377e-7,
+            "resource_error": -3.4515323932282627e-7,
+            "time_error": 7.345624908339232e-8,
+            "max_overlap": 0,
+            "max_static_overlap": 0,
+            "max_speed_error": 8.448103328007051e-16
+          }
+        }
+      ],
+      "auraApplied": false,
       "auraBuildingCostIncluded": false,
       "validation": "Controlled game observations still required"
     }

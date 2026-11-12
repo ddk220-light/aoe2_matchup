@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 
 RESOURCES = ("food", "wood", "gold", "stone")
-CONTEXT_SCHEMA_VERSION = 3
+CONTEXT_SCHEMA_VERSION = 4  # 4 (2026-11-12): curated corrections, rebates, research summaries, notes
 TRAINING_WINDOW_SECONDS = 60
 RESOURCE_WEIGHTS = {"food": 1, "wood": 1, "gold": 1.5, "stone": 3}
 MAX_ARMY = 27
@@ -91,7 +91,8 @@ def compiled_labor(cost, prices):
 def production_for_window(route, orders, units_per_purchase=1):
     """Whole buildings completing all purchase orders within the fixed window."""
     result = {**(route or {}), "windowSeconds": TRAINING_WINDOW_SECONDS,
-              "buildingCount": None, "investmentCost": None, "weightedInvestmentCost": None,
+              "buildingCount": None, "investmentCost": None, "grossInvestmentCost": None, "rebate": None,
+              "weightedInvestmentCost": None,
               "ordersPerBuilding": None, "trainingSeconds": None, "spareUnitCapacity": None}
     if route is None:
         return {**result, "status": "unresolved_training_route"}
@@ -105,9 +106,15 @@ def production_for_window(route, orders, units_per_purchase=1):
     if orders and not per_building:
         return {**result, "status": "training_exceeds_window"}
     count = math.ceil(orders / per_building) if orders else 0
+    # A completion rebate (Wu: +55 food per military building/Dock) is credited
+    # against each building; the gross cost stays visible.
+    rebate = resources(route.get("completionRebate") or {})
+    net = {r: v - rebate[r] for r, v in resources(route["cost"]).items()}
     return {**result, "status": "modeled", "buildingCount": count,
-            "investmentCost": {r: v * count for r, v in resources(route["cost"]).items()},
-            "weightedInvestmentCost": building_value(route["cost"]) * count,
+            "investmentCost": {r: v * count for r, v in net.items()},
+            "grossInvestmentCost": {r: v * count for r, v in resources(route["cost"]).items()},
+            "rebate": {r: v * count for r, v in rebate.items()},
+            "weightedInvestmentCost": building_value(net) * count,
             "trainingSeconds": math.ceil(orders / count) * seconds if orders else 0,
             "spareUnitCapacity": (count * per_building - orders) * units_per_purchase}
 

@@ -51,7 +51,11 @@ def test_reversing_display_preserves_the_original_fight_counts_and_evidence():
         assert reverse[2] == opposite[row[2]]
         assert reverse[3] == row[3]
         assert reverse[4:6] == row[4:6][::-1]
-        assert reverse[6:] == row[6:]
+        assert reverse[6:9] == row[6:9]
+        # Eco fields: categories and army investment swap sides, the winner's HP stays.
+        assert reverse[9:11] == row[9:11][::-1]
+        assert reverse[11] == row[11]
+        assert reverse[12:14] == row[12:14][::-1]
 
 
 def test_estimate_flags_and_original_provenance_survive_serving():

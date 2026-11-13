@@ -76,6 +76,9 @@ backend_sources.update((ROOT/'apps/backend/aoe2_api/data').glob('*.json'))
 # component version (simulator, engine, rankings) hashes it.
 backend_sources.update(ROOT/name for name in ['aoe2x/economy/__init__.py', 'aoe2x/economy/artefact.py',
                                               'data/army_economics/army_context.jsonl.gz'])
+# Advisor eco metrics (/api/advisor-matchups rows): gzip JSON beside the advisor DB, so the
+# *.db/*.json glob above does not pick it up.
+backend_sources.add(ROOT/'data/golden/advisor_cell_metrics.json.gz')
 backend_sources.update((ROOT/'aoe2x/js_simulation').glob('*.py'))
 # The existing release API fingerprints these sources; retain the same identity.
 backend_sources.update((ROOT/'aoe2x/js_simulation/src').rglob('*.js'))

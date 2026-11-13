@@ -53,7 +53,15 @@ LOSS = {"kite": "Kited loss", "dominance": "Outclassed loss", "eco": "Eco win", 
 
 
 def load_bundle(ref=BUNDLE_REF):
-    raw = subprocess.run(["git", "-C", str(REPO), "show", f"{ref}:{BUNDLE_PATH}"], capture_output=True, check=True).stdout
+    """The frozen campaign bundle, from git (branch ``matchup-runs``) or, when that ref is
+    not fetched, from a local copy at ``$ADVISOR_ECO_OUT/bundle.json.gz`` (same bytes)."""
+    shown = subprocess.run(["git", "-C", str(REPO), "show", f"{ref}:{BUNDLE_PATH}"], capture_output=True)
+    if shown.returncode == 0:
+        raw = shown.stdout
+    elif (OUT / "bundle.json.gz").is_file():
+        raw = (OUT / "bundle.json.gz").read_bytes()
+    else:
+        raise SystemExit(f"bundle not found: fetch {ref} (git fetch origin {ref}:{ref}) or put it at {OUT / 'bundle.json.gz'}")
     bundle = json.loads(gzip.decompress(raw))
     if bundle["bundleHash"] != BUNDLE_HASH:
         raise SystemExit(f"bundle hash {bundle['bundleHash']} != {BUNDLE_HASH}")

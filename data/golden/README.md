@@ -14,6 +14,7 @@ published per game build as GitHub Releases (`data-v<build>`,
 | `patches.db` | `python -m aoe2x.batch.patch_pipeline` | patch tracker pages; `get_current_build()` resolves the live build for every score lookup | each patch |
 | `civ_power_units/<build>.json` | `aoe2x.advisor.best_units.save_civ_power_units('<build>')` | matchup advisor rosters | on patch |
 | `civ_top_units.json` | `python -m aoe2x.advisor.top_units` | top-unit APIs / frontpage | on availability change |
+| `advisor_cell_metrics.json.gz` | `tools/economy/advisor_eco/build_advisor_metrics.py` (runbooks: "Advisor eco metrics") | `/api/advisor-matchups/<civ>` eco fields, `/api/advisor-catalog` `full_research_vm` | whenever `civ_matchups_first_pass.db` or the army-economics artefact changes |
 
 Sources upstream: the matchup baseline (`D:/AI/matchup_baseline_<build>.db`,
 not committed — too big; in the release assets) is produced by

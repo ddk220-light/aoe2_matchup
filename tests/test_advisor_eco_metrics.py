@@ -60,9 +60,10 @@ def test_every_served_row_carries_consistent_eco_fields():
                     # Up to ~1.07: a few winners end above their starting HP (regeneration).
                     assert hp is None or 0 <= hp <= 1.1
     # Revision 3 cell counts (docs/army-economics/ADVISOR_ECO_DESIGN.md), both display sides.
-    assert counts == {'plain_win': 91062, 'plain_loss': 91062, 'pending': 2 * 19647, 'power_win': 31231,
-                      'cheap_loss': 22568, 'close': 2 * 5606, 'eco_win': 8663, 'dominance': 3580,
-                      'outclassed_loss': 3580, 'kite': 97, 'kited_loss': 97}
+    # No pending cells since the 2026-11-13 re-simulation of the 19,647 formerly inferred cells.
+    assert counts == {'plain_win': 106799, 'plain_loss': 106799, 'power_win': 34315,
+                      'cheap_loss': 25461, 'close': 2 * 5610, 'eco_win': 8854, 'dominance': 4394,
+                      'outclassed_loss': 4394, 'kite': 105, 'kited_loss': 105}
 
 
 def test_full_research_package_for_the_upgrade_badge():

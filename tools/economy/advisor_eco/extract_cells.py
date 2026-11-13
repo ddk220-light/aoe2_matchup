@@ -12,6 +12,8 @@ owner 3 = context.profiles[1]):
   forecastValidation.seedResults / mismatchValidation.seedResults
       -> winnerOwner + winnerHpFraction (= winner remaining HP / its starting HP)
   recoveryValidation.measuredRecords -> unit/opponent starting + remaining HP
+  inferredResimValidation.seedResults (the 10,193 formerly rule-inferred contexts,
+      PC re-simulation 2026-11-13) -> winnerOwner + unit/opponent starting + remaining HP
   sourceRunIds (first-pass campaign, 9,315 contexts) -> run records read from git
       (``--runs-ref``, branch simulations/civ-matchups-campaign-2026-10-31), which
       carry unit/opponent starting + remaining HP.
@@ -98,6 +100,14 @@ def seeds_of(evidence, runs):
     for measured in evidence.get("recoveryValidation", {}).get("measuredRecords", []) or []:
         record = measured["record"]
         seeds.append(_record_seed(record, profiles, "recoveryValidation"))
+    for result in evidence.get("inferredResimValidation", {}).get("seedResults", []) or []:
+        # Owner 2 (unit*) = context.profiles[0], owner 3 (opponent*) = context.profiles[1].
+        frac = [result["unitRemainingHp"] / result["unitStartingHp"],
+                result["opponentRemainingHp"] / result["opponentStartingHp"]]
+        winner = {2: 0, 3: 1}.get(result["winnerOwner"])
+        seeds.append({"seed": result["seed"], "winner": winner, "frac": frac,
+                      "start": [result["unitStartingHp"], result["opponentStartingHp"]],
+                      "winnerFrac": None if winner is None else frac[winner], "source": "inferredResimValidation"})
     if not seeds:
         for reference in evidence.get("sourceRunIds", []) or []:
             if reference in runs:

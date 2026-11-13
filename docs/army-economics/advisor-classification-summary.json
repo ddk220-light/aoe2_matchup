@@ -18,67 +18,67 @@
   ]
  },
  "checks": {
-  "family agrees with bundle class": 130756,
-  "contexts with disableKiting": 58678,
-  "contexts": 58678
+  "family agrees with bundle class": 150403,
+  "contexts with disableKiting": 68871,
+  "contexts": 68871
  },
  "coverage": {
   "all": 151223,
   "identity": 820,
-  "inferred_pending": 19647,
-  "observed": 130756,
-  "observed_close": 4786,
-  "decided": 125970,
+  "inferred_pending": 0,
+  "observed": 150403,
+  "observed_close": 4790,
+  "decided": 145613,
   "decided_no_seed_hp": 962,
   "decided_eco_unavailable": 0
  },
  "sensitivity": {
   "hp<0.33 eco>=0.25": {
-   "Plain win / Plain loss": 87847,
-   "Power win / Cheap loss": 27169,
-   "Power win / Eco win": 3946,
-   "Complete dominance / Outclassed loss": 6795,
-   "Clear win (kite) / Kited loss": 97,
+   "Plain win / Plain loss": 103362,
+   "Power win / Cheap loss": 30219,
+   "Complete dominance / Outclassed loss": 7831,
+   "Power win / Eco win": 3980,
+   "Clear win (kite) / Kited loss": 105,
    "Power win / Cheap loss (HP unknown)": 116
   },
   "hp<0.33 eco>=0.33": {
-   "Plain win / Plain loss": 99531,
-   "Power win / Cheap loss": 18456,
-   "Power win / Eco win": 2918,
-   "Complete dominance / Outclassed loss": 4870,
-   "Clear win (kite) / Kited loss": 97,
+   "Plain win / Plain loss": 117139,
+   "Power win / Cheap loss": 20061,
+   "Power win / Eco win": 2929,
+   "Complete dominance / Outclassed loss": 5281,
+   "Clear win (kite) / Kited loss": 105,
    "Power win / Cheap loss (HP unknown)": 98
   },
   "hp<0.40 eco>=0.25": {
-   "Plain win / Plain loss": 89223,
-   "Power win / Cheap loss": 25591,
-   "Power win / Eco win": 5524,
-   "Complete dominance / Outclassed loss": 5419,
-   "Clear win (kite) / Kited loss": 97,
+   "Plain win / Plain loss": 104814,
+   "Power win / Cheap loss": 28594,
+   "Complete dominance / Outclassed loss": 6379,
+   "Power win / Eco win": 5605,
+   "Clear win (kite) / Kited loss": 105,
    "Power win / Cheap loss (HP unknown)": 116
   },
   "hp<0.40 eco>=0.33": {
-   "Plain win / Plain loss": 100571,
-   "Power win / Cheap loss": 17160,
-   "Power win / Eco win": 4214,
-   "Complete dominance / Outclassed loss": 3830,
-   "Clear win (kite) / Kited loss": 97,
+   "Plain win / Plain loss": 118233,
+   "Power win / Cheap loss": 18732,
+   "Power win / Eco win": 4258,
+   "Complete dominance / Outclassed loss": 4187,
+   "Clear win (kite) / Kited loss": 105,
    "Power win / Cheap loss (HP unknown)": 98
   },
   "hp<0.50 eco>=0.25": {
-   "Plain win / Plain loss": 91062,
-   "Power win / Cheap loss": 22452,
-   "Power win / Eco win": 8663,
-   "Complete dominance / Outclassed loss": 3580,
-   "Clear win (kite) / Kited loss": 97,
+   "Plain win / Plain loss": 106799,
+   "Power win / Cheap loss": 25345,
+   "Power win / Eco win": 8854,
+   "Complete dominance / Outclassed loss": 4394,
+   "Clear win (kite) / Kited loss": 105,
    "Power win / Cheap loss (HP unknown)": 116
   },
   "hp<0.50 eco>=0.33": {
-   "Plain win / Plain loss": 101872,
-   "Power win / Cheap loss": 14744,
-   "Power win / Eco win": 6630,
-   "Complete dominance / Outclassed loss": 2529,
-   "Clear win (kite) / Kited loss": 97,
+   "Plain win / Plain loss": 119595,
+   "Power win / Cheap loss": 16232,
+   "Power win / Eco win": 6758,
+   "Complete dominance / Outclassed loss": 2825,
+   "Clear win (kite) / Kited loss": 105,
    "Power win / Cheap loss (HP unknown)": 98
   }
  },
@@ -86,30 +86,30 @@
   {
    "winner": "Plain win",
    "loser": "Plain loss",
-   "cells": 91062,
-   "contexts": 39185,
-   "unitNamePairs": 3501
+   "cells": 106799,
+   "contexts": 47500,
+   "unitNamePairs": 3526
   },
   {
    "winner": "Power win",
    "loser": "Cheap loss",
-   "cells": 22452,
-   "contexts": 10985,
-   "unitNamePairs": 2026
+   "cells": 25345,
+   "contexts": 12470,
+   "unitNamePairs": 2069
   },
   {
    "winner": "Power win",
    "loser": "Eco win",
-   "cells": 8663,
-   "contexts": 4920,
-   "unitNamePairs": 1358
+   "cells": 8854,
+   "contexts": 5053,
+   "unitNamePairs": 1360
   },
   {
    "winner": "Complete dominance",
    "loser": "Outclassed loss",
-   "cells": 3580,
-   "contexts": 2507,
-   "unitNamePairs": 767
+   "cells": 4394,
+   "contexts": 3097,
+   "unitNamePairs": 786
   },
   {
    "winner": "Power win",
@@ -121,36 +121,36 @@
   {
    "winner": "Clear win (kite)",
    "loser": "Kited loss",
-   "cells": 97,
-   "contexts": 76,
-   "unitNamePairs": 34
+   "cells": 105,
+   "contexts": 83,
+   "unitNamePairs": 35
   }
  ],
  "kite": {
   "stats": {
-   "melee beats ranged": 39165,
-   "ranged beats melee": 23269,
-   "ranged beats melee, too slow to kite": 23172,
-   "melee beats ranged that could out-kite it (odd)": 392,
-   "  ... melee winner group Infantry": 345,
-   "kite rule applies": 97,
-   "without rule would be: Power win / Eco win": 57,
-   "category changed vs no-kite rule (not plain)": 93,
-   "eco-win label removed by kite rule": 57,
+   "melee beats ranged": 45917,
+   "ranged beats melee": 26951,
+   "ranged beats melee, too slow to kite": 26846,
+   "melee beats ranged that could out-kite it (odd)": 401,
+   "  ... melee winner group Infantry": 354,
+   "kite rule applies": 105,
+   "without rule would be: Power win / Eco win": 60,
+   "category changed vs no-kite rule (not plain)": 101,
+   "eco-win label removed by kite rule": 60,
    "  ... melee winner group Cavalry": 47,
-   "without rule would be: Power win / Cheap loss": 35,
+   "without rule would be: Power win / Cheap loss": 40,
    "without rule would be: Plain win / Plain loss": 4,
    "without rule would be: Complete dominance / Outclassed loss": 1,
    "close cells where the ranged side could out-kite the melee side": 22
   },
   "meleeLoserGroup": {
-   "Infantry": 97
+   "Infantry": 105
   },
   "topPairs": [
    [
     "Elite Conquistador",
     "Champion",
-    28
+    32
    ],
    [
     "Elite Conquistador",
@@ -168,6 +168,11 @@
     4
    ],
    [
+    "Elite Mangudai",
+    "Halberdier",
+    4
+   ],
+   [
     "Elite Arambai",
     "Halberdier",
     3
@@ -179,11 +184,6 @@
    ],
    [
     "Elite Kipchak",
-    "Halberdier",
-    3
-   ],
-   [
-    "Elite Mangudai",
     "Halberdier",
     3
    ],
@@ -227,7 +227,7 @@
    [
     "Elite Conquistador",
     "Champion",
-    25
+    28
    ],
    [
     "Elite Kipchak",
@@ -312,6 +312,11 @@
     42
    ],
    [
+    "Elite Genitour",
+    "Champion",
+    38
+   ],
+   [
     "Elite Kipchak",
     "Champion",
     34
@@ -322,14 +327,14 @@
     33
    ],
    [
-    "Elite Genitour",
-    "Champion",
-    33
-   ],
-   [
     "Elite Mameluke",
     "Halberdier",
-    14
+    15
+   ],
+   [
+    "Elite Genitour",
+    "Pikeman",
+    10
    ],
    [
     "Elite Conquistador",
@@ -343,8 +348,8 @@
    ],
    [
     "Elite Genitour",
-    "Pikeman",
-    9
+    "Two-Handed Swordsman",
+    7
    ],
    [
     "Elite Genitour",
@@ -370,14 +375,9 @@
     "Elite Genitour",
     "Elite Fire Lancer",
     5
-   ],
-   [
-    "Elite Genitour",
-    "Two-Handed Swordsman",
-    5
    ]
   ],
-  "oddRangedLosesButCanKiteCells": 392
+  "oddRangedLosesButCanKiteCells": 401
  },
  "badge": {
   "unitsWithFullCost": 554,
@@ -386,10 +386,10 @@
   ],
   "allNonIdentityCells": 150403,
   "cellsWithBadgeEitherSide": 23399,
-  "decidedCells": 125970,
-  "decidedWithBadgeEitherSide": 19724,
-  "decidedBadgeOnWinner": 4513,
-  "decidedBadgeOnLoser": 15211,
+  "decidedCells": 145613,
+  "decidedWithBadgeEitherSide": 22451,
+  "decidedBadgeOnWinner": 4954,
+  "decidedBadgeOnLoser": 17497,
   "allCellsRatio<=0.4": 12236,
   "allCellsRatio<=0.5": 23399,
   "allCellsRatio<=0.67": 57574

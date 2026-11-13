@@ -247,7 +247,7 @@ def write_outputs(plan: dict, out: Path, *, old: dict | None = None, new: dict |
         written["config.json"] = sha256_bytes((out / "config.json").read_bytes())
     public = {k: v for k, v in plan.items() if not k.startswith("_")}
     (out / "plan.json").write_text(json.dumps(public, indent=2) + "\n")
-    (out / "plan.md").write_text(render(public))
+    (out / "plan.md").write_text(render(public), encoding="utf-8")
     return written
 
 

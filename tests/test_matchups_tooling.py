@@ -293,6 +293,7 @@ def test_rb_commands_skip_without_the_research_branch():
 
 import gzip
 import os
+import socket
 import signal as _signal
 
 from aoe2x.matchups import export as X
@@ -405,12 +406,12 @@ def test_runner_lock_live_stale_and_recycled(tmp_path):
     lock.release()
     assert not path.exists()
     # stale: dead owner
-    path.write_text(json.dumps({"pid": _dead_pid(), "startTime": "1", "host": os.uname().nodename}))
+    path.write_text(json.dumps({"pid": _dead_pid(), "startTime": "1", "host": socket.gethostname()}))
     second = J.RunnerLock(path).acquire()
     assert second.cleared and second.held
     second.release()
     # recycled PID: our own PID but another start time is not a live owner
-    path.write_text(json.dumps({"pid": os.getpid(), "startTime": "-1", "host": os.uname().nodename}))
+    path.write_text(json.dumps({"pid": os.getpid(), "startTime": "-1", "host": socket.gethostname()}))
     assert J.RunnerLock(path).clear_stale()["cleared"]
     assert J.RunnerLock(path).clear_stale() == {"cleared": False, "reason": "no lock"}
 
@@ -692,7 +693,7 @@ def test_runner_stops_on_sigterm_and_stop_file(full_config, tmp_path, small_inve
 
     def script(job_id, seed, limit, payload):
         if len(backend.submitted) == 4:
-            os.kill(os.getpid(), _signal.SIGTERM)
+            _signal.raise_signal(_signal.SIGTERM)  # portable: os.kill terminates on Windows
         return fake_result(job_id, seed)
     runner, backend = _runner(cfg, script)
     assert runner.execute() == RN.EXIT_STOPPED

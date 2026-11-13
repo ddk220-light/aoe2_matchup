@@ -150,8 +150,41 @@ class Journal:
 
 # ------------------------------------------------------------------------ lock
 
+def _win_process(pid: int) -> tuple[bool, str | None]:
+    """Windows: (alive, creation time as FILETIME ticks or None if not readable).
+
+    ``os.kill(pid, 0)`` must never be used on Windows: there it calls
+    TerminateProcess (exit code 0) instead of probing, and there is no /proc.
+    """
+    import ctypes
+    from ctypes import wintypes
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    k32.OpenProcess.restype = wintypes.HANDLE
+    k32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    k32.GetExitCodeProcess.argtypes = (wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD))
+    k32.GetProcessTimes.argtypes = (wintypes.HANDLE,) + (ctypes.POINTER(wintypes.FILETIME),) * 4
+    k32.CloseHandle.argtypes = (wintypes.HANDLE,)
+    handle = k32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+    if not handle:
+        # ERROR_ACCESS_DENIED: the process exists but belongs to someone else.
+        return (ctypes.get_last_error() == 5, None)
+    try:
+        code = wintypes.DWORD()
+        if k32.GetExitCodeProcess(handle, ctypes.byref(code)) and code.value != 259:  # STILL_ACTIVE
+            return (False, None)
+        times = [wintypes.FILETIME() for _ in range(4)]
+        if not k32.GetProcessTimes(handle, *(ctypes.byref(t) for t in times)):
+            return (True, None)
+        return (True, str((times[0].dwHighDateTime << 32) | times[0].dwLowDateTime))
+    finally:
+        k32.CloseHandle(handle)
+
+
 def process_start_time(pid: int) -> str | None:
-    """Kernel start time of a process (clock ticks since boot), or None if it is not running."""
+    """Kernel start time of a process (clock ticks since boot; FILETIME creation time on
+    Windows), or None if it is not running."""
+    if os.name == "nt":
+        return _win_process(pid)[1]
     try:
         text = Path(f"/proc/{pid}/stat").read_text()
     except OSError:
@@ -166,6 +199,9 @@ def process_start_time(pid: int) -> str | None:
 def pid_alive(pid: int, start_time: str | None = None) -> bool:
     if not isinstance(pid, int) or pid <= 0:
         return False
+    if os.name == "nt":
+        alive, started = _win_process(pid)
+        return alive and (start_time is None or started is None or started == start_time)
     try:
         os.kill(pid, 0)
     except ProcessLookupError:

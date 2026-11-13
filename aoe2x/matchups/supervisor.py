@@ -26,7 +26,6 @@ new runner.
 """
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import signal
@@ -35,10 +34,43 @@ import sys
 import time
 from pathlib import Path
 
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
+
 from aoe2x.matchups import journal as J
 from aoe2x.matchups.runner import EXIT_DONE, EXIT_FAILED, EXIT_INTEGRITY, EXIT_LOCKED
 
 BACKOFF_START, BACKOFF_MAX, HEALTHY_SECONDS = 5.0, 300.0, 600.0
+WINDOWS = os.name == "nt"
+
+
+def _lock(lock_file) -> bool:
+    """Non-blocking exclusive lock of ``.supervisor.lock`` (flock; msvcrt byte lock on Windows)."""
+    if WINDOWS:
+        lock_file.seek(0)
+        try:
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+        except OSError:
+            return False
+        return True
+    try:
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        return False
+    return True
+
+
+def _unlock(lock_file) -> None:
+    if WINDOWS:
+        lock_file.seek(0)
+        try:
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+    else:
+        fcntl.flock(lock_file, fcntl.LOCK_UN)
 
 
 class Supervisor:
@@ -73,10 +105,20 @@ class Supervisor:
         J.write_json_atomic(self.R / "supervisor.json", self.status)
 
     # ---------------------------------------------------------------- control
+    def _stop_child(self) -> None:
+        """Ask the runner to stop. POSIX: SIGTERM. Windows has no SIGTERM delivery
+        (send_signal = TerminateProcess), so when the STOP file exists the runner is left
+        to see it (it polls it every second) and exit cleanly; otherwise it is terminated
+        (journals are crash-safe either way)."""
+        if not (self.child and self.child.poll() is None):
+            return
+        if WINDOWS and (self.R / "STOP").exists():
+            return
+        self.child.send_signal(signal.SIGTERM)
+
     def _signal(self, signum, _frame):
         self.stop_requested = signal.Signals(signum).name
-        if self.child and self.child.poll() is None:
-            self.child.send_signal(signal.SIGTERM)
+        self._stop_child()
 
     def _saved(self) -> int:
         return ((J.read_json(self.R / "state.json", {}) or {}).get("seeds") or {}).get("saved", 0)
@@ -95,8 +137,12 @@ class Supervisor:
         self.R.mkdir(parents=True, exist_ok=True)
         lock_file = open(self.R / ".supervisor.lock", "a+")
         try:
-            fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
+            locked = _lock(lock_file)
+        except Exception:
+            lock_file.close()
+            raise
+        if not locked:
+            lock_file.close()
             print(f"another supervisor holds {self.R / '.supervisor.lock'}", file=sys.stderr)
             return EXIT_LOCKED
         handlers = {s: signal.signal(s, self._signal) for s in (signal.SIGTERM, signal.SIGINT)}
@@ -118,7 +164,7 @@ class Supervisor:
                         self.beat("waiting-for-adopted-runner")
                         self._wait(min(self.heartbeat, 5.0))
                     if self.stop_requested or (self.R / "STOP").exists():
-                        if self._live_runner():
+                        if self._live_runner() and not (WINDOWS and (self.R / "STOP").exists()):
                             os.kill(owner["pid"], signal.SIGTERM)
                         continue
                     self.status["runnerPid"] = None
@@ -137,7 +183,7 @@ class Supervisor:
                         while waited < self.heartbeat and self.child.poll() is None:
                             if (self.R / "STOP").exists() and not self.stop_requested:
                                 self.stop_requested = "STOP file"
-                                self.child.send_signal(signal.SIGTERM)
+                                self._stop_child()
                             time.sleep(0.5)
                             waited += 0.5
                     code = self.child.returncode
@@ -174,12 +220,12 @@ class Supervisor:
                 backoff = min(BACKOFF_MAX, backoff * 2)
         finally:
             if self.child and self.child.poll() is None:
-                self.child.send_signal(signal.SIGTERM)
+                self._stop_child()
                 try:
-                    self.child.wait(timeout=30)
+                    self.child.wait(timeout=60 if WINDOWS else 30)
                 except subprocess.TimeoutExpired:
                     self.child.kill()
             for s, h in handlers.items():
                 signal.signal(s, h)
-            fcntl.flock(lock_file, fcntl.LOCK_UN)
+            _unlock(lock_file)
             lock_file.close()

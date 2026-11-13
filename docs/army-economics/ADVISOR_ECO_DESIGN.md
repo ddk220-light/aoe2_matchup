@@ -3,6 +3,9 @@
 ## Revision 4 — scoring model (owner request 2026-11-12)
 
 **Status (2026-11-13): wired into the site on branch `advisor-eco`** (not yet on `staging`).
+**Update 2026-11-13 (later):** the 19,647 inferred cells were re-simulated and merged
+(runbooks §9); no cell is `pending` any more and all 3,080 plans use simulated evidence
+(88 mains and 193 supports changed). Counts quoted below predate that update.
 The live advisor page now runs Revision 4 with the default weights:
 
 - Data: `data/golden/advisor_cell_metrics.json.gz` (1.3 MB; built by

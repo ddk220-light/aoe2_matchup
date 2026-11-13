@@ -537,9 +537,19 @@ The categories, winner HP and 60-second army investment come from the committed
 `data/golden/advisor_cell_metrics.json.gz`, which is tied to one advisor DB
 (`data/golden/civ_matchups_first_pass.db`, SHA-256 recorded in the file and checked by
 `tests/test_advisor_eco_metrics.py`). Rebuild it whenever that DB or the army-economics
-artefact (`data/army_economics/army_context.jsonl.gz`) changes — in particular when the PC
-re-simulation of the 19,647 inferred ("pending") cells lands on branch
-`results/inferred-2026-resim-pc`.
+artefact (`data/army_economics/army_context.jsonl.gz`) changes.
+
+**Done 2026-11-13: PC re-simulation of the 19,647 inferred ("pending") cells.** Source:
+`matchup-runs` commit 72d55423f, `data/matchup_runs/inferred-2026-resim-pc/` (snapshot
+`673d7f8a…`; the two seed-0 watchdog contexts use the owner-requested `alternate-seed-1/`).
+Run: `git archive 72d55423f data/matchup_runs/inferred-2026-resim-pc | tar -x -C $RUN`, then
+`python scripts/apply_advisor_inferred_resim.py --baseline <copy of the old DB> --snapshot
+$RUN/data/matchup_runs/inferred-2026-resim-pc --output data/golden/civ_matchups_first_pass.db
+--report data/golden/civ_matchups_first_pass.inferred-resim.json` (seeds in
+`inferredResimValidation.seedResults`, read by `extract_cells.py`), then steps 2–8 below
+(plus `classify.py`, copied to `docs/army-economics/advisor-classification*`). Result: 4
+contexts / 5 cells changed outcome, 0 `pending` cells, 962 decided cells still without seed
+HP (first-pass runs missing from git), 88 plan mains and 193 supports changed.
 
 1. **Advisor DB.** Merge the new results into `civ_matchups_first_pass.db` with the tooling
    that produced them (not part of this runbook). Re-simulated cells must become

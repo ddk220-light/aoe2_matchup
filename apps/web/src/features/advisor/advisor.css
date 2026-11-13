@@ -65,18 +65,41 @@
 .ma-main .ma-coverage strong { font-size: 1.75rem; }
 .ma-coverage small { display: block; font-size: var(--fs-xs); color: var(--text-muted); }
 
-.ma-match-line { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; align-items: center; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
-.ma-match-label { font-size: var(--fs-sm); line-height: 1.3; color: var(--text-muted); }
+.ma-match-line { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; align-items: center; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
+.ma-match-label { font-size: var(--fs-sm); line-height: 1.25; color: var(--text-muted); }
 .ma-line-win .ma-match-label { color: var(--strong); }
+.ma-line-eco .ma-match-label { color: var(--eco); }
 .ma-line-loss .ma-match-label { color: var(--poor); }
+.ma-line-pending .ma-match-label { font-style: italic; }
 .ma-opponents { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
-.ma-match { width: 40px; height: 40px; flex: 0 0 auto; padding: 2px; border: 0; border-bottom: 3px solid var(--strong); border-radius: 4px; background: var(--bg-hover); cursor: pointer; }
+/* Result colour on the bottom edge: green wins, amber cheap losses, red losses, grey close; dashed = pending. */
+.ma-match { position: relative; width: 40px; height: 40px; flex: 0 0 auto; padding: 2px; border: 0; border-bottom: 3px solid var(--strong); border-radius: 4px; background: var(--bg-hover); cursor: pointer; }
+.ma-match-eco { border-bottom-color: var(--eco); }
 .ma-match-loss { border-bottom-color: var(--poor); }
 .ma-match-close { border-bottom-color: var(--border-light); }
+.ma-cat-dominance, .ma-cat-kite { background: var(--strong-tint); }
+.ma-cat-outclassed_loss, .ma-cat-kited_loss { background: var(--poor-tint); }
+.ma-match-pending { border-bottom-style: dashed; border-bottom-color: var(--text-dim); background: var(--bg); box-shadow: inset 0 0 0 1px var(--border); }
+.ma-match-pending .ma-opponent-icon { opacity: .7; }
 .ma-match:hover, .ma-match:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 .ma-opponent-icon { display: block; width: 36px; height: 33px; object-fit: contain; border-radius: 3px; }
+/* "Cheaper to fully upgrade" marker: a small corner tab. */
+.ma-upgrade-mark { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--situational); box-shadow: 0 0 0 2px var(--surface-elevated); }
+.ma-match > .ma-upgrade-mark { position: absolute; top: 1px; right: 1px; }
+.ma-upgrade-inline, .ma-badge .ma-upgrade-mark { margin-right: 5px; vertical-align: 1px; box-shadow: none; }
+.ma-badges { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 4px 0 2px; }
+.ma-badge { font-size: var(--fs-xs); line-height: 1.4; color: var(--text-muted); padding: 1px 7px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); cursor: help; }
+.ma-badge-pending { border-style: dashed; }
 
-.ma-sidekick { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--border); }
+.ma-sidekick { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); gap: 12px; align-items: start; padding: 12px 16px; border-top: 1px solid var(--border); }
+.ma-helps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ma-help { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ma-help-text { min-width: 0; font-size: var(--fs-sm); line-height: 1.3; }
+.ma-help-text strong { font-weight: 600; }
+.ma-help-kind { color: var(--text-muted); }
+.ma-help-kind::before { content: "· "; }
+.ma-help-why { display: block; color: var(--text-muted); }
+.ma-pending-tag { font-size: var(--fs-xs); font-style: italic; color: var(--text-dim); border: 1px dashed var(--border-light); border-radius: 8px; padding: 0 5px; }
 .ma-support-heading { min-width: 0; }
 .ma-support-unit { display: flex; align-items: center; gap: 10px; }
 .ma-support-unit h3 { font-family: var(--font-body); font-size: var(--fs-md); font-weight: 600; line-height: 1.2; margin: 0; }
@@ -94,6 +117,14 @@
 .ma-counter-targets .ma-match-label { display: none; }
 .ma-additions > .ma-match-line { margin-top: 8px; }
 .ma-additions > .ma-short-note { display: block; }
+
+.ma-legend-box { margin: -6px 0 16px; font-size: var(--fs-sm); color: var(--text-muted); max-width: 100ch; }
+.ma-legend-box > summary { cursor: pointer; width: fit-content; color: var(--text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--border-light); }
+.ma-legend-list { list-style: none; margin: 10px 0 8px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 6px 24px; }
+.ma-legend-list li { display: flex; align-items: baseline; gap: 8px; line-height: 1.4; }
+.ma-legend-list b { color: var(--text); font-weight: 600; white-space: nowrap; }
+.ma-match.ma-legend-swatch { display: inline-block; flex: none; width: 16px; height: 11px; padding: 0; border-radius: 2px; cursor: default; }
+.ma-legend-box > p { margin: 0; line-height: 1.5; }
 
 .ma-team > header { margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-light); }
 
@@ -118,5 +149,6 @@
   .ma-chooser { padding: 12px 10px 8px; margin-left: -4px; margin-right: -4px; }
   .ma-chooser-head .civ-filter { width: 100%; }
   .ma-sidekick { grid-template-columns: 1fr; gap: 8px; }
+  .ma-match-line { grid-template-columns: 1fr; gap: 4px; }
   .ma-detail { bottom: 10px; padding: 16px; }
 }

@@ -82,3 +82,5 @@ python -m aoe2x.matchups inventory inferred-2026-resim-pc
 python -m aoe2x.matchups supervise inferred-2026-resim-pc --node <node 24 path>
 python -m aoe2x.matchups export inferred-2026-resim-pc
 ```
+
+Running it on the owner's Windows PC (parallelism, pause/resume, returning results): see `RUN_ON_LOCAL_PC.md`.

@@ -67,3 +67,18 @@ stopped. Blocked contexts (four timeouts: 180/600/1,800/3,600 s) are listed by
 
 Expected: ~15,900 seeds by the planner's model; pilot measured 1.03 seeds/context
 and ~730 seeds/h on 3 workers (≈ 14 h total).
+
+## Portable copy for another machine: `inferred-2026-resim-pc`
+
+`configs/inferred-2026-resim-pc.json` is the same run with no machine-specific
+paths: the selection/priors files are committed under
+`aoe2x/matchups/inputs/inferred-2026-resim/` (same sha256 as above) and records
+go to `${MATCHUP_RUNS_STORE}/inferred-2026-resim-pc` (default
+`~/.cache/aoe2-matchup-runs/`). No RB or result index needed to run it:
+
+```bash
+python -m aoe2x.matchups freeze inferred-2026-resim-pc
+python -m aoe2x.matchups inventory inferred-2026-resim-pc
+python -m aoe2x.matchups supervise inferred-2026-resim-pc --node <node 24 path>
+python -m aoe2x.matchups export inferred-2026-resim-pc
+```

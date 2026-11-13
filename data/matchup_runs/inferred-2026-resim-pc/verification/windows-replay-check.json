@@ -1,0 +1,1012 @@
+{
+  "sampler": "replay-check-strata-v1",
+  "perStratum": 3,
+  "engineId": "frozen-civ-matchups-v3",
+  "node": {
+    "binary": "C:/Users/ddk22/AppData/Local/OpenAI/Codex/runtimes/cua_node/bbc9141fe9f920ac/bin/node.exe",
+    "version": "v24.22.1"
+  },
+  "platform": {
+    "system": "Windows",
+    "machine": "AMD64",
+    "python": "3.13.14"
+  },
+  "checkedAt": "2026-11-13T15:05:10+00:00",
+  "bundleHash": "201cec0cdfac7ad218748051451350070e6a353f833d52d97094f74ddb23b813",
+  "scenarioSetHash": "f8b09a201ba63cc3227628ddd10699bc9821da26c0dbcb87dcd4b4daf37137ab",
+  "comparedFields": [
+    "outcome",
+    "winnerOwner",
+    "ticks",
+    "unitStartingHp",
+    "opponentStartingHp",
+    "unitRemainingHp",
+    "opponentRemainingHp",
+    "unitSurvivors",
+    "opponentSurvivors",
+    "finalStateHash",
+    "eventLogHash"
+  ],
+  "sampleDigest": "7958fd22af86e9add3cade0881312ff09468e2a227ba4e2371c42892ffc85b8d",
+  "seeds": 60,
+  "identical": 60,
+  "allIdentical": true,
+  "strata": {
+    "draw": 6,
+    "long": 6,
+    "loss|melee_vs_melee": 6,
+    "loss|melee_vs_ranged": 6,
+    "loss|ranged_vs_melee": 6,
+    "loss|ranged_vs_ranged": 6,
+    "win|melee_vs_melee": 6,
+    "win|melee_vs_ranged": 6,
+    "win|ranged_vs_melee": 6,
+    "win|ranged_vs_ranged": 6
+  },
+  "campaigns": {
+    "forecast-validation-2026-11-07": 30,
+    "mismatch-validation-2026-11-05": 30
+  },
+  "checks": [
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|melee_vs_melee",
+      "matchupId": "mv_85cb85c344b969ddba4e25d7",
+      "seed": 2,
+      "teamKeys": [
+        "Dravidians|halberdier",
+        "Koreans|halberdier"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 2942,
+      "archivedWallSeconds": 39.95916591599584,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 16.525488599999996
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|melee_vs_melee",
+      "matchupId": "mv_151084e7a9d346928f4adc9d",
+      "seed": 2,
+      "teamKeys": [
+        "Persians|elite_war_elephant_persians",
+        "Teutons|halberdier"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 1690,
+      "archivedWallSeconds": 14.943760917000473,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 7.8727425
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|melee_vs_melee",
+      "matchupId": "mv_54a6ff1839f3056bd7fae269",
+      "seed": 2,
+      "teamKeys": [
+        "Wu|champion",
+        "Bengalis|hussar"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 1950,
+      "archivedWallSeconds": 40.592950608998535,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 13.700058299999998
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|melee_vs_ranged",
+      "matchupId": "mv_4657c88db6486ec401e91ea5",
+      "seed": 1,
+      "teamKeys": [
+        "Dravidians|champion",
+        "Mayans|elite_plumed_archer_mayans"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 3351,
+      "archivedWallSeconds": 11.599080880001187,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 4.0586639
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|melee_vs_ranged",
+      "matchupId": "mv_90a0e60dde51c7d1b3244f08",
+      "seed": 0,
+      "teamKeys": [
+        "Aztecs|elite_jaguar_warrior_aztecs",
+        "Shu|war_chariot_shu"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 1705,
+      "archivedWallSeconds": 7.362147681996226,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 3.5240627
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|melee_vs_ranged",
+      "matchupId": "mv_5c72dbb17f09c45f6b645976",
+      "seed": 2,
+      "teamKeys": [
+        "Wu|paladin",
+        "Sicilians|heavy_scorpion"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 2040,
+      "archivedWallSeconds": 16.919960915997624,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 7.4043134
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|ranged_vs_melee",
+      "matchupId": "mv_96fee5852e4d4c7a2977a220",
+      "seed": 1,
+      "teamKeys": [
+        "Shu|war_chariot_shu",
+        "Khitans|hussar"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 2262,
+      "archivedWallSeconds": 7.005471178010106,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 3.8272769
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|ranged_vs_melee",
+      "matchupId": "mv_c067d28a717bb00b76a5997c",
+      "seed": 1,
+      "teamKeys": [
+        "Bohemians|elite_hussite_wagon_bohemians",
+        "Dravidians|halberdier"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 2312,
+      "archivedWallSeconds": 6.587558016002178,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 3.5888928
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|ranged_vs_melee",
+      "matchupId": "mv_080a4074e950f9ed75c562f1",
+      "seed": 0,
+      "teamKeys": [
+        "Hindustanis|hand_cannoneer",
+        "Dravidians|champion"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 1589,
+      "archivedWallSeconds": 4.086555580000393,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 5.7758136
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|ranged_vs_ranged",
+      "matchupId": "mv_cddbb95dd1a8976058880035",
+      "seed": 0,
+      "teamKeys": [
+        "Ethiopians|arbalester",
+        "Incas|imp_slinger"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 2044,
+      "archivedWallSeconds": 5.3969847159981725,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 5.9922412
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|ranged_vs_ranged",
+      "matchupId": "mv_33d79f770477308538f6187d",
+      "seed": 2,
+      "teamKeys": [
+        "Malians|elite_gbeto_malians",
+        "Sicilians|imp_elite_skirm"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 1591,
+      "archivedWallSeconds": 4.959288944002241,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 6.1057022
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "win|ranged_vs_ranged",
+      "matchupId": "mv_cf3bece3af41cdd2992ec49a",
+      "seed": 2,
+      "teamKeys": [
+        "Burmese|elite_arambai_burmese",
+        "Britons|arbalester"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 1823,
+      "archivedWallSeconds": 4.979242221996188,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 6.331498100000001
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|melee_vs_melee",
+      "matchupId": "mv_7097c9e227a815a669b08d8e",
+      "seed": 1,
+      "teamKeys": [
+        "Ethiopians|champion",
+        "Malians|paladin"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 1655,
+      "archivedWallSeconds": 18.528303424984216,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 14.2870228
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|melee_vs_melee",
+      "matchupId": "mv_349dafb0173010ddb871db36",
+      "seed": 2,
+      "teamKeys": [
+        "Mayans|elite_eagle",
+        "Huns|elite_tarkan_huns"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 3207,
+      "archivedWallSeconds": 41.53747432500124,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 21.2196705
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|melee_vs_melee",
+      "matchupId": "mv_71f318643c531063e6ec4fd5",
+      "seed": 1,
+      "teamKeys": [
+        "Burgundians|elite_coustillier_burgundians",
+        "Ethiopians|heavy_camel"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 2056,
+      "archivedWallSeconds": 35.886906382009386,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 19.128987400000003
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|melee_vs_ranged",
+      "matchupId": "mv_850d32e0d63f063fad494793",
+      "seed": 2,
+      "teamKeys": [
+        "Turks|halberdier",
+        "Gurjaras|elite_chakram_thrower_gurjaras"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 809,
+      "archivedWallSeconds": 2.6155865679979327,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 7.6221243
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|melee_vs_ranged",
+      "matchupId": "mv_dbcd8c32db78d5a4a84afebc",
+      "seed": 2,
+      "teamKeys": [
+        "Aztecs|halberdier",
+        "Chinese|elite_chu_ko_nu_chinese"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 1186,
+      "archivedWallSeconds": 4.677175350010395,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 9.583068299999999
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|melee_vs_ranged",
+      "matchupId": "mv_3304b698dee08ee6d06485af",
+      "seed": 4,
+      "teamKeys": [
+        "Gurjaras|heavy_camel",
+        "Saracens|arbalester"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 4574,
+      "archivedWallSeconds": 10.970678328000009,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 11.720409599999998
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|ranged_vs_melee",
+      "matchupId": "mv_9ef20091c0063c0b2835642d",
+      "seed": 0,
+      "teamKeys": [
+        "Khmer|heavy_cav_archer",
+        "Portuguese|paladin"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 2994,
+      "archivedWallSeconds": 10.036052624017,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 13.2575839
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|ranged_vs_melee",
+      "matchupId": "mv_51e3b156d9c61f56ed2ac766",
+      "seed": 0,
+      "teamKeys": [
+        "Saracens|hand_cannoneer",
+        "Armenians|paladin"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 2068,
+      "archivedWallSeconds": 6.502310275971889,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 12.900785699999998
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|ranged_vs_melee",
+      "matchupId": "mv_97b30b2cd73c07445cb47053",
+      "seed": 8,
+      "teamKeys": [
+        "Jurchens|grenadier_jurchens",
+        "Sicilians|paladin"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 2015,
+      "archivedWallSeconds": 6.467241539999843,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 14.434935900000001
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|ranged_vs_ranged",
+      "matchupId": "mv_bed02661f0792f47e9d3eed9",
+      "seed": 1,
+      "teamKeys": [
+        "Burgundians|heavy_scorpion",
+        "Britons|arbalester"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 1995,
+      "archivedWallSeconds": 8.482768887996674,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 16.4081871
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|ranged_vs_ranged",
+      "matchupId": "mv_0332d54b474f3fbba6b7f4c3",
+      "seed": 0,
+      "teamKeys": [
+        "Sicilians|heavy_scorpion",
+        "Spanish|elite_conquistador_spanish"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 3106,
+      "archivedWallSeconds": 12.486818215000444,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 18.8429238
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "loss|ranged_vs_ranged",
+      "matchupId": "mv_cf92b130560330857bedcb1d",
+      "seed": 2,
+      "teamKeys": [
+        "Chinese|elite_chu_ko_nu_chinese",
+        "Armenians|elite_composite_bowman_armenians"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 2338,
+      "archivedWallSeconds": 6.23306790600007,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 17.007574899999998
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "draw",
+      "matchupId": "mv_b8f9303249333308e2c9dc40",
+      "seed": 0,
+      "teamKeys": [
+        "Tupi|arbalester",
+        "Vikings|paladin"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 4041,
+      "archivedWallSeconds": 7.380374746009707,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 18.035109799999997
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "draw",
+      "matchupId": "mv_f62fafe8ce2ff44bd991a96e",
+      "seed": 7,
+      "teamKeys": [
+        "Italians|hand_cannoneer",
+        "Britons|imp_elite_skirm"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 3822,
+      "archivedWallSeconds": 8.433291129976512,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 17.1731442
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "draw",
+      "matchupId": "mv_9e3982eb737b4605cdaf3fe6",
+      "seed": 4,
+      "teamKeys": [
+        "Gurjaras|elite_chakram_thrower_gurjaras",
+        "Ethiopians|arbalester"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 2409,
+      "archivedWallSeconds": 6.710492217004299,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 19.283426
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "long",
+      "matchupId": "mv_a90c4e22b8037c4e6b6a9ef9",
+      "seed": 2,
+      "teamKeys": [
+        "Bengalis|elite_ele_archer",
+        "Gurjaras|elite_ele_archer"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 9051,
+      "archivedWallSeconds": 28.579018183991312,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 28.237916000000002
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "long",
+      "matchupId": "mv_678d78f03540a38aadd1c40f",
+      "seed": 7,
+      "teamKeys": [
+        "Bohemians|halberdier",
+        "Turks|imp_elite_skirm"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 10754,
+      "archivedWallSeconds": 18.578886026000138,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 25.9183934
+    },
+    {
+      "campaign": "mismatch-validation-2026-11-05",
+      "stratum": "long",
+      "matchupId": "mv_aa11d16ac250cbc971b9f02e",
+      "seed": 1,
+      "teamKeys": [
+        "Spanish|imp_elite_skirm",
+        "Shu|war_chariot_shu"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 10411,
+      "archivedWallSeconds": 29.306513023003937,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 28.7640575
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|melee_vs_melee",
+      "matchupId": "fv_feff49cf6325421a48720c25",
+      "seed": 1,
+      "teamKeys": [
+        "Bulgarians|champion",
+        "Mongols|elite_steppe"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 3004,
+      "archivedWallSeconds": 21.779275611000134,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 28.6781902
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|melee_vs_melee",
+      "matchupId": "fv_b6c5d4ae0334d595c5eebb33",
+      "seed": 0,
+      "teamKeys": [
+        "Berbers|paladin",
+        "Mongols|elite_steppe"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 3821,
+      "archivedWallSeconds": 25.666963820999488,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 29.8996684
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|melee_vs_melee",
+      "matchupId": "fv_31d909fc61d636fe7abaf622",
+      "seed": 0,
+      "teamKeys": [
+        "Portuguese|champion",
+        "Burmese|hussar"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 2425,
+      "archivedWallSeconds": 40.01252215301991,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 34.1277004
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|melee_vs_ranged",
+      "matchupId": "fv_5f1d028f38be0db8df2764af",
+      "seed": 0,
+      "teamKeys": [
+        "Cumans|elite_steppe",
+        "Malay|heavy_cav_archer"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 1554,
+      "archivedWallSeconds": 36.757825628995896,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 22.020863900000002
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|melee_vs_ranged",
+      "matchupId": "fv_39d5c4eb209f437c8d5c2f14",
+      "seed": 4,
+      "teamKeys": [
+        "Magyars|champion",
+        "Goths|arbalester"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 2668,
+      "archivedWallSeconds": 6.651298440001905,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 24.4255483
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|melee_vs_ranged",
+      "matchupId": "fv_13d05dc898d2a650b28fe95e",
+      "seed": 0,
+      "teamKeys": [
+        "Japanese|elite_samurai_japanese",
+        "Malians|arbalester"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 1822,
+      "archivedWallSeconds": 6.070681060001254,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 24.876501700000002
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|ranged_vs_melee",
+      "matchupId": "fv_18480a759e24e2b3377a723d",
+      "seed": 0,
+      "teamKeys": [
+        "Portuguese|hand_cannoneer",
+        "Cumans|heavy_camel"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 3291,
+      "archivedWallSeconds": 7.300474881999195,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 28.1431621
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|ranged_vs_melee",
+      "matchupId": "fv_639e6e00be0826a7084f3043",
+      "seed": 2,
+      "teamKeys": [
+        "Mapuche|imp_slinger",
+        "Varangians|champion"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 2440,
+      "archivedWallSeconds": 7.459869000002742,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 28.7239365
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|ranged_vs_melee",
+      "matchupId": "fv_a1f9e249aa3a09b79ad57a0b",
+      "seed": 2,
+      "teamKeys": [
+        "Vietnamese|elite_rattan_archer_vietnamese",
+        "Koreans|paladin"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 2959,
+      "archivedWallSeconds": 6.35277393900603,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 29.163108900000005
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|ranged_vs_ranged",
+      "matchupId": "fv_46b0d3272582148b9d68499d",
+      "seed": 1,
+      "teamKeys": [
+        "Wu|elite_fire_archer_wu",
+        "Celts|heavy_mounted_crossbowman"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 2328,
+      "archivedWallSeconds": 7.537927286997437,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 31.5508129
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|ranged_vs_ranged",
+      "matchupId": "fv_317df31bd309bf7f5d89e6f8",
+      "seed": 0,
+      "teamKeys": [
+        "Italians|arbalester",
+        "Gurjaras|imp_elite_skirm"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 2947,
+      "archivedWallSeconds": 5.586591933004558,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 31.6340756
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "win|ranged_vs_ranged",
+      "matchupId": "fv_119c3e74d955d594d5dbad4c",
+      "seed": 2,
+      "teamKeys": [
+        "Sicilians|heavy_mounted_crossbowman",
+        "Teutons|heavy_mounted_crossbowman"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 3884,
+      "archivedWallSeconds": 10.694744258001446,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 34.414625
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|melee_vs_melee",
+      "matchupId": "fv_5b4fc5bd430cbbeed71b4201",
+      "seed": 0,
+      "teamKeys": [
+        "Portuguese|champion",
+        "Khmer|elite_elephant"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 1595,
+      "archivedWallSeconds": 15.454183173984289,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 36.0043169
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|melee_vs_melee",
+      "matchupId": "fv_98fce1055c6cf102fa30aa74",
+      "seed": 0,
+      "teamKeys": [
+        "Incas|halberdier",
+        "Muisca|elite_champi_warrior"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 1979,
+      "archivedWallSeconds": 36.3127842900008,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 40.531760299999995
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|melee_vs_melee",
+      "matchupId": "fv_f2b2cae8feb4c7046241ce69",
+      "seed": 7,
+      "teamKeys": [
+        "Malay|champion",
+        "Lithuanians|champion"
+      ],
+      "family": "melee_vs_melee",
+      "archivedTicks": 2629,
+      "archivedWallSeconds": 23.32538042999804,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 40.0708913
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|melee_vs_ranged",
+      "matchupId": "fv_d3bc12fc7055db37f376cf89",
+      "seed": 0,
+      "teamKeys": [
+        "Magyars|champion",
+        "Franks|hand_cannoneer"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 1266,
+      "archivedWallSeconds": 3.994723116993904,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 31.7519845
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|melee_vs_ranged",
+      "matchupId": "fv_5bc9f891b6f98338a9bff431",
+      "seed": 0,
+      "teamKeys": [
+        "Dravidians|hussar",
+        "Huns|heavy_cav_archer"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 1472,
+      "archivedWallSeconds": 7.7388250289857385,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 33.939747000000004
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|melee_vs_ranged",
+      "matchupId": "fv_dc68cb1591cd7432532ca821",
+      "seed": 0,
+      "teamKeys": [
+        "Portuguese|halberdier",
+        "Italians|hand_cannoneer"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 1029,
+      "archivedWallSeconds": 2.691704111009836,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 33.197837400000004
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|ranged_vs_melee",
+      "matchupId": "fv_20df9825dc94d36db55b0434",
+      "seed": 0,
+      "teamKeys": [
+        "Wu|heavy_cav_archer",
+        "Lithuanians|elite_leitis_lithuanians"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 1934,
+      "archivedWallSeconds": 8.767402972996235,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 35.4611624
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|ranged_vs_melee",
+      "matchupId": "fv_817d7b671ec18c403b290268",
+      "seed": 0,
+      "teamKeys": [
+        "Mayans|imp_elite_skirm",
+        "Bengalis|elite_elephant"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 1887,
+      "archivedWallSeconds": 5.40065268599987,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 35.953644600000004
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|ranged_vs_melee",
+      "matchupId": "fv_64575062d89573100d1cc26c",
+      "seed": 8,
+      "teamKeys": [
+        "Vietnamese|imp_elite_skirm",
+        "Malay|hussar"
+      ],
+      "family": "ranged_vs_melee",
+      "archivedTicks": 3759,
+      "archivedWallSeconds": 8.786265009000898,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 38.4255384
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|ranged_vs_ranged",
+      "matchupId": "fv_3e961f5ed91bdfe2cce0054b",
+      "seed": 0,
+      "teamKeys": [
+        "Tupi|arbalester",
+        "Huns|heavy_cav_archer"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 2719,
+      "archivedWallSeconds": 8.818818854004144,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 38.5194119
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|ranged_vs_ranged",
+      "matchupId": "fv_0bb7155faba303a49b894470",
+      "seed": 0,
+      "teamKeys": [
+        "Burgundians|hand_cannoneer",
+        "Koreans|elite_war_wagon_koreans"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 1919,
+      "archivedWallSeconds": 6.895621306985617,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 37.2915938
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "loss|ranged_vs_ranged",
+      "matchupId": "fv_10c40769c00cb1df30d640ef",
+      "seed": 0,
+      "teamKeys": [
+        "Gurjaras|arbalester",
+        "Khmer|elite_ballista_elephant_khmer"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 1154,
+      "archivedWallSeconds": 3.246676906019449,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 37.026368
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "draw",
+      "matchupId": "fv_31d7a3258b8237f14df4cbc3",
+      "seed": 0,
+      "teamKeys": [
+        "Italians|imp_elite_skirm",
+        "Lithuanians|imp_elite_skirm"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 6413,
+      "archivedWallSeconds": 10.233923371002078,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 40.8222843
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "draw",
+      "matchupId": "fv_c1c49056014e600047d59671",
+      "seed": 9,
+      "teamKeys": [
+        "Franks|elite_throwing_axeman_franks",
+        "Incas|imp_slinger"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 2986,
+      "archivedWallSeconds": 5.090475794002414,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 38.526454
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "draw",
+      "matchupId": "fv_10e711f217fe63a317c9b227",
+      "seed": 6,
+      "teamKeys": [
+        "Spanish|hand_cannoneer",
+        "Wu|elite_fire_archer_wu"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 3181,
+      "archivedWallSeconds": 5.7788430309966206,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 39.8229171
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "long",
+      "matchupId": "fv_1930bcbe52fcade56439aaf8",
+      "seed": 2,
+      "teamKeys": [
+        "Dravidians|imp_elite_skirm",
+        "Shu|war_chariot_shu"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 9377,
+      "archivedWallSeconds": 31.245306774020197,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 46.6828309
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "long",
+      "matchupId": "fv_b857baf72bd40cd980422174",
+      "seed": 0,
+      "teamKeys": [
+        "Poles|elite_obuch_poles",
+        "Tupi|imp_slinger"
+      ],
+      "family": "melee_vs_ranged",
+      "archivedTicks": 11880,
+      "archivedWallSeconds": 14.56681947800517,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 44.3580061
+    },
+    {
+      "campaign": "forecast-validation-2026-11-07",
+      "stratum": "long",
+      "matchupId": "fv_e7c3eb6b4b0ca6659624532f",
+      "seed": 0,
+      "teamKeys": [
+        "Saracens|imp_elite_skirm",
+        "Shu|war_chariot_shu"
+      ],
+      "family": "ranged_vs_ranged",
+      "archivedTicks": 11391,
+      "archivedWallSeconds": 26.843027693003418,
+      "identical": true,
+      "differences": {},
+      "wallSeconds": 49.055137200000004
+    }
+  ]
+}

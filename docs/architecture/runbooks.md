@@ -529,6 +529,64 @@ deploying, and obtain explicit approval for that production action.**
 
 ---
 
+## 9. Advisor eco metrics (Matchup Advisor Revision 4)
+
+The live advisor (`/matchup-advisor`, browser model `apps/web/src/features/advisor/model.mjs`)
+scores every matchup by its Revision 3 category (docs/army-economics/ADVISOR_ECO_DESIGN.md).
+The categories, winner HP and 60-second army investment come from the committed
+`data/golden/advisor_cell_metrics.json.gz`, which is tied to one advisor DB
+(`data/golden/civ_matchups_first_pass.db`, SHA-256 recorded in the file and checked by
+`tests/test_advisor_eco_metrics.py`). Rebuild it whenever that DB or the army-economics
+artefact (`data/army_economics/army_context.jsonl.gz`) changes — in particular when the PC
+re-simulation of the 19,647 inferred ("pending") cells lands on branch
+`results/inferred-2026-resim-pc`.
+
+1. **Advisor DB.** Merge the new results into `civ_matchups_first_pass.db` with the tooling
+   that produced them (not part of this runbook). Re-simulated cells must become
+   `evidence_type='observed'` with seed records `extract_cells.py` can read
+   (`forecastValidation`/`mismatchValidation.seedResults` with `winnerOwner` +
+   `winnerHpFraction`, `recoveryValidation.measuredRecords`, or `sourceRunIds`). If the
+   re-simulation stores seeds in another shape, extend `seeds_of()` in
+   `tools/economy/advisor_eco/extract_cells.py` first; a cell without seed HP gets
+   `winner_hp = null` (power wins then become "Cheap loss (HP unknown)" for the loser).
+2. **Per-cell extraction** (~10 min single process, 4 jobs ≈ 3 min):
+   ```sh
+   export ADVISOR_ECO_OUT=/path/to/scratch
+   git fetch origin simulations/civ-matchups-campaign-2026-10-31   # first-pass run records (sourceRunIds)
+   python tools/economy/advisor_eco/extract_cells.py --jobs 4       # -> $ADVISOR_ECO_OUT/cells.csv.gz
+   ```
+3. **Kite-rule bundle:** `git fetch origin matchup-runs:matchup-runs`, or copy the bundle to
+   `$ADVISOR_ECO_OUT/bundle.json.gz` (hash-checked by `classify.load_bundle`).
+4. **Metrics file:** `python tools/economy/advisor_eco/build_advisor_metrics.py`
+   (≈ 5 s; deterministic bytes). Add `--check-classification` only when
+   `docs/army-economics/advisor-classification.csv.gz` was built from the same DB
+   (`python tools/economy/advisor_eco/classify.py`, then copy `classification.csv.gz` there).
+5. **Python reference plans:** `python tools/economy/advisor_eco/impact_rev4.py` (≈ 1 min;
+   rewrites `docs/army-economics/advisor-plans-rev4.json.gz`; copy `impact_rev4.json` to
+   `advisor-plans-rev4-summary.json`).
+6. **Browser parity fixture:** `python tools/economy/advisor_eco/build_advisor_parity_fixture.py`
+   (Python ≥ 3.12: the model's `sum()` is CPython's compensated sum, which `pySum` reproduces).
+   It must print `differences vs advisor-plans-rev4.json.gz: 0`.
+7. **Tests:** update the Revision 3 cell counts in
+   `tests/test_advisor_eco_metrics.py::test_every_served_row_carries_consistent_eco_fields`
+   (and the evidence-type counts in `tests/test_advisor_first_pass.py`) to the new DB, then
+   `pytest tests/test_advisor_eco_metrics.py tests/test_advisor_first_pass.py` and
+   `node --test tests/advisor_model.test.mjs tests/advisor/*.test.mjs` (all 3,080 plans).
+8. **Release:** `python scripts/migration/prepare_release.py`, `node scripts/migration/check_release.mjs frontend`
+   / `backend`, `python scripts/migration/verify_build.py`, `npm run build --prefix apps/web`,
+   then `git checkout vercel.json`. Commit `data/golden/advisor_cell_metrics.json.gz`,
+   `tests/advisor/fixtures/rev4-plans.json.gz`, the refreshed `docs/army-economics/` outputs and
+   `docs/migration/milestone-3/data-export-verification.json` on a branch off `staging`.
+
+**Tuning the weights:** every number lives in `WEIGHTS` / `CONFIG` at the top of
+`apps/web/src/features/advisor/model.mjs`; change `WEIGHT_SETS["default"]` / `CONFIG` in
+`tools/economy/advisor_eco/advisor_model_rev4.py` identically, then run steps 5–6 and the
+node tests (the parity test also checks that both files hold the same settings).
+Category thresholds (HP 50%, cheaper by 25%, kite range) live in `classify.py` and need
+steps 4–8.
+
+---
+
 ## Update triggers
 
 | If this changes | Update these sections |
@@ -543,3 +601,4 @@ deploying, and obtain explicit approval for that production action.**
 | `aoe2x/dbgen/patches/` gains a new surgical patch | §1 step 4.2, §7 (and `patch_pipeline.py` itself) |
 | Matchup DB schema or baseline workflow | §1, §7 (and `docs/matchup-baseline.md`) |
 | Civilization supplement, page composition or media contract | §8 |
+| `data/golden/civ_matchups_first_pass.db`, the army-economics artefact, advisor weights or category thresholds | §9 |

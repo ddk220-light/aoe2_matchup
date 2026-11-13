@@ -1,8 +1,10 @@
 """Revision 4 scratch advisor model (owner request 2026-11-12): category-weighted scoring
 with an opponent-strength multiplier, no Scorpion mains, trash-or-Scorpion support.
 
-Not site code. Python only (no JS twin yet). See docs/army-economics/ADVISOR_ECO_DESIGN.md,
-"Revision 4". Everything tunable lives in WEIGHT_SETS and CONFIG.
+The reference for the site's browser model apps/web/src/features/advisor/model.mjs (default
+weights; parity test tests/advisor/rev4-parity.test.mjs, fixture from
+build_advisor_parity_fixture.py). See docs/army-economics/ADVISOR_ECO_DESIGN.md, "Revision 4".
+Everything tunable lives in WEIGHT_SETS and CONFIG; change model.mjs WEIGHTS/CONFIG with it.
 
 Per plan (own civ X vs enemy civ Y), every own-unit x enemy-unit row gets one category
 from the own unit's side (classify.py, Revision 3 rules; inferred cells = "pending",

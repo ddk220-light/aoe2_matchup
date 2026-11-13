@@ -2,9 +2,25 @@
 
 ## Revision 4 — scoring model (owner request 2026-11-12)
 
-**Status:** scratch model and analysis only; no site code or published data changed.
-Model: `tools/economy/advisor_eco/advisor_model_rev4.py` (Python only; no JS twin yet —
-worth writing once the weights are agreed). Runner: `impact_rev4.py` (≈ 1 min,
+**Status (2026-11-13): wired into the site on branch `advisor-eco`** (not yet on `staging`).
+The live advisor page now runs Revision 4 with the default weights:
+
+- Data: `data/golden/advisor_cell_metrics.json.gz` (1.3 MB; built by
+  `tools/economy/advisor_eco/build_advisor_metrics.py` from `cells.csv.gz` + the campaign
+  bundle) holds every observed cell's two categories, winner HP and both 60-s investments,
+  and every unit's full research package. `/api/advisor-matchups/<civ>` rows carry
+  `category_a, category_b, winner_hp, vm_a, vm_b` (advisor component schema 3); inferred
+  cells are `pending`, identity/close cells `close`. Rebuild after a re-simulation:
+  `docs/architecture/runbooks.md` §9.
+- Browser: `apps/web/src/features/advisor/model.mjs` is the JS port (weights and settings in
+  `WEIGHTS` / `CONFIG`); `tests/advisor/rev4-parity.test.mjs` checks all 3,080 plans against
+  this Python model (main, support, targets, helps, additions, scores, enemy strength:
+  0 differences). The page shows each matchup's category, the support's helps with their
+  reason, a "cheaper to fully upgrade" mark and badge, a legend and pending marks.
+- Rounding: the published winner HP has 4 decimals and investments 2; the Python model on
+  those rounded values gives exactly the plans in `advisor-plans-rev4.json.gz`.
+
+Model: `tools/economy/advisor_eco/advisor_model_rev4.py` (the reference). Runner: `impact_rev4.py` (≈ 1 min,
 single process). Per-plan output for all 3,080 plans:
 `docs/army-economics/advisor-plans-rev4.json.gz` (default weights in full, plus the live
 plan, the Revision 3 plan and the main/support under the eco and combat weight sets).

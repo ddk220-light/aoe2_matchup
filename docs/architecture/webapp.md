@@ -120,8 +120,12 @@ Keep each component's inputs separate: a component's version hashes only its own
 files, so adding or changing one never moves another's `/data/<version>/` URLs
 (economics deliberately lives outside `data/golden/` and `aoe2x/js_simulation/`,
 which the simulator and engine versions hash). Where the browser computes from
-the data (economy), the Python code stays the reference and a committed fixture
-pins the JS port to it (`tests/economy/matchup-parity.test.mjs`).
+the data (economy, advisor), the Python code stays the reference and a committed fixture
+pins the JS port to it (`tests/economy/matchup-parity.test.mjs`,
+`tests/advisor/rev4-parity.test.mjs` for the Revision 4 advisor model against
+`tools/economy/advisor_eco/advisor_model_rev4.py`, all 3,080 plans). Advisor component
+schema 3: each `/api/advisor-matchups/<civ>` row is the nine saved fields plus
+`category_a, category_b, winner_hp, vm_a, vm_b` (`row_fields` in every document).
 
 ## Static and media assets
 
@@ -146,7 +150,7 @@ All connections are short-lived read-only SQLite connections (`connect_readonly(
 | `get_sim_ref_db()` / `get_rankings_ref_db()` (`aoe2_api/web.py`) | `data/golden/aoe2_reference_simulation.db` / `aoe2_reference_rankings.db` | 56-civ rosters for the V3 battle config, site catalog and rankings |
 | `get_rankings_derived_db()` (`aoe2_api/web.py`) | `data/golden/derived_data_v3.db` | published ranking scores (see [derived-data.md](derived-data.md)) |
 | `patches_db.get_current_build()` | `data/golden/patches.db` | `patches` etc. `get_current_build()` is the single build resolver every score lookup goes through; patch pages are built at build time by `scripts/migration/site/patches.py` |
-| advisor service (`aoe2_api/services/advisor.py`) | `data/golden/civ_matchups_first_pass.db` | `/api/advisor-*` |
+| advisor service (`aoe2_api/services/advisor.py`) | `data/golden/civ_matchups_first_pass.db` + `data/golden/advisor_cell_metrics.json.gz` (per-cell Revision 4 eco fields; runbooks §9) | `/api/advisor-*` |
 | economy service (`aoe2_api/services/economy.py`) | `data/army_economics/army_context.jsonl.gz` (gzip JSON Lines, not SQLite; `aoe2x/economy/artefact.py`) | `/api/economy*` |
 | `best_units.py` module paths | `aoe2_reference.db`, `derived_data.db`, `pool_scores.db` | advisor recommendations and percentiles |
 

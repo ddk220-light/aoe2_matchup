@@ -22,7 +22,8 @@ def test_complete_saved_matrix_and_all_civilizations():
             'observed': 67645, 'inferred': 22730, 'identity': 820, 'predicted_unvalidated': 60028,
         })
         assert dict(db.execute('SELECT evidence_type, COUNT(*) FROM cells GROUP BY evidence_type')) == expected
-        assert {'observed', 'inferred', 'identity'} <= set(expected) <= {'observed', 'inferred', 'identity', 'predicted_unvalidated'}
+        # Since the 2026-11-13 re-simulation every non-identity cell is simulated evidence.
+        assert expected == {'observed': 151223 - 820, 'identity': 820}
         assert sum(expected.values()) == 151223
         assert db.execute("SELECT COUNT(*) FROM cells WHERE outcome='unresolved'").fetchone()[0] == 0
 

@@ -1,0 +1,92 @@
+{
+  "status": "passed",
+  "description": "Owner PC re-simulation of the 10,193 rule-inferred contexts (19,647 displayed cells): frozen-civ-matchups-v3 engine, frozen 2026 mechanics/scenarios/army counts, one-three-ten sampling; the two contexts whose seed 0 exhausted every watchdog step use the owner-requested seed-1 results (provenance owner_requested_alternate_seed).",
+  "runId": "inferred-2026-resim-pc",
+  "runHash": "046b49d8929fc778df2b0c244ed82abcc6b53ecb0441ffc7ef81fe29b8242253",
+  "snapshotHash": "673d7f8a27bc5a1bc3fa38db70d293602cf3dd28f19766778a670ae1d0edbeca",
+  "sourceCommit": "72d55423ff2455f678acf91038eaabcf313f4b36",
+  "sourceBranch": "matchup-runs",
+  "sourcePath": "data/matchup_runs/inferred-2026-resim-pc",
+  "runSourceCommit": "71ad0fc4993a36dc198823bcabeb51bd408e6c3a",
+  "physicsVersion": "frozen-civ-matchups-v3",
+  "engineId": "frozen-civ-matchups-v3",
+  "executionVersion": "lossless-event-stream-v1",
+  "nodeVersion": "v24.22.1",
+  "alternateSeedSource": "data/matchup_runs/inferred-2026-resim-pc/alternate-seed-1/runs.jsonl",
+  "rowFields": {
+    "run": "inferred-2026-resim-pc@<snapshotHash[:12]>",
+    "sourceCommit": "commit[:9]",
+    "ownerOrientation": "seedResults winnerOwner 2 = context.profiles[0], 3 = context.profiles[1]",
+    "journal": "validationRunIds <jobId>:<seed> -> evidence/runs.jsonl.gz (hashes, timings)",
+    "originalCellFlagsAndTiers": "all [0, \"\"]"
+  },
+  "simulationExecutions": 0,
+  "cellOutcome:a_win": 9552,
+  "cellOutcome:b_win": 10091,
+  "cellOutcome:close_uncertain": 4,
+  "changedOutcomeCells": 5,
+  "changedOutcomeContexts": 4,
+  "contextOutcome:a_win": 5455,
+  "contextOutcome:b_win": 4735,
+  "contextOutcome:close_uncertain": 3,
+  "evidenceLevel:multi_seed_validation": 169,
+  "evidenceLevel:single_alternate_seed": 2,
+  "evidenceLevel:single_seed_confirmation": 10022,
+  "provenance:original_campaign": 10191,
+  "provenance:owner_requested_alternate_seed": 2,
+  "reviewedCells": 19647,
+  "reviewedContexts": 10193,
+  "seedRecords": 10552,
+  "teamKeyCellsChecked": 10133,
+  "untouchedCellsIdentical": 131576,
+  "untouchedEvidenceRowsByteIdentical": 58723,
+  "changedContexts": [
+    {
+      "evidenceId": 20286,
+      "jobId": "cm_528469da03691e02e274f979",
+      "teamKeys": [
+        "Burgundians|hand_cannoneer",
+        "Franks|hand_cannoneer"
+      ],
+      "prior": "a_win",
+      "outcome": "close_uncertain",
+      "cells": 2
+    },
+    {
+      "evidenceId": 12062,
+      "jobId": "cm_5c2f18c065823f7cd1763cf8",
+      "teamKeys": [
+        "Varangians|heavy_mounted_crossbowman",
+        "Berbers|hussar"
+      ],
+      "prior": "b_win",
+      "outcome": "close_uncertain",
+      "cells": 1
+    },
+    {
+      "evidenceId": 57356,
+      "jobId": "cm_9c18abc78140b2457a97fdef",
+      "teamKeys": [
+        "Varangians|heavy_mounted_crossbowman",
+        "Magyars|hussar"
+      ],
+      "prior": "b_win",
+      "outcome": "close_uncertain",
+      "cells": 1
+    },
+    {
+      "evidenceId": 56291,
+      "jobId": "cm_c562b22f64957fe07747b6f3",
+      "teamKeys": [
+        "Malay|champion",
+        "Lithuanians|hussar"
+      ],
+      "prior": "a_win",
+      "outcome": "b_win",
+      "cells": 1
+    }
+  ],
+  "baselineDatabaseSha256": "bdbbeacfc8dffc190d3b477fc0e7657f1d324d69ec4704f43211af0a774f34ea",
+  "servingDatabaseSha256": "39db9086c60babef860e80b69e3424d7e3237d5ea3255c5db099163abb480afe",
+  "servingDatabaseBytes": 102563840
+}

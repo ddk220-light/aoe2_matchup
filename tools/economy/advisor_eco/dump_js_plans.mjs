@@ -1,9 +1,9 @@
-// Run the real advisor model (apps/web/src/features/advisor/model.mjs) on
-// pairs given as JSON lines {left, right, rows} on stdin; prints JSON lines of
-// compact plans (same shape as advisor_model.summary). Used by check_js_parity.py.
+// Run the pre-Revision-4 live advisor model (model_live_pre_rev4.mjs, a frozen copy of
+// apps/web/src/features/advisor/model.mjs at d43113234) on pairs given as JSON lines {left, right, rows}
+// on stdin; prints JSON lines of compact plans (same shape as advisor_model.summary). Used by check_js_parity.py.
 import {createInterface} from 'node:readline';
 import {readFileSync} from 'node:fs';
-import {buildAdvisorRecommendations} from '../../../apps/web/src/features/advisor/model.mjs';
+import {buildAdvisorRecommendations} from './model_live_pre_rev4.mjs';
 
 const units = new Map(JSON.parse(readFileSync(process.argv[2], 'utf8')).map(u => [u.id, u]));
 const id = entry => entry ? entry.unit.id : null;

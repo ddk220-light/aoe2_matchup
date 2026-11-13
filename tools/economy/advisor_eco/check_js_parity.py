@@ -1,6 +1,6 @@
 """Check that advisor_model.py (variant "current") reproduces the real JS model.
 
-Runs apps/web/src/features/advisor/model.mjs through node (dump_js_plans.mjs) for
+Runs the pre-Revision-4 live model (model_live_pre_rev4.mjs) through node (dump_js_plans.mjs) for
 all 1,540 civilization pairs and compares main, sidekick, additions, unanswered,
 uncovered, alternatives and the main unit's win/loss lists with the Python port.
 Usage: python tools/economy/advisor_eco/check_js_parity.py

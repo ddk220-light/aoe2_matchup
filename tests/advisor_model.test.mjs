@@ -1,127 +1,135 @@
+// Behaviour of the Revision 4 advisor model on small hand-made rosters. The full parity check
+// against the Python reference (all 3,080 plans) is tests/advisor/rev4-parity.test.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildAdvisorRecommendations as build, unitWeight, invertMatchup} from '../apps/web/src/features/advisor/model.mjs';
+import {buildAdvisorRecommendations as build, cheaperToUpgrade, helpValue, invertMatchup, pyRound, rowInfo, struggles,
+    WEIGHTS} from '../apps/web/src/features/advisor/model.mjs';
 
-const unit = (id, gold = 20, name = `Unit ${id}`) => ({id, key: `unit-${id}`, name, costs: {food: 50, wood: 0, gold}});
-function matrix(own, enemy, outcome) {
-    return own.flatMap(a => enemy.map(b => [a.id, b.id, outcome(a.id, b.id), 'observed', 27, 19, 'source-tier', 0, 1]));
+const unit = (id, gold = 20, name = `Unit ${id}`, full = 100) => ({id, key: `unit-${id}`, name, costs: {food: 50, wood: 0, gold}, full_research_vm: full});
+const MIRROR = {dominance: 'outclassed_loss', kite: 'kited_loss', plain_win: 'plain_loss', power_win: 'cheap_loss',
+    eco_win: 'power_win', cheap_loss: 'power_win', plain_loss: 'plain_win', kited_loss: 'kite', outclassed_loss: 'dominance'};
+/** A served row from a's side; `cat` is a's category; hp is the winner's HP. */
+function row(a, b, cat, {hp = 0.6, vmA = 100, vmB = 100, evidence = 'observed'} = {}) {
+    if (cat === 'close') return [a, b, 'close_uncertain', evidence, 27, 27, '', 0, 1, 'close', 'close', null, vmA, vmB];
+    if (cat === 'pending_win' || cat === 'pending_loss') return [a, b, cat === 'pending_win' ? 'a_win' : 'b_win', 'inferred', 27, 27, '', 0, 1, 'pending', 'pending', null, null, null];
+    const won = ['dominance', 'kite', 'plain_win', 'power_win'].includes(cat);
+    return [a, b, won ? 'a_win' : 'b_win', evidence, 27, 27, '', 0, 1, cat, MIRROR[cat], hp, vmA, vmB];
 }
+const plan = (own, enemy, rows) => build(rows, [...own, ...enemy]).left;
 
-test('gold is 1, every zero-gold variant is 0.5, and Scorpions have no siege discount', () => {
-    assert.equal(unitWeight(unit(1)), 1);
-    assert.equal(unitWeight(unit(2, 0, 'Trash Crossbowman')), 0.5);
-    assert.equal(unitWeight(unit(3, 75, 'Heavy Scorpion')), 1);
+test('weights and settings are the default Revision 4 set', () => {
+    assert.deepEqual({...WEIGHTS}, {dominance: 1.5, kite: 1.5, plain_win: 1, power_win: 0.6, eco_win: 0.25, close: 0,
+        cheap_loss: -0.25, plain_loss: -0.5, kited_loss: -0.75, outclassed_loss: -0.75});
 });
 
-test('beating a broad enemy threat outweighs collecting more harmless wins', () => {
-    const own = [unit(1), unit(2), unit(3), unit(4), unit(5), unit(6, 0)];
-    const enemy = [unit(101), unit(102), unit(103)];
-    const rows = matrix(own, enemy, (a, b) => (a === 1) === (b === 101) ? 'a_win' : 'b_win');
-    const plan = build(rows, [...own, ...enemy]).left;
-    assert.equal(plan.main.unit.id, 1);
-    assert.equal(plan.main.wins.length, 1);
-    assert.equal(plan.threats.get(101), 5.5);
-    assert.equal(plan.main.score, 5.5);
-    assert.equal(plan.alternatives[0].score, 4);
-});
-
-test('an enemy with no wins still has its basic resource weight', () => {
-    const own = [unit(1), unit(2, 0)], enemy = [unit(101), unit(102, 0)];
-    const plan = build(matrix(own, enemy, () => 'a_win'), [...own, ...enemy]).left;
-    assert.equal(plan.threats.get(101), 1);
-    assert.equal(plan.threats.get(102), 0.5);
-    assert.equal(plan.main.score, 1.5);
-    assert.equal(plan.uncovered.length, 0);
-});
-
-test('trash support prioritizes dangerous counters to its main over more cheap counters', () => {
-    const own = [unit(1), unit(2, 0), unit(3, 0), unit(4)], enemy = [unit(101), unit(102, 0), unit(103, 0), unit(104)];
-    const wins = new Set(['1:104', '2:101', '3:102', '3:103', '4:102', '4:103']);
-    const rows = matrix(own, enemy, (a,b) => wins.has(`${a}:${b}`) ? 'a_win' : 'b_win');
-    const plan = build(rows, [...own, ...enemy]).left;
-    assert.equal(plan.main.unit.id, 1);
-    assert.equal(plan.sidekick.unit.id, 2);
-    assert.equal(plan.sidekick.coverScore, 3.5);
-    assert.deepEqual(plan.sidekick.covers.map(row => row[1]), [101]);
-    assert.deepEqual(plan.uncovered.map(row => row[1]), [102, 103]);
-    assert.ok(plan.alternatives.every(entry => ![1,2].includes(entry.unit.id)));
-});
-
-test('a close result cannot be counted as a winning sidekick counter', () => {
-    const own = [unit(1), unit(2, 0)], enemy = [unit(101), unit(102)];
-    const rows = matrix(own, enemy, (a,b) => b === 101 ? (a === 1 ? 'b_win' : 'close_uncertain') : a === 1 ? 'a_win' : 'b_win');
-    const plan = build(rows, [...own, ...enemy]).left;
-    assert.equal(plan.sidekick.covers.length, 0);
-    assert.equal(plan.sidekick.holdsClose.length, 1);
-    assert.equal(plan.sidekick.coverScore, 0);
-    assert.deepEqual(plan.uncovered.map(row => row[1]), [101]);
-});
-
-test('main prefers viable gold; support stays no-gold; alternatives are three distinct winners', () => {
-    const own = [unit(1,20,'A'), unit(2,0), unit(3,20,'B'), unit(4,20,'C'), unit(5,20,'D'), unit(6,20,'E'), unit(7,20,'F'), unit(8,20,'No wins')];
+test('Scorpions are never the main; a gold main with a win is preferred over a stronger trash unit', () => {
+    const own = [unit(1, 75, 'Heavy Scorpion'), unit(2, 0, 'Halberdier'), unit(3, 20, 'Knight')];
     const enemy = [unit(101), unit(102)];
-    const rows = matrix(own, enemy, a => a === 8 ? 'b_win' : 'a_win');
-    const plan = build(rows, [...own, ...enemy]).left;
-    assert.equal(plan.main.unit.id, 1);
-    assert.equal(plan.sidekick.unit.id, 2);
-    assert.deepEqual(plan.alternatives.map(entry => entry.unit.id), [3,4,5]);
-    assert.equal(new Set([plan.main, plan.sidekick, ...plan.alternatives].map(entry => entry.unit.id)).size, 5);
+    const rows = [row(1, 101, 'dominance'), row(1, 102, 'dominance'), row(2, 101, 'dominance'), row(2, 102, 'plain_win'),
+        row(3, 101, 'plain_win'), row(3, 102, 'plain_loss')];
+    const p = plan(own, enemy, rows);
+    assert.equal(p.topOverall.unit.id, 1);
+    assert.equal(p.topEligible.unit.id, 2);
+    assert.equal(p.main.unit.id, 3);
 });
 
-test('when no gold unit can win, use the effective no-gold main and a distinct support', () => {
-    const own = [unit(1),unit(2,0),unit(3,0)], enemy = [unit(101)];
-    const plan = build(matrix(own, enemy, a => a === 2 ? 'a_win' : 'b_win'), [...own,...enemy]).left;
-    assert.equal(plan.main.unit.id, 2);
-    assert.equal(plan.sidekick.unit.id, 3);
-    assert.deepEqual(plan.alternatives, []);
+test('opponent strength: wins over the strongest enemy count most, losses to it least', () => {
+    const own = [unit(1), unit(2)], enemy = [unit(101), unit(102)];
+    // Enemy 101 beats both of our units (strong), 102 loses to both (weak).
+    const p = plan(own, enemy, [row(1, 101, 'plain_loss'), row(1, 102, 'plain_win'), row(2, 101, 'plain_loss'), row(2, 102, 'plain_win')]);
+    assert.equal(p.strength.get(101), 1.5);
+    assert.equal(p.strength.get(102), 0.5);
+    // Each own unit: loss to 101 (-0.5 x (2 - 1.5)) + win over 102 (1.0 x 0.5).
+    assert.equal(p.main.adv, -0.25 + 0.5);
 });
 
-test('swapping sides preserves directed outcomes and army counts without changing source rows', () => {
-    const own = [unit(1),unit(2,0)], enemy = [unit(101),unit(102,0)];
-    const rows = matrix(own,enemy,(a,b) => a === 1 && b === 102 ? 'a_win' : 'b_win');
-    const original = structuredClone(rows), catalog = [...own,...enemy];
-    const first = build(rows,catalog), reverse = build(rows.map(invertMatchup),catalog);
-    assert.equal(first.right.main.unit.id, reverse.left.main.unit.id);
-    assert.equal(first.right.main.score, reverse.left.main.score);
-    assert.equal(first.right.sidekick.unit.id, reverse.left.sidekick.unit.id);
-    assert.equal(reverse.left.main.matches[0][4], 19);
-    assert.equal(reverse.left.main.matches[0][5], 27);
-    assert.deepEqual(rows, original);
+test('support is trash or a Scorpion and helps where the main loses or struggles', () => {
+    const own = [unit(1, 20, 'Paladin'), unit(2, 0, 'Pikeman'), unit(3, 75, 'Heavy Scorpion'), unit(4, 20, 'Arbalester')];
+    const enemy = [unit(101, 20, 'Camel'), unit(102, 20, 'Archer')];
+    const rows = [
+        row(1, 101, 'plain_loss'), row(1, 102, 'plain_win', {hp: 0.3}),          // main loses to 101, struggles vs 102
+        row(2, 101, 'plain_win'), row(2, 102, 'plain_loss'),                    // trash turns the loss into a win
+        row(3, 101, 'plain_loss'), row(3, 102, 'plain_win', {hp: 0.9}),         // Scorpion: same win, more HP
+        row(4, 101, 'dominance'), row(4, 102, 'dominance'),                     // gold: never support
+    ];
+    const p = plan(own, enemy, rows);
+    assert.equal(p.main.unit.id, 4);
+    const q = plan(own.filter(u => u.id !== 4), enemy, rows.filter(r => r[0] !== 4));
+    assert.equal(q.main.unit.id, 1);
+    assert.deepEqual(q.targets.map(t => t[1]), ['loss', 'struggle']);
+    assert.equal(q.support.entry.unit.id, 2);
+    assert.deepEqual(q.support.helps.map(h => [h.opp, h.why, h.value]), [[101, 'better', 1.5]]);
+    const scorpion = q.supportCandidates.find(c => c.entry.unit.id === 3);
+    assert.deepEqual(scorpion.helps.map(h => [h.opp, h.why, h.value]), [[102, 'more_hp', 0.25]]);
+    assert.ok(q.supportCandidates.every(c => c.entry.unit.costs.gold === 0 || c.entry.unit.name.includes('Scorpion')));
 });
 
-test('evidence labels and flags never affect recommendations or their scores', () => {
-    const own = [unit(1),unit(2,0)], enemy = [unit(101),unit(102,0)];
-    const rows = matrix(own,enemy,(a,b) => a === 1 || b === 101 ? 'a_win' : 'b_win');
-    const changed = rows.map(row => [row[0],row[1],row[2],'predicted_unvalidated',row[4],row[5],'other-tier',3,999]);
-    const a = build(rows,[...own,...enemy]), b = build(changed,[...own,...enemy]);
-    for (const side of ['left','right']) {
-        assert.equal(a[side].main.unit.id,b[side].main.unit.id);
-        assert.equal(a[side].main.score,b[side].main.score);
-        assert.equal(a[side].sidekick?.unit.id,b[side].sidekick?.unit.id);
-        assert.equal(a[side].sidekick?.coverScore,b[side].sidekick?.coverScore);
-    }
+test('same-result help: 15 HP points more or a 25% cheaper army', () => {
+    const win = (hp, vm) => rowInfo(row(1, 2, 'plain_win', {hp, vmA: vm}));
+    assert.deepEqual(helpValue(win(0.65, 100), win(0.5, 100)), [0.25, 'more_hp']);
+    assert.deepEqual(helpValue(win(0.64, 100), win(0.5, 100)), [0, null]);
+    assert.deepEqual(helpValue(win(0.5, 75), win(0.5, 100)), [0.25, 'cheaper']);
+    assert.deepEqual(helpValue(win(0.5, 76), win(0.5, 100)), [0, null]);
+    assert.deepEqual(helpValue(rowInfo(row(1, 2, 'cheap_loss')), rowInfo(row(1, 2, 'outclassed_loss'))), [0.5, 'better']);
 });
 
-test('one additional unit can answer multiple remaining threats using winning matchups', () => {
-    const own = [unit(1),unit(2,0),unit(3),unit(4),unit(5)];
-    const enemy = [unit(101),unit(102,0),unit(103,0)];
-    const wins = new Set(['1:101','3:102','3:103','4:102']);
-    const rows = matrix(own,enemy,(a,b) => wins.has(`${a}:${b}`) ? 'a_win' : 'b_win');
-    const plan = build(rows,[...own,...enemy]).left;
-    assert.equal(plan.main.unit.id,1);
-    assert.equal(plan.sidekick.unit.id,2);
-    assert.equal(plan.additions.length,1);
-    assert.equal(plan.additions[0].unit.id,3);
-    assert.deepEqual(new Set(plan.additions[0].covers.map(row=>row[1])),new Set([102,103]));
-    assert.ok(plan.additions[0].covers.every(row=>row[0]===3 && row[2]==='a_win'));
-    assert.deepEqual(plan.unanswered,[]);
+test('struggles: close, any power win, a win below 50% HP', () => {
+    assert.equal(struggles(rowInfo(row(1, 2, 'close'))), true);
+    assert.equal(struggles(rowInfo(row(1, 2, 'power_win', {hp: 0.97}))), true);
+    assert.equal(struggles(rowInfo(row(1, 2, 'plain_win', {hp: 0.49}))), true);
+    assert.equal(struggles(rowInfo(row(1, 2, 'dominance', {hp: 0.5}))), false);
+    assert.equal(struggles(rowInfo(row(1, 2, 'pending_win'))), false);
 });
 
-test('a remaining threat with no winning counter stays explicit, including close-only options', () => {
-    const own = [unit(1),unit(2,0),unit(3)],enemy = [unit(101),unit(102)];
-    const rows = matrix(own,enemy,(a,b) => b===101 && a===1 ? 'a_win' : b===102 && a===3 ? 'close_uncertain' : 'b_win');
-    const plan = build(rows,[...own,...enemy]).left;
-    assert.equal(plan.main.unit.id,1);
-    assert.deepEqual(plan.additions,[]);
-    assert.deepEqual(plan.unanswered.map(row=>row[1]),[102]);
+test('eco wins need no addition; a real loss the support does not beat gets a winning counter', () => {
+    const own = [unit(1, 20, 'Main'), unit(2, 0, 'Trash'), unit(3, 20, 'Counter')];
+    const enemy = [unit(101), unit(102), unit(103)];
+    const rows = [row(1, 101, 'eco_win', {hp: 0.3}), row(1, 102, 'plain_loss'), row(1, 103, 'dominance'),
+        row(2, 101, 'plain_loss'), row(2, 102, 'plain_loss'), row(2, 103, 'plain_loss'),
+        row(3, 101, 'plain_loss'), row(3, 102, 'plain_win'), row(3, 103, 'plain_loss')];
+    const p = plan(own, enemy, rows);
+    assert.equal(p.main.unit.id, 1);
+    assert.deepEqual(p.targets.map(t => t[0]).sort(), [101, 102]);
+    assert.deepEqual(p.additions.map(a => [a.entry.unit.id, a.covers]), [[3, [102]]]);
+    assert.deepEqual(p.unanswered, []);
+});
+
+test('pending (inferred) cells count as plain win / plain loss and are flagged', () => {
+    assert.deepEqual(rowInfo(row(1, 2, 'pending_win')), {cat: 'plain_win', won: true, pending: true, hpOwn: null, hpWinner: null, vmOwn: null, vmOpp: null});
+    assert.equal(rowInfo(row(1, 2, 'pending_loss')).cat, 'plain_loss');
+    assert.equal(rowInfo(row(1, 2, 'plain_win', {evidence: 'identity'})).cat, 'close');
+});
+
+test('inverting a row swaps both sides, categories and army investment', () => {
+    const r = row(1, 2, 'power_win', {hp: 0.4, vmA: 300, vmB: 150});
+    r[4] = 20;
+    const inv = invertMatchup(r);
+    assert.deepEqual(inv, [2, 1, 'b_win', 'observed', 27, 20, '', 0, 1, 'cheap_loss', 'power_win', 0.4, 150, 300]);
+    assert.deepEqual(invertMatchup(inv), r);
+    assert.deepEqual(rowInfo(inv), {cat: 'cheap_loss', won: false, pending: false, hpWinner: 0.4, hpOwn: 0, vmOwn: 150, vmOpp: 300});
+    // Old nine-field rows still work (plain results).
+    assert.equal(rowInfo([1, 2, 'a_win', 'observed', 27, 27, '', 0, 1]).cat, 'plain_win');
+});
+
+test('the source rows are never modified', () => {
+    const own = [unit(1), unit(2, 0)], enemy = [unit(101), unit(102, 0)];
+    const rows = [row(1, 101, 'plain_win'), row(1, 102, 'plain_loss'), row(2, 101, 'plain_loss'), row(2, 102, 'dominance')];
+    const copy = structuredClone(rows);
+    const both = build(rows, [...own, ...enemy]);
+    assert.deepEqual(rows, copy);
+    assert.equal(build(rows.map(invertMatchup), [...own, ...enemy]).left.main.unit.id, both.right.main.unit.id);
+});
+
+test('pyRound rounds like Python round(): ties to even on the exact binary value', () => {
+    assert.equal(pyRound(9.1328125, 6), 9.132812);
+    assert.equal(pyRound(0.375, 2), 0.38);
+    assert.equal(pyRound(2.675, 2), 2.67);
+    assert.equal(pyRound(2.5, 0), 2);
+    assert.equal(pyRound(-0.125, 2), -0.12);
+});
+
+test('cheaper-to-upgrade badge: own full research package at most half the opponent’s', () => {
+    assert.equal(cheaperToUpgrade(unit(1, 20, 'A', 50), unit(2, 20, 'B', 100)), true);
+    assert.equal(cheaperToUpgrade(unit(1, 20, 'A', 51), unit(2, 20, 'B', 100)), false);
+    assert.equal(cheaperToUpgrade(unit(1, 20, 'A', null), unit(2, 20, 'B', 100)), false);
 });

@@ -66,6 +66,8 @@ jobs:
           node tests/test_frontend_projectile_miss.js
           node tests/test_sim_params.js
           node --test tests/frontend_architecture.test.mjs tests/rankings_score_method.test.cjs tests/rankings_v3_model.test.cjs tests/advisor_model.test.mjs
+          # Revision 4 advisor: browser model vs the Python reference, all 3,080 plans (node:sqlite).
+          node --test tests/advisor/*.test.mjs
 
   vercel-build:
     runs-on: ubuntu-latest

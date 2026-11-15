@@ -12,7 +12,7 @@ For a Battle Sim pair, each army gets a **60-second army investment** in
 **weighted villager-minutes**: how much villager work it takes to pay for
 
 1. the army itself (batch-rounded purchase bill),
-2. the production buildings needed to train it within 60 seconds, and
+2. the production buildings needed to train it within 60 seconds (fractional: orders × train time ÷ 60, no whole-building rounding; owner 2026-11-15), and
 3. the net cost of the research **both** armies share (common technology IDs),
 
 with resources weighted food 1, wood 1, gold 1.5, stone 3 and converted to work

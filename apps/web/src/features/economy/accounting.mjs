@@ -88,7 +88,7 @@ export function compiledLabor(cost, prices) {
     return {seconds, villagerMinutes: seconds / 60};
 }
 
-/** Whole buildings completing all purchase orders within the fixed window. */
+/** Fractional buildings (orders x secondsPerOrder / window) completing all purchase orders in the window. */
 export function productionForWindow(route, orders, unitsPerPurchase = 1) {
     const result = {...(route || {}), windowSeconds: TRAINING_WINDOW_SECONDS,
         buildingCount: null, investmentCost: null, grossInvestmentCost: null, rebate: null,
@@ -99,10 +99,9 @@ export function productionForWindow(route, orders, unitsPerPurchase = 1) {
     if (Object.values(resources(route.cost)).some(v => !Number.isFinite(v) || v < 0)) {
         throw new RangeError('Building costs must be finite and nonnegative');
     }
-    const perBuilding = Math.floor(TRAINING_WINDOW_SECONDS / seconds);
+    const perBuilding = TRAINING_WINDOW_SECONDS / seconds;
     result.ordersPerBuilding = perBuilding;
-    if (truthy(orders) && !truthy(perBuilding)) return {...result, status: 'training_exceeds_window'};
-    const count = truthy(orders) ? Math.ceil(orders / perBuilding) : 0;
+    const count = truthy(orders) ? orders / perBuilding : 0;
     // A completion rebate (Wu: +55 food per military building/Dock) is credited
     // against each building; the gross cost stays visible.
     const rebate = resources(get(route, 'completionRebate', null) || {});
@@ -112,8 +111,8 @@ export function productionForWindow(route, orders, unitsPerPurchase = 1) {
     return {...result, status: 'modeled', buildingCount: count,
         investmentCost: scale(net), grossInvestmentCost: scale(cost), rebate: scale(rebate),
         weightedInvestmentCost: buildingValue(net) * count,
-        trainingSeconds: truthy(orders) ? Math.ceil(orders / count) * seconds : 0,
-        spareUnitCapacity: (count * perBuilding - orders) * unitsPerPurchase};
+        trainingSeconds: truthy(orders) ? TRAINING_WINDOW_SECONDS : 0,
+        spareUnitCapacity: 0};
 }
 
 function compareTuples(a, b) {
@@ -148,7 +147,7 @@ export function queueSeconds(orders, production) {
     const count = production.buildingCount;
     const seconds = get(production, 'secondsPerOrder', null);
     if (count === null || count === undefined || count <= 0 || seconds === null) return null;
-    return Math.ceil(orders / count) * seconds;
+    return orders / count * seconds;
 }
 
 export function armyInvestment(armyCost, production, commonResearch, prices) {

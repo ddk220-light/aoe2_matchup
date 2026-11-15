@@ -45,22 +45,24 @@ def complete_activities():
     return [{"id": r, "outputs": {r: 1}} for r in ("food", "wood", "gold", "stone")]
 
 
-@pytest.mark.parametrize("orders,time,buildings,queue", [(5, 40, 5, 40), (7, 20, 3, 60),
-    (7, 30, 4, 60), (5, 60, 5, 60), (0, 80, 0, 0), (14, 20, 5, 60)])
-def test_discrete_training_window(orders, time, buildings, queue):
+@pytest.mark.parametrize("orders,time,buildings,queue", [(5, 40, 5 * 40 / 60, 60), (7, 20, 7 / 3, 60),
+    (7, 30, 3.5, 60), (5, 60, 5, 60), (0, 80, 0, 0), (14, 20, 14 / 3, 60), (22, 30.075, 22 * 30.075 / 60, 60),
+    (1, 90, 1.5, 60)])
+def test_fractional_training_window(orders, time, buildings, queue):
+    """Owner 2026-11-15: buildings = orders x seconds / window, no whole-building rounding."""
     p = production_for_window(route(seconds=time), orders)
-    assert p["buildingCount"] == buildings
+    assert p["buildingCount"] == pytest.approx(buildings)
     assert p["trainingSeconds"] == queue
-    assert p["investmentCost"]["wood"] == buildings * 175
-    assert queue_seconds(orders, p) == queue
+    assert p["investmentCost"]["wood"] == pytest.approx(buildings * 175)
+    assert queue_seconds(orders, p) == pytest.approx(queue)
     assert queue_seconds(0, p) == 0
 
 
 def test_faster_training_reduces_building_investment():
     ordinary = production_for_window(route(seconds=40), 5)
     faster = production_for_window(route(seconds=20), 5)
-    assert ordinary["buildingCount"] == 5
-    assert faster["buildingCount"] == 2
+    assert ordinary["buildingCount"] == pytest.approx(5 * 40 / 60)
+    assert faster["buildingCount"] == pytest.approx(5 * 20 / 60)
     assert faster["investmentCost"]["wood"] < ordinary["investmentCost"]["wood"]
 
 
@@ -113,13 +115,12 @@ def test_route_ranking_uses_combined_labor_then_queue_time_then_id():
 def test_unavailable_window_and_labor_do_not_make_headline_scores():
     common = {"net": {}, "costIsFixed": True}
     p, _ = select_investment_route([route(seconds=61)], 1, 1, {}, None)
-    assert p["status"] == "training_exceeds_window"
-    assert queue_seconds(1, p) is None
+    assert p["status"] == "modeled" and p["buildingCount"] == pytest.approx(61 / 60)  # slow units just need more capacity
     assert army_investment({"food": 50}, p, common, None)["labor"] is None
     p, _ = select_investment_route([], 1, 1, {}, None)
     assert p["status"] == "unresolved_training_route"
     p, _ = select_investment_route([route()], 5, 1, {}, None)
-    assert p["buildingCount"] == 2  # Infrastructure known even if labor is missing.
+    assert p["buildingCount"] > 0  # Infrastructure known even if labor is missing.
     assert army_investment({"food": 50}, p, common, None)["status"] == "unresolved_labor"
     assert army_investment({}, p, {**common, "costIsFixed": False}, None)["status"] == "unresolved_common_research_cost"
     assert investment_comparison([{"investment": {"labor": None}}] * 2)["status"] == "unavailable"

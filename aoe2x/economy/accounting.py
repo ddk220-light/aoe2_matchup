@@ -89,7 +89,11 @@ def compiled_labor(cost, prices):
 
 
 def production_for_window(route, orders, units_per_purchase=1):
-    """Whole buildings completing all purchase orders within the fixed window."""
+    """Fractional buildings whose combined output completes all purchase orders in the fixed window.
+
+    Owner 2026-11-15: the count is an estimate of production capacity, not a build order, so it
+    is ``orders * secondsPerOrder / window`` with no whole-building rounding (a 30.075 s unit no
+    longer needs twice the buildings of a 30 s one)."""
     result = {**(route or {}), "windowSeconds": TRAINING_WINDOW_SECONDS,
               "buildingCount": None, "investmentCost": None, "grossInvestmentCost": None, "rebate": None,
               "weightedInvestmentCost": None,
@@ -101,11 +105,9 @@ def production_for_window(route, orders, units_per_purchase=1):
         raise ValueError("Training time must be positive and finite")
     if any(not math.isfinite(v) or v < 0 for v in resources(route["cost"]).values()):
         raise ValueError("Building costs must be finite and nonnegative")
-    per_building = math.floor(TRAINING_WINDOW_SECONDS / seconds)
+    per_building = TRAINING_WINDOW_SECONDS / seconds
     result["ordersPerBuilding"] = per_building
-    if orders and not per_building:
-        return {**result, "status": "training_exceeds_window"}
-    count = math.ceil(orders / per_building) if orders else 0
+    count = orders / per_building if orders else 0
     # A completion rebate (Wu: +55 food per military building/Dock) is credited
     # against each building; the gross cost stays visible.
     rebate = resources(route.get("completionRebate") or {})
@@ -115,8 +117,8 @@ def production_for_window(route, orders, units_per_purchase=1):
             "grossInvestmentCost": {r: v * count for r, v in resources(route["cost"]).items()},
             "rebate": {r: v * count for r, v in rebate.items()},
             "weightedInvestmentCost": building_value(net) * count,
-            "trainingSeconds": math.ceil(orders / count) * seconds if orders else 0,
-            "spareUnitCapacity": (count * per_building - orders) * units_per_purchase}
+            "trainingSeconds": TRAINING_WINDOW_SECONDS if orders else 0,
+            "spareUnitCapacity": 0}
 
 
 def select_investment_route(routes, orders, batch, base_cost, prices):
@@ -144,7 +146,7 @@ def queue_seconds(orders, production):
     seconds = production.get("secondsPerOrder")
     if count is None or count <= 0 or seconds is None:
         return None
-    return math.ceil(orders / count) * seconds
+    return orders / count * seconds
 
 
 def army_investment(army_cost, production, common_research, prices):

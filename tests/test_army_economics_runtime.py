@@ -182,9 +182,9 @@ def test_previous_schema_is_rejected(tmp_path):
 
 @needs_scipy
 @pytest.mark.parametrize("left,right,buildings", [
-    (("Spanish", 567), ("Saracens", 492), [3, 4]),
-    (("Spanish", 567), ("Saracens", 567), [3, 3]),
-    (("Chinese", 492), ("Saracens", 492), [4, 4]),
+    (("Spanish", 567), ("Saracens", 492), [1.8421, 2.3684]),  # fractional: 7 orders x seconds / 60
+    (("Spanish", 567), ("Saracens", 567), [1.8421, 1.8421]),
+    (("Chinese", 492), ("Saracens", 492), [2.3684, 2.3684]),
 ])
 def test_investment_uses_only_common_techs_and_correct_infrastructure(data, left, right, buildings):
     from aoe2x.economy.accounting import solve_labor
@@ -196,7 +196,7 @@ def test_investment_uses_only_common_techs_and_correct_infrastructure(data, left
         assert score["cost"] == add_costs(team["startingArmy"]["cost"], team["production"]["investmentCost"], common["net"])
         assert score["labor"]["seconds"] == pytest.approx(
             solve_labor(weighted_cost(score["cost"]), team["economy"]["activities"])["seconds"])
-        assert team["startingArmy"]["trainingSeconds"] <= 60
+        assert team["startingArmy"]["trainingSeconds"] == pytest.approx(60)
         assert team["replacementLookup"][0]["weightedLabor"]["seconds"] == 0
         assert all(b["alreadyAvailable"] == (b["id"] == team["production"]["id"])
                    for b in team["research"]["allInfrastructure"]["buildings"])
@@ -209,7 +209,7 @@ def test_investment_uses_only_common_techs_and_correct_infrastructure(data, left
                 sum(response["researchComparison"]["common"][1]["upfront"].values())
     else:
         assert response["researchComparison"]["exclusive"][0]["technologyCount"] > 0
-    assert [t["production"]["buildingCount"] for t in response["teams"]] == buildings
+    assert [t["production"]["buildingCount"] for t in response["teams"]] == pytest.approx(buildings, abs=1e-4)
     a = pair(data, left, left, count=7)
     assert a["investmentComparison"]["lowerTeam"] is None
 
@@ -367,9 +367,11 @@ def test_production_fixes(data):
     assert priest["production"]["cost"]["wood"] == 200
     for uid, building in ((359, "Barracks"), (6, "Archery Range")):
         unit = data.unit("Mapuche", uid)
-        assert unit["production"]["name"] == building
-        assert unit["production"]["secondsPerOrder"] == pytest.approx(16.5426, abs=1e-3)  # 22 x 1.00007 / 1.33
-        assert "SETTL1" in {r["name"] for r in unit["productionRoutes"]}
+        routes = {r["name"]: r for r in unit["productionRoutes"]}
+        assert routes[building]["secondsPerOrder"] == pytest.approx(16.5426, abs=1e-3)  # 22 x 1.00007 / 1.33
+        # With fractional buildings the Settlement (125 wood, 22 s) is marginally cheaper capacity
+        # than the 175-wood building at 16.5 s, so it is the selected route.
+        assert unit["production"]["name"] == "SETTL1"
     assert data.unit("Persians", 442)["production"]["secondsPerOrder"] == pytest.approx(22.5, abs=1e-4)
     for unit in units():
         names = {r["name"] for r in unit["productionRoutes"]}

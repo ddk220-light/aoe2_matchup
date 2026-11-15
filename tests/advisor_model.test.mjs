@@ -62,22 +62,32 @@ test('support: when the main beats everything, the biggest help on its weakest w
     assert.deepEqual([p.support.unit.id, p.supportReason], [2, 'weak_wins']);
 });
 
+test('main and support are chosen as a pair: most enemy units beaten first, then pair score', () => {
+    // Like Armenians vs Aztecs: the Champion scores best alone, but no support fixes its loss; the
+    // Bowman's one loss (to 102) is fixed by the Light Cavalry, so that pair beats every enemy unit.
+    const all = units([unit(1, 20, 'Champion'), unit(2, 45, 'Bowman'), unit(3, 0, 'Light Cavalry'),
+        unit(101), unit(102), unit(103)]);
+    const rows = [row(1, 101, -0.4), row(1, 102, 1.3), row(1, 103, 1),
+        row(2, 101, 0.6), row(2, 102, -0.7), row(2, 103, 0.4),
+        row(3, 101, -0.4), row(3, 102, 0.9), row(3, 103, -0.5)];
+    const p = plan(rows, all);
+    assert.ok(p.score.get(1) > p.score.get(2));
+    assert.deepEqual([p.main.unit.id, p.support.unit.id, p.pairWins], [2, 3, 3]);
+});
+
 test('enemy units the pair cannot beat get the best unit doing better than both, or are unanswered', () => {
     const all = units([unit(1, 20, 'Knight'), unit(2, 0, 'Spearman'), unit(3, 30, 'Archer'), unit(4, 30, 'Crossbow'),
-        unit(101), unit(102), unit(103)]);
-    const rows = [row(1, 101, 2), row(1, 102, -1), row(1, 103, -1),
-        row(2, 101, 1), row(2, 102, -0.5), row(2, 103, -1),
-        row(3, 101, -1), row(3, 102, 0.4), row(3, 103, -1),
-        row(4, 101, -1), row(4, 102, 0.8), row(4, 103, -1)];
+        unit(101), unit(102), unit(103), unit(104)]);
+    const rows = [row(1, 101, 2), row(1, 102, 1), row(1, 103, -1), row(1, 104, -1),
+        row(2, 101, 1), row(2, 102, -0.5), row(2, 103, -1), row(2, 104, -1),
+        row(3, 101, -1), row(3, 102, -1), row(3, 103, -0.2), row(3, 104, -1),   // still loses, but less
+        row(4, 101, -1), row(4, 102, -1), row(4, 103, -1), row(4, 104, 0.8)];
     const p = plan(rows, all);
-    assert.equal(p.main.unit.id, 1);
-    assert.equal(p.support.unit.id, 2);
-    assert.deepEqual(p.additions.map(a => [a.entry.unit.id, a.covers]), [[4, [102]]]);
-    assert.deepEqual(p.unanswered, [103]);
-    // A unit that still loses but loses less than both counts as the better counter.
-    const q = plan(rows.map(r => r[0] === 3 && r[1] === 103 ? row(3, 103, -0.2) : r), all);
-    assert.deepEqual(q.additions.map(a => [a.entry.unit.id, a.covers]), [[4, [102]], [3, [103]]]);
-    assert.deepEqual(q.unanswered, []);
+    assert.deepEqual([p.main.unit.id, p.support.unit.id], [1, 2]);
+    assert.deepEqual(p.additions.map(a => [a.entry.unit.id, a.covers]).sort(), [[3, [103]], [4, [104]]]);
+    assert.deepEqual(p.unanswered, []);
+    const q = plan(rows.map(r => r[0] === 3 && r[1] === 103 ? row(3, 103, -1) : r), all);
+    assert.deepEqual(q.unanswered, [103]);
 });
 
 test('the right-hand plan reads the same rows from the other side', () => {

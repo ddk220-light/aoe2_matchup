@@ -64,21 +64,23 @@ def test_browser_parity_fixture_is_fresh():
     assert header['plans'] == 3080
 
 
-def test_slavs_vs_burgundians_reference_plan():
+def test_reference_plans_for_owner_reviewed_matchups():
+    """Matchups the owner reviewed on 2026-11-15 (pair selection, strongest-threat support)."""
     sys.path.insert(0, str(ROOT / 'tools/economy/advisor_eco'))
     import advisor_model_v5
     units = {u['id']: u for u in advisor_catalog()['units']}
     name = lambda i: units[i]['name']  # noqa: E731
-    slavs = advisor_model_v5.plan(advisor_matchups('Slavs')['opponents']['Burgundians'], units)
-    assert (name(slavs['main']), name(slavs['support'])) == ('Elite Boyar', 'Halberdier')
-    burgundians = advisor_model_v5.plan(advisor_matchups('Burgundians')['opponents']['Slavs'], units)
-    # Support handles the strongest threat first: the Halberdier loses to the Elite Boyar far less.
-    assert (name(burgundians['main']), name(burgundians['support'])) == ('Paladin', 'Halberdier')
-    assert (burgundians['supportReason'], name(burgundians['supportTarget'])) == ('threat', 'Elite Boyar')
-    assert [[name(i), [name(j) for j in js]] for i, js in burgundians['additions']] == [['Champion', ['Halberdier']]]
-    assert [name(j) for j in burgundians['unanswered']] == ['Elite Boyar']
-    armenians = advisor_model_v5.plan(advisor_matchups('Armenians')['opponents']['Franks'], units)
-    assert (name(armenians['main']), name(armenians['support'])) == ('Champion', 'Halberdier')
+
+    def pair(civ, enemy):
+        p = advisor_model_v5.plan(advisor_matchups(civ)['opponents'][enemy], units)
+        return name(p['main']), name(p['support']), p
+    assert pair('Slavs', 'Burgundians')[:2] == ('Elite Boyar', 'Halberdier')
+    main, support, p = pair('Burgundians', 'Slavs')
+    assert (main, support) == ('Elite Coustillier', 'Halberdier')
+    assert [name(j) for j in p['unanswered']] == ['Elite Boyar']
+    # The Champion scores best alone but nothing fixes its Jaguar loss; this pair beats 6 and draws 1.
+    main, support, p = pair('Armenians', 'Aztecs')
+    assert (main, support, p['pairWins']) == ('Elite Composite Bowman', 'Light Cavalry', 6.5)
 
 
 @pytest.mark.skipif(not (Path(os.environ.get('ADVISOR_ECO_OUT', '/nonexistent')) / 'cells.csv.gz').is_file(),

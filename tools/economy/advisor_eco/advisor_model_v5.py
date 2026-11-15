@@ -8,7 +8,10 @@ Input: the rows ``/api/advisor-matchups/<civ>`` serves for one opponent civ (own
 2. Weighted contribution of our unit i against enemy j:
    ``value x m_j`` for a win or draw, ``value x (2 - m_j)`` for a loss
    (beating a strong unit counts more; losing to a weak one hurts more).
-3. Weighted score = sum of contributions. Main = highest weighted score, never a Scorpion.
+3. Weighted score = sum of contributions. Main and support are chosen as a pair (owner
+   2026-11-15): for every eligible main (never a Scorpion) its support is found (rule 4); pairs
+   rank by enemy units beaten by either unit (a draw counts half), then pair score (the better
+   of the two weighted contributions per enemy unit), then the main's weighted score, then id.
 4. Support = a unit without gold, other than the main (owner 2026-11-15):
    - holes = enemy units the main does not beat (value <= 0), strongest first (multiplier);
    - the strongest hole some candidate does better on than the main decides: the support is
@@ -68,30 +71,43 @@ def plan(rows, units):
     def best(candidates, key):
         return min(candidates, key=lambda i: (-key(i), -score[i], i)) if candidates else None
 
-    main = best([i for i in own if units[i]["name"] not in EXCLUDED_MAIN], lambda i: score[i])
-    candidates = [i for i in own if i != main and (not is_gold(units[i]) or units[i]["name"] in SUPPORT_EXTRA)]
-    holes = sorted([j for j in enemy if value[(main, j)] <= 0], key=lambda j: (-multiplier[j], j))
+    def support_for(main):
+        """(support, reason, target, holes) for one main (rule 4)."""
+        candidates = [i for i in own if i != main and (not is_gold(units[i]) or units[i]["name"] in SUPPORT_EXTRA)]
+        holes = sorted([j for j in enemy if value[(main, j)] <= 0], key=lambda j: (-multiplier[j], j))
 
-    def gain(s, targets):
-        total = 0.0
-        for j in targets:
-            total += max(0.0, value[(s, j)] - value[(main, j)]) * multiplier[j]
-        return total
+        def gain(s, targets):
+            total = 0.0
+            for j in targets:
+                total += max(0.0, value[(s, j)] - value[(main, j)]) * multiplier[j]
+            return total
 
-    support, reason, target = None, None, None
-    for t in holes:
-        better = [s for s in candidates if value[(s, t)] > value[(main, t)]]
-        if better:
-            support = min(better, key=lambda s: (-value[(s, t)], -gain(s, holes), -score[s], s))
-            reason, target = "threat", t
-            break
-    if support is None:
+        for t in holes:
+            better = [s for s in candidates if value[(s, t)] > value[(main, t)]]
+            if better:
+                return min(better, key=lambda s: (-value[(s, t)], -gain(s, holes), -score[s], s)), "threat", t, holes
         weak = [j for j in enemy if value[(main, j)] > 0 and contribution[(main, j)] < GAP]
         helped = [s for s in candidates if gain(s, weak) > 0]
         if helped:
-            support, reason = best(helped, lambda s: gain(s, weak)), "weak_wins"
-        elif candidates:
-            support, reason = best(candidates, lambda s: score[s]), "score"
+            return best(helped, lambda s: gain(s, weak)), "weak_wins", None, holes
+        if candidates:
+            return best(candidates, lambda s: score[s]), "score", None, holes
+        return None, None, None, holes
+
+    pairs = {}
+    for m in [i for i in own if units[i]["name"] not in EXCLUDED_MAIN]:
+        found = support_for(m)
+        members = [m] + ([found[0]] if found[0] is not None else [])
+        wins = draws = 0
+        total = 0.0
+        for j in enemy:
+            top = max(value[(i, j)] for i in members)
+            wins += top > 0
+            draws += top == 0
+            total += max(contribution[(i, j)] for i in members)
+        pairs[m] = (found, wins + 0.5 * draws, total)
+    main = min(pairs, key=lambda m: (-pairs[m][1], -pairs[m][2], -score[m], m))
+    (support, reason, target, holes), pair_wins, pair_score = pairs[main]
     pair = [main] + ([support] if support is not None else [])
     additions, unanswered = {}, []
     for j in enemy:
@@ -106,5 +122,5 @@ def plan(rows, units):
             additions.setdefault(counter, []).append(j)
     order = sorted(additions, key=lambda i: (-len(additions[i]), -score[i], i))
     return {"main": main, "support": support, "supportReason": reason, "supportTarget": target,
-            "holes": holes, "additions": [[i, additions[i]] for i in order], "unanswered": unanswered,
+            "pairWins": pair_wins, "pairScore": pair_score, "holes": holes, "additions": [[i, additions[i]] for i in order], "unanswered": unanswered,
             "score": score, "multiplier": multiplier, "contribution": contribution}

@@ -34,9 +34,9 @@ test('the main is the best weighted score but never a Scorpion; ties go to the l
 test('support: the no-gold unit doing best against the strongest enemy the main does not beat', () => {
     const all = units([unit(1, 20, 'Knight'), unit(2, 0, 'Spearman'), unit(3, 0, 'Skirmisher'), unit(4, 30, 'Archer'),
         unit(101), unit(102), unit(103)]);
-    const rows = [row(1, 101, 1.5), row(1, 102, -1), row(1, 103, -1),
-        row(2, 101, -1), row(2, 102, -1.2), row(2, 103, 1),     // wins against the weaker hole
-        row(3, 101, -1), row(3, 102, -0.5), row(3, 103, -1),    // only softens the stronger hole
+    const rows = [row(1, 101, 1), row(1, 102, -1), row(1, 103, -1),     // only the Knight beats 101 (strongest)
+        row(2, 101, -2.5), row(2, 102, -1.2), row(2, 103, 0.3),     // wins against the weaker hole
+        row(3, 101, -2.5), row(3, 102, -0.5), row(3, 103, -1),      // only softens the stronger hole
         row(4, 101, -1), row(4, 102, -1), row(4, 103, -1)];     // the Archer costs gold: never support
     const p = plan(rows, all);
     assert.equal(p.main.unit.id, 1);
@@ -62,7 +62,7 @@ test('support: when the main beats everything, the biggest help on its weakest w
     assert.deepEqual([p.support.unit.id, p.supportReason], [2, 'weak_wins']);
 });
 
-test('main and support are chosen as a pair: most enemy units beaten first, then pair score', () => {
+test('main and support are chosen as a pair: strength of the enemy units beaten first, then pair score', () => {
     // Like Armenians vs Aztecs: the Champion scores best alone, but no support fixes its loss; the
     // Bowman's one loss (to 102) is fixed by the Light Cavalry, so that pair beats every enemy unit.
     const all = units([unit(1, 20, 'Champion'), unit(2, 45, 'Bowman'), unit(3, 0, 'Light Cavalry'),
@@ -75,13 +75,27 @@ test('main and support are chosen as a pair: most enemy units beaten first, then
     assert.deepEqual([p.main.unit.id, p.support.unit.id, p.pairWins], [2, 3, 3]);
 });
 
+test('pairs that beat the stronger enemy units win even with the same number of wins', () => {
+    // Both pairs beat two of three; Eagle + Pike leaves the strongest enemy (101) unbeaten.
+    const all = units([unit(1, 50, 'Eagle'), unit(2, 30, 'Jaguar'), unit(3, 0, 'Pikeman'), unit(4, 0, 'Skirmisher'),
+        unit(101), unit(102), unit(103)]);
+    const rows = [row(1, 101, -0.5), row(1, 102, 1.2), row(1, 103, 1.2),
+        row(2, 101, 0.5), row(2, 102, -0.4), row(2, 103, 0.4),
+        row(3, 101, -0.6), row(3, 102, -0.5), row(3, 103, 0.3),
+        row(4, 101, -0.7), row(4, 102, -0.3), row(4, 103, 0.4)];
+    const p = plan(rows, all);
+    assert.ok(p.multiplier.get(101) > p.multiplier.get(102));
+    assert.equal(p.main.unit.id, 2);
+    assert.equal(p.pairWins, 2);
+});
+
 test('enemy units the pair cannot beat get the best unit doing better than both, or are unanswered', () => {
     const all = units([unit(1, 20, 'Knight'), unit(2, 0, 'Spearman'), unit(3, 30, 'Archer'), unit(4, 30, 'Crossbow'),
         unit(101), unit(102), unit(103), unit(104)]);
     const rows = [row(1, 101, 2), row(1, 102, 1), row(1, 103, -1), row(1, 104, -1),
         row(2, 101, 1), row(2, 102, -0.5), row(2, 103, -1), row(2, 104, -1),
-        row(3, 101, -1), row(3, 102, -1), row(3, 103, -0.2), row(3, 104, -1),   // still loses, but less
-        row(4, 101, -1), row(4, 102, -1), row(4, 103, -1), row(4, 104, 0.8)];
+        row(3, 101, -1), row(3, 102, -2.5), row(3, 103, -0.2), row(3, 104, -1),   // still loses, but less
+        row(4, 101, -1), row(4, 102, -2.5), row(4, 103, -1), row(4, 104, 0.8)];
     const p = plan(rows, all);
     assert.deepEqual([p.main.unit.id, p.support.unit.id], [1, 2]);
     assert.deepEqual(p.additions.map(a => [a.entry.unit.id, a.covers]).sort(), [[3, [103]], [4, [104]]]);

@@ -55,7 +55,7 @@ const round = x => x === null ? null : Number(x.toFixed(digits));
 const byId = map => Object.fromEntries([...map].sort((a, b) => a[0] - b[0]).map(([k, v]) => [String(k), round(v)]));
 function summary(p) {
     return {main: p.main.unit.id, support: p.support ? p.support.unit.id : null, supportReason: p.supportReason,
-        supportTarget: p.supportTarget, pairWins: p.pairWins, pairScore: round(p.pairScore), holes: p.holes, additions: p.additions.map(a => [a.entry.unit.id, a.covers]), unanswered: p.unanswered,
+        supportTarget: p.supportTarget, pairWins: p.pairWins, pairBeaten: round(p.pairBeaten), pairScore: round(p.pairScore), holes: p.holes, additions: p.additions.map(a => [a.entry.unit.id, a.covers]), unanswered: p.unanswered,
         score: byId(p.score), multiplier: byId(p.multiplier)};
 }
 

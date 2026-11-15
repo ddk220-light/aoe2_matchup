@@ -85,6 +85,8 @@ def test_reference_plans_for_owner_reviewed_matchups():
     main, support, p = pair('Armenians', 'Aztecs')
     assert (main, support, p['pairWins']) == ('Elite Composite Bowman', 'Light Cavalry', 7)
     assert p['additions'] == [] and p['unanswered'] == []
+    # Same number of wins (8 of 10) as Eagle + Pikeman, but it beats the Armenian Champion (strongest).
+    assert pair('Aztecs', 'Armenians')[:2] == ('Elite Jaguar Warrior', 'Elite Skirmisher')
 
 
 @pytest.mark.skipif(not (Path(os.environ.get('ADVISOR_ECO_OUT', '/nonexistent')) / 'cells.csv.gz').is_file(),

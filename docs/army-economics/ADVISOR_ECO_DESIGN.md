@@ -15,8 +15,9 @@ Replaces the Revision 3 categories and Revision 4 weights below.
   against our roster, 0.5, 1.5)`; a win counts value x m, a loss value x (2 - m). The number
   under each icon on the page is that weighted value; the unit score is their sum.
 - **Main + support are chosen as a pair** (never a Scorpion as main or support; Scorpions can be
-  extra units): for each candidate main its support is found as below, and pairs rank by enemy
-  units beaten by either unit (a draw counts half), then pair score (the better of the two
+  extra units): for each candidate main its support is found as below, and pairs rank by the
+  strength of the enemy units beaten by either unit (sum of their multipliers; a draw counts
+  half), then pair score (the better of the two
   weighted values per enemy unit). **Support** = a no-gold unit
   that handles the strongest threat first: holes = enemy units the main does not beat,
   strongest first; the first hole some candidate does better on decides (best value against

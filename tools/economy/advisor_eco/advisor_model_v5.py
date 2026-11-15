@@ -10,8 +10,9 @@ Input: the rows ``/api/advisor-matchups/<civ>`` serves for one opponent civ (own
    (beating a strong unit counts more; losing to a weak one hurts more).
 3. Weighted score = sum of contributions. Main and support are chosen as a pair (owner
    2026-11-15): for every eligible main (never a Scorpion) its support is found (rule 4); pairs
-   rank by enemy units beaten by either unit (a draw counts half), then pair score (the better
-   of the two weighted contributions per enemy unit), then the main's weighted score, then id.
+   rank by the strength of the enemy units beaten by either unit (sum of their multipliers; a
+   draw counts half), then pair score (the better of the two weighted contributions per enemy
+   unit), then the main's weighted score, then id.
 4. Support = a unit without gold, other than the main (owner 2026-11-15):
    - holes = enemy units the main does not beat (value <= 0), strongest first (multiplier);
    - the strongest hole some candidate does better on than the main decides: the support is
@@ -99,15 +100,19 @@ def plan(rows, units):
         found = support_for(m)
         members = [m] + ([found[0]] if found[0] is not None else [])
         wins = draws = 0
-        total = 0.0
+        beaten, total = 0.0, 0.0
         for j in enemy:
             top = max(value[(i, j)] for i in members)
-            wins += top > 0
-            draws += top == 0
+            if top > 0:
+                wins += 1
+                beaten += multiplier[j]
+            elif top == 0:
+                draws += 1
+                beaten += 0.5 * multiplier[j]
             total += max(contribution[(i, j)] for i in members)
-        pairs[m] = (found, wins + 0.5 * draws, total)
+        pairs[m] = (found, beaten, total, wins + 0.5 * draws)
     main = min(pairs, key=lambda m: (-pairs[m][1], -pairs[m][2], -score[m], m))
-    (support, reason, target, holes), pair_wins, pair_score = pairs[main]
+    (support, reason, target, holes), pair_beaten, pair_score, pair_wins = pairs[main]
     pair = [main] + ([support] if support is not None else [])
     additions, unanswered = {}, []
     for j in enemy:
@@ -122,5 +127,5 @@ def plan(rows, units):
             additions.setdefault(counter, []).append(j)
     order = sorted(additions, key=lambda i: (-len(additions[i]), -score[i], i))
     return {"main": main, "support": support, "supportReason": reason, "supportTarget": target,
-            "pairWins": pair_wins, "pairScore": pair_score, "holes": holes, "additions": [[i, additions[i]] for i in order], "unanswered": unanswered,
+            "pairWins": pair_wins, "pairBeaten": pair_beaten, "pairScore": pair_score, "holes": holes, "additions": [[i, additions[i]] for i in order], "unanswered": unanswered,
             "score": score, "multiplier": multiplier, "contribution": contribution}

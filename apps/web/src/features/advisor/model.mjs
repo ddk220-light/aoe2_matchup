@@ -104,21 +104,22 @@ export function plan(rows, units, cfg = CONFIG) {
         if (candidates.length) return [best(candidates, s => score.get(s), score), 'score', null, holes];
         return [null, null, null, holes];
     }
-    // Main and support as a pair: most enemy units beaten (draw = half), then pair score.
+    // Main and support as a pair: strength of the enemy units beaten (draw = half), then pair score.
     const pairs = new Map();
     for (const m of own.filter(i => !cfg.excludedMain.includes(units.get(i).name))) {
         const found = supportFor(m), members = found[0] === null ? [m] : [m, found[0]];
-        let wins = 0, draws = 0, total = 0;
+        let wins = 0, draws = 0, beaten = 0, total = 0;
         for (const j of enemy) {
             const top = Math.max(...members.map(i => v(i, j)));
-            if (top > 0) wins += 1; else if (top === 0) draws += 1;
+            if (top > 0) { wins += 1; beaten += multiplier.get(j); }
+            else if (top === 0) { draws += 1; beaten += 0.5 * multiplier.get(j); }
             total += Math.max(...members.map(i => c(i, j)));
         }
-        pairs.set(m, {found, wins: wins + 0.5 * draws, total});
+        pairs.set(m, {found, beaten, total, wins: wins + 0.5 * draws});
     }
-    const main = minBy([...pairs.keys()], m => [-pairs.get(m).wins, -pairs.get(m).total, -score.get(m), m]);
+    const main = minBy([...pairs.keys()], m => [-pairs.get(m).beaten, -pairs.get(m).total, -score.get(m), m]);
     const [support, supportReason, supportTarget, holes] = pairs.get(main).found;
-    const pairWins = pairs.get(main).wins, pairScore = pairs.get(main).total;
+    const pairWins = pairs.get(main).wins, pairBeaten = pairs.get(main).beaten, pairScore = pairs.get(main).total;
     const pair = support === null ? [main] : [main, support];
     const additions = new Map(), unanswered = [];
     for (const j of enemy) {
@@ -135,7 +136,7 @@ export function plan(rows, units, cfg = CONFIG) {
         vs: new Map(enemy.map(j => [j, {value: v(i, j), contribution: c(i, j), row: rowOf.get(`${i}:${j}`)}])),
     };
     return {
-        main: entry(main), support: entry(support), supportReason, supportTarget, pairWins, pairScore,
+        main: entry(main), support: entry(support), supportReason, supportTarget, pairWins, pairBeaten, pairScore,
         holes, additions: order.map(i => ({entry: entry(i), covers: additions.get(i)})),
         unanswered, score, multiplier, contribution, enemy,
     };

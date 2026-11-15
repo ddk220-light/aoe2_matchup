@@ -231,7 +231,7 @@ def main():
     fields = ["a", "b", "civ_a", "civ_b", "name_a", "name_b", "outcome", "count_a", "count_b", "evidence_id",
               "seeds", "seeds_won_a", "seeds_won_b", "draws", "seed_sources", "hp_avg", "hp_avg_won", "hp_min", "hp_max",
               "wcost_a", "wcost_b", "gold_a", "gold_b", "group_a", "group_b", "vm_a", "vm_b", "army_vm_a", "army_vm_b",
-              "common_vm_a", "common_vm_b", "full_vm_a", "full_vm_b", "eco_status", "saving", "label"]
+              "bld_vm_a", "bld_vm_b", "common_vm_a", "common_vm_b", "full_vm_a", "full_vm_b", "eco_status", "saving", "label"]
     with gzip.open(CELLS_CSV, "wt", newline="", compresslevel=6) as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
@@ -243,6 +243,7 @@ def main():
                 ta, tb = out
                 row.update(vm_a=ta["vm"], vm_b=tb["vm"], full_vm_a=ta["full"], full_vm_b=tb["full"],
                            army_vm_a=(ta["army"] or {}).get("villagerMinutes"), army_vm_b=(tb["army"] or {}).get("villagerMinutes"),
+                           bld_vm_a=(ta["buildings"] or {}).get("villagerMinutes"), bld_vm_b=(tb["buildings"] or {}).get("villagerMinutes"),
                            common_vm_a=ta["common"], common_vm_b=tb["common"],
                            eco_status="available" if ta["vm"] is not None and tb["vm"] is not None else f"{ta['status']}/{tb['status']}")
             label = ""
@@ -254,7 +255,7 @@ def main():
             row["label"] = label
             labels[label or "none"] += 1
             for key in ("hp_avg", "hp_avg_won", "hp_min", "hp_max", "vm_a", "vm_b", "full_vm_a", "full_vm_b",
-                        "army_vm_a", "army_vm_b", "common_vm_a", "common_vm_b", "saving"):
+                        "army_vm_a", "army_vm_b", "bld_vm_a", "bld_vm_b", "common_vm_a", "common_vm_b", "saving"):
                 if isinstance(row.get(key), float):
                     row[key] = f"{row[key]:.6f}"
             writer.writerow(row)

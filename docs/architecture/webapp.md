@@ -150,7 +150,7 @@ All connections are short-lived read-only SQLite connections (`connect_readonly(
 | `get_sim_ref_db()` / `get_rankings_ref_db()` (`aoe2_api/web.py`) | `data/golden/aoe2_reference_simulation.db` / `aoe2_reference_rankings.db` | 56-civ rosters for the V3 battle config, site catalog and rankings |
 | `get_rankings_derived_db()` (`aoe2_api/web.py`) | `data/golden/derived_data_v3.db` | published ranking scores (see [derived-data.md](derived-data.md)) |
 | `patches_db.get_current_build()` | `data/golden/patches.db` | `patches` etc. `get_current_build()` is the single build resolver every score lookup goes through; patch pages are built at build time by `scripts/migration/site/patches.py` |
-| advisor service (`aoe2_api/services/advisor.py`) | `data/golden/civ_matchups_first_pass.db` + `data/golden/advisor_cell_metrics.json.gz` (per-cell Revision 4 eco fields; runbooks §9) | `/api/advisor-*` |
+| advisor service (`aoe2_api/services/advisor.py`) | `data/golden/civ_matchups_first_pass.db` + `data/golden/advisor_cell_metrics.json.gz` (per-cell Revision 5 matchup values; runbooks §9) | `/api/advisor-*` |
 | economy service (`aoe2_api/services/economy.py`) | `data/army_economics/army_context.jsonl.gz` (gzip JSON Lines, not SQLite; `aoe2x/economy/artefact.py`) | `/api/economy*` |
 | `best_units.py` module paths | `aoe2_reference.db`, `derived_data.db`, `pool_scores.db` | advisor recommendations and percentiles |
 

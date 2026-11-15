@@ -27,10 +27,12 @@ with sync_playwright() as p:
         page.wait_for_selector('#ma-left-plan [data-role=main]')
         assert page.locator('[data-role=main]').count() == 2
         assert page.locator('[data-role=support]').count() <= 2
-        # Only the two plans: no alternatives, additions, legend or explanatory text.
-        assert page.locator('.ma-team-columns, [data-role=additions], .ma-legend-box, .ma-helps').count() == 0
-        labels = set(page.locator('.ma-match-label').all_inner_texts())
+        # Main, support and short extra-counter rows only: no alternatives, legend or explanatory text.
+        assert page.locator('.ma-team-columns, .ma-legend-box, .ma-helps').count() == 0
+        labels = set(page.locator('.ma-unit-card .ma-match-label').all_inner_texts())
         assert labels <= {'Beats', 'Loses to', 'Close'}, labels
+        nums = page.locator('.ma-unit-card .ma-num').all_inner_texts()
+        assert nums and all(n[0] in '+\u22120' for n in nums), nums[:5]
         text = page.locator('#top-units').inner_text().lower()
         assert 'pending' not in text and 'advantage' not in text
         shades = {c.split()[1].removeprefix('ma-match-') for c in page.locator('.ma-match').evaluate_all('(b)=>b.map(x=>x.className)')}

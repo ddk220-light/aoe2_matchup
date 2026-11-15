@@ -1,4 +1,4 @@
-"""Advisor eco metrics (data/golden/advisor_cell_metrics.json.gz) and their served rows."""
+"""Advisor matchup values (data/golden/advisor_cell_metrics.json.gz, Revision 5) and their served rows."""
 from collections import Counter
 import gzip
 import hashlib
@@ -14,10 +14,6 @@ from aoe2_api.services.advisor import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-WINS = {'dominance', 'kite', 'plain_win', 'power_win'}
-LOSSES = {'eco_win', 'cheap_loss', 'plain_loss', 'kited_loss', 'outclassed_loss'}
-MIRROR = {'dominance': {'outclassed_loss'}, 'kite': {'kited_loss'}, 'plain_win': {'plain_loss'},
-          'power_win': {'eco_win', 'cheap_loss'}, 'close': {'close'}, 'pending': {'pending'}}
 
 
 def sha256(path):
@@ -28,57 +24,56 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def test_metrics_were_built_from_the_committed_advisor_dataset():
+def test_values_were_built_from_the_committed_advisor_dataset():
     _, header = cell_metrics()
     assert header['advisorDataset']['sha256'] == sha256(DATASET), \
         'advisor DB changed: rebuild with tools/economy/advisor_eco/build_advisor_metrics.py (runbooks: Advisor eco metrics)'
-    assert header['thresholds'] == {'winnerHpBelow': 0.5, 'cheaperArmyBy': 0.25, 'kiteMinRangeTiles': 3.0,
-                                    'badgeResearchRatio': 0.5}
+    assert header['schemaVersion'] == 2
+    assert header['value'] == {'hpFull': 0.75, 'replenishExponent': 0.5, 'productionExponent': 0.25,
+                               'speedExponent': 0.5, 'mixedSpeedFactor': 2.0, 'speedFloor': 0.3,
+                               'villagerMinuteFloor': 1.0, 'noHpAssumed': 0.5, 'digits': 4}
+    assert header['counts'] == {'decided': 145613, 'decidedWithoutSeedHp': 962, 'draw': 4790}
 
 
-def test_every_served_row_carries_consistent_eco_fields():
+def test_every_served_row_carries_a_value_with_the_right_sign():
     catalog = advisor_catalog()
-    assert catalog['eco']['row_fields'] == ROW_FIELDS
-    counts = Counter()
+    assert catalog['eco']['row_fields'] == ROW_FIELDS and ROW_FIELDS[-1] == 'value'
+    signs = Counter()
     for civilization in catalog['civilizations']:
         data = advisor_matchups(civilization)
         assert data['row_fields'] == ROW_FIELDS
         for rows in data['opponents'].values():
-            for a, b, outcome, evidence, *_, cat_a, cat_b, hp, vm_a, vm_b in rows:
-                counts[cat_a] += 1
-                if cat_a in MIRROR:
-                    assert cat_b in MIRROR[cat_a]
+            for a, b, outcome, evidence, *_, value in rows:
+                assert evidence in ('observed', 'identity')
+                if outcome == 'a_win':
+                    assert value >= 0
+                elif outcome == 'b_win':
+                    assert value <= 0
                 else:
-                    assert cat_a in MIRROR[cat_b]
-                if cat_a == 'pending':
-                    assert evidence == 'inferred' and hp is None and vm_a is None
-                elif cat_a == 'close':
-                    assert outcome in ('equivalent', 'close_uncertain') or evidence == 'identity'
-                else:
-                    assert evidence == 'observed' and vm_a > 0 and vm_b > 0
-                    assert (cat_a in WINS) == (outcome == 'a_win') and (cat_a in LOSSES) == (outcome == 'b_win')
-                    # Up to ~1.07: a few winners end above their starting HP (regeneration).
-                    assert hp is None or 0 <= hp <= 1.1
-    # Revision 3 cell counts (docs/army-economics/ADVISOR_ECO_DESIGN.md), both display sides.
-    # No pending cells since the 2026-11-13 re-simulation of the 19,647 formerly inferred cells.
-    assert counts == {'plain_win': 106799, 'plain_loss': 106799, 'power_win': 34315,
-                      'cheap_loss': 25461, 'close': 2 * 5610, 'eco_win': 8854, 'dominance': 4394,
-                      'outclassed_loss': 4394, 'kite': 105, 'kited_loss': 105}
-
-
-def test_full_research_package_for_the_upgrade_badge():
-    units = advisor_catalog()['units']
-    missing = [u['key'] for u in units if u['full_research_vm'] is None]
-    assert missing == ['Burgundians|flemish_militia']
-    assert all(u['full_research_vm'] > 0 for u in units if u['full_research_vm'] is not None)
+                    assert value == 0
+                signs['win' if value > 0 else 'loss' if value < 0 else 'zero'] += 1
+                assert abs(value) < 5
+    assert signs['win'] == signs['loss'] > 0
 
 
 def test_browser_parity_fixture_is_fresh():
-    with gzip.open(ROOT / 'tests/advisor/fixtures/rev4-plans.json.gz', 'rt') as handle:
+    with gzip.open(ROOT / 'tests/advisor/fixtures/v5-plans.json.gz', 'rt') as handle:
         header = json.load(handle)['header']
     assert header['cellMetricsSha256'] == sha256(CELL_METRICS), \
         'stale fixture: python tools/economy/advisor_eco/build_advisor_parity_fixture.py'
-    assert header['plans'] == 3080 and header['referenceDifferences'] == 0
+    assert header['plans'] == 3080
+
+
+def test_slavs_vs_burgundians_reference_plan():
+    sys.path.insert(0, str(ROOT / 'tools/economy/advisor_eco'))
+    import advisor_model_v5
+    units = {u['id']: u for u in advisor_catalog()['units']}
+    name = lambda i: units[i]['name']  # noqa: E731
+    slavs = advisor_model_v5.plan(advisor_matchups('Slavs')['opponents']['Burgundians'], units)
+    assert (name(slavs['main']), name(slavs['support'])) == ('Elite Boyar', 'Halberdier')
+    burgundians = advisor_model_v5.plan(advisor_matchups('Burgundians')['opponents']['Slavs'], units)
+    assert name(burgundians['main']) == 'Paladin'
+    assert [name(i) for i in burgundians['unanswered']] == ['Elite Boyar']
 
 
 @pytest.mark.skipif(not (Path(os.environ.get('ADVISOR_ECO_OUT', '/nonexistent')) / 'cells.csv.gz').is_file(),

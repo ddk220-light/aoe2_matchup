@@ -1,12 +1,10 @@
-"""Read saved provisional matchup evidence. Never run fights or rank simulations.
+"""Read saved matchup evidence. Never run fights or rank simulations.
 
 Rows of ``/api/advisor-matchups/<civ>`` (``ROW_FIELDS``): the nine saved fields of the
-advisor DB, oriented from the requested civilization's side, followed by the eco-aware
-fields of the Revision 4 advisor from ``data/golden/advisor_cell_metrics.json.gz``
-(built by ``tools/economy/advisor_eco/build_advisor_metrics.py``): both units' Revision 3
-categories, the cell winner's remaining HP fraction and both armies' 60-second investment
-in villager-minutes. Identity and close cells are ``close``; inferred (never simulated)
-cells are ``pending``.
+advisor DB, oriented from the requested civilization's side, followed by ``value``: the
+matchup value from that side (Revision 5; ``data/golden/advisor_cell_metrics.json.gz``, built
+by ``tools/economy/advisor_eco/build_advisor_metrics.py``): positive for a win, negative for a
+loss, 0 for a draw or identical units.
 """
 from functools import lru_cache
 import gzip
@@ -20,8 +18,7 @@ from .catalog import presentation
 
 DATASET = GOLDEN_DIR / 'civ_matchups_first_pass.db'
 CELL_METRICS = GOLDEN_DIR / 'advisor_cell_metrics.json.gz'
-ROW_FIELDS = ['a', 'b', 'outcome', 'evidence_type', 'count_a', 'count_b', 'tier', 'flags', 'evidence_id',
-              'category_a', 'category_b', 'winner_hp', 'vm_a', 'vm_b']
+ROW_FIELDS = ['a', 'b', 'outcome', 'evidence_type', 'count_a', 'count_b', 'tier', 'flags', 'evidence_id', 'value']
 CLOSE_OUTCOMES = ('equivalent', 'close_uncertain')
 
 
@@ -31,27 +28,23 @@ def connect():
 
 @lru_cache(maxsize=1)
 def cell_metrics():
-    """{(a, b): (category_a, category_b, winner_hp, vm_a, vm_b)} in DB orientation, plus the header."""
+    """{(a, b): value_a} in DB orientation, plus the header."""
     with gzip.open(CELL_METRICS, 'rb') as handle:
         artefact = json.loads(handle.read())
-    if artefact['schemaVersion'] != 1:
+    if artefact['schemaVersion'] != 2:
         raise RuntimeError('Unsupported advisor cell metrics schema')
-    cells = {(row[0], row[1]): tuple(row[2:]) for row in artefact.pop('cells')}
+    cells = {(row[0], row[1]): row[2] for row in artefact.pop('cells')}
     return cells, artefact
 
 
-def cell_fields(a, b, outcome, evidence, metrics, swapped):
-    """Eco fields of one cell from a's side (Revision 4 row_info order: close first, then pending)."""
-    found = metrics.get((b, a) if swapped else (a, b))
-    vm = (None, None) if found is None else ((found[4], found[3]) if swapped else (found[3], found[4]))
+def cell_value(a, b, outcome, evidence, metrics, swapped):
+    """Matchup value from a's side; 0 for draws and identical units."""
     if outcome in CLOSE_OUTCOMES or evidence == 'identity':
-        return ['close', 'close', None, *vm]
-    if evidence == 'inferred':
-        return ['pending', 'pending', None, None, None]
-    if found is None or found[0] == 'close':
+        return 0.0
+    found = metrics.get((b, a) if swapped else (a, b))
+    if found is None or evidence != 'observed':
         raise RuntimeError(f'Advisor cell metrics are stale for cell {a}/{b}: rebuild advisor_cell_metrics.json.gz')
-    category_a, category_b = (found[1], found[0]) if swapped else (found[0], found[1])
-    return [category_a, category_b, found[2], *vm]
+    return -found if swapped and found else found
 
 
 @lru_cache(maxsize=1)
@@ -61,9 +54,6 @@ def advisor_catalog():
         dataset = json.loads(db.execute("SELECT value FROM metadata WHERE key='dataset'").fetchone()[0])
     names = sorted({u['civilization'] for u in units})
     _, metrics = cell_metrics()
-    full = metrics['fullResearchVm']
-    for unit in units:
-        unit['full_research_vm'] = full.get(str(unit['id']))
     supplement = load_civilization_supplement()['civilizations']
     emblems = {c: supplement.get(c, {}).get('emblem_url') or
                f'https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations/{c.lower()}.png'
@@ -78,8 +68,7 @@ def advisor_catalog():
                 reference_units[name].append(dict(row, name=row['unit_name'], civilization=name,
                     icon=f'/static/img/units/{icon}.png' if icon else '',
                     costs={k: row.get('stats', {}).get(f'cost_{k}', 0) for k in ('food','wood','gold')}))
-    eco = {key: metrics[key] for key in ('schemaVersion', 'thresholds', 'categories', 'rounding')}
-    eco['row_fields'] = ROW_FIELDS
+    eco = {'schemaVersion': metrics['schemaVersion'], 'value': metrics['value'], 'row_fields': ROW_FIELDS}
     return {'civilizations': names, 'units': units, 'emblems': emblems, 'dataset': dataset,
             'reference_units': reference_units, 'eco': eco}
 
@@ -103,7 +92,7 @@ def advisor_matchups(civilization):
         if swapped:
             a, b, ca, cb, outcome = b, a, cb, ca, inverse[outcome]
         opponents.setdefault(units[b]['civilization'], []).append(
-            [a, b, outcome, evidence, ca, cb, tier, flags, eid, *cell_fields(a, b, outcome, evidence, metrics, swapped)])
+            [a, b, outcome, evidence, ca, cb, tier, flags, eid, cell_value(a, b, outcome, evidence, metrics, swapped)])
     return {'civilization': civilization, 'opponents': opponents, 'row_fields': ROW_FIELDS,
             'source_commit': catalog['dataset']['source_commit']}
 

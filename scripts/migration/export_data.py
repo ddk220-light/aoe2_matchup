@@ -100,10 +100,10 @@ def export(destination):
                            'files':records,'source':'frozen public API and page projections'}
         if configuration_inputs:components[group]['configuration_inputs']=configuration_inputs
     components['advisor']['calculation_civilizations']=sorted(calculation)
-    # Schema 3: matchup rows carry the Revision 4 eco fields (categories, winner HP, 60-s
-    # investment) from data/golden/advisor_cell_metrics.json.gz; units carry full_research_vm.
-    components['advisor']['schema_version']=3
-    components['advisor']['source']='Saved provisional first-pass matchup evidence plus per-cell army-economics metrics; no live simulations'
+    # Schema 4: matchup rows end with the Revision 5 matchup value
+    # (data/golden/advisor_cell_metrics.json.gz, schema 2).
+    components['advisor']['schema_version']=4
+    components['advisor']['source']='Saved matchup evidence plus per-cell matchup values (HP, army, production, speed); no live simulations'
     economy_metadata=json.loads(groups['economy']['metadata'])['metadata']
     components['economy']['source']='Compiled army-economics runtime (data/army_economics/army_context.jsonl.gz); pair calculation runs in the browser'
     components['economy']['context_version']=economy_metadata['contextVersion']

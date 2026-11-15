@@ -529,15 +529,23 @@ deploying, and obtain explicit approval for that production action.**
 
 ---
 
-## 9. Advisor eco metrics (Matchup Advisor Revision 4)
+## 9. Advisor eco metrics (Matchup Advisor Revision 5)
 
-The live advisor (`/matchup-advisor`, browser model `apps/web/src/features/advisor/model.mjs`)
-scores every matchup by its Revision 3 category (docs/army-economics/ADVISOR_ECO_DESIGN.md).
-The categories, winner HP and 60-second army investment come from the committed
-`data/golden/advisor_cell_metrics.json.gz`, which is tied to one advisor DB
-(`data/golden/civ_matchups_first_pass.db`, SHA-256 recorded in the file and checked by
+**Revision 5 (2026-11-15).** The live advisor (`/matchup-advisor`, browser model
+`apps/web/src/features/advisor/model.mjs`, Python twin
+`tools/economy/advisor_eco/advisor_model_v5.py`) scores each matchup by a single **value**
+(`tools/economy/advisor_eco/advisor_value.py`: winner HP x replenish, production and speed
+ratios), weights it by the opponent unit's average value, and picks main / support /
+extra counters (docs/army-economics/ADVISOR_ECO_DESIGN.md, "Revision 5"). The per-cell values
+are the committed `data/golden/advisor_cell_metrics.json.gz` (schema 2, `[a, b, value_a]`),
+tied to one advisor DB (`data/golden/civ_matchups_first_pass.db`, SHA-256 recorded and checked by
 `tests/test_advisor_eco_metrics.py`). Rebuild it whenever that DB or the army-economics
-artefact (`data/army_economics/army_context.jsonl.gz`) changes.
+artefact (`data/army_economics/army_context.jsonl.gz`) changes:
+`extract_cells.py` (step 2) -> `build_advisor_metrics.py` -> `build_advisor_parity_fixture.py`
+(writes `tests/advisor/fixtures/v5-plans.json.gz`) -> node tests -> release (step 8).
+Value constants live in `advisor_value.py`; scoring constants in `CONFIG` of `model.mjs` and
+`advisor_model_v5.py` (keep both identical; the parity test checks it). Steps 4-7 below
+describe the retired Revision 4 files and are kept for history.
 
 **Done 2026-11-13: PC re-simulation of the 19,647 inferred ("pending") cells.** Source:
 `matchup-runs` commit 72d55423f, `data/matchup_runs/inferred-2026-resim-pc/` (snapshot
@@ -585,7 +593,7 @@ HP (first-pass runs missing from git), 88 plan mains and 193 supports changed.
 8. **Release:** `python scripts/migration/prepare_release.py`, `node scripts/migration/check_release.mjs frontend`
    / `backend`, `python scripts/migration/verify_build.py`, `npm run build --prefix apps/web`,
    then `git checkout vercel.json`. Commit `data/golden/advisor_cell_metrics.json.gz`,
-   `tests/advisor/fixtures/rev4-plans.json.gz`, the refreshed `docs/army-economics/` outputs and
+   `tests/advisor/fixtures/v5-plans.json.gz`, the refreshed `docs/army-economics/` outputs and
    `docs/migration/milestone-3/data-export-verification.json` on a branch off `staging`.
 
 **Tuning the weights:** every number lives in `WEIGHTS` / `CONFIG` at the top of

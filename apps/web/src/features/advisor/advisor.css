@@ -62,17 +62,23 @@
 .ma-cost-gold > span:first-child { color: var(--brass); }
 .ma-plan-body > .ma-support { border: 0; border-top: 1px solid var(--border); border-radius: 0; background: transparent; padding: 14px 16px; margin: 0; }
 
-.ma-match-line { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 10px; align-items: center; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
+.ma-match-line { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: center; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
 .ma-match-label { font-size: var(--fs-sm); line-height: 1.25; color: var(--text-muted); }
 .ma-opponents { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
 /* Result shade on the bottom edge only. */
-.ma-match { --ma-shade: #79b46f; width: 40px; height: 40px; flex: 0 0 auto; padding: 2px; border: 0; border-bottom: 4px solid var(--ma-shade); border-radius: 4px; background: var(--bg-hover); cursor: pointer; }
+.ma-match { --ma-shade: #79b46f; display: flex; flex-direction: column; align-items: center; width: 42px; flex: 0 0 auto; padding: 2px 2px 1px; border: 0; border-bottom: 4px solid var(--ma-shade); border-radius: 4px; background: var(--bg-hover); color: var(--text); cursor: pointer; }
 .ma-match-win-strong { --ma-shade: #1f6a2a; }
 .ma-match-loss-light { --ma-shade: #e3928a; }
 .ma-match-loss { --ma-shade: #9e2b22; }
 .ma-match-close { --ma-shade: var(--border-light); }
 .ma-match:hover, .ma-match:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 .ma-opponent-icon { display: block; width: 36px; height: 33px; object-fit: contain; border-radius: 3px; }
+.ma-num { font-size: 11px; line-height: 1.3; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.ma-plan-body > .ma-extras { padding: 6px 16px 14px; border-top: 1px solid var(--border); }
+.ma-extras > .ma-match-line:first-child { border-top: 0; margin-top: 0; }
+.ma-add { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ma-add-icon { width: 28px; height: 28px; object-fit: contain; border-radius: 3px; }
+.ma-add-name { color: var(--text); font-weight: 600; }
 
 .ma-team > header { margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-light); }
 

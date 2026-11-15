@@ -95,44 +95,59 @@ export function mountAdvisor(config) {
             if (ticket === sequence) results.innerHTML = '<p class="ma-loading" role="alert">Could not load this comparison. Choose the civilizations again to retry.</p>';
         }
     }
-    /** Underline shade per result: strong win, win, cheap loss, loss, close. */
-    const SHADE = {dominance: 'win-strong', kite: 'win-strong', plain_win: 'win', power_win: 'win',
-        eco_win: 'loss-light', cheap_loss: 'loss-light', plain_loss: 'loss', kited_loss: 'loss', outclassed_loss: 'loss', close: 'close'};
-    const LINES = [['Beats', info => info.cat !== 'close' && info.won], ['Loses to', info => info.cat !== 'close' && !info.won], ['Close', info => info.cat === 'close']];
-    function matchLines(card, entry, plan) {
-        const order = [...entry.vs.keys()].sort((a, b) => plan.strength.get(b) - plan.strength.get(a) || a - b);
-        for (const [label, test] of LINES) {
-            const opponents = order.filter(opp => test(entry.vs.get(opp)));
-            if (!opponents.length) continue;
-            const line = document.createElement('div'); line.className = 'ma-match-line';
-            line.innerHTML = `<span class="ma-match-label">${label}</span>`;
-            const icons = document.createElement('div'); icons.className = 'ma-opponents';
-            for (const opp of opponents) {
-                const row = entry.rows.get(opp), other = units.get(opp);
-                const button = document.createElement('button'); button.type = 'button';
-                button.className = `ma-match ma-match-${SHADE[entry.vs.get(opp).cat]}`;
-                button.dataset.opponent = String(opp);
-                button.title = `${other.name} · ${row[4]} vs ${row[5]} units`;
-                button.setAttribute('aria-label', `${label} ${button.title}`);
-                button.innerHTML = image(other, 'ma-opponent-icon');
-                button.addEventListener('click', () => showDetail(row)); icons.appendChild(button);
-            }
-            line.appendChild(icons); card.appendChild(line);
-        }
+    /** Weighted matchup number (value x opponent multiplier) and its underline shade. */
+    const fmt = x => (x > 0 ? '+' : x < 0 ? '\u2212' : '') + Math.abs(x).toFixed(2);
+    const shade = c => c >= 0.5 ? 'win-strong' : c > 0 ? 'win' : c === 0 ? 'close' : c > -0.5 ? 'loss-light' : 'loss';
+    function matchIcon(entry, opp, number = entry.vs.get(opp).contribution) {
+        const {row} = entry.vs.get(opp), other = units.get(opp);
+        const button = document.createElement('button'); button.type = 'button';
+        button.className = `ma-match ma-match-${shade(number)}`;
+        button.dataset.opponent = String(opp);
+        button.title = `${other.name}: ${fmt(number)} \u00b7 ${row[4]} vs ${row[5]} units`;
+        button.setAttribute('aria-label', button.title);
+        button.innerHTML = `${image(other, 'ma-opponent-icon')}<span class="ma-num">${fmt(number)}</span>`;
+        button.addEventListener('click', () => showDetail(row));
+        return button;
     }
-    function unitCard(entry, plan, role) {
+    function line(container, label, entry, opponents, number) {
+        if (!opponents.length) return;
+        const el = document.createElement('div'); el.className = 'ma-match-line';
+        const head = document.createElement('span'); head.className = 'ma-match-label';
+        if (typeof label === 'string') head.textContent = label; else head.appendChild(label);
+        const icons = document.createElement('div'); icons.className = 'ma-opponents';
+        for (const opp of opponents) icons.appendChild(matchIcon(entry, opp, number?.(opp)));
+        el.append(head, icons); container.appendChild(el);
+    }
+    function unitCard(entry, role) {
         const card = document.createElement('article');
         const kind = role === 'Main unit' ? 'main' : 'support';
         card.className = `ma-unit-card ma-recommendation ma-${kind}`; card.dataset.role = kind; card.dataset.unit = entry.unit.key;
         card.innerHTML = `<span class="ma-role">${role}</span><div class="ma-unit-heading">${image(entry.unit)}<div><h3>${esc(entry.unit.name)}</h3><div class="ma-costs">${costs(entry.unit)}</div></div></div>`;
-        matchLines(card, entry, plan);
+        const opps = [...entry.vs.keys()], c = opp => entry.vs.get(opp).contribution, v = opp => entry.vs.get(opp).value;
+        line(card, 'Beats', entry, opps.filter(o => v(o) > 0).sort((a, b) => c(b) - c(a) || a - b));
+        line(card, 'Loses to', entry, opps.filter(o => v(o) < 0).sort((a, b) => c(a) - c(b) || a - b));
+        line(card, 'Close', entry, opps.filter(o => v(o) === 0).sort((a, b) => a - b));
         return card;
+    }
+    function extras(plan) {
+        if (!plan.additions.length && !plan.unanswered.length) return null;
+        const section = document.createElement('section'); section.className = 'ma-extras'; section.dataset.role = 'additions';
+        for (const {entry, covers} of plan.additions) {
+            const label = document.createElement('span'); label.className = 'ma-add';
+            label.innerHTML = `Add ${image(entry.unit, 'ma-add-icon')}<span class="ma-add-name">${esc(entry.unit.name)}</span>`;
+            line(section, label, entry, covers);
+        }
+        const best = opp => Math.max(...[plan.main, plan.support].filter(Boolean).map(e => e.vs.get(opp).contribution));
+        line(section, 'No better counter', plan.main, plan.unanswered, best);
+        return section;
     }
     function fillPlan(element, plan, civilization, side) {
         element.innerHTML = `<header class="ma-plan-header"><h2>${esc(civilization)}</h2><span class="ma-kicker">${side === 'left' ? 'What you should build' : 'What to expect'}</span></header>`;
         const body = document.createElement('div'); body.className = 'ma-plan-body';
-        if (plan.main) body.appendChild(unitCard(plan.main, plan, 'Main unit'));
-        if (plan.support) body.appendChild(unitCard(plan.support.entry, plan, 'Support'));
+        if (plan.main) body.appendChild(unitCard(plan.main, 'Main unit'));
+        if (plan.support) body.appendChild(unitCard(plan.support, 'Support'));
+        const more = extras(plan);
+        if (more) body.appendChild(more);
         element.appendChild(body);
     }
     function renderComparison(rows) {
@@ -145,7 +160,7 @@ export function mountAdvisor(config) {
     function showDetail(row) {
         const a = units.get(row[0]), b = units.get(row[1]), detail = document.getElementById('ma-detail');
         const result = row[2] === 'a_win' ? `${a.name} is favored` : row[2] === 'b_win' ? `${b.name} is favored` : row[2] === 'equivalent' ? 'Equivalent combat profiles' : 'Close matchup';
-        detail.innerHTML = `<button type="button" class="ma-detail-close" aria-label="Close matchup details">×</button><div class="ma-detail-armies">${image(a)}<span>${row[4]} ${esc(a.name)}<small>${esc(a.civilization)}</small></span><b>vs</b>${image(b)}<span>${row[5]} ${esc(b.name)}<small>${esc(b.civilization)}</small></span></div><strong>${esc(result)}</strong><p>Fully upgraded units, army sizes adjusted so both sides cost the same.</p>`;
+        detail.innerHTML = `<button type="button" class="ma-detail-close" aria-label="Close matchup details">×</button><div class="ma-detail-armies">${image(a)}<span>${row[4]} ${esc(a.name)}<small>${esc(a.civilization)}</small></span><b>vs</b>${image(b)}<span>${row[5]} ${esc(b.name)}<small>${esc(b.civilization)}</small></span></div><strong>${esc(result)}</strong><p>Fully upgraded units; army sizes scaled by unit cost.</p>`;
         detail.hidden = false; detail.querySelector('button').addEventListener('click', () => { detail.hidden = true; });
     }
     renderPicker();

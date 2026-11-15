@@ -1,5 +1,25 @@
 # Matchup Advisor × army economics: "narrow loss, cheaper to rebuild"
 
+## Revision 5 — matchup value and weighted score (owner decisions 2026-11-15, live)
+
+Replaces the Revision 3 categories and Revision 4 weights below.
+
+- **Matchup value** (`tools/economy/advisor_eco/advisor_value.py`), from the winner's side:
+  `min(1, HP left / 0.75) x R^0.5 x P^0.25 x S^z`. HP left is the seed mean with lost seeds
+  as 0. R = loser / winner army cost (units only, villager-minutes, civ eco included).
+  P = loser / winner 60-second production buildings (fractional buildings, stone x1.5).
+  S = winner / loser speed, z = 0.5, doubled for melee vs ranged. Loser: the same, negative.
+  Draws 0. 962 cells without seed HP assume 50% HP.
+- **Weighted score**: each enemy unit gets a multiplier `clamp(1 + 0.7 x its average value
+  against our roster, 0.5, 1.5)`; a win counts value x m, a loss value x (2 - m). The number
+  under each icon on the page is that weighted value; the unit score is their sum.
+- **Main** = best weighted score, never a Scorpion. **Support** = a no-gold unit or a Scorpion
+  covering the most of the main's gaps (enemies where the main's weighted value < 0.5;
+  gain = sum of the improvement). **Add**: for enemies neither beats, the other unit with the
+  best winning value; **No better counter** when nothing beats it.
+- Code: `apps/web/src/features/advisor/model.mjs` (browser) = `advisor_model_v5.py`
+  (reference), pinned by `tests/advisor/v5-parity.test.mjs` for all 3,080 plans.
+
 ## Revision 4 — scoring model (owner request 2026-11-12)
 
 **Status (2026-11-13): wired into the site on branch `advisor-eco`** (not yet on `staging`).

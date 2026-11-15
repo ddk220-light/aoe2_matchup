@@ -11,7 +11,7 @@ const saved=p.advisor_catalog;
 const emblems=Object.fromEntries(Object.entries(saved.emblems).map(([name,url])=>[name,media.aliases[url]?.url||url]));
 // Team renders (Civ A blue, Civ B red) for the advisor's units; units without one keep their portrait icon.
 const sprites=catalog.sprites as Record<string,{url?:string,url_blue?:string}>;
-const team_icons=Object.fromEntries([...new Set([...saved.units.map((u:{name:string})=>u.name),'Siege Onager','Onager','Bombard Cannon','Houfnice'])]
+const team_icons=Object.fromEntries([...new Set([...saved.units.map((u:{name:string})=>u.name),'Siege Onager','Onager','Heavy Rocket Cart','Bombard Cannon','Houfnice'])]
   .filter(name=>sprites[name]?.url&&sprites[name]?.url_blue).map(name=>[name,{a:sprites[name].url_blue,b:sprites[name].url}]));
 const config={...saved,emblems,icons:catalog.icons,icon_names:pages.icon_names,team_icons,files:data.components.advisor.files};
 ---

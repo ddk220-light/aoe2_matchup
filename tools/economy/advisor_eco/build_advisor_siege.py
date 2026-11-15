@@ -4,7 +4,8 @@ Writes ``data/golden/advisor_siege.json``:
 - ``targets``: advisor unit names Onagers / Bombard Cannons counter (slow siege and wagons,
   foot archers, skirmishers, foot gunpowder, elephant archers). Owner-reviewed list.
 - ``civs``: civ -> its siege options, from ``aoe2_reference_simulation.db``: "Siege Onager",
-  "Onager" (only with Siege Engineers), "Bombard Cannon" ("Houfnice" when available).
+  "Onager" (only with Siege Engineers), "Heavy Rocket Cart" (Chinese, Jurchens, Khitans, Koreans;
+  owner 2026-11-15), "Bombard Cannon" ("Houfnice" when available).
   Cross-checked against aoe2techtree on 2026-11-15 (all 56 civs agree).
 
 Usage: python tools/economy/advisor_eco/build_advisor_siege.py
@@ -45,13 +46,15 @@ def build():
     for civ in sorted(r[0] for r in db.execute("SELECT DISTINCT civ_name FROM ref_units")):
         rows = {name: rid for rid, name in db.execute(
             "SELECT id, unit_name FROM ref_units WHERE civ_name=? AND unit_name IN "
-            "('Onager','Siege Onager','Bombard Cannon','Houfnice')", (civ,))}
+            "('Onager','Siege Onager','Heavy Rocket Cart','Bombard Cannon','Houfnice')", (civ,))}
         options = []
         if "Siege Onager" in rows:
             options.append("Siege Onager")
         elif "Onager" in rows and db.execute("SELECT 1 FROM ref_techs_applied WHERE ref_unit_id=? AND tech_name LIKE "
                                              "'%Siege Engineers%'", (rows["Onager"],)).fetchone():
             options.append("Onager")
+        if "Heavy Rocket Cart" in rows:
+            options.append("Heavy Rocket Cart")
         if "Houfnice" in rows:
             options.append("Houfnice")
         elif "Bombard Cannon" in rows:

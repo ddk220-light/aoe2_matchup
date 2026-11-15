@@ -44,7 +44,7 @@ test('support: a no-gold unit or a Scorpion covering the most of the main\'s gap
     assert.equal(p.support.unit.id, 3);
 });
 
-test('enemy units the pair cannot beat get the best other winner, or are unanswered', () => {
+test('enemy units the pair cannot beat get the best unit doing better than both, or are unanswered', () => {
     const all = units([unit(1, 20, 'Knight'), unit(2, 0, 'Spearman'), unit(3, 30, 'Archer'), unit(4, 30, 'Crossbow'),
         unit(101), unit(102), unit(103)]);
     const rows = [row(1, 101, 2), row(1, 102, -1), row(1, 103, -1),
@@ -56,6 +56,10 @@ test('enemy units the pair cannot beat get the best other winner, or are unanswe
     assert.equal(p.support.unit.id, 2);
     assert.deepEqual(p.additions.map(a => [a.entry.unit.id, a.covers]), [[4, [102]]]);
     assert.deepEqual(p.unanswered, [103]);
+    // A unit that still loses but loses less than both counts as the better counter.
+    const q = plan(rows.map(r => r[0] === 3 && r[1] === 103 ? row(3, 103, -0.2) : r), all);
+    assert.deepEqual(q.additions.map(a => [a.entry.unit.id, a.covers]), [[4, [102]], [3, [103]]]);
+    assert.deepEqual(q.unanswered, []);
 });
 
 test('the right-hand plan reads the same rows from the other side', () => {

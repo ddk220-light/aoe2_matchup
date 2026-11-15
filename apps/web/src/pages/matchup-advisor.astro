@@ -9,7 +9,11 @@ const p=pages.advisor;
 const frame={...p.frame,links:p.frame.links.filter(l=>l.href!=='/static/css/matchup_advisor.css')};
 const saved=p.advisor_catalog;
 const emblems=Object.fromEntries(Object.entries(saved.emblems).map(([name,url])=>[name,media.aliases[url]?.url||url]));
-const config={...saved,emblems,icons:catalog.icons,icon_names:pages.icon_names,files:data.components.advisor.files};
+// Team renders (Civ A blue, Civ B red) for the advisor's units; units without one keep their portrait icon.
+const sprites=catalog.sprites as Record<string,{url?:string,url_blue?:string}>;
+const team_icons=Object.fromEntries([...new Set(saved.units.map((u:{name:string})=>u.name))]
+  .filter(name=>sprites[name]?.url&&sprites[name]?.url_blue).map(name=>[name,{a:sprites[name].url_blue,b:sprites[name].url}]));
+const config={...saved,emblems,icons:catalog.icons,icon_names:pages.icon_names,team_icons,files:data.components.advisor.files};
 ---
 <BaseLayout page={frame}>
  <div class="page-header"><h1>Matchup Advisor</h1><p class="subtitle">Pick your civilization and your opponent's. See which unit to build, what it beats, and what to add for the units it loses to.</p></div>

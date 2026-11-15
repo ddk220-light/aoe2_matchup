@@ -72,8 +72,10 @@ def test_slavs_vs_burgundians_reference_plan():
     slavs = advisor_model_v5.plan(advisor_matchups('Slavs')['opponents']['Burgundians'], units)
     assert (name(slavs['main']), name(slavs['support'])) == ('Elite Boyar', 'Halberdier')
     burgundians = advisor_model_v5.plan(advisor_matchups('Burgundians')['opponents']['Slavs'], units)
-    assert name(burgundians['main']) == 'Paladin'
-    assert [name(i) for i in burgundians['unanswered']] == ['Elite Boyar']
+    assert (name(burgundians['main']), name(burgundians['support'])) == ('Paladin', 'Elite Skirmisher')
+    # Nothing beats the Elite Boyar, but the Halberdier loses to it far less than the pair does.
+    assert [[name(i), [name(j) for j in js]] for i, js in burgundians['additions']] == [['Halberdier', ['Elite Boyar']]]
+    assert burgundians['unanswered'] == []
 
 
 @pytest.mark.skipif(not (Path(os.environ.get('ADVISOR_ECO_OUT', '/nonexistent')) / 'cells.csv.gz').is_file(),

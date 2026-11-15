@@ -85,7 +85,8 @@ export function plan(rows, units, cfg = CONFIG) {
     const additions = new Map(), unanswered = [];
     for (const j of enemy) {
         if (pair.some(i => v(i, j) > 0)) continue;
-        const counter = best(own.filter(i => !pair.includes(i) && v(i, j) > 0), i => c(i, j), score);
+        const pairBest = Math.max(...pair.map(i => c(i, j)));
+        const counter = best(own.filter(i => !pair.includes(i) && c(i, j) > pairBest), i => c(i, j), score);
         if (counter === null) unanswered.push(j);
         else { if (!additions.has(counter)) additions.set(counter, []); additions.get(counter).push(j); }
     }

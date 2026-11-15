@@ -14,8 +14,9 @@ Input: the rows ``/api/advisor-matchups/<civ>`` serves for one opponent civ (own
    max(0, support contribution - main contribution) there. No gain anywhere -> the candidate
    with the best weighted score.
 5. Enemy units neither the main nor the support beats (value <= 0): the other unit with the
-   best winning contribution against each becomes an addition (grouped by unit); when no unit
-   beats it, it is listed as unanswered ("no better counter").
+   best contribution against each becomes an addition (grouped by unit) when it does better
+   than both of them (it need not win); otherwise the enemy is listed as unanswered
+   ("no better counter": the main and support already have the best outcome).
 
 Ties: higher weighted score, then lower unit id. Sums run in ascending unit id order with
 plain float additions, exactly as apps/web/src/features/advisor/model.mjs (the browser twin;
@@ -78,8 +79,9 @@ def plan(rows, units):
     for j in enemy:
         if any(value[(i, j)] > 0 for i in pair):
             continue
-        winners = [i for i in own if i not in pair and value[(i, j)] > 0]
-        counter = best(winners, lambda i: contribution[(i, j)])
+        pair_best = max(contribution[(i, j)] for i in pair)
+        better = [i for i in own if i not in pair and contribution[(i, j)] > pair_best]
+        counter = best(better, lambda i: contribution[(i, j)])
         if counter is None:
             unanswered.append(j)
         else:

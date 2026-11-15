@@ -30,7 +30,7 @@ const byCell = new Map(metrics.cells.map(row => [`${row[0]}:${row[1]}`, row[2]])
 
 /** Same as cell_value() in apps/backend/aoe2_api/services/advisor.py (value from the cell's a side). */
 function cellValue(cell) {
-    if (['equivalent', 'close_uncertain'].includes(cell.outcome) || cell.evidence_type === 'identity') return 0;
+    if (cell.outcome === 'equivalent' || cell.evidence_type === 'identity') return 0;
     const found = byCell.get(`${cell.a}:${cell.b}`);
     if (found === undefined || cell.evidence_type !== 'observed') throw new Error(`stale metrics for ${cell.a}/${cell.b}`);
     return found;

@@ -13,7 +13,9 @@ For a decided cell, from the winner's side:
 - ``S``   = winner's / loser's movement speed. ``z = Z_SPEED``, doubled when exactly one of
             the two units is ranged (a faster ranged unit can avoid, kite or pick fights).
 
-The loser's value is the same number, negative. Draws (close cells, identical units) are 0.
+The loser's value is the same number, negative. "Close" cells (the campaign's label for seeds
+that disagree, from 9-1 to 5-5) are scored by their seeds (owner 2026-11-15): the side that won
+more seeds is the winner, with the same HP rule. Exact seed ties and identical units are 0.
 Cells without seed HP (first-pass records not in git) use ``NO_HP_ASSUMED``.
 """
 from __future__ import annotations
@@ -42,9 +44,13 @@ def winner_hp(cell, w):
 
 def cell_value(cell, motion):
     """Signed value from side a (0 for draws) and its components. ``motion``: unit id -> motion()."""
-    if cell["outcome"] not in ("a_win", "b_win"):
+    outcome = cell["outcome"]
+    if outcome == "close_uncertain":
+        won_a, won_b = cell["seeds_won_a"] or 0, cell["seeds_won_b"] or 0
+        outcome = "a_win" if won_a > won_b else "b_win" if won_b > won_a else "draw"
+    if outcome not in ("a_win", "b_win"):
         return 0.0, None
-    w, l = ("a", "b") if cell["outcome"] == "a_win" else ("b", "a")
+    w, l = ("a", "b") if outcome == "a_win" else ("b", "a")
     hp = winner_hp(cell, w)
     hp_known = hp is not None
     h = min(1.0, (hp if hp_known else NO_HP_ASSUMED) / HP_FULL)

@@ -4,7 +4,7 @@ Rows of ``/api/advisor-matchups/<civ>`` (``ROW_FIELDS``): the nine saved fields 
 advisor DB, oriented from the requested civilization's side, followed by ``value``: the
 matchup value from that side (Revision 5; ``data/golden/advisor_cell_metrics.json.gz``, built
 by ``tools/economy/advisor_eco/build_advisor_metrics.py``): positive for a win, negative for a
-loss, 0 for a draw or identical units.
+loss ("close" cells by their seed majority), 0 for an exact seed tie or identical units.
 """
 from functools import lru_cache
 import gzip
@@ -38,8 +38,8 @@ def cell_metrics():
 
 
 def cell_value(a, b, outcome, evidence, metrics, swapped):
-    """Matchup value from a's side; 0 for draws and identical units."""
-    if outcome in CLOSE_OUTCOMES or evidence == 'identity':
+    """Matchup value from a's side; 0 for identical units ("close" cells come from the metrics)."""
+    if outcome == 'equivalent' or evidence == 'identity':
         return 0.0
     found = metrics.get((b, a) if swapped else (a, b))
     if found is None or evidence != 'observed':

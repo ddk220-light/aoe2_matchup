@@ -32,7 +32,9 @@ def test_values_were_built_from_the_committed_advisor_dataset():
     assert header['value'] == {'hpFull': 0.75, 'replenishExponent': 0.5, 'productionExponent': 0.25,
                                'speedExponent': 0.5, 'mixedSpeedFactor': 2.0, 'speedFloor': 0.3,
                                'villagerMinuteFloor': 1.0, 'noHpAssumed': 0.5, 'digits': 4}
-    assert header['counts'] == {'decided': 145613, 'decidedWithoutSeedHp': 962, 'draw': 4790}
+    # 'Close' cells are scored by seed majority; only exact seed ties stay draws.
+    assert header['counts'] == {'decided': 149777, 'closeScoredBySeedMajority': 4164,
+                                'decidedWithoutSeedHp': 962, 'draw': 626}
 
 
 def test_every_served_row_carries_a_value_with_the_right_sign():
@@ -49,8 +51,8 @@ def test_every_served_row_carries_a_value_with_the_right_sign():
                     assert value >= 0
                 elif outcome == 'b_win':
                     assert value <= 0
-                else:
-                    assert value == 0
+                elif outcome == 'equivalent' or evidence == 'identity':
+                    assert value == 0  # close_uncertain: either sign (seed majority) or 0 (exact tie)
                 signs['win' if value > 0 else 'loss' if value < 0 else 'zero'] += 1
                 assert abs(value) < 5
     assert signs['win'] == signs['loss'] > 0
@@ -78,9 +80,11 @@ def test_reference_plans_for_owner_reviewed_matchups():
     main, support, p = pair('Burgundians', 'Slavs')
     assert (main, support) == ('Elite Coustillier', 'Halberdier')
     assert [name(j) for j in p['unanswered']] == ['Elite Boyar']
-    # The Champion scores best alone but nothing fixes its Jaguar loss; this pair beats 6 and draws 1.
+    # The Champion scores best alone but nothing fixes its Jaguar loss; this pair beats all 7
+    # (the Composite Bowman wins 9 of 10 seeds against the Aztec Champion).
     main, support, p = pair('Armenians', 'Aztecs')
-    assert (main, support, p['pairWins']) == ('Elite Composite Bowman', 'Light Cavalry', 6.5)
+    assert (main, support, p['pairWins']) == ('Elite Composite Bowman', 'Light Cavalry', 7)
+    assert p['additions'] == [] and p['unanswered'] == []
 
 
 @pytest.mark.skipif(not (Path(os.environ.get('ADVISOR_ECO_OUT', '/nonexistent')) / 'cells.csv.gz').is_file(),

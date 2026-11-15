@@ -9,7 +9,8 @@ Replaces the Revision 3 categories and Revision 4 weights below.
   as 0. R = loser / winner army cost (units only, villager-minutes, civ eco included).
   P = loser / winner 60-second production buildings (fractional buildings, stone x1.5).
   S = winner / loser speed, z = 0.5, doubled for melee vs ranged. Loser: the same, negative.
-  Draws 0. 962 cells without seed HP assume 50% HP.
+  "Close" cells (seeds disagree) are scored by seed majority with the same HP rule; only exact
+  seed ties and identical units are 0. 962 cells without seed HP assume 50% HP.
 - **Weighted score**: each enemy unit gets a multiplier `clamp(1 + 0.7 x its average value
   against our roster, 0.5, 1.5)`; a win counts value x m, a loss value x (2 - m). The number
   under each icon on the page is that weighted value; the unit score is their sum.

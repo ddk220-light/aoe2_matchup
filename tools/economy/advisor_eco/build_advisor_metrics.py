@@ -7,8 +7,8 @@ mtime 0), schema 2. For every *observed* advisor cell (a, b) of
     [a, b, value_a]
 
 ``value_a`` is the matchup value from a's side (``advisor_value.cell_value``: winner HP x
-replenish, production and speed ratios; negative for a loss, 0 for a draw), rounded to
-``VALUE_DIGITS``. Identity cells are not listed (the API serves 0 for them).
+replenish, production and speed ratios; negative for a loss; "close" cells by seed majority;
+0 for an exact seed tie), rounded to ``VALUE_DIGITS``. Identity cells are not listed (the API serves 0 for them).
 
 Inputs (docs/architecture/runbooks.md, "Advisor eco metrics"):
 - ``$ADVISOR_ECO_OUT/cells.csv.gz`` from ``extract_cells.py`` (seed HP, army and building
@@ -59,10 +59,12 @@ def build():
         key = (c["a"], c["b"])
         if observed.get(key) != c["outcome"]:
             raise SystemExit(f"cells.csv.gz is stale for cell {key}: rerun extract_cells.py")
-        if c["outcome"] in ("a_win", "b_win") and None in (c["army_vm_a"], c["army_vm_b"], c["bld_vm_a"], c["bld_vm_b"]):
+        if c["outcome"] != "equivalent" and None in (c["army_vm_a"], c["army_vm_b"], c["bld_vm_a"], c["bld_vm_b"]):
             raise SystemExit(f"cell {key} has no army economics: rerun extract_cells.py")
         value, parts = cell_value(c, mo)
         counts["draw" if parts is None else "decided"] += 1
+        if parts is not None and c["outcome"] == "close_uncertain":
+            counts["closeScoredBySeedMajority"] += 1
         if parts is not None and not parts["hpKnown"]:
             counts["decidedWithoutSeedHp"] += 1
         rows.append([c["a"], c["b"], round(value, VALUE_DIGITS)])

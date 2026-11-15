@@ -18,7 +18,7 @@ export const CONFIG = Object.freeze({
     multiplierMax: 1.5,
     gap: 0.5,                    // a win below this weighted value is a weak win (support fallback)
     excludedMain: Object.freeze(['Scorpion', 'Heavy Scorpion']),
-    supportExtra: Object.freeze(['Scorpion', 'Heavy Scorpion']),   // gold units allowed as support
+    supportExtra: Object.freeze([]),   // gold units allowed as support (none: Scorpions only as extra units, owner 2026-11-15)
 });
 
 const INVERSE = {a_win: 'b_win', b_win: 'a_win'};

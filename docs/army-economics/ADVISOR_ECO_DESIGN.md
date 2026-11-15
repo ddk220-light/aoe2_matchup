@@ -13,7 +13,7 @@ Replaces the Revision 3 categories and Revision 4 weights below.
 - **Weighted score**: each enemy unit gets a multiplier `clamp(1 + 0.7 x its average value
   against our roster, 0.5, 1.5)`; a win counts value x m, a loss value x (2 - m). The number
   under each icon on the page is that weighted value; the unit score is their sum.
-- **Main** = best weighted score, never a Scorpion. **Support** = a no-gold unit or a Scorpion
+- **Main** = best weighted score, never a Scorpion. **Support** = a no-gold unit (never a Scorpion; Scorpions can be extra units)
   that handles the strongest threat first: holes = enemy units the main does not beat,
   strongest first; the first hole some candidate does better on decides (best value against
   it; ties by strength-weighted improvement over all holes). A main that beats everything

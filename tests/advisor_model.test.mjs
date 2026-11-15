@@ -12,7 +12,7 @@ const units = list => new Map(list.map(u => [u.id, u]));
 test('settings', () => {
     assert.deepEqual({...CONFIG, excludedMain: [...CONFIG.excludedMain], supportExtra: [...CONFIG.supportExtra]},
         {multiplierSlope: 0.7, multiplierMin: 0.5, multiplierMax: 1.5, gap: 0.5,
-            excludedMain: ['Scorpion', 'Heavy Scorpion'], supportExtra: ['Scorpion', 'Heavy Scorpion']});
+            excludedMain: ['Scorpion', 'Heavy Scorpion'], supportExtra: []});
 });
 
 test('opponent multiplier: 1 + 0.7 x average value from its side, clamped to 0.5..1.5', () => {
@@ -31,8 +31,8 @@ test('the main is the best weighted score but never a Scorpion; ties go to the l
     assert.equal(p.main.unit.id, 2);  // Halberdier ties the Knight; a no-gold main is allowed
 });
 
-test('support: the no-gold unit or Scorpion doing best against the strongest enemy the main does not beat', () => {
-    const all = units([unit(1, 20, 'Knight'), unit(2, 0, 'Spearman'), unit(3, 75, 'Scorpion'), unit(4, 30, 'Archer'),
+test('support: the no-gold unit doing best against the strongest enemy the main does not beat', () => {
+    const all = units([unit(1, 20, 'Knight'), unit(2, 0, 'Spearman'), unit(3, 0, 'Skirmisher'), unit(4, 30, 'Archer'),
         unit(101), unit(102), unit(103)]);
     const rows = [row(1, 101, 1.5), row(1, 102, -1), row(1, 103, -1),
         row(2, 101, -1), row(2, 102, -1.2), row(2, 103, 1),     // wins against the weaker hole
@@ -44,6 +44,14 @@ test('support: the no-gold unit or Scorpion doing best against the strongest ene
     assert.equal(p.support.unit.id, 3);
     assert.deepEqual([p.supportReason, p.supportTarget], ['threat', 102]);
     assert.deepEqual(p.additions.map(a => [a.entry.unit.id, a.covers]), [[2, [103]]]);
+});
+
+test('Scorpions are never the support, but can be an extra unit', () => {
+    const all = units([unit(1, 20, 'Knight'), unit(2, 75, 'Heavy Scorpion'), unit(3, 0, 'Spearman'), unit(101), unit(102)]);
+    const p = plan([row(1, 101, 1), row(1, 102, -1), row(2, 101, -1), row(2, 102, 1), row(3, 101, 0.5), row(3, 102, -1.5)], all);
+    assert.equal(p.main.unit.id, 1);
+    assert.equal(p.support.unit.id, 3);
+    assert.deepEqual(p.additions.map(a => [a.entry.unit.id, a.covers]), [[2, [102]]]);
 });
 
 test('support: when the main beats everything, the biggest help on its weakest wins', () => {

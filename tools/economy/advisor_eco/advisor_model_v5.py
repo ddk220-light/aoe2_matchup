@@ -9,7 +9,7 @@ Input: the rows ``/api/advisor-matchups/<civ>`` serves for one opponent civ (own
    ``value x m_j`` for a win or draw, ``value x (2 - m_j)`` for a loss
    (beating a strong unit counts more; losing to a weak one hurts more).
 3. Weighted score = sum of contributions. Main = highest weighted score, never a Scorpion.
-4. Support = a unit without gold, or a Scorpion, other than the main (owner 2026-11-15):
+4. Support = a unit without gold, other than the main (owner 2026-11-15):
    - holes = enemy units the main does not beat (value <= 0), strongest first (multiplier);
    - the strongest hole some candidate does better on than the main decides: the support is
      the candidate with the best value against it (ties: improvement over all holes, raw value
@@ -33,7 +33,7 @@ MULTIPLIER_MIN = 0.5
 MULTIPLIER_MAX = 1.5
 GAP = 0.5
 EXCLUDED_MAIN = ("Scorpion", "Heavy Scorpion")
-SUPPORT_EXTRA = ("Scorpion", "Heavy Scorpion")
+SUPPORT_EXTRA = ()  # owner 2026-11-15: Scorpions only as extra units, never support
 
 CONFIG = {"multiplierSlope": MULTIPLIER_SLOPE, "multiplierMin": MULTIPLIER_MIN, "multiplierMax": MULTIPLIER_MAX,
           "gap": GAP, "excludedMain": list(EXCLUDED_MAIN), "supportExtra": list(SUPPORT_EXTRA)}

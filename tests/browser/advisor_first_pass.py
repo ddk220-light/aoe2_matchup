@@ -30,7 +30,7 @@ with sync_playwright() as p:
         # Main, support and short extra-counter rows only: no alternatives, legend or explanatory text.
         assert page.locator('.ma-team-columns, .ma-legend-box, .ma-helps').count() == 0
         labels = set(page.locator('.ma-unit-card .ma-match-label').all_inner_texts())
-        assert labels <= {'Beats', 'Loses to', 'Close'}, labels
+        assert labels <= {'Beats', 'Loses to', 'Close', 'Counters', 'Also beats'}, labels
         nums = page.locator('.ma-unit-card .ma-num').all_inner_texts()
         assert nums and all(n[0] in '+\u22120' for n in nums), nums[:5]
         text = page.locator('#top-units').inner_text().lower()

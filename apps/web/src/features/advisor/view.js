@@ -119,28 +119,38 @@ export function mountAdvisor(config) {
         for (const opp of opponents) icons.appendChild(matchIcon(entry, opp, teams, number?.(opp)));
         el.append(head, icons); container.appendChild(el);
     }
-    /** Beats: weakest win first (where it struggles). Loses to: worst loss first. Support: Beats only. */
-    function unitCard(entry, role, teams) {
+    /** Beats: weakest win first (where it struggles). Loses to: worst loss first. */
+    const weakestFirst = entry => (a, b) => entry.vs.get(a).contribution - entry.vs.get(b).contribution || a - b;
+    function unitCard(entry, role, kind, teams) {
         const card = document.createElement('article');
-        const kind = role === 'Main unit' ? 'main' : 'support';
         card.className = `ma-unit-card ma-recommendation ma-${kind}`; card.dataset.role = kind; card.dataset.unit = entry.unit.key;
         card.innerHTML = `<span class="ma-role">${role}</span><div class="ma-unit-heading">${image(entry.unit, 'ma-unit-icon', teams.own)}<div><h3>${esc(entry.unit.name)}</h3><div class="ma-costs">${costs(entry.unit)}</div></div></div>`;
-        const opps = [...entry.vs.keys()], c = opp => entry.vs.get(opp).contribution, v = opp => entry.vs.get(opp).value;
-        line(card, 'Beats', entry, opps.filter(o => v(o) > 0).sort((a, b) => c(a) - c(b) || a - b), teams);
-        if (kind === 'main') {
-            line(card, 'Loses to', entry, opps.filter(o => v(o) < 0).sort((a, b) => c(a) - c(b) || a - b), teams);
-            line(card, 'Close', entry, opps.filter(o => v(o) === 0).sort((a, b) => a - b), teams);
-        }
         return card;
     }
-    function extras(plan, teams) {
-        if (!plan.additions.length && !plan.unanswered.length) return null;
-        const section = document.createElement('section'); section.className = 'ma-extras'; section.dataset.role = 'additions';
-        for (const {entry, covers} of plan.additions) {
-            const label = document.createElement('span'); label.className = 'ma-add';
-            label.innerHTML = `Add ${image(entry.unit, 'ma-add-icon', teams.own)}<span class="ma-add-name">${esc(entry.unit.name)}</span>`;
-            line(section, label, entry, covers, teams);
-        }
+    function mainCard(entry, teams) {
+        const card = unitCard(entry, 'Main unit', 'main', teams), opps = [...entry.vs.keys()], v = o => entry.vs.get(o).value;
+        line(card, 'Beats', entry, opps.filter(o => v(o) > 0).sort(weakestFirst(entry)), teams);
+        line(card, 'Loses to', entry, opps.filter(o => v(o) < 0).sort(weakestFirst(entry)), teams);
+        line(card, 'Close', entry, opps.filter(o => v(o) === 0).sort((a, b) => a - b), teams);
+        return card;
+    }
+    /** Support: only what it beats. */
+    function supportCard(entry, teams) {
+        const card = unitCard(entry, 'Support', 'support', teams);
+        line(card, 'Beats', entry, [...entry.vs.keys()].filter(o => entry.vs.get(o).value > 0).sort(weakestFirst(entry)), teams);
+        return card;
+    }
+    /** Extra unit (any unit, gold included): what it is added for, then what else it beats. */
+    function addCard(addition, teams) {
+        const {entry, covers} = addition, card = unitCard(entry, 'Add', 'add', teams);
+        line(card, 'Counters', entry, [...covers].sort(weakestFirst(entry)), teams);
+        line(card, 'Also beats', entry, [...entry.vs.keys()].filter(o => !covers.includes(o) && entry.vs.get(o).value > 0)
+            .sort(weakestFirst(entry)), teams);
+        return card;
+    }
+    function unanswered(plan, teams) {
+        if (!plan.unanswered.length) return null;
+        const section = document.createElement('section'); section.className = 'ma-extras'; section.dataset.role = 'unanswered';
         const best = opp => Math.max(...[plan.main, plan.support].filter(Boolean).map(e => e.vs.get(opp).contribution));
         line(section, 'No better counter', plan.main, plan.unanswered, teams, best);
         return section;
@@ -149,10 +159,11 @@ export function mountAdvisor(config) {
         const teams = side === 'left' ? {own: 'a', opp: 'b'} : {own: 'b', opp: 'a'};
         element.innerHTML = `<header class="ma-plan-header"><h2>${esc(civilization)}</h2><span class="ma-kicker">${side === 'left' ? 'What you should build' : 'What to expect'}</span></header>`;
         const body = document.createElement('div'); body.className = 'ma-plan-body';
-        if (plan.main) body.appendChild(unitCard(plan.main, 'Main unit', teams));
-        if (plan.support) body.appendChild(unitCard(plan.support, 'Support', teams));
-        const more = extras(plan, teams);
-        if (more) body.appendChild(more);
+        if (plan.main) body.appendChild(mainCard(plan.main, teams));
+        if (plan.support) body.appendChild(supportCard(plan.support, teams));
+        for (const addition of plan.additions) body.appendChild(addCard(addition, teams));
+        const rest = unanswered(plan, teams);
+        if (rest) body.appendChild(rest);
         element.appendChild(body);
     }
     function renderComparison(rows) {

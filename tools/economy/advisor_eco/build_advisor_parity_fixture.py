@@ -44,9 +44,8 @@ def row_digest(documents):
 
 def summary(p):
     r = lambda x: round(x, DIGITS)  # noqa: E731
-    return {"main": p["main"], "support": p["support"],
-            "supportGain": None if p["supportGain"] is None else r(p["supportGain"]),
-            "gaps": p["gaps"], "additions": p["additions"], "unanswered": p["unanswered"],
+    return {"main": p["main"], "support": p["support"], "supportReason": p["supportReason"],
+            "supportTarget": p["supportTarget"], "holes": p["holes"], "additions": p["additions"], "unanswered": p["unanswered"],
             "score": {str(k): r(v) for k, v in sorted(p["score"].items())},
             "multiplier": {str(k): r(v) for k, v in sorted(p["multiplier"].items())}}
 

@@ -72,10 +72,13 @@ def test_slavs_vs_burgundians_reference_plan():
     slavs = advisor_model_v5.plan(advisor_matchups('Slavs')['opponents']['Burgundians'], units)
     assert (name(slavs['main']), name(slavs['support'])) == ('Elite Boyar', 'Halberdier')
     burgundians = advisor_model_v5.plan(advisor_matchups('Burgundians')['opponents']['Slavs'], units)
-    assert (name(burgundians['main']), name(burgundians['support'])) == ('Paladin', 'Elite Skirmisher')
-    # Nothing beats the Elite Boyar, but the Halberdier loses to it far less than the pair does.
-    assert [[name(i), [name(j) for j in js]] for i, js in burgundians['additions']] == [['Halberdier', ['Elite Boyar']]]
-    assert burgundians['unanswered'] == []
+    # Support handles the strongest threat first: the Halberdier loses to the Elite Boyar far less.
+    assert (name(burgundians['main']), name(burgundians['support'])) == ('Paladin', 'Halberdier')
+    assert (burgundians['supportReason'], name(burgundians['supportTarget'])) == ('threat', 'Elite Boyar')
+    assert [[name(i), [name(j) for j in js]] for i, js in burgundians['additions']] == [['Champion', ['Halberdier']]]
+    assert [name(j) for j in burgundians['unanswered']] == ['Elite Boyar']
+    armenians = advisor_model_v5.plan(advisor_matchups('Armenians')['opponents']['Franks'], units)
+    assert (name(armenians['main']), name(armenians['support'])) == ('Champion', 'Halberdier')
 
 
 @pytest.mark.skipif(not (Path(os.environ.get('ADVISOR_ECO_OUT', '/nonexistent')) / 'cells.csv.gz').is_file(),

@@ -54,8 +54,8 @@ const digits = fixture.header.digits;
 const round = x => x === null ? null : Number(x.toFixed(digits));
 const byId = map => Object.fromEntries([...map].sort((a, b) => a[0] - b[0]).map(([k, v]) => [String(k), round(v)]));
 function summary(p) {
-    return {main: p.main.unit.id, support: p.support ? p.support.unit.id : null, supportGain: round(p.supportGain),
-        gaps: p.gaps, additions: p.additions.map(a => [a.entry.unit.id, a.covers]), unanswered: p.unanswered,
+    return {main: p.main.unit.id, support: p.support ? p.support.unit.id : null, supportReason: p.supportReason,
+        supportTarget: p.supportTarget, holes: p.holes, additions: p.additions.map(a => [a.entry.unit.id, a.covers]), unanswered: p.unanswered,
         score: byId(p.score), multiplier: byId(p.multiplier)};
 }
 

@@ -14,9 +14,13 @@ Replaces the Revision 3 categories and Revision 4 weights below.
   against our roster, 0.5, 1.5)`; a win counts value x m, a loss value x (2 - m). The number
   under each icon on the page is that weighted value; the unit score is their sum.
 - **Main** = best weighted score, never a Scorpion. **Support** = a no-gold unit or a Scorpion
-  covering the most of the main's gaps (enemies where the main's weighted value < 0.5;
-  gain = sum of the improvement). **Add**: for enemies neither beats, the other unit with the
-  best winning value; **No better counter** when nothing beats it.
+  that handles the strongest threat first: holes = enemy units the main does not beat,
+  strongest first; the first hole some candidate does better on decides (best value against
+  it; ties by strength-weighted improvement over all holes). A main that beats everything
+  gets the biggest strength-weighted help on its weak wins (weighted value < 0.5).
+  **Add** (any unit, gold included): for enemies neither beats, the unit doing best against
+  them when it beats both the main's and the support's result, shown with what it counters
+  and what else it beats; **No better counter** when nothing does better.
 - Code: `apps/web/src/features/advisor/model.mjs` (browser) = `advisor_model_v5.py`
   (reference), pinned by `tests/advisor/v5-parity.test.mjs` for all 3,080 plans.
 

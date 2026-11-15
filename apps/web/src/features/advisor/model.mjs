@@ -16,7 +16,7 @@ export const CONFIG = Object.freeze({
     multiplierSlope: 0.7,        // opponent multiplier = 1 + slope x its average value ...
     multiplierMin: 0.5,          // ... clamped to [min, max]
     multiplierMax: 1.5,
-    gap: 0.5,                    // the main's weighted contribution below this is a gap for the support
+    gap: 0.5,                    // a win below this weighted value is a weak win (support fallback)
     excludedMain: Object.freeze(['Scorpion', 'Heavy Scorpion']),
     supportExtra: Object.freeze(['Scorpion', 'Heavy Scorpion']),   // gold units allowed as support
 });
@@ -71,16 +71,36 @@ export function plan(rows, units, cfg = CONFIG) {
     }
     const c = (i, j) => contribution.get(`${i}:${j}`);
     const main = best(own.filter(i => !cfg.excludedMain.includes(units.get(i).name)), i => score.get(i), score);
-    const gaps = enemy.filter(j => c(main, j) < cfg.gap);
     const candidates = own.filter(i => i !== main && (!isGold(units.get(i)) || cfg.supportExtra.includes(units.get(i).name)));
-    const gains = new Map();
-    for (const s of candidates) {
+    // Holes: enemy units the main does not beat, strongest first (owner 2026-11-15).
+    const holes = enemy.filter(j => v(main, j) <= 0)
+        .sort((a, b) => multiplier.get(b) - multiplier.get(a) || a - b);
+    const gain = (s, targets) => {
         let total = 0;
-        for (const j of gaps) total += Math.max(0, c(s, j) - c(main, j));
-        gains.set(s, total);
+        for (const j of targets) total += Math.max(0, v(s, j) - v(main, j)) * multiplier.get(j);
+        return total;
+    };
+    let support = null, supportReason = null, supportTarget = null;
+    for (const t of holes) {
+        const better = candidates.filter(s => v(s, t) > v(main, t));
+        if (!better.length) continue;
+        // Best value against the strongest improvable hole; ties: strength-weighted gain, score, id.
+        const key = s => [-v(s, t), -gain(s, holes), -score.get(s), s];
+        support = better.reduce((x, y) => {
+            const kx = key(x), ky = key(y);
+            for (let k = 0; k < 4; k += 1) if (kx[k] !== ky[k]) return ky[k] < kx[k] ? y : x;
+            return x;
+        });
+        supportReason = 'threat'; supportTarget = t;
+        break;
     }
-    const support = best(candidates.filter(s => gains.get(s) > 0), s => gains.get(s), score)
-        ?? best(candidates, s => score.get(s), score);
+    if (support === null) {
+        // The main beats everything (or no candidate helps): improve its weakest wins.
+        const weak = enemy.filter(j => v(main, j) > 0 && c(main, j) < cfg.gap);
+        const helped = candidates.filter(s => gain(s, weak) > 0);
+        if (helped.length) { support = best(helped, s => gain(s, weak), score); supportReason = 'weak_wins'; }
+        else if (candidates.length) { support = best(candidates, s => score.get(s), score); supportReason = 'score'; }
+    }
     const pair = support === null ? [main] : [main, support];
     const additions = new Map(), unanswered = [];
     for (const j of enemy) {
@@ -97,8 +117,8 @@ export function plan(rows, units, cfg = CONFIG) {
         vs: new Map(enemy.map(j => [j, {value: v(i, j), contribution: c(i, j), row: rowOf.get(`${i}:${j}`)}])),
     };
     return {
-        main: entry(main), support: entry(support), supportGain: support === null ? null : gains.get(support),
-        gaps, additions: order.map(i => ({entry: entry(i), covers: additions.get(i)})),
+        main: entry(main), support: entry(support), supportReason, supportTarget,
+        holes, additions: order.map(i => ({entry: entry(i), covers: additions.get(i)})),
         unanswered, score, multiplier, contribution, enemy,
     };
 }

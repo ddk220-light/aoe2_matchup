@@ -9,10 +9,14 @@ Input: the rows ``/api/advisor-matchups/<civ>`` serves for one opponent civ (own
    ``value x m_j`` for a win or draw, ``value x (2 - m_j)`` for a loss
    (beating a strong unit counts more; losing to a weak one hurts more).
 3. Weighted score = sum of contributions. Main = highest weighted score, never a Scorpion.
-4. Support = a unit without gold, or a Scorpion, other than the main, covering the most of the
-   main's gaps: enemies where the main's contribution is below GAP; gain = sum of
-   max(0, support contribution - main contribution) there. No gain anywhere -> the candidate
-   with the best weighted score.
+4. Support = a unit without gold, or a Scorpion, other than the main (owner 2026-11-15):
+   - holes = enemy units the main does not beat (value <= 0), strongest first (multiplier);
+   - the strongest hole some candidate does better on than the main decides: the support is
+     the candidate with the best value against it (ties: improvement over all holes, raw value
+     difference x enemy multiplier, then weighted score);
+   - no hole, or no candidate improves any: the main's weak wins (contribution < GAP), support =
+     the biggest strength-weighted improvement there;
+   - otherwise the candidate with the best weighted score.
 5. Enemy units neither the main nor the support beats (value <= 0): the other unit with the
    best contribution against each becomes an addition (grouped by unit) when it does better
    than both of them (it need not win); otherwise the enemy is listed as unanswered
@@ -65,15 +69,29 @@ def plan(rows, units):
         return min(candidates, key=lambda i: (-key(i), -score[i], i)) if candidates else None
 
     main = best([i for i in own if units[i]["name"] not in EXCLUDED_MAIN], lambda i: score[i])
-    gaps = [j for j in enemy if contribution[(main, j)] < GAP]
     candidates = [i for i in own if i != main and (not is_gold(units[i]) or units[i]["name"] in SUPPORT_EXTRA)]
-    gains = {}
-    for s in candidates:
+    holes = sorted([j for j in enemy if value[(main, j)] <= 0], key=lambda j: (-multiplier[j], j))
+
+    def gain(s, targets):
         total = 0.0
-        for j in gaps:
-            total += max(0.0, contribution[(s, j)] - contribution[(main, j)])
-        gains[s] = total
-    support = best([s for s in candidates if gains[s] > 0], lambda s: gains[s]) or best(candidates, lambda s: score[s])
+        for j in targets:
+            total += max(0.0, value[(s, j)] - value[(main, j)]) * multiplier[j]
+        return total
+
+    support, reason, target = None, None, None
+    for t in holes:
+        better = [s for s in candidates if value[(s, t)] > value[(main, t)]]
+        if better:
+            support = min(better, key=lambda s: (-value[(s, t)], -gain(s, holes), -score[s], s))
+            reason, target = "threat", t
+            break
+    if support is None:
+        weak = [j for j in enemy if value[(main, j)] > 0 and contribution[(main, j)] < GAP]
+        helped = [s for s in candidates if gain(s, weak) > 0]
+        if helped:
+            support, reason = best(helped, lambda s: gain(s, weak)), "weak_wins"
+        elif candidates:
+            support, reason = best(candidates, lambda s: score[s]), "score"
     pair = [main] + ([support] if support is not None else [])
     additions, unanswered = {}, []
     for j in enemy:
@@ -87,6 +105,6 @@ def plan(rows, units):
         else:
             additions.setdefault(counter, []).append(j)
     order = sorted(additions, key=lambda i: (-len(additions[i]), -score[i], i))
-    return {"main": main, "support": support, "supportGain": gains.get(support, 0.0) if support is not None else None,
-            "gaps": gaps, "additions": [[i, additions[i]] for i in order], "unanswered": unanswered,
+    return {"main": main, "support": support, "supportReason": reason, "supportTarget": target,
+            "holes": holes, "additions": [[i, additions[i]] for i in order], "unanswered": unanswered,
             "score": score, "multiplier": multiplier, "contribution": contribution}

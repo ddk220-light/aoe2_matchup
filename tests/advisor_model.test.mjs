@@ -31,17 +31,27 @@ test('the main is the best weighted score but never a Scorpion; ties go to the l
     assert.equal(p.main.unit.id, 2);  // Halberdier ties the Knight; a no-gold main is allowed
 });
 
-test('support: a no-gold unit or a Scorpion covering the most of the main\'s gaps', () => {
+test('support: the no-gold unit or Scorpion doing best against the strongest enemy the main does not beat', () => {
     const all = units([unit(1, 20, 'Knight'), unit(2, 0, 'Spearman'), unit(3, 75, 'Scorpion'), unit(4, 30, 'Archer'),
         unit(101), unit(102), unit(103)]);
-    const rows = [row(1, 101, 1.5), row(1, 102, 1.5), row(1, 103, -1),
-        row(2, 101, -1), row(2, 102, -1), row(2, 103, 0.3),
-        row(3, 101, -1), row(3, 102, -1), row(3, 103, 0.9),
-        row(4, 101, -1), row(4, 102, -1), row(4, 103, 1.5)];  // the Archer costs gold: never support
+    const rows = [row(1, 101, 1.5), row(1, 102, -1), row(1, 103, -1),
+        row(2, 101, -1), row(2, 102, -1.2), row(2, 103, 1),     // wins against the weaker hole
+        row(3, 101, -1), row(3, 102, -0.5), row(3, 103, -1),    // only softens the stronger hole
+        row(4, 101, -1), row(4, 102, -1), row(4, 103, -1)];     // the Archer costs gold: never support
     const p = plan(rows, all);
     assert.equal(p.main.unit.id, 1);
-    assert.deepEqual(p.gaps, [103]);
+    assert.deepEqual(p.holes, [102, 103]);  // 102 is the stronger enemy unit
     assert.equal(p.support.unit.id, 3);
+    assert.deepEqual([p.supportReason, p.supportTarget], ['threat', 102]);
+    assert.deepEqual(p.additions.map(a => [a.entry.unit.id, a.covers]), [[2, [103]]]);
+});
+
+test('support: when the main beats everything, the biggest help on its weakest wins', () => {
+    const all = units([unit(1, 20, 'Knight'), unit(2, 0, 'Spearman'), unit(101), unit(102)]);
+    const p = plan([row(1, 101, 0.2), row(1, 102, 1.5), row(2, 101, 0.9), row(2, 102, -1)], all);
+    assert.equal(p.main.unit.id, 1);
+    assert.deepEqual(p.holes, []);
+    assert.deepEqual([p.support.unit.id, p.supportReason], [2, 'weak_wins']);
 });
 
 test('enemy units the pair cannot beat get the best unit doing better than both, or are unanswered', () => {

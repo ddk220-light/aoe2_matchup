@@ -15,7 +15,7 @@ For a Battle Sim pair, each army gets a **60-second army investment** in
 2. the production buildings needed to train it within 60 seconds (fractional: orders × train time ÷ 60, no whole-building rounding; owner 2026-11-15), and
 3. the net cost of the research **both** armies share (common technology IDs),
 
-with resources weighted food 1, wood 1, gold 1.5, stone 3 and converted to work
+with resources weighted food 1, wood 1, gold 1.5, stone 1.5 (3 until 2026-11-15) and converted to work
 using that civilization's post-Imperial gathering rates (simulated farms, wood,
 gold and stone plus civilization bonuses). The cheaper army in villager-minutes
 "wins" the comparison. Next to that headline, every army also carries its
@@ -280,7 +280,7 @@ average).
 ## Assumptions and exclusions
 
 - Post-Imperial, all available upgrades, Imperial research pricing (Chinese −15% on every tech), own civilization/team bonuses only.
-- Weights food 1 / wood 1 / gold 1.5 / stone 3 are a scarcity preference, not elapsed time.
+- Weights food 1 / wood 1 / gold 1.5 / stone 1.5 (was 3 until 2026-11-15) are a scarcity preference, not elapsed time.
 - The 60-s window starts with buildings, upgrades and resources ready; construction, rally and research queues are separate.
 - Auras fully active without placement or building cost (owner 2026-11-11). Folwark covers 8 of 10 farms.
 - Saxon foot soldiers: maximum −20% (four controlled Town Centers/Castles) — an assumption.

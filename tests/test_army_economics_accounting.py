@@ -94,7 +94,7 @@ def test_weights_are_applied_once_after_pooling_bills():
     assert score["weightedCost"] == resources({"wood": 100, "gold": 37.5})
     assert score["labor"]["seconds"] == 100
     assert score["standaloneLabor"]["army"]["seconds"] + score["standaloneLabor"]["commonResearch"]["seconds"] > 100
-    assert weighted_cost({"food": 10, "wood": 20, "gold": 30, "stone": 40}) == {"food": 10, "wood": 20, "gold": 45, "stone": 120}
+    assert weighted_cost({"food": 10, "wood": 20, "gold": 30, "stone": 40}) == {"food": 10, "wood": 20, "gold": 45, "stone": 60}
 
 
 @needs_scipy

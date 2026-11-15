@@ -13,7 +13,7 @@
 export const RESOURCES = Object.freeze(['food', 'wood', 'gold', 'stone']);
 export const CONTEXT_SCHEMA_VERSION = 4;
 export const TRAINING_WINDOW_SECONDS = 60;
-export const RESOURCE_WEIGHTS = Object.freeze({food: 1, wood: 1, gold: 1.5, stone: 3});
+export const RESOURCE_WEIGHTS = Object.freeze({food: 1, wood: 1, gold: 1.5, stone: 1.5});  // stone 3 -> 1.5: owner 2026-11-15
 
 const hasOwn = (object, key) => object != null && Object.prototype.hasOwnProperty.call(object, key);
 /** dict.get(key, fallback) */

@@ -5,7 +5,7 @@
     "food": 1,
     "wood": 1,
     "gold": 1.5,
-    "stone": 3
+    "stone": 1.5
   },
   "releaseReady": true,
   "blockers": [],
@@ -59,8 +59,8 @@
   "sourceHashes": {
     "review": "588ef3b905ae15a0cc5f04ca34393cb42854e268ed348503e6325754fc3f9bf2",
     "reference": "b3b2f34db5384f03a42d8869004ba18f6953bcacc2c2b227fb71b18ef2dc6507",
-    "compiler": "c0591d0743d1ea330c007370d9e95aa0e66a489f4a5405bb38651ec9bf653a4d",
-    "accounting": "8b19429bf95e571806854875d71565b5ebfc265ebe500dc0258651390ad960f0",
+    "compiler": "a1a4a36c74527b5366bcfa3515821b7a8175512984adc6d9ef9751b7413711a7",
+    "accounting": "131a24efb58d7ed5514bfdd11caa5b30e4a1cd338341284c4445aee804cba391",
     "scopePolicy": "c0e2655f055845d2c1a10ebe9cbb7e9ac37a1f82c0cb6f81f2920c7b3961af8e",
     "specialEconomy": "73e787ac1c31ae04f4af132f30c36e772c34bacdc81e07f463dae65605c85574",
     "curated": "cf49747f6b7daa6bce0d09f027cf953ce65bb0e2fbe006a2ea97afbf530cb1fe",
@@ -3192,7 +3192,7 @@
   "assumptions": [
     "Post-Imperial; all available upgrades; Imperial research pricing; own bonuses only.",
     "The headline is weighted villager-minutes for the displayed army, production buildings completing it within 60 seconds, and common military upgrade net costs.",
-    "Apply food x1, wood x1, gold x1.5 and stone x3 to the combined resource bill before evaluating labor. These are scarcity preferences, not literal gathering delays.",
+    "Apply food x1, wood x1, gold x1.5 and stone x1.5 to the combined resource bill before evaluating labor. These are scarcity preferences, not literal gathering delays.",
     "Gathering uses the reviewed resource layouts, including reseeding downtime and recurring farm wood; resource coproducts satisfy the combined bill without resale credit.",
     "Khitan pasture food uses an online lifecycle average of 25.2 food per villager-minute as a post-Imperial estimate, with immediate food credit and no external drop-off trip. Recurring pasture wood uses the supplied DAT cost and yield; rebuilding downtime is already in the reference rate.",
     "Controlled in-game gathering measurements are deferred by user instruction. Release eligibility does not certify measured accuracy; gathering rates remain estimates.",
@@ -3211,5 +3211,5 @@
     "Passive income, relics, trade, combat rewards and early-game grants are outside villager labor. Not counted as villager labor: relics, trade (Caravanserai, trade carts/cogs), Feitoria and other trickle buildings, Wei Tuntian, Gurjara livestock in Mills, fishing/fish traps, combat rewards, one-time grants (e.g. Cuman Mercenaries, First Crusade) and the Tupi casualty refund.",
     "Lithuanian combat stats elsewhere in the project assume 4 relics (aoe2x/dbgen/config_constants.py LITHUANIAN_RELIC_COUNT); relic income is not counted here."
   ],
-  "contextVersion": "afbe24f88194b8d6f7cf1032c90f829ce0608c21c06742f2c3e89ca5413afc36"
+  "contextVersion": "c93a495511e25fb2ab2f3e7f8d04dbaff703219196572850dc5f2808be78de1d"
 }

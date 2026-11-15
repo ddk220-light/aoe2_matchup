@@ -784,7 +784,7 @@ def compile_database(review, reference, output, observations=None, artefact=None
                 "gatheringValidation": observation_review,
                 "assumptions": ["Post-Imperial; all available upgrades; Imperial research pricing; own bonuses only.",
                     "The headline is weighted villager-minutes for the displayed army, production buildings completing it within 60 seconds, and common military upgrade net costs.",
-                    "Apply food x1, wood x1, gold x1.5 and stone x3 to the combined resource bill before evaluating labor. These are scarcity preferences, not literal gathering delays.",
+                    "Apply food x1, wood x1, gold x1.5 and stone x1.5 to the combined resource bill before evaluating labor. These are scarcity preferences, not literal gathering delays.",
                     "Gathering uses the reviewed resource layouts, including reseeding downtime and recurring farm wood; resource coproducts satisfy the combined bill without resale credit.",
                     "Khitan pasture food uses an online lifecycle average of 25.2 food per villager-minute as a post-Imperial estimate, with immediate food credit and no external drop-off trip. Recurring pasture wood uses the supplied DAT cost and yield; rebuilding downtime is already in the reference rate.",
                     "Controlled in-game gathering measurements are deferred by user instruction. Release eligibility does not certify measured accuracy; gathering rates remain estimates.",

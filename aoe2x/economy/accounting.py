@@ -11,7 +11,7 @@ import math
 RESOURCES = ("food", "wood", "gold", "stone")
 CONTEXT_SCHEMA_VERSION = 4  # 4 (2026-11-12): curated corrections, rebates, research summaries, notes
 TRAINING_WINDOW_SECONDS = 60
-RESOURCE_WEIGHTS = {"food": 1, "wood": 1, "gold": 1.5, "stone": 3}
+RESOURCE_WEIGHTS = {"food": 1, "wood": 1, "gold": 1.5, "stone": 1.5}  # stone 3 -> 1.5: owner 2026-11-15
 MAX_ARMY = 27
 
 

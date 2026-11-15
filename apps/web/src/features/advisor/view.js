@@ -148,6 +148,24 @@ export function mountAdvisor(config) {
             .sort(weakestFirst(entry)), teams);
         return card;
     }
+    /** Siege fallback: the civ's Siege Onager / Onager / Bombard Cannon against the units left to it. */
+    function siegeCard(plan, teams) {
+        const card = document.createElement('article');
+        card.className = 'ma-unit-card ma-recommendation ma-add'; card.dataset.role = 'siege';
+        const shown = plan.siege.map(name => image({name, icon: ''}, 'ma-unit-icon', teams.own)).join('');
+        card.innerHTML = `<span class="ma-role">Siege</span><div class="ma-unit-heading"><span class="ma-siege-icons">${shown}</span><div><h3>${esc(plan.siege.join(' or '))}</h3></div></div>`;
+        const el = document.createElement('div'); el.className = 'ma-match-line';
+        el.innerHTML = '<span class="ma-match-label">Counters</span>';
+        const icons = document.createElement('div'); icons.className = 'ma-opponents';
+        for (const opp of plan.siegeCovers) {
+            const other = units.get(opp), button = document.createElement('span');
+            button.className = 'ma-match ma-match-close'; button.title = other.name;
+            button.innerHTML = image(other, 'ma-opponent-icon', teams.opp);
+            icons.appendChild(button);
+        }
+        el.appendChild(icons); card.appendChild(el);
+        return card;
+    }
     function unanswered(plan, teams) {
         if (!plan.unanswered.length) return null;
         const section = document.createElement('section'); section.className = 'ma-extras'; section.dataset.role = 'unanswered';
@@ -161,13 +179,14 @@ export function mountAdvisor(config) {
         const body = document.createElement('div'); body.className = 'ma-plan-body';
         if (plan.main) body.appendChild(mainCard(plan.main, teams));
         if (plan.support) body.appendChild(supportCard(plan.support, teams));
+        if (plan.siegeCovers.length) body.appendChild(siegeCard(plan, teams));
         for (const addition of plan.additions) body.appendChild(addCard(addition, teams));
         const rest = unanswered(plan, teams);
         if (rest) body.appendChild(rest);
         element.appendChild(body);
     }
     function renderComparison(rows) {
-        const plans = buildAdvisorRecommendations(rows, units);
+        const plans = buildAdvisorRecommendations(rows, units, undefined, config.siege);
         top.innerHTML = '<div class="ma-compositions"><section class="ma-plan ma-plan-left" id="ma-left-plan"></section><section class="ma-plan ma-plan-right" id="ma-right-plan"></section></div>';
         fillPlan(document.getElementById('ma-left-plan'), plans.left, left, 'left');
         fillPlan(document.getElementById('ma-right-plan'), plans.right, right, 'right');

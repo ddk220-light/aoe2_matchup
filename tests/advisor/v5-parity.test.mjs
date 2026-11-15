@@ -26,6 +26,7 @@ const units = new Map(db.prepare('SELECT data FROM units ORDER BY id').all().map
 }));
 const cells = db.prepare('SELECT * FROM cells ORDER BY a, b').all();
 db.close();
+const siege = JSON.parse(read('data/golden/advisor_siege.json'));
 const byCell = new Map(metrics.cells.map(row => [`${row[0]}:${row[1]}`, row[2]]));
 
 /** Same as cell_value() in apps/backend/aoe2_api/services/advisor.py (value from the cell's a side). */
@@ -55,7 +56,7 @@ const round = x => x === null ? null : Number(x.toFixed(digits));
 const byId = map => Object.fromEntries([...map].sort((a, b) => a[0] - b[0]).map(([k, v]) => [String(k), round(v)]));
 function summary(p) {
     return {main: p.main.unit.id, support: p.support ? p.support.unit.id : null, supportReason: p.supportReason,
-        supportTarget: p.supportTarget, pairWins: p.pairWins, pairBeaten: round(p.pairBeaten), pairScore: round(p.pairScore), holes: p.holes, additions: p.additions.map(a => [a.entry.unit.id, a.covers]), unanswered: p.unanswered,
+        supportTarget: p.supportTarget, pairWins: p.pairWins, pairBeaten: round(p.pairBeaten), pairScore: round(p.pairScore), holes: p.holes, siege: p.siege, siegeCovers: p.siegeCovers, additions: p.additions.map(a => [a.entry.unit.id, a.covers]), unanswered: p.unanswered,
         score: byId(p.score), multiplier: byId(p.multiplier)};
 }
 
@@ -77,7 +78,7 @@ test('rows assembled here are the rows the API serves', () => {
 test('every one of the 3,080 plans equals the Python reference', () => {
     const failures = [];
     for (const {civ, enemy, ...want} of fixture.plans) {
-        try { assert.deepEqual(summary(plan(pairRows.get(`${civ}|${enemy}`), units)), want); }
+        try { assert.deepEqual(summary(plan(pairRows.get(`${civ}|${enemy}`), units, undefined, siege)), want); }
         catch (error) { failures.push(`${civ} vs ${enemy}: ${error.message.slice(0, 400)}`); }
     }
     assert.equal(fixture.plans.length, 3080);

@@ -73,8 +73,10 @@ def test_reference_plans_for_owner_reviewed_matchups():
     units = {u['id']: u for u in advisor_catalog()['units']}
     name = lambda i: units[i]['name']  # noqa: E731
 
+    siege = advisor_catalog()['siege']
+
     def pair(civ, enemy):
-        p = advisor_model_v5.plan(advisor_matchups(civ)['opponents'][enemy], units)
+        p = advisor_model_v5.plan(advisor_matchups(civ)['opponents'][enemy], units, siege)
         return name(p['main']), name(p['support']), p
     assert pair('Slavs', 'Burgundians')[:2] == ('Elite Boyar', 'Halberdier')
     main, support, p = pair('Burgundians', 'Slavs')
@@ -85,8 +87,11 @@ def test_reference_plans_for_owner_reviewed_matchups():
     main, support, p = pair('Armenians', 'Aztecs')
     assert (main, support, p['pairWins']) == ('Elite Composite Bowman', 'Light Cavalry', 7)
     assert p['additions'] == [] and p['unanswered'] == []
-    # Same number of wins (8 of 10) as Eagle + Pikeman, but it beats the Armenian Champion (strongest).
-    assert pair('Aztecs', 'Armenians')[:2] == ('Elite Jaguar Warrior', 'Elite Skirmisher')
+    # Jaguar beats the Armenian Champion (strongest); Siege Onager takes the Composite Bowman and Heavy Scorpion.
+    main, support, p = pair('Aztecs', 'Armenians')
+    assert (main, support) == ('Elite Jaguar Warrior', 'Pikeman')
+    assert (p['siege'], [name(j) for j in p['siegeCovers']]) == (['Siege Onager'], ['Elite Composite Bowman', 'Heavy Scorpion'])
+    assert p['additions'] == [] and p['unanswered'] == []
 
 
 @pytest.mark.skipif(not (Path(os.environ.get('ADVISOR_ECO_OUT', '/nonexistent')) / 'cells.csv.gz').is_file(),

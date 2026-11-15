@@ -46,7 +46,7 @@ def summary(p):
     r = lambda x: round(x, DIGITS)  # noqa: E731
     return {"main": p["main"], "support": p["support"], "supportReason": p["supportReason"],
             "supportTarget": p["supportTarget"], "pairWins": p["pairWins"], "pairBeaten": r(p["pairBeaten"]), "pairScore": r(p["pairScore"]),
-            "holes": p["holes"], "additions": p["additions"], "unanswered": p["unanswered"],
+            "holes": p["holes"], "siege": p["siege"], "siegeCovers": p["siegeCovers"], "additions": p["additions"], "unanswered": p["unanswered"],
             "score": {str(k): r(v) for k, v in sorted(p["score"].items())},
             "multiplier": {str(k): r(v) for k, v in sorted(p["multiplier"].items())}}
 
@@ -55,7 +55,8 @@ def main():
     catalog = advisor_catalog()
     units = {u["id"]: u for u in catalog["units"]}
     documents = {civ: advisor_matchups(civ)["opponents"] for civ in catalog["civilizations"]}
-    plans = [{"civ": civ, "enemy": enemy, **summary(m5.plan(rows, units))}
+    siege = catalog["siege"]
+    plans = [{"civ": civ, "enemy": enemy, **summary(m5.plan(rows, units, siege))}
              for civ in sorted(documents) for enemy, rows in sorted(documents[civ].items())]
     _, header = cell_metrics()
     metrics_bytes = (REPO / "data" / "golden" / "advisor_cell_metrics.json.gz").read_bytes()

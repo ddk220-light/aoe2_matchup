@@ -25,6 +25,12 @@ Input: the rows ``/api/advisor-matchups/<civ>`` serves for one opponent civ (own
    best contribution against each becomes an addition (grouped by unit) when it does better
    than both of them (it need not win); otherwise the enemy is listed as unanswered
    ("no better counter": the main and support already have the best outcome).
+6. Siege fallback (owner 2026-11-15): when the own civ has Siege Onager, Onager with Siege
+   Engineers or a Bombard Cannon (``data/golden/advisor_siege.json``), enemy units on the siege
+   target list (slow siege, foot archers, skirmishers, foot gunpowder, elephant archers) are
+   left to siege: the support ignores them, pair ranking counts them as beaten (score 0 when
+   the pair itself does not beat them), and those the pair does not beat are listed as siege
+   covers, before any extra unit.
 
 Ties: higher weighted score, then lower unit id. Sums run in ascending unit id order with
 plain float additions, exactly as apps/web/src/features/advisor/model.mjs (the browser twin;
@@ -47,8 +53,15 @@ def is_gold(unit):
     return float(unit["costs"].get("gold", 0) or 0) > 0
 
 
-def plan(rows, units):
-    """``units``: advisor unit id -> unit (name, costs). Returns the plan dict."""
+def siege_for(civ, siege):
+    """(options, target names) for one civ from advisor_siege.json data; empty without siege."""
+    if not siege or not siege["civs"].get(civ):
+        return [], set()
+    return list(siege["civs"][civ]), set(siege["targets"])
+
+
+def plan(rows, units, siege=None):
+    """``units``: advisor unit id -> unit (name, costs, civilization). Returns the plan dict."""
     value = {(r[0], r[1]): r[9] for r in rows}
     own = sorted({r[0] for r in rows})
     enemy = sorted({r[1] for r in rows})
@@ -69,13 +82,17 @@ def plan(rows, units):
             total += c
         score[i] = total
 
+    options, targets = siege_for(units[own[0]]["civilization"], siege)
+    siege_cover = {j for j in enemy if units[j]["name"] in targets}
+
     def best(candidates, key):
         return min(candidates, key=lambda i: (-key(i), -score[i], i)) if candidates else None
 
     def support_for(main):
         """(support, reason, target, holes) for one main (rule 4)."""
         candidates = [i for i in own if i != main and (not is_gold(units[i]) or units[i]["name"] in SUPPORT_EXTRA)]
-        holes = sorted([j for j in enemy if value[(main, j)] <= 0], key=lambda j: (-multiplier[j], j))
+        holes = sorted([j for j in enemy if value[(main, j)] <= 0 and j not in siege_cover],
+                       key=lambda j: (-multiplier[j], j))
 
         def gain(s, targets):
             total = 0.0
@@ -106,17 +123,26 @@ def plan(rows, units):
             if top > 0:
                 wins += 1
                 beaten += multiplier[j]
+                total += max(contribution[(i, j)] for i in members)
+            elif j in siege_cover:
+                wins += 1
+                beaten += multiplier[j]
             elif top == 0:
                 draws += 1
                 beaten += 0.5 * multiplier[j]
-            total += max(contribution[(i, j)] for i in members)
+                total += max(contribution[(i, j)] for i in members)
+            else:
+                total += max(contribution[(i, j)] for i in members)
         pairs[m] = (found, beaten, total, wins + 0.5 * draws)
     main = min(pairs, key=lambda m: (-pairs[m][1], -pairs[m][2], -score[m], m))
     (support, reason, target, holes), pair_beaten, pair_score, pair_wins = pairs[main]
     pair = [main] + ([support] if support is not None else [])
-    additions, unanswered = {}, []
+    additions, unanswered, siege_covers = {}, [], []
     for j in enemy:
         if any(value[(i, j)] > 0 for i in pair):
+            continue
+        if j in siege_cover:
+            siege_covers.append(j)
             continue
         pair_best = max(contribution[(i, j)] for i in pair)
         better = [i for i in own if i not in pair and contribution[(i, j)] > pair_best]
@@ -127,5 +153,6 @@ def plan(rows, units):
             additions.setdefault(counter, []).append(j)
     order = sorted(additions, key=lambda i: (-len(additions[i]), -score[i], i))
     return {"main": main, "support": support, "supportReason": reason, "supportTarget": target,
-            "pairWins": pair_wins, "pairBeaten": pair_beaten, "pairScore": pair_score, "holes": holes, "additions": [[i, additions[i]] for i in order], "unanswered": unanswered,
+            "pairWins": pair_wins, "pairBeaten": pair_beaten, "pairScore": pair_score, "holes": holes, "siege": options if siege_covers else [], "siegeCovers": siege_covers,
+            "additions": [[i, additions[i]] for i in order], "unanswered": unanswered,
             "score": score, "multiplier": multiplier, "contribution": contribution}

@@ -56,7 +56,13 @@ function minBy(items, key) {
 }
 
 /** Plan for the rows' own civilization (row[0]) against the opponent civilization (row[1]). */
-export function plan(rows, units, cfg = CONFIG) {
+/**
+ * Siege fallback (owner 2026-11-15): siege = {targets: [unit names], civs: {civ: [options]}} from
+ * data/golden/advisor_siege.json (advisor catalog `siege`). For a civ with siege, enemy units on
+ * the target list are left to siege: the support ignores them, pair ranking counts them as beaten
+ * (score 0 when the pair does not beat them), and those the pair does not beat become siege covers.
+ */
+export function plan(rows, units, cfg = CONFIG, siege = null) {
     const value = new Map(), rowOf = new Map();
     const ownSet = new Set(), enemySet = new Set();
     for (const row of rows) {
@@ -67,6 +73,10 @@ export function plan(rows, units, cfg = CONFIG) {
     const own = [...ownSet].sort((a, b) => a - b), enemy = [...enemySet].sort((a, b) => a - b);
     if (value.size !== own.length * enemy.length) throw new Error('Incomplete matchup matrix');
     const v = (i, j) => value.get(`${i}:${j}`);
+    const civ = units.get(own[0]).civilization;
+    const siegeOptions = siege?.civs?.[civ]?.length ? [...siege.civs[civ]] : [];
+    const siegeTargets = new Set(siegeOptions.length ? siege.targets : []);
+    const siegeCover = new Set(enemy.filter(j => siegeTargets.has(units.get(j).name)));
     const multiplier = new Map();
     for (const j of enemy) {
         let total = 0;
@@ -88,7 +98,8 @@ export function plan(rows, units, cfg = CONFIG) {
     /** Support for one main: holes strongest first, then weak wins, then best score (rule 4). */
     function supportFor(main) {
         const candidates = own.filter(i => i !== main && (!isGold(units.get(i)) || cfg.supportExtra.includes(units.get(i).name)));
-        const holes = enemy.filter(j => v(main, j) <= 0).sort((a, b) => multiplier.get(b) - multiplier.get(a) || a - b);
+        const holes = enemy.filter(j => v(main, j) <= 0 && !siegeCover.has(j))
+            .sort((a, b) => multiplier.get(b) - multiplier.get(a) || a - b);
         const gain = (s, targets) => {
             let total = 0;
             for (const j of targets) total += Math.max(0, v(s, j) - v(main, j)) * multiplier.get(j);
@@ -111,9 +122,10 @@ export function plan(rows, units, cfg = CONFIG) {
         let wins = 0, draws = 0, beaten = 0, total = 0;
         for (const j of enemy) {
             const top = Math.max(...members.map(i => v(i, j)));
-            if (top > 0) { wins += 1; beaten += multiplier.get(j); }
-            else if (top === 0) { draws += 1; beaten += 0.5 * multiplier.get(j); }
-            total += Math.max(...members.map(i => c(i, j)));
+            if (top > 0) { wins += 1; beaten += multiplier.get(j); total += Math.max(...members.map(i => c(i, j))); }
+            else if (siegeCover.has(j)) { wins += 1; beaten += multiplier.get(j); }
+            else if (top === 0) { draws += 1; beaten += 0.5 * multiplier.get(j); total += Math.max(...members.map(i => c(i, j))); }
+            else total += Math.max(...members.map(i => c(i, j)));
         }
         pairs.set(m, {found, beaten, total, wins: wins + 0.5 * draws});
     }
@@ -121,9 +133,10 @@ export function plan(rows, units, cfg = CONFIG) {
     const [support, supportReason, supportTarget, holes] = pairs.get(main).found;
     const pairWins = pairs.get(main).wins, pairBeaten = pairs.get(main).beaten, pairScore = pairs.get(main).total;
     const pair = support === null ? [main] : [main, support];
-    const additions = new Map(), unanswered = [];
+    const additions = new Map(), unanswered = [], siegeCovers = [];
     for (const j of enemy) {
         if (pair.some(i => v(i, j) > 0)) continue;
+        if (siegeCover.has(j)) { siegeCovers.push(j); continue; }
         const pairBest = Math.max(...pair.map(i => c(i, j)));
         const counter = best(own.filter(i => !pair.includes(i) && c(i, j) > pairBest), i => c(i, j), score);
         if (counter === null) unanswered.push(j);
@@ -137,13 +150,14 @@ export function plan(rows, units, cfg = CONFIG) {
     };
     return {
         main: entry(main), support: entry(support), supportReason, supportTarget, pairWins, pairBeaten, pairScore,
-        holes, additions: order.map(i => ({entry: entry(i), covers: additions.get(i)})),
+        holes, siege: siegeCovers.length ? siegeOptions : [], siegeCovers,
+        additions: order.map(i => ({entry: entry(i), covers: additions.get(i)})),
         unanswered, score, multiplier, contribution, enemy,
     };
 }
 
 /** Both sides' plans from the rows of the left civilization's document. */
-export function buildAdvisorRecommendations(rows, catalog, cfg = CONFIG) {
+export function buildAdvisorRecommendations(rows, catalog, cfg = CONFIG, siege = null) {
     const units = catalog instanceof Map ? catalog : new Map(catalog.map(unit => [unit.id, unit]));
-    return {left: plan(rows, units, cfg), right: plan(rows.map(invertMatchup), units, cfg)};
+    return {left: plan(rows, units, cfg, siege), right: plan(rows.map(invertMatchup), units, cfg, siege)};
 }

@@ -104,6 +104,19 @@ test('enemy units the pair cannot beat get the best unit doing better than both,
     assert.deepEqual(q.unanswered, [103]);
 });
 
+test('siege fallback: siege-target enemies are left to the civ\'s siege, before any extra unit', () => {
+    const civ = (u, c) => ({...u, civilization: c});
+    const all = units([civ(unit(1, 20, 'Knight'), 'A'), civ(unit(2, 0, 'Spearman'), 'A'), civ(unit(3, 30, 'Heavy Scorpion'), 'A'),
+        civ(unit(101, 20, 'Arbalester'), 'B'), civ(unit(102, 20, 'Paladin'), 'B')]);
+    const rows = [row(1, 101, -1), row(1, 102, 1), row(2, 101, -1), row(2, 102, 0.5), row(3, 101, 0.4), row(3, 102, -1)];
+    const siege = {targets: ['Arbalester'], civs: {A: ['Siege Onager'], B: []}};
+    const p = plan(rows, all, undefined, siege);
+    assert.deepEqual([p.siege, p.siegeCovers], [['Siege Onager'], [101]]);
+    assert.deepEqual(p.additions, []);
+    const q = plan(rows, all);  // without siege the Heavy Scorpion is the extra unit
+    assert.deepEqual(q.additions.map(a => [a.entry.unit.id, a.covers]), [[3, [101]]]);
+});
+
 test('the right-hand plan reads the same rows from the other side', () => {
     assert.deepEqual(invertMatchup(row(1, 101, 0.7)), [101, 1, 'b_win', 'observed', 27, 27, '', 0, 1, -0.7]);
     const all = units([unit(1), unit(101), unit(102)]);

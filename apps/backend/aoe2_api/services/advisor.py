@@ -18,6 +18,7 @@ from .catalog import presentation
 
 DATASET = GOLDEN_DIR / 'civ_matchups_first_pass.db'
 CELL_METRICS = GOLDEN_DIR / 'advisor_cell_metrics.json.gz'
+SIEGE = GOLDEN_DIR / 'advisor_siege.json'  # siege fallback: civ options + units they counter
 ROW_FIELDS = ['a', 'b', 'outcome', 'evidence_type', 'count_a', 'count_b', 'tier', 'flags', 'evidence_id', 'value']
 CLOSE_OUTCOMES = ('equivalent', 'close_uncertain')
 
@@ -69,8 +70,10 @@ def advisor_catalog():
                     icon=f'/static/img/units/{icon}.png' if icon else '',
                     costs={k: row.get('stats', {}).get(f'cost_{k}', 0) for k in ('food','wood','gold')}))
     eco = {'schemaVersion': metrics['schemaVersion'], 'value': metrics['value'], 'row_fields': ROW_FIELDS}
+    siege = json.loads(SIEGE.read_text())
     return {'civilizations': names, 'units': units, 'emblems': emblems, 'dataset': dataset,
-            'reference_units': reference_units, 'eco': eco}
+            'reference_units': reference_units, 'eco': eco,
+            'siege': {'targets': siege['targets'], 'civs': siege['civs']}}
 
 
 @lru_cache(maxsize=56)

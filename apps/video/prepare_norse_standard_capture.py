@@ -64,7 +64,7 @@ def army_signature(s):
             for p in range(1,9) for u in s.unit_manager.units[p]]
 
 
-def winter_templates(config, raw_dat, *, visual_source=WINTER, work=WORK):
+def winter_templates(config, raw_dat, *, visual_source=WINTER, work=WORK, extra_land=frozenset()):
     """Copy only terrain/Gaia art into each family's own gameplay template.
 
     New Gaia references are assigned above existing combat references. Each
@@ -80,6 +80,8 @@ def winter_templates(config, raw_dat, *, visual_source=WINTER, work=WORK):
     animals = {65,1239}
     # Broken paving is a passable land texture in the approved detailed draft.
     allowed_land = {6,12,25,32,35,36,40,72,73,74,100,124,125,126,127}
+    # Non-winter themes opt in to further flat, passable land textures explicitly.
+    allowed_land |= set(extra_land)
     out = {}
     for family in GOLDENS:
         if family == 'water':

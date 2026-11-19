@@ -54,7 +54,7 @@ def unit_class(slug: str) -> str:
     raise SystemExit(f'Unregistered unit {slug}; see apps/video/register_recording_unit.py')
 
 
-def build_theme(source: Path, work: Path) -> Path:
+def build_theme(source: Path, work: Path, extra_land=()) -> Path:
     """Run the audited scenery derivative pipeline into <work>/theme-templates."""
     from aoe2x.lab.live import _load_stack
     from prepare_norse_standard_capture import winter_templates
@@ -63,7 +63,7 @@ def build_theme(source: Path, work: Path) -> Path:
     with PICKLED_DAT.open('rb') as stream:
         raw_dat = pickle.load(stream)
     scratch = work / '_theme'
-    winter_templates(config, raw_dat, visual_source=source, work=scratch)
+    winter_templates(config, raw_dat, visual_source=source, work=scratch, extra_land=frozenset(extra_land))
     out = work / 'theme-templates'
     out.mkdir(parents=True, exist_ok=True)
     for f in (scratch / 'winter-templates').iterdir():
@@ -79,6 +79,8 @@ def main() -> None:
     ap.add_argument('--layouts', nargs='+', default=['arena'], choices=['arena', 'donut', 'theme'])
     ap.add_argument('--theme-source', type=Path)
     ap.add_argument('--theme-name', default='Theme')
+    ap.add_argument('--theme-extra-land', type=int, nargs='*', default=[],
+                    help='extra flat passable terrain ids allowed in the combat band (e.g. 41 DIRT_SAVANNAH)')
     ap.add_argument('--theme-opponents', nargs='*', help='limit theme rows to these opponent slugs')
     ap.add_argument('--prefix', default='spike')
     args = ap.parse_args()
@@ -90,7 +92,7 @@ def main() -> None:
         if not args.theme_source:
             raise SystemExit('--theme-source is required for the theme layout')
         src = args.theme_source if args.theme_source.is_absolute() else ROOT / args.theme_source
-        theme_dir = build_theme(src, work)
+        theme_dir = build_theme(src, work, args.theme_extra_land)
     rows = []
     for subject in args.subject:
         civ2, slug2 = subject.split(':')

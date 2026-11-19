@@ -13,7 +13,7 @@ Four external sources are used for AoE2 data. Each has different strengths. Alwa
 
 ## ⭐ Source 0: Firecrawl (FIRST STEP for any wiki page)
 
-**API key:** stored as env var `FIRECRAWL_API_KEY` (`fc-dc42befccd9640d5a2dfdc4bc5e92a4a`)  
+**API key:** stored as env var `FIRECRAWL_API_KEY`  
 **MCP tool:** `mcp__Apify__apify-slash-rag-web-browser` or direct `WebFetch` to Firecrawl API
 
 Use Firecrawl **before** the raw wiki API for any page that may be:
@@ -26,7 +26,7 @@ Use Firecrawl **before** the raw wiki API for any page that may be:
 ```bash
 # Scrape a Fandom wiki page to clean markdown
 curl -X POST https://api.firecrawl.dev/v1/scrape \
-  -H "Authorization: Bearer fc-dc42befccd9640d5a2dfdc4bc5e92a4a" \
+  -H "Authorization: Bearer $FIRECRAWL_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://ageofempires.fandom.com/wiki/Galleon_(Age_of_Empires_II)", "formats": ["markdown"]}'
 ```

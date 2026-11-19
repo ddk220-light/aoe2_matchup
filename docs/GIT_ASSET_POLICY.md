@@ -29,6 +29,32 @@ The ten new unit entries are Mounted Crossbowman, Heavy Mounted Crossbowman, Var
 
 The associated source scripts, generation records, inventory and text/JSON validation notes in `graphics/asset_completion_2026-09-22/` are retained for reuse and provenance. Its `review/` comparison images and all scratch/superseded renders stay local and ignored. Retention authorization is not visual golden approval: Savar and Heavy Mounted Crossbowman remain flagged for owner review, as recorded in the completion notes. No images are regenerated or promoted to golden by this publication.
 
+## Capture map and AI inputs: owner rule, 2026-11-18
+
+The golden branch `video-recorder-v3` holds **logic, not run history**. The owner asked for code, logic, map scripts and run instructions. With those, a fresh machine can redo any run: unit lists, costs and databases are already tracked. Records of completed runs do not belong in Git. Those records are campaign folders, per-trial plans, queues, eligibility and reuse decisions, status reports, share result-index backups, ranking outputs, logs and media. Their canonical copies live on the recording share.
+
+`data/local/` is ignored. A narrow allowlist in `.gitignore` re-includes only the map and AI inputs that the prepare scripts read, at their existing paths. That is 82 files, about 650 KB:
+
+| Path | Purpose |
+| --- | --- |
+| `data/local/detailed-standard-norse/winter-templates/`, `scenery-source/` | Frozen Arena winter Goldens (4 families) and their audits, plus their scenery source |
+| `data/local/norse-standard-capture/winter-templates/` | Older Biome-01A winter Goldens and audits |
+| `data/local/arena-donut-standard/donut-template/` | Frozen Winter Donut, its audit, and `ddkDonutQuietAI.per/.ai` |
+| `data/local/jarl-kiting-followup/donut-template/` | Donut opening-patrol and army-patrol variants |
+| `data/local/slinger-donut-timing/donut-template/` | Donut slinger-timing variant and `ddkDonutSlingerTiming.per/.ai` |
+| `data/local/legacy-kiting-preview/` (7 named files) | Approved Winter Rock scenery, `golden_rangedvsinf`, and the `ddkRockQuietAI` / `ddkRockPreviewAI` source scripts |
+| `data/local/arena-theme-review/` (scenarios, builders, `REVIEW.md`, `campaign-study/winter-*.json`) | Project-built civ and biome map drafts plus their builders |
+| `data/local/README.md` | Explains this allowlist |
+
+The allowlist excludes:
+- duplicate template copies in other campaign folders;
+- PNG previews;
+- community campaign studies and screenshots;
+- `inspect_community_campaigns.py` (local Steam profile path);
+- every run record.
+
+Game-derived data is regenerated, not committed: `aoe2x.extract.run`, `scripts/audit_installed_dat.py`, `scripts/cache_installed_dat.py`. Add a new path to the allowlist only when a prepare script reads it as an input that cannot be regenerated. List it here when you do.
+
 ## What belongs in Git
 
 - Source code, tests, documents, workflow recipes, decisions/learnings, small manifests and reusable helper scripts.

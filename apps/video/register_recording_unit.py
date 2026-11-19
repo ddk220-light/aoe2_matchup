@@ -64,9 +64,10 @@ def main() -> None:
     module.OUTPUT_DIR = AUDIT / 'installed'
     analyzer = module.UnitAnalyzer()
 
-    # Availability is the caller's responsibility: confirm in the civ's tech tree.
     master = unit_const(args.key)
-    row ={'civ': args.civ, 'slug': args.slug, 'master': master, 'label': args.label,
+    from prepare_norse_standard_capture import available
+    print('Tech tree:', available(args.civ, master))  # raises if the civ cannot build it
+    row = {'civ': args.civ, 'slug': args.slug, 'master': master, 'label': args.label,
            'scenarioKey': args.key, 'class': args.klass}
     base = analyzer.get_base_stats(analyzer.get_unit(master))
     row['baseCost'] = {r: getattr(base, 'cost_' + r) for r in ('food', 'wood', 'gold')}

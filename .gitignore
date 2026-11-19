@@ -27,7 +27,50 @@ empires2_x2_p1.dat
 # Extracted data + layer-1 inputs live under data/inputs/ (own .gitignore);
 # machine-local working artifacts (sim caches, patch intermediates, local
 # matchup DBs) live under data/local/
-data/local/
+# data/local is machine-local (runs, logs, status, media, credentials).
+# Only the exact map/AI inputs needed to rebuild captures are tracked;
+# see docs/GIT_ASSET_POLICY.md "Capture map and AI inputs".
+data/local/*
+!data/local/README.md
+!data/local/legacy-kiting-preview/
+data/local/legacy-kiting-preview/*
+!data/local/legacy-kiting-preview/Winter Rock - Jomsviking vs Arbalester.aoe2scenario
+!data/local/legacy-kiting-preview/Legacy Rock - Jomsviking vs Arbalester.aoe2scenario
+!data/local/legacy-kiting-preview/golden_rangedvsinf.aoe2scenario
+!data/local/legacy-kiting-preview/ddkRockQuietAI.per
+!data/local/legacy-kiting-preview/ddkRockQuietAI.ai
+!data/local/legacy-kiting-preview/ddkRockPreviewAI.per
+!data/local/legacy-kiting-preview/ddkRockPreviewAI.ai
+!data/local/arena-theme-review/
+data/local/arena-theme-review/*
+!data/local/arena-theme-review/*.aoe2scenario
+!data/local/arena-theme-review/*.py
+# community-campaign inspector: third-party content + local Steam profile path
+data/local/arena-theme-review/inspect_community_campaigns.py
+!data/local/arena-theme-review/REVIEW.md
+!data/local/arena-theme-review/scenarios/
+data/local/arena-theme-review/scenarios/*
+!data/local/arena-theme-review/scenarios/*.aoe2scenario
+!data/local/arena-theme-review/campaign-study/
+data/local/arena-theme-review/campaign-study/*
+!data/local/arena-theme-review/campaign-study/winter-detailed.json
+!data/local/arena-theme-review/campaign-study/winter-draft.json
+!data/local/arena-donut-standard/
+data/local/arena-donut-standard/*
+!data/local/arena-donut-standard/donut-template/
+!data/local/jarl-kiting-followup/
+data/local/jarl-kiting-followup/*
+!data/local/jarl-kiting-followup/donut-template/
+!data/local/slinger-donut-timing/
+data/local/slinger-donut-timing/*
+!data/local/slinger-donut-timing/donut-template/
+!data/local/detailed-standard-norse/
+data/local/detailed-standard-norse/*
+!data/local/detailed-standard-norse/winter-templates/
+!data/local/detailed-standard-norse/scenery-source/
+!data/local/norse-standard-capture/
+data/local/norse-standard-capture/*
+!data/local/norse-standard-capture/winter-templates/
 
 # IDE
 .idea/

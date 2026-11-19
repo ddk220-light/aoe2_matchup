@@ -123,7 +123,12 @@ def run_doctor(config: LabConfig, *, live: bool = False, ui: bool = False) -> di
         from .live import preflight_live
 
         try:
-            plan = plan_matchup(config, make_request(side2="champion", side3="halberdier"))
+            # Readiness is independent of a benchmark's reviewed unit roster.
+            # Explicit counts avoid requiring geometric-policy entries for these
+            # generic smoke-check units; this check never records a battle.
+            plan = plan_matchup(config, make_request(
+                side2="champion", side3="halberdier", balance="explicit", n2=1, n3=1
+            ))
             detail = preflight_live(config, plan, check_ui=ui)
             check("Live automation", True, str(detail))
         except Exception as error:

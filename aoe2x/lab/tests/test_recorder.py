@@ -14,6 +14,27 @@ from aoe2x.lab.planner import make_request, plan_matchup
 from aoe2x.lab.recording import recorder_retention, validate_recording_bundle, write_recording_bundle
 
 
+@pytest.mark.parametrize('opponent', ['elite_hearth_troop_saxons', 'elite_jarl_varangians'])
+def test_viking_sagas_civilization_tokens_and_new_masters_round_trip(opponent, tmp_path):
+    config = load_config()
+    plan = plan_matchup(config, make_request(side2='elite_jomsviking_danes', side3=opponent))
+    stack = _load_stack(config)
+    generated = tmp_path / 'viking-sagas.aoe2scenario'
+    sides = [stack['resolve_side'](plan[s]['civ'], plan[s]['slug']) for s in ('side2', 'side3')]
+    with contextlib.redirect_stdout(io.StringIO()):
+        stack['build_run'](*sides, generated,
+            counts=(plan['side2']['count'], plan['side3']['count']),
+            template=golden_path(config, plan['scenario']['family']),
+            player4_count=plan['scenario'].get('player4Count'))
+        report = _validate_scenario(config, plan, generated, stack)
+        scenario = stack['AoE2DEScenario'].from_file(str(generated))
+    players = {int(p.player_id): p for p in scenario.player_manager.players}
+    assert players[2].civilization == 'DANES-CIV'
+    assert players[3].civilization == ('SAXONS-CIV' if 'hearth' in opponent else 'VARANGIANS-CIV')
+    assert report['cameraMatchesGolden']
+    assert plan['side3']['ranged'] == ('jarl' in opponent)
+
+
 def test_five_hussars_preserve_first_slots_and_golden_runtime(tmp_path):
     import hashlib
     config = load_config()
@@ -40,10 +61,59 @@ def test_five_hussars_preserve_first_slots_and_golden_runtime(tmp_path):
         stack["build_run"](*sides, ordinary, counts=(plan["side2"]["count"], plan["side3"]["count"]), template=golden)
         with pytest.raises(LiveCaptureError, match="Player 4 roster"):
             _validate_scenario(config, plan, ordinary, stack)
-        for count in (0, 10, 5.5, True):
+        for count in (0, 11, 5.5, True):
             with pytest.raises(ValueError, match="player4_count"):
                 stack["build_run"](*sides, generated, template=golden, player4_count=count)
     assert hashlib.sha256(golden.read_bytes()).hexdigest() == original_hash
+
+
+@pytest.mark.parametrize('ranged,melee,expected', [
+    ('elite_blackwood_archer_tupi','elite_jaguar_warrior_aztecs',5),
+    ('houfnice_bohemians','elite_jaguar_warrior_aztecs',7),
+    ('houfnice_bohemians','elite_war_elephant_persians',10),
+])
+@pytest.mark.parametrize('reverse', [False,True])
+def test_scaled_buffer_generates_exact_roster_without_changing_golden(ranged, melee, expected, reverse, tmp_path):
+    import hashlib
+    import math
+    from copy import deepcopy
+    from aoe2x.lab.buffer import EXTRA_HUSSAR_POSITION
+    from aoe2x.lab.costs import validate_plan_costs
+    config=load_config()
+    request=make_request(side2=melee if reverse else ranged,side3=ranged if reverse else melee)
+    # Screens are a historical opt-in experiment; new captures default to none.
+    request['scenario']['player4Buffer']='scaled'
+    plan=plan_matchup(config,request)
+    assert plan['scenario']['player4Count']==expected
+    assert validate_plan_costs(plan)['verified']
+    stale=deepcopy(plan)
+    stale['scenario']['player4Scaling']['armyWeightedCost']+=1
+    with pytest.raises(ValueError,match='fielded ranged army cost'):
+        validate_plan_costs(stale)
+    stack=_load_stack(config)
+    golden=golden_path(config,plan['scenario']['family'])
+    source_hash=hashlib.sha256(golden.read_bytes()).hexdigest()
+    sides=[stack['resolve_side'](plan[s]['civ'],plan[s]['slug']) for s in ('side2','side3')]
+    with contextlib.redirect_stdout(io.StringIO()):
+        output=tmp_path/'scaled.aoe2scenario'
+        stack['build_run'](*sides,output,counts=(plan['side2']['count'],plan['side3']['count']),template=golden,player4_count=expected)
+        report=_validate_scenario(config,plan,output,stack)
+        target=stack['AoE2DEScenario'].from_file(str(output))
+        source=stack['AoE2DEScenario'].from_file(str(golden))
+    assert report['player4Count']==expected
+    assert report['player4Buffer']=='scaled'
+    assert report['player4Scaling']==plan['scenario']['player4Scaling']
+    assert report['triggerStructureMatchesGolden']
+    assert report['playerRuntimeConfigurationMatchesGolden']
+    assert report['cameraMatchesGolden']
+    if expected==10:
+        p4=list(target.unit_manager.get_player_units(4))
+        assert len({u.reference_id for u in p4})==10
+        assert (p4[-1].x,p4[-1].y)==EXTRA_HUSSAR_POSITION
+        for owner in range(9):
+            for unit in source.unit_manager.get_player_units(owner):
+                assert math.hypot(unit.x-EXTRA_HUSSAR_POSITION[0],unit.y-EXTRA_HUSSAR_POSITION[1])>=.7
+    assert hashlib.sha256(golden.read_bytes()).hexdigest()==source_hash
 
 
 def test_recorder_cli_keeps_raw_and_rejects_destructive_policy():

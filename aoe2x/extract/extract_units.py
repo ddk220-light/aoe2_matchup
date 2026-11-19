@@ -34,6 +34,9 @@ UNIT_CLASSES = {
 
 # Unit IDs to extract and their display names
 UNIT_NAMES = {
+    2706: "Elite Hearth Troop",
+    2709: "Elite Jarl",
+    2712: "Elite Jomsviking",
     775: "Missionary",
     1263: "Flaming Camel",
     # ===== Core Infantry =====

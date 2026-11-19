@@ -31,6 +31,7 @@ from pathlib import Path
 from AoE2ScenarioParser.scenarios.aoe2_de_scenario import AoE2DEScenario
 from AoE2ScenarioParser.datasets.units import UnitInfo
 from AoE2ScenarioParser.datasets.object_support import Civilization
+from aoe2x.lab.buffer import planned_buffer_positions
 
 WIN_MARKER = "WINS"   # the automation watches the center band for this word
 
@@ -59,6 +60,13 @@ P_SPECTATOR, P_SIDE1, P_SIDE2 = 1, 2, 3         # player slots in the template
 # + UnitInfo[KEY] lookup (e.g. the Bengali Ratha's slug carries a "(melee)"/"(ranged)"
 # mode tag the dataset spells without parentheses).
 _KEY_CONST_OVERRIDE = {
+    # The Viking Sagas release DAT (2026-09-22); the parser enum predates it.
+    "mounted_crossbowman": 2700,
+    "heavy_mounted_crossbowman": 2701,
+    "elite_varangian_guard": 2704,
+    "elite_hearth_troop": 2706,
+    "elite_jarl": 2709,
+    "elite_jomsviking": 2712,
     # The public/database slug omits "battle", while AoE2ScenarioParser uses
     # the full in-game enum name.
     "elite_elephant": int(UnitInfo.ELITE_BATTLE_ELEPHANT.ID),
@@ -90,8 +98,12 @@ def unit_const(key: str) -> int:
     return int(UnitInfo[key.upper()].ID)
 
 
-def civ_enum(name: str) -> Civilization:
+def civ_enum(name: str) -> Civilization | str:
     """Map a civ name like 'Muisca' -> Civilization.MUISCA."""
+    # Modern scenarios store civilization data_name tokens. These exact values
+    # come from the installed civilizations.json, not the legacy numeric IDs.
+    if name.upper() in {"SAXONS", "VARANGIANS", "DANES"}:
+        return name.upper() + "-CIV"
     return Civilization[name.upper()]
 
 
@@ -223,6 +235,7 @@ def _retarget_new_template(scn, new1, label1, n1, new2, label2, n2):
             return None
 
     TASK = 12                                          # EffectId.TASK_OBJECT
+    PATROL = 19                                        # EffectId.PATROL
     for trig in scn.trigger_manager.triggers:
         wiped_src = None
         for cond in trig.conditions:
@@ -234,9 +247,9 @@ def _retarget_new_template(scn, new1, label1, n1, new2, label2, n2):
             et = int(eff.effect_type)
             if et == COUNT and _sp(eff) in by_src:
                 eff.object_list_unit_id = by_src[_sp(eff)]
-            elif et == TASK and _sp(eff) in by_src:
+            elif et in (TASK, PATROL) and _sp(eff) in by_src:
                 # the template's own 'Contain strays' trigger (user-authored areas &
-                # cadence): point its unit filter at THIS matchup's army types
+                # cadence), or a one-time opening patrol: retarget its army filter.
                 eff.object_list_unit_id = by_src[_sp(eff)]
             elif et == DISPLAY:
                 msg = getattr(eff, "message", None) or ""
@@ -267,12 +280,16 @@ def _army_centroid(um, pid, const):
 
 def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
               ranged=(False, False), remove_player4_buffer=False, player4_count=None,
-              lithuanian_relics=None, opponent_lithuanian_relics=None):
+              lithuanian_relics=None, opponent_lithuanian_relics=None, subject_owner=None):
     """side1/side2 = (civ_name, unit_key, label). `counts` = (n1, n2) units per side
     (equal-count is (30, 30); resource-capped runs pass uneven counts). `ranged` = (r1, r2)
     is retained for caller compatibility. The template owns the spectator camera;
     changing army counts or ranged classification must never move it.
+    `subject_owner` colors that army blue and the opponent red, independently
+    of the template's colors. None preserves historical frozen color settings.
     Writes the run scenario; returns Path."""
+    if subject_owner is not None and (type(subject_owner) is not int or subject_owner not in (2, 3)):
+        raise ValueError("subject_owner must be Player 2 or Player 3")
     civ1, key1, label1 = side1
     civ2, key2, label2 = side2
     new1, new2 = unit_const(key1), unit_const(key2)
@@ -282,9 +299,14 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
     pm, um = scn.player_manager, scn.unit_manager
     screen = list(um.get_player_units(4))
     if player4_count is not None:
-        if (remove_player4_buffer or type(player4_count) is not int
-                or not 1 <= player4_count <= len(screen)):
-            raise ValueError("player4_count must retain 1..N authored P4 units with the buffer enabled")
+        if remove_player4_buffer:
+            raise ValueError("player4_count requires the buffer enabled")
+        planned_screen = planned_buffer_positions(screen, player4_count)
+        # Never insert the extension into an occupied Golden position.
+        for x, y, _ in planned_screen[len(screen):]:
+            if any(math.hypot(u.x - x, u.y - y) < .7
+                   for owner in range(9) for u in um.get_player_units(owner)):
+                raise ValueError("player4_count extension overlaps a Golden object")
     source_ai_configuration = _ai_configuration(scn)
 
     def player(pid):
@@ -293,6 +315,12 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
     player(P_SIDE1).civilization = civ_enum(civ1)
     player(P_SIDE2).civilization = civ_enum(civ2)
     player(P_SPECTATOR).civilization = player(P_SIDE2).civilization  # P1 hears P3's music
+    if subject_owner is not None:
+        # Scenario color IDs are zero-based (ColorId), not PlayerColorId.
+        # Donut's ranged P2/melee P3 assignment must not determine who is blue.
+        from AoE2ScenarioParser.datasets.players import ColorId
+        player(subject_owner).color = ColorId.BLUE
+        player(5 - subject_owner).color = ColorId.RED
 
     old1 = _test_const(um.get_player_units(P_SIDE1))
     old2 = _test_const(um.get_player_units(P_SIDE2))
@@ -318,6 +346,8 @@ def build_run(side1, side2, out_path, counts=(30, 30), template=TEMPLATE,
         # diplomacy and gate triggers. Never edit the shared Golden itself.
         for unit in screen[player4_count:]:
             um.remove_unit(unit=unit)
+        for x, y, _ in planned_screen[len(screen):]:
+            um.clone_unit(screen[-1], player=4, x=x, y=y)
     # Default 1 and all four lab goldens author the centered view at (8, 7).
     # Do not replace it with an army centroid (which changes with first-N counts).
     if _ai_configuration(scn) != source_ai_configuration:
@@ -373,8 +403,10 @@ def main():
     ap.add_argument("--side2", required=True, type=_parse_side)
     ap.add_argument("--out", required=True)
     ap.add_argument("--template", default=str(TEMPLATE))
+    ap.add_argument("--subject-owner", type=int, choices=(2, 3), default=2,
+                    help="Color the test army blue and the opponent red")
     a = ap.parse_args()
-    build_run(a.side1, a.side2, a.out, template=Path(a.template))
+    build_run(a.side1, a.side2, a.out, template=Path(a.template), subject_owner=a.subject_owner)
 
 
 if __name__ == "__main__":

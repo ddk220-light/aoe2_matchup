@@ -18,7 +18,7 @@ import { resolveFamily } from "../src/placement.js";
 import { unitBySlug } from "../src/unit-registry.js";
 import { recordingUnitBySlug } from "../src/recording-unit-registry.js";
 import { resolvePurchaseCost, COST_BASIS, COST_CATALOG_SHA256 } from "../src/recording-costs.js";
-import { geometricEvidence, geometricCounts } from "../src/recording-balance.js";
+import { geometricEvidence, geometricCounts, fieldedHussarBuffer, DEFAULT_RESOURCE_WEIGHTS } from "../src/recording-balance.js";
 
 
 const SIM_ROOT = new URL("../", import.meta.url);
@@ -67,9 +67,9 @@ function deriveCounts(side2, side3, balance) {
   const mode = balance?.mode ?? "geometric_shared_discount";
   const cap = requireInteger(balance?.cap ?? 27, "balance cap");
   const weights = Object.freeze({
-    food: requireWeight(balance?.weights?.food ?? 1, "food"),
-    wood: requireWeight(balance?.weights?.wood ?? 1, "wood"),
-    gold: requireWeight(balance?.weights?.gold ?? 1, "gold"),
+    food: requireWeight(balance?.weights?.food ?? DEFAULT_RESOURCE_WEIGHTS.food, "food"),
+    wood: requireWeight(balance?.weights?.wood ?? DEFAULT_RESOURCE_WEIGHTS.wood, "wood"),
+    gold: requireWeight(balance?.weights?.gold ?? DEFAULT_RESOURCE_WEIGHTS.gold, "gold"),
   });
   const cost2 = weightedCost(side2, weights);
   const cost3 = weightedCost(side3, weights);
@@ -111,6 +111,14 @@ function deriveCounts(side2, side3, balance) {
 
 export function createLabPlan(request) {
   if (request?.schemaVersion !== 1) throw new TypeError("request schemaVersion must be 1");
+  // Explicit subject ownership keeps colors stable across Donut's player swap.
+  // Omission retains old plan hashes and templates for historical queue reuse.
+  const subjectOwner = request.scenario?.subjectOwner;
+  if (subjectOwner !== undefined && ![2, 3].includes(subjectOwner)) {
+    throw new RangeError("subjectOwner must be Player 2 or Player 3");
+  }
+  const playerColors = subjectOwner === undefined ? undefined
+    : { 2: subjectOwner === 2 ? 0 : 1, 3: subjectOwner === 3 ? 0 : 1 };
   let side2 = recordingUnitBySlug(request.side2?.slug);
   let side3 = recordingUnitBySlug(request.side3?.slug);
   if (!side2 || !side3) {
@@ -126,26 +134,71 @@ export function createLabPlan(request) {
       || side2.captureCiv !== "Lithuanians" || side2.master !== 569)) {
     throw new RangeError("lithuanianRelics currently requires four relics and a Lithuanian P2 Paladin");
   }
-  const player4Buffer = request.scenario?.player4Buffer ?? "golden";
   const opponentLithuanianRelics = request.scenario?.opponentLithuanianRelics;
   if (opponentLithuanianRelics !== undefined && (opponentLithuanianRelics !== 4
       || side3.captureCiv !== "Lithuanians" || side3.master !== 1236)) {
     throw new RangeError("opponentLithuanianRelics requires four relics and a Lithuanian P3 Elite Leitis");
   }
-  if (!["golden", "none"].includes(player4Buffer)) throw new RangeError("player4Buffer must be golden or none");
-  const family = request.scenario?.goldenFamily ?? scenarioFamilyFor(side2, side3);
+  // Arena without a screen is the default. Historical buffer experiments must
+  // opt in; their persisted plans and footage are never rewritten.
+  const requestedBuffer = request.scenario?.player4Buffer
+    ?? (request.scenario?.player4Count !== undefined ? "golden" : "none");
+  const family = request.scenario?.goldenFamily ?? (requestedBuffer === "none"
+    ? (isRangedClass(side2.class) || isRangedClass(side3.class) ? "ranged_vs_ranged" : "melee_vs_melee")
+    : scenarioFamilyFor(side2, side3));
   if (!Object.hasOwn(GOLDEN_SCENARIO_SHA256, family)) {
     throw new RangeError("goldenFamily must name an existing Golden scenario family");
   }
+  // A reviewed visual template is frozen separately from the gameplay Golden.
+  // Include its identity in the plan hash; never silently substitute scenery.
+  const scenery = request.scenario?.scenery;
+  if (scenery !== undefined && (!scenery || typeof scenery !== "object"
+      || !["path", "auditPath"].every(k => typeof scenery[k] === "string" && scenery[k].length > 0)
+      || !["sha256", "auditSha256"].every(k => /^[a-f0-9]{64}$/.test(scenery[k] ?? "")))) {
+    throw new RangeError("scenery requires frozen template and audit paths with SHA-256 hashes");
+  }
+  const donut = request.scenario?.donut;
+  // Explicit, recording-only exception approved for the longer-range
+  // Arbalester to kite Jarl. Do not change either unit's combat class.
+  const donutExperiment = request.scenario?.donutExperiment;
+  if (donutExperiment !== undefined && (!donut
+      || donutExperiment !== "arbalester_kites_jarl_v1"
+      || side2.slug !== "arbalester_saracens" || side3.slug !== "elite_jarl_varangians"
+      || subjectOwner !== 3)) {
+    throw new RangeError("donutExperiment requires Saracen Arbalester P2 versus Varangian Jarl P3");
+  }
+  if (donut !== undefined) {
+    if (!donut || !["path", "auditPath"].every(k => typeof donut[k] === "string" && donut[k].length > 0)
+        || !["sha256", "auditSha256"].every(k => /^[a-f0-9]{64}$/.test(donut[k] ?? ""))) {
+      throw new RangeError("donut requires frozen template and audit paths with SHA-256 hashes");
+    }
+    if (scenery || !isRangedClass(side2.class) || (isRangedClass(side3.class) && !donutExperiment)
+        || requestedBuffer !== "none" || family !== "ranged_vs_ranged") {
+      throw new RangeError("Donut requires ranged P2, melee P3, no buffers, and its own audited template");
+    }
+  }
   if (family === "water" && balance.cap > 15) throw new RangeError("water template has 15 slots per side");
-  // A screen experiment keeps the Golden's diplomacy/gate and only trims its
-  // authored P4 roster. Persist this in the hash so it cannot reuse a nine-screen run.
-  const player4Count = request.scenario?.player4Count;
+  const mixed = ["ranged_vs_melee", "melee_vs_ranged"].includes(family);
+  // New geometric plans scale from the already rounded, fielded ranged army.
+  // Explicit legacy screen overrides retain their original behavior.
+  const player4Buffer = requestedBuffer;
+  if (!["golden", "none", "scaled"].includes(player4Buffer)) throw new RangeError("player4Buffer must be golden, none or scaled");
+  let player4Count = request.scenario?.player4Count;
+  let player4Scaling;
+  if (player4Buffer === "scaled") {
+    if (!mixed || family !== scenarioFamilyFor(side2, side3) || player4Count !== undefined) {
+      throw new RangeError("scaled buffer requires a natural mixed matchup and no explicit player4Count");
+    }
+    const rangedOwner = isRangedClass(side2.class) ? 2 : 3;
+    player4Scaling = fieldedHussarBuffer(rangedOwner,
+      rangedOwner === 2 ? balance.n2 : balance.n3, rangedOwner === 2 ? balance.cost2 : balance.cost3);
+    player4Count = player4Scaling.hussars;
+  }
   if (player4Count !== undefined) {
-    if (player4Buffer !== "golden" || !["ranged_vs_melee", "melee_vs_ranged"].includes(family)) {
+    if (player4Buffer === "none" || !mixed) {
       throw new RangeError("player4Count requires a mixed Golden with its P4 buffer enabled");
     }
-    requireInteger(player4Count, "player4Count", 1, 9);
+    requireInteger(player4Count, "player4Count", 1, 10);
   }
   const matchupId = `${side2.slug}_vs_${side3.slug}`;
   const base = {
@@ -197,9 +250,14 @@ export function createLabPlan(request) {
     scenario: {
       family,
       goldenSha256: GOLDEN_SCENARIO_SHA256[family],
+      ...(playerColors ? { subjectOwner, colorPolicy: "subject_blue_opponent_red_v1", playerColors } : {}),
+      ...(scenery ? { scenery } : {}),
+      ...(donut ? { layout: "Donut", donut } : {}),
+      ...(donutExperiment ? { donutExperiment } : {}),
       placementRule: "first_n_units_in_player_order",
       hasPlayer4Gate: player4Buffer !== "none" && (family === "ranged_vs_melee" || family === "melee_vs_ranged"),
       ...(player4Buffer === "none" ? { player4Buffer: "none" } : {}),
+      ...(player4Scaling ? { player4Buffer: "scaled", player4Scaling } : {}),
       ...(player4Count !== undefined ? { player4Count } : {}),
       ...(lithuanianRelics !== undefined ? { lithuanianRelics, lithuanianRelicMode: "attack_trigger_v1" } : {}),
       ...(opponentLithuanianRelics !== undefined ? { opponentLithuanianRelics, opponentLithuanianRelicMode: "attack_trigger_v1" } : {}),
@@ -217,6 +275,9 @@ export function createLabPlan(request) {
 
 
 export async function runSeed(plan, seed) {
+  if (plan?.scenario?.scenery || plan?.scenario?.donut) {
+    throw new RangeError("themed scenarios are recording-only until a matching simulation fixture is supplied");
+  }
   if (plan?.scenario?.lithuanianRelics !== undefined || plan?.scenario?.opponentLithuanianRelics !== undefined) {
     throw new RangeError("Lithuanian relic scenarios are recording-only until a matching simulation fixture is supplied");
   }
@@ -227,8 +288,8 @@ export async function runSeed(plan, seed) {
   // The native ranged/ranged Golden already has no P4. An explicit no-buffer
   // request is identical there; mixed-template overrides still need fixtures.
   if (plan?.scenario?.player4Buffer === "none"
-      && !(plan.scenario.family === "ranged_vs_ranged"
-        && scenarioFamilyFor(plan.side2, plan.side3) === "ranged_vs_ranged")) {
+      && !(["ranged_vs_ranged", "melee_vs_melee"].includes(plan.scenario.family)
+        && scenarioFamilyFor(plan.side2, plan.side3) === plan.scenario.family)) {
     throw new RangeError("no-buffer recording plan requires a matching simulation scenario; do not compare using the default P4 screen");
   }
   if (plan?.schemaVersion !== 1 || typeof plan.planHash !== "string") {

@@ -51,6 +51,13 @@ def main():
                 verified[row["jobId"]] = row
     pending = [r for r in manifest["matchups"] if r["id"] not in verified]
     if not pending:
+        # All work may already be in pass-pilot after a small pilot-only batch.
+        # Publish that verified state instead of leaving the supervisor without
+        # a root status file or recording any games again.
+        completed_state = {**previous, 'schemaVersion': 1, 'state': 'COMPLETE',
+            'manifest': str(OUT / 'manifest.json'), 'total': len(allowed_jobs),
+            'results': list(verified.values()), 'currentJob': None}
+        checkpoint(report, completed_state, report=True)
         print(f"All {len(manifest['matchups'])} captures are verified", flush=True)
         return
     if (OUT / "PAUSE").exists() or (ROOT / "data/local/thermal/PAUSED.json").exists():

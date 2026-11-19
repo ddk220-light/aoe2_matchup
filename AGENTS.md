@@ -1,5 +1,14 @@
 # Standing working instructions
 
+## Current capture maps and buffers
+
+- New captures use Arena as the default and no buffer units. Donut is the
+  approved winter central-rock kiting map, only for mixed ranged/melee tests.
+  Never run ranged/ranged on Donut. Preserve historical buffered recordings.
+- Reuse valid Arena trials; apply the selected loss trigger before conditional
+  Donut retests. Respect explicitly requested all-melee Donut comparisons.
+- Read [Arena/Donut workflow](docs/video-production/ARENA_DONUT_CAPTURE.md).
+
 ## Avoid unnecessary work and use judgment
 
 - Before expensive or repetitive work, verify what actually needs to change. Compare existing artifacts and actual inputs, counts, stats, rules, and captured results. A different policy label or an unavailable disk is not evidence that recordings must be redone.
@@ -14,6 +23,18 @@
 - Never format, reformat, initialize, erase, or repartition disks, or suggest formatting. The user handles that personally.
 - Do not delete or overwrite existing external-drive contents without explicit authorization for those contents.
 - If a drive is inaccessible, preserve sources and report the limitation; do not alter its filesystem or partition layout.
+
+## Completed recording destination
+
+- As of October 1, 2026, the default destination for completed runs is `\\100.123.128.35\AoE2-Incoming` (Dragonstar), replacing the external-disk default for new transfers.
+- Keep one clearly named folder per run, including all repeat iterations, clean matchup videos, matching frames, and reconstruction metadata; also retain the final compiled video when one exists. Follow `docs/video-production/RECORDING_RETENTION.md`.
+- Stage captures locally. Transfer completed sets, verify file sizes and SHA-256 with receipts before reclaiming authorized local duplicates, and preserve sources if the share is unavailable. Never overwrite conflicting destination files.
+
+## Matchup player colors
+
+- New individual matchups must color the unit under test blue and its opponent red, on both Arena and Donut. Color follows the subject, not the ranged army or a fixed player slot.
+- Set `scenario.subjectOwner` to 2 or 3 in new requests; the planner binds the color policy and P2/P3 color IDs into the plan. Donut still puts ranged units in P2 and melee units in P3. Pass the planned subject owner to scenario generation and validate it before recording.
+- Preserve completed recordings and historical frozen plans. A color correction alone does not authorize recaptures. The user requested the color fix on October 3, 2026, and explicitly said not to record until they ask.
 
 ## Git publication scope and reusable assets
 

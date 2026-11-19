@@ -3,7 +3,9 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
-const POLICY = 'geometric_shared_discount_unit_count_v2';
+export const POLICY = 'geometric_full_discount_weighted_resources_v3';
+export const DEFAULT_RESOURCE_WEIGHTS = Object.freeze({ food: 1, wood: 0.9, gold: 1.1 });
+export const BUFFER_POLICY = 'fielded_weighted_cost_v1';
 const RESOURCES = ['food', 'wood', 'gold'];
 
 function positive(value, name) {
@@ -16,6 +18,19 @@ function resources(value) {
   return value && RESOURCES.every(r => Number.isFinite(value[r]) && value[r] >= 0);
 }
 
+export function fieldedHussarBuffer(rangedOwner, count, weightedUnitCost) {
+  if (![2, 3].includes(rangedOwner) || !Number.isSafeInteger(count) || count < 1 || count > 27) {
+    throw new RangeError('Invalid ranged army for Hussar buffer');
+  }
+  positive(weightedUnitCost, 'Ranged weighted unit cost');
+  const armyWeightedCost = count * weightedUnitCost;
+  const hussars = Math.floor(Math.max(5, Math.min(10, 5 + (armyWeightedCost - 1000) / 1800)) + 0.5);
+  return Object.freeze({
+    policy: BUFFER_POLICY, rangedOwner, fieldedCount: count, weightedUnitCost,
+    armyWeightedCost, hussars,
+  });
+}
+
 export function comparisonResourcesFor(purchase, shared) {
   if (!purchase || !Number.isSafeInteger(purchase.unitsPerPurchase) || purchase.unitsPerPurchase < 1
       || !resources(purchase.baseCost) || !resources(purchase.effectiveCost) || typeof shared !== 'boolean') {
@@ -25,12 +40,8 @@ export function comparisonResourcesFor(purchase, shared) {
     RESOURCES.map(r => [r, purchase.baseCost[r] / purchase.unitsPerPurchase]),
   );
   const comparisonResources = { ...purchase.effectiveCost };
-  if (shared) {
-    // Only soften positive savings. Gold and cost increases stay fully effective.
-    for (const r of ['food', 'wood']) {
-      comparisonResources[r] += 0.5 * Math.max(0, basePerUnit[r] - comparisonResources[r]);
-    }
-  }
+  // Fully discounted prices apply to both shared and exclusive units. The
+  // availability classification remains provenance, not a price adjustment.
   return { basePerUnit, comparisonResources };
 }
 
@@ -38,8 +49,9 @@ export function geometricEvidence(unit, civ, weights) {
   const bytes = readFileSync(new URL('../../../data/recording-balance.json', import.meta.url));
   const catalog = JSON.parse(bytes);
   if (catalog.schemaVersion !== 1 || catalog.policy !== POLICY || catalog.populationMode !== 'one_per_unit'
-      || catalog.foodDiscountEffectiveness !== 0.5 || catalog.woodDiscountEffectiveness !== 0.5
-      || catalog.goldDiscountEffectiveness !== 1) {
+      || catalog.foodDiscountEffectiveness !== 1 || catalog.woodDiscountEffectiveness !== 1
+      || catalog.goldDiscountEffectiveness !== 1
+      || RESOURCES.some(r => catalog.defaultResourceWeights?.[r] !== DEFAULT_RESOURCE_WEIGHTS[r])) {
     throw new RangeError('Unsupported geometric benchmark policy');
   }
   const costs = JSON.parse(readFileSync(new URL('../../../data/recording-costs.json', import.meta.url)));

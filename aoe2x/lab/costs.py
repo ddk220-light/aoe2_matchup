@@ -5,6 +5,9 @@ import json
 import math
 from pathlib import Path
 
+from .balance import DEFAULT_COMPARISON_POLICY, DEFAULT_RESOURCE_WEIGHTS
+from .buffer import validate_scaled_buffer
+
 CATALOG = Path(__file__).resolve().parents[2] / "data/recording-costs.json"
 
 
@@ -73,13 +76,14 @@ def validate_plan_costs(plan):
         policy = json.loads(policy_bytes)
         if (
             policy.get("schemaVersion") != 1
-            or policy.get("policy") != "geometric_shared_discount_unit_count_v2"
+            or policy.get("policy") != DEFAULT_COMPARISON_POLICY
             or policy.get("populationMode") != "one_per_unit"
+            or policy.get("defaultResourceWeights") != DEFAULT_RESOURCE_WEIGHTS
             or [
                 policy.get(k + "DiscountEffectiveness")
                 for k in ("food", "wood", "gold")
             ]
-            != [0.5, 0.5, 1.0]
+            != [1.0, 1.0, 1.0]
         ):
             raise ValueError("Unsupported geometric benchmark policy")
         sha = hashlib.sha256(policy_bytes).hexdigest()
@@ -106,9 +110,7 @@ def validate_plan_costs(plan):
                 r: v / price["unitsPerPurchase"] for r, v in price["baseCost"].items()
             }
             comparison = dict(price["effectiveCost"])
-            if entry["sharedAcrossCivilizations"]:
-                for r in ("food", "wood"):
-                    comparison[r] += 0.5 * max(0, base[r] - comparison[r])
+            # All discounts retain their full value before resource weighting.
             cost = sum(comparison[r] * weights[r] for r in weights)
             expected = dict(
                 policy=policy["policy"],
@@ -141,6 +143,7 @@ def validate_plan_costs(plan):
             for s in ("side2", "side3")
         ):
             raise ValueError("Geometric army exceeds actual-resource ceiling")
+    validate_scaled_buffer(plan)
     return {
         "costBasis": catalog["costBasis"],
         "costCatalogSha256": balance["costCatalogSha256"],

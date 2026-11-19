@@ -51,7 +51,16 @@ New standard episodes use only the formula and 27-unit cap. Historical plans
 retain their explicit budgets. Golden placement, full HP and authored buffer
 rules are independent.
 
-## Hussar buffer for new captures
+## Current maps: Arena and Donut, no buffers
+
+As of October 3, 2026, new captures use no buffer units. Arena remains the
+default. The approved Donut map and quiet kiting AI are used only for selected
+mixed ranged/melee retests; never ranged versus ranged. See
+[Arena/Donut workflow](ARENA_DONUT_CAPTURE.md). Historical buffer footage and
+frozen plans remain intact. The resource weights and geometric counts below
+are unchanged.
+
+## Historical Hussar buffer calculation
 
 Approved September 22, 2026: new geometric mixed melee/ranged plans use
 `fielded_weighted_cost_v1`. Calculate the main armies first. Let T be the ranged

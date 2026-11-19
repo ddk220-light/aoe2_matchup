@@ -45,6 +45,8 @@ def main():
     # tolerance increase or a rewrite of the captured scenario.
     corrections_path = WORK/'capture-hp-expectations.json'
     corrections = read(corrections_path) if corrections_path.exists() else {}
+    opponent_path = WORK/'pilot-opponent-expectations.json'
+    opponent_expectations = read(opponent_path) if opponent_path.exists() else {}
     evidence = []
     for job in expected:
         if job['id'] not in verified:
@@ -63,9 +65,20 @@ def main():
             expected_hp = correction['openingHpPerUnit']
         if abs(per_unit-expected_hp) > 0.1:
             raise RuntimeError(f'Opening HP mismatch for {job["civ2"]}: {per_unit} vs {expected_hp}')
+        opponent_check = None
+        if opponent_expectations:
+            reference = opponent_expectations[job['id']]
+            opposing = hp['rows'][0]['side2']
+            opposing_hp = opposing['hp']/opposing['count']
+            if (bundle['sides']['side2']['civ'] != reference['civ'] or
+                    abs(opposing_hp-reference['hpPerUnit']) > 0.1):
+                raise RuntimeError(f'Opponent pilot mismatch: {opposing_hp} HP vs {reference}')
+            opponent_check = dict(civ=reference['civ'], openingHpPerUnit=opposing_hp,
+                                  count=opposing['count'], verified=True)
         evidence.append({'civ':job['civ2'], 'jobId':job['id'], 'openingHpPerUnit':per_unit,
                          'referenceCorrection':correction,
-                         'count':initial['count'], 'verified':True})
+                         'count':initial['count'], 'verified':True,
+                         'opponent':opponent_check})
     save(WORK/'pilot-validation.json', {'state':'PASSED', 'pilots':evidence,
          'scope':'Verified game captures, starting army counts and HP. Special attack/regeneration mechanics are provided by the installed game and Post-Imperial scenario, not synthesized by a simulator.'})
     save(WORK/'capture/pass-pilot/status.json', state)

@@ -18,7 +18,7 @@ from .io import read_json
 from .live import run_live
 from .recording import recorder_retention
 from .planner import load_matchup_file, make_request, plan_matchup
-from .balance import DEFAULT_BALANCE
+from .balance import DEFAULT_BALANCE, DEFAULT_RESOURCE_WEIGHTS
 from .serve import serve
 from .simulation import run_simulation, run_simulation_batch
 
@@ -29,6 +29,8 @@ def _matchup_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--side3", help="Player 3 engine unit slug")
     parser.add_argument("--civ2", help="Player 2 live/display civilization")
     parser.add_argument("--civ3", help="Player 3 live/display civilization")
+    parser.add_argument("--subject-owner", type=int, choices=(2, 3), default=2,
+                        help="Army under test: blue; the other army is red (default P2)")
     parser.add_argument(
         "--balance",
         choices=("equal_resources", "equal_count", "explicit", "geometric_shared_discount"),
@@ -38,9 +40,9 @@ def _matchup_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--n2", type=int)
     parser.add_argument("--n3", type=int)
     parser.add_argument("--cap", type=int, default=27)
-    parser.add_argument("--food-weight", type=float, default=1.0)
-    parser.add_argument("--wood-weight", type=float, default=1.0)
-    parser.add_argument("--gold-weight", type=float, default=1.0)
+    parser.add_argument("--food-weight", type=float, default=DEFAULT_RESOURCE_WEIGHTS['food'])
+    parser.add_argument("--wood-weight", type=float, default=DEFAULT_RESOURCE_WEIGHTS['wood'])
+    parser.add_argument("--gold-weight", type=float, default=DEFAULT_RESOURCE_WEIGHTS['gold'])
     parser.add_argument("--job-id")
 
 
@@ -76,6 +78,7 @@ def _request_from_args(args: argparse.Namespace) -> dict[str, Any]:
         wood_weight=args.wood_weight,
         gold_weight=args.gold_weight,
         job_id=args.job_id,
+        subject_owner=args.subject_owner,
     )
 
 
@@ -96,6 +99,12 @@ def _print(value: Any) -> None:
 def _normalize_batch_row(row: dict[str, Any], defaults: dict[str, Any]) -> dict[str, Any]:
     if "request" in row:
         return row["request"]
+    # New preparations declare the role inside the hashed scenario request.
+    # Do not retrofit historical top-level metadata into already frozen plans.
+    if ((row.get('scenario') or {}).get('subjectOwner') is not None
+            and row.get('subjectOwner') is not None
+            and row['scenario']['subjectOwner'] != row['subjectOwner']):
+        raise LabError('Scenario subjectOwner disagrees with the campaign subjectOwner')
     side2 = row.get("side2")
     side3 = row.get("side3")
     if isinstance(side2, str):
@@ -108,7 +117,7 @@ def _normalize_batch_row(row: dict[str, Any], defaults: dict[str, Any]) -> dict[
     balance = {
         "cap": defaults.get("cap", 27),
         "count": defaults.get("count", 27),
-        "weights": defaults.get("weights", {"food": 1, "wood": 1, "gold": 1}),
+        "weights": defaults.get("weights", dict(DEFAULT_RESOURCE_WEIGHTS)),
         **balance,
     }
     return {

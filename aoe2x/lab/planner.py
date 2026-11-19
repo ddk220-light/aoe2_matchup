@@ -10,7 +10,7 @@ from typing import Any
 from .config import LabConfig
 from .errors import PlanError
 from .io import safe_slug
-from .balance import DEFAULT_BALANCE
+from .balance import DEFAULT_BALANCE, DEFAULT_RESOURCE_WEIGHTS
 
 
 def make_request(
@@ -24,10 +24,11 @@ def make_request(
     n2: int | None = None,
     n3: int | None = None,
     cap: int = 27,
-    food_weight: float = 1.0,
-    wood_weight: float = 1.0,
-    gold_weight: float = 1.0,
+    food_weight: float = DEFAULT_RESOURCE_WEIGHTS['food'],
+    wood_weight: float = DEFAULT_RESOURCE_WEIGHTS['wood'],
+    gold_weight: float = DEFAULT_RESOURCE_WEIGHTS['gold'],
     job_id: str | None = None,
+    subject_owner: int | None = 2,
 ) -> dict[str, Any]:
     if balance == "explicit" and (n2 is None or n3 is None):
         raise PlanError("explicit balance requires both --n2 and --n3")
@@ -51,6 +52,10 @@ def make_request(
     }
     if job_id:
         request["jobId"] = safe_slug(job_id)
+    if subject_owner is not None:
+        if type(subject_owner) is not int or subject_owner not in (2, 3):
+            raise PlanError('subject_owner must be Player 2 or Player 3')
+        request['scenario'] = {'subjectOwner': subject_owner}
     return request
 
 

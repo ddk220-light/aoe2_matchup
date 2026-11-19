@@ -20,6 +20,7 @@ from .retention import (
 )
 from .recording import recorder_retention, validate_recording_bundle, write_recording_bundle
 from .battle_clip import prepare_battle_clip
+from .buffer import planned_buffer_positions, validate_scaled_buffer
 
 
 GOLDENS = {
@@ -55,6 +56,59 @@ def golden_path(config: LabConfig, family: str) -> Path:
             hint="restore the committed/current project-local golden before live capture",
         )
     return path
+
+
+def capture_template_path(config: LabConfig, plan: dict) -> Path:
+    """Resolve a frozen, audited scenery derivative without replacing a Golden."""
+    original = golden_path(config, plan['scenario']['family'])
+    donut = plan['scenario'].get('donut')
+    if donut:
+        experiment = plan['scenario'].get('donutExperiment')
+        arbalester_kites_jarl = (
+            experiment == 'arbalester_kites_jarl_v1'
+            and plan['side2'].get('slug') == 'arbalester_saracens'
+            and plan['side3'].get('slug') == 'elite_jarl_varangians'
+            and plan['scenario'].get('subjectOwner') == 3)
+        if experiment and not arbalester_kites_jarl:
+            raise PreflightError('Invalid Arbalester/Jarl Donut experiment')
+        if (plan['scenario'].get('layout') != 'Donut'
+                or plan['scenario'].get('player4Buffer') != 'none'
+                or not plan['side2']['ranged']
+                or (plan['side3']['ranged'] and not arbalester_kites_jarl)):
+            raise PreflightError('Donut requires ranged P2, melee P3 and no buffer')
+        paths = {}
+        for key, hash_key in (('path', 'sha256'), ('auditPath', 'auditSha256')):
+            path = (config.project_root / donut[key]).resolve()
+            if not path.is_relative_to(config.project_root.resolve()):
+                raise PreflightError('Donut files must be inside the project')
+            if not path.is_file() or sha256(path) != donut[hash_key]:
+                raise PreflightError(f'Frozen Donut file missing or changed: {path}')
+            paths[key] = path
+        audit = read_json(paths['auditPath'])
+        if (audit.get('state') != 'PASSED' or audit.get('layout') != 'Donut'
+                or audit.get('templateSha256') != donut['sha256']
+                or audit.get('slotsPerSide') != 27 or audit.get('bufferUnits') != 0
+                or not audit.get('terrainFlat') or not audit.get('quietAi')):
+            raise PreflightError('Donut audit does not match its reviewed template')
+        return paths['path']
+    scenery = plan['scenario'].get('scenery')
+    if not scenery:
+        return original
+    paths = {}
+    for key, hash_key in (('path', 'sha256'), ('auditPath', 'auditSha256')):
+        path = (config.project_root / scenery[key]).resolve()
+        if not path.is_relative_to(config.project_root.resolve()):
+            raise PreflightError('Scenery files must be inside the project')
+        if not path.is_file() or sha256(path) != scenery[hash_key]:
+            raise PreflightError(f'Frozen scenery file missing or changed: {path}')
+        paths[key] = path
+    audit = read_json(paths['auditPath'])
+    if (audit.get('state') != 'PASSED'
+            or audit.get('family') != plan['scenario']['family']
+            or audit.get('goldenSha256') != sha256(original)
+            or audit.get('templateSha256') != scenery['sha256']):
+        raise PreflightError('Scenery audit does not match this Golden/template')
+    return paths['path']
 
 
 def _load_stack(config: LabConfig):
@@ -101,7 +155,7 @@ def _source_positions(scenario, player_id: int, slots: int = 27) -> list[tuple[f
 
 
 def _player_runtime_configuration(scenario) -> tuple:
-    """Golden player facts that generation is never allowed to rewrite."""
+    """Player facts; only colors may follow an explicit subject-color plan."""
     rows = []
     for player in scenario.player_manager.players:
         player_id = int(player.player_id)
@@ -117,6 +171,40 @@ def _player_runtime_configuration(scenario) -> tuple:
             int(player.starting_age),
         ))
     return tuple(rows)
+
+
+def planned_player_colors(plan: dict) -> dict[int, int] | None:
+    """Validate the hashed color contract; legacy frozen plans keep their colors."""
+    settings = plan['scenario']
+    owner = settings.get('subjectOwner')
+    if 'subjectOwner' not in settings:
+        if 'playerColors' in settings or 'colorPolicy' in settings:
+            raise LiveCaptureError('Player color policy requires explicit subjectOwner')
+        return None
+    if type(owner) is not int or owner not in (2, 3):
+        raise LiveCaptureError('subjectOwner must be Player 2 or Player 3')
+    expected = {2: 0 if owner == 2 else 1, 3: 0 if owner == 3 else 1}
+    if (settings.get('colorPolicy') != 'subject_blue_opponent_red_v1'
+            or settings.get('playerColors') != {str(k): v for k, v in expected.items()}):
+        raise LiveCaptureError('Planned colors must be blue for the subject and red for its opponent')
+    return expected
+
+
+def _validate_player_runtime(plan: dict, source, target) -> dict:
+    """Allow exactly the planned P2/P3 colors, preserving all other player facts."""
+    original = _player_runtime_configuration(source)
+    actual = _player_runtime_configuration(target)
+    colors = planned_player_colors(plan)
+    expected = tuple((row[0], colors.get(row[0], row[1]), *row[2:])
+                     for row in original) if colors is not None else original
+    if actual != expected:
+        raise LiveCaptureError('generated colors, starting ages, or diplomacy differ from the plan/template')
+    return dict(playerRuntimeConfigurationMatchesGolden=actual == original,
+                playerRuntimeConfigurationMatchesPlan=True,
+                **({'subjectOwner': plan['scenario']['subjectOwner'],
+                    'colorPolicy': plan['scenario']['colorPolicy'],
+                    'playerColors': plan['scenario']['playerColors'],
+                    'playerColorsMatchPlan': True} if colors is not None else {}))
 
 
 def _trigger_structure(scenario) -> tuple:
@@ -167,7 +255,7 @@ def _camera_configuration(scenario) -> tuple:
 
 def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: dict) -> dict:
     family = plan["scenario"]["family"]
-    source_path = golden_path(config, family)
+    source_path = capture_template_path(config, plan)
     scenario_type = stack["AoE2DEScenario"]
     source = scenario_type.from_file(str(source_path))
     target = scenario_type.from_file(str(generated))
@@ -177,9 +265,9 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
     }
     if civilizations[1] != civilizations[3]:
         raise LiveCaptureError("generated Player 1 civilization must match Player 3 for music")
-    from AoE2ScenarioParser.datasets.object_support import Civilization
+    from build_run import civ_enum
     for owner, side in ((2, 'side2'), (3, 'side3')):
-        if civilizations[owner] != Civilization[plan[side]['civ'].upper()]:
+        if civilizations[owner] != civ_enum(plan[side]['civ']):
             raise LiveCaptureError(f"generated Player {owner} civilization differs from planned civilization")
     cameras = _camera_configuration(source)
     # User's corrected Default 1 (2026-09-07), shared by all four 16x16 goldens.
@@ -210,18 +298,21 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
     ]
     no_buffer = plan['scenario'].get('player4Buffer') == 'none'
     screen_count = plan['scenario'].get('player4Count')
-    if screen_count is not None and (no_buffer or type(screen_count) is not int
-                                    or not 1 <= screen_count <= len(p4(source))):
-        raise LiveCaptureError("invalid planned Player 4 count")
-    expected_screen = [] if no_buffer else p4(source)[:screen_count]
+    try:
+        validate_scaled_buffer(plan)
+        if no_buffer and screen_count is not None:
+            raise ValueError('No-buffer scenario cannot specify player4Count')
+        expected_screen = [] if no_buffer else [
+            (round(x, 6), round(y, 6), master) for x, y, master in
+            planned_buffer_positions(source.unit_manager.get_player_units(4), screen_count)
+        ]
+    except ValueError as error:
+        raise LiveCaptureError(f"invalid planned Player 4 count: {error}") from error
     if p4(target) != expected_screen:
         raise LiveCaptureError("generated Player 4 roster or positions changed")
     if stack["ai_configuration"](target) != stack["ai_configuration"](source):
         raise LiveCaptureError("generated AI configuration differs from the golden")
-    if _player_runtime_configuration(target) != _player_runtime_configuration(source):
-        raise LiveCaptureError(
-            "generated colors, starting ages, or diplomacy differ from the golden"
-        )
+    player_validation = _validate_player_runtime(plan, source, target)
     for owner, key, mode_key in (
         (2, 'lithuanianRelics', 'lithuanianRelicMode'),
         (3, 'opponentLithuanianRelics', 'opponentLithuanianRelicMode'),
@@ -246,16 +337,21 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
         raise LiveCaptureError("generated trigger structure differs from the golden")
     return {
         "sha256": sha256(generated),
-        "sourceGolden": str(source_path.relative_to(config.project_root)).replace("\\", "/"),
+        "sourceGolden": GOLDENS[family][0],
         "sourceGoldenSha256": plan["scenario"]["goldenSha256"],
+        **({'scenery': plan['scenario']['scenery']} if plan['scenario'].get('scenery') else {}),
+        **({'layout': 'Donut', 'donut': plan['scenario']['donut'],
+            'sourceTemplate': str(source_path), 'sourceTemplateSha256': sha256(source_path)}
+           if plan['scenario'].get('donut') else {}),
         "positionRule": "first_n_units_in_player_order",
         "positionsMatchGolden": True,
         "player4Unchanged": p4(target) == p4(source),
-        "player4Buffer": "none" if no_buffer else "golden",
+        "player4Buffer": plan['scenario'].get('player4Buffer', 'golden'),
+        **({'player4Scaling': plan['scenario']['player4Scaling']} if 'player4Scaling' in plan['scenario'] else {}),
         "player4Count": len(p4(target)),
         "player4MatchesPlannedCount": True,
         "aiConfigurationMatchesGolden": True,
-        "playerRuntimeConfigurationMatchesGolden": True,
+        **player_validation,
         "triggerStructureMatchesGolden": True,
         "cameraMatchesGolden": True,
         "spectatorCivilizationMatchesPlayer3": True,
@@ -436,7 +532,7 @@ def preflight_live(
         repeats=repeats,
         retention=normalize_retention(retention, config.live_retention),
     )
-    golden_path(config, plan["scenario"]["family"])
+    capture_template_path(config, plan)
     if config.game_executable and not config.game_executable.exists():
         raise PreflightError(f"configured game executable does not exist: {config.game_executable}")
     try:
@@ -625,12 +721,13 @@ def run_live(
                     final=str(temporary_video.with_suffix(".mp4")),
                     dismiss_after=True,
                     logfile=str(log_path),
-                    template=golden_path(config, plan["scenario"]["family"]),
+                    template=capture_template_path(config, plan),
                     ranged_override=(plan["side2"]["ranged"], plan["side3"]["ranged"]),
                     remove_player4_buffer=plan['scenario'].get('player4Buffer') == 'none',
                     player4_count=plan['scenario'].get('player4Count'),
                     lithuanian_relics=plan['scenario'].get('lithuanianRelics'),
                     opponent_lithuanian_relics=plan['scenario'].get('opponentLithuanianRelics'),
+                    subject_owner=plan['scenario'].get('subjectOwner') if planned_player_colors(plan) is not None else None,
                     scenario_validator=lambda generated: _validate_scenario(
                         config, plan, generated, stack
                     ),

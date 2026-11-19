@@ -2,6 +2,24 @@
 
 Keep irreplaceable recording sources before any render cache or expanded telemetry.
 
+## Default destination (October 1, 2026)
+
+New completed runs go to `\\100.123.128.35\AoE2-Incoming` on Dragonstar.
+This supersedes the external-disk default below for new transfers; historical
+archive locations and receipts still describe where existing files were stored.
+The configured default is `apps/video/storage-policy.json` (`archiveRoot`).
+Existing frozen queues and physical-disk-specific copy workers retain their
+explicit destinations; do not assume changing this default starts a transfer or
+retargets those workers.
+
+Capture locally, then transfer each completed unit set into its own named folder.
+Preserve every repeat iteration with distinct names, clean battle MP4s, matching
+frame streams, and `run.json` reconstruction metadata, plus any completed full
+video. Verify sizes and SHA-256 checksums and record receipts before reclaiming
+authorized local duplicates. Never overwrite conflicting destination files. If
+the share is unavailable, preserve local sources and report the access issue.
+Do not copy credentials to this share.
+
 For every matchup retain a clean battle video, matching binary frame stream, and
 the recording metadata describing game/video clock alignment, unit identities,
 counts, civilization upgrades, and the balance policy. Compact `run.json` archives

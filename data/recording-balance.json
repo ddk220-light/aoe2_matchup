@@ -1,10 +1,15 @@
 {
   "schemaVersion": 1,
-  "policy": "geometric_shared_discount_unit_count_v2",
-  "foodDiscountEffectiveness": 0.5,
-  "woodDiscountEffectiveness": 0.5,
+  "policy": "geometric_full_discount_weighted_resources_v3",
+  "defaultResourceWeights": {
+    "food": 1.0,
+    "wood": 0.9,
+    "gold": 1.1
+  },
+  "foodDiscountEffectiveness": 1.0,
+  "woodDiscountEffectiveness": 1.0,
   "goldDiscountEffectiveness": 1.0,
-  "datSha256": "ce3530df36cf0b333a9751cb0ff94460fe904f811feecec8ae9794701622b4cf",
+  "datSha256": "4aa2f0a719e88e5f1502517eddb27c669aeb40c2fe9d8c4f3eec7751c01e7baa",
   "units": {
     "Armenians|elite_composite_bowman_armenians": {
       "master": 1802,
@@ -206,8 +211,8 @@
       "master": 2554,
       "population": 1.0,
       "sharedAcrossCivilizations": true,
-      "classificationEvidence": "Regional Champi: Incas, Mapuche, Muisca, Tupi",
-      "populationEvidence": "Installed DAT resource_storages: negative resource 4, cross-checked resource 11"
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
     },
     "Incas|elite_kamayuk_incas": {
       "master": 881,
@@ -661,15 +666,15 @@
       "master": 330,
       "population": 1.0,
       "sharedAcrossCivilizations": true,
-      "classificationEvidence": "Heavy Camel Rider is a shared Stable unit across these seven civilizations; comparison population is one per physical unit",
-      "populationEvidence": "Installed DAT resource_storages: negative resource 4, cross-checked resource 11"
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
     },
     "Spanish|paladin_spanish": {
       "master": 569,
       "population": 1.0,
       "sharedAcrossCivilizations": true,
-      "classificationEvidence": "Shared Stable unit; food/wood discounts half-effective, gold fully effective",
-      "populationEvidence": "Installed DAT resource_storages; comparison counts one physical unit"
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
     },
     "Burgundians|paladin_burgundians": {
       "master": 569,
@@ -726,6 +731,258 @@
       "sharedAcrossCivilizations": true,
       "classificationEvidence": "Shared Stable unit; food/wood discounts half-effective, gold fully effective",
       "populationEvidence": "Installed DAT resource_storages; comparison counts one physical unit"
+    },
+    "Danes|elite_jomsviking_danes": {
+      "master": 2712,
+      "population": 1.0,
+      "sharedAcrossCivilizations": false,
+      "classificationEvidence": "Civilization-exclusive castle unique unit; installed release identity",
+      "populationEvidence": "Installed DAT; one comparison population per physical unit"
+    },
+    "Saxons|elite_hearth_troop_saxons": {
+      "master": 2706,
+      "population": 1.0,
+      "sharedAcrossCivilizations": false,
+      "classificationEvidence": "Civilization-exclusive castle unique unit; installed release identity",
+      "populationEvidence": "Installed DAT; one comparison population per physical unit"
+    },
+    "Varangians|elite_jarl_varangians": {
+      "master": 2709,
+      "population": 1.0,
+      "sharedAcrossCivilizations": false,
+      "classificationEvidence": "Civilization-exclusive castle unique unit; installed release identity",
+      "populationEvidence": "Installed DAT; one comparison population per physical unit"
+    },
+    "Byzantines|elite_varangian_guard_byzantines": {
+      "master": 2704,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared Barracks regional infantry; user explicitly selects melee for all five civilizations",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Danes|elite_varangian_guard_danes": {
+      "master": 2704,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared Barracks regional infantry; user explicitly selects melee for all five civilizations",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Saxons|elite_varangian_guard_saxons": {
+      "master": 2704,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared Barracks regional infantry; user explicitly selects melee for all five civilizations",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Varangians|elite_varangian_guard_varangians": {
+      "master": 2704,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared Barracks regional infantry; user explicitly selects melee for all five civilizations",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Vikings|elite_varangian_guard_vikings": {
+      "master": 2704,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared Barracks regional infantry; user explicitly selects melee for all five civilizations",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Danes|heavy_mounted_crossbowman_danes": {
+      "master": 2701,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Saxons|heavy_mounted_crossbowman_saxons": {
+      "master": 2701,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Varangians|heavy_mounted_crossbowman_varangians": {
+      "master": 2701,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Franks|heavy_mounted_crossbowman_franks": {
+      "master": 2701,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Portuguese|mounted_crossbowman_portuguese": {
+      "master": 2700,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Sicilians|heavy_mounted_crossbowman_sicilians": {
+      "master": 2701,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Poles|heavy_mounted_crossbowman_poles": {
+      "master": 2701,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Teutons|heavy_mounted_crossbowman_teutons": {
+      "master": 2701,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Britons|heavy_mounted_crossbowman_britons": {
+      "master": 2701,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Celts|heavy_mounted_crossbowman_celts": {
+      "master": 2701,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Bohemians|mounted_crossbowman_bohemians": {
+      "master": 2700,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Burgundians|mounted_crossbowman_burgundians": {
+      "master": 2700,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Italians|mounted_crossbowman_italians": {
+      "master": 2700,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Shared regional cavalry archer; all discounts fully effective",
+      "populationEvidence": "One comparison population per physical unit"
+    },
+    "Spanish|champion_spanish": {
+      "master": 567,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Saracens|arbalester_saracens": {
+      "master": 492,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Spanish|cavalier_spanish": {
+      "master": 283,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Spanish|hussar_spanish": {
+      "master": 441,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Cumans|elite_steppe_cumans": {
+      "master": 1372,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Bengalis|elite_elephant_bengalis": {
+      "master": 1134,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Spanish|imp_elite_skirm_spanish": {
+      "master": 6,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Saracens|heavy_cav_archer_saracens": {
+      "master": 474,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Bengalis|elite_elephant_archer_bengalis": {
+      "master": 875,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Saracens|hand_cannoneer_saracens": {
+      "master": 5,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Bengalis|heavy_scorpion_bengalis": {
+      "master": 542,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard or regional unit available across civilizations"
+    },
+    "Chinese|cavalier_chinese": {
+      "master": 283,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard unit; full discounts"
+    },
+    "Chinese|halberdier_chinese": {
+      "master": 359,
+      "population": 1,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard unit, available across civilizations"
+    },
+    "Chinese|elite_fire_lancer_chinese": {
+      "master": 1903,
+      "population": 1,
+      "sharedAcrossCivilizations": true,
+      "populationEvidence": "One comparison population per physical unit",
+      "classificationEvidence": "Standard unit, available across civilizations"
+    },
+    "Incas|imp_slinger_incas": {
+      "master": 185,
+      "population": 1.0,
+      "sharedAcrossCivilizations": true,
+      "classificationEvidence": "Installed tech trees: Slinger 185 available to Incas and Mapuche",
+      "populationEvidence": "Installed DAT: negative resource 4 and resource 11 both 1; one comparison population per physical unit"
     }
   },
   "populationMode": "one_per_unit"

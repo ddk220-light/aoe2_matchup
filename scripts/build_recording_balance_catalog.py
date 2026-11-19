@@ -84,10 +84,11 @@ def main():
         )
     out = dict(
         schemaVersion=1,
-        policy="geometric_shared_discount_unit_count_v2",
+        policy="geometric_full_discount_weighted_resources_v3",
+        defaultResourceWeights={"food": 1.0, "wood": 0.9, "gold": 1.1},
         populationMode="one_per_unit",
-        foodDiscountEffectiveness=0.5,
-        woodDiscountEffectiveness=0.5,
+        foodDiscountEffectiveness=1.0,
+        woodDiscountEffectiveness=1.0,
         goldDiscountEffectiveness=1.0,
         datSha256=hashlib.sha256(args.dat.read_bytes()).hexdigest(),
         units=entries,

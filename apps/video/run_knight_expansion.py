@@ -1,4 +1,4 @@
-"""Record the approved nine variants serially, then compact verified sources.
+"""Record a prepared variant queue serially; optionally compact verified sources.
 
 Each campaign uses the existing pilot HP/count gate, ten-match checkpoints,
 capture mutex, and 15-minute thermal/disk checks. No renders or uploads run.
@@ -12,6 +12,7 @@ from pathlib import Path
 from prepare_knight_expansion import ROOT, WORK
 from run_champi_comparison_capture import read, save
 from capture_storage_guard import archive_storage_error
+from conditional_donut import activate_conditional_donut
 
 
 def status(state, **fields):
@@ -56,29 +57,36 @@ def main():
             if storage_error:
                 raise RuntimeError(storage_error)
             work=Path(campaign['workDirectory'])
-            old=read(work/'capture/status.json') if (work/'capture/status.json').exists() else {}
-            already_complete=old.get('completed')==campaign['total'] and not old.get('failed') and not old.get('pendingExports')
-            status('CAPTURING',current=campaign,completed=completed,failures=failures,total=queue['total'])
-            if not already_complete:
-                with (work/'worker-output.log').open('a',encoding='utf-8') as stdout, (work/'worker-error.log').open('a',encoding='utf-8') as stderr:
-                    result=subprocess.run([sys.executable,'-u',str(ROOT/'apps/video/run_camel_comparison_capture.py'),
-                                           '--work',str(work)],cwd=ROOT,stdout=stdout,stderr=stderr)
-                current=read(work/'capture/status.json') if (work/'capture/status.json').exists() else {}
-                pilot=read(work/'pilot-validation.json') if (work/'pilot-validation.json').exists() else {}
-                if result.returncode:
-                    # Do not allow a bad pilot or system/UI fault to poison the
-                    # rest of the queue. Isolated battle failures can be reviewed
-                    # after other verified campaigns have made progress.
-                    failures.append(dict(key=campaign['key'],state=current.get('state'),
-                                         failed=[r for r in current.get('results',[]) if r['status']=='failed']))
-                    if pilot.get('state')!='PASSED' or current.get('state')!='COMPLETE_WITH_FAILURES':
-                        status('NEEDS_ATTENTION',current=campaign,completed=completed,failures=failures)
-                        return
-            status('COMPACTING',current=campaign,completed=completed,failures=failures)
-            storage_error=archive_storage_error(queue.get('archiveGuard'))
-            if storage_error:
-                raise RuntimeError(storage_error)
-            compact(campaign,Path(queue['archiveRoot']))
+            while True:
+                old=read(work/'capture/status.json') if (work/'capture/status.json').exists() else {}
+                already_complete=old.get('completed')==campaign['total'] and not old.get('failed') and not old.get('pendingExports')
+                status('CAPTURING',current=campaign,completed=completed,failures=failures,total=queue['total'])
+                if not already_complete:
+                    with (work/'worker-output.log').open('a',encoding='utf-8') as stdout, (work/'worker-error.log').open('a',encoding='utf-8') as stderr:
+                        result=subprocess.run([sys.executable,'-u',str(ROOT/'apps/video/run_camel_comparison_capture.py'),
+                                               '--work',str(work)],cwd=ROOT,stdout=stdout,stderr=stderr)
+                    current=read(work/'capture/status.json') if (work/'capture/status.json').exists() else {}
+                    pilot=read(work/'pilot-validation.json') if (work/'pilot-validation.json').exists() else {}
+                    if result.returncode:
+                        failures.append(dict(key=campaign['key'],state=current.get('state'),
+                                             failed=[r for r in current.get('results',[]) if r['status']=='failed']))
+                        if pilot.get('state')!='PASSED' or current.get('state')!='COMPLETE_WITH_FAILURES':
+                            status('PAUSED' if (WORK/'PAUSE').exists() or (work/'PAUSE').exists() else 'NEEDS_ATTENTION',
+                                   current=campaign,completed=completed,failures=failures)
+                            return
+                        break
+                if not activate_conditional_donut(queue, campaign, WORK):
+                    break
+                # Only newly eligible frozen Donut jobs are pending on this
+                # second pass; the recorder reuses all verified Arena games.
+            # A raw-only local queue can omit archiveRoot. Do not invent an
+            # external destination or make capture depend on a removable disk.
+            if queue.get('archiveRoot'):
+                status('COMPACTING',current=campaign,completed=completed,failures=failures)
+                storage_error=archive_storage_error(queue.get('archiveGuard'))
+                if storage_error:
+                    raise RuntimeError(storage_error)
+                compact(campaign,Path(queue['archiveRoot']))
             current=read(work/'capture/status.json')
             completed.append(dict(key=campaign['key'],verified=current['completed'],total=campaign['total']))
         verified=sum(r['verified'] for r in completed)

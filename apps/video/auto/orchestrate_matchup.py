@@ -513,7 +513,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
                 dismiss_after=True, logfile=None, template=None,
                 counts_override=None, ranged_override=None,
                 scenario_validator=None, require_grpc=False, remove_player4_buffer=False,
-                player4_count=None, lithuanian_relics=None, opponent_lithuanian_relics=None) -> Path:
+                player4_count=None, lithuanian_relics=None, opponent_lithuanian_relics=None,
+                subject_owner=None) -> Path:
     """One full matchup: build from template -> stage -> navigate -> record -> Test
     -> watch for end -> stop -> (dismiss to editor) -> compose recap -> copy.
 
@@ -550,7 +551,8 @@ def run_matchup(civ1, slug1, civ2, slug2, *, name=None, copy_to=None, raw_copy_t
     build_run(side1, side2, run_path, counts=counts, ranged=ranged,
               remove_player4_buffer=remove_player4_buffer, player4_count=player4_count,
               lithuanian_relics=lithuanian_relics,
-              opponent_lithuanian_relics=opponent_lithuanian_relics, **build_kwargs)
+              opponent_lithuanian_relics=opponent_lithuanian_relics,
+              subject_owner=subject_owner, **build_kwargs)
     if scenario_validator is not None:
         scenario_validator(run_path)
     log(f"[build] {side1[2]} x{counts[0]} ({civ1}) vs {side2[2]} x{counts[1]} ({civ2}) "
@@ -675,6 +677,7 @@ def main():
     ap.add_argument("--resources", action="store_true",
                     help="equal-resource counts (cheaper unit capped at --unit-cap)")
     ap.add_argument("--unit-cap", type=int, default=30)
+    ap.add_argument("--subject-owner", type=int, choices=(2, 3), default=2)
     ap.add_argument("--copy-to", default=None)
     ap.add_argument("--name", default=None)
     ap.add_argument("--log", default=os.path.join(TMP, "auto_matchup.log"))
@@ -691,7 +694,8 @@ def main():
                             mode=("resources" if a.resources else "count"),
                             unit_cap=a.unit_cap,
                             copy_to=a.copy_to, raw_copy_to=a.copy_to, cap=a.cap,
-                            out_mov=a.out_mov, final=a.final, logfile=a.log)
+                            out_mov=a.out_mov, final=a.final, logfile=a.log,
+                            subject_owner=a.subject_owner)
     except Exception as e:
         log(f"ERROR: {e}", a.log)
         sys.exit(1)

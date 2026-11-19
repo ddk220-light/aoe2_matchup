@@ -1,0 +1,6 @@
+# Frozen capture inputs are hashed byte-for-byte (aiSha256, auditSha256,
+# templateSha256). Store them exactly as written on Windows: no EOL conversion.
+*.aoe2scenario binary
+*.per -text
+*.ai -text
+data/local/**/*.audit.json -text

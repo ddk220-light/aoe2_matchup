@@ -33,7 +33,7 @@ The associated source scripts, generation records, inventory and text/JSON valid
 
 The golden branch `video-recorder-v3` holds **logic, not run history**. The owner asked for code, logic, map scripts and run instructions. With those, a fresh machine can redo any run: unit lists, costs and databases are already tracked. Records of completed runs do not belong in Git. Those records are campaign folders, per-trial plans, queues, eligibility and reuse decisions, status reports, share result-index backups, ranking outputs, logs and media. Their canonical copies live on the recording share.
 
-`data/local/` is ignored. A narrow allowlist in `.gitignore` re-includes only the map and AI inputs that the prepare scripts read, at their existing paths. That is 82 files, about 650 KB:
+`data/local/` is ignored. A narrow allowlist in `.gitignore` re-includes only the map and AI inputs that the prepare scripts read, at their existing paths. That is 85 files, about 840 KB:
 
 | Path | Purpose |
 | --- | --- |
@@ -43,7 +43,7 @@ The golden branch `video-recorder-v3` holds **logic, not run history**. The owne
 | `data/local/jarl-kiting-followup/donut-template/` | Donut opening-patrol and army-patrol variants |
 | `data/local/slinger-donut-timing/donut-template/` | Donut slinger-timing variant and `ddkDonutSlingerTiming.per/.ai` |
 | `data/local/legacy-kiting-preview/` (7 named files) | Approved Winter Rock scenery, `golden_rangedvsinf`, and the `ddkRockQuietAI` / `ddkRockPreviewAI` source scripts |
-| `data/local/arena-theme-review/` (scenarios, builders, `REVIEW.md`, `campaign-study/winter-*.json`) | Project-built civ and biome map drafts plus their builders |
+| `data/local/arena-theme-review/` (scenarios, builders, `winter-native-*.json`, `*scenery-dat.json`, `campaign-study/winter-*.json`) | Project-built civ and biome map drafts, their builders, and the editor-made inputs they read |
 | `data/local/README.md` | Explains this allowlist |
 
 The allowlist excludes:
@@ -51,7 +51,10 @@ The allowlist excludes:
 - PNG previews;
 - community campaign studies and screenshots;
 - `inspect_community_campaigns.py` (local Steam profile path);
+- the theme review log (`REVIEW.md`);
 - every run record.
+
+Templates, AI scripts and audits are hashed byte-for-byte, so `.gitattributes` stores them without line-ending conversion.
 
 Game-derived data is regenerated, not committed: `aoe2x.extract.run`, `scripts/audit_installed_dat.py`, `scripts/cache_installed_dat.py`. Add a new path to the allowlist only when a prepare script reads it as an input that cannot be regenerated. List it here when you do.
 

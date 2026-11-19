@@ -47,7 +47,10 @@ data/local/arena-theme-review/*
 !data/local/arena-theme-review/*.py
 # community-campaign inspector: third-party content + local Steam profile path
 data/local/arena-theme-review/inspect_community_campaigns.py
-!data/local/arena-theme-review/REVIEW.md
+!data/local/arena-theme-review/winter-native-terrain.json
+!data/local/arena-theme-review/winter-native-gaia.json
+!data/local/arena-theme-review/scenery-dat.json
+!data/local/arena-theme-review/expanded-scenery-dat.json
 !data/local/arena-theme-review/scenarios/
 data/local/arena-theme-review/scenarios/*
 !data/local/arena-theme-review/scenarios/*.aoe2scenario
@@ -71,6 +74,17 @@ data/local/detailed-standard-norse/*
 !data/local/norse-standard-capture/
 data/local/norse-standard-capture/*
 !data/local/norse-standard-capture/winter-templates/
+# never let media, logs or transient files into the re-included folders
+data/local/**/*.png
+data/local/**/*.jpg
+data/local/**/*.mp4
+data/local/**/*.mov
+data/local/**/*.wav
+data/local/**/*.bin
+data/local/**/*.log
+data/local/**/*.lock
+data/local/**/*.pkl
+data/local/**/__pycache__/
 
 # IDE
 .idea/

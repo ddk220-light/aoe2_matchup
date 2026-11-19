@@ -492,8 +492,14 @@ Everything needed is in Git except the game, credentials, and data derived from 
    A plan is a pure function of those plus the request, so the same request on the same catalogs gives the same `planHash`.
 4. **Pick the request:**
    - **A new unit episode:** scaffold it (`apps/video/scaffold_video_episode.py --key … --slug …`), then run `python -m aoe2x.lab.recording_campaign <manifest> --reports <dir>`. The root `aoe2lab.recorder.<key>-all-unique.json` files are the historical episodes' requests. They use legacy `equal_resources` rows, and the cost guard rejects re-planning them against today's catalogs.
-   - **An Arena/Donut standard-unit campaign:** run its `apps/video/prepare_*.py` (it writes a fresh `data/local/<campaign>/` work folder), then `apps/video/run_knight_expansion.py --work data/local/<campaign>`.
-   - Some prepare scripts also read earlier campaigns' outputs to **reuse** finished trials (for example `prepare_arena_donut_capture.py` reads share indexes). On a fresh machine, point them at the share or drop reuse, and capture those trials again.
+   - **A new Arena / Donut / themed-map run:** use the generic `apps/video/prepare_spike_matchups.py`. It takes subjects × opponents × layouts, freezes a recorder manifest from the tracked templates (a themed Arena is built and audited on the spot), and reads no earlier run records. Register any unit missing from the catalogs first, with `apps/video/register_recording_unit.py`. Then run `python -m aoe2x.lab.recording_campaign <work>/manifest.json --reports <dir>`.
+   - **Historical delta scripts need the share.** These scripts topped up specific past campaigns and read those campaigns' own queue, manifest or status files plus share `run.json` indexes:
+     - `prepare_arena_donut_capture`, `prepare_jarl_kiting_followup`, `prepare_slinger_timing_probe`;
+     - `prepare_mounted_donut_opening_fixes`, `prepare_donut_color_*`;
+     - `prepare_detailed_cavalier_retakes`, `prepare_saxon_guard_cost_retakes`, `fix_jarl_opening_patrol`.
+
+     They don't run on a fresh clone without those records. Keep them as a record of how those campaigns were derived, not as the way to start new work.
+   - **Older extraction folders:** `prepare_jomsviking_capture` reads `data/local/viking-sagas-research/extracted`, and the cost-audit tools read `data/local/cost-audit-extracted`. Both are `aoe2x.extract` outputs. Regenerate them by running the extractor with its output directory pointed there (`scripts/audit_installed_dat.py` shows the pattern).
 5. **Run the rest:** overlays, intro, compile, Shorts, QA and upload, per §3.6–3.8 and the [runbook](../VIDEO_PRODUCTION_RUNBOOK.md).
 
 To reproduce an **exact past plan hash**, use the catalog versions saved with that run on the share (`_arena_donut_metadata`, `frozen-catalogs/`, `run.json`). Current catalogs produce current plans.

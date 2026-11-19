@@ -11,7 +11,7 @@ scripts read. The allowlist is the `data/local` block in the root `.gitignore`.
 | Path | What it is | Read by |
 |---|---|---|
 | `arena-theme-review/scenarios/*.aoe2scenario`, `arena-theme-review/*.aoe2scenario` | Map drafts built from the Golden: 10 civ themes, 20 biome A/B variants, and the winter studies. `Winter Campaign Study - Detailed Battlefield` is the Arena scenery source; `Biome 01A - Winter Scenic` is the older Norse scenery source. | `prepare_detailed_standard_capture.py`, `prepare_norse_standard_capture.py` |
-| `arena-theme-review/*.py`, `REVIEW.md`, `campaign-study/winter-*.json` | Theme-map builders and their notes and inputs | Run by hand when making new map themes |
+| `arena-theme-review/*.py`, `winter-native-*.json`, `*scenery-dat.json`, `campaign-study/winter-*.json` | Theme-map builders and their editor-made terrain/Gaia inputs | Run by hand when making new map themes |
 | `legacy-kiting-preview/` | Approved Winter Rock scenery, `golden_rangedvsinf`, and the `ddkRockQuietAI` / `ddkRockPreviewAI` source scripts | `prepare_arena_donut_capture.py` (builds the Donut template and its quiet AI) |
 | `arena-donut-standard/donut-template/` | Frozen Winter Donut template, audit, and `ddkDonutQuietAI.per` exactly as captured | `fix_jarl_opening_patrol.py`; scenario validation |
 | `jarl-kiting-followup/donut-template/` | Donut opening-patrol and army-patrol variants | Jarl follow-up plans |

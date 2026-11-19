@@ -127,9 +127,11 @@ def main() -> None:
 
     # chapters: subject -> opponent (manifest order) -> layout
     clips, results, cursor = [], [], 0.0
-    first = episode[0]
+    # backdrop: a mid-battle frame, preferring a themed (non-Arena/Donut) map
+    first = next((e for e in episode if e['spec']['layout'] not in ('Arena', 'Donut')), episode[0])
     still = out / 'intro-still.png'
-    call(['-ss', '20', '-i', str(first['run'] / 'battle.mp4'), '-frames:v', '1', str(still)])
+    seek = float(probe(first['run'] / 'battle.mp4')['format']['duration']) * 0.4
+    call(['-ss', f'{seek:.2f}', '-i', str(first['run'] / 'battle.mp4'), '-frames:v', '1', str(still)])
     subjects = list(dict.fromkeys(f"{e['plan']['side2']['label']} ({e['plan']['side2']['civ']})" for e in episode))
     opponents = list(dict.fromkeys(e['plan']['side3']['label'] for e in episode))
     layouts = list(dict.fromkeys(e['spec']['layout'] for e in episode))

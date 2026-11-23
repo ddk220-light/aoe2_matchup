@@ -145,6 +145,11 @@ THEMES = {
                     'FOREST_PALM_DESERT', 'GRAVEL_DESERT', ['GRASS_DRY', 'DIRT_1', 'DIRT_1', 'DIRT_3', 'ROCK_1'],
                     ['TREE_PALM_FOREST', 'TREE_ACACIA', 'TREE_PALM_FOREST'], ['TREE_CYPRESS'],
                     ['ROCK_3'], ['ROCK_3', 'BROKEN_CART'], ['VASES', 'PLANT_DEAD']),
+    'thar': theme('Thar Scrubland', ['Gurjaras'], 'Rajasthan and Gujarat dry scrub',
+                    ['DIRT_SAVANNAH', 'DESERT_SAND', 'GRASS_DRY', 'DIRT_1', 'DESERT_CRACKED', 'DIRT_SAVANNAH'],
+                    'FOREST_ACACIA', 'DIRT_2', ['GRASS_DRY', 'GRASS_DRY', 'DIRT_1', 'DIRT_3', 'ROCK_1'],
+                    ['TREE_ACACIA', 'TREE_ACACIA', 'TREE_PALM_FOREST'], ['TREE_DEAD'],
+                    ['ROCK_3'], ['ROCK_3', 'ROCK_2'], ['PLANT_DEAD', 'GRASS_DRY']),
 }
 # Huns (Eurasian steppe) and Jurchens (Manchuria) keep the reviewed Winter Donut itself.
 WINTER = dict(title='Winter Steppe', civs=['Huns', 'Jurchens'], region='Eurasian winter steppe')

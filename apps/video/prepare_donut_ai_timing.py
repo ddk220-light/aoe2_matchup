@@ -34,7 +34,8 @@ UNITS = {'bolas': (bolas_timing, 'ddkDonutBolasTiming', ()),
          'gbeto': (partial(unique_timing, key='gbeto'), 'ddkDonutGbetoTiming', ()),
          'guecha': (partial(unique_timing, key='guecha'), 'ddkDonutGuechaTiming', ()),
          'jarl': (partial(unique_timing, key='jarl'), 'ddkDonutJarlTiming', ((2708, 2709),)),
-         'mameluke': (partial(unique_timing, key='mameluke'), 'ddkDonutMamelukeTiming', ())}
+         'mameluke': (partial(unique_timing, key='mameluke'), 'ddkDonutMamelukeTiming', ()),
+         'chakram': (partial(unique_timing, key='chakram'), 'ddkDonutChakramTiming', ((1741, 2709), (1743, 2709)))}
 
 
 def rel(path: Path) -> str:

@@ -54,6 +54,8 @@ UNIQUE_TIMINGS = {
     'guecha': ('Muisca', ((2562, 'Guecha Warrior'), (2564, 'Elite Guecha Warrior'))),
     'jarl': ('Varangians', ((2708, 'Jarl'), (2709, 'Elite Jarl'))),
     'mameluke': ('Saracens', ((282, 'Mameluke'), (556, 'Elite Mameluke'))),
+    # Infantry class: the AI's class searches miss it entirely (needs discovery).
+    'chakram': ('Gurjaras', ((1741, 'Chakram Thrower'), (1743, 'Elite Chakram Thrower'))),
 }
 
 

@@ -6028,6 +6028,81 @@
         "gold": 85.0
       },
       "effects": []
+    },
+    "Berbers|genitour_berbers": {
+      "civ": "Berbers",
+      "slug": "genitour_berbers",
+      "master": 1010,
+      "label": "Genitour",
+      "baseCost": {
+        "food": 40,
+        "wood": 35,
+        "gold": 0
+      },
+      "purchaseCost": {
+        "food": 40,
+        "wood": 35,
+        "gold": 0
+      },
+      "unitsPerPurchase": 1,
+      "productionEvidence": "One physical unit per purchase",
+      "effectiveCost": {
+        "food": 40.0,
+        "wood": 35.0,
+        "gold": 0.0
+      },
+      "effects": []
+    },
+    "Gurjaras|chakram_thrower_gurjaras": {
+      "civ": "Gurjaras",
+      "slug": "chakram_thrower_gurjaras",
+      "master": 1741,
+      "label": "Chakram Thrower",
+      "baseCost": {
+        "food": 65,
+        "wood": 0,
+        "gold": 30
+      },
+      "purchaseCost": {
+        "food": 49,
+        "wood": 0,
+        "gold": 30
+      },
+      "unitsPerPurchase": 1,
+      "productionEvidence": "One physical unit per purchase",
+      "effectiveCost": {
+        "food": 49.0,
+        "wood": 0.0,
+        "gold": 30.0
+      },
+      "effects": [
+        {
+          "techId": 835,
+          "command": {
+            "type": 5,
+            "type_name": "MULTIPLY_ATTRIBUTE",
+            "a": -1,
+            "b": 6,
+            "c": 103,
+            "d": 0.75,
+            "unit_id": -1,
+            "class_id": 6,
+            "attribute": "food_cost_abs",
+            "multiplier": 0.75,
+            "description": "Multiply unit -1 food_cost_abs by 0.75"
+          },
+          "before": {
+            "food": 65,
+            "wood": 0,
+            "gold": 30
+          },
+          "after": {
+            "food": 48.75,
+            "wood": 0,
+            "gold": 30
+          }
+        }
+      ]
     }
   },
   "unresolved": [],

@@ -146,7 +146,10 @@ def winter_templates(config, raw_dat, *, visual_source=WINTER, work=WORK, extra_
 
 
 def available(civ,master):
-    tree=read(GAME/f'{civ}.json')
+    path=GAME/f'{civ}.json'
+    if not path.exists() and civ.endswith('s'):
+        path=GAME/f'{civ[:-1]}.json'  # the game ships MAGYAR.json for Magyars
+    tree=read(path)
     rows=[r for values in tree.values() if isinstance(values,list) for r in values
           if r.get('Use Type')=='Unit' and r.get('Node ID')==master]
     if not rows or all(r.get('Node Status')=='NotAvailable' for r in rows):

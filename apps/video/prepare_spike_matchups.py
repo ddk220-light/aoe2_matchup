@@ -25,6 +25,7 @@ import argparse
 import json
 import math
 import pickle
+import re
 from pathlib import Path
 
 from aoe2x.lab.cli import _load_batch
@@ -128,7 +129,7 @@ def main() -> None:
                 layouts.append(('theme', dict(scenery=frozen(theme_dir / f'{family}.aoe2scenario', theme_dir / f'{family}.audit.json'))))
             for layout, extra in layouts:
                 rows.append(dict(
-                    id=f'{args.prefix}_{slug2}_{index:02}_{slug3}_{layout}',
+                    id=re.sub(r'[^a-z0-9_]', '', f'{args.prefix}_{slug2}_{index:02}_{slug3}_{layout}'),  # job ids: [a-z0-9_]
                     side2=slug2, civ2=civ2, side3=slug3, civ3=civ3, subjectOwner=2,
                     layout={'arena': 'Arena', 'donut': 'Donut', 'theme': args.theme_name}[layout],
                     balance=dict(mode='geometric_shared_discount', cap=27, weights=WEIGHTS),

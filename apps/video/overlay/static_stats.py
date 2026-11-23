@@ -74,7 +74,19 @@ def upgraded(unit, key):
     return number(base) + (f"{delta:+g}" if delta else "")
 
 
+def stat_overrides():
+    """Optional AOE2_STATS_OVERRIDES JSON: {"stats": {slug: ref_units-like row}, "portraits": {name: path}}.
+
+    For panels the Imperial-only reference DB cannot describe (Castle Age runs,
+    units newer than the extracted DAT). Off unless the variable is set."""
+    path = os.environ.get('AOE2_STATS_OVERRIDES')
+    return json.loads(Path(path).read_text(encoding='utf-8')) if path else {}
+
+
 def portrait_path(name):
+    override = stat_overrides().get('portraits', {}).get(name)
+    if override:
+        return Path(override)
     if name == 'Missionary':
         stats = json.loads(Path(__file__).with_name('supplemental-stats.json').read_text())['missionary_spanish']
         return GAME / f"resources/_common/wpfg/resources/uniticons/{stats['icon_id']}_50730.png"
@@ -85,6 +97,9 @@ def portrait_path(name):
 
 
 def resolve_stats(connection, side):
+    override = stat_overrides().get('stats', {}).get(side['slug'])
+    if override:
+        return override
     supplemental = Path(__file__).with_name('supplemental-stats.json')
     if supplemental.exists():
         row = json.loads(supplemental.read_text()).get(side['slug'])

@@ -5168,6 +5168,107 @@
         "gold": 60.0
       },
       "effects": []
+    },
+    "Magyars|heavy_cavalry_archer_magyars": {
+      "civ": "Magyars",
+      "slug": "heavy_cavalry_archer_magyars",
+      "master": 474,
+      "label": "Heavy Cavalry Archer",
+      "baseCost": {
+        "food": 0,
+        "wood": 40,
+        "gold": 60
+      },
+      "purchaseCost": {
+        "food": 0,
+        "wood": 40,
+        "gold": 60
+      },
+      "unitsPerPurchase": 1,
+      "productionEvidence": "One physical unit per purchase",
+      "effectiveCost": {
+        "food": 0.0,
+        "wood": 40.0,
+        "gold": 60.0
+      },
+      "effects": []
+    },
+    "Huns|heavy_cavalry_archer_huns": {
+      "civ": "Huns",
+      "slug": "heavy_cavalry_archer_huns",
+      "master": 474,
+      "label": "Heavy Cavalry Archer",
+      "baseCost": {
+        "food": 0,
+        "wood": 40,
+        "gold": 60
+      },
+      "purchaseCost": {
+        "food": 0,
+        "wood": 32,
+        "gold": 48
+      },
+      "unitsPerPurchase": 1,
+      "productionEvidence": "One physical unit per purchase",
+      "effectiveCost": {
+        "food": 0.0,
+        "wood": 32.0,
+        "gold": 48.0
+      },
+      "effects": [
+        {
+          "techId": 458,
+          "command": {
+            "type": 5,
+            "type_name": "MULTIPLY_ATTRIBUTE",
+            "a": -1,
+            "b": 36,
+            "c": 100,
+            "d": 0.8999999761581421,
+            "unit_id": -1,
+            "class_id": 36,
+            "attribute": "resource_cost",
+            "multiplier": 0.8999999761581421,
+            "description": "Multiply unit -1 resource_cost by 0.90"
+          },
+          "before": {
+            "food": 0,
+            "wood": 40,
+            "gold": 60
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 35.999999046325684,
+            "gold": 53.999998569488525
+          }
+        },
+        {
+          "techId": 459,
+          "command": {
+            "type": 5,
+            "type_name": "MULTIPLY_ATTRIBUTE",
+            "a": -1,
+            "b": 36,
+            "c": 100,
+            "d": 0.8888890147209167,
+            "unit_id": -1,
+            "class_id": 36,
+            "attribute": "resource_cost",
+            "multiplier": 0.8888890147209167,
+            "description": "Multiply unit -1 resource_cost by 0.89"
+          },
+          "before": {
+            "food": 0.0,
+            "wood": 35.999999046325684,
+            "gold": 53.999998569488525
+          },
+          "after": {
+            "food": 0.0,
+            "wood": 32.00000368224238,
+            "gold": 48.00000552336357
+          }
+        }
+      ]
     }
   },
   "unresolved": [],

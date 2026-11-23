@@ -99,6 +99,8 @@ def main() -> None:
                     help='extra flat passable terrain ids allowed in the combat band (e.g. 41 DIRT_SAVANNAH)')
     ap.add_argument('--theme-opponents', nargs='*', help='limit theme rows to these opponent slugs')
     ap.add_argument('--prefix', default='spike')
+    ap.add_argument('--repeats', type=int, default=1,
+                    help='record each battle N times (ids end _r1.._rN); the game is not deterministic')
     ap.add_argument('--donut-themes', type=Path,
                     help='civ-themes.json from build_themed_donuts.py: each subject civ gets its own themed Donut')
     ap.add_argument('--opponent-count', type=int,
@@ -134,9 +136,10 @@ def main() -> None:
                 layouts.append(('donut', dict(donut=frozen(donut, donut.with_suffix('.audit.json')))))
             if theme_dir and (not args.theme_opponents or slug3 in args.theme_opponents):
                 layouts.append(('theme', dict(scenery=frozen(theme_dir / f'{family}.aoe2scenario', theme_dir / f'{family}.audit.json'))))
-            for layout, extra in layouts:
+            for (layout, extra), rep in ((l, r) for l in layouts for r in range(1, args.repeats + 1)):
+                suffix = f'_r{rep}' if args.repeats > 1 else ''
                 rows.append(dict(
-                    id=re.sub(r'[^a-z0-9_]', '', f'{args.prefix}_{slug2}_{index:02}_{slug3}_{layout}'),  # job ids: [a-z0-9_]
+                    id=re.sub(r'[^a-z0-9_]', '', f'{args.prefix}_{slug2}_{index:02}_{slug3}_{layout}{suffix}'),  # job ids: [a-z0-9_]
                     side2=slug2, civ2=civ2, side3=slug3, civ3=civ3, subjectOwner=2,
                     layout={'arena': 'Arena', 'donut': 'Donut', 'theme': args.theme_name}[layout],
                     balance=dict(mode='geometric_shared_discount', cap=27, weights=WEIGHTS),

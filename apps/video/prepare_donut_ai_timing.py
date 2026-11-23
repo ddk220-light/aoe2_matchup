@@ -22,10 +22,11 @@ from pathlib import Path
 from aoe2x.lab.io import sha256
 from prepare_jomsviking_capture import DAT
 from prepare_norse_standard_capture import load_scenario
-from donut_ai_timing import bolas_timing, protect_volley
+from donut_ai_timing import bolas_timing, protect_volley, war_wagon_timing
 
 ROOT = Path(__file__).resolve().parents[2]
-UNITS = {'bolas': (bolas_timing, 'ddkDonutBolasTiming')}
+UNITS = {'bolas': (bolas_timing, 'ddkDonutBolasTiming'),
+         'war-wagon': (war_wagon_timing, 'ddkDonutWarWagonTiming')}
 
 
 def rel(path: Path) -> str:

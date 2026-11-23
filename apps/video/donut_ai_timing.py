@@ -5,9 +5,9 @@ time. Use the installed attack graphic's frame duration for release timing.
 Keep application explicit: changing timing does not authorize recapturing a
 frozen campaign or silently replacing its embedded AI.
 
-Units fixed this way so far: Slinger (Incas 185) and Bolas Rider (Mapuche
+Units fixed this way so far: Slinger (Incas 185), Bolas Rider (Mapuche
 2569/2571, whose 0.76 s windup was cut at the table's 377 ms and released
-almost nothing).
+almost nothing) and War Wagon (Koreans 827/829, ~1.0 s release vs 593 ms).
 """
 from __future__ import annotations
 
@@ -37,6 +37,11 @@ def slinger_timing(dat: Path) -> dict:
 def bolas_timing(dat: Path) -> list[dict]:
     return [unit_timing(dat, 'Mapuche', master, label)
             for master, label in ((2569, 'Bolas Rider'), (2571, 'Elite Bolas Rider'))]
+
+
+def war_wagon_timing(dat: Path) -> list[dict]:
+    return [unit_timing(dat, 'Koreans', master, label)
+            for master, label in ((827, 'War Wagon'), (829, 'Elite War Wagon'))]
 
 
 def protect_volley(ai: str, timings: list[dict]) -> str:

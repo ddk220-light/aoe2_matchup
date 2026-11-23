@@ -7,7 +7,8 @@ Layouts:
           pipeline (terrain/Gaia only; armies, AI, camera and triggers stay the Golden's)
 
 Every row: v3 geometric balance (cap 27, weights 1/0.9/1.1), no buffer, subject on P2,
-subject blue / opponent red. Plans are made and cost-validated before anything is
+subject blue / opponent red. --opponent-count N instead pins the opponent army at N and
+picks each row's cap so the subject count is the geometric-cost match for N opponents. Plans are made and cost-validated before anything is
 saved; nothing here touches the game.
 
     python apps/video/prepare_spike_matchups.py --work data/local/steppe-spike \
@@ -22,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import pickle
 from pathlib import Path
 
@@ -71,6 +73,19 @@ def build_theme(source: Path, work: Path, extra_land=()) -> Path:
     return out
 
 
+def cap_for_opponent(plan: dict, n: int) -> int:
+    """Smallest-error cap whose geometric split (costs.py rule) gives the opponent exactly n."""
+    a, b = (plan[k]['comparison']['score'] for k in ('side2', 'side3'))
+    def split(cap):
+        smaller = max(1, min(cap, math.floor(cap * math.sqrt(min(a, b) / max(a, b)) + 0.5)))
+        return (cap, smaller) if a <= b else (smaller, cap)
+    ideal = n * math.sqrt(b / a)
+    fits = [cap for cap in range(1, 28) if split(cap)[1] == n]
+    if not fits:
+        raise SystemExit(f"no cap <= 27 gives {n} opponents for {plan['side2']['slug']}")
+    return min(fits, key=lambda cap: abs(split(cap)[0] - ideal))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--work', type=Path, required=True)
@@ -83,6 +98,8 @@ def main() -> None:
                     help='extra flat passable terrain ids allowed in the combat band (e.g. 41 DIRT_SAVANNAH)')
     ap.add_argument('--theme-opponents', nargs='*', help='limit theme rows to these opponent slugs')
     ap.add_argument('--prefix', default='spike')
+    ap.add_argument('--opponent-count', type=int,
+                    help='pin the opponent army at this size; the subject count follows the geometric rule')
     args = ap.parse_args()
     work = args.work if args.work.is_absolute() else ROOT / args.work
     if (work / 'manifest.json').exists():
@@ -117,16 +134,26 @@ def main() -> None:
                     balance=dict(mode='geometric_shared_discount', cap=27, weights=WEIGHTS),
                     scenario=dict(goldenFamily=family, player4Buffer='none', subjectOwner=2, **extra)))
     work.mkdir(parents=True, exist_ok=True)
-    manifest = dict(schemaVersion=1, matchups=rows)
     tmp = work / 'manifest.candidate.json'
-    tmp.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
-    defaults, requests = _load_batch(tmp)
     config = load_config()
-    plans = []
-    for request in requests:
-        plan = plan_matchup(config, request)
-        validate_plan_costs(plan)
-        plans.append(plan)
+
+    def plan_all():
+        tmp.write_text(json.dumps(dict(schemaVersion=1, matchups=rows), indent=2) + '\n', encoding='utf-8')
+        out = []
+        for request in _load_batch(tmp)[1]:
+            plan = plan_matchup(config, request)
+            validate_plan_costs(plan)
+            out.append(plan)
+        return out
+
+    plans = plan_all()
+    if args.opponent_count:
+        for row, plan in zip(rows, plans):
+            row['balance']['cap'] = cap_for_opponent(plan, args.opponent_count)
+        plans = plan_all()
+        bad = [r['id'] for r, p in zip(rows, plans) if p['side3']['count'] != args.opponent_count]
+        if bad:
+            raise SystemExit(f'opponent count did not land on {args.opponent_count}: {bad}')
     tmp.replace(work / 'manifest.json')
     summary = [dict(id=r['id'], layout=r['layout'],
                     subject=f"{p['side2']['count']} {p['side2']['label']}",

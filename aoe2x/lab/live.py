@@ -90,6 +90,11 @@ def capture_template_path(config: LabConfig, plan: dict) -> Path:
                 or audit.get('slotsPerSide') != 27 or audit.get('bufferUnits') != 0
                 or not audit.get('terrainFlat') or not audit.get('quietAi')):
             raise PreflightError('Donut audit does not match its reviewed template')
+        # Extra Player 2 slots (e.g. half-population Blackwood Archers) must be
+        # declared by the audited template; Player 3 always keeps 27.
+        if (plan['side2'].get('count', 0) > audit.get('player2Slots', 27)
+                or plan['side3'].get('count', 0) > 27):
+            raise PreflightError('Army is larger than the Donut template declares')
         return paths['path']
     scenery = plan['scenario'].get('scenery')
     if not scenery:
@@ -143,6 +148,16 @@ def _load_stack(config: LabConfig):
         "build_run": build_run,
         "unit_const": unit_const,
     }
+
+
+def _template_slots(config: LabConfig, plan: dict, player_id: int) -> int:
+    """Authored army slots: 15 on water, 27 elsewhere, unless a Donut audit declares more for P2."""
+    if plan['scenario']['family'] == 'water':
+        return 15
+    donut = plan['scenario'].get('donut')
+    if donut and player_id == 2:
+        return read_json(config.project_root / donut['auditPath']).get('player2Slots', 27)
+    return 27
 
 
 def _source_positions(scenario, player_id: int, slots: int = 27) -> list[tuple[float, float]]:
@@ -282,7 +297,7 @@ def _validate_scenario(config: LabConfig, plan: dict, generated: Path, stack: di
     masters = [stack["unit_const"](side[1]) for side in resolved]
     counts = [plan["side2"]["count"], plan["side3"]["count"]]
     for player_id, count, master in zip((2, 3), counts, masters):
-        expected = _source_positions(source, player_id, 15 if family == "water" else 27)[:count]
+        expected = _source_positions(source, player_id, _template_slots(config, plan, player_id))[:count]
         actual = [
             (round(float(unit.x), 6), round(float(unit.y), 6))
             for unit in target.unit_manager.get_player_units(player_id)

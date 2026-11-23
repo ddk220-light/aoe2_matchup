@@ -40,6 +40,8 @@ function hash(value) {
 }
 
 
+const EXPLICIT_MAX_ARMY = 39;
+
 function requireInteger(value, name, minimum = 1, maximum = 27) {
   if (!Number.isSafeInteger(value) || value < minimum || value > maximum) {
     throw new RangeError(`${name} must be an integer ${minimum}-${maximum}`);
@@ -65,7 +67,9 @@ function weightedCost(unit, weights) {
 
 function deriveCounts(side2, side3, balance) {
   const mode = balance?.mode ?? "geometric_shared_discount";
-  const cap = requireInteger(balance?.cap ?? 27, "balance cap");
+  // Only explicit counts may exceed the 27-slot Goldens, and only into a template
+  // whose audit declares the extra slots (checked again at capture time).
+  const cap = requireInteger(balance?.cap ?? 27, "balance cap", 1, mode === "explicit" ? EXPLICIT_MAX_ARMY : 27);
   const weights = Object.freeze({
     food: requireWeight(balance?.weights?.food ?? DEFAULT_RESOURCE_WEIGHTS.food, "food"),
     wood: requireWeight(balance?.weights?.wood ?? DEFAULT_RESOURCE_WEIGHTS.wood, "wood"),

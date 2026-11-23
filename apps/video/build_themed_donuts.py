@@ -36,14 +36,14 @@ PICKLED_DAT = ROOT / 'data/local/viking-sagas-research/installed-dat.pkl'
 SNOWS = ('SNOW', 'SNOW_LIGHT', 'SNOW_SOFT', 'SNOW_SOFT_LIGHT', 'SNOW_SOFT_STRONG', 'SNOW_STRONG')
 
 
-def theme(title, civs, region, base, forest, path, accents, pines, spruces, rocks, props, deco):
+def theme(title, civs, region, base, forest, path, accents, pines, spruces, rocks, props, deco, player2_slots=27):
     """base: 6 textures for the 6 snow shades; accents: GRASS_DRY, GRASS_2, UNDERBRUSH_LEAVES, DIRT_3, ROCK_1."""
     terrain = dict(zip(SNOWS, base), UNDERBRUSH_SNOW=forest, ROAD_GRAVEL=path,
                    **dict(zip(('GRASS_DRY', 'GRASS_2', 'UNDERBRUSH_LEAVES', 'DIRT_3', 'ROCK_1'), accents)))
     # Gaia roles: snow pines / spruces (trees), snow rocks, the two plain rocks, small decorations.
     gaia = dict(TREE_SNOW_PINE=pines, SPRUCESNOW=spruces, ROCKSNOW=rocks,
                 ROCK_1=props, ROCK_2=props, GRASS_DRY=deco, PLANT_DEAD=deco, STUMP=deco)
-    return dict(title=title, civs=civs, region=region, terrain=terrain, gaia=gaia)
+    return dict(title=title, civs=civs, region=region, terrain=terrain, gaia=gaia, player2Slots=player2_slots)
 
 
 THEMES = {
@@ -61,7 +61,10 @@ THEMES = {
                     ['BEACH_NON_NAVIGABLE', 'GRASS_JUNGLE', 'BEACH_NON_NAVIGABLE', 'BEACH_NON_NAVIGABLE_WET_SAND', 'GRASS_JUNGLE_RAINFOREST', 'BEACH_NON_NAVIGABLE'],
                     'FOREST_PALM_GRASS', 'BEACH_NON_NAVIGABLE_WET_SAND', ['GRASS_JUNGLE', 'GRASS_1', 'UNDERBRUSH_JUNGLE', 'BEACH_NON_NAVIGABLE_WET_ROCK', 'ROCK_1'],
                     ['TREE_PALM_FOREST', 'TREE_BRAZILWOOD', 'TREE_PALM_FOREST'], ['TREE_BRAZILWOOD'],
-                    ['ROCK_LIMESTONE'], ['ROCK_LIMESTONE'], ['GRASS_PATCH_GREEN', 'SEA_ROCKS_1', 'FERN_PATCH']),
+                    ['ROCK_LIMESTONE'], ['ROCK_LIMESTONE'], ['GRASS_PATCH_GREEN', 'SEA_ROCKS_1', 'FERN_PATCH'],
+                    # Blackwood Archers: 2 per purchase, 0.5 population each; population-aware
+                    # geometric cost gives 15 Paladins (Franks) about 39 of them.
+                    player2_slots=39),
     'mangrove': theme('Sundarbans Delta', ['Bengalis'], 'Bengal mangrove delta',
                     ['GRASS_2', 'DIRT_MUD', 'GRASS_2', 'UNDERBRUSH_JUNGLE', 'SHALLOWS_MANGROVE', 'GRASS_2'],
                     'FOREST_MANGROVE', 'DIRT_MUD', ['GRASS_1', 'GRASS_2', 'UNDERBRUSH_JUNGLE', 'DIRT_MUD', 'ROCK_1'],
@@ -122,6 +125,33 @@ def footprint(dat, const):
     return (u.obstruction_type, u.obstruction_class, round(u.collision_size_x, 3), round(u.collision_size_y, 3))
 
 
+def add_player2_slots(s, n, dat):
+    """Append n Player 2 formation slots on free tiles touching the authored formation,
+    farthest from Player 3 first (behind the line). The literal first 27 slots are
+    untouched, so any army of 27 or fewer is placed exactly as before."""
+    if n <= 0:
+        return []
+    p2 = list(s.unit_manager.units[2])
+    taken = {(int(u.x), int(u.y)) for p in range(1, 9) for u in s.unit_manager.units[p]}
+    blocked = {(int(u.x), int(u.y)) for u in s.unit_manager.units[0] if footprint(dat, u.unit_const)[0]}
+    size = s.map_manager.map_size
+    near = {(x + dx, y + dy) for x, y in {(int(u.x), int(u.y)) for u in p2}
+            for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
+    free = [t for t in near if 0 < t[0] < size - 1 and 0 < t[1] < size - 1 and t not in taken and t not in blocked]
+    p3 = list(s.unit_manager.units[3])
+    cx, cy = sum(u.x for u in p3) / len(p3), sum(u.y for u in p3) / len(p3)
+    free.sort(key=lambda t: (-((t[0] + .5 - cx) ** 2 + (t[1] + .5 - cy) ** 2), t))
+    if len(free) < n:
+        raise SystemExit(f'only {len(free)} free tiles next to the Player 2 formation')
+    next_ref = max(u.reference_id for p in range(9) for u in s.unit_manager.units[p]) + 1
+    added = []
+    for i, (x, y) in enumerate(free[:n]):
+        s.unit_manager.add_unit(player=2, unit_const=p2[0].unit_const, x=x + .5, y=y + .5, z=p2[0].z,
+                                rotation=p2[0].rotation, reference_id=next_ref + i)
+        added.append((p2[0].unit_const, x + .5, y + .5))
+    return added
+
+
 def land_restrictions(dat):
     """Terrain restrictions of every creatable unit that can stand on Winter Donut snow."""
     from AoE2ScenarioParser.datasets.terrains import TerrainId
@@ -158,6 +188,7 @@ def build(name, spec, out, dat, restrictions):
         assert footprint(dat, new) == footprint(dat, u.unit_const), (name, 'footprint', name_of(u.unit_const), name_of(new))
         swapped.append(names[new])
         u.unit_const = new
+    added = add_player2_slots(s, spec['player2Slots'] - 27, dat)
     folder = out / name
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{spec['title']} Donut.aoe2scenario"
@@ -168,7 +199,9 @@ def build(name, spec, out, dat, restrictions):
     assert same(_camera_configuration) and same(_player_runtime_configuration) and same(_trigger_structure)
     assert same(_ai_configuration)
     army = lambda sc: [[(u.unit_const, u.x, u.y, u.rotation, u.reference_id) for u in sc.unit_manager.units[p]] for p in range(1, 9)]
-    assert army(src) == army(checked)
+    authored, extra = army(checked)[1][:27], army(checked)[1][27:]
+    assert army(src)[0] == army(checked)[0] and army(src)[2:] == army(checked)[2:] and army(src)[1] == authored
+    assert [(c, x, y) for c, x, y, _, _ in extra] == added, 'extra Player 2 slots'
     gaia = lambda sc: [(u.x, u.y, u.rotation, u.reference_id, footprint(dat, u.unit_const)) for u in sc.unit_manager.units[0]]
     assert gaia(src) == gaia(checked)
     assert [(t.x, t.y, t.elevation) for t in src.map_manager.terrain] == [(t.x, t.y, t.elevation) for t in checked.map_manager.terrain]
@@ -177,7 +210,7 @@ def build(name, spec, out, dat, restrictions):
     audit.write_text(json.dumps(dict(
         state='PASSED', layout='Donut', theme=name, title=spec['title'], civs=spec['civs'], region=spec['region'],
         templateSha256=sha256(path), sourceTemplate=SOURCE.relative_to(ROOT).as_posix(), sourceTemplateSha256=SOURCE_HASH,
-        slotsPerSide=27, bufferUnits=0, terrainFlat=True, quietAi=True, aiName='ddkDonutQuietAI',
+        slotsPerSide=27, player2Slots=spec['player2Slots'], player2ExtraSlots=added, bufferUnits=0, terrainFlat=True, quietAi=True, aiName='ddkDonutQuietAI',
         rangedOwner=2, meleeOwner=3, armiesAiCameraTriggersUnchanged=True,
         gaiaPositionsAndFootprintsUnchanged=True, passabilityUnchangedForRestrictions=restrictions,
         terrainMap=spec['terrain'], gaiaCounts={n: swapped.count(n) for n in sorted(set(swapped))}), indent=2) + '\n',

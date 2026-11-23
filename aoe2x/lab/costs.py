@@ -23,7 +23,8 @@ def validate_plan_costs(plan):
     ):
         raise ValueError("Unsupported balance mode")
     cap = balance["cap"]
-    if type(cap) is not int or not 1 <= cap <= 27:
+    # Explicit counts may use a template with declared extra slots (live.py checks it).
+    if type(cap) is not int or not 1 <= cap <= (39 if balance["mode"] == "explicit" else 27):
         raise ValueError("Invalid army cap")
     if (
         balance.get("costBasis") != catalog["costBasis"]

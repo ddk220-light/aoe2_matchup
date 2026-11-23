@@ -99,6 +99,8 @@ def main() -> None:
                     help='extra flat passable terrain ids allowed in the combat band (e.g. 41 DIRT_SAVANNAH)')
     ap.add_argument('--theme-opponents', nargs='*', help='limit theme rows to these opponent slugs')
     ap.add_argument('--prefix', default='spike')
+    ap.add_argument('--donut-themes', type=Path,
+                    help='civ-themes.json from build_themed_donuts.py: each subject civ gets its own themed Donut')
     ap.add_argument('--opponent-count', type=int,
                     help='pin the opponent army at this size; the subject count follows the geometric rule')
     args = ap.parse_args()
@@ -111,6 +113,10 @@ def main() -> None:
             raise SystemExit('--theme-source is required for the theme layout')
         src = args.theme_source if args.theme_source.is_absolute() else ROOT / args.theme_source
         theme_dir = build_theme(src, work, args.theme_extra_land)
+    donut_themes = {}
+    if args.donut_themes:
+        themes_path = args.donut_themes if args.donut_themes.is_absolute() else ROOT / args.donut_themes
+        donut_themes = json.loads(themes_path.read_text(encoding='utf-8'))
     rows = []
     for subject in args.subject:
         civ2, slug2 = subject.split(':')
@@ -124,7 +130,8 @@ def main() -> None:
             if 'arena' in args.layouts:
                 layouts.append(('arena', dict(scenery=frozen(ARENA / f'{family}.aoe2scenario', ARENA / f'{family}.audit.json'))))
             if 'donut' in args.layouts and melee:
-                layouts.append(('donut', dict(donut=frozen(DONUT, DONUT.with_name('Winter Donut.audit.json')))))
+                donut = Path(ROOT / donut_themes[civ2]['path']) if civ2 in donut_themes else DONUT
+                layouts.append(('donut', dict(donut=frozen(donut, donut.with_suffix('.audit.json')))))
             if theme_dir and (not args.theme_opponents or slug3 in args.theme_opponents):
                 layouts.append(('theme', dict(scenery=frozen(theme_dir / f'{family}.aoe2scenario', theme_dir / f'{family}.audit.json'))))
             for layout, extra in layouts:

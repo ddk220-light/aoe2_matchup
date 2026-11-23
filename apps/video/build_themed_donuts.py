@@ -115,9 +115,39 @@ THEMES = {
                     'FOREST_PINE', 'BEACH_NON_NAVIGABLE_WET_SAND', ['GRASS_DRY', 'GRASS_2', 'BEACH_NON_NAVIGABLE', 'DIRT_3', 'ROCK_1'],
                     ['TREE_PINE_FOREST', 'TREE_PINE_FOREST', 'TREE_BIRCH'], ['TREE_BIRCH'],
                     ['ROCK_2'], ['ROCK_2', 'ROCK_1'], ['SEA_ROCKS_1', 'STUMP', 'GRASS_GREEN']),
+    'anatolia': theme('Anatolian Plateau', ['Turks'], 'dry central Anatolian upland',
+                    ['GRASS_DRY', 'DIRT_1', 'GRASS_DRY', 'DIRT_3', 'GRAVEL_DEFAULT', 'DIRT_1'],
+                    'FOREST_MEDITERRANEAN', 'DIRT_2', ['GRASS_DRY', 'GRASS_2', 'DIRT_1', 'DIRT_3', 'ROCK_1'],
+                    ['TREE_CYPRESS', 'TREE_OAK', 'TREE_CYPRESS'], ['TREE_ITALIAN_PINE'],
+                    ['ROCK_3'], ['ROCK_3', 'ROCK_2'], ['PLANT_DEAD', 'PLANT_SHRUB_GREEN']),
+    'irrawaddy': theme('Irrawaddy Bamboo', ['Burmese'], 'Burmese river-valley bamboo forest',
+                    ['GRASS_JUNGLE', 'GRASS_2', 'GRASS_JUNGLE', 'DIRT_MUD', 'GRASS_JUNGLE_RAINFOREST', 'GRASS_2'],
+                    'FOREST_BAMBOO', 'DIRT_MUD', ['GRASS_1', 'GRASS_2', 'UNDERBRUSH_JUNGLE', 'DIRT_MUD', 'ROCK_1'],
+                    ['TREE_BAMBOO_FOREST', 'TREE_JUNGLE', 'TREE_BAMBOO_FOREST'], ['TREE_PALM_FOREST'],
+                    ['ROCK_JUNGLE'], ['ROCK_JUNGLE', 'ROCK_LIMESTONE'], ['FERN_PATCH', 'PLANT_JUNGLE']),
+    'sahel': theme('Niger Sahel', ['Malians'], 'West African savanna',
+                    ['DIRT_SAVANNAH', 'GRASS_DRY', 'DIRT_SAVANNAH', 'DIRT_1', 'DESERT_CRACKED', 'GRASS_DRY'],
+                    'FOREST_BAOBAB', 'DIRT_2', ['GRASS_DRY', 'GRASS_DRY', 'DIRT_1', 'DIRT_3', 'ROCK_1'],
+                    ['TREE_BAOBAB', 'TREE_ACACIA', 'TREE_ACACIA'], ['TREE_BAOBAB'],
+                    ['ROCK_2'], ['ROCK_2', 'ROCK_3'], ['PLANT_DEAD', 'GRASS_DRY']),
+    'andean': theme('Bogota Highlands', ['Muisca'], 'Colombian Andean plateau',
+                    ['GRASS_2', 'GRASS_1', 'GRASS_DRY', 'GRASS_2', 'DIRT_1', 'GRASS_FLOWERS_1'],
+                    'FOREST_RAINFOREST', 'DIRT_1', ['GRASS_DRY', 'GRASS_2', 'DIRT_1', 'DIRT_3', 'ROCK_1'],
+                    ['TREE_WAX_PALM', 'TREE_OAK_GREEN', 'TREE_WAX_PALM'], ['TREE_RAINFOREST'],
+                    ['ROCK_LIMESTONE'], ['ROCK_LIMESTONE', 'ROCK_1'], ['PLANT_FLOWERS', 'FERN_PATCH']),
+    'dnieper': theme('Dnieper Birchwood', ['Varangians'], 'Kievan Rus river birch forest',
+                    ['GRASS_2', 'GRASS_1', 'UNDERBRUSH_LEAVES', 'GRASS_2', 'GRASS_DRY', 'GRASS_1'],
+                    'FOREST_BIRCH', 'DIRT_2', ['GRASS_DRY', 'GRASS_2', 'UNDERBRUSH_LEAVES', 'DIRT_3', 'ROCK_1'],
+                    ['TREE_BIRCH', 'TREE_BIRCH', 'TREE_PINE_FOREST'], ['TREE_PINE_FOREST'],
+                    ['ROCK_1'], ['ROCK_1', 'ROCK_2'], ['STUMP', 'GRASS_GREEN']),
+    'levant': theme('Syrian Desert', ['Saracens'], 'Levantine desert edge',
+                    ['DESERT_SAND', 'GRAVEL_DESERT', 'DESERT_SAND', 'DESERT_CRACKED', 'DIRT_1', 'DESERT_SAND'],
+                    'FOREST_PALM_DESERT', 'GRAVEL_DESERT', ['GRASS_DRY', 'DIRT_1', 'DIRT_1', 'DIRT_3', 'ROCK_1'],
+                    ['TREE_PALM_FOREST', 'TREE_ACACIA', 'TREE_PALM_FOREST'], ['TREE_CYPRESS'],
+                    ['ROCK_3'], ['ROCK_3', 'BROKEN_CART'], ['VASES', 'PLANT_DEAD']),
 }
-# Huns keep the reviewed Winter Donut itself ("Winter Steppe").
-WINTER = dict(title='Winter Steppe', civs=['Huns'], region='Eurasian winter steppe')
+# Huns (Eurasian steppe) and Jurchens (Manchuria) keep the reviewed Winter Donut itself.
+WINTER = dict(title='Winter Steppe', civs=['Huns', 'Jurchens'], region='Eurasian winter steppe')
 
 
 def footprint(dat, const):

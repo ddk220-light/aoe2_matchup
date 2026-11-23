@@ -44,6 +44,38 @@ def war_wagon_timing(dat: Path) -> list[dict]:
             for master, label in ((827, 'War Wagon'), (829, 'Elite War Wagon'))]
 
 
+# Unique units whose table window is far below their installed release
+# (Arambai 310 vs 600 ms, Gbeto 560 vs 1001, Elite Jarl 343 vs 737, Mameluke
+# 260 vs 401); Guecha (477 vs 501) is included so every new unit uses the
+# installed timing. Each entry: civ, ((master, label), ...).
+UNIQUE_TIMINGS = {
+    'arambai': ('Burmese', ((1126, 'Arambai'), (1128, 'Elite Arambai'))),
+    'gbeto': ('Malians', ((1013, 'Gbeto'), (1015, 'Elite Gbeto'))),
+    'guecha': ('Muisca', ((2562, 'Guecha Warrior'), (2564, 'Elite Guecha Warrior'))),
+    'jarl': ('Varangians', ((2708, 'Jarl'), (2709, 'Elite Jarl'))),
+    'mameluke': ('Saracens', ((282, 'Mameluke'), (556, 'Elite Mameluke'))),
+}
+
+
+def unique_timing(dat: Path, key: str) -> list[dict]:
+    civ, units = UNIQUE_TIMINGS[key]
+    return [unit_timing(dat, civ, master, label) for master, label in units]
+
+
+def add_discovery(ai: str, master: int, after: int) -> str:
+    """Let the AI find a ranged unit its class searches miss (e.g. Jarl is Cavalry class).
+
+    Adds a search action next to each existing one for `after`; no rule is added,
+    so the numbered jumps stay valid."""
+    marker = f'\t(up-find-local c: {after} c: 240)'
+    if ai.count(marker) != 3 or f'(up-find-local c: {master} c: 240)' in ai:
+        raise ValueError(f'Unexpected discovery pipeline for {master}; review before editing')
+    before = ai.count('(defrule')
+    ai = ai.replace(marker, marker + f'\n\t(up-find-local c: {master} c: 240)')
+    assert ai.count('(defrule') == before
+    return ai
+
+
 def protect_volley(ai: str, timings: list[dict]) -> str:
     """Give each listed unit type its installed firing window and volley hold.
 

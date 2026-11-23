@@ -66,6 +66,7 @@ _KEY_CONST_OVERRIDE = {
     "elite_varangian_guard": 2704,
     "elite_hearth_troop": 2706,
     "elite_jarl": 2709,
+    "jarl": 2708,
     "elite_jomsviking": 2712,
     # The public/database slug omits "battle", while AoE2ScenarioParser uses
     # the full in-game enum name.

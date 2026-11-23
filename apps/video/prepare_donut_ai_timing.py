@@ -22,11 +22,19 @@ from pathlib import Path
 from aoe2x.lab.io import sha256
 from prepare_jomsviking_capture import DAT
 from prepare_norse_standard_capture import load_scenario
-from donut_ai_timing import bolas_timing, protect_volley, war_wagon_timing
+from functools import partial
+
+from donut_ai_timing import add_discovery, bolas_timing, protect_volley, unique_timing, war_wagon_timing
 
 ROOT = Path(__file__).resolve().parents[2]
-UNITS = {'bolas': (bolas_timing, 'ddkDonutBolasTiming'),
-         'war-wagon': (war_wagon_timing, 'ddkDonutWarWagonTiming')}
+# key: (timing function, new AI name, extra discovery (master, after-master) pairs)
+UNITS = {'bolas': (bolas_timing, 'ddkDonutBolasTiming', ()),
+         'war-wagon': (war_wagon_timing, 'ddkDonutWarWagonTiming', ()),
+         'arambai': (partial(unique_timing, key='arambai'), 'ddkDonutArambaiTiming', ()),
+         'gbeto': (partial(unique_timing, key='gbeto'), 'ddkDonutGbetoTiming', ()),
+         'guecha': (partial(unique_timing, key='guecha'), 'ddkDonutGuechaTiming', ()),
+         'jarl': (partial(unique_timing, key='jarl'), 'ddkDonutJarlTiming', ((2708, 2709),)),
+         'mameluke': (partial(unique_timing, key='mameluke'), 'ddkDonutMamelukeTiming', ())}
 
 
 def rel(path: Path) -> str:
@@ -46,7 +54,7 @@ def main() -> None:
     audit_in = json.loads(source.with_suffix('.audit.json').read_text(encoding='utf-8'))
     if audit_in.get('state') != 'PASSED' or audit_in.get('templateSha256') != sha256(source):
         raise SystemExit('Source Donut is not an audited, unchanged template')
-    timing_fn, name = UNITS[args.units]
+    timing_fn, name, discovery = UNITS[args.units]
     timings = timing_fn(DAT)
 
     s = load_scenario(source)
@@ -55,7 +63,10 @@ def main() -> None:
     old_name = pd.ai_names[1].replace('.ai', '.per')
     if old_name != audit_in.get('aiName', '') + '.per':
         raise SystemExit(f'Unexpected embedded AI {old_name}')
-    ai = protect_volley(embedded.data, timings)
+    ai = embedded.data
+    for master, after in discovery:
+        ai = add_discovery(ai, master, after)
+    ai = protect_volley(ai, timings)
     pd.ai_names[1] = name + '.ai'
     embedded.data = ai
     matched = 0
@@ -96,6 +107,7 @@ def main() -> None:
                  aiSha256=sha256(folder / (name + '.per')),
                  derivedFrom=dict(path=rel(source), sha256=sha256(source)),
                  aiTiming=[{k: v for k, v in t.items()} for t in timings],
+                 aiDiscoveryAdded=[dict(master=m, nextTo=a) for m, a in discovery],
                  aiTimingNote='Embedded AI patched by donut_ai_timing.protect_volley; '
                               'armies, terrain, camera and triggers unchanged',
                  playerRuntimeConfigurationUnchanged=runtime_same)

@@ -26,7 +26,8 @@ import ranking_overlay as ro
 FPS = 60
 CARD, TAIL, BEAT = 2.0, 5.0, 4.6
 _C = None
-FADE = {'BannerRow': 17.0, 'ScrollOfHonour': 19.0, 'BattleLine': 18.0}
+FADE = {'BannerRow': 17.0, 'ScrollOfHonour': 19.0, 'BattleLine': 18.0, 'LadderThenLine': 18.0}
+INTRO_CARD, MONTAGE_CLIP = 3.0, 4.0
 
 
 def _init(key, opp_short, entries, subtitle):
@@ -118,6 +119,8 @@ def render_segment(ff, concept, n, entries, run, voice, out, log, opp):
           f"[2:a]aresample=48000,adelay=300|300[n1];[3:a]aresample=48000,adelay={int((beat_at + .6) * 1000)}|{int((beat_at + .6) * 1000)}[n2];"
           f"[g][n1][n2]amix=inputs=3:normalize=0:duration=first[a]")
     dest = out / f'seg-{concept.key}-{n:02}.mp4'
+    if concept.reuse and dest.exists() and dest.stat().st_mtime > video.stat().st_mtime:
+        return dest, still
     cmd = [ff, '-y', '-v', 'warning', '-loop', '1', '-i', str(card), '-i', str(video), '-i', str(pre), '-i', str(res),
            '-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', '2560x1440', '-r', str(FPS), '-i', '-',
            '-filter_complex', fc, '-map', '[v]', '-map', '[a]', '-t', f'{total:.4f}',
@@ -147,6 +150,41 @@ def render_segment(ff, concept, n, entries, run, voice, out, log, opp):
     if proc.wait():
         raise RuntimeError(f'ffmpeg failed for {dest}')
     return dest, still
+
+
+def render_intro(ff, runs, voice, out, log, title, subtitle):
+    """Title card, then a montage of battle clips under the cold open and the rules."""
+    cold, rules = voice
+    gap = .5
+    length = math.ceil(max(INTRO_CARD + 2, .4 + seconds(cold) + gap + seconds(rules) + 1.0))
+    still = out / 'still-intro.png'
+    card = out / 'card-intro.png'
+    first = runs[0] / 'unit-hp-overlay/battle-with-unit-hp.mp4'
+    subprocess.run([ff, '-y', '-v', 'error', '-ss', '8', '-i', str(first), '-frames:v', '1', str(still)], check=True)
+    title_card(card, still, title, [subtitle])
+    clips = math.ceil((length - INTRO_CARD) / MONTAGE_CLIP)
+    inputs, parts = ['-loop', '1', '-t', str(INTRO_CARD), '-i', str(card)], []
+    for i in range(clips):
+        run = runs[i % len(runs)]
+        rows = json.loads((run / 'unit-hp-overlay/units.json').read_text())['rows']
+        start = max(2.0, .4 * terminal_row(rows)['videoSeconds'])
+        inputs += ['-ss', f'{start:.2f}', '-t', str(MONTAGE_CLIP), '-i', str(run / 'unit-hp-overlay/battle-with-unit-hp.mp4')]
+        parts.append(f'[{i + 1}:v]fps={FPS},scale=2560:1440,setsar=1,format=yuv420p,fade=t=in:st=0:d=.25[m{i}];'
+                     f'[{i + 1}:a]aresample=48000,volume=0.3[g{i}];')
+    k = clips + 1
+    inputs += ['-i', str(cold), '-i', str(rules)]
+    delay2 = int((.4 + seconds(cold) + gap) * 1000)
+    fc = (f"[0:v]fps={FPS},scale=2560:1440,setsar=1,format=yuv420p[c];" + ''.join(parts) +
+          f"[c]{''.join(f'[m{i}]' for i in range(clips))}concat=n={clips + 1}:v=1:a=0,trim=0:{length}[v];"
+          f"anullsrc=r=48000:cl=stereo,atrim=0:{INTRO_CARD}[ca];"
+          f"[ca]{''.join(f'[g{i}]' for i in range(clips))}concat=n={clips + 1}:v=0:a=1,atrim=0:{length}[g];"
+          f"[{k}:a]aresample=48000,adelay=400|400[n1];[{k + 1}:a]aresample=48000,adelay={delay2}|{delay2}[n2];"
+          f"[g][n1][n2]amix=inputs=3:normalize=0:duration=first[a]")
+    dest = out / 'seg-intro.mp4'
+    subprocess.run([ff, '-y', '-v', 'warning', *inputs, '-filter_complex', fc, '-map', '[v]', '-map', '[a]',
+                    '-t', str(length), '-c:v', 'h264_nvenc', '-preset', 'p5', '-cq', '20', '-r', str(FPS),
+                    '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', str(dest)], check=True, stdout=log, stderr=log)
+    return dest
 
 
 def render_finale(ff, concept, still, voice, out, log, subtitle):
@@ -179,7 +217,10 @@ def main():
     ap.add_argument('--video', choices=['castle', 'imperial'], required=True)
     ap.add_argument('--script', type=Path, required=True)
     ap.add_argument('--average-runs', type=Path, required=True)
-    ap.add_argument('--picks', nargs='+', required=True, help='civ names (first unit of that civ)')
+    ap.add_argument('--picks', nargs='+', required=True, help="civ names (first unit of that civ), or 'all'")
+    ap.add_argument('--intro', action='store_true', help='open with the cold open + rules montage')
+    ap.add_argument('--reuse', action='store_true', help='keep battle segments newer than their recording')
+    ap.add_argument('--name', help='output file name (default preview-<concept>-<name>.mp4)')
     ap.add_argument('--concepts', nargs='+', default=['A', 'B', 'C'])
     ap.add_argument('--out', type=Path, required=True)
     a = ap.parse_args()
@@ -193,7 +234,8 @@ def main():
     opp_short = 'Knights' if a.video == 'castle' else 'Paladins'
     entries = entries_for(facts, a.video, 15)
     lines = {(u['civ'], u['unit']): u for u in script['units']}
-    picks = [next(i for i, e in enumerate(entries) if e.civ == civ) for civ in a.picks]
+    picks = (list(range(len(entries))) if a.picks == ['all'] else
+             [next(i for i, e in enumerate(entries) if e.civ == civ) for civ in a.picks])
     speech = []
     for n in picks:
         e = entries[n]
@@ -201,6 +243,8 @@ def main():
         speech += [(u['stats'] + ' ' + u['expectation'], out / 'voice' / f'pre-{n:02}.wav'),
                    (u['result'], out / 'voice' / f'res-{n:02}.wav')]
     speech += [(script['finaleIntro'], out / 'voice' / 'finale.wav'), (script['outro'], out / 'voice' / 'outro.wav')]
+    if a.intro:
+        speech += [(script['coldOpen'], out / 'voice' / 'cold.wav'), (script['rules'], out / 'voice' / 'rules.wav')]
     tts(speech)
     subtitle = f"{'Castle' if a.video == 'castle' else 'Imperial'} Age - best of 3 runs - ranked by wins, then margin"
     log = (out / 'render.log').open('a', encoding='utf-8')
@@ -208,8 +252,16 @@ def main():
     for key in a.concepts:
         concept = ro.CONCEPTS[key](opp_short, '').bind(entries)
         concept.key = key
+        concept.reuse = a.reuse
         concept.pool = Pool(12, _init, (key, opp_short, entries, subtitle))
         segs, still = [], None
+        if a.intro:
+            top = sorted(entries, key=lambda e: e.rank)[:4]
+            title = script['title'].split(':')[0]
+            segs.append(render_intro(ff, [run_dir(avg, e.civ, e.unit) for e in top],
+                                     (out / 'voice' / 'cold.wav', out / 'voice' / 'rules.wav'), out, log, title,
+                                     script['title'].split(':', 1)[1].strip() if ':' in script['title'] else ''))
+            print(key, 'intro', flush=True)
         for n in picks:
             e = entries[n]
             seg, still = render_segment(ff, concept, n, entries, run_dir(avg, e.civ, e.unit),
@@ -221,7 +273,7 @@ def main():
                                   out, log, subtitle))
         listing = out / f'concat-{key}.txt'
         listing.write_text(''.join(f"file '{s.as_posix()}'\n" for s in segs), encoding='utf-8')
-        final = out / f'preview-{key}-{concept.name.split(" - ")[1].lower().replace(" ", "-")}.mp4'
+        final = out / (a.name or f'preview-{key}-{concept.name.split(" - ")[1].lower().replace(" ", "-")}.mp4')
         subprocess.run([ff, '-y', '-v', 'warning', '-f', 'concat', '-safe', '0', '-i', str(listing),
                         '-c', 'copy', '-movflags', '+faststart', str(final)], check=True, stdout=log, stderr=log)
         concept.pool.close()

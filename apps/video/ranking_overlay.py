@@ -875,4 +875,28 @@ class BattleLine:
         return c
 
 
-CONCEPTS = {'A': BannerRow, 'B': ScrollOfHonour, 'C': BattleLine}
+class LadderThenLine:
+    """Chosen mix: B's ladder for each battle's result, C's Battle Line for the finale."""
+    name = 'D - Ladder then Battle Line'
+
+    def __init__(self, opponent_plural, title):
+        self.ladder = ScrollOfHonour(opponent_plural, title)
+        self.line = BattleLine(opponent_plural, title)
+
+    def bind(self, entries):
+        self.ladder.bind(entries)
+        self.line.bind(entries)
+        self.entries = entries
+        return self
+
+    def rest(self, n):
+        return None
+
+    def beat(self, n, t):
+        return self.ladder.beat(n, t)
+
+    def finale(self, t, title2=''):
+        return self.line.finale(t, title2)
+
+
+CONCEPTS = {'A': BannerRow, 'B': ScrollOfHonour, 'C': BattleLine, 'D': LadderThenLine}

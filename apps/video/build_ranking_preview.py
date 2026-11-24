@@ -206,7 +206,7 @@ def render_intro(ff, runs, voice, out, log, title, subtitle):
         rows = json.loads((run / 'unit-hp-overlay/units.json').read_text())['rows']
         start = max(2.0, .4 * terminal_row(rows)['videoSeconds'])
         inputs += ['-ss', f'{start:.2f}', '-t', str(MONTAGE_CLIP), '-i', str(run / 'unit-hp-overlay/battle-with-unit-hp.mp4')]
-        parts.append(f'[{i + 1}:v]fps={FPS},scale=2560:1440,setsar=1,format=yuv420p,fade=t=in:st=0:d=.25[m{i}];'
+        parts.append(f'[{i + 1}:v]fps={FPS},scale=2560:1440,setsar=1,format=yuv420p,fade=t=in:st=0:d=0.25[m{i}];'
                      f'[{i + 1}:a]aresample=48000,volume=0.3[g{i}];')
     k = clips + 1
     inputs += ['-i', str(cold), '-i', str(rules)]
@@ -297,7 +297,7 @@ def main():
         concept.pool = Pool(a.workers, _init, (key, opp_short, entries, subtitle))
         segs = []
         if a.intro:
-            top = sorted(entries, key=lambda e: e.rank)[:4]
+            top = sorted(entries, key=lambda e: e.rank)[:10]
             title = script['title'].split(':')[0]
             segs.append(render_intro(ff, [run_dir(avg, e.civ, e.unit) for e in top],
                                      (vdir / 'cold.wav', vdir / 'rules.wav'), out, log, title,

@@ -56,17 +56,29 @@ def render_frames(pool, jobs):
     return pool.imap(_frame, jobs, chunksize=4)
 
 
-def tts(lines: list[tuple[str, Path]]):
-    todo = [(t, p) for t, p in lines if not p.exists()]
+TTS_PYTHON = {'kokoro': 'data/local/tts/.venv/Scripts/python.exe', 'chatterbox': 'data/local/tts/cb/.venv/Scripts/python.exe'}
+
+
+def tts(lines: list[tuple[str, Path]], voice: str = 'windows', root: Path = Path('.')):
+    """Voice each (text, wav) line. A .txt sidecar records the text, so edited lines are re-voiced."""
+    todo = [(t, p) for t, p in lines
+            if not p.exists() or not p.with_suffix('.txt').exists()
+            or p.with_suffix('.txt').read_text(encoding='utf-8') != t]
     if not todo:
         return
     spec = Path(todo[0][1]).parent / 'tts-todo.json'
     spec.write_text(json.dumps([{'text': t, 'path': str(p)} for t, p in todo]), encoding='utf-8')
-    ps = ("Add-Type -AssemblyName System.Speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
-          "$s.SelectVoice('Microsoft David Desktop'); $s.Rate = 0; "
-          f"foreach ($j in (Get-Content -Raw -Encoding UTF8 '{spec}' | ConvertFrom-Json)) "
-          "{ $s.SetOutputToWaveFile($j.path); $s.Speak($j.text); $s.SetOutputToNull() }")
-    subprocess.run(['powershell', '-NoProfile', '-Command', ps], check=True)
+    if voice == 'windows':
+        ps = ("Add-Type -AssemblyName System.Speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+              "$s.SelectVoice('Microsoft David Desktop'); $s.Rate = 0; "
+              f"foreach ($j in (Get-Content -Raw -Encoding UTF8 '{spec}' | ConvertFrom-Json)) "
+              "{ $s.SetOutputToWaveFile($j.path); $s.Speak($j.text); $s.SetOutputToNull() }")
+        subprocess.run(['powershell', '-NoProfile', '-Command', ps], check=True)
+    else:
+        python = root / TTS_PYTHON[voice.split(':')[0]]
+        subprocess.run([str(python), str(Path(__file__).with_name('tts_local.py')), str(spec), voice], check=True)
+    for t, p in todo:
+        p.with_suffix('.txt').write_text(t, encoding='utf-8')
 
 
 def seconds(path):
@@ -127,7 +139,7 @@ def render_segment(ff, concept, n, entries, run, voice, out, log, opp, prev_fram
     beat_at = CARD + body_len
     dest = out / f'seg-{concept.key}-{n:02}.mp4'
     if (concept.reuse and dest.exists()
-            and dest.stat().st_mtime > max(video.stat().st_mtime, prev_frame.stat().st_mtime)):
+            and dest.stat().st_mtime > max(p.stat().st_mtime for p in (video, prev_frame, pre, res))):
         return dest
     still = out / f'still-{n}.png'
     card = out / f'cardbg-{n}.png'
@@ -245,13 +257,16 @@ def main():
     ap.add_argument('--picks', nargs='+', required=True, help="civ names (first unit of that civ), or 'all'")
     ap.add_argument('--intro', action='store_true', help='open with the cold open + rules montage')
     ap.add_argument('--workers', type=int, default=12)
+    ap.add_argument('--voice', default='windows', help="windows | kokoro:<voice> | chatterbox[:reference.wav]")
+    ap.add_argument('--tts-root', default='C:/dev/aoe2/aoe2_matchup', help='checkout holding data/local/tts venvs')
     ap.add_argument('--reuse', action='store_true', help='keep battle segments newer than their recording')
     ap.add_argument('--name', help='output file name (default preview-<concept>-<name>.mp4)')
     ap.add_argument('--concepts', nargs='+', default=['A', 'B', 'C'])
     ap.add_argument('--out', type=Path, required=True)
     a = ap.parse_args()
     out = a.out.resolve()
-    (out / 'voice').mkdir(parents=True, exist_ok=True)
+    vdir = out / ('voice' if a.voice == 'windows' else 'voice-' + a.voice.replace(':', '-').replace('/', '_')[:40])
+    vdir.mkdir(parents=True, exist_ok=True)
     ff = find_ffmpeg()
     facts = json.loads(a.facts.read_text(encoding='utf-8'))
     script = json.loads(a.script.read_text(encoding='utf-8'))
@@ -266,12 +281,12 @@ def main():
     for n in picks:
         e = entries[n]
         u = lines[(e.civ, e.unit)]
-        speech += [(u['stats'] + ' ' + u['expectation'], out / 'voice' / f'pre-{n:02}.wav'),
-                   (u['result'], out / 'voice' / f'res-{n:02}.wav')]
-    speech += [(script['finaleIntro'], out / 'voice' / 'finale.wav'), (script['outro'], out / 'voice' / 'outro.wav')]
+        speech += [(u['stats'] + ' ' + u['expectation'], vdir / f'pre-{n:02}.wav'),
+                   (u['result'], vdir / f'res-{n:02}.wav')]
+    speech += [(script['finaleIntro'], vdir / 'finale.wav'), (script['outro'], vdir / 'outro.wav')]
     if a.intro:
-        speech += [(script['coldOpen'], out / 'voice' / 'cold.wav'), (script['rules'], out / 'voice' / 'rules.wav')]
-    tts(speech)
+        speech += [(script['coldOpen'], vdir / 'cold.wav'), (script['rules'], vdir / 'rules.wav')]
+    tts(speech, a.voice, Path(a.tts_root))
     subtitle = f"{'Castle' if a.video == 'castle' else 'Imperial'} Age - ranked by HP left"
     log = (out / 'render.log').open('a', encoding='utf-8')
     results = {}
@@ -285,7 +300,7 @@ def main():
             top = sorted(entries, key=lambda e: e.rank)[:4]
             title = script['title'].split(':')[0]
             segs.append(render_intro(ff, [run_dir(avg, e.civ, e.unit) for e in top],
-                                     (out / 'voice' / 'cold.wav', out / 'voice' / 'rules.wav'), out, log, title,
+                                     (vdir / 'cold.wav', vdir / 'rules.wav'), out, log, title,
                                      script['title'].split(':', 1)[1].strip() if ':' in script['title'] else ''))
             print(key, 'intro', flush=True)
         prev = out / 'black.png'
@@ -302,12 +317,12 @@ def main():
         for n in picks:
             e = entries[n]
             seg = render_segment(ff, concept, n, entries, run_dir(avg, e.civ, e.unit),
-                                 (out / 'voice' / f'pre-{n:02}.wav', out / 'voice' / f'res-{n:02}.wav'),
+                                 (vdir / f'pre-{n:02}.wav', vdir / f'res-{n:02}.wav'),
                                  out, log, opp, prev)
             segs.append(seg)
             prev = tail_frame(seg, f'last-{key}-{n:02}.png')
             print(key, 'segment', e.civ, flush=True)
-        segs.append(render_finale(ff, concept, prev, (out / 'voice' / 'finale.wav', out / 'voice' / 'outro.wav'),
+        segs.append(render_finale(ff, concept, prev, (vdir / 'finale.wav', vdir / 'outro.wav'),
                                   out, log, subtitle))
         listing = out / f'concat-{key}.txt'
         listing.write_text(''.join(f"file '{s.as_posix()}'\n" for s in segs), encoding='utf-8')

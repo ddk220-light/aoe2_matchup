@@ -2,7 +2,7 @@
 
 Runs inside the separate TTS virtualenv (it needs torch + kokoro or chatterbox-tts), not the
 video venv:  <tts-venv>/python tts_local.py <spec.json> kokoro:bm_george
-             <tts-venv>/python tts_local.py <spec.json> chatterbox[:reference.wav]
+             <tts-venv>/python tts_local.py <spec.json> chatterbox[:reference.wav][@exaggeration,cfg]
 """
 import json
 import re
@@ -25,16 +25,21 @@ def kokoro(lines, voice):
         sf.write(path, np.concatenate(parts[:-1]), 24000)
 
 
-def chatterbox(lines, reference):
+def chatterbox(lines, arg):
+    """arg = [reference.wav][@exaggeration,cfg]. Exaggeration ~0.5 is neutral, 0.8+ more emotive
+    (above ~1.2 it gets unstable); a lower cfg (0.3) keeps the pace natural at high exaggeration."""
     import torch
     from chatterbox.tts import ChatterboxTTS
+    reference, _, knobs = arg.partition('@')
+    exaggeration, cfg = (float(x) for x in knobs.split(',')) if knobs else (.5, .5)
     model = ChatterboxTTS.from_pretrained(device='cuda' if torch.cuda.is_available() else 'cpu')
     extra = {'audio_prompt_path': reference} if reference else {}
     for text, path in lines:
         torch.manual_seed(7)
         parts = []
         for sentence in (s for s in re.split(r'(?<=[.!?:])\s+', text) if s.strip()):
-            wav = model.generate(sentence, exaggeration=.5, cfg_weight=.5, **extra).squeeze(0).cpu().numpy()
+            wav = model.generate(sentence, exaggeration=exaggeration, cfg_weight=cfg,
+                                 **extra).squeeze(0).cpu().numpy()
             parts += [wav, np.zeros(int(model.sr * GAP), dtype=np.float32)]
         sf.write(path, np.concatenate(parts[:-1]), model.sr)
 

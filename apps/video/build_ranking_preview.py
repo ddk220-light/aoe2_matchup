@@ -10,8 +10,10 @@ finale board. Narration uses the local Windows voice as a placeholder (no networ
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
+import re
 import subprocess
 from multiprocessing import Pool
 from pathlib import Path
@@ -59,11 +61,33 @@ def render_frames(pool, jobs):
 TTS_PYTHON = {'kokoro': 'data/local/tts/.venv/Scripts/python.exe', 'chatterbox': 'data/local/tts/cb/.venv/Scripts/python.exe'}
 
 
+PRONUNCIATIONS = Path(__file__).with_name('pronunciations.json')
+
+
+def spoken(text: str) -> str:
+    """Respell unit/civ names so the voice says them right (pronunciations.json; plurals and
+    possessives keep their ending). Longest names first, so 'Elite Gbeto' beats 'Gbeto'."""
+    terms = json.loads(PRONUNCIATIONS.read_text(encoding='utf-8'))['terms']
+    for term in sorted(terms, key=len, reverse=True):
+        text = re.sub(rf"\b{re.escape(term)}(?=(s|es|'s)?\b)", terms[term]['say'], text)
+    return text
+
+
+def voice_dir(out: Path, voice: str) -> Path:
+    if voice == 'windows':
+        return out / 'voice'
+    name = re.sub(r'[^A-Za-z0-9_.@,-]+', '-', voice.split(':', 1)[0] + '-' + Path(voice.split(':', 1)[-1]).name)
+    return out / f"voice-{name[:40]}-{hashlib.sha1(voice.encode()).hexdigest()[:6]}"
+
+
 def tts(lines: list[tuple[str, Path]], voice: str = 'windows', root: Path = Path('.')):
-    """Voice each (text, wav) line. A .txt sidecar records the text, so edited lines are re-voiced."""
+    """Voice each (text, wav) line. A .txt sidecar records voice + spoken text, so edited lines,
+    respellings or voice settings are re-voiced."""
+    lines = [(spoken(t), p) for t, p in lines]
+    key = lambda t: f'{voice}\n{t}'
     todo = [(t, p) for t, p in lines
             if not p.exists() or not p.with_suffix('.txt').exists()
-            or p.with_suffix('.txt').read_text(encoding='utf-8') != t]
+            or p.with_suffix('.txt').read_text(encoding='utf-8') != key(t)]
     if not todo:
         return
     spec = Path(todo[0][1]).parent / 'tts-todo.json'
@@ -78,7 +102,7 @@ def tts(lines: list[tuple[str, Path]], voice: str = 'windows', root: Path = Path
         python = root / TTS_PYTHON[voice.split(':')[0]]
         subprocess.run([str(python), str(Path(__file__).with_name('tts_local.py')), str(spec), voice], check=True)
     for t, p in todo:
-        p.with_suffix('.txt').write_text(t, encoding='utf-8')
+        p.with_suffix('.txt').write_text(key(t), encoding='utf-8')
 
 
 def seconds(path):
@@ -257,7 +281,7 @@ def main():
     ap.add_argument('--picks', nargs='+', required=True, help="civ names (first unit of that civ), or 'all'")
     ap.add_argument('--intro', action='store_true', help='open with the cold open + rules montage')
     ap.add_argument('--workers', type=int, default=12)
-    ap.add_argument('--voice', default='windows', help="windows | kokoro:<voice> | chatterbox[:reference.wav]")
+    ap.add_argument('--voice', default='windows', help="windows | kokoro:<voice> | chatterbox[:reference.wav][@exaggeration,cfg]")
     ap.add_argument('--tts-root', default='C:/dev/aoe2/aoe2_matchup', help='checkout holding data/local/tts venvs')
     ap.add_argument('--reuse', action='store_true', help='keep battle segments newer than their recording')
     ap.add_argument('--name', help='output file name (default preview-<concept>-<name>.mp4)')
@@ -265,7 +289,7 @@ def main():
     ap.add_argument('--out', type=Path, required=True)
     a = ap.parse_args()
     out = a.out.resolve()
-    vdir = out / ('voice' if a.voice == 'windows' else 'voice-' + a.voice.replace(':', '-').replace('/', '_')[:40])
+    vdir = voice_dir(out, a.voice)
     vdir.mkdir(parents=True, exist_ok=True)
     ff = find_ffmpeg()
     facts = json.loads(a.facts.read_text(encoding='utf-8'))

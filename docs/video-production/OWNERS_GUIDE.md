@@ -319,6 +319,8 @@ It then checks that frame count and size match `battle.mp4`. Requirements: 2560�
 - Voice IDs are in `intro/*-voice-clone.json`. Five are **retired**, Pachacuti among them, even though `CHAMPI_COMPARISON_BOOKENDS.md` says otherwise. **Never reuse a retired ID.**
 - Narration audio is irreplaceable once a clone is deleted, so archive it.
 
+**Ranking videos** use local narration instead (Chatterbox voice clone, chunked emotion markup, phoneme-based names). The decisions are in [`RANKING_NARRATION_AND_KITING.md`](RANKING_NARRATION_AND_KITING.md).
+
 **Unit art** comes from built-in image generation using the unit icon as reference, with provenance saved next to the asset.
 
 **Covers** ([`build_campaign_thumbnail.py`](../../apps/video/build_campaign_thumbnail.py)): `-long.jpg` 1280×720 and `-shorts.jpg` 1080×1920, under 2 MiB. Older covers (Tiger, Xianbei, Liao, Grenadier) were AI-edited instead.

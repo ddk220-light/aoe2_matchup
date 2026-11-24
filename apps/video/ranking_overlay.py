@@ -61,7 +61,7 @@ class Entry:
     emblem: Path
 
     @property
-    def side(self): return 'win' if self.record.count('W') >= 2 else 'loss'
+    def side(self): return 'win' if self.record.count('W') * 2 > len(self.record) else 'loss'
 
 
 # ---------------------------------------------------------------- text & widgets
@@ -266,6 +266,7 @@ def blank():
 # ================================================================== Concept B: Scroll of Honour
 class ScrollOfHonour:
     name = 'B - Scroll of Honour'
+    show_pips = True
     X0, X1, BOTTOM = 620, 1940, 1424
     HEADER, DIV, PAD = 84, 44, 28
 
@@ -322,7 +323,8 @@ class ScrollOfHonour:
             if 268 + name.width + 16 + civ.width < 700:
                 put(im, civ, 268 + name.width + 16, mid + 2, 'lm')
         put(im, text_tile(f'{e.count} vs {e.opp}', max(22, round(28 * s)), ink), 852, mid, 'rm')
-        put_pips(im, e.record, 880, mid, max(18, round(28 * s)), max(6, round(10 * s)), 'lm', pop=pips_pop)
+        if self.show_pips:
+            put_pips(im, e.record, 880, mid, max(18, round(28 * s)), max(6, round(10 * s)), 'lm', pop=pips_pop)
         # diverging bar, zero tick at 1080
         d.line((1080, 8, 1080, h - 10), fill=P['ink_soft'], width=2)
         bh = max(14, round(22 * s))
@@ -719,6 +721,7 @@ def wrap(text, size, max_w, floor=20):
 # ================================================================== Concept C: The Battle Line
 class BattleLine:
     name = 'C - The Battle Line'
+    show_pips = True
     ZERO, SCALE = 836, 4.8
 
     def __init__(self, opponent_plural, title):
@@ -761,7 +764,7 @@ class BattleLine:
             yy = tip - 8 - ic.height - 6
             num = text_tile(margin_text(e.margin if number is None else number), 34 if p >= 100 else 30, P['win_light'], True)
             put(c, num, cx, yy, 'cb', alpha)
-            if pips:
+            if pips and self.show_pips:
                 put_pips(c, e.record, cx, yy - num.height - 4 - 8, 16 if p >= 100 else 13, 5 if p >= 100 else 4, 'cm',
                          shown=pips)
         else:
@@ -769,7 +772,7 @@ class BattleLine:
             yy = tip + 8 + ic.height + 6
             num = text_tile(margin_text(e.margin if number is None else number), 34 if p >= 100 else 30, P['loss_light'], True)
             put(c, num, cx, yy, 'ct', alpha)
-            if pips:
+            if pips and self.show_pips:
                 put_pips(c, e.record, cx, yy + num.height + 4 + 8, 16 if p >= 100 else 13, 5 if p >= 100 else 4, 'cm',
                          shown=pips)
         # emblem on the line
@@ -882,6 +885,8 @@ class LadderThenLine:
     def __init__(self, opponent_plural, title):
         self.ladder = ScrollOfHonour(opponent_plural, title)
         self.line = BattleLine(opponent_plural, title)
+        # one shown run per unit: the number is that run's HP left, no 3-run pips
+        self.ladder.show_pips = self.line.show_pips = False
 
     def bind(self, entries):
         self.ladder.bind(entries)
@@ -900,3 +905,21 @@ class LadderThenLine:
 
 
 CONCEPTS = {'A': BannerRow, 'B': ScrollOfHonour, 'C': BattleLine, 'D': LadderThenLine}
+
+
+def card_title(e, line2, t, length):
+    """Animated matchup title for the card that opens each battle (transparent frame)."""
+    c = blank()
+    a = out_cubic(seg(t, .25, .8)) * (1 - in_cubic(seg(t, length - .35, length + .1)))
+    if a <= .01:
+        return c
+    rise = 36 * (1 - out_cubic(seg(t, .25, .9)))
+    put(c, glow(icon(str(e.emblem), 150), .5)[0], W / 2, 430 + rise, 'cm', a * .8)
+    put(c, icon(str(e.emblem), 150), W / 2, 430 + rise, 'cm', a)
+    put(c, text_fit(e.unit, 112, P['gold'], 2200, 60, True), W / 2, 620 + rise, 'cm', a)
+    u = out_cubic(seg(t, .45, 1.0))
+    rule = Image.new('RGBA', (max(2, round(900 * u)), 4), P['gold_dark'])
+    put(c, rule, W / 2, 712 + rise, 'cm', a)
+    put(c, text_tile(e.civ, 54, P['cream'], True), W / 2, 780 + rise, 'cm', a * u)
+    put(c, text_tile(line2, 44, P['cream'], True), W / 2, 856 + rise, 'cm', a * u * .85)
+    return c
